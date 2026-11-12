@@ -1,0 +1,99 @@
+import type { Estimate, EstimateGroup, LineItem, PricingRule } from "../estimate/types";
+import { defaultBusinessProfile, defaultProposalConfig, type BusinessProfile, type ProposalConfig } from "../proposal/types";
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const num = (v: unknown) => (v === null || v === undefined ? "" : String(Number(v)));
+const rule = (mode: string | null, pct: unknown): PricingRule | null => (mode ? { mode: mode as PricingRule["mode"], percent: num(pct) } : null);
+
+export function rowsToEstimate(e: any, groups: any[], items: any[]): Estimate {
+  return {
+    id: e.id,
+    title: e.title ?? "",
+    trades: e.trades ?? [],
+    estimateNumber: e.estimate_number ?? "",
+    estimateDate: e.estimate_date,
+    expirationDate: e.expiration_date ?? "",
+    status: e.status,
+    customer: {
+      name: e.customer_name ?? "",
+      email: e.customer_email ?? undefined,
+      phone: e.customer_phone ?? undefined,
+      projectAddress: e.project_address ?? undefined,
+      notes: e.customer_notes ?? undefined,
+    },
+    location: { zip: e.location_zip ?? undefined, city: e.location_city ?? undefined, state: e.location_state ?? undefined },
+    pricing: { mode: e.pricing_mode, percent: num(e.pricing_percent) },
+    fixedAdjustment: num(e.fixed_adjustment),
+    adjustmentLabel: e.adjustment_label ?? undefined,
+    taxRate: num(e.tax_rate),
+    displayMode: e.display_mode,
+    defaultGroupVisibility: e.default_group_visibility,
+    templateRef: e.template_trade ? { trade: e.template_trade, version: e.template_version ?? 1 } : null,
+    customerId: e.customer_id ?? null,
+    updatedAt: e.updated_at,
+    groups: groups.map(
+      (g): EstimateGroup => ({
+        id: g.id, name: g.name ?? "", description: g.description ?? undefined, visibility: g.visibility ?? null,
+        sortOrder: g.sort_order ?? 0, pricingOverride: rule(g.pricing_mode, g.pricing_percent),
+      }),
+    ),
+    items: items.map(
+      (i): LineItem => ({
+        id: i.id, groupId: i.group_id, name: i.name ?? "", description: i.description ?? undefined, category: i.category ?? undefined,
+        costType: i.cost_type, treatment: i.treatment, quantity: num(i.quantity), unit: i.unit, unitCost: num(i.unit_cost),
+        taxable: i.taxable, pricingOverride: rule(i.pricing_mode, i.pricing_percent), showOnProposal: i.show_on_proposal,
+        notes: i.notes ?? undefined, sortOrder: i.sort_order ?? 0,
+      }),
+    ),
+  };
+}
+
+export function proposalConfigFrom(raw: unknown): ProposalConfig {
+  const d = defaultProposalConfig();
+  if (!raw || typeof raw !== "object") return d;
+  const r = raw as Partial<ProposalConfig>;
+  return { ...d, ...r, show: { ...d.show, ...(r.show ?? {}) }, paymentSchedule: r.paymentSchedule ?? d.paymentSchedule };
+}
+
+export function rowToBusiness(r: any | null): BusinessProfile & { logoPath?: string | null } {
+  const d = defaultBusinessProfile();
+  if (!r) return d;
+  return {
+    companyName: r.company_name ?? "",
+    contactName: r.contact_name ?? undefined,
+    email: r.email ?? undefined,
+    phone: r.phone ?? undefined,
+    address: r.address ?? undefined,
+    website: r.website ?? undefined,
+    licenseNumber: r.license_number ?? undefined,
+    description: r.description ?? undefined,
+    tagline: r.tagline ?? undefined,
+    primaryColor: r.primary_color ?? d.primaryColor,
+    secondaryColor: r.secondary_color ?? d.secondaryColor,
+    logoLayout: r.logo_layout ?? d.logoLayout,
+    headerStyle: r.header_style ?? d.headerStyle,
+    logoUrl: null,
+    logoPath: r.logo_path ?? null,
+  };
+}
+
+export function businessToRow(b: BusinessProfile & { logoPath?: string | null }, userId: string) {
+  const s = (v?: string | null) => (v && v.trim() ? v.trim() : null);
+  return {
+    user_id: userId,
+    company_name: b.companyName.trim(),
+    contact_name: s(b.contactName),
+    email: s(b.email),
+    phone: s(b.phone),
+    address: s(b.address),
+    website: s(b.website),
+    license_number: s(b.licenseNumber),
+    description: s(b.description),
+    tagline: s(b.tagline),
+    primary_color: b.primaryColor,
+    secondary_color: b.secondaryColor,
+    logo_layout: b.logoLayout,
+    header_style: b.headerStyle,
+    ...(b.logoPath !== undefined ? { logo_path: b.logoPath } : {}),
+  };
+}

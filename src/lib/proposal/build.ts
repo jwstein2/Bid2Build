@@ -1,7 +1,7 @@
 import { computeEstimate, effectiveVisibility, itemsForGroup, sortedGroups } from "../estimate/engine";
 import { D, formatCurrency, round2, toDec } from "../estimate/money";
 import type { Estimate } from "../estimate/types";
-import { tradeName } from "../trades/catalog";
+import { tradeName, UNIT_ABBR } from "../trades/catalog";
 import type { BusinessProfile, ProposalConfig, ProposalDocument, ProposalSection } from "./types";
 
 const clean = (s?: string | null) => (s && s.trim() ? s.trim() : undefined);
@@ -60,7 +60,7 @@ export function buildProposal(estimate: Estimate, business: BusinessProfile, con
             ...(mode === "itemized"
               ? {
                   quantity: show.quantities ? fmtQty(i.quantity) : undefined,
-                  unit: show.quantities ? i.unit : undefined,
+                  unit: show.quantities ? (UNIT_ABBR[i.unit] ?? i.unit) : undefined,
                   unitPrice: show.itemPrices && show.quantities ? formatCurrency(t.unitPrice) : undefined,
                   amount: show.itemPrices ? formatCurrency(t.extendedPrice) : undefined,
                 }

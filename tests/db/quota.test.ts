@@ -1,6 +1,7 @@
+import type { QueryResult } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Pool } from "pg";
-import { asUser, createUser, dbAvailable, freshDb } from "./harness";
+import { asUser, createUser, dbAvailable, freshDb, type Row } from "./harness";
 
 const available = await dbAvailable();
 const d = available ? describe : describe.skip;
@@ -71,7 +72,7 @@ d("free quota and exports (database)", () => {
     const u = await createUser(pool, "race2@test.dev");
     const e = await newEstimate(u);
     const results = await Promise.allSettled(Array.from({ length: 6 }, () => exportVersion(u, e, hash(500))));
-    const ok = results.filter((r): r is PromiseFulfilledResult<any> => r.status === "fulfilled");
+    const ok = results.filter((r): r is PromiseFulfilledResult<QueryResult<Row>> => r.status === "fulfilled");
     expect(ok.length).toBe(6);
     expect(ok.filter((r) => r.value.rows[0].charged).length).toBe(1);
     const c = await pool.query("select exports_used from public.usage_counters where user_id = $1", [u]);
