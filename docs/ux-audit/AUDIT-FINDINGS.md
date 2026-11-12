@@ -91,7 +91,6 @@ Based on general knowledge of the public marketing sites of Houzz Pro (houzz.com
 | P1 | Visual QA of signed-in pages on the deploy preview | Low | Needs a session; see QA-RESULTS manual steps. |
 | P1 | Attorney review of privacy/terms; real support email + domain | Owner | Placeholders today. |
 | P1 | Trademark/usage check of the Built2Bid name and mark before launch | Owner | Not done. |
-| P2 | Compare logo with the approved board image | Low | Image not provided. |
 | P2 | Dashboard: group secondary row actions into a menu on mobile; add sort | Medium | F14, F15. |
 | P2 | Estimate step on mobile: line-item table scrolls horizontally inside the card (min 860 px) | Medium–high | Card layout for rows on small screens. |
 | P2 | Auto-scroll the active builder step tab into view on mobile | Low | |

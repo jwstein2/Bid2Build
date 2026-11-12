@@ -10,7 +10,7 @@ const svg = (f) => readFileSync(join(brand, f));
 const png = (input, size, out) => sharp(input, { density: 72 * Math.max(1, size / 64) * 2 }).resize(size, size).png({ compressionLevel: 9 }).toFile(out);
 
 const fav = svg("built2bid-favicon.svg");
-const mark = svg("built2bid-mark.svg");
+const mark = svg("built2bid-mark-tile.svg");
 
 // Favicons (no ruler ticks) and app/PWA icons (full mark).
 const icoSizes = [16, 32, 48];

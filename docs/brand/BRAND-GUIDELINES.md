@@ -8,17 +8,22 @@ Credible construction know-how, delivered with clean, modern SaaS usability.
 | Asset | File | Use |
 |---|---|---|
 | Horizontal lockup | `public/brand/built2bid-logo.svg` | Default on white / light surfaces |
+| Lockup with tagline | `public/brand/built2bid-logo-tagline.svg` | Hero, documents, decks |
 | Reverse lockup | `public/brand/built2bid-logo-reverse.svg` | Navy panels, dark slides |
-| Mark (navy tile) | `public/brand/built2bid-mark.svg` | App icon, avatars, social |
-| Mark (transparent) | `public/brand/built2bid-mark-transparent.svg` | On white where a tile is too heavy |
-| Monochrome | `public/brand/built2bid-mark-mono.svg`, `built2bid-logo-mono.svg` | Fax, stamps, single-colour print |
+| Mark (navy, transparent) | `public/brand/built2bid-mark.svg` | Primary mark on light surfaces |
+| Mark (white, transparent) | `public/brand/built2bid-mark-reverse.svg` | On navy |
+| Mark tiles | `public/brand/built2bid-mark-tile.svg`, `built2bid-mark-tile-light.svg` | App icon, avatars, social |
+| Construction mark | `public/brand/built2bid-mark-construction.svg` | Large/hero use with blueprint guides |
+| Monochrome | `public/brand/built2bid-mark-mono.svg`, `built2bid-logo-mono.svg` | Single-colour print |
 | Favicon | `public/brand/built2bid-favicon.svg`, `src/app/favicon.ico` (16/32/48) | Browser tabs |
 | App / PWA | `public/brand/icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `src/app/apple-icon.png` | Home screen |
 | Social preview | `src/app/opengraph-image.png` (1200×630) | Link previews |
 
-**Construction.** An uppercase B drawn like a drafting exercise: one straight stem, two bowls, constant stroke on a 64-unit grid, a ruler scale (cyan ticks) beside the stem, and a teal check that closes the lower bowl. The check stands for an approved, finished bid. The wordmark is Montserrat ExtraBold, outlined in the SVG files, with the numeral 2 in cyan.
+Contact sheet: [logo-sheet.png](logo-sheet.png). Fidelity check against the approved board: [board-vs-mark.png](board-vs-mark.png) (left: new mark overlaid at 45% on the board's B; right: the new mark).
 
-**Small sizes.** Below 24 px use the favicon variant (no ruler ticks, heavier strokes). Tested at 16, 24, 32, 64 and 128 px.
+**Construction.** Redrawn as clean vectors from the approved Blueprint Precision board (traced by measurement on a 64-unit grid, not raster-traced): a solid, heavy uppercase B whose stem is a ruler with tick marks cut in, drafting construction lines cut through the bowls, a 45° chamfer at the lower left, both counters open to the ruler stem, and a teal check with a knockout outline closing the lower-right bowl. The wordmark is Montserrat ExtraBold, outlined in the SVG files, with the numeral 2 in a deep-cyan-to-cyan gradient.
+
+**Small sizes.** Below 24 px use the favicon variant (tile, no ticks or construction lines, heavier check). Tested at 16, 24, 32, 64 and 128 px.
 
 **Clear space.** Keep at least the width of the B's stem (≈ 1/10 of the mark) clear on all sides; minimum lockup width 120 px on screen.
 

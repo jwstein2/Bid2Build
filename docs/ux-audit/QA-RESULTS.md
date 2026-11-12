@@ -27,4 +27,4 @@ Estimate engine, proposal/PDF templates, quota and export SQL, Stripe checkout/w
 
 ## Known issues
 - With no Supabase env, `/dashboard` logs a server error from the page while the layout shows the config guard (pre-existing; only affects unconfigured local runs).
-- Logo checked against the written brief only; the referenced board image wasn't provided.
+- Logo redrawn to match the approved board (provided 2026-11-12); see `docs/brand/board-vs-mark.png`. Trademark/usage clearance is still an owner task.

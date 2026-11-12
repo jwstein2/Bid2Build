@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { Check, ClipboardList, Download, LayoutGrid, Ruler } from "lucide-react";
+import { ArrowRight, Check, ClipboardList, Download, FileText, LayoutGrid, Ruler, Timer, TrendingUp } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { Container } from "@/components/ui/misc";
 import { TradePicker } from "@/components/marketing/trade-picker";
 import { ProposalSample } from "@/components/marketing/proposal-sample";
 import { SampleProposal } from "@/components/marketing/sample-proposal";
 import { pickerTrades } from "@/lib/trades/picker";
+import { trades } from "@/lib/trades/catalog";
 import { plans, site } from "@/lib/site";
 
 const steps = [
@@ -41,31 +42,43 @@ export default function HomePage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <section className="relative overflow-hidden border-b border-line bg-surface">
-        <div aria-hidden className="blueprint-grid pointer-events-none absolute inset-0 [mask-image:linear-gradient(to_bottom,black,transparent_90%)]" />
+      <section className="on-dark relative overflow-hidden bg-navy text-white">
+        <div aria-hidden className="blueprint-grid-dark pointer-events-none absolute inset-0 [mask-image:linear-gradient(to_bottom,black,transparent_95%)]" />
         <Container className="relative grid items-center gap-12 pb-16 pt-12 sm:pt-16 lg:grid-cols-[1.05fr_1fr] lg:gap-14 lg:pb-20">
           <div>
-            <p className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1 text-xs font-semibold text-ink-soft">
+            <p className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs font-semibold text-[#D5DFE9]">
               <span className="h-1.5 w-1.5 rounded-full bg-teal" aria-hidden /> For contractors in every trade · {plans.freeMonthlyExports} free bids a month
             </p>
-            <h1 className="mt-5 max-w-xl text-4xl font-extrabold leading-[1.08] tracking-tight text-navy sm:text-5xl lg:text-[3.5rem]">
-              Professional bids, without the busywork.
+            <h1 className="mt-5 max-w-xl text-4xl font-extrabold leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-[3.5rem]">
+              Professional bids, <span className="relative inline-block text-cyan">without the busywork.<svg aria-hidden viewBox="0 0 300 12" preserveAspectRatio="none" className="absolute -bottom-2 left-0 h-2.5 w-full"><path d="M3 9C80 3 200 2 297 6" fill="none" stroke="#14B8A6" strokeWidth="4" strokeLinecap="round" /></svg></span>
             </h1>
-            <p className="mt-5 max-w-xl text-lg text-ink-soft">
+            <p className="mt-6 max-w-xl text-lg text-[#D5DFE9]">
               Build polished estimates and proposals for your trade without starting from scratch every time. Price with markup or margin, choose what your customer sees, and download a branded PDF.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
-              <ButtonLink href="/bids" variant="accent" size="lg">Create a free bid</ButtonLink>
-              <ButtonLink href="#how-it-works" variant="secondary" size="lg">See how it works</ButtonLink>
+              <ButtonLink href="/bids" variant="accent" size="lg">Create a free bid <ArrowRight className="h-4 w-4" aria-hidden /></ButtonLink>
+              <ButtonLink href="#how-it-works" size="lg" className="border border-white/40 bg-transparent text-white hover:bg-white/10">See how it works</ButtonLink>
             </div>
-            <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-ink-soft">
+            <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[#D5DFE9]">
               {["No sign-up until you download", "No credit card", "Your costs stay private"].map((x) => (
-                <li key={x} className="flex items-center gap-1.5"><Check className="h-4 w-4 text-ok" aria-hidden />{x}</li>
+                <li key={x} className="flex items-center gap-1.5"><Check className="h-4 w-4 text-teal" aria-hidden />{x}</li>
               ))}
             </ul>
           </div>
-          <SampleProposal className="mx-auto w-full max-w-xl lg:max-w-none" />
+          <SampleProposal className="mx-auto w-full max-w-xl lg:max-w-none" dark />
         </Container>
+        <div className="relative border-t border-white/10">
+          <Container className="grid grid-cols-2 gap-4 py-5 text-sm font-semibold text-white md:grid-cols-4">
+            {[
+              { icon: LayoutGrid, t: `${trades.length} trade templates` },
+              { icon: FileText, t: "Professional proposals" },
+              { icon: Timer, t: "Saves as you go" },
+              { icon: TrendingUp, t: "Know your profit" },
+            ].map((f) => (
+              <p key={f.t} className="flex items-center gap-2.5"><f.icon className="h-5 w-5 text-cyan" aria-hidden /> {f.t}</p>
+            ))}
+          </Container>
+        </div>
       </section>
 
       <section id="trades" className="scroll-mt-20 border-b border-line py-16 sm:py-20">

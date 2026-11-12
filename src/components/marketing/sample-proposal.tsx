@@ -37,7 +37,7 @@ const business: BusinessProfile = {
   headerStyle: "solid",
 };
 
-export function SampleProposal({ className = "" }: { className?: string }) {
+export function SampleProposal({ className = "", dark = false }: { className?: string; dark?: boolean }) {
   const config = {
     ...defaultProposalConfig(),
     introduction: "",
@@ -53,7 +53,7 @@ export function SampleProposal({ className = "" }: { className?: string }) {
         </div>
         <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#e4eaf1] to-transparent" />
       </div>
-      <figcaption className="mt-3 text-center text-xs text-muted">
+      <figcaption className={`mt-3 text-center text-xs ${dark ? "text-[#B8C6D4]" : "text-muted"}`}>
         Sample proposal made with {site.name} using example data. Each section can show a total, item names, or full detail.
       </figcaption>
     </figure>

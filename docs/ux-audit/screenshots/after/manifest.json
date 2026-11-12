@@ -107,7 +107,7 @@
   "name": "builder-1-company",
   "vp": "desktop",
   "file": "builder-1-company--desktop.png",
-  "url": "/builder?draft=58b4f949-fa17-48aa-8a3d-7599d44f0c6f",
+  "url": "/builder?draft=c0e24a8b-c20f-441f-a32e-2a47bae6b0f6",
   "note": "first-run anonymous",
   "hOverflow": false
  },
@@ -115,7 +115,7 @@
   "name": "builder-2-project",
   "vp": "desktop",
   "file": "builder-2-project--desktop.png",
-  "url": "/builder?draft=58b4f949-fa17-48aa-8a3d-7599d44f0c6f",
+  "url": "/builder?draft=c0e24a8b-c20f-441f-a32e-2a47bae6b0f6",
   "note": "",
   "hOverflow": false
  },
@@ -123,7 +123,7 @@
   "name": "builder-3-estimate",
   "vp": "desktop",
   "file": "builder-3-estimate--desktop.png",
-  "url": "/builder?draft=58b4f949-fa17-48aa-8a3d-7599d44f0c6f",
+  "url": "/builder?draft=c0e24a8b-c20f-441f-a32e-2a47bae6b0f6",
   "note": "",
   "hOverflow": false
  },
@@ -131,7 +131,7 @@
   "name": "builder-4-proposal",
   "vp": "desktop",
   "file": "builder-4-proposal--desktop.png",
-  "url": "/builder?draft=58b4f949-fa17-48aa-8a3d-7599d44f0c6f",
+  "url": "/builder?draft=c0e24a8b-c20f-441f-a32e-2a47bae6b0f6",
   "note": "",
   "hOverflow": false
  },
@@ -139,7 +139,7 @@
   "name": "builder-5-preview-modal",
   "vp": "desktop",
   "file": "builder-5-preview-modal--desktop.png",
-  "url": "/builder?draft=58b4f949-fa17-48aa-8a3d-7599d44f0c6f",
+  "url": "/builder?draft=c0e24a8b-c20f-441f-a32e-2a47bae6b0f6",
   "note": "",
   "hOverflow": false
  },
@@ -147,7 +147,7 @@
   "name": "builder-6-auth-gate",
   "vp": "desktop",
   "file": "builder-6-auth-gate--desktop.png",
-  "url": "/builder?draft=58b4f949-fa17-48aa-8a3d-7599d44f0c6f",
+  "url": "/builder?draft=c0e24a8b-c20f-441f-a32e-2a47bae6b0f6",
   "note": "export requires account",
   "hOverflow": false
  },
@@ -259,7 +259,7 @@
   "name": "builder-1-company",
   "vp": "tablet",
   "file": "builder-1-company--tablet.png",
-  "url": "/builder?draft=9c03270c-4bcd-45dd-ba24-52bec4498e9d",
+  "url": "/builder?draft=5a872529-44af-414f-be56-bf8755089ea5",
   "note": "first-run anonymous",
   "hOverflow": false
  },
@@ -267,7 +267,7 @@
   "name": "builder-2-project",
   "vp": "tablet",
   "file": "builder-2-project--tablet.png",
-  "url": "/builder?draft=9c03270c-4bcd-45dd-ba24-52bec4498e9d",
+  "url": "/builder?draft=5a872529-44af-414f-be56-bf8755089ea5",
   "note": "",
   "hOverflow": false
  },
@@ -275,7 +275,7 @@
   "name": "builder-3-estimate",
   "vp": "tablet",
   "file": "builder-3-estimate--tablet.png",
-  "url": "/builder?draft=9c03270c-4bcd-45dd-ba24-52bec4498e9d",
+  "url": "/builder?draft=5a872529-44af-414f-be56-bf8755089ea5",
   "note": "",
   "hOverflow": false
  },
@@ -283,7 +283,7 @@
   "name": "builder-4-proposal",
   "vp": "tablet",
   "file": "builder-4-proposal--tablet.png",
-  "url": "/builder?draft=9c03270c-4bcd-45dd-ba24-52bec4498e9d",
+  "url": "/builder?draft=5a872529-44af-414f-be56-bf8755089ea5",
   "note": "",
   "hOverflow": false
  },
@@ -291,7 +291,7 @@
   "name": "builder-5-preview-modal",
   "vp": "tablet",
   "file": "builder-5-preview-modal--tablet.png",
-  "url": "/builder?draft=9c03270c-4bcd-45dd-ba24-52bec4498e9d",
+  "url": "/builder?draft=5a872529-44af-414f-be56-bf8755089ea5",
   "note": "",
   "hOverflow": false
  },
@@ -299,7 +299,7 @@
   "name": "builder-6-auth-gate",
   "vp": "tablet",
   "file": "builder-6-auth-gate--tablet.png",
-  "url": "/builder?draft=9c03270c-4bcd-45dd-ba24-52bec4498e9d",
+  "url": "/builder?draft=5a872529-44af-414f-be56-bf8755089ea5",
   "note": "export requires account",
   "hOverflow": false
  },
@@ -411,7 +411,7 @@
   "name": "builder-1-company",
   "vp": "mobile",
   "file": "builder-1-company--mobile.png",
-  "url": "/builder?draft=29d2f3f1-4eec-4c71-984f-51825fffb3fb",
+  "url": "/builder?draft=515192da-fb69-4e53-9679-53a22558fffa",
   "note": "first-run anonymous",
   "hOverflow": false
  },
@@ -419,7 +419,7 @@
   "name": "builder-2-project",
   "vp": "mobile",
   "file": "builder-2-project--mobile.png",
-  "url": "/builder?draft=29d2f3f1-4eec-4c71-984f-51825fffb3fb",
+  "url": "/builder?draft=515192da-fb69-4e53-9679-53a22558fffa",
   "note": "",
   "hOverflow": false
  },
@@ -427,7 +427,7 @@
   "name": "builder-3-estimate",
   "vp": "mobile",
   "file": "builder-3-estimate--mobile.png",
-  "url": "/builder?draft=29d2f3f1-4eec-4c71-984f-51825fffb3fb",
+  "url": "/builder?draft=515192da-fb69-4e53-9679-53a22558fffa",
   "note": "",
   "hOverflow": false
  },
@@ -435,7 +435,7 @@
   "name": "builder-4-proposal",
   "vp": "mobile",
   "file": "builder-4-proposal--mobile.png",
-  "url": "/builder?draft=29d2f3f1-4eec-4c71-984f-51825fffb3fb",
+  "url": "/builder?draft=515192da-fb69-4e53-9679-53a22558fffa",
   "note": "",
   "hOverflow": false
  },
@@ -443,7 +443,7 @@
   "name": "builder-5-preview-modal",
   "vp": "mobile",
   "file": "builder-5-preview-modal--mobile.png",
-  "url": "/builder?draft=29d2f3f1-4eec-4c71-984f-51825fffb3fb",
+  "url": "/builder?draft=515192da-fb69-4e53-9679-53a22558fffa",
   "note": "",
   "hOverflow": false
  },
@@ -451,7 +451,7 @@
   "name": "builder-6-auth-gate",
   "vp": "mobile",
   "file": "builder-6-auth-gate--mobile.png",
-  "url": "/builder?draft=29d2f3f1-4eec-4c71-984f-51825fffb3fb",
+  "url": "/builder?draft=515192da-fb69-4e53-9679-53a22558fffa",
   "note": "export requires account",
   "hOverflow": false
  }
