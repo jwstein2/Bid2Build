@@ -61,6 +61,13 @@ export const estimateSchema = z.object({
   items: z.array(lineItemSchema).max(2000),
   templateRef: z.object({ trade: z.string(), version: z.number().int() }).nullable().optional(),
   customerId: uuid.nullable().optional(),
+  projectProfile: z.object({
+    sector: z.enum(["residential", "commercial"]).optional(),
+    workType: z.enum(["new_construction", "remodel", "addition", "replacement", "repair"]).optional(),
+    projectType: z.string().max(60).optional(),
+    measurements: z.record(z.string().max(40), z.union([z.number(), z.string().max(40), z.boolean()])).optional(),
+    outcome: z.enum(["quoted", "accepted", "declined", "completed"]).optional(),
+  }).nullable().optional(),
 }).superRefine((e, ctx) => {
   const groupIds = new Set(e.groups.map((g) => g.id));
   e.items.forEach((it, i) => {

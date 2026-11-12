@@ -15,6 +15,7 @@ Trade page -> /start/[trade] -> local draft (localStorage) -> /builder
 - **Quota**: 3 per UTC calendar month (`free_monthly_exports()`), enforced only in the database.
 - **Billing**: entitlement is set only by verified Stripe webhooks through `apply_subscription_update()`, which ignores out-of-order events. `has_unlimited()` = active/trialing/past_due within the paid period.
 - **Templates**: built-in seed in `src/lib/trades/data.ts` (no prices). Admins publish new versions to `trade_templates`; new bids use the latest published version and record it in `templateRef`.
+- **Market intelligence** (`src/lib/market`, `/admin/market`): opt-in, de-identified observations captured once per finalized version into the non-exposed `market` schema; admin-only reports with a 20-business suppression floor. See `docs/MARKET-INTELLIGENCE.md`.
 - **Regional pricing**: provider interface only (`src/lib/pricing/provider.ts`). No provider is connected; the UI says "Local pricing unavailable. Enter your cost manually."
 
 ## Key directories
@@ -25,6 +26,7 @@ Trade page -> /start/[trade] -> local draft (localStorage) -> /builder
 | `src/lib/security` | SSRF-safe fetch, image/SVG validation |
 | `src/lib/billing` | Stripe client, webhook mapping |
 | `src/lib/admin` | Admin authorization + audit log |
+| `src/lib/market` | Pricing observations: classification, units, trade models, capture, synthetic demo data |
 | `src/components/builder` | Builder UI and reducer (undo for deletes) |
 | `supabase/migrations` | Schema, RLS, functions, storage policies |
 | `tests`, `tests/db` | Unit tests; Postgres tests for RLS, quota, billing |

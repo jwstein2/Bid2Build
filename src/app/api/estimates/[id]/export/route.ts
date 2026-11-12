@@ -5,6 +5,7 @@ import { renderProposalPdf, pdfFilename } from "@/lib/pdf/render";
 import { loadBusiness, loadEstimate } from "@/lib/data/server";
 import { createAdminClient, createClient, getUser } from "@/lib/supabase/server";
 import { fail, json, logError, rateLimit, sameOrigin } from "@/lib/http/api";
+import { captureObservation } from "@/lib/market/server";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -89,6 +90,8 @@ export async function POST(_req: Request, ctx: RouteContext<"/api/estimates/[id]
     const { data: signed } = await admin.storage.from("documents").createSignedUrl(path, 300, { download: filename });
     url = signed?.signedUrl ?? null;
   }
+  // Market intelligence: one de-identified observation per finalized version, only with opt-in consent.
+  await captureObservation(admin, user.id, r.version_id, estimate, totals);
   if (r.charged) await admin.from("analytics_events").insert({ user_id: user.id, event: "export_succeeded", trade: estimate.trades[0] ?? null });
 
   return json({
