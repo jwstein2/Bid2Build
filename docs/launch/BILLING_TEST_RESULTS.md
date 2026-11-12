@@ -19,7 +19,7 @@ Subscriptions were driven through the Stripe API with test clocks; entitlement w
 | Cancel at period end → flag set, access kept; after period end → `canceled`, access removed | ✅ |
 | Failed renewal (card 4000 0000 0000 0341) → `past_due`, access kept; after retries (≈day 20) → `canceled`, access removed | ✅ |
 | Refund + immediate cancel → `canceled`, access removed | ✅ |
-| Hosted Checkout in a browser (card entry, success redirect, upgrade dialog) | ⏳ needs a person in a browser |
+| Hosted Checkout in a browser by the owner (card 4242, success redirect, `checkout.session.completed`, plan shows Unlimited Monthly) | ✅ |
 
 ## Bug found and fixed
 Two events for a brand-new customer arriving together raced on `billing_customers.stripe_customer_id`; one returned 500 until Stripe retried.
