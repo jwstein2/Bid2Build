@@ -1,5 +1,5 @@
 /**
- * Creates (or reuses) the BuildYourBid Unlimited product and its two prices in Stripe TEST mode.
+ * Creates (or reuses) the Bid2Build Unlimited product and its two prices in Stripe TEST mode.
  * Idempotent via lookup keys. Refuses live keys.
  *   STRIPE_SECRET_KEY=sk_test_... npx tsx scripts/stripe-setup.ts
  */
@@ -13,15 +13,15 @@ if (!key.startsWith("sk_test_") && !key.startsWith("rk_test_")) {
 const stripe = new Stripe(key);
 
 const PRICES = [
-  { lookup_key: "byb_unlimited_monthly", unit_amount: 1999, interval: "month" as const, nickname: "Unlimited Monthly" },
-  { lookup_key: "byb_unlimited_annual", unit_amount: 14900, interval: "year" as const, nickname: "Unlimited Annual" },
+  { lookup_key: "b2b_unlimited_monthly", unit_amount: 1999, interval: "month" as const, nickname: "Unlimited Monthly" },
+  { lookup_key: "b2b_unlimited_annual", unit_amount: 14900, interval: "year" as const, nickname: "Unlimited Annual" },
 ];
 
 async function main() {
   const existing = await stripe.prices.list({ lookup_keys: PRICES.map((p) => p.lookup_key), active: true, expand: ["data.product"] });
   let productId = existing.data.map((p) => (typeof p.product === "string" ? p.product : p.product.id))[0];
   if (!productId) {
-    const product = await stripe.products.create({ name: "BuildYourBid Unlimited", description: "Unlimited finalized proposal exports.", metadata: { app: "buildyourbid" } });
+    const product = await stripe.products.create({ name: "Bid2Build Unlimited", description: "Unlimited finalized proposal exports.", metadata: { app: "bid2build" } });
     productId = product.id;
   }
   const out: Record<string, string> = {};

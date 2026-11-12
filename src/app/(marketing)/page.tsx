@@ -53,7 +53,7 @@ export default function HomePage() {
             <TradePicker trades={pickerTrades()} />
           </div>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <ButtonLink href="/start/general-contracting" variant="accent" size="lg">Start Building Your Bid</ButtonLink>
+            <ButtonLink href="/start/general-contracting" variant="accent" size="lg">Start Your Bid</ButtonLink>
             <ButtonLink href="#how-it-works" variant="secondary" size="lg">See How It Works</ButtonLink>
           </div>
         </Container>
@@ -131,7 +131,7 @@ export default function HomePage() {
             <p className="mt-2 text-white/80">{plans.freeMonthlyExports} finalized bids every month on the free plan. Unlimited for {plans.monthlyPriceLabel}/month or {plans.annualPriceLabel}/year.</p>
           </div>
           <div className="flex gap-3">
-            <ButtonLink href="/bids" variant="accent" size="lg">Start Building Your Bid</ButtonLink>
+            <ButtonLink href="/bids" variant="accent" size="lg">Start Your Bid</ButtonLink>
             <ButtonLink href="/pricing" size="lg" className="bg-white/10 hover:bg-white/20">Compare plans</ButtonLink>
           </div>
         </Container>

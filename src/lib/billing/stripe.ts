@@ -6,7 +6,7 @@ let client: Stripe | null = null;
 export function getStripe(): Stripe {
   const key = serverEnv().stripeSecretKey;
   if (!key) throw new Error("STRIPE_SECRET_KEY is not configured");
-  client ??= new Stripe(key, { appInfo: { name: "BuildYourBid" }, maxNetworkRetries: 2 });
+  client ??= new Stripe(key, { appInfo: { name: "Bid2Build" }, maxNetworkRetries: 2 });
   return client;
 }
 

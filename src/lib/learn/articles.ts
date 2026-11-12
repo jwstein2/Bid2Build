@@ -17,7 +17,7 @@ export const articles: Article[] = [
       { h: "Margin is a percent of price", p: ["Gross margin tells you what share of the customer's price is profit."], formula: ["Price = Cost ÷ (1 − Margin)", "Example: $10,000 cost ÷ 0.75 = $13,333.33 price (25% margin)"] },
       { h: "Why the same percent gives different prices", p: ["A 25% markup on a $10,000 job produces $2,500 of gross profit, which is only a 20% margin. To earn a 25% margin you need a 33.33% markup. The higher the percent, the wider the gap."] },
       { h: "Converting between them", formula: ["Margin = Markup ÷ (1 + Markup)", "Markup = Margin ÷ (1 − Margin)"], list: ["20% markup = 16.67% margin", "25% markup = 20% margin", "50% markup = 33.33% margin", "25% margin = 33.33% markup", "40% margin = 66.67% markup"] },
-      { h: "Use one method, not both", p: ["Pick markup or margin for a given estimate and stay with it. Applying a markup and then also a margin target double-counts profit and overprices the job. In BuildYourBid you choose one method per estimate, and the other number is shown for reference."] },
+      { h: "Use one method, not both", p: ["Pick markup or margin for a given estimate and stay with it. Applying a markup and then also a margin target double-counts profit and overprices the job. In Bid2Build you choose one method per estimate, and the other number is shown for reference."] },
       { h: "Gross profit is not net profit", p: ["Gross profit is price minus the direct costs you entered. Your overhead (office, vehicles, insurance, your own salary) still has to come out of it. If overhead is not entered as line items, make sure your markup or margin is high enough to cover it."] },
       { h: "Sales tax is separate", p: ["Sales tax you collect is not revenue and should not be included in margin calculations. Compute your price first, then apply any tax that applies in your jurisdiction."] },
     ],
@@ -59,7 +59,7 @@ export const articles: Article[] = [
     blocks: [
       { p: ["Sales tax rules for construction vary widely. Depending on your state and the type of work, tax may apply to materials only, to the full contract, or not at all. This article covers how to handle tax in an estimate, not what your obligation is."] },
       { h: "Tax is collected, not earned", p: ["Sales tax you collect from a customer belongs to the taxing authority. It is not revenue and should not be counted in your markup, margin, or gross profit."] },
-      { h: "Mark which items are taxable", p: ["If only some items are taxable in your situation, mark each line accordingly. BuildYourBid applies the tax rate only to taxable lines and shows tax separately on the proposal."] },
+      { h: "Mark which items are taxable", p: ["If only some items are taxable in your situation, mark each line accordingly. Bid2Build applies the tax rate only to taxable lines and shows tax separately on the proposal."] },
       { h: "Discounts and adjustments", p: ["When you apply a discount or adjustment to the whole job, it is spread across taxable and non-taxable items in proportion to their price before tax is calculated."] },
       { h: "Confirm your rules", p: ["Check with your state's department of revenue or a tax professional to confirm what is taxable for your trade and project type."] },
     ],

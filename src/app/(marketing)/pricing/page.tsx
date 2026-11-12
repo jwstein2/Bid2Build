@@ -37,7 +37,7 @@ export default async function PricingPage({ searchParams }: PageProps<"/pricing"
       {sp.checkout === "cancelled" && <Notice tone="neutral" className="mx-auto mt-6 max-w-xl">Checkout was cancelled. You have not been charged.</Notice>}
       <div className="mx-auto mt-10 grid max-w-5xl gap-5 md:grid-cols-3">
         <Plan name="Free" price="$0" period="forever" blurb="For occasional bids." features={[`${plans.freeMonthlyExports} finalized bid exports every month`, "Unlimited drafts and previews", "Every trade", "Branding and PDF exports", "No credit card required"]}>
-          <ButtonLink href="/bids" variant="secondary" size="lg" className="w-full">Start Building Your Bid</ButtonLink>
+          <ButtonLink href="/bids" variant="secondary" size="lg" className="w-full">Start Your Bid</ButtonLink>
         </Plan>
         <Plan name="Unlimited Monthly" price={plans.monthlyPriceLabel} period="per month" blurb="Flexible, cancel anytime." features={["Unlimited bid exports", "Everything in Free", "Reusable templates", "Full proposal customization"]}>
           <CheckoutButton plan="monthly" signedIn={Boolean(user)} label="Choose Monthly" variant="primary" />
