@@ -6,9 +6,9 @@ export const site = {
   name: process.env.NEXT_PUBLIC_SITE_NAME ?? "Built2Bid",
   domain: process.env.NEXT_PUBLIC_SITE_DOMAIN ?? "localhost:3000",
   url: (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, ""),
-  tagline: "What Are You Bidding Today?",
+  tagline: "Build estimates. Create bids. Win more work.",
   description:
-    "Build professional estimates, calculate your profit, and create beautiful proposals in minutes. Three free bids every month. No credit card required.",
+    "Build clear estimates and professional, branded proposals for your trade. Price with markup or margin, choose what your customer sees, and download a PDF. 3 free bids every month, no credit card.",
   // Set NEXT_PUBLIC_SUPPORT_EMAIL and NEXT_PUBLIC_SITE_DOMAIN in production (domain not yet registered).
   supportEmail: process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "support@example.com",
 } as const;

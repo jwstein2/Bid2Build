@@ -34,9 +34,9 @@ export function BidList({ rows }: { rows: BidRow[] }) {
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
           <input aria-label="Search bids" className="field pl-9" placeholder="Search by project, customer, or number" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
-        <div role="tablist" aria-label="Filter by status" className="flex gap-1">
+        <div role="group" aria-label="Filter by status" className="flex flex-wrap gap-1">
           {FILTERS.map(([v, l]) => (
-            <button key={v} role="tab" aria-selected={filter === v} onClick={() => setFilter(v)} className={`rounded-md px-3 py-1.5 text-sm font-medium ${filter === v ? "bg-brand text-white" : "text-ink-soft hover:bg-black/5"}`}>{l}</button>
+            <button key={v} aria-pressed={filter === v} onClick={() => setFilter(v)} className={`min-h-9 rounded-md px-3 py-1.5 text-sm font-medium ${filter === v ? "bg-navy text-white" : "text-ink-soft hover:bg-black/5"}`}>{l}</button>
           ))}
         </div>
         {tradesUsed.length > 1 && (
@@ -48,7 +48,7 @@ export function BidList({ rows }: { rows: BidRow[] }) {
       {list.length === 0 ? (
         <div className="p-10 text-center">
           <p className="font-semibold">{rows.length ? "No bids match." : "No bids yet."}</p>
-          {!rows.length && <Link href="/bids" className="mt-2 inline-block text-brand underline">Start your first bid</Link>}
+          {!rows.length && <><p className="mt-1 text-sm text-muted">Pick a trade and you&apos;ll have a draft in seconds.</p><Link href="/bids" className="mt-4 inline-flex min-h-11 items-center rounded-lg bg-accent px-4 font-semibold text-navy hover:bg-accent-hover">Create your first bid</Link></>}
         </div>
       ) : (
         <ul className="divide-y divide-line">{list.map((r) => <Row key={r.id} r={r} />)}</ul>
@@ -120,8 +120,8 @@ function Row({ r }: { r: BidRow }) {
 }
 
 function IconBtn({ label, onClick, disabled, children }: { label: string; onClick: () => void; disabled?: boolean; children: React.ReactNode }) {
-  return <button title={label} aria-label={label} onClick={onClick} disabled={disabled} className="rounded-md p-2 text-ink-soft hover:bg-black/5 disabled:opacity-40">{children}</button>;
+  return <button title={label} aria-label={label} onClick={onClick} disabled={disabled} className="grid h-10 w-10 place-items-center rounded-md text-ink-soft hover:bg-brand-tint hover:text-navy disabled:opacity-40">{children}</button>;
 }
 function IconLink({ href, label, children }: { href: string; label: string; children: React.ReactNode }) {
-  return <Link href={href} title={label} aria-label={label} className="rounded-md p-2 text-ink-soft hover:bg-black/5">{children}</Link>;
+  return <Link href={href} title={label} aria-label={label} className="grid h-10 w-10 place-items-center rounded-md text-ink-soft hover:bg-brand-tint hover:text-navy">{children}</Link>;
 }

@@ -67,7 +67,7 @@ export default async function TradePage({ params }: PageProps<"/bids/[trade]">) 
             <h1 className="mt-4 text-4xl font-extrabold leading-tight sm:text-5xl">{t.headline}</h1>
             <p className="mt-4 text-lg text-ink-soft">{t.intro}</p>
             <div className="mt-7 flex flex-wrap gap-3">
-              <ButtonLink href={`/start/${t.slug}`} variant="accent" size="lg">Start My Bid <ArrowRight className="h-4 w-4" /></ButtonLink>
+              <ButtonLink href={`/start/${t.slug}`} variant="accent" size="lg">Create a free bid <ArrowRight className="h-4 w-4" /></ButtonLink>
               <ButtonLink href={`/start/${t.slug}?blank=1`} variant="secondary" size="lg">Start from blank</ButtonLink>
             </div>
             <p className="mt-3 text-sm text-muted">No signup to start. {plans.freeMonthlyExports} free PDF exports every month.</p>
@@ -137,10 +137,10 @@ export default async function TradePage({ params }: PageProps<"/bids/[trade]">) 
           </>
         )}
 
-        <div className="mt-14 rounded-2xl bg-brand p-8 text-white">
+        <div className="on-dark blueprint-grid-dark mt-14 rounded-2xl bg-brand p-8 text-white">
           <h2 className="text-2xl font-extrabold">Ready to build your {t.name.toLowerCase()} bid?</h2>
           <p className="mt-2 text-white/80">Start now. Create an account only when you are ready to download.</p>
-          <ButtonLink href={`/start/${t.slug}`} variant="accent" size="lg" className="mt-5">Start My Bid</ButtonLink>
+          <ButtonLink href={`/start/${t.slug}`} variant="accent" size="lg" className="mt-5">Create a free bid</ButtonLink>
         </div>
       </Container>
     </>

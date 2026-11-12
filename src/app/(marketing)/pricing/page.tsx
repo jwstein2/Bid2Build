@@ -37,7 +37,7 @@ export default async function PricingPage({ searchParams }: PageProps<"/pricing"
       {sp.checkout === "cancelled" && <Notice tone="neutral" className="mx-auto mt-6 max-w-xl">Checkout was cancelled. You have not been charged.</Notice>}
       <div className="mx-auto mt-10 grid max-w-5xl gap-5 md:grid-cols-3">
         <Plan name="Free" price="$0" period="forever" blurb="For occasional bids." features={[`${plans.freeMonthlyExports} finalized bid exports every month`, "Unlimited drafts and previews", "Every trade", "Branding and PDF exports", "No credit card required"]}>
-          <ButtonLink href="/bids" variant="secondary" size="lg" className="w-full">Start Your Bid</ButtonLink>
+          <ButtonLink href="/bids" variant="secondary" size="lg" className="w-full">Create a free bid</ButtonLink>
         </Plan>
         <Plan name="Unlimited Monthly" price={plans.monthlyPriceLabel} period="per month" blurb="Flexible, cancel anytime." features={["Unlimited bid exports", "Everything in Free", "Reusable templates", "Full proposal customization"]}>
           <CheckoutButton plan="monthly" signedIn={Boolean(user)} label="Choose Monthly" variant="primary" />
@@ -73,7 +73,7 @@ export default async function PricingPage({ searchParams }: PageProps<"/pricing"
 function Plan({ name, price, period, blurb, features, highlight, children }: { name: string; price: string; period: string; blurb: string; features: string[]; highlight?: boolean; children: React.ReactNode }) {
   return (
     <div className={`relative flex flex-col rounded-2xl border bg-surface p-6 ${highlight ? "border-accent shadow-lg ring-2 ring-accent/30" : "border-line"}`}>
-      {highlight && <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-accent px-3 py-1 text-xs font-bold text-white">Recommended</span>}
+      {highlight && <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-accent px-3 py-1 text-xs font-bold text-navy">Recommended</span>}
       <h2 className="font-display text-lg font-bold">{name}</h2>
       <p className="mt-3"><span className="font-display text-4xl font-extrabold">{price}</span> <span className="text-muted">{period}</span></p>
       <p className="mt-1 text-sm text-muted">{blurb}</p>
