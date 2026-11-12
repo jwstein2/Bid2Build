@@ -8,12 +8,13 @@ import { plans } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Pricing",
-  description: `Free: ${plans.freeMonthlyExports} finalized bids per month. Unlimited: ${plans.monthlyPriceLabel}/month or ${plans.annualPriceLabel}/year.`,
+  description: `Free: ${plans.starterCredits} bids to start, plus ${plans.monthlyCredits} free bid every month. Unlimited: ${plans.monthlyPriceLabel}/month or ${plans.annualPriceLabel}/year.`,
   alternates: { canonical: "/pricing" },
 };
 
 const rows: [string, boolean | string, boolean | string][] = [
-  ["Finalized PDF exports", `${plans.freeMonthlyExports} per month`, "Unlimited"],
+  ["Finalized bids", `${plans.starterCredits} to start + ${plans.monthlyCredits} every month`, "Unlimited"],
+  ["Updates and re-downloads of finalized bids", "Free", "Free"],
   ["Draft editing and previews", "Unlimited", "Unlimited"],
   ["Every trade category", true, true],
   ["Markup, margin, tax, and profit tools", true, true],
@@ -32,11 +33,11 @@ export default async function PricingPage({ searchParams }: PageProps<"/pricing"
     <Container className="py-14">
       <div className="mx-auto max-w-2xl text-center">
         <h1 className="text-4xl font-extrabold">Simple pricing for every contractor</h1>
-        <p className="mt-3 text-lg text-ink-soft">Start free. Upgrade only when you are bidding more than {plans.freeMonthlyExports} jobs a month. Both paid plans include exactly the same features.</p>
+        <p className="mt-3 text-lg text-ink-soft">Start with {plans.starterCredits} free bids, then get {plans.monthlyCredits} free bid every month. Upgrade when you are bidding regularly. Both paid plans include exactly the same features.</p>
       </div>
       {sp.checkout === "cancelled" && <Notice tone="neutral" className="mx-auto mt-6 max-w-xl">Checkout was cancelled. You have not been charged.</Notice>}
       <div className="mx-auto mt-10 grid max-w-5xl gap-5 md:grid-cols-3">
-        <Plan name="Free" price="$0" period="forever" blurb="For occasional bids." features={[`${plans.freeMonthlyExports} finalized bid exports every month`, "Unlimited drafts and previews", "Every trade", "Branding and PDF exports", "No credit card required"]}>
+        <Plan name="Free" price="$0" period="forever" blurb="For occasional bids." features={[`${plans.starterCredits} starter bids that never expire`, `Plus ${plans.monthlyCredits} free bid every month`, "Unlimited drafts and previews", "Every trade", "Branding and PDF exports", "No credit card required"]}>
           <ButtonLink href="/bids" variant="secondary" size="lg" className="w-full">Create a free bid</ButtonLink>
         </Plan>
         <Plan name="Unlimited Monthly" price={plans.monthlyPriceLabel} period="per month" blurb="Flexible, cancel anytime." features={["Unlimited bid exports", "Everything in Free", "Reusable templates", "Full proposal customization"]}>
@@ -62,8 +63,8 @@ export default async function PricingPage({ searchParams }: PageProps<"/pricing"
         </table>
       </div>
       <div className="mx-auto mt-8 max-w-3xl space-y-3 text-sm text-ink-soft">
-        <p><b>What counts as a bid?</b> One credit is used the first time a new finalized proposal version is exported. Re-downloading the same version is free. Editing drafts and previewing never use credits.</p>
-        <p><b>When does my free allowance reset?</b> At 00:00 UTC on the first day of each month.</p>
+        <p><b>What counts as a bid?</b> One credit is used when you finalize a new bid. Editing, re-finalizing, or re-downloading a bid you already finalized is free, and drafts and previews never use credits.</p>
+        <p><b>How do free credits work?</b> Every verified account gets {plans.starterCredits} starter credits that never expire. From your second month, you also get {plans.monthlyCredits} free monthly bid on your signup anniversary each month. Monthly credits don&apos;t roll over, and they&apos;re always used before starter credits.</p>
         <p>*Unlimited archived bids are subject to reasonable storage and fair-use policies. Prices in USD; applicable taxes may be added at checkout.</p>
       </div>
     </Container>

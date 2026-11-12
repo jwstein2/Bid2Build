@@ -15,7 +15,7 @@ export default async function TemplatesPage() {
   const [{ business }, { data: row }, { data: q }] = await Promise.all([
     loadBusiness(supabase, user.id),
     supabase.from("business_profiles").select("default_proposal_config").eq("user_id", user.id).maybeSingle(),
-    supabase.rpc("quota_status"),
+    supabase.rpc("credit_status"),
   ]);
   const unlimited = Boolean((Array.isArray(q) ? q[0] : q)?.unlimited);
   return (

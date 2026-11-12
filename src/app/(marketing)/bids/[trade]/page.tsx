@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: PageProps<"/bids/[trade]">): 
   if (!t) return {};
   return {
     title: t.seoTitle,
-    description: `${t.intro} ${plans.freeMonthlyExports} free bids every month.`,
+    description: `${t.intro} ${plans.starterCredits} free bids to start, plus ${plans.monthlyCredits} free every month.`,
     alternates: { canonical: `/bids/${t.slug}` },
     openGraph: { title: `${t.seoTitle} | ${site.name}`, description: t.intro },
   };
@@ -70,7 +70,7 @@ export default async function TradePage({ params }: PageProps<"/bids/[trade]">) 
               <ButtonLink href={`/start/${t.slug}`} variant="accent" size="lg">Create a free bid <ArrowRight className="h-4 w-4" /></ButtonLink>
               <ButtonLink href={`/start/${t.slug}?blank=1`} variant="secondary" size="lg">Start from blank</ButtonLink>
             </div>
-            <p className="mt-3 text-sm text-muted">No signup to start. {plans.freeMonthlyExports} free PDF exports every month.</p>
+            <p className="mt-3 text-sm text-muted">No signup to start. {plans.starterCredits} free bids to start, plus {plans.monthlyCredits} every month.</p>
           </div>
           <div className="rounded-2xl border border-line bg-paper p-5">
             <h2 className="font-bold">Example {t.name.toLowerCase()} projects</h2>

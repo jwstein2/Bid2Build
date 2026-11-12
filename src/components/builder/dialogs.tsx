@@ -1,11 +1,12 @@
 "use client";
 import * as Dialog from "@radix-ui/react-dialog";
-import { Loader2, Mail, X } from "lucide-react";
+import { Check, Loader2, Mail, X } from "lucide-react";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import { getBrowserClient, getOtpClient } from "@/lib/supabase/client";
 import { plans } from "@/lib/site";
-import { Button, ButtonLink } from "../ui/button";
+import { Button } from "../ui/button";
+import { CheckoutButton } from "../billing/checkout-button";
 import { Notice } from "../ui/misc";
 
 export function Modal({ open, onOpenChange, title, description, children, wide }: { open: boolean; onOpenChange: (o: boolean) => void; title: string; description?: string; children: ReactNode; wide?: boolean }) {
@@ -55,7 +56,7 @@ export function AuthDialog({ open, onOpenChange, next, onVerified, title }: { op
   }
 
   return (
-    <Modal open={open} onOpenChange={onOpenChange} title={stage === "email" ? (title ?? "Create your free account to download") : "Check your email"} description={stage === "email" ? `No password needed. Your bid is saved and will be waiting. ${plans.freeMonthlyExports} free PDF exports every month.` : `We sent a sign-in link and code to ${email}.`}>
+    <Modal open={open} onOpenChange={onOpenChange} title={stage === "email" ? (title ?? "Create your free account to download") : "Check your email"} description={stage === "email" ? `No password needed. Your bid is saved and will be waiting. ${plans.starterCredits} free bids to start, plus ${plans.monthlyCredits} every month.` : `We sent a sign-in link and code to ${email}.`}>
       {stage === "email" ? (
         <form onSubmit={(ev) => { ev.preventDefault(); send(); }} className="space-y-3">
           <label htmlFor="auth-email" className="label">Business email</label>
@@ -83,20 +84,38 @@ export function AuthDialog({ open, onOpenChange, next, onVerified, title }: { op
   );
 }
 
-export function UpgradeDialog({ open, onOpenChange, resetsAt }: { open: boolean; onOpenChange: (o: boolean) => void; resetsAt?: string }) {
-  const reset = resetsAt ? new Date(resetsAt).toLocaleString(undefined, { month: "long", day: "numeric", hour: "numeric", minute: "2-digit" }) : null;
+export function UpgradeDialog({ open, onOpenChange, nextCycleAt }: { open: boolean; onOpenChange: (o: boolean) => void; nextCycleAt?: string }) {
+  const next = nextCycleAt ? new Date(nextCycleAt).toLocaleDateString(undefined, { month: "long", day: "numeric" }) : null;
+  const perks = ["Unlimited finalized bids", "Reusable proposal templates", "Full proposal customization", "Cancel anytime"];
   return (
-    <Modal open={open} onOpenChange={onOpenChange} title={`You've used your ${plans.freeMonthlyExports} free bids this month.`} description="Keep bidding without limits.">
-      <div className="rounded-xl border border-line bg-paper p-4 text-center">
-        <p className="font-display text-2xl font-extrabold">{plans.monthlyPriceLabel}<span className="text-base font-semibold text-muted">/month</span> <span className="mx-1 text-muted">or</span> {plans.annualPriceLabel}<span className="text-base font-semibold text-muted">/year</span></p>
-        <p className="mt-1 text-sm text-muted">Annual saves 38%. Cancel anytime.</p>
+    <Modal open={open} onOpenChange={onOpenChange} title="You've used your free bids" description="Your estimate is saved. Go Unlimited to finalize it now and every bid after it." wide>
+      <div className="relative overflow-hidden rounded-xl bg-navy p-5 text-white on-dark">
+        <div aria-hidden className="blueprint-grid-dark pointer-events-none absolute inset-0 opacity-60" />
+        <div className="relative grid gap-4 sm:grid-cols-[1.2fr_1fr] sm:items-center">
+          <ul className="space-y-2 text-sm text-[#D5DFE9]">
+            {perks.map((p) => <li key={p} className="flex items-center gap-2"><Check className="h-4 w-4 shrink-0 text-teal" strokeWidth={3} aria-hidden />{p}</li>)}
+          </ul>
+          <div className="grid gap-2">
+            <div className="rounded-lg border-2 border-accent bg-white/5 p-3">
+              <p className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-accent">Annual <span className="rounded-full bg-accent px-2 py-0.5 text-[10px] text-navy">Save 38%</span></p>
+              <p className="mt-1 font-display text-2xl font-extrabold">{plans.annualPriceLabel}<span className="text-sm font-semibold text-[#B8C6D4]">/year</span></p>
+              <p className="text-xs text-[#B8C6D4]">Just {plans.annualMonthlyEquivalent}/month</p>
+            </div>
+            <div className="rounded-lg border border-white/20 p-3">
+              <p className="text-xs font-bold uppercase tracking-wider text-[#B8C6D4]">Monthly</p>
+              <p className="mt-1 font-display text-xl font-extrabold">{plans.monthlyPriceLabel}<span className="text-sm font-semibold text-[#B8C6D4]">/month</span></p>
+            </div>
+          </div>
+        </div>
       </div>
-      <div className="mt-4 grid gap-2">
-        <ButtonLink href="/pricing?upgrade=annual" variant="accent" size="lg">Upgrade to Unlimited</ButtonLink>
-        <ButtonLink href="/pricing" variant="secondary">View Plans</ButtonLink>
-        <Button variant="ghost" onClick={() => onOpenChange(false)}>Continue Editing</Button>
+      <div className="mt-4 grid gap-2 sm:grid-cols-2">
+        <CheckoutButton plan="annual" signedIn label="Go Unlimited Annual" />
+        <CheckoutButton plan="monthly" signedIn label="Go Unlimited Monthly" variant="secondary" />
       </div>
-      <p className="mt-3 text-center text-xs text-muted">Your estimate is saved. {reset ? `Free exports reset ${reset}.` : ""}</p>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm">
+        <p className="text-muted">{next ? `Or wait: your next free monthly bid arrives ${next}.` : "Drafts and previews stay free."}</p>
+        <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>Keep editing</Button>
+      </div>
     </Modal>
   );
 }
