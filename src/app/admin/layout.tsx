@@ -9,6 +9,7 @@ const nav = [
   { href: "/admin", label: "Overview" },
   { href: "/admin/market", label: "Market Intelligence" },
   { href: "/admin/templates", label: "Trade templates" },
+  { href: "/admin/proposal-text", label: "Scope & exclusions" },
   { href: "/admin/flags", label: "Feature flags" },
   { href: "/admin/logs", label: "Import & PDF errors" },
   { href: "/admin/audit", label: "Audit log" },

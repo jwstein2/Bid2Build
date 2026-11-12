@@ -21,7 +21,14 @@ export function versionSnapshot(estimate: Estimate, business: BusinessProfile & 
   void _s; void _u;
   const { logoUrl: _l, ...biz } = business;
   void _l;
-  return { schema: 1, estimate: { ...est, items: est.items.filter((i) => !i.isExample) }, business: biz, proposalConfig: config };
+  // Revision history is editing state, not part of what was approved: keep it out of the frozen
+  // version (and its hash) so the snapshot holds exactly the scope/exclusions that were exported.
+  const proposalConfig = {
+    ...config,
+    scope: config.scope ? { ...config.scope, history: [] } : config.scope,
+    exclusionList: config.exclusionList ? { ...config.exclusionList, history: [] } : config.exclusionList,
+  };
+  return { schema: 1, estimate: { ...est, items: est.items.filter((i) => !i.isExample) }, business: biz, proposalConfig };
 }
 
 export function contentHash(snapshot: unknown): string {

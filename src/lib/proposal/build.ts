@@ -2,6 +2,7 @@ import { computeEstimate, effectiveVisibility, itemsForGroup, sortedGroups } fro
 import { D, formatCurrency, round2, toDec } from "../estimate/money";
 import type { Estimate } from "../estimate/types";
 import { tradeName, UNIT_ABBR } from "../trades/catalog";
+import { customerExclusions, customerScope, normalizeExclusions, normalizeScope } from "./text-sections";
 import type { BusinessProfile, ProposalConfig, ProposalDocument, ProposalSection } from "./types";
 
 const clean = (s?: string | null) => (s && s.trim() ? s.trim() : undefined);
@@ -112,7 +113,8 @@ export function buildProposal(estimate: Estimate, business: BusinessProfile, con
       trades: estimate.trades.map(tradeName),
     },
     introduction: clean(config.introduction),
-    scopeOfWork: clean(config.scopeOfWork),
+    // Hidden or empty sections are omitted entirely: the text never enters the customer document.
+    scopeOfWork: customerScope(config.scopeOfWork, config.scope ?? normalizeScope(null)),
     pricing: {
       displayMode: estimate.displayMode,
       sections,
@@ -125,7 +127,7 @@ export function buildProposal(estimate: Estimate, business: BusinessProfile, con
       tax: totals.tax.isZero() ? undefined : { label: `Sales tax (${totals.taxRate.toString()}%)`, amount: formatCurrency(totals.tax) },
       total: formatCurrency(total),
     },
-    exclusions: clean(config.exclusions),
+    exclusions: customerExclusions(config.exclusionList ?? normalizeExclusions(null, config.exclusions)),
     allowances: clean(config.allowances),
     customerResponsibilities: clean(config.customerResponsibilities),
     schedule: clean(config.schedule),
