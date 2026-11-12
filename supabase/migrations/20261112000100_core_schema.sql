@@ -1,4 +1,4 @@
--- Bid2Build core schema
+-- Built2Bid core schema
 -- Conventions: uuid PKs, user_id on every user-owned row, RLS on every table,
 -- money as numeric (never float), timestamps in UTC.
 

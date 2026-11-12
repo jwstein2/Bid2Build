@@ -18,7 +18,7 @@ accounts, saving, and PDF export need Supabase.
 5. Auth > URL configuration: set Site URL to your domain and add `https://YOUR_DOMAIN/auth/callback` and `https://YOUR_DOMAIN/auth/confirm` (plus localhost equivalents) to Redirect URLs.
 6. Auth > Email templates > Magic Link: include both the link and the code so users can sign in on another device:
    ```html
-   <p><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/dashboard">Sign in to Bid2Build</a></p>
+   <p><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/dashboard">Sign in to Built2Bid</a></p>
    <p>Or enter this code: <strong>{{ .Token }}</strong></p>
    ```
 7. Configure custom SMTP (Auth > SMTP) before launch; the built-in sender is rate-limited.

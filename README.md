@@ -1,4 +1,4 @@
-# Bid2Build
+# Built2Bid
 
 Estimates and proposals for every trade. "What Are You Bidding Today?"
 

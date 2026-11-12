@@ -1,5 +1,5 @@
 /**
- * Creates (or reuses) the Bid2Build Unlimited product and its two prices in Stripe TEST mode.
+ * Creates (or reuses) the Built2Bid Unlimited product and its two prices in Stripe TEST mode.
  * Idempotent via lookup keys. Refuses live keys.
  *   STRIPE_SECRET_KEY=sk_test_... npx tsx scripts/stripe-setup.ts
  */
@@ -21,7 +21,7 @@ async function main() {
   const existing = await stripe.prices.list({ lookup_keys: PRICES.map((p) => p.lookup_key), active: true, expand: ["data.product"] });
   let productId = existing.data.map((p) => (typeof p.product === "string" ? p.product : p.product.id))[0];
   if (!productId) {
-    const product = await stripe.products.create({ name: "Bid2Build Unlimited", description: "Unlimited finalized proposal exports.", metadata: { app: "bid2build" } });
+    const product = await stripe.products.create({ name: "Built2Bid Unlimited", description: "Unlimited finalized proposal exports.", metadata: { app: "built2bid" } });
     productId = product.id;
   }
   const out: Record<string, string> = {};
