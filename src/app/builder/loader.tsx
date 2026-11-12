@@ -23,7 +23,7 @@ export function BuilderLoader({ draftId, user, business, autoExport }: { draftId
           <h1 className="text-2xl font-extrabold">We couldn&apos;t find that draft on this device</h1>
           <p className="mt-2 text-ink-soft">{user ? "Saved bids are in your dashboard." : "Drafts are stored in the browser where you started them."}</p>
           <div className="mt-5 flex justify-center gap-3">
-            <Link href="/bids" className="rounded-lg bg-accent px-4 py-2 font-semibold text-white">Start a new bid</Link>
+            <Link href="/bids" className="rounded-lg bg-accent px-4 py-2 font-semibold text-navy">Start a new bid</Link>
             {user && <Link href="/dashboard" className="rounded-lg border border-line-strong px-4 py-2 font-semibold">Dashboard</Link>}
           </div>
         </div>

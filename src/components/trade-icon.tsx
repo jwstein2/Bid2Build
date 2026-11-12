@@ -15,11 +15,12 @@ export function TradeIcon({ name, className }: { name: string; className?: strin
   return <Icon className={className} aria-hidden strokeWidth={1.75} />;
 }
 
+// Restrained brand-family tints: navy, cyan-ink and teal tones only (all icon colours >= 4.5:1 on their tint).
 export const familyTint: Record<string, string> = {
-  Exterior: "bg-[#e8eef6] text-[#1f3a5f]",
-  Interior: "bg-[#f3ece3] text-[#8a4b16]",
-  Systems: "bg-[#e9f1ec] text-[#2f6a47]",
-  Sitework: "bg-[#efece4] text-[#5b5236]",
-  Structures: "bg-[#ece9f3] text-[#4b3f7a]",
-  General: "bg-[#eef0f2] text-[#3b4656]",
+  Exterior: "bg-[#e7eef6] text-[#0b2d4d]",
+  Interior: "bg-[#e0f7fb] text-[#006a7c]",
+  Systems: "bg-[#e3f6f3] text-[#0f766e]",
+  Sitework: "bg-[#eef1f4] text-[#33465a]",
+  Structures: "bg-[#e7eef6] text-[#1d4a73]",
+  General: "bg-[#eef1f4] text-[#33465a]",
 };

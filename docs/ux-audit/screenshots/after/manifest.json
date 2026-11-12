@@ -1,0 +1,458 @@
+[
+ {
+  "name": "home",
+  "vp": "desktop",
+  "file": "home--desktop.png",
+  "url": "/",
+  "note": "HTTP 200",
+  "hOverflow": false
+ },
+ {
+  "name": "trades",
+  "vp": "desktop",
+  "file": "trades--desktop.png",
+  "url": "/bids",
+  "note": "HTTP 200",
+  "hOverflow": false
+ },
+ {
+  "name": "trade-roofing",
+  "vp": "desktop",
+  "file": "trade-roofing--desktop.png",
+  "url": "/bids/roofing",
+  "note": "HTTP 200",
+  "hOverflow": false
+ },
+ {
+  "name": "trade-kitchen",
+  "vp": "desktop",
+  "file": "trade-kitchen--desktop.png",
+  "url": "/bids/kitchens",
+  "note": "HTTP 200",
+  "hOverflow": false
+ },
+ {
+  "name": "pricing",
+  "vp": "desktop",
+  "file": "pricing--desktop.png",
+  "url": "/pricing",
+  "note": "HTTP 200",
+  "hOverflow": false
+ },
+ {
+  "name": "learn",
+  "vp": "desktop",
+  "file": "learn--desktop.png",
+  "url": "/learn",
+  "note": "HTTP 200",
+  "hOverflow": false
+ },
+ {
+  "name": "learn-article",
+  "vp": "desktop",
+  "file": "learn-article--desktop.png",
+  "url": "/learn/markup-vs-margin",
+  "note": "HTTP 200",
+  "hOverflow": false
+ },
+ {
+  "name": "login",
+  "vp": "desktop",
+  "file": "login--desktop.png",
+  "url": "/login",
+  "note": "HTTP 200",
+  "hOverflow": false
+ },
+ {
+  "name": "privacy",
+  "vp": "desktop",
+  "file": "privacy--desktop.png",
+  "url": "/privacy",
+  "note": "HTTP 200",
+  "hOverflow": false
+ },
+ {
+  "name": "terms",
+  "vp": "desktop",
+  "file": "terms--desktop.png",
+  "url": "/terms",
+  "note": "HTTP 200",
+  "hOverflow": false
+ },
+ {
+  "name": "not-found",
+  "vp": "desktop",
+  "file": "not-found--desktop.png",
+  "url": "/this-page-does-not-exist",
+  "note": "HTTP 404",
+  "hOverflow": false
+ },
+ {
+  "name": "dashboard-blocked",
+  "vp": "desktop",
+  "file": "dashboard-blocked--desktop.png",
+  "url": "/dashboard",
+  "note": "HTTP 200",
+  "hOverflow": false
+ },
+ {
+  "name": "admin-blocked",
+  "vp": "desktop",
+  "file": "admin-blocked--desktop.png",
+  "url": "/admin",
+  "note": "HTTP 404",
+  "hOverflow": false
+ },
+ {
+  "name": "builder-1-company",
+  "vp": "desktop",
+  "file": "builder-1-company--desktop.png",
+  "url": "/builder?draft=c0e24a8b-c20f-441f-a32e-2a47bae6b0f6",
+  "note": "first-run anonymous",
+  "hOverflow": false
+ },
+ {
+  "name": "builder-2-project",
+  "vp": "desktop",
+  "file": "builder-2-project--desktop.png",
+  "url": "/builder?draft=c0e24a8b-c20f-441f-a32e-2a47bae6b0f6",
+  "note": "",
+  "hOverflow": false
+ },
+ {
+  "name": "builder-3-estimate",
+  "vp": "desktop",
+  "file": "builder-3-estimate--desktop.png",
+  "url": "/builder?draft=c0e24a8b-c20f-441f-a32e-2a47bae6b0f6",
+  "note": "",
+  "hOverflow": false
+ },
+ {
+  "name": "builder-4-proposal",
+  "vp": "desktop",
+  "file": "builder-4-proposal--desktop.png",
+  "url": "/builder?draft=c0e24a8b-c20f-441f-a32e-2a47bae6b0f6",
+  "note": "",
+  "hOverflow": false
+ },
+ {
+  "name": "builder-5-preview-modal",
+  "vp": "desktop",
+  "file": "builder-5-preview-modal--desktop.png",
+  "url": "/builder?draft=c0e24a8b-c20f-441f-a32e-2a47bae6b0f6",
+  "note": "",
+  "hOverflow": false
+ },
+ {
+  "name": "builder-6-auth-gate",
+  "vp": "desktop",
+  "file": "builder-6-auth-gate--desktop.png",
+  "url": "/builder?draft=c0e24a8b-c20f-441f-a32e-2a47bae6b0f6",
+  "note": "export requires account",
+  "hOverflow": false
+ },
+ {
+  "name": "home",
+  "vp": "tablet",
+  "file": "home--tablet.png",
+  "url": "/",
+  "note": "HTTP 200",
+  "hOverflow": false
+ },
+ {
+  "name": "trades",
+  "vp": "tablet",
+  "file": "trades--tablet.png",
+  "url": "/bids",
+  "note": "HTTP 200",
+  "hOverflow": false
+ },
+ {
+  "name": "trade-roofing",
+  "vp": "tablet",
+  "file": "trade-roofing--tablet.png",
+  "url": "/bids/roofing",
+  "note": "HTTP 200",
+  "hOverflow": false
+ },
+ {
+  "name": "trade-kitchen",
+  "vp": "tablet",
+  "file": "trade-kitchen--tablet.png",
+  "url": "/bids/kitchens",
+  "note": "HTTP 200",
+  "hOverflow": false
+ },
+ {
+  "name": "pricing",
+  "vp": "tablet",
+  "file": "pricing--tablet.png",
+  "url": "/pricing",
+  "note": "HTTP 200",
+  "hOverflow": false
+ },
+ {
+  "name": "learn",
+  "vp": "tablet",
+  "file": "learn--tablet.png",
+  "url": "/learn",
+  "note": "HTTP 200",
+  "hOverflow": false
+ },
+ {
+  "name": "learn-article",
+  "vp": "tablet",
+  "file": "learn-article--tablet.png",
+  "url": "/learn/markup-vs-margin",
+  "note": "HTTP 200",
+  "hOverflow": false
+ },
+ {
+  "name": "login",
+  "vp": "tablet",
+  "file": "login--tablet.png",
+  "url": "/login",
+  "note": "HTTP 200",
+  "hOverflow": false
+ },
+ {
+  "name": "privacy",
+  "vp": "tablet",
+  "file": "privacy--tablet.png",
+  "url": "/privacy",
+  "note": "HTTP 200",
+  "hOverflow": false
+ },
+ {
+  "name": "terms",
+  "vp": "tablet",
+  "file": "terms--tablet.png",
+  "url": "/terms",
+  "note": "HTTP 200",
+  "hOverflow": false
+ },
+ {
+  "name": "not-found",
+  "vp": "tablet",
+  "file": "not-found--tablet.png",
+  "url": "/this-page-does-not-exist",
+  "note": "HTTP 404",
+  "hOverflow": false
+ },
+ {
+  "name": "dashboard-blocked",
+  "vp": "tablet",
+  "file": "dashboard-blocked--tablet.png",
+  "url": "/dashboard",
+  "note": "HTTP 200",
+  "hOverflow": false
+ },
+ {
+  "name": "admin-blocked",
+  "vp": "tablet",
+  "file": "admin-blocked--tablet.png",
+  "url": "/admin",
+  "note": "HTTP 404",
+  "hOverflow": false
+ },
+ {
+  "name": "builder-1-company",
+  "vp": "tablet",
+  "file": "builder-1-company--tablet.png",
+  "url": "/builder?draft=5a872529-44af-414f-be56-bf8755089ea5",
+  "note": "first-run anonymous",
+  "hOverflow": false
+ },
+ {
+  "name": "builder-2-project",
+  "vp": "tablet",
+  "file": "builder-2-project--tablet.png",
+  "url": "/builder?draft=5a872529-44af-414f-be56-bf8755089ea5",
+  "note": "",
+  "hOverflow": false
+ },
+ {
+  "name": "builder-3-estimate",
+  "vp": "tablet",
+  "file": "builder-3-estimate--tablet.png",
+  "url": "/builder?draft=5a872529-44af-414f-be56-bf8755089ea5",
+  "note": "",
+  "hOverflow": false
+ },
+ {
+  "name": "builder-4-proposal",
+  "vp": "tablet",
+  "file": "builder-4-proposal--tablet.png",
+  "url": "/builder?draft=5a872529-44af-414f-be56-bf8755089ea5",
+  "note": "",
+  "hOverflow": false
+ },
+ {
+  "name": "builder-5-preview-modal",
+  "vp": "tablet",
+  "file": "builder-5-preview-modal--tablet.png",
+  "url": "/builder?draft=5a872529-44af-414f-be56-bf8755089ea5",
+  "note": "",
+  "hOverflow": false
+ },
+ {
+  "name": "builder-6-auth-gate",
+  "vp": "tablet",
+  "file": "builder-6-auth-gate--tablet.png",
+  "url": "/builder?draft=5a872529-44af-414f-be56-bf8755089ea5",
+  "note": "export requires account",
+  "hOverflow": false
+ },
+ {
+  "name": "home",
+  "vp": "mobile",
+  "file": "home--mobile.png",
+  "url": "/",
+  "note": "HTTP 200",
+  "hOverflow": false
+ },
+ {
+  "name": "trades",
+  "vp": "mobile",
+  "file": "trades--mobile.png",
+  "url": "/bids",
+  "note": "HTTP 200",
+  "hOverflow": false
+ },
+ {
+  "name": "trade-roofing",
+  "vp": "mobile",
+  "file": "trade-roofing--mobile.png",
+  "url": "/bids/roofing",
+  "note": "HTTP 200",
+  "hOverflow": false
+ },
+ {
+  "name": "trade-kitchen",
+  "vp": "mobile",
+  "file": "trade-kitchen--mobile.png",
+  "url": "/bids/kitchens",
+  "note": "HTTP 200",
+  "hOverflow": false
+ },
+ {
+  "name": "pricing",
+  "vp": "mobile",
+  "file": "pricing--mobile.png",
+  "url": "/pricing",
+  "note": "HTTP 200",
+  "hOverflow": false
+ },
+ {
+  "name": "learn",
+  "vp": "mobile",
+  "file": "learn--mobile.png",
+  "url": "/learn",
+  "note": "HTTP 200",
+  "hOverflow": false
+ },
+ {
+  "name": "learn-article",
+  "vp": "mobile",
+  "file": "learn-article--mobile.png",
+  "url": "/learn/markup-vs-margin",
+  "note": "HTTP 200",
+  "hOverflow": false
+ },
+ {
+  "name": "login",
+  "vp": "mobile",
+  "file": "login--mobile.png",
+  "url": "/login",
+  "note": "HTTP 200",
+  "hOverflow": false
+ },
+ {
+  "name": "privacy",
+  "vp": "mobile",
+  "file": "privacy--mobile.png",
+  "url": "/privacy",
+  "note": "HTTP 200",
+  "hOverflow": false
+ },
+ {
+  "name": "terms",
+  "vp": "mobile",
+  "file": "terms--mobile.png",
+  "url": "/terms",
+  "note": "HTTP 200",
+  "hOverflow": false
+ },
+ {
+  "name": "not-found",
+  "vp": "mobile",
+  "file": "not-found--mobile.png",
+  "url": "/this-page-does-not-exist",
+  "note": "HTTP 404",
+  "hOverflow": false
+ },
+ {
+  "name": "dashboard-blocked",
+  "vp": "mobile",
+  "file": "dashboard-blocked--mobile.png",
+  "url": "/dashboard",
+  "note": "HTTP 200",
+  "hOverflow": false
+ },
+ {
+  "name": "admin-blocked",
+  "vp": "mobile",
+  "file": "admin-blocked--mobile.png",
+  "url": "/admin",
+  "note": "HTTP 404",
+  "hOverflow": false
+ },
+ {
+  "name": "builder-1-company",
+  "vp": "mobile",
+  "file": "builder-1-company--mobile.png",
+  "url": "/builder?draft=515192da-fb69-4e53-9679-53a22558fffa",
+  "note": "first-run anonymous",
+  "hOverflow": false
+ },
+ {
+  "name": "builder-2-project",
+  "vp": "mobile",
+  "file": "builder-2-project--mobile.png",
+  "url": "/builder?draft=515192da-fb69-4e53-9679-53a22558fffa",
+  "note": "",
+  "hOverflow": false
+ },
+ {
+  "name": "builder-3-estimate",
+  "vp": "mobile",
+  "file": "builder-3-estimate--mobile.png",
+  "url": "/builder?draft=515192da-fb69-4e53-9679-53a22558fffa",
+  "note": "",
+  "hOverflow": false
+ },
+ {
+  "name": "builder-4-proposal",
+  "vp": "mobile",
+  "file": "builder-4-proposal--mobile.png",
+  "url": "/builder?draft=515192da-fb69-4e53-9679-53a22558fffa",
+  "note": "",
+  "hOverflow": false
+ },
+ {
+  "name": "builder-5-preview-modal",
+  "vp": "mobile",
+  "file": "builder-5-preview-modal--mobile.png",
+  "url": "/builder?draft=515192da-fb69-4e53-9679-53a22558fffa",
+  "note": "",
+  "hOverflow": false
+ },
+ {
+  "name": "builder-6-auth-gate",
+  "vp": "mobile",
+  "file": "builder-6-auth-gate--mobile.png",
+  "url": "/builder?draft=515192da-fb69-4e53-9679-53a22558fffa",
+  "note": "export requires account",
+  "hOverflow": false
+ }
+]

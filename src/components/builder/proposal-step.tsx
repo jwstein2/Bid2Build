@@ -100,7 +100,7 @@ export function ProposalStep({ estimate, business, config, onConfig }: { estimat
       </div>
 
       <div className="min-w-0">
-        <div className="sticky top-[7.5rem] max-h-[calc(100vh-9rem)] overflow-y-auto rounded-xl bg-[#e9e6df] p-3 sm:p-6">
+        <div className="sticky top-[7.5rem] max-h-[calc(100vh-9rem)] overflow-y-auto rounded-xl bg-[#e4eaf1] p-3 sm:p-6">
           <p className="mb-3 text-center text-xs font-semibold uppercase tracking-wider text-muted">Live preview: exactly what your customer will see</p>
           <ProposalView doc={doc} />
         </div>

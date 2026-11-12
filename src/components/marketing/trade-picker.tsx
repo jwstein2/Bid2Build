@@ -28,7 +28,7 @@ export function TradePicker({ trades }: { trades: PickerTrade[] }) {
           <li key={t.slug}>
             <Link
               href={`/start/${t.slug}`}
-              className="group flex h-full items-center gap-3 rounded-xl border border-line bg-surface p-3 text-left shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-md sm:p-4"
+              className="group flex h-full items-center gap-3 rounded-xl border border-line bg-surface p-3 text-left shadow-card transition hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-md sm:p-4"
             >
               <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-lg ${familyTint[t.family]}`}>
                 <TradeIcon name={t.icon} className="h-6 w-6" />

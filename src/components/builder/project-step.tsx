@@ -8,7 +8,7 @@ import type { Action } from "./state";
 
 interface SavedCustomer { id: string; name: string; email?: string; phone?: string; projectAddress?: string }
 
-export function ProjectStep({ estimate: e, dispatch, signedIn, onDone }: { estimate: Estimate; dispatch: Dispatch<Action>; signedIn: boolean; onDone: () => void }) {
+export function ProjectStep({ estimate: e, dispatch, signedIn, onDone }: { estimate: Estimate; dispatch: Dispatch<Action>; signedIn: boolean; onDone?: () => void }) {
   const [customers, setCustomers] = useState<SavedCustomer[]>([]);
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
   useEffect(() => {
@@ -91,7 +91,7 @@ export function ProjectStep({ estimate: e, dispatch, signedIn, onDone }: { estim
           </div>
         </div>
       </section>
-      <div className="flex justify-end"><Button size="lg" onClick={onDone}>Continue to estimate</Button></div>
+      {onDone && <div className="flex justify-end"><Button size="lg" onClick={onDone}>Continue to estimate</Button></div>}
     </div>
   );
 }

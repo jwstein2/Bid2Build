@@ -16,7 +16,8 @@ export default function BidsIndex() {
   const families = Array.from(new Set(trades.map((t) => t.family)));
   return (
     <Container className="py-14">
-      <h1 className="text-4xl font-extrabold">What are you bidding today?</h1>
+      <p className="text-xs font-bold uppercase tracking-[0.14em] text-accent-ink">Step 1 of 4 · Choose your trade</p>
+      <h1 className="mt-2 text-4xl font-extrabold text-navy">What are you bidding today?</h1>
       <p className="mt-3 max-w-2xl text-lg text-ink-soft">Choose a trade to start with suggested sections and items, or start a custom project. Every trade uses the same pricing engine and proposal builder.</p>
       <div className="mt-10"><TradePicker trades={pickerTrades()} /></div>
       <div className="mt-16 grid gap-10 md:grid-cols-2 lg:grid-cols-3">

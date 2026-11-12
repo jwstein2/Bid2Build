@@ -1,5 +1,5 @@
 "use client";
-import { ArrowLeft, Check, CloudOff, Download, Eye, EyeOff, Loader2, RotateCcw, Undo2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, CloudOff, Download, Eye, EyeOff, Loader2, RotateCcw, Undo2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
@@ -38,11 +38,11 @@ export interface BuilderProps {
   autoExport?: boolean;
 }
 
-const STEPS: { id: Step; label: string }[] = [
-  { id: "company", label: "Company" },
-  { id: "project", label: "Customer & project" },
-  { id: "estimate", label: "Estimate" },
-  { id: "proposal", label: "Proposal" },
+const STEPS: { id: Step; label: string; next: string }[] = [
+  { id: "company", label: "Company", next: "Next: customer & project" },
+  { id: "project", label: "Customer & project", next: "Next: build the estimate" },
+  { id: "estimate", label: "Estimate", next: "Next: proposal & terms" },
+  { id: "proposal", label: "Proposal", next: "Preview & download" },
 ];
 
 function downloadBase64(b64: string, filename: string) {
@@ -204,6 +204,16 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
     }
   }, [autoExport, user, cloudMode, doExport]);
 
+  const realItems = estimate.items.filter((i) => !i.isExample).length;
+  const complete: Record<Step, boolean> = {
+    company: Boolean(business.companyName?.trim()),
+    project: Boolean(estimate.customer.name?.trim()),
+    estimate: realItems > 0 && totals.issues.length === 0,
+    proposal: false,
+  };
+  const stepIndex = STEPS.findIndex((s) => s.id === step);
+  const goTo = (s: Step) => { setStep(s); setCustomerView(false); window.scrollTo({ top: 0, behavior: "smooth" }); };
+
   const remaining = quota && !quota.unlimited ? Math.max(0, quota.limit - quota.used) : null;
   const lastTrash = state.trash[state.trash.length - 1];
 
@@ -212,8 +222,8 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
       {/* Project header */}
       <header className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur no-print">
         <div className="mx-auto flex max-w-[1400px] flex-wrap items-center gap-x-4 gap-y-2 px-3 py-2 sm:px-5">
-          <div className="flex items-center gap-2">
-            <Link href={user ? "/dashboard" : "/"} className="rounded p-1.5 text-muted hover:bg-black/5" aria-label={user ? "Back to dashboard" : "Back to home"}><ArrowLeft className="h-4 w-4" /></Link>
+          <div className="flex shrink-0 items-center gap-2">
+            <Link href={user ? "/dashboard" : "/"} className="grid h-9 w-9 place-items-center rounded-md text-muted hover:bg-black/5" aria-label={user ? "Back to dashboard" : "Back to home"}><ArrowLeft className="h-4 w-4" /></Link>
             <span className="hidden sm:block"><Logo className="text-base" /></span>
           </div>
           <div className="min-w-0 flex-1">
@@ -221,15 +231,15 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
             <input id="est-title" value={estimate.title} onChange={(e) => dispatch({ type: "patch", patch: { title: e.target.value } })} className="cell w-full max-w-md truncate font-display text-lg font-bold" placeholder="Project title" />
             <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 px-1.5 text-xs text-muted">
               <span>{estimate.customer.name || <button className="underline" onClick={() => setStep("project")}>Add customer</button>}</span>
-              <span>{estimate.trades.map(tradeName).join(" + ")}</span>
-              {(estimate.location.city || estimate.location.zip) && <span>{[estimate.location.city, estimate.location.state, estimate.location.zip].filter(Boolean).join(", ")}</span>}
-              <span>#{estimate.estimateNumber}</span>
-              <span>{estimate.estimateDate}{estimate.expirationDate ? ` → ${estimate.expirationDate}` : ""}</span>
+              <span className="hidden sm:inline">{estimate.trades.map(tradeName).join(" + ")}</span>
+              {(estimate.location.city || estimate.location.zip) && <span className="hidden md:inline">{[estimate.location.city, estimate.location.state, estimate.location.zip].filter(Boolean).join(", ")}</span>}
+              <span className="hidden md:inline">#{estimate.estimateNumber}</span>
+              <span className="hidden lg:inline">{estimate.estimateDate}{estimate.expirationDate ? ` → ${estimate.expirationDate}` : ""}</span>
               <span className={cn("rounded px-1.5 py-0.5 font-semibold", estimate.status === "finalized" ? "bg-ok-tint text-ok" : "bg-black/5 text-ink-soft")}>{estimate.status === "finalized" ? "Finalized" : "Draft"}</span>
               <SaveBadge state={save} signedIn={Boolean(user)} />
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex w-full items-start justify-end gap-2 sm:w-auto">
             {step === "estimate" && (
               <Button size="sm" variant="ghost" onClick={() => setCustomerView(!customerView)} aria-pressed={customerView} className="hidden md:inline-flex">
                 {customerView ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />} Customer view
@@ -245,17 +255,25 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
             </div>
           </div>
         </div>
-        <nav aria-label="Builder steps" className="mx-auto flex max-w-[1400px] gap-1 overflow-x-auto px-3 sm:px-5">
-          {STEPS.map((s, i) => (
-            <button
-              key={s.id}
-              onClick={() => { setStep(s.id); setCustomerView(false); }}
-              aria-current={step === s.id ? "step" : undefined}
-              className={cn("whitespace-nowrap border-b-2 px-3 py-2 text-sm font-semibold", step === s.id ? "border-accent text-ink" : "border-transparent text-muted hover:text-ink")}
-            >
-              <span className="mr-1.5 text-xs text-muted">{i + 1}</span>{s.label}
-            </button>
-          ))}
+        <nav aria-label="Builder steps" className="mx-auto max-w-[1400px] px-3 sm:px-5">
+          <p className="sr-only" aria-live="polite">Step {stepIndex + 1} of {STEPS.length}: {STEPS[stepIndex]?.label}</p>
+          <ol className="flex gap-1 overflow-x-auto">
+            {STEPS.map((s, i) => (
+              <li key={s.id}>
+                <button
+                  onClick={() => goTo(s.id)}
+                  aria-current={step === s.id ? "step" : undefined}
+                  className={cn("flex min-h-11 items-center gap-2 whitespace-nowrap border-b-2 px-3 text-sm font-semibold", step === s.id ? "border-navy text-navy" : "border-transparent text-muted hover:text-ink")}
+                >
+                  <span className={cn("grid h-5 w-5 place-items-center rounded-full text-[11px] font-bold", complete[s.id] ? "bg-teal text-navy" : step === s.id ? "bg-navy text-white" : "bg-black/5 text-ink-soft")} aria-hidden>
+                    {complete[s.id] ? <Check className="h-3 w-3" strokeWidth={3} /> : i + 1}
+                  </span>
+                  {s.label}
+                  {complete[s.id] && <span className="sr-only">(done)</span>}
+                </button>
+              </li>
+            ))}
+          </ol>
         </nav>
       </header>
 
@@ -267,16 +285,16 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
         )}
         {user && !user.emailVerified && <Notice tone="warn" className="mb-4" title="Verify your email">Check your inbox for the verification link to unlock PDF downloads.</Notice>}
         {lastTrash && (
-          <div className="fixed bottom-20 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-full bg-ink px-4 py-2 text-sm text-white shadow-lg lg:bottom-6" role="status">
+          <div className="on-dark fixed bottom-20 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-full bg-ink px-4 py-2 text-sm text-white shadow-lg lg:bottom-6" role="status">
             Deleted {lastTrash.label}
-            <button onClick={() => dispatch({ type: "undo" })} className="inline-flex items-center gap-1 font-semibold text-accent-tint underline"><Undo2 className="h-4 w-4" /> Undo</button>
+            <button onClick={() => dispatch({ type: "undo" })} className="inline-flex items-center gap-1 font-semibold text-accent underline"><Undo2 className="h-4 w-4" /> Undo</button>
           </div>
         )}
 
-        {step === "company" && <CompanyStep business={business} onChange={setBusiness} signedIn={Boolean(user)} onDone={() => setStep(estimate.customer.name ? "estimate" : "project")} />}
-        {step === "project" && <ProjectStep estimate={estimate} dispatch={dispatch} signedIn={Boolean(user)} onDone={() => setStep("estimate")} />}
+        {step === "company" && <CompanyStep business={business} onChange={setBusiness} signedIn={Boolean(user)} />}
+        {step === "project" && <ProjectStep estimate={estimate} dispatch={dispatch} signedIn={Boolean(user)} />}
         {step === "estimate" && (customerView ? (
-          <div className="rounded-xl bg-[#e9e6df] p-3 sm:p-6">
+          <div className="rounded-xl bg-[#e4eaf1] p-3 sm:p-6">
             <p className="mb-3 text-center text-xs font-semibold uppercase tracking-wider text-muted">Customer view: this is all your customer sees</p>
             <ProposalView doc={doc} />
           </div>
@@ -284,13 +302,28 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
           <Workspace estimate={estimate} dispatch={dispatch} lib={lib} />
         ))}
         {step === "proposal" && <ProposalStep estimate={estimate} business={business} config={config} onConfig={onConfig} />}
+
+        {/* Step footer: Back / Next on every step */}
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-5 no-print">
+          {stepIndex > 0 ? (
+            <Button variant="secondary" onClick={() => goTo(STEPS[stepIndex - 1].id)}><ArrowLeft className="h-4 w-4" /><span>Back<span className="hidden sm:inline">: {STEPS[stepIndex - 1].label.toLowerCase()}</span></span></Button>
+          ) : <span />}
+          <div className="flex items-center gap-3">
+            <span className="hidden text-sm text-muted sm:inline">Step {stepIndex + 1} of {STEPS.length}</span>
+            {stepIndex < STEPS.length - 1 ? (
+              <Button size="lg" onClick={() => goTo(STEPS[stepIndex + 1].id)}>{STEPS[stepIndex].next} <ArrowRight className="h-4 w-4" /></Button>
+            ) : (
+              <Button size="lg" variant="accent" onClick={() => setPreviewOpen(true)}><Eye className="h-4 w-4" /> Preview &amp; download</Button>
+            )}
+          </div>
+        </div>
       </main>
 
       {/* Mobile persistent total */}
       <div className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 border-t border-line bg-surface px-4 py-3 shadow-[0_-4px_12px_rgb(0_0_0/0.06)] lg:hidden no-print">
         <div>
           <p className="text-xs text-muted">Proposal total</p>
-          <p className="tabular text-lg font-extrabold">{formatCurrency(totals.total)}</p>
+          <p className="tabular font-display text-lg font-extrabold text-navy">{formatCurrency(totals.total)}</p>
         </div>
         <div className="text-right text-xs text-muted">
           <p>Profit <span className="tabular font-semibold text-ink">{formatCurrency(totals.grossProfit)}</span></p>
@@ -299,7 +332,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
       </div>
 
       <Modal open={previewOpen} onOpenChange={setPreviewOpen} title="Preview your proposal" description="This is exactly what your customer will see. Previews are always free." wide>
-        <div className="-mx-6 bg-[#e9e6df] p-3 sm:p-5"><ProposalView doc={doc} /></div>
+        <div className="-mx-6 bg-[#e4eaf1] p-3 sm:p-5"><ProposalView doc={doc} /></div>
         <div className="mt-4 flex flex-wrap justify-end gap-2">
           <Button variant="secondary" onClick={() => { setPreviewOpen(false); setStep("proposal"); }}>Customize proposal</Button>
           <Button variant="accent" onClick={() => { setPreviewOpen(false); void doExport(); }}><Download className="h-4 w-4" /> Download PDF</Button>

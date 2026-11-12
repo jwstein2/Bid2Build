@@ -30,10 +30,10 @@ export default async function Dashboard() {
     <div className="mx-auto max-w-5xl space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-extrabold">Your bids</h1>
-          <p className="text-ink-soft">{biz?.company_name ? biz.company_name : <Link href="/settings/company" className="text-brand underline">Set up your company profile</Link>}</p>
+          <h1 className="text-3xl font-extrabold text-navy">Your bids</h1>
+          <p className="text-ink-soft">{biz?.company_name ? biz.company_name : <Link href="/settings/company" className="text-accent-ink underline">Set up your company profile</Link>}</p>
         </div>
-        <ButtonLink href="/bids" variant="accent">New Bid</ButtonLink>
+        <ButtonLink href="/bids" variant="accent">New bid</ButtonLink>
       </div>
       <LocalDraftsBanner />
       <div className="grid gap-4 sm:grid-cols-3">

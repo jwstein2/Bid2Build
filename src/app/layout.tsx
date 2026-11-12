@@ -1,19 +1,19 @@
 import type { Metadata, Viewport } from "next";
 import "@fontsource-variable/inter";
-import "@fontsource-variable/archivo";
+import "@fontsource-variable/montserrat";
 import "./globals.css";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
-  title: { default: `${site.name} — Contractor Estimates & Proposals in Minutes`, template: `%s | ${site.name}` },
+  title: { default: `${site.name}: Professional contractor bids, without the busywork`, template: `%s | ${site.name}` },
   description: site.description,
-  openGraph: { siteName: site.name, type: "website", title: `${site.name} — ${site.tagline}`, description: site.description },
+  openGraph: { siteName: site.name, type: "website", title: `${site.name}: ${site.tagline}`, description: site.description },
   twitter: { card: "summary_large_image" },
   alternates: { canonical: "/" },
 };
 
-export const viewport: Viewport = { themeColor: "#1f3a5f", width: "device-width", initialScale: 1 };
+export const viewport: Viewport = { themeColor: "#0b2d4d", width: "device-width", initialScale: 1 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (

@@ -4,7 +4,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type Dispatch } from "react";
 import * as Dropdown from "@radix-ui/react-dropdown-menu";
-import { computeEstimate, effectiveVisibility, itemsForGroup, sortedGroups, type EstimateTotals } from "@/lib/estimate/engine";
+import { computeEstimate, itemsForGroup, sortedGroups, type EstimateTotals } from "@/lib/estimate/engine";
 import { formatCurrency, formatPercent } from "@/lib/estimate/money";
 import type { Estimate, EstimateGroup, GroupVisibility, LineItem, PricingRule } from "@/lib/estimate/types";
 import { COST_TYPES, UNIT_ABBR, UNITS, getTrade, parseTemplateItem, type TemplateItem } from "@/lib/trades/catalog";
@@ -150,12 +150,11 @@ function GroupCard(props: {
   const [open, setOpen] = useState(true);
   const items = itemsForGroup(estimate, g.id);
   const gt = totals.groups[g.id];
-  const vis = effectiveVisibility(g, estimate);
-  const examples = items.length === 0 ? (props.examples.length ? props.examples : props.fallbackExamples) : [];
+    const examples = items.length === 0 ? (props.examples.length ? props.examples : props.fallbackExamples) : [];
   const projectTotalMode = estimate.displayMode === "project_total";
 
   return (
-    <section className="rounded-xl border border-line bg-surface shadow-[0_1px_2px_rgb(0_0_0/0.04)]" aria-label={`Section ${g.name || "untitled"}`}>
+    <section className="rounded-xl border border-line bg-surface shadow-card" aria-label={`Section ${g.name || "untitled"}`}>
       <header className="flex flex-wrap items-center gap-2 border-b border-line px-3 py-2.5 sm:px-4">
         <button onClick={() => setOpen(!open)} aria-expanded={open} aria-label={open ? "Collapse section" : "Expand section"} className="rounded p-1 hover:bg-black/5">
           {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
@@ -187,14 +186,14 @@ function GroupCard(props: {
               disabled={projectTotalMode}
               value={g.visibility ?? "inherit"}
               onChange={(e) => dispatch({ type: "updateGroup", id: g.id, patch: { visibility: e.target.value === "inherit" ? null : (e.target.value as GroupVisibility) } })}
-              className="field field-sm w-auto py-0.5 text-xs"
+              className="field field-sm w-auto max-w-full py-1 text-xs"
             >
               <option value="inherit">Estimate default ({VISIBILITY_LABEL[estimate.defaultGroupVisibility]})</option>
               {Object.entries(VISIBILITY_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
             </select>
             {projectTotalMode && <span className="text-muted">Single project total is on; sections are hidden from the customer.</span>}
             {g.pricingOverride && <span className="rounded bg-accent-tint px-1.5 py-0.5 font-semibold text-accent-dark">Section pricing: {g.pricingOverride.percent}% {g.pricingOverride.mode}</span>}
-            {!projectTotalMode && <span className="text-muted">({VISIBILITY_LABEL[vis]})</span>}
+            
           </div>
 
           {items.length > 0 && (
