@@ -99,5 +99,7 @@ export interface Estimate {
   items: LineItem[];
   /** Template version the estimate was started from (templates never mutate existing estimates). */
   templateRef?: { trade: string; version: number } | null;
+  /** Saved customer this estimate was created for (optional). */
+  customerId?: string | null;
   updatedAt?: string;
 }

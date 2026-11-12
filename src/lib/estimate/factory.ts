@@ -39,13 +39,14 @@ export function newGroup(name: string, sortOrder: number): EstimateGroup {
  * New estimate for a trade. Template groups are created EMPTY: suggested items are offered in
  * the editor but never added (and never priced) automatically.
  */
-export function createEstimate(tradeSlug: string, opts: { blank?: boolean; now?: Date; number?: string } = {}): Estimate {
+export function createEstimate(tradeSlug: string, opts: { blank?: boolean; now?: Date; number?: string; template?: TradeTemplate } = {}): Estimate {
   const trade = getTrade(tradeSlug) ?? getTrade("other")!;
+  const template = opts.template && opts.template.trade === trade.slug ? opts.template : trade.template;
   const now = opts.now ?? new Date();
   const expires = new Date(now.getTime() + 30 * 86400000);
   const groups = opts.blank
     ? [newGroup("Materials", 0), newGroup("Labor", 1)]
-    : trade.template.groups.map((g, i) => newGroup(g.name, i));
+    : template.groups.map((g, i) => newGroup(g.name, i));
   return {
     id: uid(),
     title: trade.slug === "other" ? "New Project" : `${trade.name} Project`,
@@ -63,7 +64,7 @@ export function createEstimate(tradeSlug: string, opts: { blank?: boolean; now?:
     defaultGroupVisibility: "names_only",
     groups,
     items: [],
-    templateRef: { trade: trade.slug, version: trade.template.version },
+    templateRef: { trade: trade.slug, version: template.version },
   };
 }
 

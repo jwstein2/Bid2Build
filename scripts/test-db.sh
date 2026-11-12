@@ -3,7 +3,7 @@
 # Usage: scripts/test-db.sh start|stop   -> exports nothing; tests use TEST_DATABASE_URL or the default below.
 set -euo pipefail
 PGBIN=${PGBIN:-$(ls -d /usr/lib/postgresql/*/bin 2>/dev/null | sort -V | tail -1)}
-DATA=${PGDATA_TEST:-/tmp/byb-pgdata}
+DATA=${PGDATA_TEST:-/tmp/b2b-pgdata}
 PORT=${PGPORT_TEST:-54329}
 RUN_AS=()
 if [ "$(id -u)" = "0" ]; then RUN_AS=(sudo -u "${PG_RUN_USER:-claude}"); fi

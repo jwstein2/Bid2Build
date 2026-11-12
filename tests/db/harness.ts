@@ -50,14 +50,17 @@ export async function createUser(pool: Pool, email: string, verified = true): Pr
   return r.rows[0].id;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- test rows are untyped SQL results
+export type Row = Record<string, any>;
+
 /** Run queries as an authenticated end user, with RLS enforced. */
-export async function asUser<T>(pool: Pool, userId: string, fn: (q: (sql: string, params?: unknown[]) => Promise<{ rows: any[]; rowCount: number | null }>) => Promise<T>): Promise<T> {
+export async function asUser<T>(pool: Pool, userId: string, fn: (q: (sql: string, params?: unknown[]) => Promise<{ rows: Row[]; rowCount: number | null }>) => Promise<T>): Promise<T> {
   const client = await pool.connect();
   try {
     await client.query("begin");
     await client.query("set local role authenticated");
     await client.query("select set_config('request.jwt.claim.sub', $1, true)", [userId]);
-    const out = await fn((sql, params) => client.query(sql, params as any[]) as any);
+    const out = await fn((sql, params) => client.query(sql, params) as Promise<{ rows: Row[]; rowCount: number | null }>);
     await client.query("commit");
     return out;
   } catch (e) {

@@ -92,10 +92,32 @@ d("16. user account isolation (RLS)", () => {
   it("anonymous users see only the public catalog", async () => {
     const client = await pool.connect();
     try {
-      await client.query("begin; set local role anon");
+      await client.query("begin; set local role anon; savepoint s");
       await expect(client.query("select * from public.estimates")).rejects.toThrow(/permission denied/);
+      await client.query("rollback to savepoint s");
+      // Seeded reference data is readable: all 36 trades with a published v1 template, no prices.
+      const cats = await client.query("select count(*)::int as n from public.trade_categories");
+      expect(cats.rows[0].n).toBe(36);
+      const tpl = await client.query("select definition from public.trade_templates where published");
+      expect(tpl.rows.length).toBe(36);
+      expect(JSON.stringify(tpl.rows)).not.toMatch(/unitCost|price/i);
       await client.query("rollback");
     } finally { client.release(); }
+  });
+
+  it("end users cannot edit trade templates, flags, or the audit log", async () => {
+    await asUser(pool, alice, async (q) => {
+      for (const sql of [
+        "insert into public.trade_templates (trade_slug, version, definition, published) values ('roofing', 99, '{}', true)",
+        "update public.feature_flags set enabled = false",
+        "insert into public.audit_logs (action) values ('x')",
+        "select * from public.audit_logs",
+      ]) {
+        await q("savepoint s");
+        await expect(q(sql)).rejects.toThrow(/permission denied/);
+        await q("rollback to savepoint s");
+      }
+    });
   });
 
   it("admin metrics require an admin role and contain no bid contents", async () => {
