@@ -4,6 +4,7 @@ import { applySubscription } from "@/lib/billing/apply";
 import { createAdminClient } from "@/lib/supabase/server";
 import { serverEnv } from "@/lib/env";
 import { logError } from "@/lib/http/api";
+import { markChurned, markCustomer } from "@/lib/growth/leads";
 
 export const runtime = "nodejs";
 
@@ -68,7 +69,13 @@ export async function POST(req: Request) {
       const sub = await stripe.subscriptions.retrieve(subscriptionId);
       const res = await applySubscription(admin, sub, event.created);
       if (!res.userId) throw new Error(`No user for subscription ${subscriptionId}`);
-      if (event.type === "checkout.session.completed") await admin.from("analytics_events").insert({ user_id: res.userId, event: "subscribed" });
+      if (event.type === "checkout.session.completed") {
+        await admin.from("analytics_events").insert({ user_id: res.userId, event: "subscribed" });
+        // Paying customers leave prospecting: mark the lead and add them to the Instantly block list.
+        const email = (obj as { customer_details?: { email?: string | null } }).customer_details?.email ?? null;
+        await markCustomer(admin, res.userId, email);
+      }
+      if (event.type === "customer.subscription.deleted") await markChurned(admin, res.userId);
     }
     await admin.from("stripe_events").update({ processed_at: new Date().toISOString(), error: null }).eq("id", event.id);
     return new Response("ok", { status: 200 });

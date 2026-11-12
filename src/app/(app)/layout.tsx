@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { FileText } from "lucide-react";
 import { Logo } from "@/components/layout/logo";
-import { getUser, createClient } from "@/lib/supabase/server";
-import { isSupabaseConfigured } from "@/lib/env";
+import { getUser, createClient, createAdminClient } from "@/lib/supabase/server";
+import { isSupabaseConfigured, serverEnv } from "@/lib/env";
+import { ATTRIBUTION_COOKIE, decodeAttribution } from "@/lib/growth/attribution";
+import { syncSignedInUser } from "@/lib/growth/leads";
 import { ButtonLink } from "@/components/ui/button";
 import { AppNav } from "@/components/layout/app-nav";
 
@@ -19,6 +22,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const user = await getUser();
   if (!user) redirect("/login?next=/dashboard");
   const { data: isAdmin } = await (await createClient()).rpc("is_admin", { p_user_id: user.id });
+  // Link the account to its lead + first-touch attribution (best effort, one indexed lookup when already linked).
+  if (serverEnv().supabaseServiceKey) {
+    await syncSignedInUser(createAdminClient(), user, decodeAttribution((await cookies()).get(ATTRIBUTION_COOKIE)?.value));
+  }
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
       <aside className="on-dark bg-navy text-white md:sticky md:top-0 md:flex md:h-screen md:w-64 md:shrink-0 md:flex-col no-print">

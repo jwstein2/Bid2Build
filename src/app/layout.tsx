@@ -2,15 +2,17 @@ import type { Metadata, Viewport } from "next";
 import "@fontsource-variable/inter";
 import "@fontsource-variable/montserrat";
 import "./globals.css";
-import { site } from "@/lib/site";
+import { deploy, site } from "@/lib/site";
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
-  title: { default: `${site.name}: Professional contractor bids, without the busywork`, template: `%s | ${site.name}` },
+  title: { default: `${site.name}: Win more bids with professional contractor proposals`, template: `%s | ${site.name}` },
   description: site.description,
   openGraph: { siteName: site.name, type: "website", title: `${site.name}: ${site.tagline}`, description: site.description },
   twitter: { card: "summary_large_image" },
   alternates: { canonical: "/" },
+  // Belt and braces with robots.txt and the X-Robots-Tag header: non-production deploys are noindex.
+  ...(deploy.allowIndexing ? {} : { robots: { index: false, follow: false } }),
 };
 
 export const viewport: Viewport = { themeColor: "#0b2d4d", width: "device-width", initialScale: 1 };

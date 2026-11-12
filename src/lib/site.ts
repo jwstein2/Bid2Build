@@ -1,11 +1,30 @@
+import { hostOf, resolveAllowIndexing, resolveDeployContext, resolveSiteUrl } from "./config/deploy";
+
 /**
- * Central brand configuration. Rebranding = change env vars (or these defaults).
+ * Central brand and URL configuration. Rebranding or moving domains = change env vars, not code.
  * Nothing else in the codebase hard-codes the product name or domain.
+ *
+ * NEXT_PUBLIC_* values are inlined at build time; next.config.ts resolves the site URL and deploy
+ * context per Netlify context (see src/lib/config/deploy.ts) so previews never point at production.
  */
+const env = {
+  NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+  NEXT_PUBLIC_DEPLOY_CONTEXT: process.env.NEXT_PUBLIC_DEPLOY_CONTEXT,
+  NEXT_PUBLIC_ALLOW_INDEXING: process.env.NEXT_PUBLIC_ALLOW_INDEXING,
+};
+const url = resolveSiteUrl(env);
+
+export const deploy = {
+  context: resolveDeployContext(env),
+  /** True only on a production deploy with NEXT_PUBLIC_ALLOW_INDEXING=true. */
+  allowIndexing: resolveAllowIndexing(env),
+} as const;
+
 export const site = {
   name: process.env.NEXT_PUBLIC_SITE_NAME ?? "Built2Bid",
-  domain: process.env.NEXT_PUBLIC_SITE_DOMAIN ?? "localhost:3000",
-  url: (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, ""),
+  domain: process.env.NEXT_PUBLIC_SITE_DOMAIN || hostOf(url),
+  /** Canonical public URL of this deploy (app and marketing share one origin). */
+  url,
   tagline: "Build estimates. Create bids. Win more work.",
   description:
     "Build clear estimates and professional, branded proposals for your trade. Price with markup or margin, choose what your customer sees, and download a PDF. 3 free bids every month, no credit card.",

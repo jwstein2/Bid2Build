@@ -18,7 +18,7 @@ for (const [name, viewport] of Object.entries(viewports)) {
   page.on("pageerror", (e) => errors.push(e.message));
 
   await page.goto(base + "/");
-  check(await page.getByRole("heading", { level: 1, name: /Professional bids, without the busywork/ }).isVisible(), "home hero headline");
+  check(await page.getByRole("heading", { level: 1, name: /Win More Bids\. Look More Professional\. Get Back to Building\./ }).isVisible(), "home hero headline");
   await page.getByRole("link", { name: "Create a free bid" }).first().click();
   await page.waitForURL(/\/bids$/);
   check(true, "primary CTA opens trade selection");
@@ -42,8 +42,12 @@ for (const [name, viewport] of Object.entries(viewports)) {
   // 10 x 40 = 400 cost; 25% default markup -> 500 price (no tax by default).
   check(await page.getByText("$500.00").first().isVisible(), "line item price computes 10 x $40 at 25% markup = $500.00");
 
+  await page.getByRole("button", { name: /Next: scope & exclusions/ }).click();
+  check(await steps.getByRole("button", { name: /Scope/ }).getAttribute("aria-current") === "step", "Next reaches Scope & exclusions step");
   await page.getByRole("button", { name: /Next: proposal & terms/ }).click();
   check(await steps.getByRole("button", { name: /Proposal/ }).getAttribute("aria-current") === "step", "Next reaches Proposal step");
+  await page.getByRole("button", { name: /Back/ }).click();
+  check(await steps.getByRole("button", { name: /Scope/ }).getAttribute("aria-current") === "step", "Back returns to Scope & exclusions");
   await page.getByRole("button", { name: /Back/ }).click();
   check(await steps.getByRole("button", { name: /Estimate/ }).getAttribute("aria-current") === "step", "Back returns to Estimate");
 
@@ -51,6 +55,7 @@ for (const [name, viewport] of Object.entries(viewports)) {
   await page.waitForTimeout(800);
   check(await page.getByText("$500.00").first().isVisible(), "draft survives a page refresh (local autosave)");
 
+  await page.getByRole("button", { name: /Next: scope & exclusions/ }).click();
   await page.getByRole("button", { name: /Next: proposal & terms/ }).click();
   await page.getByRole("button", { name: /Preview & download/ }).click();
   const dialog = page.getByRole("dialog");
