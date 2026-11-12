@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Dev-only CommonJS screenshot script.
+    "scripts/ux-screenshots.cjs",
   ]),
 ]);
 

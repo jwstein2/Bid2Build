@@ -50,10 +50,10 @@ export default function HomePage() {
               <span className="h-1.5 w-1.5 rounded-full bg-teal" aria-hidden /> For contractors in every trade · {plans.freeMonthlyExports} free bids a month
             </p>
             <h1 className="mt-5 max-w-xl text-4xl font-extrabold leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-[3.5rem]">
-              Professional bids, <span className="relative inline-block text-cyan">without the busywork.<svg aria-hidden viewBox="0 0 300 12" preserveAspectRatio="none" className="absolute -bottom-2 left-0 h-2.5 w-full"><path d="M3 9C80 3 200 2 297 6" fill="none" stroke="#14B8A6" strokeWidth="4" strokeLinecap="round" /></svg></span>
+              Win More Bids. Look More Professional. <span className="relative inline-block text-cyan">Get Back to Building.<svg aria-hidden viewBox="0 0 300 12" preserveAspectRatio="none" className="absolute -bottom-2 left-0 h-2.5 w-full"><path d="M3 9C80 3 200 2 297 6" fill="none" stroke="#14B8A6" strokeWidth="4" strokeLinecap="round" /></svg></span>
             </h1>
             <p className="mt-6 max-w-xl text-lg text-[#D5DFE9]">
-              Build polished estimates and proposals for your trade without starting from scratch every time. Price with markup or margin, choose what your customer sees, and download a branded PDF.
+              Turn rough estimates into organized, customer-ready proposals for your trade. Price with markup or margin, choose what your customer sees, and download a branded PDF.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <ButtonLink href="/bids" variant="accent" size="lg">Create a free bid <ArrowRight className="h-4 w-4" aria-hidden /></ButtonLink>

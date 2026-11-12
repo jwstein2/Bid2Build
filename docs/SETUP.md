@@ -35,8 +35,8 @@ accounts, saving, and PDF export need Supabase.
 
 ## 3. Netlify
 1. New site from GitHub, pick the repo. Build settings come from `netlify.toml`.
-2. Add every variable from `.env.example` under Site configuration > Environment variables. Set `NEXT_PUBLIC_SITE_URL` to the deployed URL.
-3. Keep `NEXT_PUBLIC_ALLOW_INDEXING=false` until public launch is approved.
+2. Add every variable from `.env.example` under Site configuration > Environment variables. Scope `NEXT_PUBLIC_SITE_URL` to the **Production** context only (previews and branch deploys use their own URL automatically). Full list: `docs/launch/ENVIRONMENT_VARIABLE_INVENTORY.md`; domain move: `docs/launch/DOMAIN_MIGRATION_CHECKLIST.md`.
+3. Keep `NEXT_PUBLIC_ALLOW_INDEXING=false` until public launch is approved. Previews are always noindex regardless.
 
 ## Tests
 ```bash
