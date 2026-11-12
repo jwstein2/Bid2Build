@@ -11,7 +11,7 @@ export async function saveProposalDefaults(config: unknown): Promise<SaveDefault
   const parsed = proposalConfigSchema.safeParse(config);
   if (!parsed.success) return { ok: false, message: "Some settings are invalid." };
   const supabase = await createClient();
-  const { data: q } = await supabase.rpc("quota_status");
+  const { data: q } = await supabase.rpc("credit_status");
   const unlimited = Boolean((Array.isArray(q) ? q[0] : q)?.unlimited);
   if (!unlimited) return { ok: false, message: "Saved proposal defaults are part of Unlimited." };
   const { error } = await supabase.from("business_profiles").upsert({ user_id: user.id, default_proposal_config: parsed.data }, { onConflict: "user_id" });

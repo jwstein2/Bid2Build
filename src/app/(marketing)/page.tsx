@@ -17,12 +17,12 @@ const steps = [
 ];
 
 const faqs = [
-  { q: "Is it really free?", a: `Yes. The free plan includes ${plans.freeMonthlyExports} finalized PDF exports every calendar month, unlimited drafts and previews, every trade, and your branding. No credit card required.` },
+  { q: "Is it really free?", a: `Yes. Every verified account gets ${plans.starterCredits} free bids to start, plus ${plans.monthlyCredits} free bid every month from your second month on. Drafts and previews are unlimited, with every trade and your branding. No credit card required.` },
   { q: "Do I need to sign up before I can try it?", a: "No. Pick a trade and start building right away. Your draft is saved in your browser. You only create an account (with a one-time email link) when you are ready to download your first PDF or save to the cloud." },
   { q: "Will my customer see my costs or markup?", a: "Never. Customer-facing proposals are built only from customer prices. Internal costs, margins, and notes are not included in the preview or the PDF." },
   { q: "Do you provide local material prices?", a: "Only when a licensed pricing source is connected. We never show made-up prices. Until then, you enter your own costs, which is what accurate bids are built on anyway." },
   { q: "Where is my draft saved?", a: "Before you sign in, drafts are saved in this browser on this device. After you sign in, they autosave to your account so you can pick them up on any device." },
-  { q: "What counts as one of my free bids?", a: "A bid is used the first time a new finalized proposal version is exported. Re-downloading the same version is free, and editing drafts never uses a bid." },
+  { q: "What counts as one of my free bids?", a: "A credit is used when you finalize a new bid. Editing, re-finalizing, or re-downloading a bid you already finalized is free, and drafts never use a credit. Your monthly bid is used first, then starter credits." },
 ];
 
 export default function HomePage() {
@@ -47,7 +47,7 @@ export default function HomePage() {
         <Container className="relative grid items-center gap-12 pb-16 pt-12 sm:pt-16 lg:grid-cols-[1.05fr_1fr] lg:gap-14 lg:pb-20">
           <div>
             <p className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs font-semibold text-[#D5DFE9]">
-              <span className="h-1.5 w-1.5 rounded-full bg-teal" aria-hidden /> For contractors in every trade · {plans.freeMonthlyExports} free bids a month
+              <span className="h-1.5 w-1.5 rounded-full bg-teal" aria-hidden /> For contractors in every trade · {plans.starterCredits} free bids to start
             </p>
             <h1 className="mt-5 max-w-xl text-4xl font-extrabold leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-[3.5rem]">
               Professional bids, <span className="relative inline-block text-cyan">without the busywork.<svg aria-hidden viewBox="0 0 300 12" preserveAspectRatio="none" className="absolute -bottom-2 left-0 h-2.5 w-full"><path d="M3 9C80 3 200 2 297 6" fill="none" stroke="#14B8A6" strokeWidth="4" strokeLinecap="round" /></svg></span>
@@ -165,7 +165,7 @@ export default function HomePage() {
         <Container className="relative flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
           <div>
             <h2 className="text-3xl font-extrabold">Free to start. {plans.monthlyPriceLabel}/month when you need more.</h2>
-            <p className="mt-2 text-[#D5DFE9]">{plans.freeMonthlyExports} finalized bids every month on the free plan. Unlimited for {plans.monthlyPriceLabel}/month or {plans.annualPriceLabel}/year.</p>
+            <p className="mt-2 text-[#D5DFE9]">{plans.starterCredits} free bids to start, plus {plans.monthlyCredits} free bid every month. Unlimited for {plans.monthlyPriceLabel}/month or {plans.annualPriceLabel}/year.</p>
           </div>
           <div className="flex gap-3">
             <ButtonLink href="/bids" variant="accent" size="lg">Create a free bid</ButtonLink>

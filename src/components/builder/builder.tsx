@@ -11,6 +11,8 @@ import { defaultBusinessProfile, type BusinessProfile, type ProposalConfig } fro
 import { deleteLocalDraft, loadLocalBusiness, saveLocalBusiness, saveLocalDraft, clearLocalBusiness } from "@/lib/drafts/local";
 import { tradeName } from "@/lib/trades/catalog";
 import { cn } from "@/lib/cn";
+import { exportMessage, type CreditSource, type CreditStatus } from "@/lib/credits/status";
+import { CreditSummary, UpgradeLink } from "../billing/credits";
 import { Logo } from "../layout/logo";
 import { ProposalView } from "../proposal/proposal-view";
 import { Button } from "../ui/button";
@@ -26,7 +28,6 @@ import { Workspace } from "./workspace";
 type Biz = BusinessProfile & { logoPath?: string | null };
 type Step = "company" | "project" | "estimate" | "proposal";
 type SaveState = "idle" | "saving" | "saved" | "local" | "error";
-interface Quota { used: number; limit: number; unlimited: boolean; resetsAt: string; emailVerified: boolean }
 
 export interface BuilderProps {
   initialEstimate: Estimate;
@@ -63,7 +64,8 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
   const [step, setStep] = useState<Step>(initialStep ?? "estimate");
   const [customerView, setCustomerView] = useState(false);
   const [save, setSave] = useState<SaveState>(mode === "cloud" ? "saved" : "local");
-  const [quota, setQuota] = useState<Quota | null>(null);
+  const [credits, setCredits] = useState<CreditStatus | null>(null);
+  const [finalizedHere, setFinalizedHere] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportMsg, setExportMsg] = useState<{ tone: "ok" | "danger" | "warn"; text: string } | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
@@ -164,13 +166,13 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, mode]);
 
-  const refreshQuota = useCallback(async () => {
+  const refreshCredits = useCallback(async () => {
     if (!user) return;
-    const r = await fetch("/api/quota", { cache: "no-store" }).catch(() => null);
-    if (r?.ok) setQuota(await r.json());
+    const r = await fetch("/api/credits", { cache: "no-store" }).catch(() => null);
+    if (r?.ok) setCredits(await r.json());
   }, [user]);
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- fetches server quota on mount
-  useEffect(() => { void refreshQuota(); }, [refreshQuota]);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- fetches server credit balances on mount
+  useEffect(() => { void refreshCredits(); }, [refreshCredits]);
 
   const doExport = useCallback(async () => {
     setExportMsg(null);
@@ -183,17 +185,18 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
       if (!(await saveCloud())) { setExportMsg({ tone: "danger", text: "We couldn't save your latest changes, so we didn't export. Check your connection and try again." }); return; }
       const r = await fetch(`/api/estimates/${estimate.id}/export`, { method: "POST" });
       const data = await r.json().catch(() => ({}));
-      if (r.status === 402) { await refreshQuota(); setUpgradeOpen(true); return; }
+      if (r.status === 402) { await refreshCredits(); setUpgradeOpen(true); return; }
       if (r.status === 401) { setAuthOpen(true); return; }
       if (!r.ok) { setExportMsg({ tone: "danger", text: data?.error?.message ?? "Export failed. Please try again." }); return; }
       if (data.url) window.location.assign(data.url);
       else if (data.pdfBase64) downloadBase64(data.pdfBase64, data.filename);
-      setExportMsg({ tone: "ok", text: data.charged ? `Proposal version ${data.versionNumber} exported.${data.quota.unlimited ? "" : ` ${Math.max(0, data.quota.limit - data.quota.used)} free export(s) left this month.`}` : `Re-downloaded version ${data.versionNumber}. No bid credit used.` });
-      await refreshQuota();
+      setExportMsg({ tone: "ok", text: exportMessage(data.creditSource as CreditSource, data.versionNumber, data.credits) });
+      setFinalizedHere(true);
+      await refreshCredits();
     } finally {
       setExporting(false);
     }
-  }, [user, totals.issues.length, estimate.items.length, estimate.id, saveCloud, refreshQuota]);
+  }, [user, totals.issues.length, estimate.items.length, estimate.id, saveCloud, refreshCredits]);
 
   // Resume an export that was interrupted by sign-in.
   const autoRan = useRef(false);
@@ -214,7 +217,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
   const stepIndex = STEPS.findIndex((s) => s.id === step);
   const goTo = (s: Step) => { setStep(s); setCustomerView(false); window.scrollTo({ top: 0, behavior: "smooth" }); };
 
-  const remaining = quota && !quota.unlimited ? Math.max(0, quota.limit - quota.used) : null;
+  const alreadyFinalized = finalizedHere || estimate.status === "finalized";
   const lastTrash = state.trash[state.trash.length - 1];
 
   return (
@@ -240,6 +243,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
             </div>
           </div>
           <div className="flex w-full items-start justify-end gap-2 sm:w-auto">
+            {credits && !credits.unlimited && <UpgradeLink compact className="border-transparent text-xs sm:text-sm" />}
             {step === "estimate" && (
               <Button size="sm" variant="ghost" onClick={() => setCustomerView(!customerView)} aria-pressed={customerView} className="hidden md:inline-flex">
                 {customerView ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />} Customer view
@@ -250,8 +254,8 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
               <Button size="sm" variant="accent" onClick={doExport} disabled={exporting}>
                 {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} Download PDF
               </Button>
-              {remaining !== null && <span className="mt-0.5 text-[11px] text-muted">{remaining} of {quota!.limit} free left this month</span>}
-              {quota?.unlimited && <span className="mt-0.5 text-[11px] text-ok">Unlimited plan</span>}
+              {credits && <span className="mt-0.5"><CreditSummary credits={credits} /></span>}
+              {credits && !credits.unlimited && <span className="text-[11px] text-muted">{alreadyFinalized ? "Updates are free" : "Uses 1 credit"}</span>}
             </div>
           </div>
         </div>
@@ -339,7 +343,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
         </div>
       </Modal>
       <AuthDialog open={authOpen} onOpenChange={setAuthOpen} next={`/builder?draft=${estimate.id}&export=1`} onVerified={() => { window.location.assign(`/builder?draft=${estimate.id}&export=1`); }} />
-      <UpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} resetsAt={quota?.resetsAt} />
+      <UpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} nextCycleAt={credits?.nextCycleAt} />
     </div>
   );
 }

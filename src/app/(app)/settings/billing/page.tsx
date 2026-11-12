@@ -6,6 +6,8 @@ import { reconcileUser } from "@/lib/billing/apply";
 import { CheckoutButton, PortalButton } from "@/components/billing/checkout-button";
 import { Badge, Card, Notice } from "@/components/ui/misc";
 import { plans } from "@/lib/site";
+import { CreditBalances } from "@/components/billing/credits";
+import { loadCreditStatus } from "@/lib/credits/server";
 
 export const metadata: Metadata = { title: "Subscription", robots: { index: false } };
 
@@ -19,12 +21,12 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
     try { await reconcileUser(createAdminClient(), getStripe(), user.id); } catch { /* webhook will catch up */ }
   }
   const supabase = await createClient();
-  const [{ data: subs }, { data: quota }, { data: bc }] = await Promise.all([
+  const [{ data: subs }, credits, { data: bc }] = await Promise.all([
     supabase.from("subscriptions").select("*").order("updated_at", { ascending: false }),
-    supabase.rpc("quota_status"),
+    loadCreditStatus(supabase),
     supabase.from("billing_customers").select("stripe_customer_id").maybeSingle(),
   ]);
-  const q = (Array.isArray(quota) ? quota[0] : quota) as { exports_used: number; export_limit: number; unlimited: boolean } | null;
+  const q = credits ? { unlimited: credits.unlimited } : null;
   const current = subs?.find((s) => ["active", "trialing", "past_due"].includes(s.status)) ?? subs?.[0];
   const end = current?.current_period_end ? new Date(current.current_period_end).toLocaleDateString(undefined, { dateStyle: "long" }) : null;
 
@@ -43,12 +45,14 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
             <p className="text-sm text-muted">Current plan</p>
             <p className="text-2xl font-extrabold">{q?.unlimited ? (current?.plan === "annual" ? "Unlimited Annual" : "Unlimited Monthly") : "Free"}</p>
             {q?.unlimited && end && <p className="text-sm text-ink-soft">{current?.cancel_at_period_end ? `Cancels on ${end}. You keep Unlimited until then.` : `Renews on ${end}.`}</p>}
-            {!q?.unlimited && q && <p className="text-sm text-ink-soft">{Math.max(0, q.export_limit - q.exports_used)} of {q.export_limit} free exports left this month.</p>}
+            {!q?.unlimited && <p className="text-sm text-ink-soft">{plans.starterCredits} starter credits to begin, then {plans.monthlyCredits} free bid every month.</p>}
           </div>
           {current && <Badge tone={q?.unlimited ? "ok" : "neutral"}>{current.status.replace("_", " ")}</Badge>}
         </div>
         {bc && <div className="mt-5 border-t border-line pt-4"><PortalButton label="Manage subscription, payment method & billing history" /><p className="mt-2 text-xs text-muted">Opens Stripe&apos;s secure customer portal, where you can change plans, cancel, update your card, and download invoices.</p></div>}
       </Card>
+
+      {credits && !credits.unlimited && <CreditBalances credits={credits} showUpgrade={false} />}
 
       {!q?.unlimited && stripeReady && (
         <div className="grid gap-4 sm:grid-cols-2">
