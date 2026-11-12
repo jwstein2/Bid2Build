@@ -1,4 +1,5 @@
 import type { Estimate, EstimateGroup, LineItem, PricingRule } from "../estimate/types";
+import { normalizeExclusions, normalizeScope } from "../proposal/text-sections";
 import { defaultBusinessProfile, defaultProposalConfig, type BusinessProfile, type ProposalConfig } from "../proposal/types";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -52,7 +53,16 @@ export function proposalConfigFrom(raw: unknown): ProposalConfig {
   const d = defaultProposalConfig();
   if (!raw || typeof raw !== "object") return d;
   const r = raw as Partial<ProposalConfig>;
-  return { ...d, ...r, show: { ...d.show, ...(r.show ?? {}) }, paymentSchedule: r.paymentSchedule ?? d.paymentSchedule };
+  const exclusionList = normalizeExclusions(r.exclusionList, typeof r.exclusions === "string" ? r.exclusions : "");
+  return {
+    ...d, ...r,
+    show: { ...d.show, ...(r.show ?? {}) },
+    paymentSchedule: r.paymentSchedule ?? d.paymentSchedule,
+    scope: normalizeScope(r.scope),
+    exclusionList,
+    // Legacy text is carried into exclusionList once; clearing it avoids showing it twice.
+    exclusions: "",
+  };
 }
 
 export function rowToBusiness(r: any | null): BusinessProfile & { logoPath?: string | null } {

@@ -125,7 +125,7 @@ export function ProposalPdf({ doc, logo }: { doc: ProposalDocument; logo?: { dat
           </View>
 
           {doc.allowances ? <Prose title="Allowances" body={doc.allowances} gap={st.sectionGap} color={brand} fs={fs} /> : null}
-          {doc.exclusions ? <Prose title="Exclusions" body={doc.exclusions} gap={st.sectionGap} color={brand} fs={fs} /> : null}
+          {doc.exclusions ? <Prose title="Exclusions & Clarifications" body={doc.exclusions} gap={st.sectionGap} color={brand} fs={fs} /> : null}
           {doc.customerResponsibilities ? <Prose title="Customer Responsibilities" body={doc.customerResponsibilities} gap={st.sectionGap} color={brand} fs={fs} /> : null}
           {doc.schedule ? <Prose title="Estimated Schedule" body={doc.schedule} gap={st.sectionGap} color={brand} fs={fs} /> : null}
 

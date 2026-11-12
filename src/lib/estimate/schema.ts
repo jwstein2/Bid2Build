@@ -94,11 +94,46 @@ export const businessSchema = z.object({
   headerStyle: z.enum(["solid", "line", "minimal"]),
 });
 
+const writingStyle = z.enum(["simple", "professional", "detailed"]);
+const textSource = z.enum(["manual", "generated", "edited"]);
+const ts = z.string().max(40).nullable();
+const exclusionItem = z.object({
+  id: z.string().max(64),
+  category: z.string().max(40),
+  title: z.string().max(120),
+  text: z.string().max(1000),
+  status: z.enum(["approved", "suggested", "rejected"]),
+  source: textSource,
+  review: z.string().max(300).nullable().optional(),
+});
+export const scopeSettingsSchema = z.object({
+  visible: z.boolean(),
+  source: textSource,
+  style: writingStyle,
+  generatedAt: ts,
+  generator: z.string().max(120).nullable(),
+  basedOn: z.string().max(64).nullable(),
+  updatedAt: ts,
+  history: z.array(z.object({ at: z.string().max(40), content: z.string().max(20000), source: textSource })).max(10),
+});
+export const exclusionSettingsSchema = z.object({
+  visible: z.boolean(),
+  style: writingStyle,
+  generatedAt: ts,
+  generator: z.string().max(120).nullable(),
+  basedOn: z.string().max(64).nullable(),
+  updatedAt: ts,
+  items: z.array(exclusionItem).max(40),
+  history: z.array(z.object({ at: z.string().max(40), items: z.array(exclusionItem).max(40) })).max(10),
+});
+
 export const proposalConfigSchema = z.object({
   template: z.enum(["classic", "modern", "premium", "detailed", "compact"]),
   introduction: z.string().max(5000),
   scopeOfWork: z.string().max(20000),
   exclusions: z.string().max(10000),
+  scope: scopeSettingsSchema.optional(),
+  exclusionList: exclusionSettingsSchema.optional(),
   allowances: z.string().max(10000),
   customerResponsibilities: z.string().max(10000),
   schedule: z.string().max(5000),

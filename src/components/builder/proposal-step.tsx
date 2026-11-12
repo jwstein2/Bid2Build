@@ -1,6 +1,6 @@
 "use client";
 import { Plus, Trash2 } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import { buildProposal } from "@/lib/proposal/build";
 import { TEMPLATES } from "@/lib/proposal/templates";
 import type { BusinessProfile, ProposalConfig } from "@/lib/proposal/types";
@@ -17,15 +17,13 @@ const SHOW_LABELS: [keyof ProposalConfig["show"], string][] = [
 
 const TEXT_SECTIONS: [keyof ProposalConfig, string, string][] = [
   ["introduction", "Introduction", "A short thank-you and summary."],
-  ["scopeOfWork", "Scope of work", "Describe what you will do."],
   ["allowances", "Allowances", "e.g. Tile allowance of $5/sq ft; selections above allowance billed separately."],
-  ["exclusions", "Exclusions", "What is not included."],
   ["customerResponsibilities", "Customer responsibilities", "e.g. Clear the work area; provide water and power."],
   ["schedule", "Estimated schedule", "e.g. Start within 3 weeks of signing; about 5 working days."],
   ["terms", "Terms and conditions", "Have your terms reviewed by an attorney."],
 ];
 
-export function ProposalStep({ estimate, business, config, onConfig }: { estimate: Estimate; business: BusinessProfile; config: ProposalConfig; onConfig: (c: ProposalConfig) => void }) {
+export function ProposalStep({ estimate, business, config, onConfig, textExtra }: { estimate: Estimate; business: BusinessProfile; config: ProposalConfig; onConfig: (c: ProposalConfig) => void; textExtra?: ReactNode }) {
   const doc = useMemo(() => buildProposal(estimate, business, config), [estimate, business, config]);
   const set = (patch: Partial<ProposalConfig>) => onConfig({ ...config, ...patch });
   const pctSum = config.paymentSchedule.reduce((s, p) => s.plus(toDec(p.percent).value), toDec("0").value);
@@ -68,15 +66,18 @@ export function ProposalStep({ estimate, business, config, onConfig }: { estimat
 
         <section className="rounded-xl border border-line bg-surface p-4">
           <h2 className="font-bold">Proposal text</h2>
+          <p className="mt-1 text-xs text-muted">{textExtra ? "Defaults for new bids." : "Scope of Work and Exclusions & Clarifications are on the Scope & exclusions step."}</p>
           <div className="mt-3 space-y-3">
             {TEXT_SECTIONS.map(([k, l, hint]) => (
               <div key={k}>
                 <label htmlFor={`pt-${k}`} className="label">{l} <span className="font-normal text-muted">(optional)</span></label>
-                <textarea id={`pt-${k}`} rows={k === "terms" || k === "scopeOfWork" ? 4 : 2} className="field text-sm" placeholder={hint} value={config[k] as string} onChange={(ev) => set({ [k]: ev.target.value } as Partial<ProposalConfig>)} />
+                <textarea id={`pt-${k}`} rows={k === "terms" ? 4 : 2} className="field text-sm" placeholder={hint} value={config[k] as string} onChange={(ev) => set({ [k]: ev.target.value } as Partial<ProposalConfig>)} />
               </div>
             ))}
           </div>
         </section>
+
+        {textExtra}
 
         <section className="rounded-xl border border-line bg-surface p-4">
           <h2 className="font-bold">Payment schedule</h2>

@@ -100,7 +100,7 @@ export function ProposalView({ doc }: { doc: ProposalDocument }) {
         </section>
 
         {doc.allowances && <Prose title="Allowances" body={doc.allowances} gap={st.sectionGap} color={brand} />}
-        {doc.exclusions && <Prose title="Exclusions" body={doc.exclusions} gap={st.sectionGap} color={brand} />}
+        {doc.exclusions && <Prose title="Exclusions & Clarifications" body={doc.exclusions} gap={st.sectionGap} color={brand} />}
         {doc.customerResponsibilities && <Prose title="Customer Responsibilities" body={doc.customerResponsibilities} gap={st.sectionGap} color={brand} />}
         {doc.schedule && <Prose title="Estimated Schedule" body={doc.schedule} gap={st.sectionGap} color={brand} />}
 
