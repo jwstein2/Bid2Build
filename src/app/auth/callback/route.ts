@@ -17,5 +17,13 @@ export async function GET(request: Request) {
       return NextResponse.redirect(new URL(next, url.origin));
     }
   }
+  if (!code && !url.searchParams.get("error")) {
+    // Implicit-flow links put the session in the URL fragment, which servers never see.
+    // Browsers keep the fragment across this redirect, so /auth/finish can read it.
+    const finish = new URL("/auth/finish", url.origin);
+    finish.searchParams.set("next", next);
+    if (url.searchParams.get("marketing") === "1") finish.searchParams.set("marketing", "1");
+    return NextResponse.redirect(finish);
+  }
   return NextResponse.redirect(new URL(`/login?error=link&next=${encodeURIComponent(next)}`, url.origin));
 }
