@@ -1,6 +1,7 @@
 "use client";
 import { useMemo, useState, useTransition } from "react";
 import { ProposalStep } from "@/components/builder/proposal-step";
+import { ExclusionsEditor } from "@/components/builder/scope-step";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Notice } from "@/components/ui/misc";
 import { createEstimate } from "@/lib/estimate/factory";
@@ -11,6 +12,7 @@ export function DefaultsEditor({ business, initial, unlimited }: { business: Bus
   const [config, setConfig] = useState(initial);
   const [result, setResult] = useState<SaveDefaultsResult | null>(null);
   const [pending, start] = useTransition();
+  const onConfig = (c: ProposalConfig) => { setConfig(c); setResult(null); };
   // Preview uses an empty sample project: no invented prices.
   const sample = useMemo(() => ({ ...createEstimate("other", { now: new Date("2026-01-01T12:00:00Z"), number: "SAMPLE" }), title: "Sample project" }), []);
   return (
@@ -21,7 +23,13 @@ export function DefaultsEditor({ business, initial, unlimited }: { business: Bus
         {result?.ok && <span role="status" className="text-sm text-ok">Saved. New bids will use these settings.</span>}
         {result && !result.ok && <span role="alert" className="text-sm text-danger">{result.message}</span>}
       </div>
-      <ProposalStep estimate={sample} business={business} config={config} onConfig={(c) => { setConfig(c); setResult(null); }} />
+      <ProposalStep
+        estimate={sample} business={business} config={config} onConfig={onConfig}
+        textExtra={
+          <ExclusionsEditor manualOnly estimate={sample} config={config} onConfig={onConfig} signedIn fingerprint="" canGenerate={false}
+            value={config.exclusionList} onChange={(exclusionList) => onConfig({ ...config, exclusionList })} />
+        }
+      />
     </div>
   );
 }

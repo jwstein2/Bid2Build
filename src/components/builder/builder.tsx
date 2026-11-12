@@ -20,11 +20,12 @@ import { AuthDialog, Modal, UpgradeDialog } from "./dialogs";
 import { useLibrary } from "./library";
 import { ProjectStep } from "./project-step";
 import { ProposalStep } from "./proposal-step";
+import { ScopeStep } from "./scope-step";
 import { reducer } from "./state";
 import { Workspace } from "./workspace";
 
 type Biz = BusinessProfile & { logoPath?: string | null };
-type Step = "company" | "project" | "estimate" | "proposal";
+type Step = "company" | "project" | "estimate" | "scope" | "proposal";
 type SaveState = "idle" | "saving" | "saved" | "local" | "error";
 interface Quota { used: number; limit: number; unlimited: boolean; resetsAt: string; emailVerified: boolean }
 
@@ -41,7 +42,8 @@ export interface BuilderProps {
 const STEPS: { id: Step; label: string; next: string }[] = [
   { id: "company", label: "Company", next: "Next: customer & project" },
   { id: "project", label: "Customer & project", next: "Next: build the estimate" },
-  { id: "estimate", label: "Estimate", next: "Next: proposal & terms" },
+  { id: "estimate", label: "Estimate", next: "Next: scope & exclusions" },
+  { id: "scope", label: "Scope & exclusions", next: "Next: proposal & terms" },
   { id: "proposal", label: "Proposal", next: "Preview & download" },
 ];
 
@@ -209,6 +211,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
     company: Boolean(business.companyName?.trim()),
     project: Boolean(estimate.customer.name?.trim()),
     estimate: realItems > 0 && totals.issues.length === 0,
+    scope: Boolean(config.scopeOfWork.trim()) || config.exclusionList.items.some((i) => i.status === "approved"),
     proposal: false,
   };
   const stepIndex = STEPS.findIndex((s) => s.id === step);
@@ -301,6 +304,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
         ) : (
           <Workspace estimate={estimate} dispatch={dispatch} lib={lib} />
         ))}
+        {step === "scope" && <ScopeStep estimate={estimate} config={config} onConfig={onConfig} signedIn={Boolean(user)} estimateId={cloudMode ? estimate.id : null} />}
         {step === "proposal" && <ProposalStep estimate={estimate} business={business} config={config} onConfig={onConfig} />}
 
         {/* Step footer: Back / Next on every step */}

@@ -1,3 +1,5 @@
+import { defaultExclusionSettings, defaultScopeSettings, type ExclusionSettings, type ScopeSettings } from "./text-sections";
+
 export type ProposalTemplateId = "classic" | "modern" | "premium" | "detailed" | "compact";
 
 export interface BusinessProfile {
@@ -26,8 +28,12 @@ export interface PaymentMilestone {
 export interface ProposalConfig {
   template: ProposalTemplateId;
   introduction: string;
+  /** Scope of Work text. Its visibility, source and history live in `scope`. */
   scopeOfWork: string;
+  /** Legacy free-text exclusions; migrated into `exclusionList` on load and no longer edited. */
   exclusions: string;
+  scope: ScopeSettings;
+  exclusionList: ExclusionSettings;
   allowances: string;
   customerResponsibilities: string;
   schedule: string;
@@ -54,6 +60,8 @@ export const defaultProposalConfig = (): ProposalConfig => ({
     "Thank you for the opportunity to bid on your project. This proposal outlines the work we will perform and the investment required.",
   scopeOfWork: "",
   exclusions: "",
+  scope: defaultScopeSettings(),
+  exclusionList: defaultExclusionSettings(),
   allowances: "",
   customerResponsibilities: "",
   schedule: "",
