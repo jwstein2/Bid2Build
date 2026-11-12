@@ -6,6 +6,7 @@ import { loadBusiness, loadEstimate } from "@/lib/data/server";
 import { createAdminClient, createClient, getUser } from "@/lib/supabase/server";
 import { fail, json, logError, rateLimit, sameOrigin } from "@/lib/http/api";
 import { captureObservation } from "@/lib/market/server";
+import type { CreditSource } from "@/lib/credits/status";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -14,7 +15,8 @@ export const maxDuration = 60;
  * Finalize + export. Order matters:
  *  1. authenticate (verified server-side) and load data with the user's RLS-bound client
  *  2. build the canonical proposal and render the PDF (failures here never consume a credit)
- *  3. record_export() atomically checks quota / idempotency and creates the version
+ *  3. finalize_bid() atomically checks credits / idempotency, spends at most one credit per bid,
+ *     and creates the version (all-or-nothing in one database transaction)
  *  4. store the PDF privately and return a short-lived signed URL
  */
 export async function POST(_req: Request, ctx: RouteContext<"/api/estimates/[id]/export">) {
@@ -55,7 +57,7 @@ export async function POST(_req: Request, ctx: RouteContext<"/api/estimates/[id]
     return fail(500, "pdf_failed", "We could not create the PDF. No bid credit was used. Please try again.");
   }
 
-  const { data: rec, error } = await admin.rpc("record_export", {
+  const { data: rec, error } = await admin.rpc("finalize_bid", {
     p_user_id: user.id,
     p_estimate_id: id,
     p_content_hash: hash,
@@ -67,13 +69,16 @@ export async function POST(_req: Request, ctx: RouteContext<"/api/estimates/[id]
     p_total: totals.total.toFixed(2),
   });
   if (error) {
-    if (error.message.includes("quota_exceeded")) return fail(402, "quota_exceeded", "You've used your free bids this month.");
+    if (error.message.includes("credits_exhausted")) return fail(402, "credits_exhausted", "You've used your free bid credits. Your bid is saved.");
     if (error.message.includes("email_not_verified")) return fail(403, "email_not_verified", "Please verify your email address first.");
     if (error.message.includes("estimate_not_found")) return fail(404, "not_found", "Estimate not found.");
     logError("export.record", error, { user: user.id });
     return fail(500, "export_failed", "Export failed. Please try again.");
   }
-  const r = (Array.isArray(rec) ? rec[0] : rec) as { version_id: string; version_number: number; charged: boolean; exports_used: number; export_limit: number; unlimited: boolean };
+  const r = (Array.isArray(rec) ? rec[0] : rec) as {
+    version_id: string; version_number: number; new_version: boolean; charged: boolean; credit_source: CreditSource;
+    starter_balance: number; monthly_balance: number; unlimited: boolean; next_cycle_at: string;
+  };
 
   const path = `${user.id}/${id}/v${r.version_number}-${hash.slice(0, 12)}.pdf`;
   const up = await admin.storage.from("documents").upload(path, pdf, { contentType: "application/pdf", upsert: true });
@@ -92,7 +97,7 @@ export async function POST(_req: Request, ctx: RouteContext<"/api/estimates/[id]
   }
   // Market intelligence: one de-identified observation per finalized version, only with opt-in consent.
   await captureObservation(admin, user.id, r.version_id, estimate, totals);
-  if (r.charged) await admin.from("analytics_events").insert({ user_id: user.id, event: "export_succeeded", trade: estimate.trades[0] ?? null });
+  if (r.new_version) await admin.from("analytics_events").insert({ user_id: user.id, event: "export_succeeded", trade: estimate.trades[0] ?? null });
 
   return json({
     url,
@@ -102,6 +107,7 @@ export async function POST(_req: Request, ctx: RouteContext<"/api/estimates/[id]
     versionId: r.version_id,
     versionNumber: r.version_number,
     charged: r.charged,
-    quota: { used: r.exports_used, limit: r.export_limit, unlimited: r.unlimited },
+    creditSource: r.credit_source,
+    credits: { starter: r.starter_balance, monthly: r.monthly_balance, unlimited: r.unlimited, nextCycleAt: r.next_cycle_at },
   });
 }

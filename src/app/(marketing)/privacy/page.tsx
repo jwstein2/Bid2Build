@@ -25,7 +25,7 @@ export default function Privacy() {
         <h2 className="pt-2 text-xl font-bold text-ink">Website import</h2>
         <p>If you ask us to import branding from a website, we fetch that public page once, extract details for you to review, and record only the host name and outcome.</p>
         <h2 className="pt-2 text-xl font-bold text-ink">Your choices</h2>
-        <p>You can export your data or delete your account from Account settings. Deleting your account removes your bids, customers, logos, and generated documents.</p>
+        <p>You can export your data or delete your account from Account settings. Deleting your account removes your bids, customers, logos, and generated documents. To prevent repeat free-credit signups, we keep a one-way hash of your email address (not the address itself).</p>
         <h2 className="pt-2 text-xl font-bold text-ink">Service providers</h2>
         <p>Supabase (database, authentication, file storage), Stripe (payments), and our hosting provider process data on our behalf.</p>
         <h2 className="pt-2 text-xl font-bold text-ink">Contact</h2>

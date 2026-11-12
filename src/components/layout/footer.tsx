@@ -10,7 +10,7 @@ export function Footer() {
         <div className="md:col-span-1">
           <Logo tone="dark" />
           <p className="mt-4 font-display text-sm font-semibold text-white">{site.tagline}</p>
-          <p className="mt-2 text-sm text-[#B8C6D4]">Estimates and proposals for contractors. 3 free bids every month, no credit card.</p>
+          <p className="mt-2 text-sm text-[#B8C6D4]">Estimates and proposals for contractors. 3 free bids to start, plus 1 every month. No credit card.</p>
         </div>
         <FooterCol title="Popular trades">
           {featuredTrades.slice(0, 6).map((t) => (
