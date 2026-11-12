@@ -1,0 +1,103 @@
+/** Canonical estimate data model shared by the editor, persistence, preview and PDF. */
+
+export type PricingMode = "markup" | "margin";
+
+export type CostType =
+  | "material"
+  | "labor"
+  | "equipment"
+  | "subcontractor"
+  | "overhead"
+  | "contingency"
+  | "permit"
+  | "delivery"
+  | "labor_burden"
+  | "other";
+
+/**
+ * marked_up: an estimated direct cost; the pricing method (markup or margin) is applied.
+ * pass_through: a separate customer-facing charge billed at cost (e.g. permit fees).
+ */
+export type ChargeTreatment = "marked_up" | "pass_through";
+
+/** How a group is presented to the customer. */
+export type GroupVisibility = "group_total" | "names_only" | "itemized";
+
+/** Estimate-wide presentation. "by_group" lets each group choose its own visibility. */
+export type EstimateDisplayMode = "by_group" | "project_total";
+
+export interface PricingRule {
+  mode: PricingMode;
+  /** Percentage as a decimal string, e.g. "25" for 25%. */
+  percent: string;
+}
+
+export interface LineItem {
+  id: string;
+  groupId: string;
+  name: string;
+  description?: string;
+  category?: string;
+  costType: CostType;
+  treatment: ChargeTreatment;
+  /** Decimal strings to avoid float drift. */
+  quantity: string;
+  unit: string;
+  unitCost: string;
+  taxable: boolean;
+  /** Overrides the estimate pricing rule for this item only. */
+  pricingOverride?: PricingRule | null;
+  /** If false the item is excluded from the customer-facing item list (price still counts). */
+  showOnProposal: boolean;
+  notes?: string;
+  sortOrder: number;
+  /** Example/placeholder rows never count toward totals. */
+  isExample?: boolean;
+  /** Optional regional reference attached for display only. */
+  favoriteId?: string | null;
+}
+
+export interface EstimateGroup {
+  id: string;
+  name: string;
+  description?: string;
+  /** null = use estimate default. */
+  visibility: GroupVisibility | null;
+  sortOrder: number;
+  /** Override pricing for every item in the group (items may still override). */
+  pricingOverride?: PricingRule | null;
+}
+
+export interface EstimateCustomer {
+  name: string;
+  email?: string;
+  phone?: string;
+  projectAddress?: string;
+  notes?: string;
+}
+
+export interface Estimate {
+  id: string;
+  title: string;
+  /** Primary trade slug plus any additional trades for mixed projects. */
+  trades: string[];
+  estimateNumber: string;
+  estimateDate: string; // ISO date
+  expirationDate: string; // ISO date
+  status: "draft" | "finalized" | "archived";
+  customer: EstimateCustomer;
+  location: { zip?: string; city?: string; state?: string };
+  pricing: PricingRule;
+  /** Signed decimal string. Negative = discount. Applied to pre-tax price. */
+  fixedAdjustment: string;
+  adjustmentLabel?: string;
+  /** Sales tax percentage applied to taxable items. */
+  taxRate: string;
+  displayMode: EstimateDisplayMode;
+  defaultGroupVisibility: GroupVisibility;
+  groups: EstimateGroup[];
+  items: LineItem[];
+  /** Template version the estimate was started from (templates never mutate existing estimates). */
+  templateRef?: { trade: string; version: number } | null;
+  updatedAt?: string;
+}
