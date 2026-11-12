@@ -3,7 +3,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { Loader2, Mail, X } from "lucide-react";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
-import { getBrowserClient } from "@/lib/supabase/client";
+import { getBrowserClient, getOtpClient } from "@/lib/supabase/client";
 import { plans } from "@/lib/site";
 import { Button, ButtonLink } from "../ui/button";
 import { Notice } from "../ui/misc";
@@ -39,7 +39,7 @@ export function AuthDialog({ open, onOpenChange, next, onVerified, title }: { op
     const redirect = new URL("/auth/callback", window.location.origin);
     redirect.searchParams.set("next", next);
     if (marketing) redirect.searchParams.set("marketing", "1");
-    const { error } = await supabase.auth.signInWithOtp({ email: email.trim(), options: { emailRedirectTo: redirect.toString(), shouldCreateUser: true } });
+    const { error } = await (getOtpClient() ?? supabase).auth.signInWithOtp({ email: email.trim(), options: { emailRedirectTo: redirect.toString(), shouldCreateUser: true } });
     setBusy(false);
     if (error) setErr(error.message.includes("rate") ? "Too many attempts. Please wait a minute and try again." : "We couldn't send the email. Check the address and try again.");
     else setStage("sent");
