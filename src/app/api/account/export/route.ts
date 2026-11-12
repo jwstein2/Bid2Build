@@ -6,7 +6,7 @@ export async function GET() {
   const user = await getUser();
   if (!user) return fail(401, "not_authenticated", "Sign in required.");
   const supabase = await createClient();
-  const tables = ["profiles", "business_profiles", "customers", "estimates", "estimate_groups", "estimate_items", "estimate_versions", "generated_documents", "usage_counters", "usage_events", "subscriptions", "saved_items", "assemblies", "assembly_items", "user_templates"] as const;
+  const tables = ["profiles", "business_profiles", "customers", "estimates", "estimate_groups", "estimate_items", "estimate_versions", "generated_documents", "usage_counters", "usage_events", "subscriptions", "saved_items", "assemblies", "assembly_items", "user_templates", "market_consent", "estimate_project_profiles"] as const;
   const out: Record<string, unknown> = { exported_at: new Date().toISOString(), account: { id: user.id, email: user.email } };
   for (const t of tables) out[t] = (await supabase.from(t).select("*")).data ?? [];
   return new Response(JSON.stringify(out, null, 2), {

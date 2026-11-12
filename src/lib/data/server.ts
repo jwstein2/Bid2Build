@@ -1,15 +1,19 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { proposalConfigFrom, rowToBusiness, rowsToEstimate } from "./mappers";
+import { proposalConfigFrom, rowToBusiness, rowToProjectProfile, rowsToEstimate } from "./mappers";
 
 export async function loadEstimate(supabase: SupabaseClient, id: string) {
-  const [{ data: e, error }, { data: groups }, { data: items }] = await Promise.all([
+  const [{ data: e, error }, { data: groups }, { data: items }, { data: profile }] = await Promise.all([
     supabase.from("estimates").select("*").eq("id", id).maybeSingle(),
     supabase.from("estimate_groups").select("*").eq("estimate_id", id).order("sort_order"),
     supabase.from("estimate_items").select("*").eq("estimate_id", id).order("sort_order"),
+    // Tolerates the table not existing yet (migration not applied): profile is just empty.
+    supabase.from("estimate_project_profiles").select("sector, work_type, project_type, measurements, outcome").eq("estimate_id", id).maybeSingle(),
   ]);
   if (error || !e) return null;
-  return { estimate: rowsToEstimate(e, groups ?? [], items ?? []), proposalConfig: proposalConfigFrom(e.proposal_config), customerId: e.customer_id as string | null };
+  const estimate = rowsToEstimate(e, groups ?? [], items ?? []);
+  estimate.projectProfile = rowToProjectProfile(profile);
+  return { estimate, proposalConfig: proposalConfigFrom(e.proposal_config), customerId: e.customer_id as string | null };
 }
 
 export async function loadBusiness(supabase: SupabaseClient, userId: string, opts: { signedLogo?: boolean } = {}) {

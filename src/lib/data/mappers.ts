@@ -1,4 +1,5 @@
 import type { Estimate, EstimateGroup, LineItem, PricingRule } from "../estimate/types";
+import type { ProjectProfile } from "../market/trade-models";
 import { defaultBusinessProfile, defaultProposalConfig, type BusinessProfile, type ProposalConfig } from "../proposal/types";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -45,6 +46,17 @@ export function rowsToEstimate(e: any, groups: any[], items: any[]): Estimate {
         notes: i.notes ?? undefined, sortOrder: i.sort_order ?? 0,
       }),
     ),
+  };
+}
+
+export function rowToProjectProfile(r: any | null): ProjectProfile | null {
+  if (!r) return null;
+  return {
+    sector: r.sector ?? undefined,
+    workType: r.work_type ?? undefined,
+    projectType: r.project_type ?? undefined,
+    measurements: r.measurements && typeof r.measurements === "object" ? r.measurements : undefined,
+    outcome: r.outcome ?? undefined,
   };
 }
 

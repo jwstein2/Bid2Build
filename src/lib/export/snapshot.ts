@@ -15,8 +15,9 @@ export function stableStringify(v: unknown): string {
  * are excluded so re-downloading an unchanged estimate maps to the same version.
  */
 export function versionSnapshot(estimate: Estimate, business: BusinessProfile & { logoPath?: string | null }, config: ProposalConfig) {
-  const { status: _s, updatedAt: _u, customerId: _c, ...est } = estimate;
-  void _c;
+  // projectProfile is benchmarking metadata (never on the proposal): excluded so editing it is free.
+  const { status: _s, updatedAt: _u, customerId: _c, projectProfile: _p, ...est } = estimate;
+  void _c; void _p;
   void _s; void _u;
   const { logoUrl: _l, ...biz } = business;
   void _l;

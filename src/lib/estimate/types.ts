@@ -1,4 +1,5 @@
 /** Canonical estimate data model shared by the editor, persistence, preview and PDF. */
+import type { ProjectProfile } from "../market/trade-models";
 
 export type PricingMode = "markup" | "margin";
 
@@ -101,5 +102,10 @@ export interface Estimate {
   templateRef?: { trade: string; version: number } | null;
   /** Saved customer this estimate was created for (optional). */
   customerId?: string | null;
+  /**
+   * Structured project facts for benchmarking (sector, work type, measurements, bid outcome).
+   * Never shown to the customer and excluded from the version hash, so editing it never creates a new version.
+   */
+  projectProfile?: ProjectProfile | null;
   updatedAt?: string;
 }

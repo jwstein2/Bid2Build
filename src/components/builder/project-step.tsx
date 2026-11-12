@@ -4,6 +4,7 @@ import type { Estimate } from "@/lib/estimate/types";
 import { trades } from "@/lib/trades/catalog";
 import { Button } from "../ui/button";
 import { Field } from "../ui/misc";
+import { ProjectProfileFields } from "./project-profile";
 import type { Action } from "./state";
 
 interface SavedCustomer { id: string; name: string; email?: string; phone?: string; projectAddress?: string }
@@ -91,6 +92,7 @@ export function ProjectStep({ estimate: e, dispatch, signedIn, onDone }: { estim
           </div>
         </div>
       </section>
+      <ProjectProfileFields estimate={e} dispatch={dispatch} />
       {onDone && <div className="flex justify-end"><Button size="lg" onClick={onDone}>Continue to estimate</Button></div>}
     </div>
   );
