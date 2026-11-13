@@ -63,6 +63,13 @@ with these keys talks to production data. See PRODUCTION_LAUNCH_CHECKLIST.md ite
 | `AI_MONTHLY_BUDGET_USD` | server | All | No | Default 25; above it drafting falls back to rules. |
 | `AI_TEXT_GENERATION` | server | All | No | `off` pauses AI without removing the key. |
 
+## Google Maps address autocomplete (optional)
+
+| Variable | Exposure | Contexts | Required | Notes |
+|---|---|---|---|---|
+| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | public (browser key) | All | No | Turns on address suggestions in Company and Customer & project address fields. Restrict the key in Google Cloud by HTTP referrer (built2bid.org, built2bid.netlify.app, deploy previews) and by API (Places API (New), Maps JavaScript API). Without it the fields are plain text. Must be set before the build (it is inlined), so redeploy after setting. |
+| `NEXT_PUBLIC_GOOGLE_MAPS_REGIONS` | public | All | No | Comma-separated country codes for suggestions. Default `us`. |
+
 ## Instantly (INCOMPLETE until an Instantly workspace exists)
 
 | Name | Scope | Contexts | Required | Purpose |

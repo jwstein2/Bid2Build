@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState, type Dispatch } from "react";
+import { AddressInput } from "../ui/address-input";
 import type { Estimate } from "@/lib/estimate/types";
 import { trades } from "@/lib/trades/catalog";
 import { Button } from "../ui/button";
@@ -49,7 +50,19 @@ export function ProjectStep({ estimate: e, dispatch, signedIn, onDone }: { estim
           <Field label="Customer name" required htmlFor="c-name"><input id="c-name" className="field" value={c.name} onChange={(ev) => pc({ name: ev.target.value })} /></Field>
           <Field label="Customer email" optional htmlFor="c-email"><input id="c-email" type="email" className="field" value={c.email ?? ""} onChange={(ev) => pc({ email: ev.target.value })} /></Field>
           <Field label="Customer phone" optional htmlFor="c-phone"><input id="c-phone" type="tel" className="field" value={c.phone ?? ""} onChange={(ev) => pc({ phone: ev.target.value })} /></Field>
-          <Field label="Project address" required htmlFor="c-addr"><textarea id="c-addr" rows={2} className="field" value={c.projectAddress ?? ""} onChange={(ev) => pc({ projectAddress: ev.target.value })} /></Field>
+          <Field label="Project address" required htmlFor="c-addr"><AddressInput
+            id="c-addr"
+            multiline
+            value={c.projectAddress ?? ""}
+            onChange={(v) => pc({ projectAddress: v })}
+            placeholder="Start typing the job site address"
+            // Fill empty location fields only; never overwrite what the contractor typed.
+            onPick={(p) => {
+              const loc = e.location;
+              const patch = { ...(!loc.zip && p.zip ? { zip: p.zip } : {}), ...(!loc.city && p.city ? { city: p.city } : {}), ...(!loc.state && p.state ? { state: p.state } : {}) };
+              if (Object.keys(patch).length) dispatch({ type: "patchLocation", patch });
+            }}
+          /></Field>
           <div className="sm:col-span-2"><Field label="Project notes" optional htmlFor="c-notes" hint="Private to you. Not shown on the proposal."><textarea id="c-notes" rows={2} className="field" value={c.notes ?? ""} onChange={(ev) => pc({ notes: ev.target.value })} /></Field></div>
         </div>
         {signedIn && c.name.trim() && (
