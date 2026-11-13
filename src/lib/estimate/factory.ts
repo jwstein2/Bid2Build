@@ -47,6 +47,8 @@ export function createEstimate(tradeSlug: string, opts: { blank?: boolean; now?:
   const groups = opts.blank
     ? [newGroup("Materials", 0), newGroup("Labor", 1)]
     : template.groups.map((g, i) => newGroup(g.name, i));
+  // Every section belongs to the project's (first) trade; more trades add their own sections.
+  for (const g of groups) g.trade = trade.slug;
   return {
     id: uid(),
     title: trade.slug === "other" ? "New Project" : `${trade.name} Project`,

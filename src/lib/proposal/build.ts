@@ -1,4 +1,5 @@
-import { computeEstimate, effectiveVisibility, itemsForGroup, sortedGroups } from "../estimate/engine";
+import { computeEstimate, effectiveVisibility, itemsForGroup } from "../estimate/engine";
+import { tradeBlocks } from "../estimate/trades";
 import { D, formatCurrency, round2, toDec } from "../estimate/money";
 import type { Estimate } from "../estimate/types";
 import { tradeName, UNIT_ABBR } from "../trades/catalog";
@@ -39,37 +40,47 @@ export function buildProposal(estimate: Estimate, business: BusinessProfile, con
 
   const sections: ProposalSection[] = [];
   if (estimate.displayMode === "by_group") {
-    for (const g of sortedGroups(estimate)) {
-      const gt = totals.groups[g.id];
-      if (!gt || gt.itemCount === 0) continue;
-      const mode = effectiveVisibility(g, estimate);
-      const visibleItems = itemsForGroup(estimate, g.id).filter((i) => i.showOnProposal && totals.items[i.id]);
-      const section: ProposalSection = {
-        title: g.name.trim() || "Untitled section",
-        description: show.itemDescriptions ? clean(g.description) : undefined,
-        mode,
-        amount: show.groupPrices || mode === "group_total" ? formatCurrency(gt.price) : undefined,
-        lines: [],
-      };
-      if (mode !== "group_total") {
-        section.lines = visibleItems.map((i) => {
-          const t = totals.items[i.id];
-          return {
-            name: i.name.trim() || "Item",
-            description: show.itemDescriptions ? clean(i.description) : undefined,
-            notes: show.notes ? clean(i.notes) : undefined,
-            ...(mode === "itemized"
-              ? {
-                  quantity: show.quantities ? fmtQty(i.quantity) : undefined,
-                  unit: show.quantities ? (UNIT_ABBR[i.unit] ?? i.unit) : undefined,
-                  unitPrice: show.itemPrices && show.quantities ? formatCurrency(t.unitPrice) : undefined,
-                  amount: show.itemPrices ? formatCurrency(t.extendedPrice) : undefined,
-                }
-              : {}),
-          };
-        });
+    // Sections follow the project's trade order. With more than one trade, each trade gets a heading.
+    const multiTrade = estimate.trades.length > 1;
+    for (const block of tradeBlocks(estimate)) {
+      const blockStart = sections.length;
+      for (const g of block.groups) {
+        const gt = totals.groups[g.id];
+        if (!gt || gt.itemCount === 0) continue;
+        const mode = effectiveVisibility(g, estimate);
+        const visibleItems = itemsForGroup(estimate, g.id).filter((i) => i.showOnProposal && totals.items[i.id]);
+        const section: ProposalSection = {
+          title: g.name.trim() || "Untitled section",
+          description: show.itemDescriptions ? clean(g.description) : undefined,
+          mode,
+          amount: show.groupPrices || mode === "group_total" ? formatCurrency(gt.price) : undefined,
+          lines: [],
+        };
+        if (mode !== "group_total") {
+          section.lines = visibleItems.map((i) => {
+            const t = totals.items[i.id];
+            return {
+              name: i.name.trim() || "Item",
+              description: show.itemDescriptions ? clean(i.description) : undefined,
+              notes: show.notes ? clean(i.notes) : undefined,
+              ...(mode === "itemized"
+                ? {
+                    quantity: show.quantities ? fmtQty(i.quantity) : undefined,
+                    unit: show.quantities ? (UNIT_ABBR[i.unit] ?? i.unit) : undefined,
+                    unitPrice: show.itemPrices && show.quantities ? formatCurrency(t.unitPrice) : undefined,
+                    amount: show.itemPrices ? formatCurrency(t.extendedPrice) : undefined,
+                  }
+                : {}),
+            };
+          });
+        }
+        sections.push(section);
       }
-      sections.push(section);
+      const own = sections.slice(blockStart);
+      if (multiTrade && own.length) {
+        const price = block.groups.reduce((sum, g) => sum.plus(totals.groups[g.id]?.price ?? 0), new D(0));
+        own[0].tradeHeading = { title: block.name, amount: own.every((x) => x.amount) ? formatCurrency(price) : undefined };
+      }
     }
   }
 

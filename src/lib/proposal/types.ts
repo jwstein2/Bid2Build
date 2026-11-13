@@ -110,6 +110,11 @@ export interface ProposalLine {
 }
 
 export interface ProposalSection {
+  /**
+   * Set on the first section of each trade in multi-trade proposals: the trade's heading, and its
+   * subtotal only when every one of its sections already shows a price (never reveals hidden pricing).
+   */
+  tradeHeading?: { title: string; amount?: string };
   title: string;
   description?: string;
   mode: "group_total" | "names_only" | "itemized";

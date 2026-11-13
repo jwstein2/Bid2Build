@@ -14,20 +14,20 @@ export function Footer() {
         </div>
         <FooterCol title="Popular trades">
           {featuredTrades.slice(0, 6).map((t) => (
-            <li key={t.slug}><Link href={`/bids/${t.slug}`} className="hover:text-white hover:underline">{t.seoTitle}</Link></li>
+            <li key={t.slug}><Link href={`/bids/${t.slug}`} className="inline-block py-1 hover:text-white hover:underline">{t.seoTitle}</Link></li>
           ))}
         </FooterCol>
         <FooterCol title="Product">
-          <li><Link href="/bids" className="hover:text-white hover:underline">All trades</Link></li>
-          <li><Link href="/#how-it-works" className="hover:text-white hover:underline">How it works</Link></li>
-          <li><Link href="/pricing" className="hover:text-white hover:underline">Pricing</Link></li>
-          <li><Link href="/learn" className="hover:text-white hover:underline">Contractor guides</Link></li>
-          <li><Link href="/dashboard" className="hover:text-white hover:underline">Your bids</Link></li>
+          <li><Link href="/bids" className="inline-block py-1 hover:text-white hover:underline">All trades</Link></li>
+          <li><Link href="/#how-it-works" className="inline-block py-1 hover:text-white hover:underline">How it works</Link></li>
+          <li><Link href="/pricing" className="inline-block py-1 hover:text-white hover:underline">Pricing</Link></li>
+          <li><Link href="/learn" className="inline-block py-1 hover:text-white hover:underline">Contractor guides</Link></li>
+          <li><Link href="/dashboard" className="inline-block py-1 hover:text-white hover:underline">Your bids</Link></li>
         </FooterCol>
         <FooterCol title="Support">
-          <li><a href={`mailto:${site.supportEmail}`} className="hover:text-white hover:underline">Contact support</a></li>
-          <li><Link href="/privacy" className="hover:text-white hover:underline">Privacy policy</Link></li>
-          <li><Link href="/terms" className="hover:text-white hover:underline">Terms of service</Link></li>
+          <li><a href={`mailto:${site.supportEmail}`} className="inline-block py-1 hover:text-white hover:underline">Contact support</a></li>
+          <li><Link href="/privacy" className="inline-block py-1 hover:text-white hover:underline">Privacy policy</Link></li>
+          <li><Link href="/terms" className="inline-block py-1 hover:text-white hover:underline">Terms of service</Link></li>
         </FooterCol>
       </div>
       <div className="border-t border-white/10 py-5 text-center text-xs text-[#B8C6D4]">© {new Date().getFullYear()} {site.name}. All rights reserved.</div>
@@ -39,7 +39,7 @@ function FooterCol({ title, children }: { title: string; children: React.ReactNo
   return (
     <div>
       <h2 className="text-xs font-bold uppercase tracking-wider text-cyan">{title}</h2>
-      <ul className="mt-4 space-y-2.5 text-sm text-[#D5DFE9]">{children}</ul>
+      <ul className="mt-3 space-y-1 text-sm text-[#D5DFE9]">{children}</ul>
     </div>
   );
 }

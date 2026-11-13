@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { revalidatePath } from "next/cache";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/misc";
+import { ConfirmDelete } from "../confirm-delete";
 
 export const metadata: Metadata = { title: "Saved customers", robots: { index: false } };
 
@@ -26,11 +27,11 @@ export default async function CustomersPage() {
           <ul className="divide-y divide-line">
             {data.map((c) => (
               <li key={c.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-                <div>
+                <div className="min-w-0">
                   <p className="font-semibold">{c.name}</p>
                   <p className="text-sm text-muted">{[c.email, c.phone, c.project_address].filter(Boolean).join(" · ")}</p>
                 </div>
-                <form action={remove}><input type="hidden" name="id" value={c.id} /><button className="text-sm text-danger hover:underline">Delete</button></form>
+                <ConfirmDelete action={remove} fields={{ id: c.id }} name={c.name} />
               </li>
             ))}
           </ul>

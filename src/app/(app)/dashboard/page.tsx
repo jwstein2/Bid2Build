@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/misc";
 import { ButtonLink } from "@/components/ui/button";
 import { BidList, type BidRow } from "./bid-list";
 import { LocalDraftsBanner } from "./local-drafts";
+import { ProfileReminder } from "./profile-reminder";
 import { CreditBalances, UpgradeLink } from "@/components/billing/credits";
 import { loadCreditStatus } from "@/lib/credits/server";
 
@@ -17,7 +18,7 @@ export default async function Dashboard() {
     supabase.from("estimates").select("id, title, customer_name, trades, status, updated_at, estimate_number").order("updated_at", { ascending: false }).limit(500),
     supabase.from("estimate_versions").select("id, estimate_id, version_number, total, created_at").order("version_number", { ascending: false }),
     loadCreditStatus(supabase),
-    supabase.from("business_profiles").select("company_name").eq("user_id", user.id).maybeSingle(),
+    supabase.from("business_profiles").select("company_name, logo_path, phone, email, address").eq("user_id", user.id).maybeSingle(),
   ]);
   const latest = new Map<string, { id: string; version_number: number; total: number }>();
   for (const v of versions ?? []) if (!latest.has(v.estimate_id)) latest.set(v.estimate_id, v);
@@ -25,6 +26,10 @@ export default async function Dashboard() {
     id: e.id, title: e.title || "Untitled bid", customer: e.customer_name, trades: e.trades, status: e.status, updatedAt: e.updated_at, number: e.estimate_number,
     latestVersion: latest.get(e.id) ? { id: latest.get(e.id)!.id, number: latest.get(e.id)!.version_number, total: Number(latest.get(e.id)!.total) } : null,
   }));
+
+  // Details that make proposals look complete. None are required to create or export a bid.
+  const missing = [!biz?.company_name && "company name", !biz?.logo_path && "logo", !(biz?.phone || biz?.email) && "phone or email", !biz?.address && "business address"]
+    .filter((x): x is string => Boolean(x));
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -35,10 +40,11 @@ export default async function Dashboard() {
         </div>
         <div className="flex items-center gap-2">
           {credits && !credits.unlimited && <UpgradeLink compact />}
-          <ButtonLink href="/bids" variant="accent">New bid</ButtonLink>
+          <ButtonLink href="/bids" variant="accent" className="hidden md:inline-flex">New bid</ButtonLink>
         </div>
       </div>
       <LocalDraftsBanner />
+      <ProfileReminder missing={missing} />
       <div className="grid gap-4 lg:grid-cols-3">
         {credits && <CreditBalances credits={credits} className="lg:col-span-2" showUpgrade={false} />}
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-1">

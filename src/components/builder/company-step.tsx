@@ -1,5 +1,6 @@
 "use client";
 import { Check, Globe, Loader2, Upload, X } from "lucide-react";
+import { AddressInput } from "../ui/address-input";
 import { useRef, useState } from "react";
 import type { BusinessProfile } from "@/lib/proposal/types";
 import { Button } from "../ui/button";
@@ -151,7 +152,7 @@ export function CompanyStep({ business, onChange, signedIn, onDone }: { business
           <Field label="Contact name" required htmlFor="b-contact"><input id="b-contact" className="field" value={business.contactName ?? ""} onChange={(e) => set({ contactName: e.target.value })} autoComplete="name" /></Field>
           <Field label="Business email" required htmlFor="b-email" hint="Shown on proposals so customers can reach you."><input id="b-email" type="email" className="field" value={business.email ?? ""} onChange={(e) => set({ email: e.target.value })} autoComplete="email" /></Field>
           <Field label="Phone number" required htmlFor="b-phone"><input id="b-phone" type="tel" className="field" value={business.phone ?? ""} onChange={(e) => set({ phone: e.target.value })} autoComplete="tel" /></Field>
-          <div className="sm:col-span-2"><Field label="Business address" required htmlFor="b-addr"><input id="b-addr" className="field" value={business.address ?? ""} onChange={(e) => set({ address: e.target.value })} autoComplete="street-address" /></Field></div>
+          <div className="sm:col-span-2"><Field label="Business address" required htmlFor="b-addr"><AddressInput id="b-addr" value={business.address ?? ""} onChange={(v) => set({ address: v })} placeholder="Start typing your business address" /></Field></div>
           <Field label="Website" optional htmlFor="b-web"><input id="b-web" className="field" value={business.website ?? ""} onChange={(e) => set({ website: e.target.value })} inputMode="url" /></Field>
           <Field label="License number" optional htmlFor="b-lic"><input id="b-lic" className="field" value={business.licenseNumber ?? ""} onChange={(e) => set({ licenseNumber: e.target.value })} /></Field>
           <div className="sm:col-span-2"><Field label="Tagline" optional htmlFor="b-tag"><input id="b-tag" className="field" value={business.tagline ?? ""} onChange={(e) => set({ tagline: e.target.value })} maxLength={200} /></Field></div>

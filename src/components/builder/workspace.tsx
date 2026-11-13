@@ -1,10 +1,10 @@
 "use client";
 import {
-  ArrowDown, ArrowUp, BookmarkPlus, ChevronDown, ChevronRight, Copy, Layers, MoreHorizontal, Plus, Search, Trash2, X,
+  AlertCircle, ArrowDown, ArrowRightLeft, ArrowUp, BookmarkPlus, Check, ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown, Copy, Layers, MoreHorizontal, Plus, Search, Trash2, X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type Dispatch } from "react";
 import * as Dropdown from "@radix-ui/react-dropdown-menu";
-import { computeEstimate, itemsForGroup, sortedGroups, type EstimateTotals } from "@/lib/estimate/engine";
+import { computeEstimate, itemsForGroup, type EstimateTotals } from "@/lib/estimate/engine";
 import { formatCurrency, formatPercent } from "@/lib/estimate/money";
 import type { Estimate, EstimateGroup, GroupVisibility, LineItem, PricingRule } from "@/lib/estimate/types";
 import { COST_TYPES, UNIT_ABBR, UNITS, getTrade, parseTemplateItem, type TemplateItem } from "@/lib/trades/catalog";
@@ -13,7 +13,11 @@ import { Button } from "../ui/button";
 import type { Action } from "./state";
 import type { useLibrary } from "./library";
 import { PricingPanel } from "./pricing-panel";
+import { useOpenSections } from "./open-sections";
 import { QuantityCalculator } from "./calculators/quantity-calculator";
+import { orderedSections, sectionTrade, tradeBlocks, tradeTotals, type TradeBlock, type TradeTotals } from "@/lib/estimate/trades";
+import { TradeIcon } from "../trade-icon";
+import { AddTradeSelect, useTradeRemoval } from "./trade-controls";
 
 type Lib = ReturnType<typeof useLibrary>;
 
@@ -23,9 +27,11 @@ export const VISIBILITY_LABEL: Record<GroupVisibility, string> = {
   itemized: "Fully itemized",
 };
 
+/** Suggestions for a section come from its own trade (so "Labor" under Roofing suggests roofing labor). */
 function suggestionsForGroup(estimate: Estimate, group: EstimateGroup): TemplateItem[] {
   const out: TemplateItem[] = [];
-  for (const slug of estimate.trades) {
+  const own = sectionTrade(estimate, group);
+  for (const slug of estimate.trades.length > 1 && own ? [own] : estimate.trades) {
     const t = getTrade(slug);
     const g = t?.template.groups.find((x) => x.name.toLowerCase() === group.name.trim().toLowerCase());
     if (g) out.push(...g.items);
@@ -52,7 +58,17 @@ export function Workspace({ estimate, dispatch, lib }: { estimate: Estimate; dis
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [focusId, setFocusId] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
-  const groups = sortedGroups(estimate);
+  const multiTrade = estimate.trades.length > 1;
+  // Trade by trade, in the project's trade order. A single-trade estimate is one block (no trade header).
+  const blocks = tradeBlocks(estimate);
+  const groups = blocks.flatMap((b) => b.groups);
+  // Only the first section (and, with several trades, the first trade) starts open.
+  const { isOpen, toggle, setAll } = useOpenSections(estimate.id, groups.map((g) => g.id), { openAdded: "first" });
+  const tradeOpen = useOpenSections(`${estimate.id}:trades`, estimate.trades, { openAdded: "first" });
+  const tradeSums = multiTrade ? tradeTotals(estimate, totals) : [];
+  const { requestRemove, dialog: removalDialog } = useTradeRemoval(estimate, dispatch);
+  const issueGroups = new Set(totals.issues.map((i) => estimate.items.find((it) => it.id === i.itemId)?.groupId).filter(Boolean));
+  const dismissedFor = (g: EstimateGroup) => suggestionsForGroup(estimate, g).filter((x) => !dismissed.has(`${g.id}:${x.name}`));
 
   useEffect(() => {
     if (!focusId) return;
@@ -89,29 +105,60 @@ export function Workspace({ estimate, dispatch, lib }: { estimate: Estimate; dis
           />
         )}
 
-        {groups.map((g, gi) => (
-          <GroupCard
-            key={g.id}
-            group={g}
-            index={gi}
-            count={groups.length}
-            estimate={estimate}
-            totals={totals}
-            dispatch={dispatch}
-            selected={selected}
-            setSelected={setSelected}
-            addItem={addItem}
-            examples={suggestionsForGroup(estimate, g).filter((x) => !dismissed.has(`${g.id}:${x.name}`)).slice(0, 3)}
-            dismissExample={(name) => setDismissed(new Set(dismissed).add(`${g.id}:${name}`))}
-            fallbackExamples={gi === 0 && estimate.items.length === 0 ? (getTrade(estimate.trades[0])?.template.examples ?? []).slice(0, 3) : []}
-            suggestions={allSuggestions(estimate)}
-            lib={lib}
-          />
-        ))}
+        {(groups.length > 1 || multiTrade) && (
+          <div className="flex justify-end gap-1 text-sm">
+            <Button size="sm" variant="ghost" onClick={() => { setAll(true); tradeOpen.setAll(true); }}><ChevronsUpDown className="h-4 w-4" aria-hidden /> Expand all</Button>
+            <Button size="sm" variant="ghost" onClick={() => { setAll(false); tradeOpen.setAll(false); }}><ChevronsDownUp className="h-4 w-4" aria-hidden /> Collapse all</Button>
+          </div>
+        )}
 
-        <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" onClick={() => dispatch({ type: "addGroup" })}><Plus className="h-4 w-4" /> Add section</Button>
+        {blocks.map((b, bi) => {
+          const cards = b.groups.map((g, gi) => (
+            <GroupCard
+              key={g.id}
+              group={g}
+              index={gi}
+              count={b.groups.length}
+              estimate={estimate}
+              totals={totals}
+              dispatch={dispatch}
+              selected={selected}
+              setSelected={setSelected}
+              addItem={addItem}
+              open={isOpen(g.id)}
+              onToggle={() => toggle(g.id)}
+              hasIssues={issueGroups.has(g.id)}
+              examples={dismissedFor(g)}
+              dismissExample={(name) => setDismissed(new Set(dismissed).add(`${g.id}:${name}`))}
+              fallbackExamples={gi === 0 ? (getTrade(b.trade)?.template.examples ?? []) : []}
+              suggestions={allSuggestions(estimate)}
+              lib={lib}
+            />
+          ));
+          if (!multiTrade) return cards;
+          return (
+            <TradeSection
+              key={b.trade}
+              block={b}
+              index={bi}
+              count={blocks.length}
+              sums={tradeSums[bi]}
+              open={tradeOpen.isOpen(b.trade)}
+              onToggle={() => tradeOpen.toggle(b.trade)}
+              hasIssues={b.groups.some((g) => issueGroups.has(g.id))}
+              dispatch={dispatch}
+              onRemove={() => requestRemove(b.trade)}
+            >
+              {cards}
+            </TradeSection>
+          );
+        })}
+
+        <div className="flex flex-wrap items-center gap-2">
+          {!multiTrade && <Button variant="secondary" onClick={() => dispatch({ type: "addGroup" })}><Plus className="h-4 w-4" /> Add section</Button>}
+          <AddTradeSelect estimate={estimate} dispatch={dispatch} className="min-h-11 md:min-h-9" label={multiTrade ? "+ Add another trade" : "+ Add a trade to this project"} />
         </div>
+        {removalDialog}
       </div>
 
       <PricingPanel estimate={estimate} totals={totals} dispatch={dispatch} />
@@ -145,30 +192,41 @@ function GroupCard(props: {
   group: EstimateGroup; index: number; count: number; estimate: Estimate; totals: EstimateTotals; dispatch: Dispatch<Action>;
   selected: Set<string>; setSelected: (s: Set<string>) => void;
   addItem: (groupId: string, from?: Partial<TemplateItem> & Partial<LineItem>, afterId?: string, field?: "name" | "cost") => void;
+  open: boolean; onToggle: () => void; hasIssues: boolean;
   examples: TemplateItem[]; dismissExample: (name: string) => void; fallbackExamples: TemplateItem[]; suggestions: TemplateItem[]; lib: Lib;
 }) {
-  const { group: g, estimate, totals, dispatch } = props;
-  const [open, setOpen] = useState(true);
+  const { group: g, estimate, totals, dispatch, open } = props;
   const items = itemsForGroup(estimate, g.id);
   const gt = totals.groups[g.id];
-    const examples = items.length === 0 ? (props.examples.length ? props.examples : props.fallbackExamples) : [];
+  const examples = props.examples.length ? props.examples : props.fallbackExamples;
   const projectTotalMode = estimate.displayMode === "project_total";
+  const panelId = `gp-${g.id}`;
+  const sectionName = g.name || "untitled section";
 
   return (
     <section className="rounded-xl border border-line bg-surface shadow-card" aria-label={`Section ${g.name || "untitled"}`}>
-      <header className="flex flex-wrap items-center gap-2 border-b border-line px-3 py-2.5 sm:px-4">
-        <button onClick={() => setOpen(!open)} aria-expanded={open} aria-label={open ? "Collapse section" : "Expand section"} className="rounded p-1 hover:bg-black/5">
-          {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+      <header className={cn("flex flex-wrap items-center gap-x-2 gap-y-1 px-2 py-2 sm:px-3", open && "border-b border-line")}>
+        <button
+          type="button"
+          onClick={props.onToggle}
+          aria-expanded={open}
+          aria-controls={panelId}
+          aria-label={`${open ? "Collapse" : "Expand"} ${sectionName}`}
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-md text-ink-soft hover:bg-black/5 md:h-9 md:w-9"
+        >
+          {open ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
         </button>
         <label className="sr-only" htmlFor={`g-${g.id}`}>Section name</label>
         <input
           id={`g-${g.id}`}
           value={g.name}
           onChange={(e) => dispatch({ type: "updateGroup", id: g.id, patch: { name: e.target.value } })}
-          className="cell min-w-0 flex-1 font-display text-base font-bold"
+          className="cell min-w-0 flex-1 basis-32 font-display text-base font-bold"
           placeholder="Section name"
         />
-        <div className="flex items-center gap-3 text-sm">
+        <div className="flex items-center gap-3 text-sm max-sm:order-last max-sm:w-full max-sm:pb-1 max-sm:pl-12">
+          {!open && props.hasIssues && <span className="inline-flex items-center gap-1 rounded bg-danger-tint px-1.5 py-0.5 text-xs font-semibold text-danger"><AlertCircle className="h-3.5 w-3.5" aria-hidden /> Needs attention</span>}
+          {!open && <button type="button" onClick={props.onToggle} className="text-xs text-muted hover:text-ink" tabIndex={-1} aria-hidden="true">{items.length} {items.length === 1 ? "item" : "items"}</button>}
           <span className="hidden text-muted sm:inline">Cost <span className="tabular font-semibold text-ink-soft">{formatCurrency(gt.cost)}</span></span>
           <span className="text-muted">Price <span className="tabular font-bold text-ink">{formatCurrency(gt.price)}</span></span>
           <span className={cn("hidden rounded px-1.5 py-0.5 text-xs font-semibold sm:inline", gt.grossProfit.isNegative() ? "bg-danger-tint text-danger" : "bg-ok-tint text-ok")}>
@@ -179,7 +237,7 @@ function GroupCard(props: {
       </header>
 
       {open && (
-        <div>
+        <div id={panelId}>
           <div className="flex flex-wrap items-center gap-2 border-b border-line bg-paper/60 px-3 py-2 text-xs sm:px-4">
             <label htmlFor={`gv-${g.id}`} className="font-semibold text-ink-soft">Customer sees:</label>
             <select
@@ -198,9 +256,11 @@ function GroupCard(props: {
           </div>
 
           {items.length > 0 && (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[860px] text-sm">
-                <thead>
+            // `relative` keeps absolutely positioned children (sr-only labels) inside the scroll box,
+            // otherwise they widen the whole page on phones. Below md each row renders as a card.
+            <div className="relative md:overflow-x-auto">
+              <table className="w-full text-sm max-md:block md:min-w-[860px]">
+                <thead className="max-md:hidden">
                   <tr className="border-b border-line text-left text-xs font-semibold text-muted">
                     <th className="w-8 px-2 py-2"><span className="sr-only">Select</span></th>
                     <th className="px-1 py-2">Item</th>
@@ -214,7 +274,7 @@ function GroupCard(props: {
                     <th className="w-16 px-1 py-2"><span className="sr-only">Actions</span></th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="max-md:block max-md:divide-y max-md:divide-line">
                   {items.map((it, idx) => (
                     <ItemRow
                       key={it.id}
@@ -239,26 +299,12 @@ function GroupCard(props: {
           )}
 
           {examples.length > 0 && (
-            <div className="px-3 py-2 sm:px-4">
-              <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted">Examples (not included in your totals)</p>
-              <ul className="divide-y divide-dashed divide-line rounded-lg border border-dashed border-line-strong">
-                {examples.map((ex) => (
-                  <li key={ex.name} className="flex items-center gap-3 px-3 py-2 text-sm text-muted opacity-70 transition hover:opacity-100">
-                    <button
-                      className="flex flex-1 items-center gap-3 text-left"
-                      onClick={() => props.addItem(g.id, ex, undefined, "cost")}
-                      aria-label={`Add example item ${ex.name} to this section`}
-                    >
-                      <span className="rounded bg-black/5 px-1.5 py-0.5 text-[10px] font-bold uppercase">Example</span>
-                      <span className="flex-1 italic">{ex.name}</span>
-                      <span className="text-xs">{UNIT_ABBR[ex.unit] ?? ex.unit}</span>
-                      <span className="text-xs font-semibold text-brand">Click to add</span>
-                    </button>
-                    <button onClick={() => props.dismissExample(ex.name)} className="rounded p-1 hover:bg-black/5" aria-label={`Dismiss example ${ex.name}`}><X className="h-3.5 w-3.5" /></button>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <SuggestionChips
+              suggestions={examples}
+              items={items}
+              onAdd={(ex) => props.addItem(g.id, ex, undefined, "cost")}
+              onDismiss={props.dismissExample}
+            />
           )}
 
           <div className="flex flex-wrap items-center gap-2 px-3 py-2.5 sm:px-4">
@@ -271,17 +317,168 @@ function GroupCard(props: {
   );
 }
 
-function GroupMenu({ group: g, index, count, dispatch }: { group: EstimateGroup; index: number; count: number; dispatch: Dispatch<Action> }) {
+/**
+ * One trade in a multi-trade estimate: a collapsible block holding that trade's own sections, with
+ * the trade's subtotal (pre-adjustment, pre-tax). Collapsing only hides rows; nothing is lost.
+ */
+function TradeSection({ block: b, index, count, sums, open, onToggle, hasIssues, dispatch, onRemove, children }: {
+  block: TradeBlock; index: number; count: number; sums: TradeTotals | undefined; open: boolean; onToggle: () => void; hasIssues: boolean;
+  dispatch: Dispatch<Action>; onRemove: () => void; children: React.ReactNode;
+}) {
+  const panelId = `trade-${b.trade}`;
+  const icon = getTrade(b.trade)?.icon ?? "Hammer";
+  return (
+    <section className="rounded-2xl border border-line-strong bg-paper/60" aria-label={`${b.name} trade`}>
+      <header className={cn("flex flex-wrap items-center gap-x-2 gap-y-1 px-2 py-2 sm:px-3", open && "border-b border-line")}>
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={open}
+          aria-controls={panelId}
+          aria-label={`${open ? "Collapse" : "Expand"} ${b.name} trade`}
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-md text-ink-soft hover:bg-black/5 md:h-9 md:w-9"
+        >
+          {open ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
+        </button>
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-tint text-brand" aria-hidden><TradeIcon name={icon} className="h-5 w-5" /></span>
+        <div className="min-w-0 flex-1 basis-40">
+          <h2 className="truncate font-display text-lg font-extrabold leading-tight">
+            <span className="tabular text-muted">{index + 1}.</span> {b.name}
+          </h2>
+          <p className="text-xs text-muted">
+            {b.groups.length} {b.groups.length === 1 ? "section" : "sections"} · {sums?.itemCount ?? 0} {sums?.itemCount === 1 ? "item" : "items"}
+          </p>
+        </div>
+        <div className="flex items-center gap-3 text-sm max-sm:order-last max-sm:w-full max-sm:pb-1 max-sm:pl-12">
+          {!open && hasIssues && <span className="inline-flex items-center gap-1 rounded bg-danger-tint px-1.5 py-0.5 text-xs font-semibold text-danger"><AlertCircle className="h-3.5 w-3.5" aria-hidden /> Needs attention</span>}
+          {sums && <span className="hidden text-muted sm:inline">Cost <span className="tabular font-semibold text-ink-soft">{formatCurrency(sums.cost)}</span></span>}
+          {sums && <span className="text-muted">Subtotal <span className="tabular font-bold text-ink">{formatCurrency(sums.price)}</span></span>}
+          {sums && (
+            <span className={cn("hidden rounded px-1.5 py-0.5 text-xs font-semibold sm:inline", sums.grossProfit.isNegative() ? "bg-danger-tint text-danger" : "bg-ok-tint text-ok")}>
+              {sums.grossMargin ? formatPercent(sums.grossMargin) : "—"} GM
+            </span>
+          )}
+        </div>
+        <Dropdown.Root>
+          <Dropdown.Trigger className="grid h-11 w-11 shrink-0 place-items-center rounded-md hover:bg-black/5 md:h-9 md:w-9" aria-label={`Trade actions for ${b.name}`}><MoreHorizontal className="h-4 w-4" /></Dropdown.Trigger>
+          <Dropdown.Portal>
+            <Dropdown.Content align="end" sideOffset={4} className="z-50 min-w-[200px] rounded-lg border border-line bg-surface p-1 text-sm shadow-lg">
+              <MenuItem onSelect={() => dispatch({ type: "moveTrade", trade: b.trade, dir: -1 })} disabled={index === 0}><ArrowUp className="h-4 w-4" /> Move trade up</MenuItem>
+              <MenuItem onSelect={() => dispatch({ type: "moveTrade", trade: b.trade, dir: 1 })} disabled={index === count - 1}><ArrowDown className="h-4 w-4" /> Move trade down</MenuItem>
+              <Dropdown.Separator className="my-1 h-px bg-line" />
+              <MenuItem onSelect={onRemove} danger><Trash2 className="h-4 w-4" /> Remove trade</MenuItem>
+            </Dropdown.Content>
+          </Dropdown.Portal>
+        </Dropdown.Root>
+      </header>
+      {open && (
+        <div id={panelId} className="space-y-3 p-2 sm:p-3">
+          {children}
+          {b.groups.length === 0 && <p className="px-1 text-sm text-muted">No sections yet for {b.name}.</p>}
+          <Button size="sm" variant="secondary" onClick={() => dispatch({ type: "addGroup", trade: b.trade })}><Plus className="h-4 w-4" /> Add section to {b.name}</Button>
+        </div>
+      )}
+    </section>
+  );
+}
+
+const CHIP_LIMIT = 6;
+
+/**
+ * Trade suggestions for a section. They stay visible after one is picked so several can be added
+ * in a row; picked ones turn into a checked "Added" chip and clicking one again jumps to the existing
+ * row instead of adding a duplicate. Suggestions are never counted in totals until added.
+ */
+function SuggestionChips({ suggestions, items, onAdd, onDismiss }: {
+  suggestions: TemplateItem[]; items: LineItem[]; onAdd: (s: TemplateItem) => void; onDismiss: (name: string) => void;
+}) {
+  const [showAll, setShowAll] = useState(false);
+  const added = new Map(items.map((i) => [i.name.trim().toLowerCase(), i.id]));
+  const pending = suggestions.filter((x) => !added.has(x.name.toLowerCase()));
+  // Unpicked suggestions first, so the next useful one is always in view.
+  const ordered = [...pending, ...suggestions.filter((x) => added.has(x.name.toLowerCase()))];
+  const visible = showAll ? ordered : ordered.slice(0, CHIP_LIMIT);
+  const hiddenCount = ordered.length - visible.length;
+  const focusRow = (id: string) => {
+    const el = document.querySelector<HTMLInputElement>(`[data-focus="${id}:name"]`);
+    el?.scrollIntoView({ block: "center", behavior: "smooth" });
+    el?.focus({ preventScroll: true });
+  };
+  return (
+    <div className="px-3 py-2.5 sm:px-4">
+      <p className="mb-1.5 text-xs font-semibold text-muted">
+        <span className="uppercase tracking-wider">Suggested items</span>
+        <span className="font-normal"> · tap to add. Not in your totals until added.</span>
+      </p>
+      <ul className="flex flex-wrap gap-1.5" aria-label="Suggested items for this section">
+        {visible.map((ex) => {
+          const id = added.get(ex.name.toLowerCase());
+          return (
+            <li key={ex.name} className="flex max-w-full">
+              {id ? (
+                <button
+                  type="button"
+                  onClick={() => focusRow(id)}
+                  className="inline-flex min-h-10 max-w-full items-center gap-1.5 rounded-full border border-teal/50 bg-teal/10 px-3 text-sm font-medium text-ink md:min-h-8"
+                  aria-label={`${ex.name} is already in this section. Go to it.`}
+                >
+                  <Check className="h-3.5 w-3.5 shrink-0 text-teal" strokeWidth={3} aria-hidden />
+                  <span className="truncate">{ex.name}</span>
+                  <span className="text-xs text-muted">Added</span>
+                </button>
+              ) : (
+                <span className="inline-flex max-w-full items-stretch rounded-full border border-dashed border-line-strong bg-surface text-sm text-ink-soft hover:border-brand/50">
+                  <button
+                    type="button"
+                    onClick={() => onAdd(ex)}
+                    className="inline-flex min-h-10 min-w-0 items-center gap-1.5 rounded-l-full py-1 pl-3 pr-1.5 hover:text-ink md:min-h-8"
+                    aria-label={`Add ${ex.name} to this section`}
+                  >
+                    <Plus className="h-3.5 w-3.5 shrink-0 text-brand" aria-hidden />
+                    <span className="truncate">{ex.name}</span>
+                    <span className="text-xs text-muted">{UNIT_ABBR[ex.unit] ?? ex.unit}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onDismiss(ex.name)}
+                    className="grid min-h-10 w-9 shrink-0 place-items-center rounded-r-full text-muted hover:bg-black/5 hover:text-ink md:min-h-8 md:w-7"
+                    aria-label={`Hide suggestion ${ex.name}`}
+                  >
+                    <X className="h-3.5 w-3.5" aria-hidden />
+                  </button>
+                </span>
+              )}
+            </li>
+          );
+        })}
+        {(hiddenCount > 0 || showAll) && ordered.length > CHIP_LIMIT && (
+          <li>
+            <button type="button" onClick={() => setShowAll(!showAll)} aria-expanded={showAll} className="inline-flex min-h-10 items-center rounded-full px-3 text-sm font-semibold text-brand hover:bg-brand-tint md:min-h-8">
+              {showAll ? "Show fewer" : `+${hiddenCount} more`}
+            </button>
+          </li>
+        )}
+      </ul>
+    </div>
+  );
+}
+
+function GroupMenu({ group: g, index, count, dispatch, estimate }: { group: EstimateGroup; index: number; count: number; dispatch: Dispatch<Action>; estimate: Estimate }) {
   const [editPricing, setEditPricing] = useState(false);
+  const own = sectionTrade(estimate, g);
+  const otherTrades = estimate.trades.length > 1 ? estimate.trades.filter((t) => t !== own) : [];
   return (
     <>
       <Dropdown.Root>
-        <Dropdown.Trigger className="rounded p-1.5 hover:bg-black/5" aria-label="Section actions"><MoreHorizontal className="h-4 w-4" /></Dropdown.Trigger>
+        <Dropdown.Trigger className="grid h-11 w-11 shrink-0 place-items-center rounded-md hover:bg-black/5 md:h-9 md:w-9" aria-label={`Actions for ${g.name || "section"}`}><MoreHorizontal className="h-4 w-4" /></Dropdown.Trigger>
         <Dropdown.Portal>
           <Dropdown.Content align="end" sideOffset={4} className="z-50 min-w-[200px] rounded-lg border border-line bg-surface p-1 text-sm shadow-lg">
             <MenuItem onSelect={() => dispatch({ type: "moveGroup", id: g.id, dir: -1 })} disabled={index === 0}><ArrowUp className="h-4 w-4" /> Move section up</MenuItem>
             <MenuItem onSelect={() => dispatch({ type: "moveGroup", id: g.id, dir: 1 })} disabled={index === count - 1}><ArrowDown className="h-4 w-4" /> Move section down</MenuItem>
             <MenuItem onSelect={() => setEditPricing(true)}>% Section pricing override</MenuItem>
+            {otherTrades.map((t) => (
+              <MenuItem key={t} onSelect={() => dispatch({ type: "moveGroupToTrade", id: g.id, trade: t })}><ArrowRightLeft className="h-4 w-4" /> Move to {getTrade(t)?.name ?? t}</MenuItem>
+            ))}
             <Dropdown.Separator className="my-1 h-px bg-line" />
             <MenuItem onSelect={() => dispatch({ type: "deleteGroup", id: g.id })} danger><Trash2 className="h-4 w-4" /> Delete section</MenuItem>
           </Dropdown.Content>
@@ -361,63 +558,70 @@ function ItemRow({ item: it, isLast, totals, estimate, dispatch, selected, toggl
       }
     }
   };
-  const groups = sortedGroups(estimate);
+  const groups = orderedSections(estimate);
+  const multiTrade = estimate.trades.length > 1;
   const customUnit = !(UNITS as readonly string[]).includes(it.unit);
 
   return (
     <>
-      <tr className={cn("border-b border-line/70 align-middle", selected && "bg-brand-tint/50")}>
-        <td className="px-2 text-center">
-          <input type="checkbox" checked={selected} onChange={toggleSelected} aria-label={`Select ${it.name || "item"}`} className="h-4 w-4 accent-[var(--color-brand)]" />
+      <tr className={cn("border-b border-line/70 align-middle max-md:grid max-md:grid-cols-12 max-md:items-end max-md:gap-x-2 max-md:gap-y-2 max-md:border-0 max-md:px-3 max-md:py-3", selected && "bg-brand-tint/50")}>
+        <td className="px-2 text-center max-md:col-span-1 max-md:row-start-1 max-md:self-start max-md:px-0">
+          <label className="inline-grid place-items-center max-md:h-11 max-md:w-8">
+            <input type="checkbox" checked={selected} onChange={toggleSelected} aria-label={`Select ${it.name || "item"}`} className="h-4 w-4 accent-[var(--color-brand)] max-md:h-5 max-md:w-5" />
+          </label>
         </td>
-        <td className="px-1 py-1">
+        <td className="px-1 py-1 max-md:col-span-10 max-md:row-start-1 max-md:p-0">
           <div className="flex items-center gap-1">
-            <button onClick={() => setExpanded(!expanded)} className="rounded p-0.5 text-muted hover:bg-black/5" aria-label={expanded ? "Hide item details" : "Show item details"} aria-expanded={expanded}>
-              {expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+            <button onClick={() => setExpanded(!expanded)} className="grid shrink-0 place-items-center rounded p-0.5 text-muted hover:bg-black/5 max-md:h-11 max-md:w-8" aria-label={expanded ? "Hide item details" : "Show item details"} aria-expanded={expanded}>
+              {expanded ? <ChevronDown className="h-3.5 w-3.5 max-md:h-4 max-md:w-4" /> : <ChevronRight className="h-3.5 w-3.5 max-md:h-4 max-md:w-4" />}
             </button>
-            <input data-focus={`${it.id}:name`} data-col="name" value={it.name} onChange={(e) => up({ name: e.target.value })} onKeyDown={onKey} className="cell font-medium" placeholder="Item name" aria-label="Item name" />
+            <input data-focus={`${it.id}:name`} data-col="name" value={it.name} onChange={(e) => up({ name: e.target.value })} onKeyDown={onKey} className="cell font-medium max-md:min-h-11 max-md:border-line max-md:text-base" placeholder="Item name" aria-label="Item name" />
           </div>
-          <div className="flex flex-wrap gap-1 pl-6">
+          <div className="flex flex-wrap gap-1 pl-6 max-md:pl-9">
             {it.pricingOverride && <span className="rounded bg-accent-tint px-1 text-[10px] font-semibold text-accent-dark">{it.pricingOverride.percent}% {it.pricingOverride.mode}</span>}
             {it.treatment === "pass_through" && <span className="rounded bg-brand-tint px-1 text-[10px] font-semibold text-brand">at cost</span>}
             {!it.showOnProposal && <span className="rounded bg-black/5 px-1 text-[10px] font-semibold text-muted">hidden from customer</span>}
             {!it.taxable && <span className="rounded bg-black/5 px-1 text-[10px] font-semibold text-muted">non-taxable</span>}
           </div>
         </td>
-        <td className="px-1">
-          <select value={it.costType} onChange={(e) => up({ costType: e.target.value as LineItem["costType"] })} className="cell" aria-label="Cost type">
+        <td className="px-1 max-md:col-span-4 max-md:p-0">
+          <span aria-hidden="true" className="mb-0.5 block text-[11px] font-semibold text-muted md:hidden">Type</span>
+          <select value={it.costType} onChange={(e) => up({ costType: e.target.value as LineItem["costType"] })} className="cell max-md:min-h-11 max-md:border-line" aria-label="Cost type">
             {COST_TYPES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
           </select>
         </td>
-        <td className="px-1">
+        <td className="px-1 max-md:col-span-4 max-md:p-0">
+          <span aria-hidden="true" className="mb-0.5 block text-[11px] font-semibold text-muted md:hidden">Qty</span>
           <div className="flex items-center gap-0.5">
-          <input data-col="qty" value={it.quantity} onChange={(e) => up({ quantity: e.target.value })} onKeyDown={onKey} inputMode="decimal" className="cell tabular text-right" aria-label="Quantity" aria-invalid={invalid("quantity")} />
-          <QuantityCalculator item={it} estimate={estimate} dispatch={dispatch} />
+            <input data-col="qty" value={it.quantity} onChange={(e) => up({ quantity: e.target.value })} onKeyDown={onKey} inputMode="decimal" className="cell tabular min-w-0 text-right max-md:min-h-11 max-md:border-line max-md:text-base" aria-label="Quantity" aria-invalid={invalid("quantity")} />
+            <QuantityCalculator item={it} estimate={estimate} dispatch={dispatch} />
           </div>
         </td>
-        <td className="px-1">
+        <td className="px-1 max-md:col-span-4 max-md:p-0">
+          <span aria-hidden="true" className="mb-0.5 block text-[11px] font-semibold text-muted md:hidden">Unit</span>
           {customUnit ? (
-            <input value={it.unit} onChange={(e) => up({ unit: e.target.value || "each" })} className="cell" aria-label="Custom unit" onBlur={(e) => !e.target.value && up({ unit: "each" })} />
+            <input value={it.unit} onChange={(e) => up({ unit: e.target.value || "each" })} className="cell max-md:min-h-11 max-md:border-line" aria-label="Custom unit" onBlur={(e) => !e.target.value && up({ unit: "each" })} />
           ) : (
-            <select value={it.unit} onChange={(e) => up({ unit: e.target.value === "__custom" ? "custom" : e.target.value })} className="cell" aria-label="Unit">
+            <select value={it.unit} onChange={(e) => up({ unit: e.target.value === "__custom" ? "custom" : e.target.value })} className="cell max-md:min-h-11 max-md:border-line" aria-label="Unit">
               {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
               <option value="__custom">Custom…</option>
             </select>
           )}
         </td>
-        <td className="px-1">
+        <td className="px-1 max-md:col-span-6 max-md:p-0">
+          <span aria-hidden="true" className="mb-0.5 block text-[11px] font-semibold text-muted md:hidden">Unit cost (internal)</span>
           <div className="relative">
             <span className="pointer-events-none absolute left-1.5 top-1/2 -translate-y-1/2 text-xs text-muted">$</span>
-            <input data-focus={`${it.id}:cost`} data-col="cost" value={it.unitCost} onChange={(e) => up({ unitCost: e.target.value })} onKeyDown={onKey} inputMode="decimal" placeholder="0.00" className="cell tabular pl-4 text-right" aria-label="Internal unit cost" aria-invalid={invalid("unitCost")} />
+            <input data-focus={`${it.id}:cost`} data-col="cost" value={it.unitCost} onChange={(e) => up({ unitCost: e.target.value })} onKeyDown={onKey} inputMode="decimal" placeholder="0.00" className="cell tabular pl-4 text-right max-md:min-h-11 max-md:border-line max-md:text-base" aria-label="Internal unit cost" aria-invalid={invalid("unitCost")} />
           </div>
         </td>
-        <td className="tabular px-1 text-right text-ink-soft">{t ? formatCurrency(t.extendedCost) : "—"}</td>
-        <td className="tabular px-1 text-right text-ink-soft">{t ? formatCurrency(t.unitPrice) : "—"}</td>
-        <td className="tabular px-1 text-right font-semibold">{t ? formatCurrency(t.extendedPrice) : "—"}</td>
-        <td className="px-1">
+        <td className="tabular px-1 text-right text-ink-soft max-md:col-span-6 max-md:row-start-4 max-md:p-0 max-md:text-left max-md:text-xs"><span className="text-muted md:hidden">Ext. cost </span>{t ? formatCurrency(t.extendedCost) : "—"}</td>
+        <td className="tabular px-1 text-right text-ink-soft max-md:col-span-6 max-md:row-start-4 max-md:p-0 max-md:text-xs"><span className="text-muted md:hidden">Unit price </span>{t ? formatCurrency(t.unitPrice) : "—"}</td>
+        <td className="tabular px-1 text-right font-semibold max-md:col-span-6 max-md:col-start-7 max-md:row-start-3 max-md:self-center max-md:p-0 max-md:text-base"><span aria-hidden="true" className="mb-0.5 block text-[11px] font-semibold text-muted md:hidden">Customer price</span>{t ? formatCurrency(t.extendedPrice) : "—"}</td>
+        <td className="px-1 max-md:col-span-1 max-md:col-start-12 max-md:row-start-1 max-md:self-start max-md:p-0">
           <div className="flex justify-end">
             <Dropdown.Root>
-              <Dropdown.Trigger className="rounded p-1.5 hover:bg-black/5" aria-label={`Actions for ${it.name || "item"}`}><MoreHorizontal className="h-4 w-4" /></Dropdown.Trigger>
+              <Dropdown.Trigger className="grid place-items-center rounded p-1.5 hover:bg-black/5 max-md:h-11 max-md:w-8" aria-label={`Actions for ${it.name || "item"}`}><MoreHorizontal className="h-4 w-4" /></Dropdown.Trigger>
               <Dropdown.Portal>
                 <Dropdown.Content align="end" sideOffset={4} className="z-50 min-w-[210px] rounded-lg border border-line bg-surface p-1 text-sm shadow-lg">
                   <MenuItem onSelect={() => dispatch({ type: "duplicateItem", id: it.id })}><Copy className="h-4 w-4" /> Duplicate</MenuItem>
@@ -428,7 +632,7 @@ function ItemRow({ item: it, isLast, totals, estimate, dispatch, selected, toggl
                     <Dropdown.Portal>
                       <Dropdown.SubContent className="z-50 min-w-[180px] rounded-lg border border-line bg-surface p-1 text-sm shadow-lg">
                         {groups.filter((g) => g.id !== it.groupId).map((g) => (
-                          <MenuItem key={g.id} onSelect={() => dispatch({ type: "moveItemToGroup", id: it.id, groupId: g.id })}>{g.name || "Untitled"}</MenuItem>
+                          <MenuItem key={g.id} onSelect={() => dispatch({ type: "moveItemToGroup", id: it.id, groupId: g.id })}>{multiTrade ? `${getTrade(sectionTrade(estimate, g))?.name ?? ""} · ` : ""}{g.name || "Untitled"}</MenuItem>
                         ))}
                       </Dropdown.SubContent>
                     </Dropdown.Portal>
@@ -444,9 +648,9 @@ function ItemRow({ item: it, isLast, totals, estimate, dispatch, selected, toggl
         </td>
       </tr>
       {expanded && (
-        <tr className="border-b border-line bg-paper/60">
-          <td />
-          <td colSpan={9} className="px-2 py-3">
+        <tr className="border-b border-line bg-paper/60 max-md:block">
+          <td className="max-md:hidden" />
+          <td colSpan={9} className="px-2 py-3 max-md:block max-md:px-3">
             <div className="grid gap-3 md:grid-cols-2">
               <div>
                 <label className="label" htmlFor={`d-${it.id}`}>Description <span className="font-normal text-muted">(can appear on proposal)</span></label>
@@ -478,7 +682,7 @@ function ItemRow({ item: it, isLast, totals, estimate, dispatch, selected, toggl
         </tr>
       )}
       {editPricing && (
-        <tr><td colSpan={10}>
+        <tr className="max-md:block"><td colSpan={10} className="max-md:block">
           <OverrideEditor title={`Pricing for "${it.name || "item"}"`} rule={it.pricingOverride ?? null} onClose={() => setEditPricing(false)} onSave={(r) => { up({ pricingOverride: r }); setEditPricing(false); }} />
         </td></tr>
       )}
@@ -499,18 +703,24 @@ function AddFromLibrary({ group, estimate, suggestions, lib, dispatch }: { group
     return () => { document.removeEventListener("mousedown", onDoc); document.removeEventListener("keydown", onEsc); };
   }, [open]);
   const s = q.trim().toLowerCase();
-  const inEstimate = new Set(estimate.items.map((i) => i.name.toLowerCase()));
-  const sug = suggestions.filter((x) => (!s || x.name.toLowerCase().includes(s)) && !inEstimate.has(x.name.toLowerCase())).slice(0, 12);
+  // Items already in this section stay listed with an "Added" mark (instead of vanishing) and can't be added twice by accident.
+  const inSection = new Set(estimate.items.filter((i) => i.groupId === group.id).map((i) => i.name.trim().toLowerCase()));
+  const has = (name: string) => inSection.has(name.trim().toLowerCase());
+  const sug = suggestions.filter((x) => !s || x.name.toLowerCase().includes(s)).slice(0, 20);
   const favs = lib.items.filter((x) => !s || x.name.toLowerCase().includes(s)).slice(0, 8);
   const asm = lib.assemblies.filter((x) => !s || x.name.toLowerCase().includes(s)).slice(0, 6);
-  const custom = s && !sug.length && !favs.length ? parseTemplateItem(q.trim()) : null;
+  const custom = s && ![...sug, ...favs].some((x) => x.name.toLowerCase() === s) ? parseTemplateItem(q.trim()) : null;
 
   return (
     <div className="relative" ref={ref}>
-      <Button size="sm" variant="ghost" onClick={() => setOpen(!open)} aria-expanded={open}><Search className="h-4 w-4" /> Suggested & saved items</Button>
+      <Button size="sm" variant="ghost" onClick={() => setOpen(!open)} aria-expanded={open} className="max-md:min-h-11"><Search className="h-4 w-4" /> Suggested & saved items</Button>
       {open && (
-        <div className="absolute left-0 z-30 mt-1 w-[340px] max-w-[90vw] rounded-lg border border-line bg-surface p-2 shadow-xl">
-          <input autoFocus className="field field-sm" placeholder="Search items…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search suggested and saved items" />
+        <div className="absolute left-0 z-30 mt-1 w-[340px] max-w-[calc(100vw-2rem)] rounded-lg border border-line bg-surface p-2 shadow-xl">
+          <div className="flex items-center gap-2">
+            <input autoFocus className="field field-sm min-w-0 flex-1" placeholder="Search items…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search suggested and saved items" />
+            <Button size="sm" variant="secondary" onClick={() => setOpen(false)}>Done</Button>
+          </div>
+          <p className="mt-1 px-1 text-[11px] text-muted">Pick as many as you need. Added items show a check.</p>
           <div className="mt-2 max-h-72 overflow-y-auto text-sm">
             {asm.length > 0 && <p className="px-2 pt-1 text-[11px] font-bold uppercase tracking-wider text-muted">Assemblies</p>}
             {asm.map((a) => (
@@ -520,19 +730,15 @@ function AddFromLibrary({ group, estimate, suggestions, lib, dispatch }: { group
             ))}
             {favs.length > 0 && <p className="px-2 pt-2 text-[11px] font-bold uppercase tracking-wider text-muted">Favorites</p>}
             {favs.map((f) => (
-              <button key={f.id} className="flex w-full justify-between rounded px-2 py-1.5 text-left hover:bg-paper" onClick={() => { dispatch({ type: "addItem", groupId: group.id, from: { ...f, id: undefined } }); setOpen(false); }}>
-                <span>{f.name}</span><span className="text-xs text-muted">{f.unitCost ? `${formatCurrency(f.unitCost)}/${UNIT_ABBR[f.unit] ?? f.unit}` : UNIT_ABBR[f.unit] ?? f.unit}</span>
-              </button>
+              <PickRow key={f.id} name={f.name} added={has(f.name)} meta={f.unitCost ? `${formatCurrency(f.unitCost)}/${UNIT_ABBR[f.unit] ?? f.unit}` : UNIT_ABBR[f.unit] ?? f.unit} onPick={() => dispatch({ type: "addItem", groupId: group.id, from: { ...f, id: undefined } })} />
             ))}
             {sug.length > 0 && <p className="px-2 pt-2 text-[11px] font-bold uppercase tracking-wider text-muted">Suggested for {estimate.trades.map((t) => getTrade(t)?.name ?? t).join(", ")}</p>}
             {sug.map((x) => (
-              <button key={x.name} className="flex w-full justify-between rounded px-2 py-1.5 text-left hover:bg-paper" onClick={() => { dispatch({ type: "addItem", groupId: group.id, from: x }); setOpen(false); }}>
-                <span>{x.name}</span><span className="text-xs text-muted">{UNIT_ABBR[x.unit] ?? x.unit} · no price</span>
-              </button>
+              <PickRow key={x.name} name={x.name} added={has(x.name)} meta={`${UNIT_ABBR[x.unit] ?? x.unit} · no price`} onPick={() => dispatch({ type: "addItem", groupId: group.id, from: x })} />
             ))}
             {custom && (
-              <button className="w-full rounded px-2 py-1.5 text-left hover:bg-paper" onClick={() => { dispatch({ type: "addItem", groupId: group.id, from: { name: q.trim() } }); setOpen(false); }}>
-                Add “{q.trim()}”
+              <button className="w-full rounded px-2 py-2 text-left font-medium text-brand hover:bg-paper" onClick={() => { dispatch({ type: "addItem", groupId: group.id, from: { name: q.trim() } }); setQ(""); }}>
+                <Plus className="mr-1 inline h-3.5 w-3.5" aria-hidden />Add custom item “{q.trim()}”
               </button>
             )}
             {!asm.length && !favs.length && !sug.length && !custom && <p className="px-2 py-3 text-muted">Nothing found.</p>}
@@ -540,5 +746,23 @@ function AddFromLibrary({ group, estimate, suggestions, lib, dispatch }: { group
         </div>
       )}
     </div>
+  );
+}
+
+function PickRow({ name, meta, added, onPick }: { name: string; meta: string; added: boolean; onPick: () => void }) {
+  return (
+    <button
+      type="button"
+      disabled={added}
+      onClick={onPick}
+      aria-label={added ? `${name}, already added to this section` : `Add ${name}`}
+      className={cn("flex min-h-10 w-full items-center justify-between gap-2 rounded px-2 py-1.5 text-left md:min-h-8", added ? "cursor-default text-ink-soft" : "hover:bg-paper")}
+    >
+      <span className="flex min-w-0 items-center gap-1.5">
+        {added ? <Check className="h-3.5 w-3.5 shrink-0 text-teal" strokeWidth={3} aria-hidden /> : <Plus className="h-3.5 w-3.5 shrink-0 text-brand" aria-hidden />}
+        <span className="truncate">{name}</span>
+      </span>
+      <span className="shrink-0 text-xs text-muted">{added ? "Added" : meta}</span>
+    </button>
   );
 }

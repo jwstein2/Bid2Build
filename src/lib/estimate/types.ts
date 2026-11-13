@@ -68,6 +68,11 @@ export interface EstimateGroup {
   sortOrder: number;
   /** Override pricing for every item in the group (items may still override). */
   pricingOverride?: PricingRule | null;
+  /**
+   * Slug of the project trade this section belongs to (see lib/estimate/trades.ts). Missing on
+   * sections saved before trade sections existed: those belong to the primary trade.
+   */
+  trade?: string | null;
 }
 
 export interface EstimateCustomer {

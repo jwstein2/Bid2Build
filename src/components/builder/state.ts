@@ -1,12 +1,15 @@
-import { newGroup, newLineItem, uid } from "@/lib/estimate/factory";
+import { newLineItem, uid } from "@/lib/estimate/factory";
 import type { Estimate, EstimateGroup, LineItem, PricingRule } from "@/lib/estimate/types";
 import type { TemplateItem } from "@/lib/trades/catalog";
 import type { CalcRecord } from "@/lib/calculators/types";
+import { addSection, addTrade, moveSectionToTrade, moveSectionWithinTrade, moveTrade, removeTrade, restoreTrade } from "@/lib/estimate/trades";
+import { tradeName } from "@/lib/trades/catalog";
 
 export type Trash =
   | { kind: "item"; item: LineItem; label: string }
   | { kind: "group"; group: EstimateGroup; items: LineItem[]; label: string }
-  | { kind: "items"; items: LineItem[]; label: string };
+  | { kind: "items"; items: LineItem[]; label: string }
+  | { kind: "trade"; trade: string; index: number; groups: EstimateGroup[]; items: LineItem[]; label: string };
 
 export type Action =
   | { type: "replace"; estimate: Estimate }
@@ -22,7 +25,11 @@ export type Action =
   | { type: "moveItem"; id: string; dir: -1 | 1 }
   | { type: "moveItemToGroup"; id: string; groupId: string }
   | { type: "bulkOverride"; ids: string[]; rule: PricingRule | null }
-  | { type: "addGroup"; name?: string }
+  | { type: "addGroup"; name?: string; trade?: string }
+  | { type: "addTrade"; trade: string }
+  | { type: "removeTrade"; trade: string; keepIn?: string }
+  | { type: "moveTrade"; trade: string; dir: -1 | 1 }
+  | { type: "moveGroupToTrade"; id: string; trade: string }
   | { type: "updateGroup"; id: string; patch: Partial<EstimateGroup> }
   | { type: "deleteGroup"; id: string }
   | { type: "moveGroup"; id: string; dir: -1 | 1 }
@@ -121,10 +128,28 @@ export function reducer(state: State, action: Action): State {
       const ids = new Set(action.ids);
       return next({ ...e, items: e.items.map((i) => (ids.has(i.id) ? { ...i, pricingOverride: action.rule } : i)) });
     }
-    case "addGroup": {
-      const groups = [...e.groups].sort((a, b) => a.sortOrder - b.sortOrder);
-      groups.push(newGroup(action.name ?? "New section", groups.length));
-      return next({ ...e, groups: renumber(groups) });
+    case "addGroup":
+      return next(addSection(e, action.name ?? "New section", action.trade));
+    case "addTrade": {
+      const added = addTrade(e, action.trade);
+      return added === e ? state : next(added);
+    }
+    case "removeTrade": {
+      const r = removeTrade(e, action.trade, { keepIn: action.keepIn });
+      if (!r) return state;
+      // Deleted sections go to the undo stack, like a deleted section does.
+      const trash = r.groups.length
+        ? [...state.trash, { kind: "trade" as const, trade: action.trade, index: r.index, groups: r.groups, items: r.items, label: tradeName(action.trade) }].slice(-20)
+        : state.trash;
+      return next(r.estimate, trash);
+    }
+    case "moveTrade": {
+      const moved = moveTrade(e, action.trade, action.dir);
+      return moved === e ? state : next(moved);
+    }
+    case "moveGroupToTrade": {
+      const moved = moveSectionToTrade(e, action.id, action.trade);
+      return moved === e ? state : next(moved);
     }
     case "updateGroup":
       return next({ ...e, groups: e.groups.map((g) => (g.id === action.id ? { ...g, ...action.patch } : g)) });
@@ -136,12 +161,9 @@ export function reducer(state: State, action: Action): State {
       return next({ ...e, groups, items: e.items.filter((i) => i.groupId !== group.id) }, [...state.trash, { kind: "group", group, items, label: group.name || "section" } as Trash].slice(-20));
     }
     case "moveGroup": {
-      const groups = [...e.groups].sort((a, b) => a.sortOrder - b.sortOrder);
-      const idx = groups.findIndex((g) => g.id === action.id);
-      const to = idx + action.dir;
-      if (idx < 0 || to < 0 || to >= groups.length) return state;
-      [groups[idx], groups[to]] = [groups[to], groups[idx]];
-      return next({ ...e, groups: renumber(groups) });
+      // Sections move within their own trade; use moveGroupToTrade to change trades.
+      const moved = moveSectionWithinTrade(e, action.id, action.dir);
+      return moved === e ? state : next(moved);
     }
     case "applyCalculation": {
       // Changes ONE existing item's quantity (and unit, if the calculator produced another unit).
@@ -176,6 +198,9 @@ export function reducer(state: State, action: Action): State {
         const list = groupItems(e, groupId);
         list.splice(Math.min(last.item.sortOrder, list.length), 0, { ...last.item, groupId });
         return next(setGroupItems(e, groupId, list), trash);
+      }
+      if (last.kind === "trade") {
+        return next(restoreTrade(e, last.trade, last.index, last.groups, last.items), trash);
       }
       if (last.kind === "items") {
         const groupIds = new Set(e.groups.map((g) => g.id));

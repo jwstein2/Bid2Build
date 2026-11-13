@@ -1,0 +1,167 @@
+[
+  {
+    "name": "[mobile] Company profile is directly below Bids",
+    "ok": true,
+    "detail": "Bids | Company profile | Saved customers"
+  },
+  {
+    "name": "[mobile] Only the first section starts expanded",
+    "ok": true,
+    "detail": "true,false,false,false"
+  },
+  {
+    "name": "[mobile] Value persists after collapse/expand",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[mobile] Collapsing does not change totals",
+    "ok": true,
+    "detail": "Proposal total $9,299.95"
+  },
+  {
+    "name": "[mobile] Totals return to original after restoring value",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[mobile] Multiple sections can be open at once",
+    "ok": true,
+    "detail": "true,false,true,false"
+  },
+  {
+    "name": "[mobile] Picking a suggestion adds one row",
+    "ok": true,
+    "detail": "2 -> 3"
+  },
+  {
+    "name": "[mobile] Other suggestions stay visible after a pick",
+    "ok": true,
+    "detail": "4 -> 3"
+  },
+  {
+    "name": "[mobile] A second suggestion can be picked right away",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[mobile] Picked suggestions are marked Added",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[mobile] Clicking an Added suggestion does not duplicate",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[mobile] Suggested & saved items picker stays open for several picks",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[mobile] Picker shows added items with a check",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[mobile] No horizontal page scroll after interactions",
+    "ok": true,
+    "detail": "excess 0px"
+  },
+  {
+    "name": "[mobile] Proposal preview dialog fits the screen width",
+    "ok": true,
+    "detail": "16..359"
+  },
+  {
+    "name": "[desktop] Company profile is directly below Bids",
+    "ok": true,
+    "detail": "Bids | Company profile | Saved customers"
+  },
+  {
+    "name": "[desktop] Only the first section starts expanded",
+    "ok": true,
+    "detail": "true,false,false,false"
+  },
+  {
+    "name": "[desktop] Value persists after collapse/expand",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[desktop] Collapsing does not change totals",
+    "ok": true,
+    "detail": "Proposal total $9,299.95"
+  },
+  {
+    "name": "[desktop] Totals return to original after restoring value",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[desktop] Multiple sections can be open at once",
+    "ok": true,
+    "detail": "true,false,true,false"
+  },
+  {
+    "name": "[desktop] Picking a suggestion adds one row",
+    "ok": true,
+    "detail": "2 -> 3"
+  },
+  {
+    "name": "[desktop] Other suggestions stay visible after a pick",
+    "ok": true,
+    "detail": "4 -> 3"
+  },
+  {
+    "name": "[desktop] A second suggestion can be picked right away",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[desktop] Picked suggestions are marked Added",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[desktop] Clicking an Added suggestion does not duplicate",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[desktop] Suggested & saved items picker stays open for several picks",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[desktop] Picker shows added items with a check",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[desktop] No horizontal page scroll after interactions",
+    "ok": true,
+    "detail": "excess 0px"
+  },
+  {
+    "name": "[desktop] Proposal preview dialog fits the screen width",
+    "ok": true,
+    "detail": "384..1056"
+  },
+  {
+    "name": "[anon 320] Trade pick opens the builder",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[anon 320] New bid: only first section expanded",
+    "ok": true,
+    "detail": "true,false,false"
+  },
+  {
+    "name": "[anon 320] No horizontal scroll on new estimate",
+    "ok": true,
+    "detail": "excess 0px"
+  }
+]
