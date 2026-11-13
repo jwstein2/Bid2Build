@@ -1,6 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { proposalConfigFrom, rowToBusiness, rowToProjectProfile, rowsToEstimate } from "./mappers";
+import { proposalConfigFrom, rowToBusiness, rowToProjectProfile, rowsToEstimate, worksheetFrom } from "./mappers";
 
 export async function loadEstimate(supabase: SupabaseClient, id: string) {
   const [{ data: e, error }, { data: groups }, { data: items }, { data: profile }] = await Promise.all([
@@ -13,6 +13,7 @@ export async function loadEstimate(supabase: SupabaseClient, id: string) {
   if (error || !e) return null;
   const estimate = rowsToEstimate(e, groups ?? [], items ?? []);
   estimate.projectProfile = rowToProjectProfile(profile);
+  estimate.worksheet = worksheetFrom(e.proposal_config);
   return { estimate, proposalConfig: proposalConfigFrom(e.proposal_config), customerId: e.customer_id as string | null };
 }
 

@@ -14,6 +14,7 @@ import type { Action } from "./state";
 import type { useLibrary } from "./library";
 import { PricingPanel } from "./pricing-panel";
 import { useOpenSections } from "./open-sections";
+import { QuantityCalculator } from "./calculators/quantity-calculator";
 
 type Lib = ReturnType<typeof useLibrary>;
 
@@ -230,7 +231,7 @@ function GroupCard(props: {
                     <th className="w-8 px-2 py-2"><span className="sr-only">Select</span></th>
                     <th className="px-1 py-2">Item</th>
                     <th className="w-[110px] px-1 py-2">Type</th>
-                    <th className="w-[76px] px-1 py-2 text-right">Qty</th>
+                    <th className="w-[108px] px-1 py-2 text-right">Qty</th>
                     <th className="w-[96px] px-1 py-2">Unit</th>
                     <th className="w-[100px] px-1 py-2 text-right">Unit cost</th>
                     <th className="w-[96px] px-1 py-2 text-right">Ext. cost</th>
@@ -486,7 +487,10 @@ function ItemRow({ item: it, isLast, totals, estimate, dispatch, selected, toggl
         </td>
         <td className="px-1 max-md:col-span-4 max-md:p-0">
           <span aria-hidden="true" className="mb-0.5 block text-[11px] font-semibold text-muted md:hidden">Qty</span>
-          <input data-col="qty" value={it.quantity} onChange={(e) => up({ quantity: e.target.value })} onKeyDown={onKey} inputMode="decimal" className="cell tabular text-right max-md:min-h-11 max-md:border-line max-md:text-base" aria-label="Quantity" aria-invalid={invalid("quantity")} />
+          <div className="flex items-center gap-0.5">
+            <input data-col="qty" value={it.quantity} onChange={(e) => up({ quantity: e.target.value })} onKeyDown={onKey} inputMode="decimal" className="cell tabular min-w-0 text-right max-md:min-h-11 max-md:border-line max-md:text-base" aria-label="Quantity" aria-invalid={invalid("quantity")} />
+            <QuantityCalculator item={it} estimate={estimate} dispatch={dispatch} />
+          </div>
         </td>
         <td className="px-1 max-md:col-span-4 max-md:p-0">
           <span aria-hidden="true" className="mb-0.5 block text-[11px] font-semibold text-muted md:hidden">Unit</span>
