@@ -30,7 +30,7 @@ export default async function CustomersPage() {
                   <p className="font-semibold">{c.name}</p>
                   <p className="text-sm text-muted">{[c.email, c.phone, c.project_address].filter(Boolean).join(" · ")}</p>
                 </div>
-                <form action={remove}><input type="hidden" name="id" value={c.id} /><button className="text-sm text-danger hover:underline">Delete</button></form>
+                <form action={remove}><input type="hidden" name="id" value={c.id} /><button className="-my-2 min-h-11 px-2 text-sm text-danger hover:underline">Delete</button></form>
               </li>
             ))}
           </ul>

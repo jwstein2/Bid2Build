@@ -37,7 +37,7 @@ export default async function ItemsPage() {
               <li key={i.id} className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
                 <span className="font-medium">{i.name}</span>
                 <span className="flex items-center gap-4 text-muted">{i.unit_cost !== null ? `${formatCurrency(String(i.unit_cost))} / ${i.unit}` : i.unit}
-                  <form action={remove}><input type="hidden" name="id" value={i.id} /><input type="hidden" name="kind" value="item" /><button className="text-danger hover:underline">Delete</button></form>
+                  <form action={remove}><input type="hidden" name="id" value={i.id} /><input type="hidden" name="kind" value="item" /><button className="-my-2 min-h-11 px-2 text-danger hover:underline">Delete</button></form>
                 </span>
               </li>
             ))}
@@ -52,7 +52,7 @@ export default async function ItemsPage() {
               <li key={a.id} className="flex items-center justify-between px-4 py-2.5 text-sm">
                 <span className="font-medium">{a.name}</span>
                 <span className="flex items-center gap-4 text-muted">{(asmItems ?? []).filter((x) => x.assembly_id === a.id).length} items
-                  <form action={remove}><input type="hidden" name="id" value={a.id} /><input type="hidden" name="kind" value="assembly" /><button className="text-danger hover:underline">Delete</button></form>
+                  <form action={remove}><input type="hidden" name="id" value={a.id} /><input type="hidden" name="kind" value="assembly" /><button className="-my-2 min-h-11 px-2 text-danger hover:underline">Delete</button></form>
                 </span>
               </li>
             ))}

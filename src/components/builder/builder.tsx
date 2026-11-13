@@ -218,6 +218,11 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
     proposal: false,
   };
   const stepIndex = STEPS.findIndex((s) => s.id === step);
+  // On narrow screens the step strip scrolls sideways: keep the current step in view.
+  const stepsRef = useRef<HTMLOListElement>(null);
+  useEffect(() => {
+    stepsRef.current?.querySelector<HTMLElement>('[aria-current="step"]')?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }, [step]);
   const goTo = (s: Step) => { setStep(s); setCustomerView(false); window.scrollTo({ top: 0, behavior: "smooth" }); };
 
   const alreadyFinalized = finalizedHere || estimate.status === "finalized";
@@ -264,7 +269,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
         </div>
         <nav aria-label="Builder steps" className="mx-auto max-w-[1400px] px-3 sm:px-5">
           <p className="sr-only" aria-live="polite">Step {stepIndex + 1} of {STEPS.length}: {STEPS[stepIndex]?.label}</p>
-          <ol className="flex gap-1 overflow-x-auto">
+          <ol ref={stepsRef} className="relative flex gap-1 overflow-x-auto">
             {STEPS.map((s, i) => (
               <li key={s.id}>
                 <button
