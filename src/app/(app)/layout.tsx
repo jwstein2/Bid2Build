@@ -1,14 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
-import { FileText } from "lucide-react";
-import { Logo } from "@/components/layout/logo";
 import { getUser, createClient, createAdminClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured, serverEnv } from "@/lib/env";
 import { ATTRIBUTION_COOKIE, decodeAttribution } from "@/lib/growth/attribution";
 import { syncSignedInUser } from "@/lib/growth/leads";
-import { ButtonLink } from "@/components/ui/button";
-import { AppNav } from "@/components/layout/app-nav";
+import { AppSidebar } from "@/components/layout/app-nav";
 
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -29,10 +26,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
       <aside className="on-dark bg-navy text-white md:sticky md:top-0 md:flex md:h-screen md:w-64 md:shrink-0 md:flex-col no-print">
-        <div className="flex items-center justify-between px-4 py-4"><Logo tone="dark" href="/dashboard" /></div>
-        <div className="px-3"><ButtonLink href="/bids" variant="accent" className="w-full"><FileText className="h-4 w-4" aria-hidden /> New bid</ButtonLink></div>
-        <AppNav isAdmin={Boolean(isAdmin)} />
-        <p className="mt-auto hidden truncate border-t border-white/10 px-5 py-4 text-xs text-[#B8C6D4] md:block">{user.email}</p>
+        <AppSidebar isAdmin={Boolean(isAdmin)} email={user.email} />
       </aside>
       <main id="main" className="min-w-0 flex-1 px-4 py-6 sm:px-8">{children}</main>
     </div>
