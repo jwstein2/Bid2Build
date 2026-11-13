@@ -16,17 +16,20 @@ export function stableStringify(v: unknown): string {
  */
 export function versionSnapshot(estimate: Estimate, business: BusinessProfile & { logoPath?: string | null }, config: ProposalConfig) {
   // projectProfile is benchmarking metadata (never on the proposal): excluded so editing it is free.
-  const { status: _s, updatedAt: _u, customerId: _c, projectProfile: _p, ...est } = estimate;
-  void _c; void _p;
+  // worksheet holds calculator inputs: only the quantities they produced are part of the bid.
+  const { status: _s, updatedAt: _u, customerId: _c, projectProfile: _p, worksheet: _w, ...est } = estimate;
+  void _c; void _p; void _w;
   void _s; void _u;
   const { logoUrl: _l, ...biz } = business;
   void _l;
   // Revision history is editing state, not part of what was approved: keep it out of the frozen
   // version (and its hash) so the snapshot holds exactly the scope/exclusions that were exported.
+  const { worksheet: _cw, ...cfg } = config as ProposalConfig & { worksheet?: unknown };
+  void _cw;
   const proposalConfig = {
-    ...config,
-    scope: config.scope ? { ...config.scope, history: [] } : config.scope,
-    exclusionList: config.exclusionList ? { ...config.exclusionList, history: [] } : config.exclusionList,
+    ...cfg,
+    scope: cfg.scope ? { ...cfg.scope, history: [] } : cfg.scope,
+    exclusionList: cfg.exclusionList ? { ...cfg.exclusionList, history: [] } : cfg.exclusionList,
   };
   return { schema: 1, estimate: { ...est, items: est.items.filter((i) => !i.isExample) }, business: biz, proposalConfig };
 }
