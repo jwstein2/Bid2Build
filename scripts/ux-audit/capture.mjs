@@ -83,7 +83,7 @@ for (const r of ROUTES) {
       const resp = await page.goto(BASE + r.path, { waitUntil: "networkidle", timeout: 30000 });
       status = resp?.status() ?? 0;
       await page.waitForTimeout(400);
-    } catch (e) { status = -1; }
+    } catch { status = -1; }
     const probe = await page.evaluate(overflowProbe).catch(() => ({ overflow: null }));
     const file = `${r.id}__${w}x${h}${landscape ? "-landscape" : ""}.jpg`;
     await page.screenshot({ path: path.join(out, file), fullPage: !landscape, type: "jpeg", quality: 60 }).catch(() => {});
