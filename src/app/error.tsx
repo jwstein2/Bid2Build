@@ -1,8 +1,12 @@
 "use client";
+import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
 
 export default function ErrorBoundary({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
-  useEffect(() => { console.error("[ui]", error.digest ?? error.message); }, [error]);
+  useEffect(() => {
+    console.error("[ui]", error.digest ?? error.message);
+    Sentry.captureException(error);
+  }, [error]);
   return (
     <main id="main" role="alert" className="grid min-h-[70vh] place-items-center px-4 text-center">
       <div>
