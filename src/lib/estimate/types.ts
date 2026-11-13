@@ -1,5 +1,6 @@
 /** Canonical estimate data model shared by the editor, persistence, preview and PDF. */
 import type { ProjectProfile } from "../market/trade-models";
+import type { EstimateWorksheet } from "../calculators/types";
 
 export type PricingMode = "markup" | "margin";
 
@@ -107,5 +108,11 @@ export interface Estimate {
    * Never shown to the customer and excluded from the version hash, so editing it never creates a new version.
    */
   projectProfile?: ProjectProfile | null;
+  /**
+   * Contractor working data: applied quantity-calculator inputs (by line item) and the minimum job
+   * charge. Never shown to the customer and excluded from the version hash: only the quantities a
+   * calculation was applied to are part of the bid. Persisted inside estimates.proposal_config.
+   */
+  worksheet?: EstimateWorksheet | null;
   updatedAt?: string;
 }

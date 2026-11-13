@@ -1,6 +1,7 @@
 import { newGroup, newLineItem, uid } from "@/lib/estimate/factory";
 import type { Estimate, EstimateGroup, LineItem, PricingRule } from "@/lib/estimate/types";
 import type { TemplateItem } from "@/lib/trades/catalog";
+import type { CalcRecord } from "@/lib/calculators/types";
 
 export type Trash =
   | { kind: "item"; item: LineItem; label: string }
@@ -25,6 +26,9 @@ export type Action =
   | { type: "updateGroup"; id: string; patch: Partial<EstimateGroup> }
   | { type: "deleteGroup"; id: string }
   | { type: "moveGroup"; id: string; dir: -1 | 1 }
+  | { type: "applyCalculation"; itemId: string; record: CalcRecord }
+  | { type: "clearCalculation"; itemId: string; restore?: boolean }
+  | { type: "setMinimumCharge"; value: string }
   | { type: "undo" };
 
 export interface State {
@@ -139,6 +143,28 @@ export function reducer(state: State, action: Action): State {
       [groups[idx], groups[to]] = [groups[to], groups[idx]];
       return next({ ...e, groups: renumber(groups) });
     }
+    case "applyCalculation": {
+      // Changes ONE existing item's quantity (and unit, if the calculator produced another unit).
+      // Never adds items, never touches cost, pricing or credits.
+      const target = e.items.find((i) => i.id === action.itemId && !i.isExample);
+      if (!target) return state;
+      const record: CalcRecord = { ...action.record, previous: { quantity: target.quantity, unit: target.unit } };
+      const items = e.items.map((i) => (i.id === target.id ? { ...i, quantity: record.result, unit: record.unit } : i));
+      const worksheet = { ...(e.worksheet ?? {}), calcs: { ...(e.worksheet?.calcs ?? {}), [target.id]: record } };
+      return next({ ...e, items, worksheet });
+    }
+    case "clearCalculation": {
+      const rec = e.worksheet?.calcs?.[action.itemId];
+      if (!rec) return state;
+      const { [action.itemId]: _gone, ...calcs } = e.worksheet?.calcs ?? {};
+      void _gone;
+      const items = action.restore && rec.previous
+        ? e.items.map((i) => (i.id === action.itemId ? { ...i, quantity: rec.previous!.quantity, unit: rec.previous!.unit } : i))
+        : e.items;
+      return next({ ...e, items, worksheet: { ...(e.worksheet ?? {}), calcs } });
+    }
+    case "setMinimumCharge":
+      return next({ ...e, worksheet: { ...(e.worksheet ?? {}), minimumCharge: action.value } });
     case "undo": {
       const last = state.trash[state.trash.length - 1];
       if (!last) return state;

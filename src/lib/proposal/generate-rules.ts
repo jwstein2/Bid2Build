@@ -110,10 +110,16 @@ interface Candidate {
   notFor?: string[];
   /** Cost types that count as "included". */
   kinds?: string[];
+  /**
+   * A clarification rather than an exclusion: suggested when the bid INCLUDES the keyword
+   * (e.g. roof cleaning) or, with an empty keyword pattern, always for its trades.
+   */
+  clarify?: boolean;
 }
 
 const OUTDOOR = ["decks", "fencing", "concrete", "landscaping", "excavation", "foundations", "masonry", "asphalt-paving", "roofing", "siding", "gutters", "exterior-remodeling", "additions", "garages", "pole-barns", "demolition"];
 const INTERIOR = ["kitchens", "bathrooms", "interior-remodeling", "drywall", "painting", "flooring", "tile", "finish-carpentry", "cabinets-countertops", "basements", "insulation", "commercial-remodeling", "windows-doors", "handyman"];
+const WASHING = ["pressure-washing", "soft-washing"];
 const STRUCTURAL = ["decks", "additions", "framing", "foundations", "garages", "pole-barns", "basements", "concrete", "exterior-remodeling", "general-contracting"];
 
 const CANDIDATES: Candidate[] = [
@@ -163,7 +169,7 @@ const CANDIDATES: Candidate[] = [
     },
   },
   {
-    category: "demolition", title: "Demolition & Removal", trades: "*", notFor: ["demolition"],
+    category: "demolition", title: "Demolition & Removal", trades: "*", notFor: ["demolition", ...WASHING],
     keywords: /demo(lition)?\b|tear[- ]?(off|out)|remov(e|al)|rip[- ]?out|strip/i,
     text: {
       simple: "Removing existing materials or structures is not included unless listed in the estimate.",
@@ -181,7 +187,7 @@ const CANDIDATES: Candidate[] = [
     },
   },
   {
-    category: "finishing", title: "Painting & Finishing", trades: ["decks", "fencing", "drywall", "finish-carpentry", "siding", "windows-doors", "framing", "additions", "basements", "interior-remodeling", "exterior-remodeling", "garages"], notFor: ["painting"],
+    category: "finishing", title: "Painting & Finishing", trades: ["decks", "fencing", "drywall", "finish-carpentry", "siding", "windows-doors", "framing", "additions", "basements", "interior-remodeling", "exterior-remodeling", "garages", ...WASHING], notFor: ["painting"],
     keywords: /paint|stain|seal(er|ant|ing)?\b|primer|finish coat|varnish|texture/i,
     text: {
       simple: "Painting, staining, or sealing is not included unless listed in the estimate.",
@@ -223,6 +229,55 @@ const CANDIDATES: Candidate[] = [
       simple: "Testing for or removing asbestos, lead paint, or mold is not included.",
       professional: "Testing, abatement, or removal of asbestos, lead-based paint, mold, or other hazardous materials is excluded.",
       detailed: "Testing for, abatement of, or removal of asbestos, lead-based paint, mold, or other hazardous materials is excluded. If such materials are discovered, work in the affected area may pause until they are addressed by a qualified specialist.",
+    },
+  },
+  {
+    category: "water_access", title: "Water & Site Access", trades: WASHING,
+    keywords: /water (supply|tank|hauling)|haul(ing)? water|water truck/i,
+    text: {
+      simple: "Please provide access to an outdoor water spigot and the areas to be cleaned.",
+      professional: "Owner to provide access to an exterior water supply and to all work areas. Vehicles and outdoor items should be moved before work begins.",
+      detailed: "The owner will provide access to a working exterior water supply and to all areas to be cleaned. Vehicles, outdoor furniture, and other movable items should be cleared from the work areas before work begins. Water hauling is not included unless listed in the estimate.",
+    },
+  },
+  {
+    category: "stain_results", title: "Stain Removal Results", trades: WASHING, keywords: /$^/,
+    text: {
+      simple: "Some deep stains may not come out completely.",
+      professional: "Cleaning improves appearance, but complete removal of oil, rust, tire marks, efflorescence, or other deep-set stains is not promised.",
+      detailed: "Cleaning will improve the appearance of the surfaces listed, but complete removal of oil, rust, tire marks, efflorescence, organic staining, or other deep-set stains cannot be promised. Some stains are permanent or require restoration beyond cleaning.",
+    },
+  },
+  {
+    category: "existing_damage", title: "Existing Surface Conditions", trades: WASHING, keywords: /repair|re-?caulk|replace/i,
+    text: {
+      simple: "Repairing damage that cleaning reveals is not included.",
+      professional: "Repair of loose or failing paint, oxidized or brittle siding, failed caulking, loose mortar, or other existing damage that cleaning may reveal is not included.",
+      detailed: "Cleaning can reveal existing problems such as loose or failing paint, oxidized or brittle siding, failed caulking or seals, loose mortar, and wood rot. Repair of these existing conditions is not included unless it is listed in the estimate.",
+    },
+  },
+  {
+    category: "property_protection", title: "Plants & Property", trades: WASHING, keywords: /plant|landscap|property protection|protect/i,
+    text: {
+      simple: "Protecting plants and outdoor items beyond normal care is not included.",
+      professional: "Protection of plants, outdoor furniture, vehicles, and other property beyond reasonable precautions is not included unless listed in the estimate.",
+      detailed: "We take reasonable precautions around the work area. Additional protection of plants, landscaping, outdoor furniture, vehicles, and other property is not included unless it is listed in the estimate.",
+    },
+  },
+  {
+    category: "roof_method", title: "Roof Cleaning: Method & Safety", trades: WASHING, keywords: /\broof/i, clarify: true,
+    text: {
+      simple: "Roof cleaning is priced now; access, safety and cleaning method are confirmed on site before work starts.",
+      professional: "Roof cleaning is priced for estimating purposes. Roof access, fall protection, and the cleaning method and products are confirmed on site by the applicator before work begins, and work may be rescheduled if conditions are unsafe.",
+      detailed: "Roof cleaning is priced for estimating purposes only. Roof access, fall protection, the cleaning method, and any products used will be confirmed on site by the applicator, following manufacturer labels and applicable safety rules, before work begins. Work may be rescheduled or declined if weather or roof conditions are unsafe.",
+    },
+  },
+  {
+    category: "cleaning_method", title: "Cleaning Methods & Products", trades: ["soft-washing"], keywords: /$^/, clarify: true,
+    text: {
+      simple: "We choose cleaning products and pressure on site to suit each surface.",
+      professional: "Cleaning products, mix ratios, and pressure settings are selected on site by the applicator to suit each surface and follow product labels. This estimate does not specify them.",
+      detailed: "Cleaning products, mix ratios, pressure settings, and application methods are selected on site by the applicator to suit each surface, following product labels and local rules. Delicate surfaces are cleaned with low-pressure methods. This estimate prices the work and does not specify these methods.",
     },
   },
   {
@@ -296,6 +351,12 @@ export function ruleExclusions(input: GenerationInput, style: WritingStyle = inp
   for (const c of CANDIDATES) {
     if (have.has(c.category) || !applies(c, trades)) continue;
     const cov = coverage(c.category, input);
+    if (c.clarify) {
+      // Clarifications attach to work the bid includes (or always, with no keyword).
+      if (c.keywords.source !== "$^" && !cov.included) continue;
+      out.push({ id: newId(), category: c.category, title: c.title, text: c.text[style], status: "suggested", source: "generated", review: null });
+      continue;
+    }
     if (cov.included) continue; // never exclude work the estimate includes
     out.push({
       id: newId(), category: c.category, title: c.title, text: c.text[style], status: "suggested", source: "generated",
@@ -319,7 +380,8 @@ export function guardExclusions(items: ExclusionItem[], input: GenerationInput):
     const category = canonicalCategory(raw.category);
     const cov = coverage(category, input);
     const textKey = `${raw.title} ${raw.text}`.toLowerCase().replace(/[^a-z]/g, "").slice(0, 80);
-    if (cov.included || (category !== "custom" && (have.has(category) || seen.has(category))) || seen.has(textKey)) { dropped++; continue; }
+    const isClarification = CANDIDATES.some((c) => c.category === category && c.clarify);
+    if ((cov.included && !isClarification) || (category !== "custom" && (have.has(category) || seen.has(category))) || seen.has(textKey)) { dropped++; continue; }
     if (category !== "custom") seen.add(category);
     seen.add(textKey);
     kept.push({

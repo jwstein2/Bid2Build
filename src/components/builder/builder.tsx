@@ -25,6 +25,7 @@ import { ProposalStep } from "./proposal-step";
 import { ScopeStep } from "./scope-step";
 import { reducer } from "./state";
 import { Workspace } from "./workspace";
+import { WashingJobPanel, isWashingEstimate } from "./calculators/washing-job-panel";
 
 type Biz = BusinessProfile & { logoPath?: string | null };
 type Step = "company" | "project" | "estimate" | "scope" | "proposal";
@@ -306,7 +307,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
             <ProposalView doc={doc} />
           </div>
         ) : (
-          <Workspace estimate={estimate} dispatch={dispatch} lib={lib} />
+          <>{isWashingEstimate(estimate) && <WashingJobPanel estimate={estimate} dispatch={dispatch} />}<Workspace estimate={estimate} dispatch={dispatch} lib={lib} /></>
         ))}
         {step === "scope" && <ScopeStep estimate={estimate} config={config} onConfig={onConfig} signedIn={Boolean(user)} estimateId={cloudMode ? estimate.id : null} />}
         {step === "proposal" && <ProposalStep estimate={estimate} business={business} config={config} onConfig={onConfig} />}

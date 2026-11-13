@@ -13,6 +13,7 @@ import { Button } from "../ui/button";
 import type { Action } from "./state";
 import type { useLibrary } from "./library";
 import { PricingPanel } from "./pricing-panel";
+import { QuantityCalculator } from "./calculators/quantity-calculator";
 
 type Lib = ReturnType<typeof useLibrary>;
 
@@ -204,7 +205,7 @@ function GroupCard(props: {
                     <th className="w-8 px-2 py-2"><span className="sr-only">Select</span></th>
                     <th className="px-1 py-2">Item</th>
                     <th className="w-[110px] px-1 py-2">Type</th>
-                    <th className="w-[76px] px-1 py-2 text-right">Qty</th>
+                    <th className="w-[108px] px-1 py-2 text-right">Qty</th>
                     <th className="w-[96px] px-1 py-2">Unit</th>
                     <th className="w-[100px] px-1 py-2 text-right">Unit cost</th>
                     <th className="w-[96px] px-1 py-2 text-right">Ext. cost</th>
@@ -389,7 +390,10 @@ function ItemRow({ item: it, isLast, totals, estimate, dispatch, selected, toggl
           </select>
         </td>
         <td className="px-1">
+          <div className="flex items-center gap-0.5">
           <input data-col="qty" value={it.quantity} onChange={(e) => up({ quantity: e.target.value })} onKeyDown={onKey} inputMode="decimal" className="cell tabular text-right" aria-label="Quantity" aria-invalid={invalid("quantity")} />
+          <QuantityCalculator item={it} estimate={estimate} dispatch={dispatch} />
+          </div>
         </td>
         <td className="px-1">
           {customUnit ? (

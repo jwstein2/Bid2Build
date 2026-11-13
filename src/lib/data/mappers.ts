@@ -1,4 +1,6 @@
 import type { Estimate, EstimateGroup, LineItem, PricingRule } from "../estimate/types";
+import type { EstimateWorksheet } from "../calculators/types";
+import { worksheetSchema } from "../estimate/schema";
 import type { ProjectProfile } from "../market/trade-models";
 import { normalizeExclusions, normalizeScope } from "../proposal/text-sections";
 import { defaultBusinessProfile, defaultProposalConfig, type BusinessProfile, type ProposalConfig } from "../proposal/types";
@@ -64,7 +66,9 @@ export function rowToProjectProfile(r: any | null): ProjectProfile | null {
 export function proposalConfigFrom(raw: unknown): ProposalConfig {
   const d = defaultProposalConfig();
   if (!raw || typeof raw !== "object") return d;
-  const r = raw as Partial<ProposalConfig>;
+  // The worksheet is stored alongside the proposal settings but belongs to the estimate.
+  const { worksheet: _w, ...r } = raw as Partial<ProposalConfig> & { worksheet?: unknown };
+  void _w;
   const exclusionList = normalizeExclusions(r.exclusionList, typeof r.exclusions === "string" ? r.exclusions : "");
   return {
     ...d, ...r,
@@ -118,4 +122,23 @@ export function businessToRow(b: BusinessProfile & { logoPath?: string | null },
     header_style: b.headerStyle,
     ...(b.logoPath !== undefined ? { logo_path: b.logoPath } : {}),
   };
+}
+
+/** Read the estimate worksheet (calculator inputs, minimum charge) back out of a stored proposal_config. */
+export function worksheetFrom(rawConfig: unknown): EstimateWorksheet | null {
+  if (!rawConfig || typeof rawConfig !== "object") return null;
+  const parsed = worksheetSchema.safeParse((rawConfig as { worksheet?: unknown }).worksheet);
+  return parsed.success && parsed.data ? (parsed.data as EstimateWorksheet) : null;
+}
+
+/** The worksheet to persist: calculations only for line items that still exist; null when empty. */
+export function worksheetToStore(estimate: Pick<Estimate, "items" | "worksheet">): EstimateWorksheet | null {
+  const w = estimate.worksheet;
+  if (!w) return null;
+  const ids = new Set(estimate.items.filter((i) => !i.isExample).map((i) => i.id));
+  const calcs = Object.fromEntries(Object.entries(w.calcs ?? {}).filter(([id]) => ids.has(id)));
+  const out: EstimateWorksheet = {};
+  if (Object.keys(calcs).length) out.calcs = calcs;
+  if (w.minimumCharge && w.minimumCharge.trim()) out.minimumCharge = w.minimumCharge.trim();
+  return Object.keys(out).length ? out : null;
 }

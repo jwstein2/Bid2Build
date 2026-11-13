@@ -40,6 +40,8 @@ const bool = (key: string, label: string): MeasureField => ({ key, label, type: 
 const n = (m: Record<string, unknown>, k: string) => (typeof m[k] === "number" ? (m[k] as number) : Number(m[k] ?? NaN));
 
 const STORIES = o(["1", "1 story"], ["2", "2 stories"], ["3", "3+ stories"]);
+const WASH_SURFACES = o(["concrete", "Concrete"], ["pavers", "Pavers"], ["brick", "Brick"], ["stone", "Natural stone"], ["asphalt", "Asphalt"], ["wood", "Wood"], ["composite", "Composite"], ["vinyl", "Vinyl"], ["other", "Other"]);
+const WASH_CONDITION = o(["light", "Light (dust, light mildew)"], ["moderate", "Moderate (algae, dirt)"], ["heavy", "Heavy buildup"], ["stains", "Oil, rust or other stains"]);
 
 export const TRADE_MODELS: Record<string, TradeModel> = {
   decks: {
@@ -243,6 +245,35 @@ export const TRADE_MODELS: Record<string, TradeModel> = {
     fields: [num("area_sqft", "Garage area", "SF"), num("bays", "Bays", "count")],
     complexity: () => null,
     complexityRule: "No complexity split yet.",
+  },
+  "pressure-washing": {
+    trade: "pressure-washing",
+    projectTypes: o(["flatwork", "Driveway & flatwork"], ["patio_pavers", "Patio / pavers"], ["deck_fence", "Deck / fence"], ["mixed", "Multiple surfaces"]),
+    primary: { key: "area_sqft", unit: "square foot", label: "Cleaned area" },
+    fields: [
+      num("area_sqft", "Cleaned area", "SF"),
+      sel("surface", "Main surface", WASH_SURFACES),
+      sel("condition", "Condition / buildup", WASH_CONDITION),
+      sel("access", "Accessibility", o(["easy", "Easy"], ["moderate", "Moderate"], ["difficult", "Difficult"])),
+      bool("water_on_site", "Water available on site"),
+    ],
+    complexity: (m) => (m.condition === "heavy" || m.condition === "stains" || m.access === "difficult" ? "complex" : m.condition || m.access ? "standard" : null),
+    complexityRule: "Complex = heavy buildup, stain treatment, or difficult access.",
+  },
+  "soft-washing": {
+    trade: "soft-washing",
+    projectTypes: o(["house_wash", "House wash"], ["roof_cleaning", "Roof cleaning"], ["house_and_roof", "House and roof"], ["commercial_exterior", "Commercial exterior"]),
+    primary: { key: "area_sqft", unit: "square foot", label: "Cleaned area" },
+    fields: [
+      num("area_sqft", "Cleaned area", "SF"),
+      sel("material", "Main surface material", o(["vinyl", "Vinyl siding"], ["fiber_cement", "Fiber cement"], ["wood", "Wood"], ["stucco", "Stucco"], ["brick", "Brick"], ["stone", "Stone"], ["eifs", "EIFS"], ["painted", "Painted surface"], ["asphalt_shingle", "Asphalt shingle roof"], ["metal_roof", "Metal roof"], ["tile_roof", "Tile roof"], ["other", "Other"])),
+      sel("stories", "Stories / working height", STORIES),
+      sel("condition", "Condition / buildup", WASH_CONDITION),
+      sel("access", "Access difficulty", o(["easy", "Easy"], ["moderate", "Moderate"], ["difficult", "Difficult"])),
+      bool("roof_included", "Includes roof cleaning"),
+    ],
+    complexity: (m) => (n(m, "stories") >= 3 || m.access === "difficult" || m.roof_included === true ? "complex" : m.stories || m.access ? "standard" : null),
+    complexityRule: "Complex = 3+ stories, difficult access, or roof cleaning included.",
   },
   landscaping: {
     trade: "landscaping",

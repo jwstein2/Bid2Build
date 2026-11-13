@@ -35,6 +35,33 @@ export const groupSchema = z.object({
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
+const calcId = z.enum(["area", "roof", "linear", "perimeter", "volume", "stairs", "coverage", "boards", "convert", "labor"]);
+const shortStr = z.string().max(40);
+/** Saved calculator inputs: strings exactly as typed, bounded so a payload can't balloon. */
+export const calcRecordSchema = z.object({
+  v: z.literal(1),
+  calc: calcId,
+  output: shortStr,
+  input: z.object({
+    sections: z.array(z.object({
+      id: shortStr,
+      shape: shortStr,
+      deduct: z.boolean().optional(),
+      label: z.string().max(80).optional(),
+      values: z.record(shortStr, shortStr),
+    })).max(60),
+    options: z.record(shortStr, shortStr),
+  }),
+  result: dec(),
+  unit: z.string().min(1).max(40),
+  appliedAt: z.string().max(40),
+  previous: z.object({ quantity: dec(), unit: z.string().min(1).max(40) }).optional(),
+});
+export const worksheetSchema = z.object({
+  calcs: z.record(uuid, calcRecordSchema).optional(),
+  minimumCharge: dec().optional(),
+}).nullable().optional();
+
 export const estimateSchema = z.object({
   id: uuid,
   title: z.string().max(300),
@@ -68,8 +95,11 @@ export const estimateSchema = z.object({
     measurements: z.record(z.string().max(40), z.union([z.number(), z.string().max(40), z.boolean()])).optional(),
     outcome: z.enum(["quoted", "accepted", "declined", "completed"]).optional(),
   }).nullable().optional(),
+  worksheet: worksheetSchema,
 }).superRefine((e, ctx) => {
   const groupIds = new Set(e.groups.map((g) => g.id));
+  const calcs = e.worksheet?.calcs ?? {};
+  if (Object.keys(calcs).length > 2000) ctx.addIssue({ code: "custom", path: ["worksheet", "calcs"], message: "too many saved calculations" });
   e.items.forEach((it, i) => {
     if (!groupIds.has(it.groupId)) ctx.addIssue({ code: "custom", path: ["items", i, "groupId"], message: "unknown group" });
     if (it.quantity.startsWith("-")) ctx.addIssue({ code: "custom", path: ["items", i, "quantity"], message: "negative quantity" });
@@ -141,6 +171,8 @@ export const proposalConfigSchema = z.object({
   exclusions: z.string().max(10000),
   scope: scopeSettingsSchema.optional(),
   exclusionList: exclusionSettingsSchema.optional(),
+  /** Persisted copy of Estimate.worksheet (written by the save route, read back by the loader). */
+  worksheet: worksheetSchema,
   allowances: z.string().max(10000),
   customerResponsibilities: z.string().max(10000),
   schedule: z.string().max(5000),
