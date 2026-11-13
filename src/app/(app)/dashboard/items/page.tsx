@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { revalidatePath } from "next/cache";
 import { createClient, getUser } from "@/lib/supabase/server";
+import { ConfirmDelete } from "../confirm-delete";
 import { Card } from "@/components/ui/misc";
 import { formatCurrency } from "@/lib/estimate/money";
 
@@ -34,10 +35,10 @@ export default async function ItemsPage() {
         {!items?.length ? <p className="p-6 text-center text-muted">No favorites yet.</p> : (
           <ul className="divide-y divide-line">
             {items.map((i) => (
-              <li key={i.id} className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
+              <li key={i.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 text-sm">
                 <span className="font-medium">{i.name}</span>
                 <span className="flex items-center gap-4 text-muted">{i.unit_cost !== null ? `${formatCurrency(String(i.unit_cost))} / ${i.unit}` : i.unit}
-                  <form action={remove}><input type="hidden" name="id" value={i.id} /><input type="hidden" name="kind" value="item" /><button className="-my-2 min-h-11 px-2 text-danger hover:underline">Delete</button></form>
+                  <ConfirmDelete action={remove} fields={{ id: i.id, kind: "item" }} name={i.name} />
                 </span>
               </li>
             ))}
@@ -49,10 +50,10 @@ export default async function ItemsPage() {
         {!asm?.length ? <p className="p-6 text-center text-muted">No assemblies yet.</p> : (
           <ul className="divide-y divide-line">
             {asm.map((a) => (
-              <li key={a.id} className="flex items-center justify-between px-4 py-2.5 text-sm">
+              <li key={a.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 text-sm">
                 <span className="font-medium">{a.name}</span>
                 <span className="flex items-center gap-4 text-muted">{(asmItems ?? []).filter((x) => x.assembly_id === a.id).length} items
-                  <form action={remove}><input type="hidden" name="id" value={a.id} /><input type="hidden" name="kind" value="assembly" /><button className="-my-2 min-h-11 px-2 text-danger hover:underline">Delete</button></form>
+                  <ConfirmDelete action={remove} fields={{ id: a.id, kind: "assembly" }} name={a.name} />
                 </span>
               </li>
             ))}
