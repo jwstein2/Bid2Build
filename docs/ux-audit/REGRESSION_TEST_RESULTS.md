@@ -7,7 +7,7 @@ Run on the final commit of `claude/project-thread-yo7h1t`.
 | Type check | `tsc --noEmit` | Pass |
 | Lint | `eslint src scripts tests` | 0 errors; 5 warnings, all pre-existing on `main` |
 | Production build | `next build` | Pass |
-| Unit/integration | `npm test` (vitest) | 16 files, **171 passed** (165 existing + 6 new accordion tests), 82 skipped (DB suite, run separately below) |
+| Unit/integration | `npm test` (vitest) | **247/247 passed** in 22 files with the local test Postgres running (165 existing unit + 6 new accordion tests + 82 DB tests; without Postgres the 82 DB tests skip) |
 | Database (local Postgres with Supabase stubs) | `npm run test:db` | 7 files, **82 passed**: credit accounting (starter/monthly order, no roll-over), finalize_bid, subscription entitlement, billing race, RLS |
 | Browser interaction checks | `node scripts/ux-audit/interactions.mjs` | **33/33 pass** (results JSON in `screenshots/2026-11-13/interactions/`) |
 | Overflow sweep | `node scripts/ux-audit/capture.mjs` | **0/198** route × viewport combos overflow (was 9) |
