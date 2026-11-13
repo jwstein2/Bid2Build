@@ -159,6 +159,12 @@ function Section({ s, striped, bar, brand, px, base }: { s: ProposalSection; str
   const hasAmt = itemized && s.lines.some((l) => l.amount);
   return (
     <div className="break-inside-avoid">
+      {s.tradeHeading && (
+        <h3 className="flex items-baseline justify-between gap-3 px-2 pb-1 pt-3 font-display font-bold uppercase tracking-wide" style={{ color: brand, fontSize: px(base * 1.05) }}>
+          <span>{s.tradeHeading.title}</span>
+          {s.tradeHeading.amount && <span className="tabular">{s.tradeHeading.amount}</span>}
+        </h3>
+      )}
       <div
         className="flex items-baseline justify-between gap-3 rounded px-2 py-1.5 font-semibold"
         style={bar ? { background: `${brand}14`, borderLeft: `3px solid ${brand}` } : { borderBottom: `1px solid ${brand}55` }}

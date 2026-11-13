@@ -31,6 +31,7 @@ export const groupSchema = z.object({
   visibility: z.enum(["group_total", "names_only", "itemized"]).nullable(),
   sortOrder: z.number().int(),
   pricingOverride: rule,
+  trade: z.string().max(60).nullable().optional(),
 });
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -60,6 +61,7 @@ export const calcRecordSchema = z.object({
 export const worksheetSchema = z.object({
   calcs: z.record(uuid, calcRecordSchema).optional(),
   minimumCharge: dec().optional(),
+  sectionTrades: z.record(uuid, z.string().max(60)).optional(),
 }).nullable().optional();
 
 export const estimateSchema = z.object({

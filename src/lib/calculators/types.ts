@@ -125,6 +125,12 @@ export interface EstimateWorksheet {
   calcs?: Record<string, CalcRecord>;
   /** Contractor-defined minimum job charge (decimal string). Used by the washing trades. */
   minimumCharge?: string;
+  /**
+   * Storage only: section id → trade slug. estimate_groups has no trade column, so the save route
+   * writes each section's trade here and the loader puts it back on the sections (no migration).
+   * In the editor the trade lives on EstimateGroup.trade.
+   */
+  sectionTrades?: Record<string, string>;
 }
 
 /** A calculator offered for a particular line item, with trade-aware defaults. */

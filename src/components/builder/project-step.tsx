@@ -2,7 +2,9 @@
 import { useEffect, useState, type Dispatch } from "react";
 import { AddressInput } from "../ui/address-input";
 import type { Estimate } from "@/lib/estimate/types";
-import { trades } from "@/lib/trades/catalog";
+import { ArrowLeft, ArrowRight, X } from "lucide-react";
+import { tradeName } from "@/lib/trades/catalog";
+import { AddTradeSelect, useTradeRemoval } from "./trade-controls";
 import { Button } from "../ui/button";
 import { Field } from "../ui/misc";
 import { ProjectProfileFields } from "./project-profile";
@@ -17,6 +19,7 @@ export function ProjectStep({ estimate: e, dispatch, signedIn, onDone }: { estim
     if (!signedIn) return;
     fetch("/api/customers").then((r) => (r.ok ? r.json() : { customers: [] })).then((d) => setCustomers(d.customers ?? [])).catch(() => {});
   }, [signedIn]);
+  const { requestRemove, dialog: removalDialog } = useTradeRemoval(e, dispatch);
   const c = e.customer;
   const pc = (patch: Partial<Estimate["customer"]>) => dispatch({ type: "patchCustomer", patch });
 
@@ -88,23 +91,28 @@ export function ProjectStep({ estimate: e, dispatch, signedIn, onDone }: { estim
             <Field label="State" optional htmlFor="p-state"><input id="p-state" className="field" value={e.location.state ?? ""} onChange={(ev) => dispatch({ type: "patchLocation", patch: { state: ev.target.value } })} maxLength={50} /></Field>
           </div>
           <div className="sm:col-span-2">
-            <span className="label">Trades in this project</span>
-            <p className="mb-2 text-xs text-muted">Add trades for mixed projects to get their suggested items.</p>
-            <div className="flex flex-wrap gap-2">
-              {e.trades.map((t) => (
-                <span key={t} className="inline-flex items-center gap-1 rounded-full bg-brand-tint px-2.5 py-1 text-sm font-medium text-brand">
-                  {trades.find((x) => x.slug === t)?.name ?? t}
-                  {e.trades.length > 1 && <button aria-label={`Remove ${t}`} onClick={() => dispatch({ type: "patch", patch: { trades: e.trades.filter((x) => x !== t) } })} className="ml-0.5 rounded-full px-1 hover:bg-black/10">×</button>}
-                </span>
+            <span className="label" id="trades-label">Trades in this project</span>
+            <p className="mb-2 text-xs text-muted">Each trade gets its own section in the estimate, in this order.</p>
+            <ol aria-labelledby="trades-label" className="flex flex-wrap gap-2">
+              {e.trades.map((t, i) => (
+                <li key={t} className="inline-flex items-center gap-0.5 rounded-full bg-brand-tint py-0.5 pl-2.5 pr-1 text-sm font-medium text-brand">
+                  <span className="mr-0.5 tabular text-xs text-brand/70">{i + 1}.</span>
+                  {tradeName(t)}
+                  {e.trades.length > 1 && (
+                    <>
+                      <button aria-label={`Move ${tradeName(t)} earlier`} disabled={i === 0} onClick={() => dispatch({ type: "moveTrade", trade: t, dir: -1 })} className="grid h-8 w-7 place-items-center rounded-full hover:bg-black/10 disabled:opacity-30"><ArrowLeft className="h-3.5 w-3.5" aria-hidden /></button>
+                      <button aria-label={`Move ${tradeName(t)} later`} disabled={i === e.trades.length - 1} onClick={() => dispatch({ type: "moveTrade", trade: t, dir: 1 })} className="grid h-8 w-7 place-items-center rounded-full hover:bg-black/10 disabled:opacity-30"><ArrowRight className="h-3.5 w-3.5" aria-hidden /></button>
+                      <button aria-label={`Remove ${tradeName(t)}`} onClick={() => requestRemove(t)} className="grid h-8 w-7 place-items-center rounded-full hover:bg-black/10"><X className="h-3.5 w-3.5" aria-hidden /></button>
+                    </>
+                  )}
+                </li>
               ))}
-              <select aria-label="Add a trade" className="field field-sm w-auto" value="" onChange={(ev) => ev.target.value && dispatch({ type: "patch", patch: { trades: [...e.trades, ev.target.value] } })}>
-                <option value="">+ Add trade</option>
-                {trades.filter((t) => !e.trades.includes(t.slug)).map((t) => <option key={t.slug} value={t.slug}>{t.name}</option>)}
-              </select>
-            </div>
+              <li><AddTradeSelect estimate={e} dispatch={dispatch} /></li>
+            </ol>
           </div>
         </div>
       </section>
+      {removalDialog}
       <ProjectProfileFields estimate={e} dispatch={dispatch} />
       {onDone && <div className="flex justify-end"><Button size="lg" onClick={onDone}>Continue to estimate</Button></div>}
     </div>

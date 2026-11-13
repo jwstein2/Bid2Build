@@ -1,10 +1,10 @@
 "use client";
 import {
-  AlertCircle, ArrowDown, ArrowUp, BookmarkPlus, Check, ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown, Copy, Layers, MoreHorizontal, Plus, Search, Trash2, X,
+  AlertCircle, ArrowDown, ArrowRightLeft, ArrowUp, BookmarkPlus, Check, ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown, Copy, Layers, MoreHorizontal, Plus, Search, Trash2, X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type Dispatch } from "react";
 import * as Dropdown from "@radix-ui/react-dropdown-menu";
-import { computeEstimate, itemsForGroup, sortedGroups, type EstimateTotals } from "@/lib/estimate/engine";
+import { computeEstimate, itemsForGroup, type EstimateTotals } from "@/lib/estimate/engine";
 import { formatCurrency, formatPercent } from "@/lib/estimate/money";
 import type { Estimate, EstimateGroup, GroupVisibility, LineItem, PricingRule } from "@/lib/estimate/types";
 import { COST_TYPES, UNIT_ABBR, UNITS, getTrade, parseTemplateItem, type TemplateItem } from "@/lib/trades/catalog";
@@ -15,6 +15,9 @@ import type { useLibrary } from "./library";
 import { PricingPanel } from "./pricing-panel";
 import { useOpenSections } from "./open-sections";
 import { QuantityCalculator } from "./calculators/quantity-calculator";
+import { orderedSections, sectionTrade, tradeBlocks, tradeTotals, type TradeBlock, type TradeTotals } from "@/lib/estimate/trades";
+import { TradeIcon } from "../trade-icon";
+import { AddTradeSelect, useTradeRemoval } from "./trade-controls";
 
 type Lib = ReturnType<typeof useLibrary>;
 
@@ -24,9 +27,11 @@ export const VISIBILITY_LABEL: Record<GroupVisibility, string> = {
   itemized: "Fully itemized",
 };
 
+/** Suggestions for a section come from its own trade (so "Labor" under Roofing suggests roofing labor). */
 function suggestionsForGroup(estimate: Estimate, group: EstimateGroup): TemplateItem[] {
   const out: TemplateItem[] = [];
-  for (const slug of estimate.trades) {
+  const own = sectionTrade(estimate, group);
+  for (const slug of estimate.trades.length > 1 && own ? [own] : estimate.trades) {
     const t = getTrade(slug);
     const g = t?.template.groups.find((x) => x.name.toLowerCase() === group.name.trim().toLowerCase());
     if (g) out.push(...g.items);
@@ -53,9 +58,17 @@ export function Workspace({ estimate, dispatch, lib }: { estimate: Estimate; dis
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [focusId, setFocusId] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
-  const groups = sortedGroups(estimate);
-  const { isOpen, toggle, setAll } = useOpenSections(estimate.id, groups.map((g) => g.id));
+  const multiTrade = estimate.trades.length > 1;
+  // Trade by trade, in the project's trade order. A single-trade estimate is one block (no trade header).
+  const blocks = tradeBlocks(estimate);
+  const groups = blocks.flatMap((b) => b.groups);
+  // Only the first section (and, with several trades, the first trade) starts open.
+  const { isOpen, toggle, setAll } = useOpenSections(estimate.id, groups.map((g) => g.id), { openAdded: "first" });
+  const tradeOpen = useOpenSections(`${estimate.id}:trades`, estimate.trades, { openAdded: "first" });
+  const tradeSums = multiTrade ? tradeTotals(estimate, totals) : [];
+  const { requestRemove, dialog: removalDialog } = useTradeRemoval(estimate, dispatch);
   const issueGroups = new Set(totals.issues.map((i) => estimate.items.find((it) => it.id === i.itemId)?.groupId).filter(Boolean));
+  const dismissedFor = (g: EstimateGroup) => suggestionsForGroup(estimate, g).filter((x) => !dismissed.has(`${g.id}:${x.name}`));
 
   useEffect(() => {
     if (!focusId) return;
@@ -92,39 +105,60 @@ export function Workspace({ estimate, dispatch, lib }: { estimate: Estimate; dis
           />
         )}
 
-        {groups.length > 1 && (
+        {(groups.length > 1 || multiTrade) && (
           <div className="flex justify-end gap-1 text-sm">
-            <Button size="sm" variant="ghost" onClick={() => setAll(true)}><ChevronsUpDown className="h-4 w-4" aria-hidden /> Expand all</Button>
-            <Button size="sm" variant="ghost" onClick={() => setAll(false)}><ChevronsDownUp className="h-4 w-4" aria-hidden /> Collapse all</Button>
+            <Button size="sm" variant="ghost" onClick={() => { setAll(true); tradeOpen.setAll(true); }}><ChevronsUpDown className="h-4 w-4" aria-hidden /> Expand all</Button>
+            <Button size="sm" variant="ghost" onClick={() => { setAll(false); tradeOpen.setAll(false); }}><ChevronsDownUp className="h-4 w-4" aria-hidden /> Collapse all</Button>
           </div>
         )}
 
-        {groups.map((g, gi) => (
-          <GroupCard
-            key={g.id}
-            group={g}
-            index={gi}
-            count={groups.length}
-            estimate={estimate}
-            totals={totals}
-            dispatch={dispatch}
-            selected={selected}
-            setSelected={setSelected}
-            addItem={addItem}
-            open={isOpen(g.id)}
-            onToggle={() => toggle(g.id)}
-            hasIssues={issueGroups.has(g.id)}
-            examples={suggestionsForGroup(estimate, g).filter((x) => !dismissed.has(`${g.id}:${x.name}`))}
-            dismissExample={(name) => setDismissed(new Set(dismissed).add(`${g.id}:${name}`))}
-            fallbackExamples={gi === 0 ? (getTrade(estimate.trades[0])?.template.examples ?? []) : []}
-            suggestions={allSuggestions(estimate)}
-            lib={lib}
-          />
-        ))}
+        {blocks.map((b, bi) => {
+          const cards = b.groups.map((g, gi) => (
+            <GroupCard
+              key={g.id}
+              group={g}
+              index={gi}
+              count={b.groups.length}
+              estimate={estimate}
+              totals={totals}
+              dispatch={dispatch}
+              selected={selected}
+              setSelected={setSelected}
+              addItem={addItem}
+              open={isOpen(g.id)}
+              onToggle={() => toggle(g.id)}
+              hasIssues={issueGroups.has(g.id)}
+              examples={dismissedFor(g)}
+              dismissExample={(name) => setDismissed(new Set(dismissed).add(`${g.id}:${name}`))}
+              fallbackExamples={gi === 0 ? (getTrade(b.trade)?.template.examples ?? []) : []}
+              suggestions={allSuggestions(estimate)}
+              lib={lib}
+            />
+          ));
+          if (!multiTrade) return cards;
+          return (
+            <TradeSection
+              key={b.trade}
+              block={b}
+              index={bi}
+              count={blocks.length}
+              sums={tradeSums[bi]}
+              open={tradeOpen.isOpen(b.trade)}
+              onToggle={() => tradeOpen.toggle(b.trade)}
+              hasIssues={b.groups.some((g) => issueGroups.has(g.id))}
+              dispatch={dispatch}
+              onRemove={() => requestRemove(b.trade)}
+            >
+              {cards}
+            </TradeSection>
+          );
+        })}
 
-        <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" onClick={() => dispatch({ type: "addGroup" })}><Plus className="h-4 w-4" /> Add section</Button>
+        <div className="flex flex-wrap items-center gap-2">
+          {!multiTrade && <Button variant="secondary" onClick={() => dispatch({ type: "addGroup" })}><Plus className="h-4 w-4" /> Add section</Button>}
+          <AddTradeSelect estimate={estimate} dispatch={dispatch} className="min-h-11 md:min-h-9" label={multiTrade ? "+ Add another trade" : "+ Add a trade to this project"} />
         </div>
+        {removalDialog}
       </div>
 
       <PricingPanel estimate={estimate} totals={totals} dispatch={dispatch} />
@@ -283,6 +317,71 @@ function GroupCard(props: {
   );
 }
 
+/**
+ * One trade in a multi-trade estimate: a collapsible block holding that trade's own sections, with
+ * the trade's subtotal (pre-adjustment, pre-tax). Collapsing only hides rows; nothing is lost.
+ */
+function TradeSection({ block: b, index, count, sums, open, onToggle, hasIssues, dispatch, onRemove, children }: {
+  block: TradeBlock; index: number; count: number; sums: TradeTotals | undefined; open: boolean; onToggle: () => void; hasIssues: boolean;
+  dispatch: Dispatch<Action>; onRemove: () => void; children: React.ReactNode;
+}) {
+  const panelId = `trade-${b.trade}`;
+  const icon = getTrade(b.trade)?.icon ?? "Hammer";
+  return (
+    <section className="rounded-2xl border border-line-strong bg-paper/60" aria-label={`${b.name} trade`}>
+      <header className={cn("flex flex-wrap items-center gap-x-2 gap-y-1 px-2 py-2 sm:px-3", open && "border-b border-line")}>
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={open}
+          aria-controls={panelId}
+          aria-label={`${open ? "Collapse" : "Expand"} ${b.name} trade`}
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-md text-ink-soft hover:bg-black/5 md:h-9 md:w-9"
+        >
+          {open ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
+        </button>
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-tint text-brand" aria-hidden><TradeIcon name={icon} className="h-5 w-5" /></span>
+        <div className="min-w-0 flex-1 basis-40">
+          <h2 className="truncate font-display text-lg font-extrabold leading-tight">
+            <span className="tabular text-muted">{index + 1}.</span> {b.name}
+          </h2>
+          <p className="text-xs text-muted">
+            {b.groups.length} {b.groups.length === 1 ? "section" : "sections"} · {sums?.itemCount ?? 0} {sums?.itemCount === 1 ? "item" : "items"}
+          </p>
+        </div>
+        <div className="flex items-center gap-3 text-sm max-sm:order-last max-sm:w-full max-sm:pb-1 max-sm:pl-12">
+          {!open && hasIssues && <span className="inline-flex items-center gap-1 rounded bg-danger-tint px-1.5 py-0.5 text-xs font-semibold text-danger"><AlertCircle className="h-3.5 w-3.5" aria-hidden /> Needs attention</span>}
+          {sums && <span className="hidden text-muted sm:inline">Cost <span className="tabular font-semibold text-ink-soft">{formatCurrency(sums.cost)}</span></span>}
+          {sums && <span className="text-muted">Subtotal <span className="tabular font-bold text-ink">{formatCurrency(sums.price)}</span></span>}
+          {sums && (
+            <span className={cn("hidden rounded px-1.5 py-0.5 text-xs font-semibold sm:inline", sums.grossProfit.isNegative() ? "bg-danger-tint text-danger" : "bg-ok-tint text-ok")}>
+              {sums.grossMargin ? formatPercent(sums.grossMargin) : "—"} GM
+            </span>
+          )}
+        </div>
+        <Dropdown.Root>
+          <Dropdown.Trigger className="grid h-11 w-11 shrink-0 place-items-center rounded-md hover:bg-black/5 md:h-9 md:w-9" aria-label={`Trade actions for ${b.name}`}><MoreHorizontal className="h-4 w-4" /></Dropdown.Trigger>
+          <Dropdown.Portal>
+            <Dropdown.Content align="end" sideOffset={4} className="z-50 min-w-[200px] rounded-lg border border-line bg-surface p-1 text-sm shadow-lg">
+              <MenuItem onSelect={() => dispatch({ type: "moveTrade", trade: b.trade, dir: -1 })} disabled={index === 0}><ArrowUp className="h-4 w-4" /> Move trade up</MenuItem>
+              <MenuItem onSelect={() => dispatch({ type: "moveTrade", trade: b.trade, dir: 1 })} disabled={index === count - 1}><ArrowDown className="h-4 w-4" /> Move trade down</MenuItem>
+              <Dropdown.Separator className="my-1 h-px bg-line" />
+              <MenuItem onSelect={onRemove} danger><Trash2 className="h-4 w-4" /> Remove trade</MenuItem>
+            </Dropdown.Content>
+          </Dropdown.Portal>
+        </Dropdown.Root>
+      </header>
+      {open && (
+        <div id={panelId} className="space-y-3 p-2 sm:p-3">
+          {children}
+          {b.groups.length === 0 && <p className="px-1 text-sm text-muted">No sections yet for {b.name}.</p>}
+          <Button size="sm" variant="secondary" onClick={() => dispatch({ type: "addGroup", trade: b.trade })}><Plus className="h-4 w-4" /> Add section to {b.name}</Button>
+        </div>
+      )}
+    </section>
+  );
+}
+
 const CHIP_LIMIT = 6;
 
 /**
@@ -364,8 +463,10 @@ function SuggestionChips({ suggestions, items, onAdd, onDismiss }: {
   );
 }
 
-function GroupMenu({ group: g, index, count, dispatch }: { group: EstimateGroup; index: number; count: number; dispatch: Dispatch<Action> }) {
+function GroupMenu({ group: g, index, count, dispatch, estimate }: { group: EstimateGroup; index: number; count: number; dispatch: Dispatch<Action>; estimate: Estimate }) {
   const [editPricing, setEditPricing] = useState(false);
+  const own = sectionTrade(estimate, g);
+  const otherTrades = estimate.trades.length > 1 ? estimate.trades.filter((t) => t !== own) : [];
   return (
     <>
       <Dropdown.Root>
@@ -375,6 +476,9 @@ function GroupMenu({ group: g, index, count, dispatch }: { group: EstimateGroup;
             <MenuItem onSelect={() => dispatch({ type: "moveGroup", id: g.id, dir: -1 })} disabled={index === 0}><ArrowUp className="h-4 w-4" /> Move section up</MenuItem>
             <MenuItem onSelect={() => dispatch({ type: "moveGroup", id: g.id, dir: 1 })} disabled={index === count - 1}><ArrowDown className="h-4 w-4" /> Move section down</MenuItem>
             <MenuItem onSelect={() => setEditPricing(true)}>% Section pricing override</MenuItem>
+            {otherTrades.map((t) => (
+              <MenuItem key={t} onSelect={() => dispatch({ type: "moveGroupToTrade", id: g.id, trade: t })}><ArrowRightLeft className="h-4 w-4" /> Move to {getTrade(t)?.name ?? t}</MenuItem>
+            ))}
             <Dropdown.Separator className="my-1 h-px bg-line" />
             <MenuItem onSelect={() => dispatch({ type: "deleteGroup", id: g.id })} danger><Trash2 className="h-4 w-4" /> Delete section</MenuItem>
           </Dropdown.Content>
@@ -454,7 +558,8 @@ function ItemRow({ item: it, isLast, totals, estimate, dispatch, selected, toggl
       }
     }
   };
-  const groups = sortedGroups(estimate);
+  const groups = orderedSections(estimate);
+  const multiTrade = estimate.trades.length > 1;
   const customUnit = !(UNITS as readonly string[]).includes(it.unit);
 
   return (
@@ -527,7 +632,7 @@ function ItemRow({ item: it, isLast, totals, estimate, dispatch, selected, toggl
                     <Dropdown.Portal>
                       <Dropdown.SubContent className="z-50 min-w-[180px] rounded-lg border border-line bg-surface p-1 text-sm shadow-lg">
                         {groups.filter((g) => g.id !== it.groupId).map((g) => (
-                          <MenuItem key={g.id} onSelect={() => dispatch({ type: "moveItemToGroup", id: it.id, groupId: g.id })}>{g.name || "Untitled"}</MenuItem>
+                          <MenuItem key={g.id} onSelect={() => dispatch({ type: "moveItemToGroup", id: it.id, groupId: g.id })}>{multiTrade ? `${getTrade(sectionTrade(estimate, g))?.name ?? ""} · ` : ""}{g.name || "Untitled"}</MenuItem>
                         ))}
                       </Dropdown.SubContent>
                     </Dropdown.Portal>

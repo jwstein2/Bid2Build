@@ -299,7 +299,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
         {user && !user.emailVerified && <Notice tone="warn" className="mb-4" title="Verify your email">Check your inbox for the verification link to unlock PDF downloads.</Notice>}
         {lastTrash && (
           <div className="on-dark fixed bottom-20 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-full bg-ink px-4 py-2 text-sm text-white shadow-lg lg:bottom-6" role="status">
-            Deleted {lastTrash.label}
+            {lastTrash.kind === "trade" ? `Removed ${lastTrash.label} and its sections` : `Deleted ${lastTrash.label}`}
             <button onClick={() => dispatch({ type: "undo" })} className="inline-flex items-center gap-1 font-semibold text-accent underline"><Undo2 className="h-4 w-4" /> Undo</button>
           </div>
         )}

@@ -5,6 +5,8 @@ import { pricingFactor, type EstimateTotals } from "@/lib/estimate/engine";
 import { D, formatCurrency, formatPercent, toDec } from "@/lib/estimate/money";
 import type { Estimate, GroupVisibility } from "@/lib/estimate/types";
 import { cn } from "@/lib/cn";
+import { tradeTotals } from "@/lib/estimate/trades";
+import { tradeName } from "@/lib/trades/catalog";
 import type { Action } from "./state";
 import { VISIBILITY_LABEL } from "./workspace";
 
@@ -81,6 +83,11 @@ export function PricingPanel({ estimate: e, totals: t, dispatch }: { estimate: E
 
       <div className="rounded-xl border border-line bg-surface p-4">
         <h2 className="font-display font-bold">Project summary</h2>
+        {e.trades.length > 1 && (
+          <dl className="mt-3 space-y-1.5 border-b border-line pb-3 text-sm" aria-label="Subtotal by trade">
+            {tradeTotals(e, t).map((tt) => <Metric key={tt.trade} k={tradeName(tt.trade)} v={formatCurrency(tt.price)} />)}
+          </dl>
+        )}
         <dl className="mt-3 space-y-1.5 text-sm">
           <Metric k="Estimated total cost" v={formatCurrency(t.totalCost)} />
           <Metric k="Customer bid price" v={formatCurrency(t.subtotal)} hint="Pre-tax revenue" />

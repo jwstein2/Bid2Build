@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { loadEstimate } from "@/lib/data/server";
+import { worksheetToStore } from "@/lib/data/mappers";
 
 const id = z.string().uuid();
 
@@ -44,15 +45,18 @@ export async function duplicateEstimate(estimateId: string) {
   const itemMap = new Map(data.estimate.items.map((i) => [i.id, crypto.randomUUID()]));
   // Carry saved calculator inputs over to the copied line items.
   const calcs = Object.fromEntries(Object.entries(data.estimate.worksheet?.calcs ?? {}).filter(([k]) => itemMap.has(k)).map(([k, v]) => [itemMap.get(k)!, v]));
-  const worksheet = data.estimate.worksheet ? { ...data.estimate.worksheet, calcs } : undefined;
+  const groups = data.estimate.groups.map((g) => ({ ...g, id: groupMap.get(g.id)! }));
+  const items = data.estimate.items.map((i) => ({ ...i, id: itemMap.get(i.id)!, groupId: groupMap.get(i.groupId)! }));
+  // Section trades ride in the worksheet too, keyed by the copied section ids.
+  const worksheet = worksheetToStore({ items, groups, worksheet: { ...(data.estimate.worksheet ?? {}), calcs } }) ?? undefined;
   const copy = {
     ...data.estimate,
     id: crypto.randomUUID(),
     title: `${data.estimate.title} (copy)`.slice(0, 300),
     status: "draft" as const,
     estimateDate: new Date().toISOString().slice(0, 10),
-    groups: data.estimate.groups.map((g) => ({ ...g, id: groupMap.get(g.id)! })),
-    items: data.estimate.items.map((i) => ({ ...i, id: itemMap.get(i.id)!, groupId: groupMap.get(i.groupId)! })),
+    groups,
+    items,
     worksheet: undefined,
     proposalConfig: { ...data.proposalConfig, worksheet },
   };
