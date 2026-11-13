@@ -21,6 +21,8 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_SITE_URL: siteUrl,
     NEXT_PUBLIC_DEPLOY_CONTEXT: deployContext,
+    // Netlify commit SHA, used as the Sentry release.
+    NEXT_PUBLIC_COMMIT_REF: process.env.COMMIT_REF ?? "",
   },
   serverExternalPackages: ["@react-pdf/renderer"],
   turbopack: {
