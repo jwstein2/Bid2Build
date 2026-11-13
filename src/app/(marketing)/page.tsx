@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Check, ClipboardList, Download, FileText, LayoutGrid, Ruler, Timer, TrendingUp } from "lucide-react";
+import { Check, ClipboardList, Download, FileText, LayoutGrid, Ruler, Timer, TrendingUp } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { Container } from "@/components/ui/misc";
 import { TradePicker } from "@/components/marketing/trade-picker";
@@ -8,6 +8,9 @@ import { SampleProposal } from "@/components/marketing/sample-proposal";
 import { pickerTrades } from "@/lib/trades/picker";
 import { trades } from "@/lib/trades/catalog";
 import { plans, site } from "@/lib/site";
+import { AccountCtas } from "@/components/account/account-ctas";
+import { getAccountStatus } from "@/lib/account/server";
+import { accountCtas, creditBadge, MEMBER_TAGLINE, type AccountStatus } from "@/lib/account/status";
 
 const steps = [
   { icon: LayoutGrid, title: "Choose your trade", body: "Start from sections made for your work (roofing, decks, kitchens and 30+ more) or a blank estimate. Nothing is pre-priced." },
@@ -16,16 +19,23 @@ const steps = [
   { icon: Download, title: "Review and export", body: "Choose what the customer sees, preview the proposal, then download a branded PDF to send from your own email." },
 ];
 
-const faqs = [
-  { q: "Is it really free?", a: `Yes. Every verified account gets ${plans.starterCredits} free bids to start, plus ${plans.monthlyCredits} free bid every month from your second month on. Drafts and previews are unlimited, with every trade and your branding. No credit card required.` },
-  { q: "Do I need to sign up before I can try it?", a: "No. Pick a trade and start building right away. Your draft is saved in your browser. You only create an account (with a one-time email link) when you are ready to download your first PDF or save to the cloud." },
+const faqs: { q: string; a: string; visitorOnly?: boolean; freePlanOnly?: boolean }[] = [
+  { visitorOnly: true, q: "Is it really free?", a: `Yes. Every verified account gets ${plans.starterCredits} free bids to start, plus ${plans.monthlyCredits} free bid every month from your second month on. Drafts and previews are unlimited, with every trade and your branding. No credit card required.` },
+  { visitorOnly: true, q: "Do I need to sign up before I can try it?", a: "No. Pick a trade and start building right away. Your draft is saved in your browser. You only create an account (with a one-time email link) when you are ready to download your first PDF or save to the cloud." },
   { q: "Will my customer see my costs or markup?", a: "Never. Customer-facing proposals are built only from customer prices. Internal costs, margins, and notes are not included in the preview or the PDF." },
   { q: "Do you provide local material prices?", a: "Only when a licensed pricing source is connected. We never show made-up prices. Until then, you enter your own costs, which is what accurate bids are built on anyway." },
   { q: "Where is my draft saved?", a: "Before you sign in, drafts are saved in this browser on this device. After you sign in, they autosave to your account so you can pick them up on any device." },
-  { q: "What counts as one of my free bids?", a: "A credit is used when you finalize a new bid. Editing, re-finalizing, or re-downloading a bid you already finalized is free, and drafts never use a credit. Your monthly bid is used first, then starter credits." },
+  { freePlanOnly: true, q: "What counts as one of my free bids?", a: "A credit is used when you finalize a new bid. Editing, re-finalizing, or re-downloading a bid you already finalized is free, and drafts never use a credit. Your monthly bid is used first, then starter credits." },
 ];
 
-export default function HomePage() {
+const VISITOR_POINTS = ["No sign-up until you download", "No credit card", "Your costs stay private"];
+const MEMBER_POINTS = ["Every trade, one pricing engine", "Your costs stay private", "Branded PDF proposals"];
+
+export default async function HomePage() {
+  const status = await getAccountStatus();
+  const visitor = !status.signedIn;
+  const badge = creditBadge(status);
+  const shownFaqs = faqs.filter((f) => (!f.visitorOnly || visitor) && (!f.freePlanOnly || status.kind !== "unlimited"));
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
@@ -47,7 +57,9 @@ export default function HomePage() {
         <Container className="relative grid items-center gap-12 pb-16 pt-12 sm:pt-16 lg:grid-cols-[1.05fr_1fr] lg:gap-14 lg:pb-20">
           <div>
             <p className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs font-semibold text-[#D5DFE9]">
-              <span className="h-1.5 w-1.5 rounded-full bg-teal" aria-hidden /> For contractors in every trade · {plans.starterCredits} free bids to start
+              <span className="h-1.5 w-1.5 rounded-full bg-teal" aria-hidden />
+              <span data-testid="hero-tagline">{visitor ? `For contractors in every trade · ${plans.starterCredits} free bids to start` : MEMBER_TAGLINE}</span>
+              {badge && <span className="whitespace-nowrap border-l border-white/20 pl-2" data-testid="hero-credits">{badge}</span>}
             </p>
             <h1 className="mt-5 max-w-xl text-4xl font-extrabold leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-[3.5rem]">
               Win More Bids. Look More Professional. <span className="relative inline-block text-cyan">Get Back to Building.<svg aria-hidden viewBox="0 0 300 12" preserveAspectRatio="none" className="absolute -bottom-2 left-0 h-2.5 w-full"><path d="M3 9C80 3 200 2 297 6" fill="none" stroke="#14B8A6" strokeWidth="4" strokeLinecap="round" /></svg></span>
@@ -55,12 +67,9 @@ export default function HomePage() {
             <p className="mt-6 max-w-xl text-lg text-[#D5DFE9]">
               Turn rough estimates into organized, customer-ready proposals for your trade. Price with markup or margin, choose what your customer sees, and download a branded PDF.
             </p>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <ButtonLink href="/bids" variant="accent" size="lg">Create a free bid <ArrowRight className="h-4 w-4" aria-hidden /></ButtonLink>
-              <ButtonLink href="#how-it-works" size="lg" className="border border-white/40 bg-transparent text-white hover:bg-white/10">See how it works</ButtonLink>
-            </div>
+            <AccountCtas status={status} tone="dark" arrow howHref="#how-it-works" className="mt-8" />
             <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[#D5DFE9]">
-              {["No sign-up until you download", "No credit card", "Your costs stay private"].map((x) => (
+              {(visitor ? VISITOR_POINTS : MEMBER_POINTS).map((x) => (
                 <li key={x} className="flex items-center gap-1.5"><Check className="h-4 w-4 text-teal" aria-hidden />{x}</li>
               ))}
             </ul>
@@ -163,14 +172,7 @@ export default function HomePage() {
       <section className="on-dark relative overflow-hidden bg-navy py-16 text-white">
         <div aria-hidden className="blueprint-grid-dark pointer-events-none absolute inset-0" />
         <Container className="relative flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
-          <div>
-            <h2 className="text-3xl font-extrabold">Free to start. {plans.monthlyPriceLabel}/month when you need more.</h2>
-            <p className="mt-2 text-[#D5DFE9]">{plans.starterCredits} free bids to start, plus {plans.monthlyCredits} free bid every month. Unlimited for {plans.monthlyPriceLabel}/month, or {plans.annualPriceLabel}/year billed annually.</p>
-          </div>
-          <div className="flex gap-3">
-            <ButtonLink href="/bids" variant="accent" size="lg">Create a free bid</ButtonLink>
-            <ButtonLink href="/pricing" size="lg" className="border border-white/30 bg-transparent hover:bg-white/10">Compare plans</ButtonLink>
-          </div>
+          <PlanBand status={status} />
         </Container>
       </section>
 
@@ -178,7 +180,7 @@ export default function HomePage() {
         <Container className="max-w-3xl">
           <h2 className="text-3xl font-extrabold text-navy">Questions contractors ask</h2>
           <div className="mt-8 divide-y divide-line rounded-xl border border-line bg-surface">
-            {faqs.map((f) => (
+            {shownFaqs.map((f) => (
               <details key={f.q} className="group p-5">
                 <summary className="cursor-pointer list-none font-semibold marker:hidden [&::-webkit-details-marker]:hidden">
                   <span className="flex items-center justify-between gap-4">{f.q}<span className="text-muted transition group-open:rotate-45" aria-hidden>+</span></span>
@@ -190,6 +192,44 @@ export default function HomePage() {
           <p className="mt-6 text-sm text-muted">More in our <Link href="/learn" className="text-accent-ink underline">contractor guides</Link>, or <a href={`mailto:${site.supportEmail}`} className="text-accent-ink underline">email support</a>.</p>
         </Container>
       </section>
+    </>
+  );
+}
+
+/** Closing band: the public offer for visitors, plan-appropriate next steps for customers. */
+function PlanBand({ status }: { status: AccountStatus }) {
+  const outline = "border border-white/30 bg-transparent text-white hover:bg-white/10";
+  const { primary, secondary } = accountCtas(status);
+  const copy = {
+    signed_out: {
+      h: `Free to start. ${plans.monthlyPriceLabel}/month when you need more.`,
+      p: `${plans.starterCredits} free bids to start, plus ${plans.monthlyCredits} free bid every month. Unlimited for ${plans.monthlyPriceLabel}/month, or ${plans.annualPriceLabel}/year billed annually.`,
+    },
+    free: {
+      h: "Bidding regularly? Go Unlimited.",
+      p: `Finalize as many bids as you need for ${plans.monthlyPriceLabel}/month, or ${plans.annualPriceLabel}/year billed annually.`,
+    },
+    no_credits: {
+      h: "Keep bidding with Unlimited.",
+      p: `Your bids and drafts are all still here. Go Unlimited for ${plans.monthlyPriceLabel}/month, or ${plans.annualPriceLabel}/year, to finalize as many as you need.`,
+    },
+    unlimited: {
+      h: "You're on Unlimited.",
+      p: "Finalize as many bids as you need. Your company details and branding carry over to every proposal.",
+    },
+  }[status.kind];
+  // Visitors compare plans; Free-plan members see plans next to Create; others get their usual pair.
+  const second = status.kind === "signed_out" || status.kind === "free" ? { action: "plans", label: status.kind === "free" ? "View Plans" : "Compare plans", href: "/pricing" } : secondary;
+  return (
+    <>
+      <div>
+        <h2 className="text-3xl font-extrabold" data-testid="plan-band-heading">{copy.h}</h2>
+        <p className="mt-2 text-[#D5DFE9]">{copy.p}</p>
+      </div>
+      <div className="flex flex-wrap gap-3">
+        <ButtonLink href={primary.href} variant="accent" size="lg" data-cta={primary.action}>{primary.label}</ButtonLink>
+        <ButtonLink href={second.href} size="lg" className={outline} data-cta={second.action}>{second.label}</ButtonLink>
+      </div>
     </>
   );
 }

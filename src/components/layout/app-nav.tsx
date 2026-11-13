@@ -50,7 +50,7 @@ export function AppSidebar({ isAdmin, email }: { isAdmin: boolean; email: string
           </button>
         </div>
       </div>
-      <div className="hidden px-3 md:block"><ButtonLink href="/bids" variant="accent" className="w-full"><FileText className="h-4 w-4" aria-hidden /> New bid</ButtonLink></div>
+      <div className="hidden px-3 md:block"><ButtonLink href="/bids" variant="accent" className="w-full"><FileText className="h-4 w-4" aria-hidden /> Create New Bid</ButtonLink></div>
       {!open && current && <p className="px-4 pb-2 text-xs text-[#B8C6D4] md:hidden">{current.label}</p>}
       <nav id="account-nav" aria-label="Account" className={cn("flex-col gap-1 px-2 pb-3 md:mt-4 md:flex", open ? "flex" : "hidden")}>
         {nav.map((n) => {

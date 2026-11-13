@@ -2,8 +2,9 @@
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
+import type { Cta } from "@/lib/account/status";
 
-export function MobileNav({ items, signedIn }: { items: { href: string; label: string }[]; signedIn: boolean }) {
+export function MobileNav({ items, signedIn, primary, badge }: { items: { href: string; label: string }[]; signedIn: boolean; primary: Cta; badge: string | null }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="md:hidden">
@@ -17,9 +18,10 @@ export function MobileNav({ items, signedIn }: { items: { href: string; label: s
               <Link key={n.href} href={n.href} onClick={() => setOpen(false)} className="border-b border-line py-3 font-medium">{n.label}</Link>
             ))}
             <Link href={signedIn ? "/dashboard" : "/login"} onClick={() => setOpen(false)} className="border-b border-line py-3 font-medium">
-              {signedIn ? "Dashboard" : "Log in"}
+              {signedIn ? "My Bids" : "Log in"}
             </Link>
-            <Link href="/bids" onClick={() => setOpen(false)} className="mt-3 rounded-lg bg-accent py-3 text-center font-semibold text-navy">Create a free bid</Link>
+            {badge && <p className="pt-3 text-center text-sm text-ink-soft" data-testid="credit-badge-mobile">{badge}</p>}
+            <Link href={primary.href} onClick={() => setOpen(false)} data-cta={primary.action} className="mt-3 rounded-lg bg-accent py-3 text-center font-semibold text-navy">{primary.label}</Link>
           </nav>
         </div>
       )}

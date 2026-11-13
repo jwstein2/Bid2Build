@@ -51,6 +51,28 @@ const rpcs = {
   save_estimate: { id: EST }, market_log_view: null,
 };
 
+// Account scenarios for the account-aware CTA checks (scripts/account-ctas/run.mjs). Switch at runtime with
+// GET /__scenario?name=<key>&authDelayMs=<n>. MOCK_UNLIMITED keeps its old meaning for the UX audit scripts.
+const sub = (o) => [{ stripe_subscription_id: "sub_test", id: "sub_test", user_id: USER.id, status: "active", plan: "monthly", price_id: "price_test", current_period_end: iso(-20), cancel_at_period_end: false, canceled_at: null, ended_at: null, updated_at: iso(1), ...o }];
+const credit = (o) => [{ starter_balance: 2, starter_total: 3, monthly_balance: 0, monthly_eligible: false, next_cycle_at: iso(-12), unlimited: false, email_verified: true, starter_granted: true, ...o }];
+export const SCENARIOS = {
+  starter: { credit: credit({}), subs: [] },
+  monthly: { credit: credit({ starter_balance: 0, monthly_balance: 1, monthly_eligible: true }), subs: [] },
+  unlimited: { credit: credit({ unlimited: true }), subs: sub({}) },
+  canceling: { credit: credit({ unlimited: true }), subs: sub({ cancel_at_period_end: true, canceled_at: iso(2) }) },
+  expired: { credit: credit({ starter_balance: 0, monthly_balance: 0, monthly_eligible: true }), subs: sub({ status: "canceled", current_period_end: iso(3), ended_at: iso(3), canceled_at: iso(30) }) },
+  zero: { credit: credit({ starter_balance: 0, monthly_balance: 0, monthly_eligible: true }), subs: [] },
+};
+let authDelayMs = 0;
+function applyScenario(name) {
+  const sc = SCENARIOS[name];
+  if (!sc) return false;
+  rpcs.credit_status = sc.credit;
+  tables.subscriptions = sc.subs;
+  return true;
+}
+if (process.env.MOCK_SCENARIO) applyScenario(process.env.MOCK_SCENARIO);
+
 const cors = { "access-control-allow-origin": "*", "access-control-allow-headers": "*", "access-control-allow-methods": "GET,POST,PATCH,PUT,DELETE,OPTIONS", "access-control-expose-headers": "content-range" };
 const send = (res, code, body, extra = {}) => { res.writeHead(code, { "content-type": "application/json", ...cors, ...extra }); res.end(body === undefined ? "" : JSON.stringify(body)); };
 
@@ -59,7 +81,11 @@ http.createServer((req, res) => {
   let raw = ""; req.on("data", (c) => (raw += c));
   req.on("end", () => {
     if (req.method === "OPTIONS") return send(res, 204);
-    if (u.pathname === "/auth/v1/user") return send(res, 200, USER);
+    if (u.pathname === "/__scenario") {
+      authDelayMs = Number(u.searchParams.get("authDelayMs") ?? 0);
+      return applyScenario(u.searchParams.get("name") ?? "") ? send(res, 200, { ok: true }) : send(res, 400, { error: "unknown scenario" });
+    }
+    if (u.pathname === "/auth/v1/user") return void setTimeout(() => send(res, 200, USER), authDelayMs);
     // Email OTP for checkout-flow tests: any address, code 123456 succeeds, anything else is "expired or invalid".
     if (u.pathname === "/auth/v1/otp") return send(res, 200, {});
     if (u.pathname === "/auth/v1/verify") {

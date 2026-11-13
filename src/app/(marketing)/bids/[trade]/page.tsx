@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, Check } from "lucide-react";
-import { ButtonLink } from "@/components/ui/button";
+import { Check } from "lucide-react";
 import { Container } from "@/components/ui/misc";
 import { familyTint, TradeIcon } from "@/components/trade-icon";
 import { getTrade, trades, UNIT_ABBR } from "@/lib/trades/catalog";
 import { plans, site } from "@/lib/site";
+import { AccountCtas } from "@/components/account/account-ctas";
+import { getAccountStatus } from "@/lib/account/server";
+import { creditBadge, CTA_LABELS, type AccountStatus } from "@/lib/account/status";
 
 export const dynamicParams = false;
 export function generateStaticParams() {
@@ -34,7 +36,13 @@ export default async function TradePage({ params }: PageProps<"/bids/[trade]">) 
   const { trade: slug } = await params;
   const t = getTrade(slug);
   if (!t) notFound();
+  const status = await getAccountStatus();
   const faqs = [...t.faqs, ...genericFaqs];
+  const start = `/start/${t.slug}`;
+  // Starting a draft never uses a credit, so it stays one click away in every state.
+  const secondary = status.kind === "no_credits"
+    ? { action: "draft" as const, label: CTA_LABELS.draft, href: start }
+    : { action: "draft" as const, label: "Start from blank", href: `${start}?blank=1` };
   const related = trades.filter((x) => x.family === t.family && x.slug !== t.slug).slice(0, 4);
   const jsonLd = {
     "@context": "https://schema.org",
@@ -66,11 +74,8 @@ export default async function TradePage({ params }: PageProps<"/bids/[trade]">) 
             </div>
             <h1 className="mt-4 text-4xl font-extrabold leading-tight sm:text-5xl">{t.headline}</h1>
             <p className="mt-4 text-lg text-ink-soft">{t.intro}</p>
-            <div className="mt-7 flex flex-wrap gap-3">
-              <ButtonLink href={`/start/${t.slug}`} variant="accent" size="lg">Create a free bid <ArrowRight className="h-4 w-4" /></ButtonLink>
-              <ButtonLink href={`/start/${t.slug}?blank=1`} variant="secondary" size="lg">Start from blank</ButtonLink>
-            </div>
-            <p className="mt-3 text-sm text-muted">No signup to start. {plans.starterCredits} free bids to start, plus {plans.monthlyCredits} every month.</p>
+            <AccountCtas status={status} createHref={start} secondary={secondary} arrow className="mt-7" />
+            <p className="mt-3 text-sm text-muted" data-testid="trade-cta-note">{tradeNote(status)}</p>
           </div>
           <div className="rounded-2xl border border-line bg-paper p-5">
             <h2 className="font-bold">Example {t.name.toLowerCase()} projects</h2>
@@ -139,10 +144,19 @@ export default async function TradePage({ params }: PageProps<"/bids/[trade]">) 
 
         <div className="on-dark blueprint-grid-dark mt-14 rounded-2xl bg-brand p-8 text-white">
           <h2 className="text-2xl font-extrabold">Ready to build your {t.name.toLowerCase()} bid?</h2>
-          <p className="mt-2 text-white/80">Start now. Create an account only when you are ready to download.</p>
-          <ButtonLink href={`/start/${t.slug}`} variant="accent" size="lg" className="mt-5">Create a free bid</ButtonLink>
+          <p className="mt-2 text-white/80">{status.signedIn ? "Your company details and branding carry over to every bid." : "Start now. Create an account only when you are ready to download."}</p>
+          <AccountCtas status={status} createHref={start} tone="dark" secondary={status.kind === "no_credits" ? { ...secondary, label: CTA_LABELS.draft } : false} className="mt-5" />
         </div>
       </Container>
     </>
   );
+}
+
+function tradeNote(s: AccountStatus): string {
+  switch (s.kind) {
+    case "signed_out": return `No signup to start. ${plans.starterCredits} free bids to start, plus ${plans.monthlyCredits} every month.`;
+    case "free": return s.creditsLeft !== null ? `You have ${creditBadge(s)}. Drafts never use a credit.` : "Drafts never use a credit.";
+    case "no_credits": return "You're out of free bids. Drafts and previews still work; go Unlimited to finalize.";
+    case "unlimited": return "Unlimited plan: finalize as many bids as you need.";
+  }
 }
