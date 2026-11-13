@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
 import { Check, Minus } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
-import { Container, Notice } from "@/components/ui/misc";
+import { Container } from "@/components/ui/misc";
 import { CheckoutButton } from "@/components/billing/checkout-button";
-import { getUser } from "@/lib/supabase/server";
+import { CheckoutFlowProvider } from "@/components/billing/checkout-flow";
+import { createClient, getUser } from "@/lib/supabase/server";
+import { loadCreditStatus } from "@/lib/credits/server";
 import { plans } from "@/lib/site";
+import { ANNUAL, ANNUAL_MONTHLY_EQUIVALENT, ANNUAL_SAVINGS_PERCENT, MONTHLY } from "@/lib/billing/plans";
 
 export const metadata: Metadata = {
   title: "Pricing",
-  description: `Free: ${plans.starterCredits} bids to start, plus ${plans.monthlyCredits} free bid every month. Unlimited: ${plans.monthlyPriceLabel}/month or ${plans.annualPriceLabel}/year.`,
+  description: `Free: ${plans.starterCredits} bids to start, plus ${plans.monthlyCredits} free bid every month. Unlimited: ${MONTHLY.price}/month billed monthly, or ${ANNUAL.price}/year billed annually.`,
   alternates: { canonical: "/pricing" },
 };
 
@@ -26,27 +29,35 @@ const rows: [string, boolean | string, boolean | string][] = [
   ["Archived bids", "Unlimited", "Unlimited*"],
 ];
 
-export default async function PricingPage({ searchParams }: PageProps<"/pricing">) {
-  const sp = await searchParams;
+const UNLIMITED_FEATURES = ["Unlimited bid exports", "Everything in Free", "Reusable templates", "Full proposal customization"];
+
+export default async function PricingPage() {
   const user = await getUser();
+  const credits = user ? await loadCreditStatus(await createClient()) : null;
+  const subscribed = Boolean(credits?.unlimited);
+  const manage = <ButtonLink href="/settings/billing" variant="secondary" size="lg" className="w-full">Manage subscription</ButtonLink>;
   return (
     <Container className="py-14">
       <div className="mx-auto max-w-2xl text-center">
         <h1 className="text-4xl font-extrabold">Simple pricing for every contractor</h1>
-        <p className="mt-3 text-lg text-ink-soft">Start with {plans.starterCredits} free bids, then get {plans.monthlyCredits} free bid every month. Upgrade when you are bidding regularly. Both paid plans include exactly the same features.</p>
+        <p className="mt-3 text-lg text-ink-soft">Start with {plans.starterCredits} free bids, then get {plans.monthlyCredits} free bid every month. Upgrade when you are bidding regularly.</p>
       </div>
-      {sp.checkout === "cancelled" && <Notice tone="neutral" className="mx-auto mt-6 max-w-xl">Checkout was cancelled. You have not been charged.</Notice>}
-      <div className="mx-auto mt-10 grid max-w-5xl gap-5 md:grid-cols-3">
-        <Plan name="Free" price="$0" period="forever" blurb="For occasional bids." features={[`${plans.starterCredits} starter bids that never expire`, `Plus ${plans.monthlyCredits} free bid every month`, "Unlimited drafts and previews", "Every trade", "Branding and PDF exports", "No credit card required"]}>
-          <ButtonLink href="/bids" variant="secondary" size="lg" className="w-full">Create a free bid</ButtonLink>
-        </Plan>
-        <Plan name="Unlimited Monthly" price={plans.monthlyPriceLabel} period="per month" blurb="Flexible, cancel anytime." features={["Unlimited bid exports", "Everything in Free", "Reusable templates", "Full proposal customization"]}>
-          <CheckoutButton plan="monthly" signedIn={Boolean(user)} label="Choose Monthly" variant="primary" />
-        </Plan>
-        <Plan name="Unlimited Annual" price={plans.annualPriceLabel} period="per year" blurb={`Just ${plans.annualMonthlyEquivalent}/month, save 38%.`} highlight features={["Unlimited bid exports", "Everything in Free", "Reusable templates", "Full proposal customization", "Billed once a year"]}>
-          <CheckoutButton plan="annual" signedIn={Boolean(user)} label="Choose Annual" />
-        </Plan>
-      </div>
+      <CheckoutFlowProvider signedIn={Boolean(user)} subscribed={subscribed} userEmail={user?.email ?? null}>
+        <div className="mx-auto mt-10 grid max-w-5xl gap-5 md:grid-cols-3">
+          <Plan name="Free" price="$0" per="forever" billing="No credit card required." features={[`${plans.starterCredits} starter bids that never expire`, `Plus ${plans.monthlyCredits} free bid every month`, "Unlimited drafts and previews", "Every trade", "Branding and PDF exports"]}>
+            <ButtonLink href="/bids" variant="secondary" size="lg" className="w-full">Create a free bid</ButtonLink>
+          </Plan>
+          <Plan name={MONTHLY.name} price={MONTHLY.price} per="/month" billing="Billed monthly. Cancel anytime." features={UNLIMITED_FEATURES}>
+            {subscribed ? manage : <CheckoutButton plan="monthly" signedIn={Boolean(user)} label="Choose Monthly" variant="primary" />}
+          </Plan>
+          <Plan name={ANNUAL.name} price={ANNUAL.price} per="/year" billing="Billed annually" highlight
+            note={<>Equivalent to {ANNUAL_MONTHLY_EQUIVALENT}/month. Save approximately {ANNUAL_SAVINGS_PERCENT}% compared with monthly billing.</>}
+            features={UNLIMITED_FEATURES}>
+            {subscribed ? manage : <CheckoutButton plan="annual" signedIn={Boolean(user)} label="Choose Annual" />}
+          </Plan>
+        </div>
+        <p className="mx-auto mt-5 max-w-2xl text-center text-sm text-ink-soft">Unlimited Monthly and Unlimited Annual include exactly the same features. Only the billing schedule is different.{subscribed && " You're on Unlimited."}</p>
+      </CheckoutFlowProvider>
 
       <div className="mx-auto mt-14 max-w-3xl overflow-x-auto rounded-xl border border-line bg-surface">
         <table className="w-full text-sm">
@@ -71,13 +82,14 @@ export default async function PricingPage({ searchParams }: PageProps<"/pricing"
   );
 }
 
-function Plan({ name, price, period, blurb, features, highlight, children }: { name: string; price: string; period: string; blurb: string; features: string[]; highlight?: boolean; children: React.ReactNode }) {
+function Plan({ name, price, per, billing, note, features, highlight, children }: { name: string; price: string; per: string; billing: string; note?: React.ReactNode; features: string[]; highlight?: boolean; children: React.ReactNode }) {
   return (
     <div className={`relative flex flex-col rounded-2xl border bg-surface p-6 ${highlight ? "border-accent shadow-lg ring-2 ring-accent/30" : "border-line"}`}>
       {highlight && <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-accent px-3 py-1 text-xs font-bold text-navy">Recommended</span>}
       <h2 className="font-display text-lg font-bold">{name}</h2>
-      <p className="mt-3"><span className="font-display text-4xl font-extrabold">{price}</span> <span className="text-muted">{period}</span></p>
-      <p className="mt-1 text-sm text-muted">{blurb}</p>
+      <p className="mt-3 whitespace-nowrap"><span className="font-display text-4xl font-extrabold">{price}</span><span className={`font-semibold text-muted ${per.startsWith("/") ? "" : "ml-1.5"}`}>{per}</span></p>
+      <p className="mt-1 text-sm font-semibold text-ink">{billing}</p>
+      {note && <p className="mt-1 text-sm text-ink-soft">{note}</p>}
       <ul className="mt-5 flex-1 space-y-2 text-sm">{features.map((f) => <li key={f} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-ok" aria-hidden />{f}</li>)}</ul>
       <div className="mt-6">{children}</div>
     </div>

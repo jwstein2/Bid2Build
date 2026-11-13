@@ -165,7 +165,7 @@ export default function HomePage() {
         <Container className="relative flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
           <div>
             <h2 className="text-3xl font-extrabold">Free to start. {plans.monthlyPriceLabel}/month when you need more.</h2>
-            <p className="mt-2 text-[#D5DFE9]">{plans.starterCredits} free bids to start, plus {plans.monthlyCredits} free bid every month. Unlimited for {plans.monthlyPriceLabel}/month or {plans.annualPriceLabel}/year.</p>
+            <p className="mt-2 text-[#D5DFE9]">{plans.starterCredits} free bids to start, plus {plans.monthlyCredits} free bid every month. Unlimited for {plans.monthlyPriceLabel}/month, or {plans.annualPriceLabel}/year billed annually.</p>
           </div>
           <div className="flex gap-3">
             <ButtonLink href="/bids" variant="accent" size="lg">Create a free bid</ButtonLink>

@@ -60,6 +60,15 @@ http.createServer((req, res) => {
   req.on("end", () => {
     if (req.method === "OPTIONS") return send(res, 204);
     if (u.pathname === "/auth/v1/user") return send(res, 200, USER);
+    // Email OTP for checkout-flow tests: any address, code 123456 succeeds, anything else is "expired or invalid".
+    if (u.pathname === "/auth/v1/otp") return send(res, 200, {});
+    if (u.pathname === "/auth/v1/verify") {
+      let body = {}; try { body = JSON.parse(raw || "{}"); } catch { /* ignore */ }
+      if (body.token !== "123456") return send(res, 403, { code: "otp_expired", error_code: "otp_expired", msg: "Token has expired or is invalid" });
+      const b64u = (x) => Buffer.from(x).toString("base64url");
+      const jwt = `${b64u('{"alg":"HS256","typ":"JWT"}')}.${b64u(JSON.stringify({ sub: USER.id, exp: 4102444800, role: "authenticated", aud: "authenticated", email: body.email }))}.sig`;
+      return send(res, 200, { access_token: jwt, refresh_token: "mock", token_type: "bearer", expires_in: 3600 * 24 * 365, expires_at: 4102444800, user: { ...USER, email: body.email ?? USER.email } });
+    }
     if (u.pathname.startsWith("/auth/v1/")) return send(res, 200, {});
     if (u.pathname.startsWith("/storage/v1/")) return send(res, 400, { error: "not available in mock" });
     const rpc = u.pathname.match(/^\/rest\/v1\/rpc\/(\w+)/);
