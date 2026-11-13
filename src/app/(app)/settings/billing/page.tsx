@@ -30,6 +30,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
   ]);
   const q = credits ? { unlimited: credits.unlimited } : null;
   const current = subs?.find((s) => ["active", "trialing", "past_due"].includes(s.status)) ?? subs?.[0];
+  const ended = !q?.unlimited && current && ["canceled", "unpaid", "incomplete_expired"].includes(current.status) ? (current.ended_at ?? current.current_period_end) : null;
   const end = current?.current_period_end ? new Date(current.current_period_end).toLocaleDateString(undefined, { dateStyle: "long" }) : null;
 
   return (
@@ -42,6 +43,8 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
       {sp.notice === "already_subscribed" && q?.unlimited && <Notice tone="ok" title="You already have Unlimited">We didn&apos;t start a new checkout, so you won&apos;t be charged twice. Change or cancel your plan below.</Notice>}
       {!stripeReady && <Notice tone="warn" title="Billing not configured">Stripe keys are not set on this server. See docs/SETUP.md.</Notice>}
       {current?.status === "past_due" && <Notice tone="danger" title="Payment failed">Your last payment didn&apos;t go through. Stripe will retry automatically; update your payment method to keep Unlimited.</Notice>}
+
+      {ended && <Notice tone="neutral" title="Your Unlimited plan has ended">Unlimited ended on {new Date(ended).toLocaleDateString(undefined, { dateStyle: "long" })}. All your bids are still here, and your free credits apply again. Resubscribe any time below.</Notice>}
 
       <Card className="p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">

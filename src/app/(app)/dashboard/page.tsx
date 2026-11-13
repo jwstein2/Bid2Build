@@ -40,7 +40,7 @@ export default async function Dashboard() {
         </div>
         <div className="flex items-center gap-2">
           {credits && !credits.unlimited && <UpgradeLink compact />}
-          <ButtonLink href="/bids" variant="accent" className="hidden md:inline-flex">New bid</ButtonLink>
+          <ButtonLink href="/bids" variant="accent" className="hidden md:inline-flex">Create New Bid</ButtonLink>
         </div>
       </div>
       <LocalDraftsBanner />

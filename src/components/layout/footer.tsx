@@ -1,16 +1,20 @@
 import Link from "next/link";
 import { featuredTrades } from "@/lib/trades/catalog";
-import { site } from "@/lib/site";
+import { plans, site } from "@/lib/site";
+import { getAccountStatus } from "@/lib/account/server";
 import { Logo } from "./logo";
 
-export function Footer() {
+export async function Footer() {
+  const { signedIn } = await getAccountStatus();
   return (
     <footer className="on-dark mt-auto bg-navy text-white no-print">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-4">
         <div className="md:col-span-1">
           <Logo tone="dark" />
           <p className="mt-4 font-display text-sm font-semibold text-white">{site.tagline}</p>
-          <p className="mt-2 text-sm text-[#B8C6D4]">Estimates and proposals for contractors. 3 free bids to start, plus 1 every month. No credit card.</p>
+          <p className="mt-2 text-sm text-[#B8C6D4]">
+            Estimates and proposals for contractors.{!signedIn && ` ${plans.starterCredits} free bids to start, plus ${plans.monthlyCredits} every month. No credit card.`}
+          </p>
         </div>
         <FooterCol title="Popular trades">
           {featuredTrades.slice(0, 6).map((t) => (

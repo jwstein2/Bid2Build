@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ButtonLink } from "@/components/ui/button";
 import { Container } from "@/components/ui/misc";
 import { articles, getArticle } from "@/lib/learn/articles";
-import { site } from "@/lib/site";
+import { plans, site } from "@/lib/site";
+import { AccountCtas } from "@/components/account/account-ctas";
+import { getAccountStatus } from "@/lib/account/server";
 
 export const dynamicParams = false;
 export function generateStaticParams() { return articles.map((a) => ({ slug: a.slug })); }
@@ -18,6 +19,7 @@ export async function generateMetadata({ params }: PageProps<"/learn/[slug]">): 
 export default async function ArticlePage({ params }: PageProps<"/learn/[slug]">) {
   const a = getArticle((await params).slug);
   if (!a) notFound();
+  const status = await getAccountStatus();
   const ld = { "@context": "https://schema.org", "@type": "Article", headline: a.title, description: a.description, dateModified: a.updated, publisher: { "@type": "Organization", name: site.name } };
   return (
     <Container className="py-12">
@@ -37,8 +39,8 @@ export default async function ArticlePage({ params }: PageProps<"/learn/[slug]">
         </div>
         <div className="mt-10 rounded-xl border border-line bg-surface p-5">
           <p className="font-bold">Put it into practice</p>
-          <p className="mt-1 text-sm text-ink-soft">Build an estimate and proposal free. Three finished bids every month.</p>
-          <ButtonLink href="/bids" variant="accent" className="mt-3">Start a bid</ButtonLink>
+          <p className="mt-1 text-sm text-ink-soft">{status.kind === "no_credits" ? "Drafts are always free. Go Unlimited to finalize as many bids as you need." : status.signedIn ? "Open a new bid and apply it to your next estimate." : `Build an estimate and proposal free. ${plans.starterCredits} free bids to start, plus ${plans.monthlyCredits} every month.`}</p>
+          <AccountCtas status={status} size="md" secondary={false} className="mt-3" />
         </div>
       </article>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld).replace(/</g, "\\u003c") }} />
