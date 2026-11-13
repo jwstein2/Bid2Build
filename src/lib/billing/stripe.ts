@@ -13,7 +13,7 @@ export function getStripe(): Stripe {
 /** Live mode is refused unless the owner explicitly enables it (launch approval gate). */
 export function assertModeAllowed() {
   const key = serverEnv().stripeSecretKey;
-  if (key.startsWith("sk_live_") && process.env.STRIPE_ALLOW_LIVE !== "true") {
+  if (/^(sk|rk)_live_/.test(key) && process.env.STRIPE_ALLOW_LIVE !== "true") {
     throw new Error("Live Stripe keys are configured but STRIPE_ALLOW_LIVE is not 'true'. Live payments require explicit owner approval.");
   }
 }
