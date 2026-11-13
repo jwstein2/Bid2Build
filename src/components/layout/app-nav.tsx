@@ -34,19 +34,19 @@ export function AppSidebar({ isAdmin, email }: { isAdmin: boolean; email: string
   const current = nav.find((n) => active(n.href, n.exact));
   return (
     <>
-      <div className="flex items-center justify-between gap-2 px-4 py-3 md:py-4">
+      <div className="flex items-center justify-between gap-2 px-3 py-3 sm:px-4 md:py-4">
         <Logo tone="dark" href="/dashboard" />
         <div className="flex items-center gap-1 md:hidden">
-          <ButtonLink href="/bids" variant="accent" size="sm" className="min-h-11"><FileText className="h-4 w-4" aria-hidden /> New bid</ButtonLink>
+          <ButtonLink href="/bids" variant="accent" size="sm" className="min-h-11 max-[380px]:px-2.5"><FileText className="h-4 w-4 max-[380px]:hidden" aria-hidden /> New bid</ButtonLink>
           <button
             type="button"
             onClick={() => setOpen(!open)}
             aria-expanded={open}
             aria-controls="account-nav"
-            className="flex min-h-11 items-center gap-1.5 rounded-md px-2.5 text-sm font-semibold text-white hover:bg-white/10"
+            className="flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-md px-2.5 text-sm font-semibold text-white hover:bg-white/10"
           >
             {open ? <X className="h-5 w-5" aria-hidden /> : <Menu className="h-5 w-5" aria-hidden />}
-            <span>{open ? "Close" : "Menu"}</span>
+            <span className="max-[380px]:sr-only">{open ? "Close" : "Menu"}</span>
           </button>
         </div>
       </div>

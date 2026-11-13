@@ -81,7 +81,7 @@ function Row({ r }: { r: BidRow }) {
 
   return (
     <li className="flex flex-wrap items-center gap-3 px-4 py-3">
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 max-sm:basis-full">
         {renaming ? (
           <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); start(() => renameEstimate(r.id, title)); setRenaming(false); }}>
             <input autoFocus aria-label="New name" className="field field-sm" value={title} onChange={(e) => setTitle(e.target.value)} />
