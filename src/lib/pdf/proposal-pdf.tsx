@@ -202,6 +202,12 @@ function PdfSection({ s, fs, brand, striped, bar }: { s: ProposalSection; fs: nu
   const hasAmt = itemized && s.lines.some((l) => l.amount);
   return (
     <View style={{ marginTop: 7 }}>
+      {s.tradeHeading ? (
+        <View minPresenceAhead={60} wrap={false} style={{ flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 5, paddingTop: 6, paddingBottom: 2 }}>
+          <Text style={{ fontFamily: "Helvetica-Bold", fontSize: fs * 1.05, color: brand, textTransform: "uppercase", flex: 1, paddingRight: 8 }}>{T(s.tradeHeading.title)}</Text>
+          {s.tradeHeading.amount ? <Text style={{ fontFamily: "Helvetica-Bold", fontSize: fs * 1.05, color: brand }}>{T(s.tradeHeading.amount)}</Text> : null}
+        </View>
+      ) : null}
       <View
         minPresenceAhead={40}
         wrap={false}

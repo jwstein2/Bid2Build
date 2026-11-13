@@ -131,14 +131,30 @@ export function worksheetFrom(rawConfig: unknown): EstimateWorksheet | null {
   return parsed.success && parsed.data ? (parsed.data as EstimateWorksheet) : null;
 }
 
-/** The worksheet to persist: calculations only for line items that still exist; null when empty. */
-export function worksheetToStore(estimate: Pick<Estimate, "items" | "worksheet">): EstimateWorksheet | null {
-  const w = estimate.worksheet;
-  if (!w) return null;
+/**
+ * The worksheet to persist: calculations only for line items that still exist, plus each section's
+ * trade (estimate_groups has no trade column); null when empty.
+ */
+export function worksheetToStore(estimate: Pick<Estimate, "items" | "worksheet"> & { groups?: EstimateGroup[] }): EstimateWorksheet | null {
+  const w = estimate.worksheet ?? {};
   const ids = new Set(estimate.items.filter((i) => !i.isExample).map((i) => i.id));
   const calcs = Object.fromEntries(Object.entries(w.calcs ?? {}).filter(([id]) => ids.has(id)));
+  const sectionTrades = Object.fromEntries((estimate.groups ?? []).filter((g) => g.trade).map((g) => [g.id, g.trade as string]));
   const out: EstimateWorksheet = {};
   if (Object.keys(calcs).length) out.calcs = calcs;
   if (w.minimumCharge && w.minimumCharge.trim()) out.minimumCharge = w.minimumCharge.trim();
+  if (Object.keys(sectionTrades).length) out.sectionTrades = sectionTrades;
   return Object.keys(out).length ? out : null;
+}
+
+/**
+ * Puts stored section trades back on the sections and keeps them out of the in-memory worksheet,
+ * so EstimateGroup.trade stays the only place the editor reads a section's trade from.
+ */
+export function applySectionTrades(estimate: Estimate, worksheet: EstimateWorksheet | null): Estimate {
+  const map = worksheet?.sectionTrades ?? {};
+  const { sectionTrades: _st, ...rest } = worksheet ?? {};
+  void _st;
+  const groups = estimate.groups.map((g) => (map[g.id] ? { ...g, trade: map[g.id] } : g));
+  return { ...estimate, groups, worksheet: worksheet && Object.keys(rest).length ? rest : null };
 }

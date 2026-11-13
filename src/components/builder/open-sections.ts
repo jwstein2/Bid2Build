@@ -13,10 +13,11 @@ export function initialOpenState(ids: string[]): OpenState {
  * Reconciles saved state with the current section list: drops deleted sections and opens
  * sections that appeared since (the contractor just added them), leaving everything else as it was.
  */
-export function reconcileOpenState(prev: OpenState, ids: string[]): OpenState {
+export function reconcileOpenState(prev: OpenState, ids: string[], openAdded: "all" | "first" = "all"): OpenState {
   const known = new Set(prev.known);
   const added = ids.filter((id) => !known.has(id));
-  const open = prev.open.filter((id) => ids.includes(id)).concat(added);
+  // "first": when several sections appear at once (a trade was added), open just the first of them.
+  const open = prev.open.filter((id) => ids.includes(id)).concat(openAdded === "first" ? added.slice(0, 1) : added);
   if (!added.length && open.length === prev.open.length && prev.known.length === ids.length) return prev;
   return { open, known: [...ids] };
 }
@@ -40,20 +41,21 @@ function readSaved(estimateId: string): OpenState | null {
  * hide their rows. Remembered per estimate for this browser tab, so moving between builder steps
  * (or reloading) returns the contractor to the sections they had open.
  */
-export function useOpenSections(estimateId: string, ids: string[]) {
+export function useOpenSections(estimateId: string, ids: string[], opts: { openAdded?: "all" | "first" } = {}) {
+  const openAdded = opts.openAdded ?? "all";
   const [state, setState] = useState<OpenState>(() => initialOpenState(ids));
   const idsKey = ids.join(",");
 
   useEffect(() => {
     const saved = readSaved(estimateId);
     // eslint-disable-next-line react-hooks/set-state-in-effect -- session storage is only readable after hydration
-    if (saved) setState(reconcileOpenState(saved, idsKey ? idsKey.split(",") : []));
+    if (saved) setState(reconcileOpenState(saved, idsKey ? idsKey.split(",") : [], openAdded));
   }, [estimateId]); // eslint-disable-line react-hooks/exhaustive-deps -- restore once per estimate
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- keep state in step with added/removed sections
-    setState((s) => reconcileOpenState(s, idsKey ? idsKey.split(",") : []));
-  }, [idsKey]);
+    setState((s) => reconcileOpenState(s, idsKey ? idsKey.split(",") : [], openAdded));
+  }, [idsKey, openAdded]);
 
   useEffect(() => {
     try { sessionStorage.setItem(storageKey(estimateId), JSON.stringify(state)); } catch { /* storage blocked */ }
