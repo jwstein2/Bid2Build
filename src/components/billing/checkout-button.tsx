@@ -1,22 +1,43 @@
 "use client";
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
+import type { PlanId } from "@/lib/billing/plans";
+import { resumePath, saveIntent } from "@/lib/billing/checkout-intent";
+import { startCheckout } from "@/lib/billing/start-checkout";
+import { useCheckoutFlow } from "./checkout-context";
 
-export function CheckoutButton({ plan, signedIn, label, variant = "accent", className }: { plan: "monthly" | "annual"; signedIn: boolean; label: string; variant?: "accent" | "primary" | "secondary"; className?: string }) {
+/**
+ * Starts checkout for an approved plan id. On the pricing page it hands off to the checkout flow
+ * (verification modal + automatic resume). Elsewhere signed-out visitors go through /login, which
+ * returns to /pricing?resume=<plan> so checkout continues without choosing again.
+ */
+export function CheckoutButton({ plan, signedIn, label, variant = "accent", className }: { plan: PlanId; signedIn: boolean; label: string; variant?: "accent" | "primary" | "secondary"; className?: string }) {
+  const flow = useCheckoutFlow();
+  const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+
+  // Coming back from Stripe with the Back button restores this page from cache mid-"busy".
+  useEffect(() => {
+    const onShow = (e: PageTransitionEvent) => { if (e.persisted) setBusy(false); };
+    window.addEventListener("pageshow", onShow);
+    return () => window.removeEventListener("pageshow", onShow);
+  }, []);
+
   async function go() {
-    if (!signedIn) { window.location.assign(`/login?next=${encodeURIComponent(`/pricing?upgrade=${plan}`)}`); return; }
+    if (flow) { flow.choose(plan); return; }
+    saveIntent(plan);
+    if (!signedIn) { router.push(`/login?next=${encodeURIComponent(resumePath(plan))}`); return; }
     setBusy(true); setErr(null);
-    try {
-      const r = await fetch("/api/stripe/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ plan }) });
-      const d = await r.json();
-      if (r.ok && d.url) window.location.assign(d.url);
-      else if (d?.error?.code === "already_subscribed") window.location.assign("/settings/billing");
-      else setErr(d?.error?.message ?? "Checkout is unavailable right now.");
-    } catch { setErr("Checkout is unavailable right now."); }
-    finally { setBusy(false); }
+    const r = await startCheckout(plan);
+    if (r.kind === "redirecting") return;
+    setBusy(false);
+    if (r.kind === "already_subscribed") router.push("/settings/billing?notice=already_subscribed");
+    else if (r.kind === "signed_out") router.push(`/login?next=${encodeURIComponent(resumePath(plan))}`);
+    else if (r.kind === "busy") setErr("Checkout is already opening in another tab.");
+    else setErr(r.message);
   }
   return (
     <div className={className}>

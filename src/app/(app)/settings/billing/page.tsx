@@ -8,6 +8,8 @@ import { Badge, Card, Notice } from "@/components/ui/misc";
 import { plans } from "@/lib/site";
 import { CreditBalances } from "@/components/billing/credits";
 import { loadCreditStatus } from "@/lib/credits/server";
+import { ANNUAL, ANNUAL_MONTHLY_EQUIVALENT, MONTHLY, isPlanId, planDisplay } from "@/lib/billing/plans";
+import { ClearCheckoutIntent, ConfirmingPayment } from "@/components/billing/checkout-return";
 
 export const metadata: Metadata = { title: "Subscription", robots: { index: false } };
 
@@ -33,9 +35,11 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <h1 className="text-3xl font-extrabold">Subscription</h1>
+      {sp.checkout === "success" && <ClearCheckoutIntent />}
       {sp.checkout === "success" && (q?.unlimited
         ? <Notice tone="ok" title="You're on Unlimited">Thanks! Payment confirmed by Stripe. Unlimited exports are active.</Notice>
-        : <Notice tone="warn" title="Confirming your payment">We haven&apos;t received confirmation from Stripe yet. This usually takes a few seconds; refresh this page shortly.</Notice>)}
+        : <ConfirmingPayment planName={isPlanId(sp.plan) ? planDisplay(sp.plan).name : "Unlimited"} />)}
+      {sp.notice === "already_subscribed" && q?.unlimited && <Notice tone="ok" title="You already have Unlimited">We didn&apos;t start a new checkout, so you won&apos;t be charged twice. Change or cancel your plan below.</Notice>}
       {!stripeReady && <Notice tone="warn" title="Billing not configured">Stripe keys are not set on this server. See docs/SETUP.md.</Notice>}
       {current?.status === "past_due" && <Notice tone="danger" title="Payment failed">Your last payment didn&apos;t go through. Stripe will retry automatically; update your payment method to keep Unlimited.</Notice>}
 
@@ -43,7 +47,8 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-sm text-muted">Current plan</p>
-            <p className="text-2xl font-extrabold">{q?.unlimited ? (current?.plan === "annual" ? "Unlimited Annual" : "Unlimited Monthly") : "Free"}</p>
+            <p className="text-2xl font-extrabold">{q?.unlimited ? (current?.plan === "annual" ? ANNUAL.name : MONTHLY.name) : "Free"}</p>
+            {q?.unlimited && <p className="text-sm text-ink-soft">{current?.plan === "annual" ? `${ANNUAL.price}/year, billed annually` : `${MONTHLY.price}/month, billed monthly`}</p>}
             {q?.unlimited && end && <p className="text-sm text-ink-soft">{current?.cancel_at_period_end ? `Cancels on ${end}. You keep Unlimited until then.` : `Renews on ${end}.`}</p>}
             {!q?.unlimited && <p className="text-sm text-ink-soft">{plans.starterCredits} starter credits to begin, then {plans.monthlyCredits} free bid every month.</p>}
           </div>
@@ -56,8 +61,9 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
 
       {!q?.unlimited && stripeReady && (
         <div className="grid gap-4 sm:grid-cols-2">
-          <Card className="p-5"><p className="font-bold">Unlimited Monthly</p><p className="mb-4 text-2xl font-extrabold">{plans.monthlyPriceLabel}<span className="text-sm text-muted">/mo</span></p><CheckoutButton plan="monthly" signedIn label="Upgrade monthly" variant="primary" /></Card>
-          <Card className="border-accent p-5"><p className="font-bold">Unlimited Annual <Badge tone="accent">Best value</Badge></p><p className="mb-4 text-2xl font-extrabold">{plans.annualPriceLabel}<span className="text-sm text-muted">/yr</span></p><CheckoutButton plan="annual" signedIn label="Upgrade annually" /></Card>
+          <Card className="flex flex-col p-5"><p className="font-bold">{MONTHLY.name}</p><p className="text-2xl font-extrabold">{MONTHLY.price}<span className="text-sm font-semibold text-muted">/month</span></p><p className="mb-4 flex-1 text-sm text-ink-soft">Billed monthly. Cancel anytime.</p><CheckoutButton plan="monthly" signedIn label="Choose Monthly" variant="primary" /></Card>
+          <Card className="flex flex-col border-accent p-5"><p className="font-bold">{ANNUAL.name} <Badge tone="accent">Best value</Badge></p><p className="text-2xl font-extrabold">{ANNUAL.price}<span className="text-sm font-semibold text-muted">/year</span></p><p className="mb-4 flex-1 text-sm text-ink-soft">Billed annually. Equivalent to {ANNUAL_MONTHLY_EQUIVALENT}/month.</p><CheckoutButton plan="annual" signedIn label="Choose Annual" /></Card>
+          <p className="text-sm text-muted sm:col-span-2">Both plans include exactly the same Unlimited features.</p>
         </div>
       )}
     </div>

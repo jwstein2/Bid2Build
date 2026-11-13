@@ -1,4 +1,5 @@
 import { hostOf, resolveAllowIndexing, resolveDeployContext, resolveSiteUrl } from "./config/deploy";
+import { ANNUAL, ANNUAL_MONTHLY_EQUIVALENT, ANNUAL_SAVINGS_PERCENT, MONTHLY } from "./billing/plans";
 
 /**
  * Central brand and URL configuration. Rebranding or moving domains = change env vars, not code.
@@ -37,7 +38,9 @@ export const plans = {
   starterCredits: 3,
   /** Free credits per monthly cycle, starting in the second month. Enforced in Postgres. */
   monthlyCredits: 1,
-  monthlyPriceLabel: "$19.99",
-  annualPriceLabel: "$149",
-  annualMonthlyEquivalent: "$12.42",
+  /** Derived from src/lib/billing/plans.ts (the single source of truth for paid plan prices). */
+  monthlyPriceLabel: MONTHLY.price,
+  annualPriceLabel: ANNUAL.price,
+  annualMonthlyEquivalent: ANNUAL_MONTHLY_EQUIVALENT,
+  annualSavingsPercent: ANNUAL_SAVINGS_PERCENT,
 } as const;
