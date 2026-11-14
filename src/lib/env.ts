@@ -24,8 +24,14 @@ export const isStripeConfigured = () => {
   return Boolean(e.stripeSecretKey && e.stripePriceMonthly && e.stripePriceAnnual);
 };
 
-/** Enterprise checkout is offered only once both Enterprise prices are configured. */
+/**
+ * Enterprise checkout is offered only once both Enterprise prices are configured, and with a live
+ * Stripe key only after the owner switches it on (ENTERPRISE_CHECKOUT_LIVE=true), separately from
+ * STRIPE_ALLOW_LIVE, so Enterprise can be verified before real customers can buy it.
+ */
 export const isEnterpriseConfigured = () => {
   const e = serverEnv();
-  return isStripeConfigured() && Boolean(e.stripePriceEnterpriseBase && e.stripePriceEnterpriseSeat);
+  if (!isStripeConfigured() || !e.stripePriceEnterpriseBase || !e.stripePriceEnterpriseSeat) return false;
+  if (/^(sk|rk)_live_/.test(e.stripeSecretKey) && process.env.ENTERPRISE_CHECKOUT_LIVE !== "true") return false;
+  return true;
 };

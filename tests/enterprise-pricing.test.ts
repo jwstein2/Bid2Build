@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ENTERPRISE_SEAT_TIERS, enterpriseMonthlyCents, enterpriseQuote, formatCents, nextSeatCents } from "../src/lib/enterprise/pricing";
+import { ENTERPRISE_SEAT_TIERS, enterpriseBaseMismatch, enterpriseMonthlyCents, enterpriseQuote, enterpriseSeatMismatch, formatCents, nextSeatCents } from "../src/lib/enterprise/pricing";
 import { effectivePermissions, ROLE_PERMISSIONS } from "../src/lib/enterprise/permissions";
 
 describe("Enterprise seat pricing", () => {
@@ -74,5 +74,22 @@ describe("Enterprise permissions mirror", () => {
   });
   it("no role but owner gets billing by default", () => {
     for (const r of ["manager", "estimator", "viewer"] as const) expect(ROLE_PERMISSIONS[r]).not.toContain("manage_billing");
+  });
+});
+
+describe("Stripe Enterprise price checks", () => {
+  const monthly = { interval: "month", interval_count: 1, usage_type: "licensed" };
+  const good = { currency: "usd", unit_amount: null, billing_scheme: "tiered", tiers_mode: "graduated", recurring: monthly,
+    tiers: [{ up_to: 2, unit_amount: 1999, flat_amount: null }, { up_to: 7, unit_amount: 1799, flat_amount: null }, { up_to: null, unit_amount: 1599, flat_amount: null }] };
+  it("accepts the exact base and seat prices", () => {
+    expect(enterpriseBaseMismatch({ currency: "usd", unit_amount: 4999, recurring: monthly })).toBeNull();
+    expect(enterpriseSeatMismatch(good)).toBeNull();
+  });
+  it("refuses anything that would bill a different amount", () => {
+    expect(enterpriseBaseMismatch({ currency: "usd", unit_amount: 4900, recurring: monthly })).toMatch(/amount/);
+    expect(enterpriseBaseMismatch({ currency: "usd", unit_amount: 4999, recurring: { ...monthly, interval: "year" } })).toMatch(/monthly/);
+    expect(enterpriseSeatMismatch({ ...good, tiers_mode: "volume" })).toMatch(/graduated/);
+    expect(enterpriseSeatMismatch({ ...good, tiers: [...good.tiers.slice(0, 2), { up_to: null, unit_amount: 1499, flat_amount: null }] })).toMatch(/tier 3/);
+    expect(enterpriseSeatMismatch({ ...good, active: false })).toMatch(/archived/);
   });
 });
