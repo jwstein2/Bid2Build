@@ -10,13 +10,15 @@ import { CreditBalances, UpgradeLink } from "@/components/billing/credits";
 import { loadCreditStatus } from "@/lib/credits/server";
 import { PremiumTiles } from "./library-tile";
 import { hasPremiumAccess } from "@/lib/billing/entitlement";
+import { can, loadMyCompany } from "@/lib/enterprise/server";
+import { ROLE_LABELS } from "@/lib/enterprise/permissions";
 
 export const metadata: Metadata = { title: "Dashboard", robots: { index: false } };
 
 export default async function Dashboard() {
   const user = (await getUser())!;
   const supabase = await createClient();
-  const [{ data: estimates }, { data: versions }, credits, { data: biz }, libraryAccess] = await Promise.all([
+  const [{ data: estimates }, { data: versions }, credits, { data: biz }, libraryAccess, company] = await Promise.all([
     // "My bids" stays personal: Enterprise owners/managers can also read teammates' company bids (RLS),
     // which belong in the company Command Center, not here.
     supabase.from("estimates").select("id, title, customer_name, trades, status, updated_at, estimate_number").eq("user_id", user.id).order("updated_at", { ascending: false }).limit(500),
@@ -24,7 +26,12 @@ export default async function Dashboard() {
     loadCreditStatus(supabase),
     supabase.from("business_profiles").select("company_name, logo_path, phone, email, address").eq("user_id", user.id).maybeSingle(),
     hasPremiumAccess(supabase),
+    loadMyCompany(supabase),
   ]);
+  const enterprise = company?.entitlement.active ? {
+    companyName: company.name, role: ROLE_LABELS[company.role], complimentary: company.entitlement.source === "complimentary",
+    expiresAt: company.entitlement.expiresAt, manageHref: can(company, "manage_billing") ? "/company/billing" as const : "/company/users" as const,
+  } : null;
   const latest = new Map<string, { id: string; version_number: number; total: number }>();
   for (const v of versions ?? []) if (!latest.has(v.estimate_id)) latest.set(v.estimate_id, v);
   const rows: BidRow[] = (estimates ?? []).map((e) => ({
@@ -51,7 +58,7 @@ export default async function Dashboard() {
       <LocalDraftsBanner />
       <ProfileReminder missing={missing} />
       <div className="grid gap-4 lg:grid-cols-3">
-        {credits && <CreditBalances credits={credits} className="lg:col-span-2" showUpgrade={false} />}
+        {credits && <CreditBalances credits={credits} className="lg:col-span-2" showUpgrade={false} enterprise={enterprise} />}
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-1">
           <Card className="p-4"><p className="text-sm text-muted">Drafts</p><p className="text-2xl font-extrabold">{rows.filter((r) => r.status === "draft").length}</p></Card>
           <Card className="p-4"><p className="text-sm text-muted">Finalized proposals</p><p className="text-2xl font-extrabold">{rows.filter((r) => r.status === "finalized").length}</p></Card>

@@ -91,6 +91,20 @@ function applyScenario(name) {
   rpcs.library_access = Boolean(sc.credit[0].unlimited);
   rpcs.my_company = sc.company ?? null;
   rpcs.company_billing_summary = sc.company ? { activeMembers: Math.max(1, (sc.company.seatsUsed ?? 1) - 1) } : null;
+  // Users & Permissions page data (owner sees emails, deactivated people and invitations).
+  const owner = sc.company?.role === "owner";
+  const TEAM = "55555555-5555-4555-8555-0000000000a1";
+  const M2 = "00000000-0000-4000-8000-000000000002", M3 = "00000000-0000-4000-8000-000000000003", M4 = "00000000-0000-4000-8000-000000000004";
+  rpcs.company_roster = sc.company ? [
+    { user_id: USER.id, display_name: "Jordan Owner", email: USER.email, role: sc.company.role, status: "active", team_ids: [], managed_team_ids: [], joined_at: iso(60), last_active_at: iso(0) },
+    { user_id: M2, display_name: "Riley Manager", email: owner ? "riley@summit.test" : null, role: "manager", status: "active", team_ids: [TEAM], managed_team_ids: [TEAM], joined_at: iso(40), last_active_at: iso(1) },
+    { user_id: M3, display_name: "Casey Estimator", email: owner ? "casey@summit.test" : null, role: "estimator", status: "active", team_ids: [TEAM], managed_team_ids: [], joined_at: iso(20), last_active_at: iso(2) },
+    ...(owner ? [{ user_id: M4, display_name: "Pat Former", email: "pat@summit.test", role: "viewer", status: "deactivated", team_ids: [], managed_team_ids: [], joined_at: iso(90), last_active_at: iso(30) }] : []),
+  ] : null;
+  rpcs.company_member_access = owner ? [{ user_id: M3, permissions_granted: ["view_analytics"], permissions_revoked: [] }] : null;
+  rpcs.company_teams_overview = sc.company ? [{ id: TEAM, name: "Siding Crew", trade: "siding", member_count: 2, manager_count: 1 }] : null;
+  rpcs.list_company_invitations = owner ? [{ id: "55555555-5555-4555-8555-0000000000b1", email: "newhire@summit.test", role: "estimator", team_id: null, expires_at: iso(-6), created_at: iso(1) }] : null;
+  rpcs.peek_company_invitation = [{ company_name: "Summit Exteriors LLC", role: "estimator", email_hint: "u•••@built2bid.test", expires_at: iso(-6), email_matches: true }];
   return true;
 }
 if (process.env.MOCK_SCENARIO) applyScenario(process.env.MOCK_SCENARIO);

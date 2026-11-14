@@ -55,7 +55,7 @@ for (const [label, vp] of [["desktop", { width: 1280, height: 900 }], ["m390", {
   check(`${label}: past due banner, no seat changes`, (await page.textContent("body")).includes("Payment failed") && !(await page.getByTestId("seat-changer").count()));
   await scenario("enterprise_owner");
   await page.goto("http://localhost:3000/pricing#enterprise");
-  check(`${label}: pricing page shows Manage Enterprise for owner`, await page.getByRole("link", { name: "Manage Enterprise" }).isVisible());
+  check(`${label}: pricing page shows Manage Enterprise for owner`, await page.getByRole("link", { name: "Manage Enterprise" }).waitFor({ timeout: 10000 }).then(() => true, () => false));
   await ctx.close();
 }
 await scenario("starter");

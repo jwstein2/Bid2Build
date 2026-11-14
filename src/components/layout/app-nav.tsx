@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, Plug, LayoutTemplate, LogOut, X } from "lucide-react";
+import { CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, Plug, LayoutTemplate, LogOut, X, UserCog, Receipt } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ButtonLink } from "@/components/ui/button";
 import { Logo } from "./logo";
@@ -27,13 +27,17 @@ const item = "flex min-h-11 items-center gap-2.5 whitespace-nowrap rounded-md px
  * Navy account sidebar. Desktop: always-visible vertical list. Mobile: a compact top bar
  * (logo, New bid, Menu) whose menu opens the same list, so content starts near the top of the screen.
  */
-export function AppSidebar({ isAdmin, email }: { isAdmin: boolean; email: string | null }) {
+/** Enterprise company links, chosen on the server from the member's permissions. */
+export type CompanyNav = { name: string; links: { href: "/company/users" | "/company/billing"; label: string }[] };
+const COMPANY_ICONS = { "/company/users": UserCog, "/company/billing": Receipt } as const;
+
+export function AppSidebar({ isAdmin, email, company }: { isAdmin: boolean; email: string | null; company?: CompanyNav | null }) {
   const path = usePathname();
   const [open, setOpen] = useState(false);
   // eslint-disable-next-line react-hooks/set-state-in-effect -- close the mobile menu after navigating
   useEffect(() => { setOpen(false); }, [path]);
   const active = (href: string, exact?: boolean) => (exact ? path === href : path === href || path.startsWith(`${href}/`));
-  const current = nav.find((n) => active(n.href, n.exact));
+  const current = nav.find((n) => active(n.href, n.exact)) ?? company?.links.find((l) => active(l.href));
   return (
     <>
       <div className="flex items-center justify-between gap-2 px-3 py-3 sm:px-4 md:py-4">
@@ -53,7 +57,7 @@ export function AppSidebar({ isAdmin, email }: { isAdmin: boolean; email: string
         </div>
       </div>
       <div className="hidden px-3 md:block"><ButtonLink href="/bids" variant="accent" className="w-full"><FileText className="h-4 w-4" aria-hidden /> Create New Bid</ButtonLink></div>
-      {!open && current && <p className="flex items-center gap-1.5 px-4 pb-2 text-xs text-[#B8C6D4] md:hidden">{current.label}{current.premium && <PremiumDiamond tone="dark" />}</p>}
+      {!open && current && <p className="flex items-center gap-1.5 px-4 pb-2 text-xs text-[#B8C6D4] md:hidden">{current.label}{"premium" in current && current.premium && <PremiumDiamond tone="dark" />}</p>}
       <nav id="account-nav" aria-label="Account" className={cn("flex-col gap-1 px-2 pb-3 md:mt-4 md:flex", open ? "flex" : "hidden")}>
         {nav.map((n) => {
           const on = active(n.href, n.exact);
@@ -64,6 +68,20 @@ export function AppSidebar({ isAdmin, email }: { isAdmin: boolean; email: string
             </Link>
           );
         })}
+        {company && company.links.length > 0 && (
+          <>
+            <p className="mt-3 truncate px-3 pb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#B8C6D4]" title={company.name}>Company · {company.name}</p>
+            {company.links.map((l) => {
+              const on = active(l.href);
+              const Icon = COMPANY_ICONS[l.href];
+              return (
+                <Link key={l.href} href={l.href} aria-current={on ? "page" : undefined} className={cn(item, on ? "bg-white/10 text-white shadow-[inset_3px_0_0_var(--color-cyan)]" : "text-[#C9D6E3] hover:bg-white/5 hover:text-white")}>
+                  <Icon className={cn("h-4 w-4", on ? "text-cyan" : "")} aria-hidden /> {l.label}
+                </Link>
+              );
+            })}
+          </>
+        )}
         <p className="mt-3 px-3 pb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#B8C6D4]">Help</p>
         <ReplayTourButton className={cn(item, "w-full text-left text-[#C9D6E3] hover:bg-white/5 hover:text-white")} />
         {isAdmin && (
