@@ -116,3 +116,9 @@ h1, h2, h3, .font-display { font-family: var(--font-display); letter-spacing: -0
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* Touch screens: 16px fields in the quantity calculator so iOS Safari doesn't zoom the page on
+   focus (which pushed the calculator sheet off screen). */
+@media (pointer: coarse), (max-width: 639px) {
+  .calc-panel .field, .calc-panel .cell { font-size: 16px; }
+}

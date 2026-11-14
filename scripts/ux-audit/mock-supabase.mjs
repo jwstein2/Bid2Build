@@ -39,7 +39,12 @@ const tables = {
     item(5, 3, "J-channel", "material", 240, "linear foot", 1.1, 0),
   ],
   customers: [{ id: "55555555-5555-4555-8555-000000000001", user_id: USER.id, name: "Pat Johnson", email: "pat@example.test", phone: "(555) 333-4444", address: "48 Oak Lane", notes: null, created_at: iso(10), updated_at: iso(1) }],
-  saved_items: [{ id: "66666666-6666-4666-8666-000000000001", user_id: USER.id, name: "Dumpster rental (20 yd)", cost_type: "equipment", unit: "each", unit_cost: 450, taxable: true, description: null, created_at: iso(5) }],
+  saved_items: [
+    { id: "66666666-6666-4666-8666-000000000001", user_id: USER.id, name: "Dumpster rental (20 yd)", cost_type: "equipment", unit: "each", unit_cost: 450, treatment: "marked_up", taxable: true, description: null, trade: null, category: null, quantity: null, created_at: iso(5) },
+    { id: "66666666-6666-4666-8666-000000000002", user_id: USER.id, name: "Framing Labor", cost_type: "labor", unit: "square foot", unit_cost: 8, treatment: "marked_up", taxable: false, description: null, trade: "framing", category: "Framing Labor", quantity: null, created_at: iso(4) },
+    { id: "66666666-6666-4666-8666-000000000003", user_id: USER.id, name: "Framing Materials", cost_type: "material", unit: "square foot", unit_cost: 10, treatment: "marked_up", taxable: true, description: null, trade: "framing", category: "Framing Materials", quantity: null, created_at: iso(4) },
+    { id: "66666666-6666-4666-8666-000000000004", user_id: USER.id, name: "Remove existing siding", cost_type: "labor_material", unit: "square", unit_cost: 70, treatment: "marked_up", taxable: false, description: null, trade: "siding", category: "Tear-off & prep", quantity: null, created_at: iso(3) },
+  ],
   assemblies: [], assembly_items: [],
   subscriptions: process.env.MOCK_UNLIMITED ? [{ id: "sub_test", user_id: USER.id, status: "active", plan: "monthly", price_id: "price_test", current_period_end: iso(-20), cancel_at_period_end: false, updated_at: iso(1) }] : [],
   billing_customers: [], profiles: [{ id: USER.id, marketing_opt_in: false, created_at: iso(30) }], market_consent: [],
@@ -49,6 +54,8 @@ const rpcs = {
   is_admin: process.env.MOCK_ADMIN === "1",
   credit_status: [{ starter_balance: 2, starter_total: 3, monthly_balance: 0, monthly_eligible: false, next_cycle_at: iso(-12), unlimited: Boolean(process.env.MOCK_UNLIMITED), email_verified: true, starter_granted: true }],
   save_estimate: { id: EST }, market_log_view: null,
+  // Saved Items & Pricing Library entitlement (Unlimited or admin).
+  library_access: Boolean(process.env.MOCK_UNLIMITED) || process.env.MOCK_ADMIN === "1",
 };
 
 // Account scenarios for the account-aware CTA checks (scripts/account-ctas/run.mjs). Switch at runtime with
@@ -63,6 +70,7 @@ export const SCENARIOS = {
   expired: { credit: credit({ starter_balance: 0, monthly_balance: 0, monthly_eligible: true }), subs: sub({ status: "canceled", current_period_end: iso(3), ended_at: iso(3), canceled_at: iso(30) }) },
   zero: { credit: credit({ starter_balance: 0, monthly_balance: 0, monthly_eligible: true }), subs: [] },
 };
+const LIBRARY_SEED = JSON.stringify({ saved_items: tables.saved_items, assemblies: tables.assemblies, assembly_items: tables.assembly_items });
 let authDelayMs = 0;
 const otpLog = [];
 const KNOWN_PHONES = new Set(["15552345678"]);
@@ -72,6 +80,7 @@ function applyScenario(name) {
   if (!sc) return false;
   rpcs.credit_status = sc.credit;
   tables.subscriptions = sc.subs;
+  rpcs.library_access = Boolean(sc.credit[0].unlimited);
   return true;
 }
 if (process.env.MOCK_SCENARIO) applyScenario(process.env.MOCK_SCENARIO);
@@ -88,6 +97,7 @@ http.createServer((req, res) => {
       authDelayMs = Number(u.searchParams.get("authDelayMs") ?? 0);
       return applyScenario(u.searchParams.get("name") ?? "") ? send(res, 200, { ok: true }) : send(res, 400, { error: "unknown scenario" });
     }
+    if (u.pathname === "/__reset_library") { Object.assign(tables, JSON.parse(LIBRARY_SEED)); return send(res, 200, { ok: true }); }
     if (u.pathname === "/auth/v1/user" && req.method === "GET") return void setTimeout(() => send(res, 200, USER), authDelayMs);
     if (u.pathname === "/__otp-log") {
       if (u.searchParams.get("reset")) otpLog.length = 0;
@@ -123,9 +133,34 @@ http.createServer((req, res) => {
     if (rpc) return send(res, 200, rpcs[rpc[1]] ?? null);
     const t = u.pathname.match(/^\/rest\/v1\/(\w+)/);
     if (!t) return send(res, 404, { message: "unknown" });
-    if (req.method !== "GET" && req.method !== "HEAD") return send(res, 201, []);
-    let rows = tables[t[1]] ?? [];
-    for (const [k, v] of u.searchParams) if (v.startsWith("eq.")) rows = rows.filter((r) => r[k] === undefined || String(r[k]) === v.slice(3));
+    const matches = (r) => [...u.searchParams].every(([k, v]) => !v.startsWith("eq.") || r[k] === undefined || String(r[k]) === v.slice(3));
+    // Library tables keep writes in memory so saved items can be created, edited and deleted in browser walks.
+    const LIVE = new Set(["saved_items", "assemblies", "assembly_items"]);
+    if (req.method !== "GET" && req.method !== "HEAD") {
+      if (!LIVE.has(t[1])) return send(res, 201, []);
+      const list = (tables[t[1]] ??= []);
+      let body = null; try { body = JSON.parse(raw || "null"); } catch { /* ignore */ }
+      if (req.method === "POST") {
+        const add = (Array.isArray(body) ? body : [body]).filter(Boolean).map((r) => ({ id: r.id ?? crypto.randomUUID(), created_at: iso(0), ...r }));
+        if (t[1] === "saved_items" && !rpcs.library_access) return send(res, 403, { code: "42501", message: 'new row violates row-level security policy for table "saved_items"' });
+        list.push(...add);
+        return send(res, 201, add);
+      }
+      if (req.method === "PATCH") {
+        const hit = rpcs.library_access ? list.filter(matches) : [];
+        for (const r of hit) Object.assign(r, body);
+        return send(res, 200, hit);
+      }
+      if (req.method === "DELETE") {
+        const keep = list.filter((r) => !matches(r));
+        const gone = list.length - keep.length;
+        tables[t[1]] = keep;
+        if (t[1] === "assemblies") tables.assembly_items = (tables.assembly_items ?? []).filter((i) => keep.some((a) => a.id === i.assembly_id));
+        return send(res, 200, gone ? [] : []);
+      }
+      return send(res, 201, []);
+    }
+    let rows = (tables[t[1]] ?? []).filter(matches);
     const one = (req.headers.accept ?? "").includes("vnd.pgrst.object");
     if (one) return rows.length ? send(res, 200, rows[0]) : send(res, 406, { code: "PGRST116", details: "The result contains 0 rows", hint: null, message: "JSON object requested, multiple (or no) rows returned" });
     send(res, 200, rows, { "content-range": `0-${Math.max(rows.length - 1, 0)}/${rows.length}` });

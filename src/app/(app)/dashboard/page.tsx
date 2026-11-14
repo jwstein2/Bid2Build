@@ -8,17 +8,19 @@ import { LocalDraftsBanner } from "./local-drafts";
 import { ProfileReminder } from "./profile-reminder";
 import { CreditBalances, UpgradeLink } from "@/components/billing/credits";
 import { loadCreditStatus } from "@/lib/credits/server";
+import { LibraryTile } from "./library-tile";
 
 export const metadata: Metadata = { title: "Dashboard", robots: { index: false } };
 
 export default async function Dashboard() {
   const user = (await getUser())!;
   const supabase = await createClient();
-  const [{ data: estimates }, { data: versions }, credits, { data: biz }] = await Promise.all([
+  const [{ data: estimates }, { data: versions }, credits, { data: biz }, { data: libraryAccess }] = await Promise.all([
     supabase.from("estimates").select("id, title, customer_name, trades, status, updated_at, estimate_number").order("updated_at", { ascending: false }).limit(500),
     supabase.from("estimate_versions").select("id, estimate_id, version_number, total, created_at").order("version_number", { ascending: false }),
     loadCreditStatus(supabase),
     supabase.from("business_profiles").select("company_name, logo_path, phone, email, address").eq("user_id", user.id).maybeSingle(),
+    supabase.rpc("library_access"),
   ]);
   const latest = new Map<string, { id: string; version_number: number; total: number }>();
   for (const v of versions ?? []) if (!latest.has(v.estimate_id)) latest.set(v.estimate_id, v);
@@ -52,6 +54,7 @@ export default async function Dashboard() {
           <Card className="p-4"><p className="text-sm text-muted">Finalized proposals</p><p className="text-2xl font-extrabold">{rows.filter((r) => r.status === "finalized").length}</p></Card>
         </div>
       </div>
+      <LibraryTile unlocked={libraryAccess === true} />
       <BidList rows={rows} />
     </div>
   );

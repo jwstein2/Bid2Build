@@ -1,17 +1,19 @@
 "use client";
 import {
-  AlertCircle, ArrowDown, ArrowRightLeft, ArrowUp, BookmarkPlus, Check, ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown, Copy, Layers, MoreHorizontal, Plus, Search, Trash2, X,
+  AlertCircle, ArrowDown, ArrowRightLeft, ArrowUp, BookmarkPlus, Check, ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown, Copy, Layers, Lock, MoreHorizontal, Plus, Trash2, X,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type Dispatch } from "react";
+import { useEffect, useMemo, useState, type Dispatch } from "react";
 import * as Dropdown from "@radix-ui/react-dropdown-menu";
 import { computeEstimate, itemsForGroup, type EstimateTotals } from "@/lib/estimate/engine";
 import { formatCurrency, formatPercent } from "@/lib/estimate/money";
 import type { Estimate, EstimateGroup, GroupVisibility, LineItem, PricingRule } from "@/lib/estimate/types";
-import { COST_TYPES, UNIT_ABBR, UNITS, getTrade, parseTemplateItem, type TemplateItem } from "@/lib/trades/catalog";
+import { COST_TYPES, UNIT_ABBR, UNITS, getTrade, type TemplateItem } from "@/lib/trades/catalog";
 import { cn } from "@/lib/cn";
 import { Button } from "../ui/button";
+import { useVisualViewport } from "../ui/use-visual-viewport";
 import type { Action } from "./state";
-import type { useLibrary } from "./library";
+import type { Library } from "./library";
+import { SavedItemsPicker, useSavedItemsUi, type SavedItemsUi } from "./saved-items";
 import { PricingPanel } from "./pricing-panel";
 import { useOpenSections } from "./open-sections";
 import { QuantityCalculator } from "./calculators/quantity-calculator";
@@ -19,7 +21,7 @@ import { orderedSections, sectionTrade, tradeBlocks, tradeTotals, type TradeBloc
 import { TradeIcon } from "../trade-icon";
 import { AddTradeSelect, useTradeRemoval } from "./trade-controls";
 
-type Lib = ReturnType<typeof useLibrary>;
+type Lib = SavedItemsUi;
 
 export const VISIBILITY_LABEL: Record<GroupVisibility, string> = {
   group_total: "Group total only",
@@ -53,8 +55,9 @@ function allSuggestions(estimate: Estimate): TemplateItem[] {
   return out;
 }
 
-export function Workspace({ estimate, dispatch, lib }: { estimate: Estimate; dispatch: Dispatch<Action>; lib: Lib }) {
+export function Workspace({ estimate, dispatch, lib: library }: { estimate: Estimate; dispatch: Dispatch<Action>; lib: Library }) {
   const totals = useMemo(() => computeEstimate(estimate), [estimate]);
+  const lib = useSavedItemsUi(library, estimate);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [focusId, setFocusId] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
@@ -101,7 +104,7 @@ export function Workspace({ estimate, dispatch, lib }: { estimate: Estimate; dis
             onClear={() => setSelected(new Set())}
             onApply={(rule) => { dispatch({ type: "bulkOverride", ids: [...selected], rule }); }}
             onDelete={() => { dispatch({ type: "deleteItems", ids: [...selected] }); setSelected(new Set()); }}
-            onAssembly={(name) => { lib.saveAssembly(name, estimate.items.filter((i) => selected.has(i.id))); setSelected(new Set()); }}
+            onSaveStack={() => { if (lib.saveStack(estimate.items.filter((i) => selected.has(i.id)))) setSelected(new Set()); }}
           />
         )}
 
@@ -159,6 +162,9 @@ export function Workspace({ estimate, dispatch, lib }: { estimate: Estimate; dis
           <AddTradeSelect estimate={estimate} dispatch={dispatch} className="min-h-11 md:min-h-9" label={multiTrade ? "+ Add another trade" : "+ Add a trade to this project"} />
         </div>
         {removalDialog}
+        {lib.dialogs}
+        {/* Room to scroll the last rows above the selected-items bar pinned to the bottom on phones and tablets. */}
+        {selected.size > 0 && <div aria-hidden className="h-40 lg:hidden" />}
       </div>
 
       <PricingPanel estimate={estimate} totals={totals} dispatch={dispatch} />
@@ -166,24 +172,43 @@ export function Workspace({ estimate, dispatch, lib }: { estimate: Estimate; dis
   );
 }
 
-function BulkBar({ count, onClear, onApply, onDelete, onAssembly }: { count: number; onClear: () => void; onApply: (r: PricingRule | null) => void; onDelete: () => void; onAssembly: (name: string) => void }) {
+function BulkBar({ count, onClear, onApply, onDelete, onSaveStack }: { count: number; onClear: () => void; onApply: (r: PricingRule | null) => void; onDelete: () => void; onSaveStack: () => void }) {
   const [mode, setMode] = useState<"markup" | "margin">("markup");
   const [pct, setPct] = useState("");
+  const vv = useVisualViewport();
   return (
-    <div className="sticky top-[7.5rem] z-20 flex flex-wrap items-center gap-2 rounded-lg border border-brand/30 bg-brand-tint px-3 py-2 text-sm shadow-sm">
-      <span className="font-semibold">{count} selected</span>
-      <span className="mx-1 text-muted">·</span>
-      <label className="sr-only" htmlFor="bulk-mode">Pricing mode</label>
-      <select id="bulk-mode" className="field field-sm w-auto" value={mode} onChange={(e) => setMode(e.target.value as "markup" | "margin")}>
-        <option value="markup">Markup %</option><option value="margin">Margin %</option>
-      </select>
-      <label className="sr-only" htmlFor="bulk-pct">Percent</label>
-      <input id="bulk-pct" className="field field-sm w-20" inputMode="decimal" placeholder="%" value={pct} onChange={(e) => setPct(e.target.value)} />
-      <Button size="sm" onClick={() => pct.trim() && onApply({ mode, percent: pct.trim() })}>Apply override</Button>
-      <Button size="sm" variant="secondary" onClick={() => onApply(null)}>Use estimate pricing</Button>
-      <Button size="sm" variant="secondary" onClick={() => { const n = prompt("Name this assembly"); if (n) onAssembly(n); }}><Layers className="h-4 w-4" /> Save as assembly</Button>
-      <Button size="sm" variant="ghost" className="text-danger" onClick={onDelete}><Trash2 className="h-4 w-4" /> Delete</Button>
-      <button onClick={onClear} className="ml-auto rounded p-1 hover:bg-black/5" aria-label="Clear selection"><X className="h-4 w-4" /></button>
+    // Phones and tablets: an action bar pinned to the bottom of the screen (over the running total,
+    // above the keyboard and the home indicator), so it never hides under the wrapping header or
+    // covers the rows being selected. Desktop: sticks just below the builder header.
+    <div
+      role="toolbar"
+      aria-label={`Edit ${count} selected ${count === 1 ? "item" : "items"}`}
+      className={cn(
+        "z-40 border-brand/30 bg-brand-tint text-sm",
+        "max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:border-t max-lg:px-3 max-lg:pt-2 max-lg:pb-[max(0.5rem,env(safe-area-inset-bottom))] max-lg:shadow-[0_-4px_14px_rgb(0_0_0/0.12)]",
+        "lg:sticky lg:top-[calc(var(--builder-header-h,7.5rem)+0.5rem)] lg:rounded-lg lg:border lg:px-3 lg:py-2 lg:shadow-sm",
+      )}
+      style={vv && vv.inset > 0 ? { bottom: vv.inset } : undefined}
+    >
+      <div className="mx-auto flex max-w-2xl flex-wrap items-center gap-2 lg:max-w-none">
+        <span className="font-semibold" aria-live="polite">{count} selected</span>
+        <span className="mx-1 hidden text-muted lg:inline" aria-hidden>·</span>
+        <Button size="sm" variant="ghost" className="ml-auto text-danger max-lg:min-h-10 lg:order-3 lg:ml-0" onClick={onDelete}><Trash2 className="h-4 w-4" /> Delete</Button>
+        <button onClick={onClear} className="grid h-9 w-9 shrink-0 place-items-center rounded hover:bg-black/5 lg:order-4 lg:ml-auto" aria-label="Clear selection"><X className="h-4 w-4" /></button>
+        <div className="flex w-full min-w-0 items-center gap-2 lg:order-1 lg:w-auto">
+          <label className="sr-only" htmlFor="bulk-mode">Pricing mode</label>
+          <select id="bulk-mode" className="field field-sm w-auto shrink-0 max-lg:min-h-10 max-lg:text-base" value={mode} onChange={(e) => setMode(e.target.value as "markup" | "margin")}>
+            <option value="markup">Markup %</option><option value="margin">Margin %</option>
+          </select>
+          <label className="sr-only" htmlFor="bulk-pct">Percent</label>
+          <input id="bulk-pct" className="field field-sm min-w-0 flex-1 max-lg:min-h-10 max-lg:text-base lg:w-20 lg:flex-none" inputMode="decimal" enterKeyHint="done" placeholder="%" value={pct} onChange={(e) => setPct(e.target.value)} />
+          <Button size="sm" className="shrink-0 max-lg:min-h-10" onClick={() => pct.trim() && onApply({ mode, percent: pct.trim() })}>Apply<span className="max-sm:hidden"> override</span></Button>
+        </div>
+        <div className="flex w-full flex-wrap items-center gap-2 lg:order-2 lg:w-auto">
+          <Button size="sm" variant="secondary" className="max-lg:min-h-10" onClick={() => onApply(null)}>Use estimate pricing</Button>
+          <Button size="sm" variant="secondary" className="max-lg:min-h-10" onClick={onSaveStack}><Layers className="h-4 w-4" /> Save Stack</Button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -309,7 +334,7 @@ function GroupCard(props: {
 
           <div className="flex flex-wrap items-center gap-2 px-3 py-2.5 sm:px-4">
             <Button size="sm" variant="secondary" onClick={() => props.addItem(g.id)}><Plus className="h-4 w-4" /> Add line item</Button>
-            <AddFromLibrary group={g} estimate={estimate} suggestions={props.suggestions} lib={props.lib} dispatch={dispatch} />
+            <SavedItemsPicker group={g} estimate={estimate} suggestions={props.suggestions} lib={props.lib} dispatch={dispatch} />
           </div>
         </div>
       )}
@@ -638,7 +663,7 @@ function ItemRow({ item: it, isLast, totals, estimate, dispatch, selected, toggl
                     </Dropdown.Portal>
                   </Dropdown.Sub>
                   <MenuItem onSelect={() => setEditPricing(true)}>% Override pricing</MenuItem>
-                  <MenuItem onSelect={() => lib.saveItem(it)}><BookmarkPlus className="h-4 w-4" /> Save to favorites</MenuItem>
+                  <MenuItem onSelect={() => void lib.saveItem(it)}><BookmarkPlus className="h-4 w-4" /> Save Item{!lib.access && <Lock className="ml-auto h-3.5 w-3.5 text-muted" aria-label="Premium" />}</MenuItem>
                   <Dropdown.Separator className="my-1 h-px bg-line" />
                   <MenuItem onSelect={() => dispatch({ type: "deleteItem", id: it.id })} danger><Trash2 className="h-4 w-4" /> Delete</MenuItem>
                 </Dropdown.Content>
@@ -687,82 +712,5 @@ function ItemRow({ item: it, isLast, totals, estimate, dispatch, selected, toggl
         </td></tr>
       )}
     </>
-  );
-}
-
-function AddFromLibrary({ group, estimate, suggestions, lib, dispatch }: { group: EstimateGroup; estimate: Estimate; suggestions: TemplateItem[]; lib: Lib; dispatch: Dispatch<Action> }) {
-  const [open, setOpen] = useState(false);
-  const [q, setQ] = useState("");
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const onDoc = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
-    const onEsc = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
-    document.addEventListener("mousedown", onDoc);
-    document.addEventListener("keydown", onEsc);
-    return () => { document.removeEventListener("mousedown", onDoc); document.removeEventListener("keydown", onEsc); };
-  }, [open]);
-  const s = q.trim().toLowerCase();
-  // Items already in this section stay listed with an "Added" mark (instead of vanishing) and can't be added twice by accident.
-  const inSection = new Set(estimate.items.filter((i) => i.groupId === group.id).map((i) => i.name.trim().toLowerCase()));
-  const has = (name: string) => inSection.has(name.trim().toLowerCase());
-  const sug = suggestions.filter((x) => !s || x.name.toLowerCase().includes(s)).slice(0, 20);
-  const favs = lib.items.filter((x) => !s || x.name.toLowerCase().includes(s)).slice(0, 8);
-  const asm = lib.assemblies.filter((x) => !s || x.name.toLowerCase().includes(s)).slice(0, 6);
-  const custom = s && ![...sug, ...favs].some((x) => x.name.toLowerCase() === s) ? parseTemplateItem(q.trim()) : null;
-
-  return (
-    <div className="relative" ref={ref}>
-      <Button size="sm" variant="ghost" onClick={() => setOpen(!open)} aria-expanded={open} className="max-md:min-h-11"><Search className="h-4 w-4" /> Suggested & saved items</Button>
-      {open && (
-        <div className="absolute left-0 z-30 mt-1 w-[340px] max-w-[calc(100vw-2rem)] rounded-lg border border-line bg-surface p-2 shadow-xl">
-          <div className="flex items-center gap-2">
-            <input autoFocus className="field field-sm min-w-0 flex-1" placeholder="Search items…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search suggested and saved items" />
-            <Button size="sm" variant="secondary" onClick={() => setOpen(false)}>Done</Button>
-          </div>
-          <p className="mt-1 px-1 text-[11px] text-muted">Pick as many as you need. Added items show a check.</p>
-          <div className="mt-2 max-h-72 overflow-y-auto text-sm">
-            {asm.length > 0 && <p className="px-2 pt-1 text-[11px] font-bold uppercase tracking-wider text-muted">Assemblies</p>}
-            {asm.map((a) => (
-              <button key={a.id} className="flex w-full justify-between rounded px-2 py-1.5 text-left hover:bg-paper" onClick={() => { dispatch({ type: "addItems", groupId: group.id, items: a.items }); setOpen(false); }}>
-                <span><Layers className="mr-1 inline h-3.5 w-3.5" />{a.name}</span><span className="text-xs text-muted">{a.items.length} items</span>
-              </button>
-            ))}
-            {favs.length > 0 && <p className="px-2 pt-2 text-[11px] font-bold uppercase tracking-wider text-muted">Favorites</p>}
-            {favs.map((f) => (
-              <PickRow key={f.id} name={f.name} added={has(f.name)} meta={f.unitCost ? `${formatCurrency(f.unitCost)}/${UNIT_ABBR[f.unit] ?? f.unit}` : UNIT_ABBR[f.unit] ?? f.unit} onPick={() => dispatch({ type: "addItem", groupId: group.id, from: { ...f, id: undefined } })} />
-            ))}
-            {sug.length > 0 && <p className="px-2 pt-2 text-[11px] font-bold uppercase tracking-wider text-muted">Suggested for {estimate.trades.map((t) => getTrade(t)?.name ?? t).join(", ")}</p>}
-            {sug.map((x) => (
-              <PickRow key={x.name} name={x.name} added={has(x.name)} meta={`${UNIT_ABBR[x.unit] ?? x.unit} · no price`} onPick={() => dispatch({ type: "addItem", groupId: group.id, from: x })} />
-            ))}
-            {custom && (
-              <button className="w-full rounded px-2 py-2 text-left font-medium text-brand hover:bg-paper" onClick={() => { dispatch({ type: "addItem", groupId: group.id, from: { name: q.trim() } }); setQ(""); }}>
-                <Plus className="mr-1 inline h-3.5 w-3.5" aria-hidden />Add custom item “{q.trim()}”
-              </button>
-            )}
-            {!asm.length && !favs.length && !sug.length && !custom && <p className="px-2 py-3 text-muted">Nothing found.</p>}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function PickRow({ name, meta, added, onPick }: { name: string; meta: string; added: boolean; onPick: () => void }) {
-  return (
-    <button
-      type="button"
-      disabled={added}
-      onClick={onPick}
-      aria-label={added ? `${name}, already added to this section` : `Add ${name}`}
-      className={cn("flex min-h-10 w-full items-center justify-between gap-2 rounded px-2 py-1.5 text-left md:min-h-8", added ? "cursor-default text-ink-soft" : "hover:bg-paper")}
-    >
-      <span className="flex min-w-0 items-center gap-1.5">
-        {added ? <Check className="h-3.5 w-3.5 shrink-0 text-teal" strokeWidth={3} aria-hidden /> : <Plus className="h-3.5 w-3.5 shrink-0 text-brand" aria-hidden />}
-        <span className="truncate">{name}</span>
-      </span>
-      <span className="shrink-0 text-xs text-muted">{added ? "Added" : meta}</span>
-    </button>
   );
 }

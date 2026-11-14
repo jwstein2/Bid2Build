@@ -8,7 +8,8 @@ import { formatCurrency } from "@/lib/estimate/money";
 import type { Estimate } from "@/lib/estimate/types";
 import { buildProposal } from "@/lib/proposal/build";
 import { defaultBusinessProfile, type BusinessProfile, type ProposalConfig } from "@/lib/proposal/types";
-import { deleteLocalDraft, loadLocalBusiness, saveLocalBusiness, saveLocalDraft, clearLocalBusiness } from "@/lib/drafts/local";
+import { deleteLocalDraft, loadLocalBusiness, saveLocalBusiness, saveLocalDraft, clearLocalBusiness, loadLocalStep, saveLocalStep } from "@/lib/drafts/local";
+import { isBuilderStep, isCompanyComplete, resolveStartStep, type BuilderStep } from "@/lib/estimate/workflow";
 import { tradeName } from "@/lib/trades/catalog";
 import { cn } from "@/lib/cn";
 import { exportMessage, type CreditSource, type CreditStatus } from "@/lib/credits/status";
@@ -29,7 +30,7 @@ import { Workspace } from "./workspace";
 import { WashingJobPanel, isWashingEstimate } from "./calculators/washing-job-panel";
 
 type Biz = BusinessProfile & { logoPath?: string | null };
-type Step = "company" | "project" | "estimate" | "scope" | "proposal";
+type Step = BuilderStep;
 type SaveState = "idle" | "saving" | "saved" | "local" | "error";
 
 export interface BuilderProps {
@@ -38,6 +39,7 @@ export interface BuilderProps {
   initialBusiness: Biz | null;
   mode: "local" | "cloud";
   user: { id: string; email: string | null; emailVerified: boolean; verified?: boolean } | null;
+  /** A step the URL asks for (e.g. ?step=proposal). Otherwise the workflow decides; see resolveStartStep. */
   initialStep?: Step;
   autoExport?: boolean;
 }
@@ -63,9 +65,15 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
   const [state, dispatch] = useReducer(reducer, { estimate: initialEstimate, trash: [], dirty: 0 });
   const [config, setConfig] = useState<ProposalConfig>(initialConfig);
   const [configDirty, setConfigDirty] = useState(0);
-  const [business, setBusinessState] = useState<Biz>(() => initialBusiness ?? defaultBusinessProfile());
+  // Local drafts render only in the browser (BuilderLoader waits for storage), so browser storage is
+  // readable here; cloud bids are server-rendered and read it after hydration (effect below).
+  const [business, setBusinessState] = useState<Biz>(() => initialBusiness ?? (mode === "local" && !user ? loadLocalBusiness() : null) ?? defaultBusinessProfile());
   const [bizDirty, setBizDirty] = useState(0);
-  const [step, setStep] = useState<Step>(initialStep ?? "estimate");
+  const [step, setStep] = useState<Step>(() => {
+    const saved = mode === "local" ? loadLocalStep(initialEstimate.id) : null;
+    const biz = initialBusiness ?? (mode === "local" && !user ? loadLocalBusiness() : null);
+    return resolveStartStep({ companyComplete: isCompanyComplete(biz), estimate: initialEstimate, saved: isBuilderStep(saved) ? saved : null, requested: initialStep });
+  });
   const [customerView, setCustomerView] = useState(false);
   const [save, setSave] = useState<SaveState>(mode === "cloud" ? "saved" : "local");
   const [credits, setCredits] = useState<CreditStatus | null>(null);
@@ -81,15 +89,15 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
   const totals = useMemo(() => computeEstimate(estimate), [estimate]);
   const doc = useMemo(() => buildProposal(estimate, business, config), [estimate, business, config]);
 
-  // Load business for anonymous visitors from the browser.
+  // Server-rendered (cloud) bids: reopen the step this device last showed for this bid.
   useEffect(() => {
-    if (!user && !initialBusiness) {
-      const b = loadLocalBusiness();
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- browser storage is only readable after hydration
-      if (b) setBusinessState(b);
-      else if (!initialStep) setStep("company");
-    }
-  }, [user, initialBusiness, initialStep]);
+    if (mode !== "cloud" || initialStep) return;
+    const saved = loadLocalStep(initialEstimate.id);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- browser storage is only readable after hydration
+    if (isBuilderStep(saved)) setStep(resolveStartStep({ companyComplete: isCompanyComplete(initialBusiness), estimate: initialEstimate, saved }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per bid, on mount
+  }, [initialEstimate.id]);
+  useEffect(() => { saveLocalStep(estimate.id, step); }, [estimate.id, step]);
 
   const setBusiness = (b: Biz) => { setBusinessState(b); setBizDirty((n) => n + 1); };
   const onConfig = (c: ProposalConfig) => { setConfig(c); setConfigDirty((n) => n + 1); };
@@ -213,7 +221,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
 
   const realItems = estimate.items.filter((i) => !i.isExample).length;
   const complete: Record<Step, boolean> = {
-    company: Boolean(business.companyName?.trim()),
+    company: isCompanyComplete(business),
     project: Boolean(estimate.customer.name?.trim()),
     estimate: realItems > 0 && totals.issues.length === 0,
     scope: Boolean(config.scopeOfWork.trim()) || config.exclusionList.items.some((i) => i.status === "approved"),
@@ -225,15 +233,26 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
   useEffect(() => {
     stepsRef.current?.querySelector<HTMLElement>('[aria-current="step"]')?.scrollIntoView({ block: "nearest", inline: "nearest" });
   }, [step]);
+  // Publish the sticky header's height so sticky content below it (the selected-items toolbar)
+  // sits under it at every screen width instead of behind it.
+  const rootRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const header = headerRef.current, root = rootRef.current;
+    if (!header || !root || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => root.style.setProperty("--builder-header-h", `${Math.ceil(header.getBoundingClientRect().height)}px`));
+    ro.observe(header);
+    return () => ro.disconnect();
+  }, []);
   const goTo = (s: Step) => { setStep(s); setCustomerView(false); window.scrollTo({ top: 0, behavior: "smooth" }); };
 
   const alreadyFinalized = finalizedHere || estimate.status === "finalized";
   const lastTrash = state.trash[state.trash.length - 1];
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div ref={rootRef} className="flex min-h-screen flex-col">
       {/* Project header */}
-      <header className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur no-print">
+      <header ref={headerRef} className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur no-print">
         <div className="mx-auto flex max-w-[1400px] flex-wrap items-center gap-x-4 gap-y-2 px-3 py-2 sm:px-5">
           <div className="flex shrink-0 items-center gap-2">
             <Link href={user ? "/dashboard" : "/"} className="grid h-9 w-9 place-items-center rounded-md text-muted hover:bg-black/5" aria-label={user ? "Back to dashboard" : "Back to home"}><ArrowLeft className="h-4 w-4" /></Link>
@@ -261,8 +280,8 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
             )}
             <Button size="sm" variant="secondary" onClick={() => setPreviewOpen(true)}><Eye className="h-4 w-4" /> <span className="hidden sm:inline">Preview My Bid</span><span className="sm:hidden">Preview</span></Button>
             <div className="flex flex-col items-end">
-              <Button size="sm" variant="accent" onClick={doExport} disabled={exporting}>
-                {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} Download PDF
+              <Button size="sm" variant="accent" onClick={doExport} disabled={exporting} aria-label="Download PDF">
+                {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} <span><span className="max-[360px]:hidden">Download </span>PDF</span>
               </Button>
               {credits && <span className="mt-0.5"><CreditSummary credits={credits} /></span>}
               {credits && !credits.unlimited && <span className="text-[11px] text-muted">{alreadyFinalized ? "Updates are free" : "Uses 1 credit"}</span>}
