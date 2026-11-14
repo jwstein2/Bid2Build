@@ -5,7 +5,7 @@ import { fail, json, sameOrigin } from "@/lib/http/api";
 export async function GET() {
   const user = await getUser();
   if (!user) return fail(401, "not_authenticated", "Sign in required.");
-  const { data } = await (await createClient()).from("customers").select("id, name, email, phone, project_address, notes").order("name").limit(500);
+  const { data } = await (await createClient()).from("customers").select("id, name, email, phone, project_address, notes").eq("user_id", user.id).order("name").limit(500);
   return json({ customers: (data ?? []).map((c) => ({ id: c.id, name: c.name, email: c.email ?? undefined, phone: c.phone ?? undefined, projectAddress: c.project_address ?? undefined, notes: c.notes ?? undefined })) });
 }
 
