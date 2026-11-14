@@ -79,3 +79,14 @@ describe("20. multi-page PDF rendering", () => {
     expect(pdfFilename(doc, 2)).toMatch(/^[\w-]+_[\w-]+_[\w-]+_v2\.pdf$/);
   });
 });
+
+describe("P0: customer PDF never prints instructional legal text", () => {
+  it("a legacy draft's placeholder terms are left out of the PDF; the edited title is used", async () => {
+    const e = est({ title: "Smith backyard deck", customer: { name: "Pat Smith", projectAddress: "48 Oak Lane" }, items: [item("g1", "10", "20")] });
+    const cfg = { ...defaultProposalConfig(), terms: "Valid for 30 days. [Placeholder terms: have these reviewed by your attorney.]" };
+    const { text } = await pdfText(await renderProposalPdf(buildProposal(e, biz, cfg)));
+    expect(text).toContain("Smith backyard deck");
+    expect(text).toContain("Valid for 30 days.");
+    expect(text).not.toMatch(/placeholder|attorney/i);
+  });
+});

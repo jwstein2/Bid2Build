@@ -27,7 +27,7 @@ const VIEWPORTS = [
   { tag: "desktop", width: 1440, height: 900, mobile: false },
 ];
 const ctxFor = (browser, vp, extra = {}) => browser.newContext({ viewport: { width: vp.width, height: vp.height }, isMobile: vp.mobile && vp.width < 768, hasTouch: vp.mobile, ...extra });
-const currentStep = (page) => page.locator('nav[aria-label="Builder steps"] [aria-current="step"]').innerText().then((t) => t.replace(/^\d+\s*/, "").replace(/\(done\)/, "").trim());
+const currentStep = (page) => page.locator('nav[aria-label="Builder steps"] [aria-current="step"]').innerText().then((t) => t.replace(/^\d+\s*/, "").replace(/\((done|needs details)\)/, "").trim());
 const companyDone = (page) => page.locator('nav[aria-label="Builder steps"] li').first().innerText().then((t) => /done/.test(t));
 const tap = async (page, loc) => { if ((await page.evaluate(() => "ontouchstart" in window))) await loc.tap(); else await loc.click(); };
 

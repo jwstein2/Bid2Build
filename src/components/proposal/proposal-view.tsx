@@ -50,7 +50,7 @@ export function ProposalView({ doc }: { doc: ProposalDocument }) {
         <div className="flex flex-wrap items-end justify-between gap-4 border-b pb-4" style={{ borderColor: "#e4e0d8" }}>
           <div>
             <p className="font-semibold uppercase tracking-wider" style={{ color: accent, fontSize: px(st.baseSize * 0.85) }}>Proposal</p>
-            <h1 className="font-display font-extrabold leading-tight" style={{ fontSize: px(st.titleSize), color: brand }}>{doc.meta.title}</h1>
+            <h2 className="font-display font-extrabold leading-tight" style={{ fontSize: px(st.titleSize), color: brand }}>{doc.meta.title}</h2>
           </div>
           <dl className="grid grid-cols-[auto_auto] gap-x-4 gap-y-0.5" style={{ fontSize: px(st.baseSize * 0.9) }}>
             <dt className="text-[#6b7686]">Proposal #</dt><dd className="text-right font-semibold">{doc.meta.number}</dd>

@@ -225,10 +225,11 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
    */
   const runExport = useCallback(async (deliver: "download" | "bytes"): Promise<{ file?: File; message: string } | { error: string } | null> => {
     setExportMsg(null);
-    if (!user) { setAuthOpen(true); return null; }
-    if (!(user.verified ?? user.emailVerified)) { setExportMsg({ tone: "warn", text: "Please verify your email address before exporting." }); return null; }
+    // Missing details first, so nobody signs up only to be told the proposal isn't ready yet.
     if (readiness.length) { setMissing(readiness); fixIssue(readiness[0]); return null; }
     setMissing([]);
+    if (!user) { setAuthOpen(true); return null; }
+    if (!(user.verified ?? user.emailVerified)) { setExportMsg({ tone: "warn", text: "Please verify your email address before exporting." }); return null; }
     if (exportLock.current) return null;
     exportLock.current = true;
     setExporting(true);
@@ -300,6 +301,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
   const alreadyFinalized = finalizedHere || estimate.status === "finalized";
   // Issues drop off the notice as soon as they are fixed.
   const missingNow = missing.filter((m) => readiness.some((r) => r.code === m.code));
+  const missingCodes = new Set<string>(missingNow.map((m) => m.code));
   const status = stepStatuses({ estimate, business, config, totals, visited, finalized: alreadyFinalized });
   const stepIndex = STEPS.findIndex((s) => s.id === step);
   // On narrow screens the step strip scrolls sideways: keep the current step in view.
@@ -355,7 +357,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
             )}
             <Button size="sm" variant="secondary" onClick={() => setPreviewOpen(true)}><Eye className="h-4 w-4" /> <span className="hidden sm:inline">Preview My Bid</span><span className="sm:hidden">Preview</span></Button>
             <Button size="sm" variant="secondary" onClick={startSend} disabled={exporting} aria-label="Send via My Email" data-testid="send-email-header">
-              <Mail className="h-4 w-4" aria-hidden /> <span className="max-[419px]:hidden">Send<span className="hidden xl:inline"> via My Email</span><span className="xl:hidden"> by email</span></span>
+              <Mail className="h-4 w-4" aria-hidden /> <span className="max-[419px]:hidden"><span className="sm:hidden">Email</span><span className="hidden sm:inline xl:hidden">Send by email</span><span className="hidden xl:inline">Send via My Email</span></span>
             </Button>
             <div className="flex flex-col items-end">
               <Button size="sm" variant="accent" onClick={doExport} disabled={exporting} aria-label="Download PDF">
@@ -419,8 +421,8 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
           </div>
         )}
 
-        {step === "company" && <CompanyStep business={business} onChange={setBusiness} signedIn={Boolean(user)} />}
-        {step === "project" && <ProjectStep estimate={estimate} dispatch={dispatch} signedIn={Boolean(user)} />}
+        {step === "company" && <CompanyStep business={business} onChange={setBusiness} signedIn={Boolean(user)} missing={missingCodes} />}
+        {step === "project" && <ProjectStep estimate={estimate} dispatch={dispatch} signedIn={Boolean(user)} missing={missingCodes} />}
         {step === "estimate" && (customerView ? (
           <div className="rounded-xl bg-[#e4eaf1] p-3 sm:p-6">
             <p className="mb-3 text-center text-xs font-semibold uppercase tracking-wider text-muted">Customer view: this is all your customer sees</p>

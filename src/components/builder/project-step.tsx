@@ -13,7 +13,7 @@ import type { Action } from "./state";
 
 interface SavedCustomer { id: string; name: string; email?: string; phone?: string; projectAddress?: string }
 
-export function ProjectStep({ estimate: e, dispatch, signedIn, onDone }: { estimate: Estimate; dispatch: Dispatch<Action>; signedIn: boolean; onDone?: () => void }) {
+export function ProjectStep({ estimate: e, dispatch, signedIn, onDone, missing }: { estimate: Estimate; dispatch: Dispatch<Action>; signedIn: boolean; onDone?: () => void; /** Readiness codes still blocking download (shown inline). */ missing?: ReadonlySet<string> }) {
   const [customers, setCustomers] = useState<SavedCustomer[]>([]);
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
   const [titleTouched, setTitleTouched] = useState(false);
@@ -53,10 +53,10 @@ export function ProjectStep({ estimate: e, dispatch, signedIn, onDone }: { estim
           )}
         </div>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <Field label="Customer name" required htmlFor="c-name"><input id="c-name" className="field" value={c.name} onChange={(ev) => pc({ name: ev.target.value })} /></Field>
+          <Field label="Customer name" required htmlFor="c-name" error={missing?.has("customer_name") ? "Add the customer's name before downloading this proposal." : undefined}><input id="c-name" className="field" value={c.name} onChange={(ev) => pc({ name: ev.target.value })} /></Field>
           <Field label="Customer email" optional htmlFor="c-email"><input id="c-email" type="email" className="field" value={c.email ?? ""} onChange={(ev) => pc({ email: ev.target.value })} /></Field>
           <Field label="Customer phone" optional htmlFor="c-phone"><input id="c-phone" type="tel" className="field" value={c.phone ?? ""} onChange={(ev) => pc({ phone: ev.target.value })} /></Field>
-          <Field label="Project address" required htmlFor="c-addr"><AddressInput
+          <Field label="Project address" required htmlFor="c-addr" error={missing?.has("project_address") ? "Add a project address before downloading this proposal." : undefined}><AddressInput
             id="c-addr"
             multiline
             value={c.projectAddress ?? ""}
@@ -82,7 +82,7 @@ export function ProjectStep({ estimate: e, dispatch, signedIn, onDone }: { estim
       <section className="rounded-xl border border-line bg-surface p-5">
         <h3 className="font-bold">Project</h3>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <div className="sm:col-span-2"><Field label="Project title" required htmlFor="p-title" hint={titleIsStarter ? `Your proposal uses “${e.title}” until you type a name.` : undefined}>
+          <div className="sm:col-span-2"><Field label="Project title" required htmlFor="p-title" error={missing?.has("project_title") ? "Add a project title before downloading this proposal." : undefined} hint={titleIsStarter ? `Your proposal uses “${e.title}” until you type a name.` : undefined}>
             {/* The starter title is shown as a suggestion, so typing a name replaces it instead of appending to it. */}
             <input id="p-title" className="field" value={titleIsStarter ? "" : e.title} placeholder={titleIsStarter ? e.title : "e.g. Smith backyard deck"} onChange={(ev) => { setTitleTouched(true); dispatch({ type: "patch", patch: { title: ev.target.value } }); }} />
           </Field></div>

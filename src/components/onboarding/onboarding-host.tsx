@@ -69,7 +69,10 @@ export function OnboardingHost() {
   useEffect(() => { openRef.current = open; }, [open]);
   const signedIn = useRef(false);
 
+  // The button that opened a replay (Watch Demo, Help menu) gets focus back when the tour closes.
+  const opener = useRef<HTMLElement | null>(null);
   const show = useCallback((m: "auto" | "replay") => {
+    opener.current = m === "replay" && document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null;
     setMode(m);
     setSession((n) => n + 1);
     setOpen(true);
@@ -131,6 +134,10 @@ export function OnboardingHost() {
 
   const onExit = useCallback((how: TourExit) => {
     setOpen(false);
+    const back = opener.current;
+    opener.current = null;
+    // After the dialog's own focus handling has run.
+    if (back) setTimeout(() => { if (back.isConnected) back.focus(); }, 0);
     if (mode !== "auto") return; // replay never changes onboarding status
     const at = new Date().toISOString();
     const signed = signedIn.current || hasSessionCookie(document.cookie);

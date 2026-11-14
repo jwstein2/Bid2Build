@@ -35,7 +35,7 @@ export function TradePicker({ trades }: { trades: PickerTrade[] }) {
               </span>
               <span className="min-w-0">
                 <span className="block hyphens-auto font-display font-bold leading-tight text-ink [overflow-wrap:anywhere] group-hover:text-brand">{t.name}</span>
-                <span className="mt-0.5 hidden text-xs text-muted sm:block">Start a {t.slug === "other" ? "custom" : t.name.toLowerCase()} bid</span>
+                <span className="mt-0.5 hidden text-xs text-muted sm:block">{t.slug === "other" ? "Start a custom bid" : `Start a bid for ${tradePhrase(t.name)}`}</span>
               </span>
             </Link>
           </li>
@@ -86,4 +86,9 @@ export function TradePicker({ trades }: { trades: PickerTrade[] }) {
       )}
     </div>
   );
+}
+
+/** "Decks & Porches" → "decks & porches", but acronyms stay as written ("HVAC"). Reads correctly after "a bid for". */
+export function tradePhrase(name: string): string {
+  return name.split(" ").map((w) => (w.length > 1 && w === w.toUpperCase() ? w : w.toLowerCase())).join(" ");
 }
