@@ -2,9 +2,12 @@ import "server-only";
 import type Stripe from "stripe";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { serverEnv } from "../env";
-import { subscriptionToUpdate, type SubscriptionLike } from "./sync";
+import { enterpriseSeats, subscriptionToUpdate, type PriceIds, type SubscriptionLike } from "./sync";
 
-export const prices = () => ({ monthly: serverEnv().stripePriceMonthly, annual: serverEnv().stripePriceAnnual });
+export const prices = (): PriceIds => {
+  const e = serverEnv();
+  return { monthly: e.stripePriceMonthly, annual: e.stripePriceAnnual, enterpriseBase: e.stripePriceEnterpriseBase || undefined, enterpriseSeat: e.stripePriceEnterpriseSeat || undefined };
+};
 
 /** Find our user for a Stripe subscription: metadata first, then the stored customer mapping. */
 export async function resolveUserId(admin: SupabaseClient, sub: SubscriptionLike): Promise<string | null> {
@@ -19,7 +22,20 @@ export async function applySubscription(admin: SupabaseClient, sub: Stripe.Subsc
   const s = sub as unknown as SubscriptionLike;
   const userId = await resolveUserId(admin, s);
   if (!userId) return { applied: false, userId: null };
-  const { data, error } = await admin.rpc("apply_subscription_update", subscriptionToUpdate(s, userId, eventCreatedSec, prices()));
+  const p = prices();
+  let companyId: string | null = null;
+  if (enterpriseSeats(s, p) !== null) {
+    // The company is created (idempotently) from the paid Enterprise subscription itself, so an
+    // abandoned checkout never leaves an empty company behind.
+    const { data: id, error: ce } = await admin.rpc("create_company", { p_owner: userId, p_name: s.metadata?.company_name ?? "" });
+    if (ce) throw ce;
+    companyId = id as string;
+  }
+  const update = subscriptionToUpdate(s, userId, eventCreatedSec, p, companyId);
+  // Older database (Enterprise billing migration not applied): send only the original arguments.
+  const args: Record<string, unknown> = { ...update };
+  if (update.p_plan !== "enterprise") { delete args.p_company_id; delete args.p_seat_quantity; }
+  const { data, error } = await admin.rpc("apply_subscription_update", args);
   if (error) throw error;
   return { applied: Boolean(data), userId };
 }

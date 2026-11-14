@@ -14,10 +14,18 @@ export function serverEnv() {
     stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",
     stripePriceMonthly: process.env.STRIPE_PRICE_MONTHLY ?? "",
     stripePriceAnnual: process.env.STRIPE_PRICE_ANNUAL ?? "",
+    stripePriceEnterpriseBase: process.env.STRIPE_PRICE_ENTERPRISE_BASE ?? "",
+    stripePriceEnterpriseSeat: process.env.STRIPE_PRICE_ENTERPRISE_SEAT ?? "",
   };
 }
 
 export const isStripeConfigured = () => {
   const e = serverEnv();
   return Boolean(e.stripeSecretKey && e.stripePriceMonthly && e.stripePriceAnnual);
+};
+
+/** Enterprise checkout is offered only once both Enterprise prices are configured. */
+export const isEnterpriseConfigured = () => {
+  const e = serverEnv();
+  return isStripeConfigured() && Boolean(e.stripePriceEnterpriseBase && e.stripePriceEnterpriseSeat);
 };
