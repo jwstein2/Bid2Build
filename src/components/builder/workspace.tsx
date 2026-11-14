@@ -10,6 +10,7 @@ import type { Estimate, EstimateGroup, GroupVisibility, LineItem, PricingRule } 
 import { COST_TYPES, UNIT_ABBR, UNITS, getTrade, type TemplateItem } from "@/lib/trades/catalog";
 import { cn } from "@/lib/cn";
 import { Button } from "../ui/button";
+import { useVisualViewport } from "../ui/use-visual-viewport";
 import type { Action } from "./state";
 import type { Library } from "./library";
 import { SavedItemsPicker, useSavedItemsUi, type SavedItemsUi } from "./saved-items";
@@ -162,6 +163,8 @@ export function Workspace({ estimate, dispatch, lib: library }: { estimate: Esti
         </div>
         {removalDialog}
         {lib.dialogs}
+        {/* Room to scroll the last rows above the selected-items bar pinned to the bottom on phones and tablets. */}
+        {selected.size > 0 && <div aria-hidden className="h-40 lg:hidden" />}
       </div>
 
       <PricingPanel estimate={estimate} totals={totals} dispatch={dispatch} />
@@ -172,21 +175,40 @@ export function Workspace({ estimate, dispatch, lib: library }: { estimate: Esti
 function BulkBar({ count, onClear, onApply, onDelete, onSaveStack }: { count: number; onClear: () => void; onApply: (r: PricingRule | null) => void; onDelete: () => void; onSaveStack: () => void }) {
   const [mode, setMode] = useState<"markup" | "margin">("markup");
   const [pct, setPct] = useState("");
+  const vv = useVisualViewport();
   return (
-    <div className="sticky top-[7.5rem] z-20 flex flex-wrap items-center gap-2 rounded-lg border border-brand/30 bg-brand-tint px-3 py-2 text-sm shadow-sm">
-      <span className="font-semibold">{count} selected</span>
-      <span className="mx-1 text-muted">·</span>
-      <label className="sr-only" htmlFor="bulk-mode">Pricing mode</label>
-      <select id="bulk-mode" className="field field-sm w-auto" value={mode} onChange={(e) => setMode(e.target.value as "markup" | "margin")}>
-        <option value="markup">Markup %</option><option value="margin">Margin %</option>
-      </select>
-      <label className="sr-only" htmlFor="bulk-pct">Percent</label>
-      <input id="bulk-pct" className="field field-sm w-20" inputMode="decimal" placeholder="%" value={pct} onChange={(e) => setPct(e.target.value)} />
-      <Button size="sm" onClick={() => pct.trim() && onApply({ mode, percent: pct.trim() })}>Apply override</Button>
-      <Button size="sm" variant="secondary" onClick={() => onApply(null)}>Use estimate pricing</Button>
-      <Button size="sm" variant="secondary" onClick={onSaveStack}><Layers className="h-4 w-4" /> Save Stack</Button>
-      <Button size="sm" variant="ghost" className="text-danger" onClick={onDelete}><Trash2 className="h-4 w-4" /> Delete</Button>
-      <button onClick={onClear} className="ml-auto rounded p-1 hover:bg-black/5" aria-label="Clear selection"><X className="h-4 w-4" /></button>
+    // Phones and tablets: an action bar pinned to the bottom of the screen (over the running total,
+    // above the keyboard and the home indicator), so it never hides under the wrapping header or
+    // covers the rows being selected. Desktop: sticks just below the builder header.
+    <div
+      role="toolbar"
+      aria-label={`Edit ${count} selected ${count === 1 ? "item" : "items"}`}
+      className={cn(
+        "z-40 border-brand/30 bg-brand-tint text-sm",
+        "max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:border-t max-lg:px-3 max-lg:pt-2 max-lg:pb-[max(0.5rem,env(safe-area-inset-bottom))] max-lg:shadow-[0_-4px_14px_rgb(0_0_0/0.12)]",
+        "lg:sticky lg:top-[calc(var(--builder-header-h,7.5rem)+0.5rem)] lg:rounded-lg lg:border lg:px-3 lg:py-2 lg:shadow-sm",
+      )}
+      style={vv && vv.inset > 0 ? { bottom: vv.inset } : undefined}
+    >
+      <div className="mx-auto flex max-w-2xl flex-wrap items-center gap-2 lg:max-w-none">
+        <span className="font-semibold" aria-live="polite">{count} selected</span>
+        <span className="mx-1 hidden text-muted lg:inline" aria-hidden>·</span>
+        <Button size="sm" variant="ghost" className="ml-auto text-danger max-lg:min-h-10 lg:order-3 lg:ml-0" onClick={onDelete}><Trash2 className="h-4 w-4" /> Delete</Button>
+        <button onClick={onClear} className="grid h-9 w-9 shrink-0 place-items-center rounded hover:bg-black/5 lg:order-4 lg:ml-auto" aria-label="Clear selection"><X className="h-4 w-4" /></button>
+        <div className="flex w-full min-w-0 items-center gap-2 lg:order-1 lg:w-auto">
+          <label className="sr-only" htmlFor="bulk-mode">Pricing mode</label>
+          <select id="bulk-mode" className="field field-sm w-auto shrink-0 max-lg:min-h-10 max-lg:text-base" value={mode} onChange={(e) => setMode(e.target.value as "markup" | "margin")}>
+            <option value="markup">Markup %</option><option value="margin">Margin %</option>
+          </select>
+          <label className="sr-only" htmlFor="bulk-pct">Percent</label>
+          <input id="bulk-pct" className="field field-sm min-w-0 flex-1 max-lg:min-h-10 max-lg:text-base lg:w-20 lg:flex-none" inputMode="decimal" enterKeyHint="done" placeholder="%" value={pct} onChange={(e) => setPct(e.target.value)} />
+          <Button size="sm" className="shrink-0 max-lg:min-h-10" onClick={() => pct.trim() && onApply({ mode, percent: pct.trim() })}>Apply<span className="max-sm:hidden"> override</span></Button>
+        </div>
+        <div className="flex w-full flex-wrap items-center gap-2 lg:order-2 lg:w-auto">
+          <Button size="sm" variant="secondary" className="max-lg:min-h-10" onClick={() => onApply(null)}>Use estimate pricing</Button>
+          <Button size="sm" variant="secondary" className="max-lg:min-h-10" onClick={onSaveStack}><Layers className="h-4 w-4" /> Save Stack</Button>
+        </div>
+      </div>
     </div>
   );
 }

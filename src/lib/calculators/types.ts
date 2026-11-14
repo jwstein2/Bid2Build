@@ -73,6 +73,8 @@ export interface CalcIssue {
   message: string;
   sectionId?: string;
   field?: string;
+  /** A required entry that is still blank (not a wrong value). The UI holds these back until the contractor tries to use the result. */
+  empty?: true;
 }
 
 export interface CalcResult {

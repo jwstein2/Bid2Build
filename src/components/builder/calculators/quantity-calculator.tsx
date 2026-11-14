@@ -1,7 +1,7 @@
 "use client";
 import * as Dialog from "@radix-ui/react-dialog";
 import { AlertTriangle, Calculator, Check, Minus, Plus, RotateCcw, Trash2, X } from "lucide-react";
-import { useLayoutEffect, useMemo, useRef, useState, type Dispatch } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type Dispatch } from "react";
 import {
   CALCULATORS, SHAPES, abbr, calculatorsFor, fmt, newInput, newSection, recordMatchesItem, runCalculator,
   type CalcId, type CalcInput, type CalcPreset, type CalcRecord, type CalcResult, type CalcSection, type FieldDef,
@@ -10,6 +10,7 @@ import { D } from "@/lib/estimate/money";
 import type { Estimate, LineItem } from "@/lib/estimate/types";
 import { cn } from "@/lib/cn";
 import { Button } from "../../ui/button";
+import { useVisualViewport } from "../../ui/use-visual-viewport";
 import type { Action } from "../state";
 
 /**
@@ -17,6 +18,13 @@ import type { Action } from "../state";
  * field; opens as a popover on desktop and a bottom sheet on phones. It only changes the item's
  * quantity when the contractor presses "Use", and asks first before replacing a different,
  * manually entered quantity. It never adds line items, prices or credits.
+ *
+ * Phones and tablets (mobile-first; contractors use this on site):
+ *  - The sheet sits above the on-screen keyboard (visualViewport), so fields and the Use button stay visible.
+ *  - Tapping outside while typing only closes the keyboard; it never throws the calculator away.
+ *  - Measurements typed but not applied survive closing and reopening the calculator for that item.
+ *  - Blank fields aren't flagged red while the contractor is still filling them in.
+ *  - Fields use a 16px font on touch screens so iOS doesn't zoom the page on focus.
  */
 export function QuantityCalculator({ item, estimate, dispatch, className }: { item: LineItem; estimate: Estimate; dispatch: Dispatch<Action>; className?: string }) {
   const presets = useMemo(() => calculatorsFor(item, estimate.trades), [item, estimate.trades]);
@@ -57,14 +65,36 @@ export function QuantityCalculator({ item, estimate, dispatch, className }: { it
 
 const PANEL_W = 420;
 
-function usePanelPosition(anchor: React.RefObject<HTMLElement | null>) {
+/** Measurements typed but not yet applied, per line item, for this page session. */
+interface PanelDraft { active: CalcId; inputs: Partial<Record<CalcId, CalcInput>>; outputs: Partial<Record<CalcId, string>>; basis?: string }
+const unapplied = new Map<string, PanelDraft>();
+export function clearUnappliedCalculation(itemId: string) { unapplied.delete(itemId); }
+
+/** Sheet layout on phones and on touch tablets; anchored popover on desktop. */
+function useSheetLayout() {
+  const query = "(max-width: 639px), (pointer: coarse) and (max-width: 1100px)";
+  const [sheet, setSheet] = useState(true);
+  useLayoutEffect(() => {
+    const mq = window.matchMedia?.(query);
+    const update = () => setSheet(mq ? mq.matches : window.innerWidth < 640);
+    update();
+    mq?.addEventListener?.("change", update);
+    return () => mq?.removeEventListener?.("change", update);
+  }, []);
+  return sheet;
+}
+
+function usePanelPosition(anchor: React.RefObject<HTMLElement | null>, sheet: boolean) {
   const [pos, setPos] = useState<{ mobile: boolean; top?: number; left?: number; maxHeight?: number; above?: boolean }>({ mobile: true });
   useLayoutEffect(() => {
+    // The sheet never follows the trigger, so keyboard-driven resizes can't move it off screen.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- layout mode comes from a media query read after mount
+    if (sheet) { setPos({ mobile: true }); return; }
     const place = () => {
       const el = anchor.current;
       const vw = window.innerWidth;
       const vh = window.innerHeight;
-      if (!el || vw < 640) { setPos({ mobile: true }); return; }
+      if (!el) { setPos({ mobile: true }); return; }
       const r = el.getBoundingClientRect();
       const left = Math.max(12, Math.min(r.right - PANEL_W, vw - PANEL_W - 12));
       const below = vh - r.bottom - 16;
@@ -76,7 +106,7 @@ function usePanelPosition(anchor: React.RefObject<HTMLElement | null>) {
     place();
     window.addEventListener("resize", place);
     return () => window.removeEventListener("resize", place);
-  }, [anchor]);
+  }, [anchor, sheet]);
   return pos;
 }
 
@@ -86,17 +116,49 @@ function CalculatorPanel({ item, estimate, dispatch, presets: basePresets, recor
 }) {
   // Keep a saved calculation reachable even if the item's unit changed since.
   const presets = useMemo(() => (record && !basePresets.some((p) => p.calc === record.calc) ? [{ calc: record.calc, output: record.output }, ...basePresets] : basePresets), [basePresets, record]);
-  const [active, setActive] = useState<CalcId>(record?.calc ?? presets[0].calc);
-  const [inputs, setInputs] = useState<Partial<Record<CalcId, CalcInput>>>(() => (record ? { [record.calc]: structuredClone(record.input) } : {}));
-  const [outputs, setOutputs] = useState<Partial<Record<CalcId, string>>>(() => (record ? { [record.calc]: record.output } : {}));
+  // Reopen with unapplied measurements if the calculator was closed before "Use" (and nothing was applied since).
+  const [draft] = useState(() => {
+    const d = unapplied.get(item.id);
+    return d && d.basis === record?.appliedAt && presets.some((p) => p.calc === d.active) ? d : null;
+  });
+  const [active, setActive] = useState<CalcId>(draft?.active ?? record?.calc ?? presets[0].calc);
+  const [inputs, setInputs] = useState<Partial<Record<CalcId, CalcInput>>>(() => draft?.inputs ?? (record ? { [record.calc]: structuredClone(record.input) } : {}));
+  const [outputs, setOutputs] = useState<Partial<Record<CalcId, string>>>(() => draft?.outputs ?? (record ? { [record.calc]: record.output } : {}));
   const [confirming, setConfirming] = useState(false);
-  const pos = usePanelPosition(anchor);
+  // Validation: blank fields stay quiet until the contractor tries to use the result; a wrong value
+  // shows once they leave that field.
+  const [touched, setTouched] = useState<Set<string>>(() => new Set());
+  const [attempted, setAttempted] = useState(false);
+  const sheet = useSheetLayout();
+  const pos = usePanelPosition(anchor, sheet);
+  const vv = useVisualViewport(pos.mobile);
+  const contentRef = useRef<HTMLDivElement>(null);
+  // Whether a calculator field had focus (keyboard up) when the current outside tap began. Radix
+  // reports touch taps outside only on click, after the field has already lost focus.
+  const typingAtTap = useRef(false);
+  useEffect(() => {
+    const onDown = () => {
+      const a = document.activeElement as HTMLElement | null;
+      typingAtTap.current = Boolean(a && contentRef.current?.contains(a) && a.matches("input, select, textarea"));
+    };
+    document.addEventListener("pointerdown", onDown, true);
+    return () => document.removeEventListener("pointerdown", onDown, true);
+  }, []);
+
+  useEffect(() => {
+    if (Object.keys(inputs).length === 0 && !draft) return;
+    unapplied.set(item.id, { active, inputs, outputs, basis: record?.appliedAt });
+  }, [item.id, active, inputs, outputs, record?.appliedAt, draft]);
 
   const preset = presets.find((p) => p.calc === active) ?? presets[0];
   const def = CALCULATORS[preset.calc];
   const input = inputs[preset.calc] ?? newInput(preset);
   const output = outputs[preset.calc] ?? preset.output ?? def.outputs[0].id;
   const result = useMemo(() => runCalculator(preset.calc, input, output), [preset.calc, input, output]);
+  const fieldKey = (sectionId: string | undefined, field: string | undefined) => `${preset.calc}:${sectionId ?? "-"}:${field ?? "-"}`;
+  const shownErrors = attempted ? result.errors : result.errors.filter((e) => !e.empty && (!e.field || touched.has(fieldKey(e.sectionId, e.field))));
+  const hiddenErrors = result.errors.length - shownErrors.length;
+  const touch = (sectionId: string | undefined, field: string) => setTouched((t) => (t.has(fieldKey(sectionId, field)) ? t : new Set(t).add(fieldKey(sectionId, field))));
 
   const setInput = (next: CalcInput) => { setInputs((m) => ({ ...m, [preset.calc]: next })); setConfirming(false); };
   const patchSection = (id: string, patch: Partial<CalcSection>) => setInput({ ...input, sections: input.sections.map((s) => (s.id === id ? { ...s, ...patch } : s)) });
@@ -115,12 +177,39 @@ function CalculatorPanel({ item, estimate, dispatch, presets: basePresets, recor
   const needsConfirm = !sameAsCurrent && current !== "" && currentNum !== 0 && !(record && recordMatchesItem(record, item) && record.calc === preset.calc);
   const unitChanges = result.quantity !== null && result.unit !== item.unit;
   const canApply = result.ok && result.quantity !== null && resultNum > 0 && !sameAsCurrent;
+  // With entries still to fill in, "Use" stays pressable: it points at what's missing instead.
+  const canPress = canApply || (result.errors.length > 0 && !sameAsCurrent);
 
   const apply = () => {
+    if (result.errors.length) {
+      setAttempted(true);
+      const first = result.errors.find((e) => e.field);
+      const root = contentRef.current;
+      const el = first && root?.querySelector<HTMLInputElement>(`[data-calc-key="${CSS.escape(`${first.sectionId ?? "-"}:${first.field}`)}"]`);
+      (el ?? root?.querySelector<HTMLInputElement>("input[data-calc-field]"))?.focus();
+      return;
+    }
     if (!canApply || result.quantity === null) return;
     if (needsConfirm && !confirming) { setConfirming(true); return; }
     dispatch({ type: "applyCalculation", itemId: item.id, record: { v: 1, calc: preset.calc, output, input, result: result.quantity, unit: result.unit, appliedAt: new Date().toISOString() } });
+    unapplied.delete(item.id);
     onClose();
+  };
+  const forget = (restore?: boolean) => { unapplied.delete(item.id); dispatch({ type: "clearCalculation", itemId: item.id, restore }); onClose(); };
+
+  // Keep the field being typed in visible above the keyboard once it has opened.
+  const onFieldFocus = (e: React.FocusEvent<HTMLElement>) => {
+    if (!pos.mobile) return;
+    const el = e.currentTarget;
+    window.setTimeout(() => el.scrollIntoView({ block: "nearest" }), 320);
+  };
+  // Enter / "Next" on the phone keyboard moves to the next measurement.
+  const onFieldEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    const fields = [...(contentRef.current?.querySelectorAll<HTMLInputElement>("input[data-calc-field]") ?? [])];
+    const next = fields[fields.indexOf(e.currentTarget) + 1];
+    if (next) next.focus(); else e.currentTarget.blur();
   };
 
   const matches = recordMatchesItem(record, item);
@@ -130,22 +219,36 @@ function CalculatorPanel({ item, estimate, dispatch, presets: basePresets, recor
     <Dialog.Portal>
       <Dialog.Overlay className={cn("fixed inset-0 z-50", pos.mobile ? "bg-ink/40" : "bg-ink/5")} />
       <Dialog.Content
+        ref={contentRef}
         aria-labelledby={titleId}
         aria-describedby={undefined}
         onOpenAutoFocus={(e) => {
-          // Focus the first measurement field rather than the close button.
           e.preventDefault();
-          (e.currentTarget as HTMLElement).querySelector<HTMLInputElement>("input[data-calc-field]")?.focus();
+          const root = e.currentTarget as HTMLElement;
+          // Desktop: straight into the first measurement. Touch: don't pop the keyboard while the
+          // sheet is still opening; the contractor taps the field they want.
+          if (pos.mobile || sheet) root.focus({ preventScroll: true });
+          else root.querySelector<HTMLInputElement>("input[data-calc-field]")?.focus();
         }}
+        onFocusOutside={(e) => e.preventDefault()}
+        onPointerDownOutside={(e) => {
+          if (!pos.mobile) return;
+          // A tap above the sheet while typing just closes the keyboard; the calculator stays open.
+          if (typingAtTap.current) {
+            e.preventDefault();
+            (document.activeElement as HTMLElement | null)?.blur();
+          }
+        }}
+        tabIndex={-1}
         className={cn(
-          "fixed z-50 flex flex-col overflow-hidden border border-line bg-surface shadow-[var(--shadow-raised)] outline-none",
-          pos.mobile ? "inset-x-0 bottom-0 max-h-[88dvh] rounded-t-2xl" : "w-[420px] rounded-xl",
+          "calc-panel fixed z-50 flex flex-col overflow-hidden border border-line bg-surface shadow-[var(--shadow-raised)] outline-none",
+          pos.mobile ? "inset-x-0 bottom-0 mx-auto max-h-[88dvh] w-full max-w-xl rounded-t-2xl" : "w-[420px] rounded-xl",
         )}
-        style={pos.mobile ? undefined : { top: pos.top, left: pos.left, maxHeight: pos.maxHeight }}
+        style={pos.mobile ? (vv ? { bottom: vv.inset, maxHeight: Math.max(220, Math.round(vv.height * 0.94)) } : undefined) : { top: pos.top, left: pos.left, maxHeight: pos.maxHeight }}
       >
         {/* Header */}
         <div className="flex shrink-0 items-start gap-2 border-b border-line px-4 pb-2 pt-3">
-          {pos.mobile && <span className="absolute left-1/2 top-1.5 h-1 w-10 -translate-x-1/2 rounded-full bg-line-strong" aria-hidden />}
+          {pos.mobile && <span className="pointer-events-none absolute left-1/2 top-1.5 h-1 w-10 -translate-x-1/2 rounded-full bg-line-strong" aria-hidden />}
           <div className="min-w-0 flex-1">
             <Dialog.Title id={titleId} className="flex items-center gap-1.5 font-display text-[15px] font-bold">
               <Calculator className="h-4 w-4 text-accent-ink" aria-hidden /> {preset.label ?? def.name}
@@ -186,9 +289,12 @@ function CalculatorPanel({ item, estimate, dispatch, presets: basePresets, recor
                   shapes={def.shapes.map((x) => ({ id: x.id, label: x.label }))}
                   deductions={def.deductions}
                   canRemove={input.sections.length > 1}
-                  errors={result.errors}
+                  errors={shownErrors}
                   onShape={(shape) => changeShape(s, shape)}
                   onValue={(k, v) => setValue(s.id, k, v)}
+                  onBlurField={(k) => touch(s.id, k)}
+                  onFocusField={onFieldFocus}
+                  onEnter={onFieldEnter}
                   onPatch={(patch) => patchSection(s.id, patch)}
                   onRemove={() => setInput({ ...input, sections: input.sections.filter((x) => x.id !== s.id) })}
                 />
@@ -210,7 +316,7 @@ function CalculatorPanel({ item, estimate, dispatch, presets: basePresets, recor
           {def.options.length > 0 && (
             <div className={cn("grid grid-cols-2 gap-x-3 gap-y-2", def.shapes.length > 0 && "mt-3 border-t border-dashed border-line pt-3")}>
               {def.options.map((f) => (
-                <FieldInput key={f.key} id={`${item.id}-opt-${f.key}`} field={f} value={input.options[f.key] ?? ""} onChange={(v) => setOption(f.key, v)} invalid={result.errors.some((e) => !e.sectionId && e.field === f.key)} wide={f.kind === "select"} />
+                <FieldInput key={f.key} id={`${item.id}-opt-${f.key}`} calcKey={`-:${f.key}`} field={f} value={input.options[f.key] ?? ""} onChange={(v) => setOption(f.key, v)} onBlur={() => touch(undefined, f.key)} onFocus={onFieldFocus} onEnter={onFieldEnter} invalid={shownErrors.some((e) => !e.sectionId && e.field === f.key)} wide={f.kind === "select"} />
               ))}
             </div>
           )}
@@ -224,7 +330,7 @@ function CalculatorPanel({ item, estimate, dispatch, presets: basePresets, recor
             </div>
           )}
 
-          <ResultBlock result={result} id={`${item.id}-calc-result`} />
+          <ResultBlock result={result} errors={shownErrors} pending={hiddenErrors > 0} id={`${item.id}-calc-result`} />
 
           {record && (
             <div className="mt-3 rounded-lg bg-paper px-3 py-2 text-xs text-ink-soft">
@@ -234,11 +340,11 @@ function CalculatorPanel({ item, estimate, dispatch, presets: basePresets, recor
               </p>
               <div className="mt-1 flex flex-wrap gap-x-3">
                 {record.previous && matches && (
-                  <button className="font-semibold text-accent-ink underline-offset-2 hover:underline" onClick={() => { dispatch({ type: "clearCalculation", itemId: item.id, restore: true }); onClose(); }}>
+                  <button className="font-semibold text-accent-ink underline-offset-2 hover:underline" onClick={() => forget(true)}>
                     <RotateCcw className="mr-1 inline h-3 w-3" />Restore previous quantity ({record.previous.quantity || "0"} {abbr(record.previous.unit)})
                   </button>
                 )}
-                <button className="font-semibold text-muted underline-offset-2 hover:underline" onClick={() => { dispatch({ type: "clearCalculation", itemId: item.id }); onClose(); }}>
+                <button className="font-semibold text-muted underline-offset-2 hover:underline" onClick={() => forget()}>
                   <Trash2 className="mr-1 inline h-3 w-3" />Forget saved measurements
                 </button>
               </div>
@@ -261,7 +367,8 @@ function CalculatorPanel({ item, estimate, dispatch, presets: basePresets, recor
           <div className="flex items-center justify-end gap-2">
             {!confirming && (
               <p className="mr-auto min-w-0 truncate text-xs text-muted" aria-hidden>
-                {result.errors.length ? <span className="text-danger">{result.errors.length === 1 ? "1 entry to fix" : `${result.errors.length} entries to fix`}</span>
+                {shownErrors.length ? <span className="text-danger">{shownErrors.length === 1 ? "1 entry to fix" : `${shownErrors.length} entries to fix`}</span>
+                  : result.errors.length ? <>Enter the measurements</>
                   : <>Result <span className="font-bold tabular text-navy">{fmt(new D(result.quantity ?? "0"))} {abbr(result.unit)}</span></>}
               </p>
             )}
@@ -272,8 +379,8 @@ function CalculatorPanel({ item, estimate, dispatch, presets: basePresets, recor
               </>
             ) : (
               <>
-                <Dialog.Close asChild><Button size="sm" variant="ghost">Cancel</Button></Dialog.Close>
-                <Button size="sm" onClick={apply} disabled={!canApply} aria-describedby={`${item.id}-calc-result`}>
+                <Dialog.Close asChild><Button size="sm" variant="ghost" onClick={() => unapplied.delete(item.id)}>Cancel</Button></Dialog.Close>
+                <Button size="sm" onClick={apply} disabled={!canPress} aria-describedby={`${item.id}-calc-result`}>
                   {sameAsCurrent ? <><Check className="h-4 w-4" /> Already applied</> : result.quantity !== null && resultNum > 0 ? <>Use {fmt(new D(result.quantity))} {abbr(result.unit)}</> : "Use result"}
                 </Button>
               </>
@@ -285,9 +392,10 @@ function CalculatorPanel({ item, estimate, dispatch, presets: basePresets, recor
   );
 }
 
-function SectionEditor({ section: s, index, shapes, deductions, canRemove, errors, onShape, onValue, onPatch, onRemove }: {
+function SectionEditor({ section: s, index, shapes, deductions, canRemove, errors, onShape, onValue, onPatch, onRemove, onBlurField, onFocusField, onEnter }: {
   section: CalcSection; index: number; shapes: { id: string; label: string }[]; deductions: boolean; canRemove: boolean; errors: CalcResult["errors"];
   onShape: (shape: string) => void; onValue: (key: string, value: string) => void; onPatch: (p: Partial<CalcSection>) => void; onRemove: () => void;
+  onBlurField: (key: string) => void; onFocusField: (e: React.FocusEvent<HTMLElement>) => void; onEnter: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 }) {
   const shape = SHAPES[s.shape];
   const idBase = `sec-${s.id}`;
@@ -319,14 +427,17 @@ function SectionEditor({ section: s, index, shapes, deductions, canRemove, error
       )}
       <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 sm:grid-cols-3">
         {shape?.fields.map((f) => (
-          <FieldInput key={f.key} id={`${idBase}-${f.key}`} field={f} value={s.values[f.key] ?? ""} onChange={(v) => onValue(f.key, v)} invalid={errors.some((e) => e.sectionId === s.id && e.field === f.key)} compact />
+          <FieldInput key={f.key} id={`${idBase}-${f.key}`} calcKey={`${s.id}:${f.key}`} field={f} value={s.values[f.key] ?? ""} onChange={(v) => onValue(f.key, v)} onBlur={() => onBlurField(f.key)} onFocus={onFocusField} onEnter={onEnter} invalid={errors.some((e) => e.sectionId === s.id && e.field === f.key)} compact />
         ))}
       </div>
     </fieldset>
   );
 }
 
-function FieldInput({ id, field: f, value, onChange, invalid, compact, wide }: { id: string; field: FieldDef; value: string; onChange: (v: string) => void; invalid?: boolean; compact?: boolean; wide?: boolean }) {
+function FieldInput({ id, calcKey, field: f, value, onChange, onBlur, onFocus, onEnter, invalid, compact, wide }: {
+  id: string; calcKey: string; field: FieldDef; value: string; onChange: (v: string) => void; onBlur?: () => void;
+  onFocus?: (e: React.FocusEvent<HTMLElement>) => void; onEnter?: (e: React.KeyboardEvent<HTMLInputElement>) => void; invalid?: boolean; compact?: boolean; wide?: boolean;
+}) {
   const label = (
     <label htmlFor={id} className={cn("block font-semibold text-ink-soft", compact ? "mb-0.5 text-[11px]" : "mb-0.5 text-xs")}>
       {f.label}{f.optional && f.kind !== "select" ? <span className="font-normal text-muted"> (optional)</span> : null}
@@ -350,15 +461,21 @@ function FieldInput({ id, field: f, value, onChange, invalid, compact, wide }: {
         <input
           id={id}
           data-calc-field
+          data-calc-key={calcKey}
           className={cn("field field-sm tabular", f.unit && "pr-10")}
           inputMode={f.kind === "feet" ? "text" : "decimal"}
+          enterKeyHint="next"
           autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
           value={value}
           placeholder={f.placeholder ?? (f.kind === "feet" ? `e.g. 12'6"` : "")}
           aria-invalid={invalid || undefined}
           aria-describedby={helpId}
           onChange={(e) => onChange(e.target.value.slice(0, 20))}
-          onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
+          onBlur={onBlur}
+          onFocus={onFocus}
+          onKeyDown={(e) => { if (e.key === "Enter") { if (onEnter) onEnter(e); else e.preventDefault(); } }}
         />
         {f.unit && <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-muted">{f.unit}</span>}
       </div>
@@ -368,14 +485,15 @@ function FieldInput({ id, field: f, value, onChange, invalid, compact, wide }: {
   );
 }
 
-function ResultBlock({ result, id }: { result: CalcResult; id: string }) {
-  const hasErrors = result.errors.length > 0;
+function ResultBlock({ result, errors, pending, id }: { result: CalcResult; errors: CalcResult["errors"]; pending: boolean; id: string }) {
   return (
     <div id={id} className="mt-3" aria-live="polite">
-      {hasErrors ? (
+      {errors.length > 0 ? (
         <div className="rounded-lg border border-danger/25 bg-danger-tint px-3 py-2 text-xs text-danger">
-          <ul className="list-disc space-y-0.5 pl-4">{result.errors.slice(0, 4).map((e, i) => <li key={i}>{e.message}</li>)}</ul>
+          <ul className="list-disc space-y-0.5 pl-4">{errors.slice(0, 4).map((e, i) => <li key={i}>{e.message}</li>)}</ul>
         </div>
+      ) : pending ? (
+        <div className="rounded-lg border border-dashed border-line px-3 py-2.5 text-xs text-muted">Enter the measurements above to see the result.</div>
       ) : (
         <div className="rounded-lg border border-line bg-brand-tint/50 px-3 py-2.5">
           <div className="flex items-baseline justify-between gap-3">

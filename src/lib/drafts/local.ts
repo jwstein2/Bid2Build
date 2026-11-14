@@ -69,3 +69,15 @@ export function saveLocalBusiness(b: BusinessProfile) {
 export function clearLocalBusiness() {
   remove(KEY_BUSINESS);
 }
+
+/**
+ * The builder step this device last showed for a bid, so resuming a draft (or coming back after
+ * signing in) reopens the same step instead of restarting the workflow.
+ */
+const KEY_STEP = (id: string) => `b2b:step:${id}`;
+export function loadLocalStep(id: string): string | null {
+  return read<string>(KEY_STEP(id));
+}
+export function saveLocalStep(id: string, step: string) {
+  write(KEY_STEP(id), step);
+}

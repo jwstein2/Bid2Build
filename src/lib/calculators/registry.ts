@@ -64,7 +64,7 @@ function maxFor(f: FieldDef): number {
 function readField(f: FieldDef, raw: string | undefined, ctx: Ctx, where: { sectionId?: string; prefix?: string } = {}): Dec | undefined {
   const label = where.prefix ? `${where.prefix}: ${f.label}` : f.label;
   if (raw === undefined || raw.trim() === "") {
-    if (!f.optional) ctx.errors.push({ message: parseMessage("empty", label), sectionId: where.sectionId, field: f.key });
+    if (!f.optional) ctx.errors.push({ message: parseMessage("empty", label), sectionId: where.sectionId, field: f.key, empty: true });
     return undefined;
   }
   const max = maxFor(f);
@@ -125,7 +125,7 @@ function sumSections(
   let adds = ZERO;
   let deducts = ZERO;
   if (!input.sections.length) {
-    ctx.errors.push({ message: "Add at least one measurement." });
+    ctx.errors.push({ message: "Add at least one measurement.", empty: true });
     return null;
   }
   if (input.sections.length > MAX_SECTIONS) {
@@ -392,7 +392,7 @@ const stairsDef: CalcDef = {
     const ctx: Ctx = { errors: [], warnings: [] };
     const o = readOptions(this.options, input, ctx);
     const out = STAIR_OUTPUTS.find((x) => x.id === outputId) ?? STAIR_OUTPUTS[0];
-    if (!ctx.errors.length && !o.totalRise?.gt(0) && !o.treadCount?.gt(0)) ctx.errors.push({ message: "Enter the total rise or the number of treads.", field: "totalRise" });
+    if (!ctx.errors.length && !o.totalRise?.gt(0) && !o.treadCount?.gt(0)) ctx.errors.push({ message: "Enter the total rise or the number of treads.", field: "totalRise", empty: true });
     if (o.maxRiser && o.maxRiser.isZero()) ctx.errors.push({ message: "Max riser height must be greater than 0.", field: "maxRiser" });
     if (o.runs && o.runs.isZero()) ctx.errors.push({ message: "Stair runs must be at least 1.", field: "runs" });
     if (ctx.errors.length) return finish(ctx, null, out.unit, "", []);
