@@ -16,6 +16,10 @@ const MESSAGES: Record<string, [number, string]> = {
   not_a_member: [403, "You're not part of a company account."],
   invitation_invalid: [410, "This invitation has expired, was replaced by a newer one, or was already used."],
   invitation_email_mismatch: [403, "This invitation was sent to a different email address. Sign in with the invited email (verified) to accept it."],
+  invalid_stage: [400, "Choose a valid pipeline stage."],
+  estimate_not_found: [404, "That bid isn't available to you."],
+  approval_required: [409, "This bid needs approval before it can be marked Sent. Ask a manager or the owner to approve it."],
+  use_set_estimate_stage: [409, "Change the stage from Bids & Pipeline."],
   no_verified_email: [409, "This person has no verified email address on their account."],
 };
 

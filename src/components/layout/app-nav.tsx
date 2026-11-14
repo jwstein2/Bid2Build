@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, Plug, LayoutTemplate, LogOut, X, UserCog, Receipt } from "lucide-react";
+import { CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, Plug, LayoutTemplate, LogOut, X, UserCog, Receipt, Gauge, SquareKanban } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ButtonLink } from "@/components/ui/button";
 import { Logo } from "./logo";
@@ -28,8 +28,10 @@ const item = "flex min-h-11 items-center gap-2.5 whitespace-nowrap rounded-md px
  * (logo, New bid, Menu) whose menu opens the same list, so content starts near the top of the screen.
  */
 /** Enterprise company links, chosen on the server from the member's permissions. */
-export type CompanyNav = { name: string; links: { href: "/company/users" | "/company/billing"; label: string }[] };
-const COMPANY_ICONS = { "/company/users": UserCog, "/company/billing": Receipt } as const;
+export type CompanyHref = "/company" | "/company/pipeline" | "/company/users" | "/company/billing";
+export type CompanyNav = { name: string; links: { href: CompanyHref; label: string }[] };
+const COMPANY_ICONS = { "/company": Gauge, "/company/pipeline": SquareKanban, "/company/users": UserCog, "/company/billing": Receipt } as const;
+const companyExact = (href: CompanyHref) => href === "/company";
 
 export function AppSidebar({ isAdmin, email, company }: { isAdmin: boolean; email: string | null; company?: CompanyNav | null }) {
   const path = usePathname();
@@ -37,7 +39,7 @@ export function AppSidebar({ isAdmin, email, company }: { isAdmin: boolean; emai
   // eslint-disable-next-line react-hooks/set-state-in-effect -- close the mobile menu after navigating
   useEffect(() => { setOpen(false); }, [path]);
   const active = (href: string, exact?: boolean) => (exact ? path === href : path === href || path.startsWith(`${href}/`));
-  const current = nav.find((n) => active(n.href, n.exact)) ?? company?.links.find((l) => active(l.href));
+  const current = nav.find((n) => active(n.href, n.exact)) ?? company?.links.find((l) => active(l.href, companyExact(l.href)));
   return (
     <>
       <div className="flex items-center justify-between gap-2 px-3 py-3 sm:px-4 md:py-4">
@@ -72,7 +74,7 @@ export function AppSidebar({ isAdmin, email, company }: { isAdmin: boolean; emai
           <>
             <p className="mt-3 truncate px-3 pb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#B8C6D4]" title={company.name}>Company · {company.name}</p>
             {company.links.map((l) => {
-              const on = active(l.href);
+              const on = active(l.href, companyExact(l.href));
               const Icon = COMPANY_ICONS[l.href];
               return (
                 <Link key={l.href} href={l.href} aria-current={on ? "page" : undefined} className={cn(item, on ? "bg-white/10 text-white shadow-[inset_3px_0_0_var(--color-cyan)]" : "text-[#C9D6E3] hover:bg-white/5 hover:text-white")}>

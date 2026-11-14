@@ -34,7 +34,9 @@ export async function companySubscription(admin: SupabaseClient, companyId: stri
 /** Sidebar links for the member's company, by permission (null when not in a company). */
 export function companyNav(c: MyCompany | null) {
   if (!c) return null;
-  const links: { href: "/company/users" | "/company/billing"; label: string }[] = [{ href: "/company/users", label: "Users & Permissions" }];
+  const links: { href: "/company" | "/company/pipeline" | "/company/users" | "/company/billing"; label: string }[] = [];
+  if (can(c, "view_analytics")) links.push({ href: "/company", label: "Overview" });
+  links.push({ href: "/company/pipeline", label: "Bids & Pipeline" }, { href: "/company/users", label: "Users & Permissions" });
   if (can(c, "manage_billing")) links.push({ href: "/company/billing", label: "Billing & Licenses" });
   return { name: c.name, links };
 }
