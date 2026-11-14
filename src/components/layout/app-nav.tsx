@@ -7,6 +7,7 @@ import { cn } from "@/lib/cn";
 import { ButtonLink } from "@/components/ui/button";
 import { Logo } from "./logo";
 import { PremiumDiamond } from "../billing/premium";
+import { ReplayTourButton } from "../onboarding/replay-tour-button";
 
 const nav: { href: string; label: string; icon: typeof Library; exact?: boolean; premium?: boolean }[] = [
   { href: "/dashboard", label: "Bids", icon: LayoutDashboard, exact: true },
@@ -63,6 +64,8 @@ export function AppSidebar({ isAdmin, email }: { isAdmin: boolean; email: string
             </Link>
           );
         })}
+        <p className="mt-3 px-3 pb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#B8C6D4]">Help</p>
+        <ReplayTourButton className={cn(item, "w-full text-left text-[#C9D6E3] hover:bg-white/5 hover:text-white")} />
         {isAdmin && (
           <Link href="/admin" className={cn(item, "text-[#C9D6E3] hover:bg-white/5 hover:text-white")}><Shield className="h-4 w-4" aria-hidden /> Admin</Link>
         )}

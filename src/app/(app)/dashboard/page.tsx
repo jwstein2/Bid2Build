@@ -17,7 +17,9 @@ export default async function Dashboard() {
   const user = (await getUser())!;
   const supabase = await createClient();
   const [{ data: estimates }, { data: versions }, credits, { data: biz }, libraryAccess] = await Promise.all([
-    supabase.from("estimates").select("id, title, customer_name, trades, status, updated_at, estimate_number").order("updated_at", { ascending: false }).limit(500),
+    // "My bids" stays personal: Enterprise owners/managers can also read teammates' company bids (RLS),
+    // which belong in the company Command Center, not here.
+    supabase.from("estimates").select("id, title, customer_name, trades, status, updated_at, estimate_number").eq("user_id", user.id).order("updated_at", { ascending: false }).limit(500),
     supabase.from("estimate_versions").select("id, estimate_id, version_number, total, created_at").order("version_number", { ascending: false }),
     loadCreditStatus(supabase),
     supabase.from("business_profiles").select("company_name, logo_path, phone, email, address").eq("user_id", user.id).maybeSingle(),

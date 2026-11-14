@@ -7,3 +7,17 @@
 [build.environment]
   NODE_VERSION = "22"
   NEXT_TELEMETRY_DISABLED = "1"
+
+# Welcome video, poster and tour stills (public/media). Served straight from Netlify's CDN with
+# byte-range support, so the MP4 (faststart: index at the front) streams instead of downloading
+# whole. File names carry a version (meet-built2bid-v1.mp4): ship a new name to replace the video.
+[[headers]]
+  for = "/media/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+    Accept-Ranges = "bytes"
+
+[[headers]]
+  for = "/media/*.mp4"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
