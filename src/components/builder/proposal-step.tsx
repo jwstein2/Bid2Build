@@ -20,7 +20,7 @@ const TEXT_SECTIONS: [keyof ProposalConfig, string, string][] = [
   ["allowances", "Allowances", "e.g. Tile allowance of $5/sq ft; selections above allowance billed separately."],
   ["customerResponsibilities", "Customer responsibilities", "e.g. Clear the work area; provide water and power."],
   ["schedule", "Estimated schedule", "e.g. Start within 3 weeks of signing; about 5 working days."],
-  ["terms", "Terms and conditions", "Have your terms reviewed by an attorney."],
+  ["terms", "Terms and conditions", "Your payment, warranty and change-order terms. Leave blank to omit this section."],
 ];
 
 export function ProposalStep({ estimate, business, config, onConfig, textExtra }: { estimate: Estimate; business: BusinessProfile; config: ProposalConfig; onConfig: (c: ProposalConfig) => void; textExtra?: ReactNode }) {
@@ -71,7 +71,8 @@ export function ProposalStep({ estimate, business, config, onConfig, textExtra }
             {TEXT_SECTIONS.map(([k, l, hint]) => (
               <div key={k}>
                 <label htmlFor={`pt-${k}`} className="label">{l} <span className="font-normal text-muted">(optional)</span></label>
-                <textarea id={`pt-${k}`} rows={k === "terms" ? 4 : 2} className="field text-sm" placeholder={hint} value={config[k] as string} onChange={(ev) => set({ [k]: ev.target.value } as Partial<ProposalConfig>)} />
+                {k === "terms" && <p id="pt-terms-guidance" className="mb-1 text-xs text-muted">Only you see this note: contract rules vary by state, so have an attorney review your standard terms. Built2Bid doesn&apos;t write terms for you, and bracketed notes like [placeholder] never print on the proposal.</p>}
+                <textarea id={`pt-${k}`} aria-describedby={k === "terms" ? "pt-terms-guidance" : undefined} rows={k === "terms" ? 4 : 2} className="field text-sm" placeholder={hint} value={config[k] as string} onChange={(ev) => set({ [k]: ev.target.value } as Partial<ProposalConfig>)} />
               </div>
             ))}
           </div>

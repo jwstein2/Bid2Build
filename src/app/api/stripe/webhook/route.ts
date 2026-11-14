@@ -5,6 +5,8 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { serverEnv } from "@/lib/env";
 import { logError } from "@/lib/http/api";
 import { markChurned, markCustomer } from "@/lib/growth/leads";
+import { isFirstPaidSubscriptionInvoice } from "@/lib/email/founder-welcome";
+import { deliverFounderEmails, enqueueFounderWelcome } from "@/lib/email/outbox";
 
 export const runtime = "nodejs";
 
@@ -46,6 +48,7 @@ export async function POST(req: Request) {
     await admin.from("stripe_events").insert({ id: event.id, type: event.type, event_created: new Date(event.created * 1000).toISOString() });
   }
 
+  let welcomeQueued = false;
   try {
     const stripe = getStripe();
     let subscriptionId: string | null = null;
@@ -76,8 +79,19 @@ export async function POST(req: Request) {
         await markCustomer(admin, res.userId, email);
       }
       if (event.type === "customer.subscription.deleted") await markChurned(admin, res.userId);
+      // Founder welcome email: only for the first paid invoice of a subscription. Recording the job is
+      // idempotent (one per user, ever) and never throws, so it can't affect billing or retries.
+      if (event.type === "invoice.paid") {
+        const inv = obj as { id?: string; billing_reason?: string | null; amount_paid?: number | null; status?: string | null; customer_email?: string | null };
+        if (isFirstPaidSubscriptionInvoice(inv)) {
+          welcomeQueued = (await enqueueFounderWelcome(admin, { userId: res.userId, email: inv.customer_email ?? null, sourceRef: inv.id ?? event.id })) === "queued";
+        }
+      }
     }
     await admin.from("stripe_events").update({ processed_at: new Date().toISOString(), error: null }).eq("id", event.id);
+    // Entitlements are saved; now try the email (off unless FOUNDER_EMAIL_ENABLED). Failures are
+    // recorded on the job for a later retry and never change this response.
+    if (welcomeQueued) await deliverFounderEmails(admin, { limit: 1 }).catch((e) => logError("email.deliver", e, { event: event.id }));
     return new Response("ok", { status: 200 });
   } catch (e) {
     logError("stripe.webhook", e, { event: event.id, type: event.type });

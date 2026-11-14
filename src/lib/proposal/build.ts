@@ -3,6 +3,7 @@ import { tradeBlocks } from "../estimate/trades";
 import { D, formatCurrency, round2, toDec } from "../estimate/money";
 import type { Estimate } from "../estimate/types";
 import { tradeName, UNIT_ABBR } from "../trades/catalog";
+import { customerText, displayPhone } from "./customer-text";
 import { customerExclusions, customerScope, normalizeExclusions, normalizeScope } from "./text-sections";
 import type { BusinessProfile, ProposalConfig, ProposalDocument, ProposalSection } from "./types";
 
@@ -32,7 +33,7 @@ export function buildProposal(estimate: Estimate, business: BusinessProfile, con
   const show = config.show;
 
   const contact: { label: string; value: string }[] = [];
-  if (show.phone && clean(business.phone)) contact.push({ label: "Phone", value: business.phone!.trim() });
+  if (show.phone && clean(business.phone)) contact.push({ label: "Phone", value: displayPhone(business.phone) });
   if (show.email && clean(business.email)) contact.push({ label: "Email", value: business.email!.trim() });
   if (show.website && clean(business.website)) contact.push({ label: "Web", value: business.website!.trim() });
   if (show.address && clean(business.address)) contact.push({ label: "Address", value: business.address!.trim() });
@@ -113,7 +114,7 @@ export function buildProposal(estimate: Estimate, business: BusinessProfile, con
     customer: {
       name: estimate.customer.name.trim() || "Customer",
       email: clean(estimate.customer.email),
-      phone: clean(estimate.customer.phone),
+      phone: clean(displayPhone(estimate.customer.phone)),
       projectAddress: clean(estimate.customer.projectAddress),
     },
     meta: {
@@ -123,7 +124,7 @@ export function buildProposal(estimate: Estimate, business: BusinessProfile, con
       expires: fmtDate(estimate.expirationDate),
       trades: estimate.trades.map(tradeName),
     },
-    introduction: clean(config.introduction),
+    introduction: customerText(config.introduction),
     // Hidden or empty sections are omitted entirely: the text never enters the customer document.
     scopeOfWork: customerScope(config.scopeOfWork, config.scope ?? normalizeScope(null)),
     pricing: {
@@ -140,13 +141,13 @@ export function buildProposal(estimate: Estimate, business: BusinessProfile, con
       total: formatCurrency(total),
     },
     exclusions: customerExclusions(config.exclusionList ?? normalizeExclusions(null, config.exclusions)),
-    allowances: clean(config.allowances),
-    customerResponsibilities: clean(config.customerResponsibilities),
-    schedule: clean(config.schedule),
+    allowances: customerText(config.allowances),
+    customerResponsibilities: customerText(config.customerResponsibilities),
+    schedule: customerText(config.schedule),
     paymentSchedule,
-    terms: clean(config.terms),
+    terms: customerText(config.terms),
     signature: config.showSignature,
-    footer: [business.companyName.trim(), show.phone ? clean(business.phone) : undefined, show.website ? clean(business.website) : undefined]
+    footer: [business.companyName.trim(), show.phone ? clean(displayPhone(business.phone)) : undefined, show.website ? clean(business.website) : undefined]
       .filter(Boolean)
       .join("  ·  "),
   };

@@ -35,6 +35,22 @@ export function newGroup(name: string, sortOrder: number): EstimateGroup {
   return { id: uid(), name, description: "", visibility: null, sortOrder, pricingOverride: null };
 }
 
+/** The starter title a new bid gets for its first trade ("Decks & Porches Project", or "New Project"). */
+export function defaultTitleFor(tradeSlug: string | undefined): string {
+  const trade = (tradeSlug && getTrade(tradeSlug)) || getTrade("other")!;
+  return trade.slug === "other" ? "New Project" : `${trade.name} Project`;
+}
+
+/**
+ * True while a bid still carries the starter title it was created with. Title inputs then treat it as
+ * a suggestion (placeholder / select-all) so typing a name replaces it instead of appending to it.
+ * Derived from the title itself, so nothing is stored and saved titles are never rewritten.
+ */
+export function isDefaultTitle(e: Pick<Estimate, "title" | "trades">): boolean {
+  const t = e.title.trim();
+  return t === "New Project" || t === defaultTitleFor(e.trades[0]);
+}
+
 /**
  * New estimate for a trade. Template groups are created EMPTY: suggested items are offered in
  * the editor but never added (and never priced) automatically.
@@ -51,7 +67,7 @@ export function createEstimate(tradeSlug: string, opts: { blank?: boolean; now?:
   for (const g of groups) g.trade = trade.slug;
   return {
     id: uid(),
-    title: trade.slug === "other" ? "New Project" : `${trade.name} Project`,
+    title: defaultTitleFor(trade.slug),
     trades: [trade.slug],
     estimateNumber: opts.number ?? `EST-${now.toISOString().slice(2, 10).replace(/-/g, "")}-${Math.floor(Math.random() * 900 + 100)}`,
     estimateDate: isoDate(now),

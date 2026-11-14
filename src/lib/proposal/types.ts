@@ -66,7 +66,7 @@ export const defaultProposalConfig = (): ProposalConfig => ({
   customerResponsibilities: "",
   schedule: "",
   terms:
-    "This proposal is valid until the expiration date shown. Any changes to the scope of work may affect the price and will be documented in writing before work proceeds. [Placeholder terms: have these reviewed by your attorney.]",
+    "This proposal is valid until the expiration date shown. Any changes to the scope of work may affect the price and will be documented in writing before work proceeds.",
   paymentSchedule: [
     { label: "Deposit due at signing", percent: "30" },
     { label: "Progress payment", percent: "40" },
