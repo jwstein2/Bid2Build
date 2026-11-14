@@ -264,6 +264,15 @@ d("Enterprise workspace, roles and entitlement (database)", () => {
       expect(await tier(compUser)).toEqual({ tier: "free", source: null });
     });
 
+    it("create_company attaches the owner's Enterprise grant that had no company yet", async () => {
+      const early = await createUser(pool, "early@test.dev");
+      await pool.query("insert into public.complimentary_grants (user_id, plan, status, starts_at, expires_at, extra_seats) values ($1, 'enterprise', 'active', now(), now() + interval '30 days', 1)", [early]);
+      expect(await tier(early)).toEqual({ tier: "unlimited", source: "complimentary" });
+      const co = (await pool.query("select public.create_company($1, 'Early Co') as id", [early])).rows[0].id;
+      expect(await tier(early)).toEqual({ tier: "enterprise", source: "company_seat" });
+      expect((await pool.query("select seat_limit from public.company_entitlement($1)", [co])).rows[0].seat_limit).toBe(4);
+    });
+
     it("an Enterprise grant gives 3 + authorized extra seats, and lapses cleanly", async () => {
       await pool.query("insert into public.complimentary_grants (user_id, company_id, plan, status, starts_at, expires_at, extra_seats) values ($1, $2, 'enterprise', 'active', now(), now() + interval '30 days', 2)", [compOwner, compCompany]);
       expect(await tier(compOwner)).toEqual({ tier: "enterprise", source: "company_seat" });

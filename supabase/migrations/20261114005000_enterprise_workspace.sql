@@ -452,7 +452,7 @@ language plpgsql security definer set search_path = public as $$
 declare v_id uuid; v_email text; v_other uuid;
 begin
   select c.id into v_id from public.companies c where c.owner_user_id = p_owner order by c.created_at limit 1;
-  if v_id is not null then return v_id; end if;
+  if v_id is null then
   select m.company_id into v_other from public.company_members m where m.user_id = p_owner and m.status = 'active';
   if v_other is not null then raise exception 'already_in_company' using errcode = 'P0001'; end if;
   select u.email into v_email from auth.users u where u.id = p_owner;
@@ -463,6 +463,14 @@ begin
     values (v_id, p_owner, 'owner', 'active', lower(v_email));
   insert into public.company_audit_log (company_id, actor_id, action, target_type, target_id)
     values (v_id, p_owner, 'company.created', 'company', v_id::text);
+  end if;
+  -- Attach the owner's Enterprise complimentary grant that has no company yet (activated before this
+  -- migration, or before the company existed), so its seat limit applies.
+  if to_regclass('public.complimentary_grants') is not null then
+    execute $q$ update public.complimentary_grants set company_id = $1
+      where user_id = $2 and plan = 'enterprise' and company_id is null and status in ('pending', 'active') $q$
+      using v_id, p_owner;
+  end if;
   return v_id;
 end $$;
 revoke execute on function public.create_company(uuid, text) from public, anon, authenticated;
