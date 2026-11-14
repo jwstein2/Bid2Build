@@ -47,7 +47,11 @@ export async function POST(req: Request) {
     assertModeAllowed();
     const stripe = getStripe();
     const admin = createAdminClient();
-    const { data: active } = await admin.rpc("has_unlimited", { p_user_id: user.id });
+    // Only a PAID subscription blocks checkout: complimentary access (which has_unlimited also counts)
+    // must not stop someone from converting to a paid plan. Falls back to has_unlimited if the
+    // complimentary-access migration hasn't been applied yet.
+    const paid = await admin.rpc("has_paid_subscription", { p_user_id: user.id });
+    const active = paid.error ? (await admin.rpc("has_unlimited", { p_user_id: user.id })).data : paid.data;
     if (active) return fail(409, "already_subscribed", "You already have Unlimited. Manage it from Subscription settings.");
 
     let { data: bc } = await admin.from("billing_customers").select("stripe_customer_id").eq("user_id", user.id).maybeSingle();

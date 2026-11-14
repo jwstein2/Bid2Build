@@ -251,14 +251,16 @@ d("Enterprise workspace, roles and entitlement (database)", () => {
     beforeAll(async () => {
       await pool.query(`create table if not exists public.complimentary_grants (
         id uuid primary key default gen_random_uuid(), email text, user_id uuid, plan text, status text,
-        starts_at timestamptz, expires_at timestamptz, extra_seats int default 0, company_id uuid)`);
+        starts_at timestamptz, expires_at timestamptz, extra_seats int default 0, company_id uuid,
+        duration_days int default 30, included_seats int default 1)`);
+      // Rows below satisfy the real table's constraints too (20261114004000_complimentary_access.sql).
       compOwner = await createUser(pool, "comp-owner@test.dev");
       compUser = await createUser(pool, "comp-user@test.dev");
       compCompany = (await pool.query("select public.create_company($1, 'Comp Co') as id", [compOwner])).rows[0].id;
     });
 
     it("an Unlimited grant gives Unlimited and expires by time alone", async () => {
-      await pool.query("insert into public.complimentary_grants (user_id, plan, status, starts_at, expires_at) values ($1, 'unlimited', 'active', now() - interval '1 day', now() + interval '1 day')", [compUser]);
+      await pool.query("insert into public.complimentary_grants (email, duration_days, included_seats, user_id, plan, status, starts_at, expires_at) values ('comp-user@test.dev', 2, 1, $1, 'unlimited', 'active', now() - interval '1 day', now() + interval '1 day')", [compUser]);
       expect(await tier(compUser)).toEqual({ tier: "unlimited", source: "complimentary" });
       await pool.query("update public.complimentary_grants set expires_at = now() - interval '1 second' where user_id = $1", [compUser]);
       expect(await tier(compUser)).toEqual({ tier: "free", source: null });
@@ -266,7 +268,7 @@ d("Enterprise workspace, roles and entitlement (database)", () => {
 
     it("create_company attaches the owner's Enterprise grant that had no company yet", async () => {
       const early = await createUser(pool, "early@test.dev");
-      await pool.query("insert into public.complimentary_grants (user_id, plan, status, starts_at, expires_at, extra_seats) values ($1, 'enterprise', 'active', now(), now() + interval '30 days', 1)", [early]);
+      await pool.query("insert into public.complimentary_grants (email, duration_days, included_seats, user_id, plan, status, starts_at, expires_at, extra_seats) values ('early@test.dev', 30, 3, $1, 'enterprise', 'active', now(), now() + interval '30 days', 1)", [early]);
       expect(await tier(early)).toEqual({ tier: "unlimited", source: "complimentary" });
       const co = (await pool.query("select public.create_company($1, 'Early Co') as id", [early])).rows[0].id;
       expect(await tier(early)).toEqual({ tier: "enterprise", source: "company_seat" });
@@ -274,7 +276,7 @@ d("Enterprise workspace, roles and entitlement (database)", () => {
     });
 
     it("an Enterprise grant gives 3 + authorized extra seats, and lapses cleanly", async () => {
-      await pool.query("insert into public.complimentary_grants (user_id, company_id, plan, status, starts_at, expires_at, extra_seats) values ($1, $2, 'enterprise', 'active', now(), now() + interval '30 days', 2)", [compOwner, compCompany]);
+      await pool.query("insert into public.complimentary_grants (email, duration_days, included_seats, user_id, company_id, plan, status, starts_at, expires_at, extra_seats) values ('comp-owner@test.dev', 30, 3, $1, $2, 'enterprise', 'active', now(), now() + interval '30 days', 2)", [compOwner, compCompany]);
       expect(await tier(compOwner)).toEqual({ tier: "enterprise", source: "company_seat" });
       const e = (await pool.query("select * from public.company_entitlement($1)", [compCompany])).rows[0];
       expect(e).toMatchObject({ active: true, source: "complimentary", seat_limit: 5 });

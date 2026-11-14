@@ -9,6 +9,9 @@ type Sess = { id: string; created: number; url: string | null; expires_at: numbe
 const state = {
   user: { id: "00000000-0000-4000-8000-0000000000aa", email: "pro@example.test", emailVerified: true, phone: null, phoneVerified: false, verified: true } as { id: string; email: string; emailVerified: boolean; phone?: string | null; phoneVerified?: boolean; verified?: boolean } | null,
   hasUnlimited: false,
+  /** Paid Stripe subscription in good standing (has_paid_subscription). Complimentary access is hasUnlimited only. */
+  hasPaid: false,
+  paidRpcMissing: false,
   subs: [] as { id: string; status: string; metadata: Record<string, string>; customer: string }[],
   sessions: [] as Sess[],
   prices: {
@@ -40,7 +43,10 @@ const fakeStripe = {
 };
 
 const admin = {
-  rpc: vi.fn(async () => ({ data: state.hasUnlimited })),
+  rpc: vi.fn(async (name: string) => {
+    if (name === "has_paid_subscription") return state.paidRpcMissing ? { data: null, error: { message: "function not found" } } : { data: state.hasPaid, error: null };
+    return { data: state.hasUnlimited, error: null };
+  }),
   from: vi.fn(() => {
     const q = {
       select: () => q, eq: () => q,
@@ -68,7 +74,7 @@ const call = async (body: unknown) => {
 
 beforeEach(() => {
   state.user = { id: "00000000-0000-4000-8000-0000000000aa", email: "pro@example.test", emailVerified: true, phone: null, phoneVerified: false, verified: true };
-  state.hasUnlimited = false; state.subs = []; state.sessions = []; state.created = []; state.expired = []; state.applied = 0;
+  state.hasUnlimited = false; state.hasPaid = false; state.paidRpcMissing = false; state.subs = []; state.sessions = []; state.created = []; state.expired = []; state.applied = 0;
   state.prices.price_month = { unit_amount: 1999, currency: "usd", recurring: { interval: "month", interval_count: 1 }, active: true };
   vi.spyOn(Date, "now").mockReturnValue(state.clock * 1000);
 });
@@ -103,10 +109,22 @@ describe("POST /api/stripe/checkout", () => {
     expect((await call({ plan: "monthly" })).body.error.code).toBe("email_not_verified");
   });
 
+  it("lets someone on complimentary access subscribe (only a paid subscription blocks checkout)", async () => {
+    state.hasUnlimited = true; state.hasPaid = false;
+    const r = await call({ plan: "monthly", attempt: "attempt-0001" });
+    expect(r.status).toBe(200);
+    expect(state.created).toHaveLength(1);
+  });
+
+  it("falls back to has_unlimited before the complimentary-access migration is applied", async () => {
+    state.paidRpcMissing = true; state.hasUnlimited = true;
+    expect((await call({ plan: "monthly" })).body.error.code).toBe("already_subscribed");
+  });
+
   it("sends existing subscribers to manage their plan instead of selling another", async () => {
-    state.hasUnlimited = true;
+    state.hasUnlimited = true; state.hasPaid = true;
     expect((await call({ plan: "annual" }))).toMatchObject({ status: 409, body: { error: { code: "already_subscribed" } } });
-    state.hasUnlimited = false;
+    state.hasUnlimited = false; state.hasPaid = false;
     // Paid in Stripe but the webhook hasn't landed yet: still blocked, and the subscription is recorded.
     state.subs = [{ id: "sub_1", status: "active", metadata: {}, customer: "cus_1" }];
     expect((await call({ plan: "annual" })).body.error.code).toBe("already_subscribed");
