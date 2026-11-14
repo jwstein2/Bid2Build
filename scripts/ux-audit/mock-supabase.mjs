@@ -72,6 +72,9 @@ export const SCENARIOS = {
 };
 const LIBRARY_SEED = JSON.stringify({ saved_items: tables.saved_items, assemblies: tables.assemblies, assembly_items: tables.assembly_items });
 let authDelayMs = 0;
+const otpLog = [];
+const KNOWN_PHONES = new Set(["15552345678"]);
+const TAKEN_PHONE = "15559990000";
 function applyScenario(name) {
   const sc = SCENARIOS[name];
   if (!sc) return false;
@@ -95,15 +98,34 @@ http.createServer((req, res) => {
       return applyScenario(u.searchParams.get("name") ?? "") ? send(res, 200, { ok: true }) : send(res, 400, { error: "unknown scenario" });
     }
     if (u.pathname === "/__reset_library") { Object.assign(tables, JSON.parse(LIBRARY_SEED)); return send(res, 200, { ok: true }); }
-    if (u.pathname === "/auth/v1/user") return void setTimeout(() => send(res, 200, USER), authDelayMs);
-    // Email OTP for checkout-flow tests: any address, code 123456 succeeds, anything else is "expired or invalid".
-    if (u.pathname === "/auth/v1/otp") return send(res, 200, {});
+    if (u.pathname === "/auth/v1/user" && req.method === "GET") return void setTimeout(() => send(res, 200, USER), authDelayMs);
+    if (u.pathname === "/__otp-log") {
+      if (u.searchParams.get("reset")) otpLog.length = 0;
+      return send(res, 200, otpLog);
+    }
+    // Email/SMS OTP for checkout and sign-in tests: code 123456 succeeds, anything else is "expired or invalid".
+    // SMS: numbers in KNOWN_PHONES have accounts; others get Supabase's "Signups not allowed" unless create_user is set.
+    // Email with create_user=false (linking a phone to an existing account): only USER.email exists.
+    if (u.pathname === "/auth/v1/otp") {
+      let body = {}; try { body = JSON.parse(raw || "{}"); } catch { /* ignore */ }
+      otpLog.push({ kind: "otp", phone: body.phone, email: body.email, create_user: body.create_user, channel: body.channel });
+      const exists = body.phone ? KNOWN_PHONES.has(String(body.phone).replace(/\D/g, "")) : (body.email ?? "").toLowerCase() === USER.email;
+      if (body.create_user === false && !exists) return send(res, 422, { code: 422, error_code: "otp_disabled", msg: "Signups not allowed for otp" });
+      return send(res, 200, {});
+    }
+    if (u.pathname === "/auth/v1/user" && req.method === "PUT") {
+      let body = {}; try { body = JSON.parse(raw || "{}"); } catch { /* ignore */ }
+      otpLog.push({ kind: "update_user", phone: body.phone, email: body.email });
+      if (body.phone && String(body.phone).replace(/\D/g, "") === TAKEN_PHONE) return send(res, 422, { code: 422, error_code: "phone_exists", msg: "A user with this phone number has already been registered" });
+      return send(res, 200, { ...USER, new_phone: body.phone, new_email: body.email });
+    }
     if (u.pathname === "/auth/v1/verify") {
       let body = {}; try { body = JSON.parse(raw || "{}"); } catch { /* ignore */ }
       if (body.token !== "123456") return send(res, 403, { code: "otp_expired", error_code: "otp_expired", msg: "Token has expired or is invalid" });
+      otpLog.push({ kind: "verify", type: body.type, phone: body.phone, email: body.email });
       const b64u = (x) => Buffer.from(x).toString("base64url");
       const jwt = `${b64u('{"alg":"HS256","typ":"JWT"}')}.${b64u(JSON.stringify({ sub: USER.id, exp: 4102444800, role: "authenticated", aud: "authenticated", email: body.email }))}.sig`;
-      return send(res, 200, { access_token: jwt, refresh_token: "mock", token_type: "bearer", expires_in: 3600 * 24 * 365, expires_at: 4102444800, user: { ...USER, email: body.email ?? USER.email } });
+      return send(res, 200, { access_token: jwt, refresh_token: "mock", token_type: "bearer", expires_in: 3600 * 24 * 365, expires_at: 4102444800, user: { ...USER, email: body.email ?? USER.email, ...(body.phone ? { phone: String(body.phone).replace(/\D/g, ""), phone_confirmed_at: new Date().toISOString() } : {}) } });
     }
     if (u.pathname.startsWith("/auth/v1/")) return send(res, 200, {});
     if (u.pathname.startsWith("/storage/v1/")) return send(res, 400, { error: "not available in mock" });
