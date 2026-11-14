@@ -104,6 +104,29 @@ function applyScenario(name) {
   rpcs.company_member_access = owner ? [{ user_id: M3, permissions_granted: ["view_analytics"], permissions_revoked: [] }] : null;
   rpcs.company_teams_overview = sc.company ? [{ id: TEAM, name: "Siding Crew", trade: "siding", member_count: 2, manager_count: 1 }] : null;
   rpcs.list_company_invitations = owner ? [{ id: "55555555-5555-4555-8555-0000000000b1", email: "newhire@summit.test", role: "estimator", team_id: null, expires_at: iso(-6), created_at: iso(1) }] : null;
+  // Command Center (Overview, Bids & Pipeline, bid review).
+  const B1 = "77777777-7777-4777-8777-000000000001", B2 = "77777777-7777-4777-8777-000000000002", B3 = "77777777-7777-4777-8777-000000000003";
+  const prow = (id, title, stage, owner, total, margin, o = {}) => ({ id, title, estimate_number: `EST-${id.slice(-3)}`, customer_name: "Pat Homeowner", trades: ["siding"], pipeline_stage: stage, status: "finalized", user_id: owner, owner_name: owner === M3 ? "Casey Estimator" : "Riley Manager", total, margin_pct: owner ? margin : null, created_at: iso(5), updated_at: iso(1), stage_changed_at: iso(1), total_count: 3, ...o });
+  rpcs.company_pipeline_bids = sc.company ? [
+    prow(B1, "Hillside re-side", "ready_for_review", M3, "18450.00", owner ? "31.5" : null),
+    prow(B2, "Oak St gutters", "won", M2, "4200.00", owner ? "28.0" : null),
+    prow(B3, "Maple Ave deck", "draft", M3, null, null, { status: "draft" }),
+  ] : null;
+  rpcs.company_pipeline_summary = sc.company && sc.company.role !== "estimator" ? {
+    bids: 3, sent: 1, won: 1, lost: 0, awaitingReview: 1, winRate: 100, wonValue: 4200, openValue: 0, avgBid: 11325, avgMargin: 29.8,
+    stages: { draft: { count: 1, value: 0 }, ready_for_review: { count: 1, value: 18450 }, approved: { count: 0, value: 0 }, sent: { count: 0, value: 0 }, pending: { count: 0, value: 0 }, won: { count: 1, value: 4200 }, lost: { count: 0, value: 0 } },
+    members: [
+      { userId: M2, name: "Riley Manager", status: "active", bids: 1, sent: 1, won: 1, lost: 0, wonValue: 4200, avgBid: 4200, winRate: 100, avgMargin: 28 },
+      { userId: M3, name: "Casey Estimator", status: "active", bids: 2, sent: 0, won: 0, lost: 0, wonValue: 0, avgBid: 18450, winRate: null, avgMargin: 31.5 },
+    ],
+    requireApproval: false,
+  } : null;
+  rpcs.company_bid_review = sc.company ? {
+    id: B1, title: "Hillside re-side", estimateNumber: "EST-001", customerName: "Pat Homeowner", projectAddress: "12 Hillside Rd", trades: ["siding"], stage: "ready_for_review", status: "finalized",
+    lostReason: null, userId: M3, isMine: false, ownerName: "Casey Estimator", createdAt: iso(5), updatedAt: iso(1), canSeeCosts: owner,
+    version: { number: 2, total: 18450, subtotal: 18450, tax: 0, cost: owner ? 12638 : null, marginPct: owner ? 31.5 : null, createdAt: iso(1) },
+    history: [{ from: "draft", to: "ready_for_review", note: "Ready when you are", at: iso(1), by: "Casey Estimator" }],
+  } : null;
   rpcs.peek_company_invitation = [{ company_name: "Summit Exteriors LLC", role: "estimator", email_hint: "u•••@built2bid.test", expires_at: iso(-6), email_matches: true }];
   return true;
 }
