@@ -14,10 +14,24 @@ export function serverEnv() {
     stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",
     stripePriceMonthly: process.env.STRIPE_PRICE_MONTHLY ?? "",
     stripePriceAnnual: process.env.STRIPE_PRICE_ANNUAL ?? "",
+    stripePriceEnterpriseBase: process.env.STRIPE_PRICE_ENTERPRISE_BASE ?? "",
+    stripePriceEnterpriseSeat: process.env.STRIPE_PRICE_ENTERPRISE_SEAT ?? "",
   };
 }
 
 export const isStripeConfigured = () => {
   const e = serverEnv();
   return Boolean(e.stripeSecretKey && e.stripePriceMonthly && e.stripePriceAnnual);
+};
+
+/**
+ * Enterprise checkout is offered only once both Enterprise prices are configured, and with a live
+ * Stripe key only after the owner switches it on (ENTERPRISE_CHECKOUT_LIVE=true), separately from
+ * STRIPE_ALLOW_LIVE, so Enterprise can be verified before real customers can buy it.
+ */
+export const isEnterpriseConfigured = () => {
+  const e = serverEnv();
+  if (!isStripeConfigured() || !e.stripePriceEnterpriseBase || !e.stripePriceEnterpriseSeat) return false;
+  if (/^(sk|rk)_live_/.test(e.stripeSecretKey) && process.env.ENTERPRISE_CHECKOUT_LIVE !== "true") return false;
+  return true;
 };

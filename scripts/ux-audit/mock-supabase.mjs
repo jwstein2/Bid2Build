@@ -61,6 +61,9 @@ const rpcs = {
 // Account scenarios for the account-aware CTA checks (scripts/account-ctas/run.mjs). Switch at runtime with
 // GET /__scenario?name=<key>&authDelayMs=<n>. MOCK_UNLIMITED keeps its old meaning for the UX audit scripts.
 const sub = (o) => [{ stripe_subscription_id: "sub_test", id: "sub_test", user_id: USER.id, status: "active", plan: "monthly", price_id: "price_test", current_period_end: iso(-20), cancel_at_period_end: false, canceled_at: null, ended_at: null, updated_at: iso(1), ...o }];
+const COMPANY = "55555555-5555-4555-8555-000000000001";
+const ALL_PERMS = ["view_own_bids", "view_team_bids", "view_company_bids", "create_estimates", "edit_team_estimates", "view_costs", "view_margin", "approve_bids", "manage_company_pricing", "view_analytics", "manage_teams", "manage_users", "manage_billing"];
+const company = (role, o) => ({ id: COMPANY, name: "Summit Exteriors LLC", role, isOwner: role === "owner", permissions: role === "owner" ? ALL_PERMS : ["view_own_bids", "create_estimates", "view_costs"], entitlement: { active: true, source: "stripe", seatLimit: 5, expiresAt: null }, seatsUsed: 3, ...o });
 const credit = (o) => [{ starter_balance: 2, starter_total: 3, monthly_balance: 0, monthly_eligible: false, next_cycle_at: iso(-12), unlimited: false, email_verified: true, starter_granted: true, ...o }];
 export const SCENARIOS = {
   starter: { credit: credit({}), subs: [] },
@@ -69,6 +72,11 @@ export const SCENARIOS = {
   canceling: { credit: credit({ unlimited: true }), subs: sub({ cancel_at_period_end: true, canceled_at: iso(2) }) },
   expired: { credit: credit({ starter_balance: 0, monthly_balance: 0, monthly_eligible: true }), subs: sub({ status: "canceled", current_period_end: iso(3), ended_at: iso(3), canceled_at: iso(30) }) },
   zero: { credit: credit({ starter_balance: 0, monthly_balance: 0, monthly_eligible: true }), subs: [] },
+  // Enterprise: owner with 5 licensed users (4 in use), a member without billing rights, a complimentary company.
+  enterprise_owner: { credit: credit({ unlimited: true }), subs: sub({ plan: "enterprise", company_id: COMPANY, seat_quantity: 5, price_id: "price_ent_base" }), company: company("owner", { seatsUsed: 4, entitlement: { active: true, source: "stripe", seatLimit: 5, expiresAt: iso(-20) } }) },
+  enterprise_estimator: { credit: credit({ unlimited: true }), subs: [], company: company("estimator", {}) },
+  enterprise_comp: { credit: credit({ unlimited: true }), subs: [], company: company("owner", { entitlement: { active: true, source: "complimentary", seatLimit: 3, expiresAt: iso(-30) } }) },
+  enterprise_past_due: { credit: credit({ unlimited: true }), subs: sub({ status: "past_due", plan: "enterprise", company_id: COMPANY, seat_quantity: 5 }), company: company("owner", { seatsUsed: 4, entitlement: { active: true, source: "stripe", seatLimit: 5, expiresAt: iso(-20) } }) },
 };
 const LIBRARY_SEED = JSON.stringify({ saved_items: tables.saved_items, assemblies: tables.assemblies, assembly_items: tables.assembly_items });
 let authDelayMs = 0;
@@ -81,6 +89,8 @@ function applyScenario(name) {
   rpcs.credit_status = sc.credit;
   tables.subscriptions = sc.subs;
   rpcs.library_access = Boolean(sc.credit[0].unlimited);
+  rpcs.my_company = sc.company ?? null;
+  rpcs.company_billing_summary = sc.company ? { activeMembers: Math.max(1, (sc.company.seatsUsed ?? 1) - 1) } : null;
   return true;
 }
 if (process.env.MOCK_SCENARIO) applyScenario(process.env.MOCK_SCENARIO);

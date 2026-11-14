@@ -9,6 +9,11 @@ import { CTA_LABELS, creditBadge, type AccountStatus } from "@/lib/account/statu
 import { formatCycleDate } from "@/lib/credits/status";
 import { plans } from "@/lib/site";
 import { ANNUAL, ANNUAL_MONTHLY_EQUIVALENT, ANNUAL_SAVINGS_PERCENT, MONTHLY } from "@/lib/billing/plans";
+import { Suspense } from "react";
+import { EnterprisePlan } from "@/components/billing/enterprise-plan";
+import { isEnterpriseConfigured } from "@/lib/env";
+import { site } from "@/lib/site";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Pricing",
@@ -16,18 +21,23 @@ export const metadata: Metadata = {
   alternates: { canonical: "/pricing" },
 };
 
-const rows: [string, boolean | string, boolean | string][] = [
-  ["Finalized bids", `${plans.starterCredits} to start + ${plans.monthlyCredits} every month`, "Unlimited"],
-  ["Updates and re-downloads of finalized bids", "Free", "Free"],
-  ["Draft editing and previews", "Unlimited", "Unlimited"],
-  ["Every trade category", true, true],
-  ["Markup, margin, tax, and profit tools", true, true],
-  ["Editable branding and logo", true, true],
-  ["Customer visibility modes", true, true],
-  ["Saved business settings and customers", true, true],
-  ["Reusable proposal templates", false, true],
-  ["Full proposal customization", "Core options", true],
-  ["Archived bids", "Unlimited", "Unlimited*"],
+const rows: [string, boolean | string, boolean | string, boolean | string][] = [
+  ["Finalized bids", `${plans.starterCredits} to start + ${plans.monthlyCredits} every month`, "Unlimited", "Unlimited for every user"],
+  ["Licensed users", "1", "1", "3 included, more at volume pricing"],
+  ["Updates and re-downloads of finalized bids", "Free", "Free", "Free"],
+  ["Draft editing and previews", "Unlimited", "Unlimited", "Unlimited"],
+  ["Every trade category", true, true, true],
+  ["Markup, margin, tax, and profit tools", true, true, true],
+  ["Editable branding and logo", true, true, true],
+  ["Customer visibility modes", true, true, true],
+  ["Saved business settings and customers", true, true, true],
+  ["Saved Items & Pricing", false, true, true],
+  ["Reusable proposal templates", false, true, true],
+  ["Full proposal customization", "Core options", true, true],
+  ["Company dashboard, team management and permissions", false, false, true],
+  ["Company sales pipeline and analytics", false, false, true],
+  ["Centralized billing and license management", false, false, true],
+  ["Archived bids", "Unlimited", "Unlimited*", "Unlimited*"],
 ];
 
 const UNLIMITED_FEATURES = ["Unlimited bid exports", "Everything in Free", "Reusable templates", "Full proposal customization"];
@@ -35,6 +45,12 @@ const UNLIMITED_FEATURES = ["Unlimited bid exports", "Everything in Free", "Reus
 export default async function PricingPage() {
   const { user, status, plan } = await getAccountContext();
   const subscribed = status.kind === "unlimited";
+  let entMode: "open" | "contact" | "member" | "owner" = isEnterpriseConfigured() ? "open" : "contact";
+  if (user) {
+    // Tolerates the Enterprise migration not being applied yet (no company => null).
+    const { data: co } = await (await createClient()).rpc("my_company");
+    if (co) entMode = (co as { isOwner?: boolean }).isOwner ? "owner" : "member";
+  }
   const manage = <ButtonLink href="/settings/billing" variant="secondary" size="lg" className="w-full">Manage subscription</ButtonLink>;
   return (
     <Container className="py-14">
@@ -58,16 +74,17 @@ export default async function PricingPage() {
         </div>
         <p className="mx-auto mt-5 max-w-2xl text-center text-sm text-ink-soft">Unlimited Monthly and Unlimited Annual include exactly the same features. Only the billing schedule is different.{subscribed && " You're on Unlimited."}</p>
       </CheckoutFlowProvider>
+      <Suspense><EnterprisePlan signedIn={Boolean(user)} mode={entMode} supportEmail={site.supportEmail} /></Suspense>
 
-      <div className="mx-auto mt-14 max-w-3xl overflow-x-auto rounded-xl border border-line bg-surface">
+      <div className="mx-auto mt-14 max-w-4xl overflow-x-auto rounded-xl border border-line bg-surface">
         <table className="w-full text-sm">
           <caption className="sr-only">Plan comparison</caption>
-          <thead><tr className="border-b border-line text-left"><th className="p-3">Feature</th><th className="p-3">Free</th><th className="p-3">Unlimited (monthly or annual)</th></tr></thead>
+          <thead><tr className="border-b border-line text-left"><th className="p-3">Feature</th><th className="p-3">Free</th><th className="p-3">Unlimited (monthly or annual)</th><th className="p-3">Enterprise</th></tr></thead>
           <tbody>
-            {rows.map(([f, a, b]) => (
+            {rows.map(([f, a, b, c]) => (
               <tr key={f} className="border-b border-line last:border-0">
                 <td className="p-3 font-medium">{f}</td>
-                {[a, b].map((v, i) => <td key={i} className="p-3">{v === true ? <Check className="h-4 w-4 text-ok" aria-label="Included" /> : v === false ? <Minus className="h-4 w-4 text-muted" aria-label="Not included" /> : v}</td>)}
+                {[a, b, c].map((v, i) => <td key={i} className="p-3">{v === true ? <Check className="h-4 w-4 text-ok" aria-label="Included" /> : v === false ? <Minus className="h-4 w-4 text-muted" aria-label="Not included" /> : v}</td>)}
               </tr>
             ))}
           </tbody>
