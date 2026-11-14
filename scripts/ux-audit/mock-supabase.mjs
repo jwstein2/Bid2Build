@@ -88,6 +88,7 @@ if (process.env.MOCK_SCENARIO) applyScenario(process.env.MOCK_SCENARIO);
 const cors = { "access-control-allow-origin": "*", "access-control-allow-headers": "*", "access-control-allow-methods": "GET,POST,PATCH,PUT,DELETE,OPTIONS", "access-control-expose-headers": "content-range" };
 const send = (res, code, body, extra = {}) => { res.writeHead(code, { "content-type": "application/json", ...cors, ...extra }); res.end(body === undefined ? "" : JSON.stringify(body)); };
 
+let onboardingMode = "ok";
 http.createServer((req, res) => {
   const u = new URL(req.url, "http://x");
   let raw = ""; req.on("data", (c) => (raw += c));
@@ -96,6 +97,22 @@ http.createServer((req, res) => {
     if (u.pathname === "/__scenario") {
       authDelayMs = Number(u.searchParams.get("authDelayMs") ?? 0);
       return applyScenario(u.searchParams.get("name") ?? "") ? send(res, 200, { ok: true }) : send(res, 400, { error: "unknown scenario" });
+    }
+    // Welcome popup tests: set the account's profiles.onboarding_status ("new" = null, "missing" = column not migrated).
+    if (u.pathname === "/__onboarding") {
+      const st = u.searchParams.get("status");
+      if (st) { onboardingMode = st === "missing" ? "missing" : "ok"; tables.profiles[0].onboarding_status = ["existing", "dismissed", "completed"].includes(st) ? st : null; }
+      return send(res, 200, { mode: onboardingMode, status: tables.profiles[0].onboarding_status ?? null });
+    }
+    if (u.pathname === "/rest/v1/profiles" && onboardingMode === "missing" && ((u.searchParams.get("select") ?? "").includes("onboarding") || raw.includes("onboarding"))) {
+      return send(res, 400, { code: "42703", message: "column profiles.onboarding_status does not exist" });
+    }
+    if (u.pathname === "/rest/v1/profiles" && req.method === "PATCH") {
+      let body = {}; try { body = JSON.parse(raw || "{}"); } catch { /* ignore */ }
+      const p = tables.profiles[0];
+      const onlyNull = u.searchParams.get("onboarding_status") === "is.null";
+      if (!(onlyNull && p.onboarding_status)) Object.assign(p, body);
+      return send(res, 200, [p]);
     }
     if (u.pathname === "/__reset_library") { Object.assign(tables, JSON.parse(LIBRARY_SEED)); return send(res, 200, { ok: true }); }
     if (u.pathname === "/auth/v1/user" && req.method === "GET") return void setTimeout(() => send(res, 200, USER), authDelayMs);
