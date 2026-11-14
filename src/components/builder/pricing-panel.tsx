@@ -97,8 +97,29 @@ export function PricingPanel({ estimate: e, totals: t, dispatch }: { estimate: E
           {!t.adjustment.isZero() && <Metric k={e.adjustmentLabel || (t.adjustment.isNegative() ? "Discount" : "Adjustment")} v={formatCurrency(t.adjustment)} />}
           <Metric k={`Sales tax collected${t.taxRate.isZero() ? "" : ` (${t.taxRate.toString()}%)`}`} v={formatCurrency(t.tax)} hint="Not revenue" />
         </dl>
+        <label className="mt-3 flex items-start gap-2 border-t border-line pt-3 text-sm">
+          <input
+            type="checkbox"
+            checked={Boolean(e.roundTotal)}
+            onChange={(ev) => dispatch({ type: "patch", patch: { roundTotal: ev.target.checked || undefined } })}
+            className="mt-0.5 h-4 w-4 accent-[var(--color-brand)] max-md:h-5 max-md:w-5"
+          />
+          <span>
+            <span className="font-semibold">Round final bid total</span>
+            <span className="block text-xs text-muted">
+              Nearest whole dollar. Line items, markup and tax stay exact.
+              {e.status === "finalized" ? " Proposals you already sent keep their total until you update them." : ""}
+            </span>
+          </span>
+        </label>
+        {e.roundTotal && (
+          <dl className="mt-2 space-y-1.5 text-sm" aria-label="Rounding">
+            <Metric k="Calculated total" v={formatCurrency(t.calculatedTotal)} />
+            <Metric k="Rounding adjustment" v={formatCurrency(t.rounding)} />
+          </dl>
+        )}
         <div className="mt-3 flex items-baseline justify-between rounded-lg bg-brand-tint px-3 py-2.5">
-          <span className="font-bold">Proposal total</span>
+          <span className="font-bold">{e.roundTotal ? "Final bid" : "Proposal total"}</span>
           <span className="tabular text-xl font-extrabold">{formatCurrency(t.total)}</span>
         </div>
         <p className="mt-2 text-xs text-muted">Gross profit is before overhead and indirect costs you have not entered in this estimate.</p>

@@ -7,6 +7,8 @@ export type PricingMode = "markup" | "margin";
 export type CostType =
   | "material"
   | "labor"
+  /** One row covering both labor and materials (a classification only: no split pricing). */
+  | "labor_material"
   | "equipment"
   | "subcontractor"
   | "overhead"
@@ -100,6 +102,12 @@ export interface Estimate {
   adjustmentLabel?: string;
   /** Sales tax percentage applied to taxable items. */
   taxRate: string;
+  /**
+   * Round the final bid total (after tax) to the nearest whole dollar. The difference is shown as a
+   * separate rounding line; line items, markup and tax are never changed. Missing/false = exact cents.
+   * Persisted in estimates.proposal_config.roundTotal (no column).
+   */
+  roundTotal?: boolean;
   displayMode: EstimateDisplayMode;
   defaultGroupVisibility: GroupVisibility;
   groups: EstimateGroup[];

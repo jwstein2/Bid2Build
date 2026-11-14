@@ -1,6 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { applySectionTrades, proposalConfigFrom, rowToBusiness, rowToProjectProfile, rowsToEstimate, worksheetFrom } from "./mappers";
+import { applySectionTrades, proposalConfigFrom, roundTotalFrom, rowToBusiness, rowToProjectProfile, rowsToEstimate, worksheetFrom } from "./mappers";
 
 export async function loadEstimate(supabase: SupabaseClient, id: string) {
   const [{ data: e, error }, { data: groups }, { data: items }, { data: profile }] = await Promise.all([
@@ -14,6 +14,7 @@ export async function loadEstimate(supabase: SupabaseClient, id: string) {
   // Section trades are stored in proposal_config.worksheet (no schema change) and restored onto the sections.
   const estimate = applySectionTrades(rowsToEstimate(e, groups ?? [], items ?? []), worksheetFrom(e.proposal_config));
   estimate.projectProfile = rowToProjectProfile(profile);
+  if (roundTotalFrom(e.proposal_config)) estimate.roundTotal = true;
   return { estimate, proposalConfig: proposalConfigFrom(e.proposal_config), customerId: e.customer_id as string | null };
 }
 

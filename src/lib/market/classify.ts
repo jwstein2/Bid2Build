@@ -221,6 +221,8 @@ function costClassOf(t: CostType): CostClass {
     case "labor": case "labor_burden": return "labor";
     case "equipment": return "equipment";
     case "subcontractor": return "subcontractor";
+    // A combined labor + material row is neither: keeping it out of both benchmarks avoids double counting.
+    case "labor_material": return "other";
     default: return "other";
   }
 }
@@ -292,7 +294,8 @@ export function classifyItem(input: ClassifyInput): Classification {
   const laborText = LABOR_WORDS.test(text);
   if (entered === "material" && laborText && !brand) classConflict = true;
   if (entered === "labor" && (brand || (material && !laborText))) classConflict = true;
-  if (entered === "other") {
+  // Only an explicit "Other" is re-guessed from the text; a deliberate "Labor / Material" stays as entered.
+  if (input.costType === "other") {
     if (laborText) costClass = "labor";
     else if (SUB_WORDS.test(text)) costClass = "subcontractor";
     else if (EQUIPMENT_WORDS.test(text)) costClass = "equipment";

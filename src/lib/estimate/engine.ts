@@ -104,7 +104,11 @@ export interface EstimateTotals {
   taxableBase: Dec;
   taxRate: Dec;
   tax: Dec;
-  total: Dec; // subtotal + tax
+  /** subtotal + tax, to the cent. */
+  calculatedTotal: Dec;
+  /** total - calculatedTotal: zero unless the estimate rounds its final total. */
+  rounding: Dec;
+  total: Dec; // calculatedTotal + rounding
   issues: Issue[];
 }
 
@@ -240,6 +244,9 @@ export function computeEstimate(estimate: Estimate): EstimateTotals {
   }
   const tax = round2(taxableBase.times(taxRate).div(100));
   const grossProfit = subtotal.minus(totalCost);
+  const calculatedTotal = subtotal.plus(tax);
+  // Rounding happens once, on the final figure, and is tracked as its own adjustment.
+  const total = estimate.roundTotal ? calculatedTotal.toDecimalPlaces(0, D.ROUND_HALF_UP) : calculatedTotal;
 
   return {
     items,
@@ -255,7 +262,9 @@ export function computeEstimate(estimate: Estimate): EstimateTotals {
     taxableBase,
     taxRate,
     tax,
-    total: subtotal.plus(tax),
+    calculatedTotal,
+    rounding: total.minus(calculatedTotal),
+    total,
     issues,
   };
 }

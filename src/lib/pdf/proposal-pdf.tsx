@@ -115,8 +115,9 @@ export function ProposalPdf({ doc, logo }: { doc: ProposalDocument; logo?: { dat
 
             <View style={{ marginTop: 8, marginLeft: "auto", width: 220 }} wrap={false}>
               {doc.pricing.adjustment ? <Total k={doc.pricing.adjustment.label} v={doc.pricing.adjustment.amount} /> : null}
-              {doc.pricing.tax || doc.pricing.adjustment ? <Total k="Subtotal" v={doc.pricing.subtotal} /> : null}
+              {doc.pricing.tax || doc.pricing.adjustment || doc.pricing.rounding ? <Total k="Subtotal" v={doc.pricing.subtotal} /> : null}
               {doc.pricing.tax ? <Total k={doc.pricing.tax.label} v={doc.pricing.tax.amount} /> : null}
+              {doc.pricing.rounding ? <Total k={doc.pricing.rounding.label} v={doc.pricing.rounding.amount} /> : null}
               <View style={{ flexDirection: "row", justifyContent: "space-between", backgroundColor: brand, color: onColor(brand), paddingVertical: 5, paddingHorizontal: 8, marginTop: 3, borderRadius: 2 }}>
                 <Text style={{ fontFamily: "Helvetica-Bold", fontSize: fs * 1.2 }}>Total</Text>
                 <Text style={{ fontFamily: "Helvetica-Bold", fontSize: fs * 1.2 }}>{T(doc.pricing.total)}</Text>

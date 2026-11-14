@@ -145,6 +145,8 @@ export interface ProposalDocument {
     adjustment?: { label: string; amount: string };
     subtotal: string;
     tax?: { label: string; amount: string };
+    /** Present only when the contractor rounds the final bid and the rounding is not zero. */
+    rounding?: { label: string; amount: string };
     total: string;
   };
   exclusions?: string;

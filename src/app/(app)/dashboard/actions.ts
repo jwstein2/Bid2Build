@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { loadEstimate } from "@/lib/data/server";
-import { worksheetToStore } from "@/lib/data/mappers";
+import { estimateOptionsToStore, worksheetToStore } from "@/lib/data/mappers";
 
 const id = z.string().uuid();
 
@@ -58,7 +58,7 @@ export async function duplicateEstimate(estimateId: string) {
     groups,
     items,
     worksheet: undefined,
-    proposalConfig: { ...data.proposalConfig, worksheet },
+    proposalConfig: { ...data.proposalConfig, ...estimateOptionsToStore(data.estimate), worksheet },
   };
   const { error } = await supabase.rpc("save_estimate", { p: copy });
   if (!error) redirect(`/estimates/${copy.id}`);

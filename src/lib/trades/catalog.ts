@@ -58,6 +58,7 @@ export const UNIT_ABBR: Record<string, string> = {
 export const COST_TYPES: { value: CostType; label: string }[] = [
   { value: "material", label: "Material" },
   { value: "labor", label: "Labor" },
+  { value: "labor_material", label: "Labor / Material" },
   { value: "equipment", label: "Equipment" },
   { value: "subcontractor", label: "Subcontractor" },
   { value: "overhead", label: "Overhead" },

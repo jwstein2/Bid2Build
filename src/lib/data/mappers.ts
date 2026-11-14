@@ -66,9 +66,9 @@ export function rowToProjectProfile(r: any | null): ProjectProfile | null {
 export function proposalConfigFrom(raw: unknown): ProposalConfig {
   const d = defaultProposalConfig();
   if (!raw || typeof raw !== "object") return d;
-  // The worksheet is stored alongside the proposal settings but belongs to the estimate.
-  const { worksheet: _w, ...r } = raw as Partial<ProposalConfig> & { worksheet?: unknown };
-  void _w;
+  // The worksheet and roundTotal are stored alongside the proposal settings but belong to the estimate.
+  const { worksheet: _w, roundTotal: _rt, ...r } = raw as Partial<ProposalConfig> & { worksheet?: unknown; roundTotal?: unknown };
+  void _w; void _rt;
   const exclusionList = normalizeExclusions(r.exclusionList, typeof r.exclusions === "string" ? r.exclusions : "");
   return {
     ...d, ...r,
@@ -122,6 +122,16 @@ export function businessToRow(b: BusinessProfile & { logoPath?: string | null },
     header_style: b.headerStyle,
     ...(b.logoPath !== undefined ? { logo_path: b.logoPath } : {}),
   };
+}
+
+/** Final-bid rounding preference stored in proposal_config (absent on every estimate saved before it existed = off). */
+export function roundTotalFrom(rawConfig: unknown): boolean {
+  return Boolean(rawConfig && typeof rawConfig === "object" && (rawConfig as { roundTotal?: unknown }).roundTotal === true);
+}
+
+/** Estimate-level options persisted inside proposal_config (estimates has no column for them). */
+export function estimateOptionsToStore(estimate: Pick<Estimate, "roundTotal">): { roundTotal?: true } {
+  return estimate.roundTotal ? { roundTotal: true } : {};
 }
 
 /** Read the estimate worksheet (calculator inputs, minimum charge) back out of a stored proposal_config. */

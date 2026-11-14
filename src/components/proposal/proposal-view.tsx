@@ -91,8 +91,9 @@ export function ProposalView({ doc }: { doc: ProposalDocument }) {
           </div>
           <dl className="ml-auto mt-4 w-full max-w-xs space-y-1">
             {doc.pricing.adjustment && <Row k={doc.pricing.adjustment.label} v={doc.pricing.adjustment.amount} />}
-            {(doc.pricing.tax || doc.pricing.adjustment) && <Row k="Subtotal" v={doc.pricing.subtotal} />}
+            {(doc.pricing.tax || doc.pricing.adjustment || doc.pricing.rounding) && <Row k="Subtotal" v={doc.pricing.subtotal} />}
             {doc.pricing.tax && <Row k={doc.pricing.tax.label} v={doc.pricing.tax.amount} />}
+            {doc.pricing.rounding && <Row k={doc.pricing.rounding.label} v={doc.pricing.rounding.amount} />}
             <div className="flex justify-between rounded px-3 py-2 font-extrabold" style={{ background: brand, color: onColor(brand), fontSize: px(st.baseSize * 1.25) }}>
               <dt>Total</dt><dd className="tabular">{doc.pricing.total}</dd>
             </div>

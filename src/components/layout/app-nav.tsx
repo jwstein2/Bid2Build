@@ -12,7 +12,7 @@ const nav = [
   // Directly below Bids: contractors set this up first and their proposals depend on it.
   { href: "/settings/company", label: "Company profile", icon: Building2 },
   { href: "/dashboard/customers", label: "Saved customers", icon: Users },
-  { href: "/dashboard/items", label: "Saved cost items", icon: Library },
+  { href: "/dashboard/items", label: "Saved Items & Pricing", icon: Library },
   { href: "/dashboard/templates", label: "Proposal templates", icon: LayoutTemplate },
   { href: "/settings/billing", label: "Subscription", icon: CreditCard },
   { href: "/settings/pricing", label: "Pricing data", icon: Plug },
