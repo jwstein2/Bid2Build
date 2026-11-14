@@ -88,6 +88,30 @@ if (process.env.MOCK_SCENARIO) applyScenario(process.env.MOCK_SCENARIO);
 const cors = { "access-control-allow-origin": "*", "access-control-allow-headers": "*", "access-control-allow-methods": "GET,POST,PATCH,PUT,DELETE,OPTIONS", "access-control-expose-headers": "content-range" };
 const send = (res, code, body, extra = {}) => { res.writeHead(code, { "content-type": "application/json", ...cors, ...extra }); res.end(body === undefined ? "" : JSON.stringify(body)); };
 
+// Complimentary Access browser walk (scripts/complimentary/walk.mjs): when COMP_PG_URL points at a throwaway
+// test database with the real migrations, these RPCs run the real SQL there instead of returning canned data.
+const COMP_RPC = /^(admin_comp_\w+|my_comp_access|claim_comp_grant_by_token|has_paid_subscription|credit_status|library_access)$/;
+const compPool = process.env.COMP_PG_URL ? new (await import("pg")).default.Pool({ connectionString: process.env.COMP_PG_URL, max: 5 }) : null;
+const inviteLog = [];
+async function compRpc(name, args, res) {
+  const keys = Object.keys(args);
+  const params = keys.map((k) => (args[k] !== null && typeof args[k] === "object" ? JSON.stringify(args[k]) : args[k]));
+  const call = `public.${name}(${keys.map((k, i) => `${k} => $${i + 1}`).join(", ")})`;
+  const setReturning = ["my_comp_access", "credit_status"].includes(name);
+  const c = await compPool.connect();
+  try {
+    await c.query("begin");
+    // Functions that read auth.uid() run as the signed-in mock user.
+    await c.query("select set_config('request.jwt.claim.sub', $1, true)", [USER.id]);
+    const r = await c.query(setReturning ? `select * from ${call}` : `select ${call} as v`, params);
+    await c.query("commit");
+    send(res, 200, setReturning ? r.rows : r.rows[0].v);
+  } catch (e) {
+    await c.query("rollback").catch(() => {});
+    send(res, 400, { code: e.code ?? "P0001", message: e.message, details: null, hint: null });
+  } finally { c.release(); }
+}
+
 let onboardingMode = "ok";
 http.createServer((req, res) => {
   const u = new URL(req.url, "http://x");
@@ -144,9 +168,12 @@ http.createServer((req, res) => {
       const jwt = `${b64u('{"alg":"HS256","typ":"JWT"}')}.${b64u(JSON.stringify({ sub: USER.id, exp: 4102444800, role: "authenticated", aud: "authenticated", email: body.email }))}.sig`;
       return send(res, 200, { access_token: jwt, refresh_token: "mock", token_type: "bearer", expires_in: 3600 * 24 * 365, expires_at: 4102444800, user: { ...USER, email: body.email ?? USER.email, ...(body.phone ? { phone: String(body.phone).replace(/\D/g, ""), phone_confirmed_at: new Date().toISOString() } : {}) } });
     }
+    if (u.pathname === "/auth/v1/invite") { try { inviteLog.push({ ...JSON.parse(raw || "{}"), redirect_to: u.searchParams.get("redirect_to") }); } catch { /* ignore */ } return send(res, 200, { id: crypto.randomUUID(), email: inviteLog.at(-1)?.email }); }
+    if (u.pathname === "/__invites") return send(res, 200, inviteLog);
     if (u.pathname.startsWith("/auth/v1/")) return send(res, 200, {});
     if (u.pathname.startsWith("/storage/v1/")) return send(res, 400, { error: "not available in mock" });
     const rpc = u.pathname.match(/^\/rest\/v1\/rpc\/(\w+)/);
+    if (rpc && compPool && COMP_RPC.test(rpc[1])) { let args = {}; try { args = JSON.parse(raw || "{}"); } catch { /* ignore */ } return void compRpc(rpc[1], args, res); }
     if (rpc) return send(res, 200, rpcs[rpc[1]] ?? null);
     const t = u.pathname.match(/^\/rest\/v1\/(\w+)/);
     if (!t) return send(res, 404, { message: "unknown" });
