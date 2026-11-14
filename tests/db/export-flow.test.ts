@@ -39,7 +39,7 @@ const table = () => ({ insert: async () => ({ error: null }), upsert: async () =
 const storage = { from: () => ({ upload: async () => ({ error: null }), createSignedUrl: async () => ({ data: { signedUrl: "https://files.test/doc.pdf" } }), download: async () => ({ data: null }) }) };
 
 vi.mock("@/lib/supabase/server", () => ({
-  getUser: async () => (ctx.userId ? { id: ctx.userId, email: "flow@test.dev", emailVerified: true } : null),
+  getUser: async () => (ctx.userId ? { id: ctx.userId, email: "flow@test.dev", emailVerified: true, phone: null, phoneVerified: false, verified: true } : null),
   createClient: async () => ({ rpc: (n: string, p?: Record<string, unknown>) => callRpc(n, p, ctx.userId) }),
   createAdminClient: () => ({ rpc: (n: string, p?: Record<string, unknown>) => callRpc(n, p), from: table, storage }),
 }));

@@ -18,7 +18,8 @@ import { ProposalView } from "../proposal/proposal-view";
 import { Button } from "../ui/button";
 import { Notice } from "../ui/misc";
 import { CompanyStep } from "./company-step";
-import { AuthDialog, Modal, UpgradeDialog } from "./dialogs";
+import { Modal, UpgradeDialog } from "./dialogs";
+import { AuthDialog } from "../auth/auth-dialog";
 import { useLibrary } from "./library";
 import { ProjectStep } from "./project-step";
 import { ProposalStep } from "./proposal-step";
@@ -36,7 +37,7 @@ export interface BuilderProps {
   initialConfig: ProposalConfig;
   initialBusiness: Biz | null;
   mode: "local" | "cloud";
-  user: { id: string; email: string | null; emailVerified: boolean } | null;
+  user: { id: string; email: string | null; emailVerified: boolean; verified?: boolean } | null;
   initialStep?: Step;
   autoExport?: boolean;
 }
@@ -180,7 +181,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
   const doExport = useCallback(async () => {
     setExportMsg(null);
     if (!user) { setAuthOpen(true); return; }
-    if (!user.emailVerified) { setExportMsg({ tone: "warn", text: "Please verify your email address before exporting." }); return; }
+    if (!(user.verified ?? user.emailVerified)) { setExportMsg({ tone: "warn", text: "Please verify your email address before exporting." }); return; }
     if (totals.issues.length) { setStep("estimate"); setExportMsg({ tone: "danger", text: "Fix the highlighted entries before exporting." }); return; }
     if (!estimate.items.length) { setStep("estimate"); setExportMsg({ tone: "warn", text: "Add at least one line item before exporting." }); return; }
     setExporting(true);
@@ -296,7 +297,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
             <span className="flex items-center justify-between gap-3">{exportMsg.text}<button onClick={() => setExportMsg(null)} className="text-xs underline">Dismiss</button></span>
           </Notice>
         )}
-        {user && !user.emailVerified && <Notice tone="warn" className="mb-4" title="Verify your email">Check your inbox for the verification link to unlock PDF downloads.</Notice>}
+        {user && !(user.verified ?? user.emailVerified) && <Notice tone="warn" className="mb-4" title="Verify your email">Check your inbox for the verification link to unlock PDF downloads.</Notice>}
         {lastTrash && (
           <div className="on-dark fixed bottom-20 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-full bg-ink px-4 py-2 text-sm text-white shadow-lg lg:bottom-6" role="status">
             {lastTrash.kind === "trade" ? `Removed ${lastTrash.label} and its sections` : `Deleted ${lastTrash.label}`}

@@ -30,6 +30,8 @@ Template: `.env.example`.
 | `NEXT_PUBLIC_SITE_NAME` | public | All | No (default `Built2Bid`) | Product name in titles, emails, PDFs. |
 | `NEXT_PUBLIC_SITE_DOMAIN` | public | All | No | Display domain. Defaults to the host of the site URL. |
 | `NEXT_PUBLIC_SUPPORT_EMAIL` | public | All | **Yes before launch** | Shown in footer, homepage FAQ, Privacy, Terms. Default is the placeholder `support@example.com`. Set to a Google Workspace address (e.g. support@built2bid.org). |
+| `NEXT_PUBLIC_SMS_SIGNIN` | public | All (try Deploy Preview first) | No (default off) | `on` makes texted codes the primary sign-in. Set only after Twilio Verify is configured in Supabase. See docs/auth/SMS_SIGN_IN.md. |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | public | All | Recommended with SMS | Cloudflare Turnstile site key for the bot check on code requests. The secret goes in Supabase Attack Protection, not Netlify. |
 | `NEXT_PUBLIC_ALLOW_INDEXING` | public | Production only | Launch decision | `true` lets search engines index production. Has no effect on previews (always noindex). |
 
 ## Supabase

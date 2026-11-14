@@ -14,7 +14,8 @@ const LOCK_KEY = "b2b.checkoutLock";
 export const INTENT_TTL_MS = 60 * 60_000;
 
 export type IntentStatus = "pending" | "redirected" | "cancelled";
-export type CheckoutIntent = { v: 1; id: string; plan: PlanId; createdAt: number; status: IntentStatus; email?: string };
+/** `email` / `phone`: the identity being verified in this browser, so a refresh reopens the code step. */
+export type CheckoutIntent = { v: 1; id: string; plan: PlanId; createdAt: number; status: IntentStatus; email?: string; phone?: string };
 
 const store = (): Storage | null => {
   try { return typeof window === "undefined" ? null : window.localStorage; } catch { return null; }
@@ -29,7 +30,7 @@ export function parseIntent(raw: string | null, now = Date.now()): { intent: Che
   try {
     const v = JSON.parse(raw) as Partial<CheckoutIntent>;
     if (v?.v !== 1 || !isPlanId(v.plan) || typeof v.createdAt !== "number" || typeof v.id !== "string") return { intent: null, expired: null };
-    const intent: CheckoutIntent = { v: 1, id: v.id, plan: v.plan, createdAt: v.createdAt, status: v.status === "redirected" || v.status === "cancelled" ? v.status : "pending", email: typeof v.email === "string" ? v.email : undefined };
+    const intent: CheckoutIntent = { v: 1, id: v.id, plan: v.plan, createdAt: v.createdAt, status: v.status === "redirected" || v.status === "cancelled" ? v.status : "pending", email: typeof v.email === "string" ? v.email : undefined, phone: typeof v.phone === "string" && /^\+\d{8,15}$/.test(v.phone) ? v.phone : undefined };
     if (now - intent.createdAt > INTENT_TTL_MS || intent.createdAt > now + 60_000) return { intent: null, expired: intent };
     return { intent, expired: null };
   } catch { return { intent: null, expired: null }; }
@@ -51,12 +52,12 @@ export function saveIntent(plan: PlanId): CheckoutIntent {
   const { intent } = readIntent();
   const next: CheckoutIntent = intent && intent.plan === plan
     ? { ...intent, status: "pending", createdAt: Date.now() }
-    : { v: 1, id: newId(), plan, createdAt: Date.now(), status: "pending", email: intent?.email };
+    : { v: 1, id: newId(), plan, createdAt: Date.now(), status: "pending", email: intent?.email, phone: intent?.phone };
   write(next);
   return next;
 }
 
-export function updateIntent(patch: Partial<Pick<CheckoutIntent, "status" | "email" | "plan">>): CheckoutIntent | null {
+export function updateIntent(patch: Partial<Pick<CheckoutIntent, "status" | "email" | "phone" | "plan">>): CheckoutIntent | null {
   const { intent } = readIntent();
   if (!intent) return null;
   const next = { ...intent, ...patch };

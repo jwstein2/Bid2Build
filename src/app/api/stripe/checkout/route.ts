@@ -38,7 +38,7 @@ export async function POST(req: Request) {
   if (!(await rateLimit("checkout", 10, 10 * 60_000))) return fail(429, "rate_limited", "Please wait a moment and try again.");
   const user = await getUser();
   if (!user) return fail(401, "not_authenticated", "Sign in to upgrade.");
-  if (!user.emailVerified) return fail(403, "email_not_verified", "Verify your email before upgrading.");
+  if (!user.verified) return fail(403, "email_not_verified", "Verify your phone or email before upgrading.");
   const p = Body.safeParse(await req.json().catch(() => null));
   if (!p.success) return fail(400, "invalid", "Choose a plan.");
   const plan = p.data.plan;
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
 
     let { data: bc } = await admin.from("billing_customers").select("stripe_customer_id").eq("user_id", user.id).maybeSingle();
     if (!bc) {
-      const customer = await stripe.customers.create({ email: user.email ?? undefined, metadata: { user_id: user.id } }, { idempotencyKey: `customer-${user.id}` });
+      const customer = await stripe.customers.create({ email: user.email ?? undefined, phone: user.phone ?? undefined, metadata: { user_id: user.id } }, { idempotencyKey: `customer-${user.id}` });
       const { error } = await admin.from("billing_customers").insert({ user_id: user.id, stripe_customer_id: customer.id });
       if (error) ({ data: bc } = await admin.from("billing_customers").select("stripe_customer_id").eq("user_id", user.id).maybeSingle());
       else bc = { stripe_customer_id: customer.id };

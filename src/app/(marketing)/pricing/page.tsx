@@ -42,7 +42,7 @@ export default async function PricingPage() {
         <h1 className="text-4xl font-extrabold">Simple pricing for every contractor</h1>
         <p className="mt-3 text-lg text-ink-soft" data-testid="pricing-intro">{pricingIntro(status)}</p>
       </div>
-      <CheckoutFlowProvider signedIn={Boolean(user)} subscribed={subscribed} userEmail={user?.email ?? null}>
+      <CheckoutFlowProvider signedIn={Boolean(user)} subscribed={subscribed} userEmail={user?.email ?? null} userPhone={user?.phone ?? null}>
         <div className="mx-auto mt-10 grid max-w-5xl gap-5 md:grid-cols-3">
           <Plan name="Free" current={status.kind === "free" || status.kind === "no_credits"} price="$0" per="forever" billing="No credit card required." features={[`${plans.starterCredits} starter bids that never expire`, `Plus ${plans.monthlyCredits} free bid every month`, "Unlimited drafts and previews", "Every trade", "Branding and PDF exports"]}>
             <FreePlanAction status={status} />

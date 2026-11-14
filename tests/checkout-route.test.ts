@@ -7,7 +7,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 type Sess = { id: string; created: number; url: string | null; expires_at: number; status: string; metadata: Record<string, string> };
 const state = {
-  user: { id: "00000000-0000-4000-8000-0000000000aa", email: "pro@example.test", emailVerified: true } as { id: string; email: string; emailVerified: boolean } | null,
+  user: { id: "00000000-0000-4000-8000-0000000000aa", email: "pro@example.test", emailVerified: true, phone: null, phoneVerified: false, verified: true } as { id: string; email: string; emailVerified: boolean; phone?: string | null; phoneVerified?: boolean; verified?: boolean } | null,
   hasUnlimited: false,
   subs: [] as { id: string; status: string; metadata: Record<string, string>; customer: string }[],
   sessions: [] as Sess[],
@@ -67,7 +67,7 @@ const call = async (body: unknown) => {
 };
 
 beforeEach(() => {
-  state.user = { id: "00000000-0000-4000-8000-0000000000aa", email: "pro@example.test", emailVerified: true };
+  state.user = { id: "00000000-0000-4000-8000-0000000000aa", email: "pro@example.test", emailVerified: true, phone: null, phoneVerified: false, verified: true };
   state.hasUnlimited = false; state.subs = []; state.sessions = []; state.created = []; state.expired = []; state.applied = 0;
   state.prices.price_month = { unit_amount: 1999, currency: "usd", recurring: { interval: "month", interval_count: 1 }, active: true };
   vi.spyOn(Date, "now").mockReturnValue(state.clock * 1000);
@@ -99,7 +99,7 @@ describe("POST /api/stripe/checkout", () => {
   it("requires a signed-in, verified account", async () => {
     state.user = null;
     expect((await call({ plan: "monthly" })).body.error.code).toBe("not_authenticated");
-    state.user = { id: "u", email: "x@y.z", emailVerified: false };
+    state.user = { id: "u", email: "x@y.z", emailVerified: false, verified: false };
     expect((await call({ plan: "monthly" })).body.error.code).toBe("email_not_verified");
   });
 

@@ -25,7 +25,7 @@ export async function POST(_req: Request, ctx: RouteContext<"/api/estimates/[id]
   if (!(await rateLimit("export", 20, 60_000))) return fail(429, "rate_limited", "Too many exports at once. Please wait a moment.");
   const user = await getUser();
   if (!user) return fail(401, "not_authenticated", "Create a free account to download your PDF.");
-  if (!user.emailVerified) return fail(403, "email_not_verified", "Please verify your email address first.");
+  if (!user.verified) return fail(403, "email_not_verified", "Please verify your phone or email first.");
 
   const supabase = await createClient();
   const data = await loadEstimate(supabase, id);
