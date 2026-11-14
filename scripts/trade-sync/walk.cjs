@@ -10,7 +10,7 @@ const check = (n, ok, d = "") => { results.push(ok); console.log(`${ok ? "PASS" 
   const browser = await chromium.launch();
   for (const vp of [{ width: 1440, height: 900, tag: "desktop" }, { width: 820, height: 1180, tag: "tablet" }, { width: 390, height: 844, tag: "mobile" }]) {
     const ctx = await browser.newContext({ viewport: vp, isMobile: vp.width < 768, hasTouch: vp.width < 768 });
-    await ctx.addInitScript(() => { try { localStorage.setItem("byb:business", JSON.stringify({ companyName: "Summit Builders", primaryColor: "#0B2D4D", secondaryColor: "#00C2E0", logoLayout: "left", headerStyle: "solid", logoUrl: null })); } catch {} });
+    await ctx.addInitScript(() => { try { localStorage.setItem("byb:business", JSON.stringify({ companyName: "Summit Builders", contactName: "Alex Rivera", email: "office@summit.test", phone: "555-0100", address: "120 Main St", primaryColor: "#0B2D4D", secondaryColor: "#00C2E0", logoLayout: "left", headerStyle: "solid", logoUrl: null })); } catch {} });
     const page = await ctx.newPage();
     const errors = [];
     page.on("pageerror", (e) => errors.push(e.message));

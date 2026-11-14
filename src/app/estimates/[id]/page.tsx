@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { Builder } from "@/components/builder/builder";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { loadBusiness, loadEstimate } from "@/lib/data/server";
+import { isBuilderStep } from "@/lib/estimate/workflow";
 
 export const metadata: Metadata = { title: "Edit Bid", robots: { index: false } };
 
@@ -23,7 +24,7 @@ export default async function EstimatePage({ params, searchParams }: PageProps<"
       initialBusiness={exists ? business : null}
       mode="cloud"
       user={user}
-      initialStep={!exists || !business.companyName ? "company" : sp.step === "proposal" ? "proposal" : "estimate"}
+      initialStep={isBuilderStep(sp.step) ? sp.step : undefined}
       autoExport={sp.export === "1"}
     />
   );
