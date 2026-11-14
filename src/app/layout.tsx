@@ -3,6 +3,7 @@ import "@fontsource-variable/inter";
 import "@fontsource-variable/montserrat";
 import "./globals.css";
 import { deploy, site } from "@/lib/site";
+import { OnboardingHost } from "@/components/onboarding/onboarding-host";
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
@@ -23,6 +24,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-full flex-col">
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-surface focus:px-3 focus:py-2">Skip to content</a>
         {children}
+        <OnboardingHost />
       </body>
     </html>
   );
