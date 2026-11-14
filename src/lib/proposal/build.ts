@@ -136,6 +136,7 @@ export function buildProposal(estimate: Estimate, business: BusinessProfile, con
           : undefined,
       subtotal: formatCurrency(totals.subtotal),
       tax: totals.tax.isZero() ? undefined : { label: `Sales tax (${totals.taxRate.toString()}%)`, amount: formatCurrency(totals.tax) },
+      rounding: totals.rounding.isZero() ? undefined : { label: "Rounding", amount: formatCurrency(totals.rounding) },
       total: formatCurrency(total),
     },
     exclusions: customerExclusions(config.exclusionList ?? normalizeExclusions(null, config.exclusions)),

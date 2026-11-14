@@ -1,68 +1,94 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { LineItem } from "@/lib/estimate/types";
+import { EMPTY_LIBRARY, findSameItem, savedItemFromLine, type LibraryData, type LibraryOp, type SavedItem, type SavedStack } from "@/lib/library/saved-items";
 
-/** Favorites and assemblies. Stored in the cloud for signed-in users, in the browser otherwise. */
-export interface SavedItem {
-  id: string;
-  name: string;
-  description?: string;
-  costType: LineItem["costType"];
-  treatment: LineItem["treatment"];
-  unit: string;
-  unitCost: string;
-  taxable: boolean;
-}
-export interface Assembly {
-  id: string;
-  name: string;
-  items: (SavedItem & { quantity: string })[];
-}
-interface Library { items: SavedItem[]; assemblies: Assembly[] }
+export type { SavedItem, SavedStack } from "@/lib/library/saved-items";
 
-const KEY = "byb:library";
-const readLocal = (): Library => {
-  try { return JSON.parse(localStorage.getItem(KEY) || "") as Library; } catch { return { items: [], assemblies: [] }; }
-};
-const writeLocal = (l: Library) => { try { localStorage.setItem(KEY, JSON.stringify(l)); } catch { /* ignore */ } };
+export type LibraryResult = { ok: true } | { ok: false; code: string; message: string };
 
+const PREMIUM: LibraryResult = { ok: false, code: "premium_required", message: "Saved Items are part of Unlimited." };
+
+/**
+ * Premium Saved Items & Pricing Library for the signed-in contractor. Signed-out visitors and free
+ * accounts get `access: false` (the server decides); every write is re-checked by the API and RLS.
+ */
 export function useLibrary(signedIn: boolean) {
-  const [lib, setLib] = useState<Library>({ items: [], assemblies: [] });
+  const [lib, setLib] = useState<LibraryData>(EMPTY_LIBRARY);
+  const [loaded, setLoaded] = useState(false);
+  const libRef = useRef(lib);
+  useEffect(() => { libRef.current = lib; }, [lib]);
+
+  const reload = useCallback(async () => {
+    if (!signedIn) { setLib(EMPTY_LIBRARY); setLoaded(true); return; }
+    try {
+      const r = await fetch("/api/library", { cache: "no-store" });
+      if (r.ok) setLib((await r.json()) as LibraryData);
+    } catch { /* keep what we have */ }
+    setLoaded(true);
+  }, [signedIn]);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      if (signedIn) {
-        try {
-          const r = await fetch("/api/library", { cache: "no-store" });
-          if (r.ok) { const data = (await r.json()) as Library; if (!cancelled) setLib(data); return; }
-        } catch { /* fall back */ }
-      }
-      if (!cancelled) setLib(readLocal());
+      if (!signedIn) { if (!cancelled) { setLib(EMPTY_LIBRARY); setLoaded(true); } return; }
+      try {
+        const r = await fetch("/api/library", { cache: "no-store" });
+        if (r.ok && !cancelled) setLib((await r.json()) as LibraryData);
+      } catch { /* offline: library stays empty */ }
+      if (!cancelled) setLoaded(true);
     })();
     return () => { cancelled = true; };
   }, [signedIn]);
 
-  const persist = useCallback(async (next: Library, op: { kind: "item" | "assembly"; action: "add" | "remove"; payload: unknown }) => {
+  /** Optimistic update, rolled back if the server refuses. */
+  const run = useCallback(async (next: LibraryData, op: LibraryOp): Promise<LibraryResult> => {
+    const prev = libRef.current;
+    if (!prev.access && op.action !== "remove") return PREMIUM;
+    libRef.current = next;
     setLib(next);
-    if (signedIn) {
-      await fetch("/api/library", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(op) }).catch(() => {});
-    } else writeLocal(next);
-  }, [signedIn]);
+    try {
+      const r = await fetch("/api/library", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(op) });
+      if (r.ok) return { ok: true };
+      const d = (await r.json().catch(() => null)) as { error?: { code?: string; message?: string } } | null;
+      const back = r.status === 402 ? { ...prev, access: false } : prev;
+      libRef.current = back;
+      setLib(back);
+      return { ok: false, code: d?.error?.code ?? "save_failed", message: d?.error?.message ?? "Could not update your Saved Items." };
+    } catch {
+      libRef.current = prev;
+      setLib(prev);
+      return { ok: false, code: "network", message: "You're offline. Your Saved Items were not changed." };
+    }
+  }, []);
 
-  const saveItem = (it: LineItem) => {
-    const s: SavedItem = { id: crypto.randomUUID(), name: it.name, description: it.description, costType: it.costType, treatment: it.treatment, unit: it.unit, unitCost: it.unitCost, taxable: it.taxable };
-    return persist({ ...lib, items: [s, ...lib.items.filter((x) => x.name.toLowerCase() !== s.name.toLowerCase())] }, { kind: "item", action: "add", payload: s });
+  const addItem = (s: SavedItem) => run({ ...libRef.current, items: [s, ...libRef.current.items] }, { kind: "item", action: "add", payload: s });
+  const updateItem = (s: SavedItem) =>
+    run({ ...libRef.current, items: libRef.current.items.map((x) => (x.id === s.id ? s : x)) }, { kind: "item", action: "update", payload: s });
+  const removeItem = (id: string) => run({ ...libRef.current, items: libRef.current.items.filter((x) => x.id !== id) }, { kind: "item", action: "remove", payload: { id } });
+
+  /** "Save Item" on an estimate row: updates the saved item with the same name in the same trade, otherwise adds one. */
+  const saveLine = (it: LineItem, ctx: { trade?: string | null; category?: string | null }): Promise<LibraryResult & { updated?: boolean }> => {
+    const existing = findSameItem(libRef.current.items, { name: it.name, trade: ctx.trade ?? null });
+    const s = savedItemFromLine(it, ctx, existing?.id ?? crypto.randomUUID());
+    return existing
+      ? updateItem({ ...s, category: s.category ?? existing.category }).then((r) => ({ ...r, updated: true }))
+      : addItem(s);
   };
-  const removeItem = (id: string) => persist({ ...lib, items: lib.items.filter((x) => x.id !== id) }, { kind: "item", action: "remove", payload: { id } });
-  const saveAssembly = (name: string, items: LineItem[]) => {
-    const a: Assembly = {
-      id: crypto.randomUUID(), name,
-      items: items.map((it) => ({ id: crypto.randomUUID(), name: it.name, description: it.description, costType: it.costType, treatment: it.treatment, unit: it.unit, unitCost: it.unitCost, taxable: it.taxable, quantity: it.quantity })),
+
+  /** "Save Stack": a reusable collection of rows (with quantities), kept in order. */
+  const saveStack = (name: string, items: LineItem[], trade: string | null) => {
+    const stack: SavedStack = {
+      id: crypto.randomUUID(), name: name.trim(), trade,
+      items: items.map((it) => ({ ...savedItemFromLine(it, { trade }, crypto.randomUUID()), quantity: it.quantity.trim() || "1" })),
     };
-    return persist({ ...lib, assemblies: [a, ...lib.assemblies] }, { kind: "assembly", action: "add", payload: a });
+    return run({ ...libRef.current, stacks: [stack, ...libRef.current.stacks] }, { kind: "stack", action: "add", payload: stack });
   };
-  const removeAssembly = (id: string) => persist({ ...lib, assemblies: lib.assemblies.filter((x) => x.id !== id) }, { kind: "assembly", action: "remove", payload: { id } });
+  const renameStack = (id: string, name: string) =>
+    run({ ...libRef.current, stacks: libRef.current.stacks.map((x) => (x.id === id ? { ...x, name } : x)) }, { kind: "stack", action: "rename", payload: { id, name } });
+  const removeStack = (id: string) => run({ ...libRef.current, stacks: libRef.current.stacks.filter((x) => x.id !== id) }, { kind: "stack", action: "remove", payload: { id } });
 
-  return { ...lib, saveItem, removeItem, saveAssembly, removeAssembly };
+  return { ...lib, signedIn, loaded, reload, addItem, updateItem, removeItem, saveLine, saveStack, renameStack, removeStack };
 }
+
+export type Library = ReturnType<typeof useLibrary>;

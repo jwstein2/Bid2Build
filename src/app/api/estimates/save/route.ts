@@ -3,7 +3,7 @@ import { estimateSchema, proposalConfigSchema } from "@/lib/estimate/schema";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { fail, json, logError, sameOrigin } from "@/lib/http/api";
 import { saveProjectProfile } from "@/lib/market/server";
-import { worksheetToStore } from "@/lib/data/mappers";
+import { estimateOptionsToStore, worksheetToStore } from "@/lib/data/mappers";
 
 const body = z.object({ estimate: estimateSchema, proposalConfig: proposalConfigSchema });
 
@@ -15,9 +15,10 @@ export async function POST(req: Request) {
   if (!parsed.success) return fail(400, "invalid", "Some estimate fields are invalid.", { issues: parsed.error.issues.slice(0, 10).map((i) => ({ path: i.path.join("."), message: i.message })) });
   const { estimate, proposalConfig } = parsed.data;
   const supabase = await createClient();
-  // The worksheet (calculator inputs, minimum charge) rides inside proposal_config: no schema change.
+  // The worksheet (calculator inputs, minimum charge) and the final-bid rounding preference ride
+  // inside proposal_config: no schema change.
   const worksheet = worksheetToStore(estimate);
-  const { error } = await supabase.rpc("save_estimate", { p: { ...estimate, proposalConfig: { ...proposalConfig, worksheet: worksheet ?? undefined } } });
+  const { error } = await supabase.rpc("save_estimate", { p: { ...estimate, proposalConfig: { ...proposalConfig, ...estimateOptionsToStore(estimate), worksheet: worksheet ?? undefined } } });
   if (error) {
     logError("estimates.save", error, { user: user.id });
     if (error.code === "P0002" || /row-level security/.test(error.message)) return fail(404, "not_found", "Estimate not found.");

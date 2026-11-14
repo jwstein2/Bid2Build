@@ -66,8 +66,8 @@ export function ruleScope(input: GenerationInput, style: WritingStyle = input.st
   const groups = input.groups.map((g) => ({ ...g, items: workItems(g) })).filter((g) => g.items.length);
   if (!groups.length) return "";
   const all = groups.flatMap((g) => g.items);
-  const hasLabor = all.some((i) => i.kind === "labor" || i.kind === "subcontractor");
-  const hasMaterial = all.some((i) => i.kind === "material" || i.kind === "equipment");
+  const hasLabor = all.some((i) => i.kind === "labor" || i.kind === "labor_material" || i.kind === "subcontractor");
+  const hasMaterial = all.some((i) => i.kind === "material" || i.kind === "labor_material" || i.kind === "equipment");
   const furnish = hasLabor && hasMaterial ? "Furnish the labor and materials" : hasLabor ? "Provide the labor" : "Furnish the materials";
   const noun = projectNoun(input);
 
