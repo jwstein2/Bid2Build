@@ -4,6 +4,7 @@ import { loadBusiness } from "@/lib/data/server";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { fail, json, logError, sameOrigin } from "@/lib/http/api";
 import { z } from "zod";
+import { hasPremiumAccess } from "@/lib/billing/entitlement";
 
 export async function GET() {
   const user = await getUser();
@@ -25,8 +26,11 @@ export async function PUT(req: Request) {
   const b = parsed.data.business;
   // Only accept a logo path inside the caller's own folder.
   if (b.logoPath && !b.logoPath.startsWith(`${user.id}/`)) return fail(400, "invalid", "Invalid logo.");
-  const row = { ...businessToRow({ ...b, logoUrl: null }, user.id), ...(parsed.data.defaultProposalConfig ? { default_proposal_config: parsed.data.defaultProposalConfig } : {}) };
-  const { error } = await (await createClient()).from("business_profiles").upsert(row, { onConflict: "user_id" });
+  const supabase = await createClient();
+  // Saved proposal defaults are a Proposal Templates (Unlimited) feature: ignored without access.
+  const row: Record<string, unknown> = businessToRow({ ...b, logoUrl: null }, user.id);
+  if (parsed.data.defaultProposalConfig && (await hasPremiumAccess(supabase))) row.default_proposal_config = parsed.data.defaultProposalConfig;
+  const { error } = await supabase.from("business_profiles").upsert(row, { onConflict: "user_id" });
   if (error) {
     logError("business.save", error, { user: user.id });
     return fail(500, "save_failed", "Could not save your company profile.");

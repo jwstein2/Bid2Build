@@ -6,14 +6,15 @@ import { CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield,
 import { cn } from "@/lib/cn";
 import { ButtonLink } from "@/components/ui/button";
 import { Logo } from "./logo";
+import { PremiumDiamond } from "../billing/premium";
 
-const nav = [
+const nav: { href: string; label: string; icon: typeof Library; exact?: boolean; premium?: boolean }[] = [
   { href: "/dashboard", label: "Bids", icon: LayoutDashboard, exact: true },
   // Directly below Bids: contractors set this up first and their proposals depend on it.
   { href: "/settings/company", label: "Company profile", icon: Building2 },
   { href: "/dashboard/customers", label: "Saved customers", icon: Users },
-  { href: "/dashboard/items", label: "Saved Items & Pricing", icon: Library },
-  { href: "/dashboard/templates", label: "Proposal templates", icon: LayoutTemplate },
+  { href: "/dashboard/items", label: "Saved Items & Pricing", icon: Library, premium: true },
+  { href: "/dashboard/templates", label: "Proposal Templates", icon: LayoutTemplate, premium: true },
   { href: "/settings/billing", label: "Subscription", icon: CreditCard },
   { href: "/settings/pricing", label: "Pricing data", icon: Plug },
   { href: "/settings/account", label: "Account settings", icon: Settings },
@@ -51,13 +52,14 @@ export function AppSidebar({ isAdmin, email }: { isAdmin: boolean; email: string
         </div>
       </div>
       <div className="hidden px-3 md:block"><ButtonLink href="/bids" variant="accent" className="w-full"><FileText className="h-4 w-4" aria-hidden /> Create New Bid</ButtonLink></div>
-      {!open && current && <p className="px-4 pb-2 text-xs text-[#B8C6D4] md:hidden">{current.label}</p>}
+      {!open && current && <p className="flex items-center gap-1.5 px-4 pb-2 text-xs text-[#B8C6D4] md:hidden">{current.label}{current.premium && <PremiumDiamond tone="dark" />}</p>}
       <nav id="account-nav" aria-label="Account" className={cn("flex-col gap-1 px-2 pb-3 md:mt-4 md:flex", open ? "flex" : "hidden")}>
         {nav.map((n) => {
           const on = active(n.href, n.exact);
           return (
             <Link key={n.href} href={n.href} aria-current={on ? "page" : undefined} className={cn(item, on ? "bg-white/10 text-white shadow-[inset_3px_0_0_var(--color-cyan)]" : "text-[#C9D6E3] hover:bg-white/5 hover:text-white")}>
               <n.icon className={cn("h-4 w-4", on ? "text-cyan" : "")} aria-hidden /> {n.label}
+              {n.premium && <PremiumDiamond tone="dark" className="ml-auto pl-2" />}
             </Link>
           );
         })}

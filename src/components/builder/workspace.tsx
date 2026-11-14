@@ -101,10 +101,24 @@ export function Workspace({ estimate, dispatch, lib: library }: { estimate: Esti
         {selected.size > 0 && (
           <BulkBar
             count={selected.size}
+            hasOverride={estimate.items.some((i) => selected.has(i.id) && i.pricingOverride)}
             onClear={() => setSelected(new Set())}
             onApply={(rule) => { dispatch({ type: "bulkOverride", ids: [...selected], rule }); }}
+            onRemoveOverride={() => { dispatch({ type: "bulkOverride", ids: [...selected], rule: null }); lib.say("Pricing override removed."); }}
+            onDuplicate={() => {
+              const n = estimate.items.filter((i) => selected.has(i.id) && !i.isExample).length;
+              dispatch({ type: "duplicateItems", ids: [...selected] });
+              setSelected(new Set());
+              lib.say(n === 1 ? "1 item duplicated." : `${n} items duplicated.`);
+            }}
             onDelete={() => { dispatch({ type: "deleteItems", ids: [...selected] }); setSelected(new Set()); }}
-            onSaveStack={() => { if (lib.saveStack(estimate.items.filter((i) => selected.has(i.id)))) setSelected(new Set()); }}
+            onSave={() => {
+              const rows = estimate.items.filter((i) => selected.has(i.id));
+              // One row: Save Item (no name prompt). Several rows: Save Stack. Both go through the same
+              // premium check (free accounts get the Unlimited upgrade dialog instead).
+              if (rows.length === 1) { void lib.saveItem(rows[0]); if (lib.access && rows[0].name.trim()) setSelected(new Set()); }
+              else if (lib.saveStack(rows)) setSelected(new Set());
+            }}
           />
         )}
 
@@ -172,7 +186,10 @@ export function Workspace({ estimate, dispatch, lib: library }: { estimate: Esti
   );
 }
 
-function BulkBar({ count, onClear, onApply, onDelete, onSaveStack }: { count: number; onClear: () => void; onApply: (r: PricingRule | null) => void; onDelete: () => void; onSaveStack: () => void }) {
+function BulkBar({ count, hasOverride, onClear, onApply, onRemoveOverride, onDuplicate, onDelete, onSave }: {
+  count: number; hasOverride: boolean; onClear: () => void; onApply: (r: PricingRule) => void; onRemoveOverride: () => void;
+  onDuplicate: () => void; onDelete: () => void; onSave: () => void;
+}) {
   const [mode, setMode] = useState<"markup" | "margin">("markup");
   const [pct, setPct] = useState("");
   const vv = useVisualViewport();
@@ -203,13 +220,37 @@ function BulkBar({ count, onClear, onApply, onDelete, onSaveStack }: { count: nu
           <label className="sr-only" htmlFor="bulk-pct">Percent</label>
           <input id="bulk-pct" className="field field-sm min-w-0 flex-1 max-lg:min-h-10 max-lg:text-base lg:w-20 lg:flex-none" inputMode="decimal" enterKeyHint="done" placeholder="%" value={pct} onChange={(e) => setPct(e.target.value)} />
           <Button size="sm" className="shrink-0 max-lg:min-h-10" onClick={() => pct.trim() && onApply({ mode, percent: pct.trim() })}>Apply<span className="max-sm:hidden"> override</span></Button>
+          {hasOverride && <OverrideMenu onRemove={onRemoveOverride} />}
         </div>
         <div className="flex w-full flex-wrap items-center gap-2 lg:order-2 lg:w-auto">
-          <Button size="sm" variant="secondary" className="max-lg:min-h-10" onClick={() => onApply(null)}>Use estimate pricing</Button>
-          <Button size="sm" variant="secondary" className="max-lg:min-h-10" onClick={onSaveStack}><Layers className="h-4 w-4" /> Save Stack</Button>
+          <Button size="sm" variant="secondary" className="max-lg:min-h-10" onClick={onDuplicate}><Copy className="h-4 w-4" aria-hidden /> Duplicate<span className="max-[359px]:hidden"> Selected</span></Button>
+          <Button size="sm" variant="secondary" className="max-lg:min-h-10" onClick={onSave}>
+            {count === 1 ? <><BookmarkPlus className="h-4 w-4" aria-hidden /> Save Item</> : <><Layers className="h-4 w-4" aria-hidden /> Save Stack</>}
+          </Button>
         </div>
       </div>
     </div>
+  );
+}
+
+/** Secondary pricing actions for the selection; only rendered when a selected row has its own override. */
+function OverrideMenu({ onRemove }: { onRemove: () => void }) {
+  return (
+    <Dropdown.Root>
+      <Dropdown.Trigger asChild>
+        <button type="button" className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-line-strong bg-surface hover:bg-paper max-lg:h-10 max-lg:w-10" aria-label="More pricing options">
+          <MoreHorizontal className="h-4 w-4" aria-hidden />
+        </button>
+      </Dropdown.Trigger>
+      <Dropdown.Portal>
+        <Dropdown.Content align="end" sideOffset={6} className="z-50 min-w-52 rounded-lg border border-line bg-surface p-1 text-sm shadow-lg">
+          <Dropdown.Item onSelect={onRemove} className="flex cursor-pointer flex-col items-start rounded-md px-3 py-2 outline-none data-[highlighted]:bg-paper">
+            <span className="font-semibold">Remove Override</span>
+            <span className="text-xs text-muted">Selected rows go back to the section or estimate pricing.</span>
+          </Dropdown.Item>
+        </Dropdown.Content>
+      </Dropdown.Portal>
+    </Dropdown.Root>
   );
 }
 

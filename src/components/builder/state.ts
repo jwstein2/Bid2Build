@@ -22,6 +22,7 @@ export type Action =
   | { type: "deleteItem"; id: string }
   | { type: "deleteItems"; ids: string[] }
   | { type: "duplicateItem"; id: string }
+  | { type: "duplicateItems"; ids: string[] }
   | { type: "moveItem"; id: string; dir: -1 | 1 }
   | { type: "moveItemToGroup"; id: string; groupId: string }
   | { type: "bulkOverride"; ids: string[]; rule: PricingRule | null }
@@ -104,6 +105,29 @@ export function reducer(state: State, action: Action): State {
       const idx = list.findIndex((i) => i.id === src.id);
       list.splice(idx + 1, 0, { ...src, id: uid(), name: src.name ? `${src.name} (copy)` : "" });
       return next(setGroupItems(e, src.groupId, list));
+    }
+    case "duplicateItems": {
+      // Bulk "Duplicate Selected": each copy keeps every field of its original (name included),
+      // gets a fresh id so it saves as its own row, and lands directly below its original in the
+      // same section. A quantity calculation on the original is copied too, keyed to the new id.
+      const ids = new Set(action.ids);
+      const sources = e.items.filter((i) => ids.has(i.id) && !i.isExample);
+      if (!sources.length) return state;
+      let out = e;
+      const calcs = { ...(e.worksheet?.calcs ?? {}) };
+      for (const groupId of [...new Set(sources.map((s) => s.groupId))]) {
+        const list: LineItem[] = [];
+        for (const it of groupItems(out, groupId)) {
+          list.push(it);
+          if (!ids.has(it.id) || it.isExample) continue;
+          const id = uid();
+          list.push({ ...it, id, ...(it.pricingOverride ? { pricingOverride: { ...it.pricingOverride } } : {}) });
+          const rec = e.worksheet?.calcs?.[it.id];
+          if (rec) calcs[id] = structuredClone(rec);
+        }
+        out = setGroupItems(out, groupId, list);
+      }
+      return next(e.worksheet?.calcs ? { ...out, worksheet: { ...(e.worksheet ?? {}), calcs } } : out);
     }
     case "moveItem": {
       const src = e.items.find((i) => i.id === action.id);

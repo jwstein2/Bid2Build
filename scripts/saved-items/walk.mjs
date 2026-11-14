@@ -52,7 +52,7 @@ for (const vp of VIEWPORTS) {
   await fetch(`${MOCK}/__reset_library`);
 
   await page.goto(`${BASE}/dashboard`, { waitUntil: "networkidle" });
-  const tile = page.getByRole("link", { name: /Saved Items & Pricing Library/ });
+  const tile = page.locator("main").getByRole("link", { name: /^Saved Items & Pricing/ });
   check(T("dashboard tile is unlocked and links to the library"), (await tile.count()) === 1 && (await tile.getAttribute("href")) === "/dashboard/items");
   if (vp.id === "desktop" || vp.id === "m390") { await tile.scrollIntoViewIfNeeded(); await shot(page, `premium__dashboard-tile__${vp.id}`); }
 
@@ -177,16 +177,16 @@ for (const vp of VIEWPORTS.filter((v) => ["desktop", "m390", "m320"].includes(v.
   page.on("pageerror", (e) => errors.push(e.message));
 
   await page.goto(`${BASE}/dashboard`, { waitUntil: "networkidle" });
-  const tile = page.getByLabel("Saved Items & Pricing Library (Premium only)");
+  const tile = page.locator("main").getByRole("link", { name: "Saved Items & Pricing (Unlimited feature)" });
   const tileText = (await tile.count()) ? await tile.innerText() : "";
-  check(T("dashboard tile is locked with the Premium Only message and an upgrade action"), /Premium Only — Save your preferred labor rates, material prices, and frequently used estimating items\./.test(tileText) && /Upgrade/.test(tileText));
+  check(T("dashboard tile is locked with the Unlimited message and an upgrade action"), /Save your labor rates, material costs, and frequently used estimating items\. Included with Unlimited\./.test(tileText) && /Unlimited plans/.test(tileText));
   await tile.scrollIntoViewIfNeeded();
   await shot(page, `free__dashboard-tile__${vp.id}`);
 
   await page.goto(`${BASE}/dashboard/items`, { waitUntil: "networkidle" });
-  await page.waitForSelector("text=Premium Only");
+  await page.waitForSelector("text=is an Unlimited feature");
   const t = await page.locator("main").innerText();
-  check(T("library page is locked, keeps data and offers checkout"), /kept safe/.test(t) && (await page.getByRole("button", { name: "Upgrade to Unlimited" }).count()) === 1 && !/Dumpster rental/.test(t));
+  check(T("library page is locked, keeps data and offers checkout"), /kept safe/.test(t) && (await page.getByRole("button", { name: /Upgrade to Unlimited/ }).count()) === 1 && !/Dumpster rental/.test(t));
   await shot(page, `free__library-locked__${vp.id}`, true);
 
   await openEstimateStep(page);
@@ -198,7 +198,7 @@ for (const vp of VIEWPORTS.filter((v) => ["desktop", "m390", "m320"].includes(v.
   await page.getByRole("button", { name: /Actions for Remove existing siding/ }).click();
   await page.getByRole("menuitem", { name: /Save Item/ }).click();
   const dlg = page.getByRole("dialog");
-  check(T("Save Item on a free account opens the upgrade dialog"), (await dlg.count()) === 1 && /Premium Only/.test(await dlg.innerText()));
+  check(T("Save Item on a free account opens the upgrade dialog"), (await dlg.count()) === 1 && /Unlimited/.test(await dlg.innerText()));
   await shot(page, `free__save-item-upsell__${vp.id}`);
   check(T("no page errors"), errors.length === 0, errors.join(" | "));
   await ctx.close();

@@ -1,6 +1,7 @@
 import type { z } from "zod";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { fail, json, sameOrigin } from "@/lib/http/api";
+import { hasPremiumAccess } from "@/lib/billing/entitlement";
 import { libraryOpSchema, savedItemSchema, type LibraryData, type SavedItem } from "@/lib/library/saved-items";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -8,10 +9,7 @@ const num = (v: unknown) => (v === null || v === undefined ? "" : String(Number(
 type Supa = Awaited<ReturnType<typeof createClient>>;
 
 /** Server-side entitlement (Unlimited or admin). RLS enforces the same rule on every write. */
-async function hasAccess(supabase: Supa): Promise<boolean> {
-  const { data, error } = await supabase.rpc("library_access");
-  return !error && data === true;
-}
+const hasAccess = (supabase: Supa) => hasPremiumAccess(supabase);
 
 const mapItem = (r: any): SavedItem => ({
   id: r.id, name: r.name, description: r.description ?? undefined, trade: r.trade ?? null, category: r.category ?? undefined,
