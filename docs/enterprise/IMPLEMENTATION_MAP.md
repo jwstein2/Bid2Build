@@ -106,8 +106,8 @@ Split billing would mean separate subscriptions per billing group; the schema al
 
 | Phase | PR content | DB migration | Owner action |
 |---|---|---|---|
-| 1 (this PR) | Implementation map, workspace/roles/teams/invitations schema, RLS, entitlement function, pricing + permission modules, tests | `20261114005000_enterprise_workspace.sql` | Paste SQL (no visible change until a company exists) |
-| 2 | Enterprise on pricing page, Enterprise Checkout, webhook → `create_company` + seats, seat add/remove with proration preview, billing history/invoices, failed payment banner | small (plan/price columns if needed) | Approve creating 2 live Stripe prices; set `STRIPE_PRICE_ENTERPRISE_BASE` / `STRIPE_PRICE_ENTERPRISE_SEAT` in Netlify |
+| 1 (PR #22, merged + SQL applied 2026-11-14) | Implementation map, workspace/roles/teams/invitations schema, RLS, entitlement function, pricing + permission modules, tests | `20261114005000_enterprise_workspace.sql` | Paste SQL (no visible change until a company exists) |
+| 2 | Enterprise on pricing page, Enterprise Checkout, webhook → `create_company` + seats, seat add/remove with proration preview, billing history/invoices, failed payment banner (see STRIPE_SETUP.md) | `20261114006000_enterprise_billing.sql` | Approve creating 2 live Stripe prices; set `STRIPE_PRICE_ENTERPRISE_BASE` / `STRIPE_PRICE_ENTERPRISE_SEAT` in Netlify |
 | 3 | Command Center shell + nav (Overview, Bids & Pipeline, Team Performance, Estimating Intelligence, Saved Pricing, Users & Permissions, Billing & Licenses, Company Settings), Users & Permissions UI, invite emails + accept page, teams, read-only review view of teammates' bids, company Saved Pricing (6.9) | policies for company saved items | none expected |
 | 4 | KPI dashboard (server-side aggregates), filters, CSV export, pipeline stages, manager dashboards, optional approval rules + review history | pipeline/review tables, aggregate RPCs, indexes | none expected |
 | 5 | Trade statistics, geographic rollups with minimum sample sizes, deterministic anomaly alerts (median/IQR per trade+unit), weekly executive report (exportable; schedulable later) | alerts table | none expected |
