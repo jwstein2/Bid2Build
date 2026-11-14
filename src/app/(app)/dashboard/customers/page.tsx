@@ -15,7 +15,9 @@ async function remove(formData: FormData) {
 }
 
 export default async function CustomersPage() {
-  const { data } = await (await createClient()).from("customers").select("id, name, email, phone, project_address").order("name");
+  const user = (await getUser())!;
+  // Own customers only (company managers can also read teammates' company customers through RLS).
+  const { data } = await (await createClient()).from("customers").select("id, name, email, phone, project_address").eq("user_id", user.id).order("name");
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <div>
