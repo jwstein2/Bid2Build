@@ -30,3 +30,11 @@ export async function companySubscription(admin: SupabaseClient, companyId: stri
     .order("updated_at", { ascending: false }).limit(1).maybeSingle();
   return data as null | { stripe_subscription_id: string; stripe_customer_id: string; user_id: string; status: string; seat_quantity: number | null; current_period_end: string | null; cancel_at_period_end: boolean };
 }
+
+/** Sidebar links for the member's company, by permission (null when not in a company). */
+export function companyNav(c: MyCompany | null) {
+  if (!c) return null;
+  const links: { href: "/company/users" | "/company/billing"; label: string }[] = [{ href: "/company/users", label: "Users & Permissions" }];
+  if (can(c, "manage_billing")) links.push({ href: "/company/billing", label: "Billing & Licenses" });
+  return { name: c.name, links };
+}

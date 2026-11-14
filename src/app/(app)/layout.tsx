@@ -1,3 +1,4 @@
+import { companyNav, loadMyCompany } from "@/lib/enterprise/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
@@ -19,7 +20,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
   const user = await getUser();
   if (!user) redirect("/login?next=/dashboard");
-  const { data: isAdmin } = await (await createClient()).rpc("is_admin", { p_user_id: user.id });
+  const supabase = await createClient();
+  const [{ data: isAdmin }, company] = await Promise.all([supabase.rpc("is_admin", { p_user_id: user.id }), loadMyCompany(supabase)]);
   // Link the account to its lead + first-touch attribution (best effort, one indexed lookup when already linked).
   if (serverEnv().supabaseServiceKey) {
     await syncSignedInUser(createAdminClient(), user, decodeAttribution((await cookies()).get(ATTRIBUTION_COOKIE)?.value));
@@ -27,7 +29,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
       <aside className="on-dark bg-navy text-white md:sticky md:top-0 md:flex md:h-screen md:w-64 md:shrink-0 md:flex-col no-print">
-        <AppSidebar isAdmin={Boolean(isAdmin)} email={user.email ?? (user.phone ? formatPhone(user.phone) : null)} />
+        <AppSidebar isAdmin={Boolean(isAdmin)} company={companyNav(company)} email={user.email ?? (user.phone ? formatPhone(user.phone) : null)} />
       </aside>
       <main id="main" className="min-w-0 flex-1 px-4 py-6 sm:px-8">{children}</main>
     </div>
