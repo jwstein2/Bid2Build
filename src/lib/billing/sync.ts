@@ -5,7 +5,9 @@
 export type Plan = "monthly" | "annual" | "enterprise";
 
 /** Configured Stripe price ids. Enterprise ids are optional until the Enterprise prices exist. */
-export type PriceIds = { monthly: string; annual: string; enterpriseBase?: string; enterpriseSeat?: string };
+export type PriceIds = { monthly: string; annual: string; enterpriseBase?: string; enterpriseSeat?: string; pmAddonMonthly?: string; pmAddonAnnual?: string; pmEditor?: string };
+
+const pmIds = (p: PriceIds) => new Set([p.pmAddonMonthly, p.pmAddonAnnual, p.pmEditor].filter(Boolean));
 
 export interface SubscriptionLike {
   id: string;
@@ -58,7 +60,9 @@ export function enterpriseSeats(sub: SubscriptionLike, prices: PriceIds): number
 
 export function subscriptionToUpdate(sub: SubscriptionLike, userId: string, eventCreatedSec: number, prices: PriceIds, companyId: string | null = null): SubscriptionUpdate {
   const seats = enterpriseSeats(sub, prices);
-  const item = seats !== null ? sub.items.data.find((i) => i.price?.id === prices.enterpriseBase)! : sub.items.data[0];
+  // The plan item, never a PM add-on/editor item (those are mirrored separately by apply_pm_update).
+  const pm = pmIds(prices);
+  const item = seats !== null ? sub.items.data.find((i) => i.price?.id === prices.enterpriseBase)! : (sub.items.data.find((i) => !pm.has(i.price?.id)) ?? sub.items.data[0]);
   const priceId = item?.price?.id ?? null;
   const periodEnd = item?.current_period_end ?? sub.current_period_end ?? null;
   return {

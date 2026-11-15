@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
-import { isEnterpriseConfigured } from "@/lib/env";
+import { isEnterpriseConfigured, isPmBillingConfigured, isPmEnabled } from "@/lib/env";
+import { loadPmAccess } from "@/lib/pm/server";
+import { PmEditorsCard } from "@/components/company/pm-editors";
 import { getStripe } from "@/lib/billing/stripe";
 import { reconcileUser } from "@/lib/billing/apply";
 import { can, companySubscription, loadMyCompany } from "@/lib/enterprise/server";
@@ -65,6 +67,22 @@ export default async function CompanyBillingPage({ searchParams }: PageProps<"/c
   }
   const end = row?.current_period_end ? new Date(row.current_period_end).toLocaleDateString(undefined, { dateStyle: "long" }) : null;
   const comp = company.entitlement.source === "complimentary";
+  // Project scheduling editors (shown only once scheduling is switched on).
+  let pmCard: { limit: number; extra: number; members: { id: string; name: string; role: string }[]; assigned: string[] } | null = null;
+  if (isPmEnabled() && company.entitlement.active) {
+    const [pm, { data: roster }, { data: eds }, { data: subRow }] = await Promise.all([
+      loadPmAccess(supabase),
+      supabase.rpc("company_roster"),
+      supabase.from("pm_editors").select("user_id"),
+      row ? admin.from("subscriptions").select("pm_extra_editors").eq("stripe_subscription_id", row.stripe_subscription_id).maybeSingle() : Promise.resolve({ data: null }),
+    ]);
+    if (pm) {
+      const members = ((roster ?? []) as { user_id: string; display_name: string | null; email: string | null; role: string; status: string }[])
+        .filter((m) => m.status === "active").map((m) => ({ id: m.user_id, name: m.display_name || m.email || "Team member", role: m.role }));
+      const active = new Set(members.map((m) => m.id));
+      pmCard = { limit: pm.editorLimit, extra: (subRow as { pm_extra_editors?: number } | null)?.pm_extra_editors ?? 0, members, assigned: ((eds ?? []) as { user_id: string }[]).map((e) => e.user_id).filter((u) => active.has(u)) };
+    }
+  }
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -107,6 +125,7 @@ export default async function CompanyBillingPage({ searchParams }: PageProps<"/c
           <SeatChanger current={licensed} seatsInUse={company.seatsUsed} />
         </Card>
       )}
+      {pmCard && <PmEditorsCard {...pmCard} comp={comp} canBuy={Boolean(row && !comp && isPmBillingConfigured("editor") && (row.status === "active" || row.status === "trialing"))} />}
       {comp && <Notice tone="neutral" title="Need more users?">Complimentary accounts include 3 users. Contact Built2Bid to arrange more.</Notice>}
 
       {row && (

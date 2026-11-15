@@ -21,6 +21,8 @@ export interface FeatureState {
 export interface Access {
   /** library_access(): Unlimited subscription, Enterprise seat, complimentary grant or admin. */
   unlimited: boolean;
+  /** pm_entitlement().can_edit */
+  pm?: boolean;
 }
 
 export const META_KEY = "b2b_features";
@@ -45,7 +47,7 @@ export function parseState(raw: unknown): FeatureState | null {
 export const released = (list: readonly Feature[] = FEATURES) => list.filter((f) => f.status === "released");
 
 export function hasAccess(f: Feature, a: Access): boolean {
-  return f.entitlement === "free" || (f.entitlement === "unlimited" && a.unlimited);
+  return f.entitlement === "free" || (f.entitlement === "unlimited" && a.unlimited) || (f.entitlement === "pm" && Boolean(a.pm));
 }
 
 /** Released features this account can use right now. */

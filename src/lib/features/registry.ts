@@ -13,8 +13,11 @@
  * Release notes are written by people in this file; nothing is generated from code changes.
  */
 
-/** What a feature needs. "free" = every account; "unlimited" = Unlimited subscription, Enterprise or complimentary access (library_access()). */
-export type Entitlement = "free" | "unlimited";
+/**
+ * What a feature needs. "free" = every account; "unlimited" = Unlimited subscription, Enterprise or
+ * complimentary access (library_access()); "pm" = project scheduling editor (pm_entitlement()).
+ */
+export type Entitlement = "free" | "unlimited" | "pm";
 
 export interface Release {
   version: string;
@@ -109,6 +112,17 @@ const DEFS = {
     walkthrough: { title: "Know your numbers", body: "Open any saved bid and choose Internal report in the header to preview, download or email your private cost and profit report.", cta: "Open a bid" },
     release: "4.0.0",
     status: "released",
+  },
+  project_scheduling: {
+    name: "Project scheduling",
+    entitlement: "pm",
+    route: "/projects",
+    description: "Turn a won bid into a job schedule with a timeline, tasks from your estimate, and progress tracking.",
+    pitch: "Schedule won jobs on a visual timeline built from your estimate. $4.99/month add-on for Unlimited; one editor included with Enterprise.",
+    walkthrough: { title: "Schedule the job", body: "Choose Schedule Now on a won bid to build a timeline from its sections, then drag tasks to adjust dates." },
+    release: "4.0.0",
+    // Billing and entitlements ship first (Phase 5); the scheduler itself ships in Phases 6-7.
+    status: "unreleased",
   },
 } as const satisfies Record<string, FeatureInput>;
 

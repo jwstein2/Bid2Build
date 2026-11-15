@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { createAdminClient, createClient, getUser } from "@/lib/supabase/server";
-import { isStripeConfigured } from "@/lib/env";
+import { isPmEnabled, isStripeConfigured } from "@/lib/env";
+import { loadPmAccess } from "@/lib/pm/server";
+import { PmAddonCard } from "@/components/billing/pm-addon";
 import { getStripe } from "@/lib/billing/stripe";
 import { reconcileUser } from "@/lib/billing/apply";
 import { CheckoutButton, PortalButton } from "@/components/billing/checkout-button";
@@ -34,6 +36,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
     supabase.rpc("my_comp_access"), // errors (migration not applied yet) just mean "no complimentary access"
   ]);
   const q = credits ? { unlimited: credits.unlimited } : null;
+  const pm = isPmEnabled() && credits?.unlimited ? await loadPmAccess(supabase) : null;
   const current = subs?.find((s) => ["active", "trialing", "past_due"].includes(s.status)) ?? subs?.[0];
   const paidActive = Boolean(current && ["active", "trialing", "past_due"].includes(current.status) && (!current.current_period_end || new Date(current.current_period_end) > new Date()));
   const comp = (Array.isArray(compRows) ? compRows[0] : null) as CompAccess | null;
@@ -75,6 +78,9 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
         {bc && <div className="mt-5 border-t border-line pt-4"><PortalButton label="Manage subscription, payment method & billing history" /><p className="mt-2 text-xs text-muted">Opens Stripe&apos;s secure customer portal, where you can change plans, cancel, update your card, and download invoices.</p></div>}
       </Card>
 
+      {pm && pm.scope !== "company" && (paidActive || pm.source === "complimentary") && (
+        <PmAddonCard state={pm} periodEnd={current?.current_period_end ?? null} annual={current?.plan === "annual" && !process.env.STRIPE_PRICE_PM_ADDON_ANNUAL} />
+      )}
       {credits && !credits.unlimited && <CreditBalances credits={credits} showUpgrade={false} />}
 
       {(!q?.unlimited || compOnly) && stripeReady && (

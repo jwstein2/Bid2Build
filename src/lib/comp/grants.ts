@@ -62,6 +62,8 @@ export const GrantInput = z.object({
 export type GrantInput = z.infer<typeof GrantInput>;
 
 export const ExtendInput = z.object({ id: z.string().uuid(), days: z.coerce.number().int().min(1).max(MAX_GRANT_DAYS) });
+/** Project scheduling editors on a grant; null = plan default (Unlimited 0, Enterprise 1). */
+export const PmEditorsInput = z.object({ id: z.string().uuid(), editors: z.union([z.null(), z.coerce.number().int().min(0).max(50)]), approve: z.literal(true) });
 export const SeatsInput = z.object({ id: z.string().uuid(), extraSeats: z.coerce.number().int().min(0).max(MAX_EXTRA_SEATS), approve: z.literal(true) });
 
 /** Database error codes (raised by the admin_comp_* functions) -> admin-facing text. */
@@ -102,7 +104,7 @@ export function claimMessage(reason: string | undefined, hint?: string): string 
 
 export interface CompRow {
   id: string; email: string; user_id: string | null; plan: CompPlan; state: CompState; status: string;
-  duration_days: number; included_seats: number; extra_seats: number; company_id: string | null;
+  duration_days: number; included_seats: number; extra_seats: number; company_id: string | null; pm_editors?: number | null;
   starts_at: string | null; expires_at: string | null; paused_at: string | null; activated_at: string | null;
   invite_expires_at: string | null; invite_sent_at: string | null; invite_send_count: number;
   note: string | null; created_at: string; revoked_at: string | null; revoke_reason: string | null;

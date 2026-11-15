@@ -80,6 +80,21 @@ Placement rules: a real signature puts a bid at Won or later; an active signing 
 - **Storage:** per account in Supabase auth `user_metadata.b2b_features` (acknowledged ids, last notice version, walkthrough outcome), via `/api/features`. It never grants access. **No migration.**
 - **Tests:** `tests/feature-registry.test.ts`, `tests/features-route.test.ts`, `scripts/features/walk.mjs` (mock Supabase).
 
+## Phase 5: project scheduling add-on, entitlements and billing (test mode)
+
+- **Pricing:** Standard Unlimited can add project scheduling for **$4.99/month** (one editor). Enterprise includes **one editor**; each extra editor is **$1.99/month**. Editors are separate from licensed users (seat counts never change). Free accounts have no access.
+- **Complimentary access:** complimentary Unlimited does not include scheduling; complimentary Enterprise includes one editor. The owner can change either per grant in Admin > Complimentary > Scheduling (`complimentary_grants.pm_editors`, null = plan default).
+- **Preview before any charge:** both purchase flows call Stripe `invoices.createPreview` first and show the new charge, billing interval, effective date, prorated amount today and the next invoice total. Nothing is charged until the user confirms. Prices are checked against Stripe (amount, currency, recurring monthly) before every charge.
+- **Removal policy:** removing the Standard add-on takes effect at the end of the paid period with no refund; editing stays on until then (`pm_addon_until`). Removing extra Enterprise editors takes effect immediately with a prorated credit; you can't go below the number of assigned editors, and if the limit drops the earliest-assigned editors keep editing.
+- **Downgrade keeps data:** losing the entitlement makes schedules read-only. Nothing is deleted.
+- **Assignment:** company admins (manage users or billing) assign editors on Company > Billing. Only active members count; every change is audit-logged.
+- **Source of truth:** Stripe subscription items mirror into `subscriptions.pm_addon / pm_addon_until / pm_extra_editors` via the webhook (`apply_pm_update`, service role only, ignores older events). `pm_entitlement(uid)` and `my_pm_access()` decide access; `can_edit_schedules()` is what Phases 6-7 will check.
+- **Hidden in production:** everything is behind `NEXT_PUBLIC_PROJECT_SCHEDULING=on` (off in production until the scheduler ships in Phases 6-7). With a live Stripe key, purchases also need `PM_BILLING_LIVE=true`. The registry entry `project_scheduling` is `unreleased`, so no modal, notice or tour mentions it.
+- **Env vars (when going live):** `STRIPE_PRICE_PM_ADDON` ($4.99/mo), `STRIPE_PRICE_PM_EDITOR` ($1.99/mo), optional `STRIPE_PRICE_PM_ADDON_ANNUAL` (annual Unlimited customers see "coming soon" without it).
+- **Code:** `src/lib/pm/billing.ts`, `src/lib/pm/server.ts`, `src/app/api/billing/pm-addon/route.ts`, `src/app/api/company/pm-editors/route.ts` and `/assign`, `src/components/billing/pm-addon.tsx`, `src/components/company/pm-editors.tsx`.
+- **Migration:** `supabase/migrations/20261116003000_pm_entitlements.sql`. Rollback: `docs/pipeline/rollback_20261116003000.sql`. The app works before the SQL runs (cards stay hidden; webhook mirroring only runs when PM prices are configured).
+- **Tests:** `tests/pm-billing.test.ts` (16, Stripe mocked), `tests/db/pm-entitlements.test.ts` (11 on real Postgres), `scripts/pm/walk.mjs` (14 browser checks, mock Supabase).
+
 ## Migration and rollback
 
 - Migration: `supabase/migrations/20261116002000_sales_pipeline.sql` (idempotent, tested twice in a row).
@@ -107,8 +122,8 @@ Placement rules: a real signature puts a bid at Won or later; an active signing 
 | 9 | Enterprise PM permissions and seat assignment | none |
 | 10 | Owner analytics: pipeline adoption, PM MRR split, regression run | none |
 
-## Production approval checklist (this PR)
+## Production approval checklist (Phase 5 PR)
 
-1. Run `20261116002000_sales_pipeline.sql` in the Supabase SQL Editor.
-2. Review the Netlify deploy preview of this PR.
-3. Say "merge" and it goes live (Netlify auto-deploys `main`). No env vars, no Stripe changes.
+1. Run `20261116003000_pm_entitlements.sql` in the Supabase SQL Editor.
+2. Say "merge". Nothing becomes visible: the flag stays off and no live prices exist.
+3. Later, before the scheduler launches: approve creating the live $4.99/mo and $1.99/mo prices (and an annual add-on price if wanted), then set the price env vars, `PM_BILLING_LIVE=true` and the flag.
