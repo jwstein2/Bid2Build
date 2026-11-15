@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Container, Notice } from "@/components/ui/misc";
+import { Container } from "@/components/ui/misc";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Privacy Policy", alternates: { canonical: "/privacy" } };
@@ -9,7 +9,6 @@ export default function Privacy() {
     <Container className="py-12">
       <div className="mx-auto max-w-2xl space-y-4 leading-relaxed text-ink-soft">
         <h1 className="text-4xl font-extrabold text-ink">Privacy Policy</h1>
-        <Notice tone="warn" title="Draft for legal review">This is a working draft describing how the product currently handles data. It must be reviewed by counsel before public launch.</Notice>
         <h2 className="pt-2 text-xl font-bold text-ink">What we collect</h2>
         <ul className="list-disc space-y-1 pl-5">
           <li>Account: your email address and sign-in records.</li>
