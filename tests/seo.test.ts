@@ -30,5 +30,7 @@ describe("openGraphFor", () => {
   });
   it("marks guides as articles", () => {
     expect((openGraphFor({ title: "t", description: "d", path: "/learn/x", type: "article" }) as Record<string, unknown>).type).toBe("article");
+    // Trade pages and guides have their own generated card, so the generic image must not override it.
+    expect((openGraphFor({ title: "t", description: "d", path: "/bids/decks", ownImage: true }) as Record<string, unknown>).images).toBeUndefined();
   });
 });

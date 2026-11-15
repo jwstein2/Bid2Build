@@ -18,7 +18,9 @@ export const OG_IMAGE = {
 
 type OpenGraph = NonNullable<Metadata["openGraph"]>;
 
-export function openGraphFor(input: { title: string; description: string; path: string; type?: "website" | "article" } & Partial<Pick<OpenGraph, "locale">>): OpenGraph {
-  const { title, description, path, type = "website" } = input;
-  return { title, description, url: path, siteName: site.name, type, locale: "en_US", images: [OG_IMAGE] };
+export function openGraphFor(input: { title: string; description: string; path: string; type?: "website" | "article"; ownImage?: boolean } & Partial<Pick<OpenGraph, "locale">>): OpenGraph {
+  const { title, description, path, type = "website", ownImage = false } = input;
+  // ownImage: the route segment has its own opengraph-image.tsx (trade pages, guides). Leave
+  // `images` out so the generated per-page card is used instead of the generic brand image.
+  return { title, description, url: path, siteName: site.name, type, locale: "en_US", ...(ownImage ? {} : { images: [OG_IMAGE] }) };
 }
