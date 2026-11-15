@@ -9,9 +9,6 @@ name: Pricing articles
 on:
   schedule:
     - cron: "0 13 * * 1,4"
-  # TEMPORARY: dry-run test on the PR branch before merge (removed before merging).
-  push:
-    branches: [claude/project-thread-v8ndbu]
   workflow_dispatch:
     inputs:
       dry_run:
@@ -37,7 +34,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'push' && github.ref || 'main' }}
+          ref: main
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -47,7 +44,7 @@ jobs:
         id: write
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          DRY_RUN: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
           TOPIC: ${{ inputs.topic }}
         run: |
           set -euo pipefail
@@ -56,10 +53,10 @@ jobs:
           if [ -n "${TOPIC:-}" ]; then FLAGS+=(--topic "$TOPIC"); fi
           npx tsx scripts/content/write-article.ts "${FLAGS[@]}"
       - name: Re-run the published-guide tests
-        if: ${{ github.event_name != 'push' && !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
         run: npx vitest run tests/learn-articles.test.ts
       - name: Commit to main
-        if: ${{ github.event_name != 'push' && !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
         env:
           TITLE: ${{ steps.write.outputs.title }}
         run: |

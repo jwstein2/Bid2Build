@@ -16,7 +16,7 @@ pricing topic (labor rate, overhead, change orders...). The plan in `topicPlan()
      length and structure limits.
    - A second Haiku pass acts as a senior estimator/editor and rejects wrong advice, math errors, code or
      legal claims stated as universal, and filler.
-   - Problems go back for one rewrite. If it still fails, **nothing is published** and the run fails
+   - Problems go back for up to two rewrites. If it still fails, **nothing is published** and the run fails
      (GitHub emails you). The next run tries again.
 4. The guide is appended to `src/lib/learn/generated-articles.json`, committed to `main`, and Netlify
    deploys it. It appears on `/learn`, in the sitemap, on its trade page under "<Trade> pricing guides",
