@@ -9,6 +9,7 @@ import { pickerTrades } from "@/lib/trades/picker";
 import { trades } from "@/lib/trades/catalog";
 import { plans, site } from "@/lib/site";
 import { AccountCtas } from "@/components/account/account-ctas";
+import { ReplayTourButton } from "@/components/onboarding/replay-tour-button";
 import { getAccountStatus } from "@/lib/account/server";
 import { accountCtas, creditBadge, MEMBER_TAGLINE, type AccountStatus } from "@/lib/account/status";
 
@@ -68,6 +69,9 @@ export default async function HomePage() {
               Turn rough estimates into organized, customer-ready proposals for your trade. Price with markup or margin, choose what your customer sees, and download a branded PDF.
             </p>
             <AccountCtas status={status} tone="dark" arrow howHref="#how-it-works" className="mt-8" />
+            <ReplayTourButton testId="watch-demo" className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-lg px-1 text-sm font-semibold text-cyan underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan">
+              Watch Demo <span className="font-normal text-[#B8C6D4]">(3 min)</span>
+            </ReplayTourButton>
             <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[#D5DFE9]">
               {(visitor ? VISITOR_POINTS : MEMBER_POINTS).map((x) => (
                 <li key={x} className="flex items-center gap-1.5"><Check className="h-4 w-4 text-teal" aria-hidden />{x}</li>

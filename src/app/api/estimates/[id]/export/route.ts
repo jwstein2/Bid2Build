@@ -7,6 +7,7 @@ import { createAdminClient, createClient, getUser } from "@/lib/supabase/server"
 import { fail, json, logError, rateLimit, sameOrigin } from "@/lib/http/api";
 import { captureObservation } from "@/lib/market/server";
 import type { CreditSource } from "@/lib/credits/status";
+import { exportReadiness } from "@/lib/estimate/readiness";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -19,7 +20,7 @@ export const maxDuration = 60;
  *     and creates the version (all-or-nothing in one database transaction)
  *  4. store the PDF privately and return a short-lived signed URL
  */
-export async function POST(_req: Request, ctx: RouteContext<"/api/estimates/[id]/export">) {
+export async function POST(req: Request, ctx: RouteContext<"/api/estimates/[id]/export">) {
   const { id } = await ctx.params;
   if (!(await sameOrigin())) return fail(403, "bad_origin", "Cross-site request refused.");
   if (!(await rateLimit("export", 20, 60_000))) return fail(429, "rate_limited", "Too many exports at once. Please wait a moment.");
@@ -33,9 +34,18 @@ export async function POST(_req: Request, ctx: RouteContext<"/api/estimates/[id]
   const { business } = await loadBusiness(supabase, user.id, { signedLogo: false });
   const { estimate, proposalConfig } = data;
 
+  // "Send via My Email" asks for the PDF bytes so the browser can attach them to a share sheet
+  // without fetching the private storage URL. Same checks, same finalize_bid, same credit rules.
+  const body = (await req.json().catch(() => null)) as { deliver?: unknown } | null;
+  const deliverBytes = body?.deliver === "bytes";
+
   const totals = computeEstimate(estimate);
   if (totals.issues.length) return fail(422, "invalid_estimate", "Fix the highlighted entries before exporting.", { issues: totals.issues.slice(0, 5) });
   if (!estimate.items.length) return fail(422, "empty_estimate", "Add at least one line item before exporting.");
+  // The same readiness check the builder runs, so a proposal with missing required details
+  // never reaches finalize_bid and never consumes a bid credit.
+  const missing = exportReadiness(estimate, business, totals);
+  if (missing.length) return fail(422, "not_ready", missing[0].message, { missing: missing.map(({ code, step, fieldId, message }) => ({ code, step, fieldId, message })) });
 
   const admin = createAdminClient();
   let logo: { data: Buffer; format: "png" } | null = null;
@@ -102,7 +112,7 @@ export async function POST(_req: Request, ctx: RouteContext<"/api/estimates/[id]
   return json({
     url,
     // Fallback: if storage failed, deliver the bytes directly so the user still gets their PDF.
-    pdfBase64: url ? undefined : pdf.toString("base64"),
+    pdfBase64: url && !deliverBytes ? undefined : pdf.toString("base64"),
     filename,
     versionId: r.version_id,
     versionNumber: r.version_number,

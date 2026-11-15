@@ -102,7 +102,7 @@ export default async function PricingPage() {
 function Plan({ name, current, price, per, billing, note, features, highlight, children }: { name: string; current?: boolean; price: string; per: string; billing: string; note?: React.ReactNode; features: string[]; highlight?: boolean; children: React.ReactNode }) {
   return (
     <div className={`relative flex flex-col rounded-2xl border bg-surface p-6 ${highlight ? "border-accent shadow-lg ring-2 ring-accent/30" : "border-line"}`}>
-      {highlight && <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-accent px-3 py-1 text-xs font-bold text-navy">Recommended</span>}
+      {highlight && <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-accent px-3 py-1 text-xs font-bold text-navy">Best value</span>}
       <h2 className="flex items-center justify-between gap-2 font-display text-lg font-bold">{name}{current && <span className="shrink-0 whitespace-nowrap rounded-full bg-ok/10 px-2 py-0.5 text-xs font-semibold text-ok" data-testid="current-plan">Your plan</span>}</h2>
       <p className="mt-3 whitespace-nowrap"><span className="font-display text-4xl font-extrabold">{price}</span><span className={`font-semibold text-muted ${per.startsWith("/") ? "" : "ml-1.5"}`}>{per}</span></p>
       <p className="mt-1 text-sm font-semibold text-ink">{billing}</p>

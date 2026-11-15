@@ -1,5 +1,5 @@
 "use client";
-import { ArrowLeft, ArrowRight, Check, CloudOff, Download, Eye, EyeOff, Loader2, RotateCcw, Undo2 } from "lucide-react";
+import { AlertCircle, ArrowLeft, ArrowRight, Check, CloudOff, Download, Eye, EyeOff, Loader2, Mail, RotateCcw, Undo2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
@@ -11,6 +11,7 @@ import { defaultBusinessProfile, type BusinessProfile, type ProposalConfig } fro
 import { deleteLocalDraft, loadLocalBusiness, saveLocalBusiness, saveLocalDraft, clearLocalBusiness, loadLocalStep, saveLocalStep } from "@/lib/drafts/local";
 import { isBuilderStep, isCompanyComplete, resolveStartStep, type BuilderStep } from "@/lib/estimate/workflow";
 import { tradeName } from "@/lib/trades/catalog";
+import { isDefaultTitle } from "@/lib/estimate/factory";
 import { cn } from "@/lib/cn";
 import { exportMessage, type CreditSource, type CreditStatus } from "@/lib/credits/status";
 import { CreditSummary, UpgradeLink } from "../billing/credits";
@@ -28,6 +29,11 @@ import { ScopeStep } from "./scope-step";
 import { reducer } from "./state";
 import { Workspace } from "./workspace";
 import { WashingJobPanel, isWashingEstimate } from "./calculators/washing-job-panel";
+import { SendEmailDialog, type SendPhase } from "./send-email";
+import { exportReadiness, type ReadinessIssue } from "@/lib/estimate/readiness";
+import { stepStatuses } from "@/lib/estimate/step-status";
+import { buildShareEmail } from "@/lib/proposal/share-email";
+import { displayPhone } from "@/lib/proposal/customer-text";
 
 type Biz = BusinessProfile & { logoPath?: string | null };
 type Step = BuilderStep;
@@ -52,9 +58,13 @@ const STEPS: { id: Step; label: string; next: string }[] = [
   { id: "proposal", label: "Proposal", next: "Preview & download" },
 ];
 
-function downloadBase64(b64: string, filename: string) {
+function base64File(b64: string, filename: string): File {
   const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
-  const url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
+  return new File([bytes], filename, { type: "application/pdf" });
+}
+
+function downloadBase64(b64: string, filename: string) {
+  const url = URL.createObjectURL(base64File(b64, filename));
   const a = Object.assign(document.createElement("a"), { href: url, download: filename });
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
@@ -75,6 +85,10 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
     return resolveStartStep({ companyComplete: isCompanyComplete(biz), estimate: initialEstimate, saved: isBuilderStep(saved) ? saved : null, requested: initialStep });
   });
   const [customerView, setCustomerView] = useState(false);
+  // Steps opened in this session: an opened step is "visited", never "complete" on its own.
+  const [visited, setVisited] = useState<ReadonlySet<Step>>(() => new Set<Step>());
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- records the step being shown
+  useEffect(() => { setVisited((v) => (v.has(step) ? v : new Set([...v, step]))); }, [step]);
   const [save, setSave] = useState<SaveState>(mode === "cloud" ? "saved" : "local");
   const [credits, setCredits] = useState<CreditStatus | null>(null);
   const [finalizedHere, setFinalizedHere] = useState(false);
@@ -83,6 +97,12 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
   const [authOpen, setAuthOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [missing, setMissing] = useState<ReadinessIssue[]>([]);
+  const [sendOpen, setSendOpen] = useState(false);
+  const [sendPhase, setSendPhase] = useState<SendPhase>({ k: "preparing" });
+  const [sendKey, setSendKey] = useState(0);
+  // One export at a time, across Download PDF and Send via My Email (double taps included).
+  const exportLock = useRef(false);
   const [cloudMode, setCloudMode] = useState(mode === "cloud");
   const lib = useLibrary(Boolean(user));
   const estimate = state.estimate;
@@ -186,29 +206,88 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
   // eslint-disable-next-line react-hooks/set-state-in-effect -- fetches server credit balances on mount
   useEffect(() => { void refreshCredits(); }, [refreshCredits]);
 
-  const doExport = useCallback(async () => {
+  const readiness = useMemo(() => exportReadiness(estimate, business, totals), [estimate, business, totals]);
+
+  /** Jump to the step (and field) that holds a missing detail. */
+  const fixIssue = useCallback((i: ReadinessIssue) => {
+    setStep(i.step); setCustomerView(false);
+    if (i.fieldId) {
+      const id = i.fieldId;
+      // Wait for the step to render, then bring the field into view and focus it.
+      setTimeout(() => { const el = document.getElementById(id); el?.scrollIntoView({ block: "center", behavior: "smooth" }); el?.focus({ preventScroll: true }); }, 60);
+    } else window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  /**
+   * The one finalize + export path behind Download PDF and Send via My Email. The export API applies
+   * the bid-credit rules (an unchanged, already-finalized proposal is never charged again), so
+   * switching between the two actions never uses an extra credit. Returns null when it stopped.
+   */
+  const runExport = useCallback(async (deliver: "download" | "bytes"): Promise<{ file?: File; message: string } | { error: string } | null> => {
     setExportMsg(null);
-    if (!user) { setAuthOpen(true); return; }
-    if (!(user.verified ?? user.emailVerified)) { setExportMsg({ tone: "warn", text: "Please verify your email address before exporting." }); return; }
-    if (totals.issues.length) { setStep("estimate"); setExportMsg({ tone: "danger", text: "Fix the highlighted entries before exporting." }); return; }
-    if (!estimate.items.length) { setStep("estimate"); setExportMsg({ tone: "warn", text: "Add at least one line item before exporting." }); return; }
+    // Missing details first, so nobody signs up only to be told the proposal isn't ready yet.
+    if (readiness.length) { setMissing(readiness); fixIssue(readiness[0]); return null; }
+    setMissing([]);
+    if (!user) { setAuthOpen(true); return null; }
+    if (!(user.verified ?? user.emailVerified)) { setExportMsg({ tone: "warn", text: "Please verify your email address before exporting." }); return null; }
+    if (exportLock.current) return null;
+    exportLock.current = true;
     setExporting(true);
     try {
-      if (!(await saveCloud())) { setExportMsg({ tone: "danger", text: "We couldn't save your latest changes, so we didn't export. Check your connection and try again." }); return; }
-      const r = await fetch(`/api/estimates/${estimate.id}/export`, { method: "POST" });
+      if (!(await saveCloud())) return { error: "We couldn't save your latest changes, so we didn't export. Check your connection and try again." };
+      const r = await fetch(`/api/estimates/${estimate.id}/export`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ deliver }) }).catch(() => null);
+      if (!r) return { error: "We couldn't reach Built2Bid. Check your connection and try again. No bid credit was used." };
       const data = await r.json().catch(() => ({}));
-      if (r.status === 402) { await refreshCredits(); setUpgradeOpen(true); return; }
-      if (r.status === 401) { setAuthOpen(true); return; }
-      if (!r.ok) { setExportMsg({ tone: "danger", text: data?.error?.message ?? "Export failed. Please try again." }); return; }
-      if (data.url) window.location.assign(data.url);
-      else if (data.pdfBase64) downloadBase64(data.pdfBase64, data.filename);
-      setExportMsg({ tone: "ok", text: exportMessage(data.creditSource as CreditSource, data.versionNumber, data.credits) });
+      if (r.status === 402) { await refreshCredits(); setUpgradeOpen(true); return null; }
+      if (r.status === 401) { setAuthOpen(true); return null; }
+      if (r.status === 422 && Array.isArray(data?.error?.missing) && data.error.missing.length) {
+        setMissing(data.error.missing as ReadinessIssue[]); fixIssue(data.error.missing[0] as ReadinessIssue); return null;
+      }
+      if (!r.ok) return { error: data?.error?.message ?? "Export failed. Please try again." };
+      const message = exportMessage(data.creditSource as CreditSource, data.versionNumber, data.credits);
       setFinalizedHere(true);
       await refreshCredits();
+      if (deliver === "bytes") {
+        if (!data.pdfBase64) return { error: "We couldn't prepare the PDF for sharing. Please try again." };
+        return { file: base64File(data.pdfBase64, data.filename), message };
+      }
+      if (data.url) window.location.assign(data.url);
+      else if (data.pdfBase64) downloadBase64(data.pdfBase64, data.filename);
+      return { message };
     } finally {
+      exportLock.current = false;
       setExporting(false);
     }
-  }, [user, totals.issues.length, estimate.items.length, estimate.id, saveCloud, refreshCredits]);
+  }, [user, readiness, fixIssue, estimate.id, saveCloud, refreshCredits]);
+
+  const doExport = useCallback(async () => {
+    const res = await runExport("download");
+    if (!res) return;
+    if ("error" in res) setExportMsg({ tone: "danger", text: res.error });
+    else setExportMsg({ tone: "ok", text: res.message });
+  }, [runExport]);
+
+  const prepareSend = useCallback(async () => {
+    setSendPhase({ k: "preparing" });
+    const res = await runExport("bytes");
+    if (!res) { setSendOpen(false); return; }
+    if ("error" in res) { setSendPhase({ k: "error", message: res.error }); return; }
+    setSendPhase({ k: "ready", file: res.file!, note: res.message });
+  }, [runExport]);
+
+  const startSend = useCallback(() => {
+    // Checks that need another screen (sign-in, missing details) run before the dialog opens.
+    if (!user || !(user.verified ?? user.emailVerified) || readiness.length) { void runExport("bytes"); return; }
+    if (exportLock.current) return;
+    setSendKey((k) => k + 1);
+    setSendOpen(true);
+    void prepareSend();
+  }, [user, readiness.length, runExport, prepareSend]);
+
+  const shareEmail = useMemo(() => buildShareEmail({
+    customerName: estimate.customer.name, customerEmail: estimate.customer.email, projectTitle: estimate.title,
+    companyName: business.companyName, contactName: business.contactName, phone: displayPhone(business.phone),
+  }), [estimate.customer.name, estimate.customer.email, estimate.title, business.companyName, business.contactName, business.phone]);
 
   // Resume an export that was interrupted by sign-in.
   const autoRan = useRef(false);
@@ -219,14 +298,11 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
     }
   }, [autoExport, user, cloudMode, doExport]);
 
-  const realItems = estimate.items.filter((i) => !i.isExample).length;
-  const complete: Record<Step, boolean> = {
-    company: isCompanyComplete(business),
-    project: Boolean(estimate.customer.name?.trim()),
-    estimate: realItems > 0 && totals.issues.length === 0,
-    scope: Boolean(config.scopeOfWork.trim()) || config.exclusionList.items.some((i) => i.status === "approved"),
-    proposal: false,
-  };
+  const alreadyFinalized = finalizedHere || estimate.status === "finalized";
+  // Issues drop off the notice as soon as they are fixed.
+  const missingNow = missing.filter((m) => readiness.some((r) => r.code === m.code));
+  const missingCodes = new Set<string>(missingNow.map((m) => m.code));
+  const status = stepStatuses({ estimate, business, config, totals, visited, finalized: alreadyFinalized });
   const stepIndex = STEPS.findIndex((s) => s.id === step);
   // On narrow screens the step strip scrolls sideways: keep the current step in view.
   const stepsRef = useRef<HTMLOListElement>(null);
@@ -246,7 +322,6 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
   }, []);
   const goTo = (s: Step) => { setStep(s); setCustomerView(false); window.scrollTo({ top: 0, behavior: "smooth" }); };
 
-  const alreadyFinalized = finalizedHere || estimate.status === "finalized";
   const lastTrash = state.trash[state.trash.length - 1];
 
   return (
@@ -256,14 +331,16 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
         <div className="mx-auto flex max-w-[1400px] flex-wrap items-center gap-x-4 gap-y-2 px-3 py-2 sm:px-5">
           <div className="flex shrink-0 items-center gap-2">
             <Link href={user ? "/dashboard" : "/"} className="grid h-9 w-9 place-items-center rounded-md text-muted hover:bg-black/5" aria-label={user ? "Back to dashboard" : "Back to home"}><ArrowLeft className="h-4 w-4" /></Link>
-            <span className="hidden sm:block"><Logo className="text-base" /></span>
+            <span className="hidden lg:block"><Logo className="text-base" /></span>
           </div>
           <div className="min-w-0 flex-1">
             <label htmlFor="est-title" className="sr-only">Project title</label>
-            <input id="est-title" value={estimate.title} onChange={(e) => dispatch({ type: "patch", patch: { title: e.target.value } })} className="cell w-full max-w-md truncate font-display text-lg font-bold" placeholder="Project title" />
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 px-1.5 text-xs text-muted">
+            <input id="est-title" value={estimate.title} onChange={(e) => dispatch({ type: "patch", patch: { title: e.target.value } })}
+              // Starter title ("Decks & Porches Project"): select it on focus so typing replaces it.
+              onFocus={(ev) => { if (isDefaultTitle(estimate)) { const el = ev.currentTarget; requestAnimationFrame(() => el.select()); } }} className="cell w-full max-w-md truncate font-display text-lg font-bold" placeholder="Project title" />
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 px-1.5 text-xs text-muted [&>*]:whitespace-nowrap">
               <span>{estimate.customer.name || <button className="underline" onClick={() => setStep("project")}>Add customer</button>}</span>
-              <span className="hidden sm:inline">{estimate.trades.map(tradeName).join(" + ")}</span>
+              <span className="hidden max-w-[16rem] truncate sm:inline">{estimate.trades.map(tradeName).join(" + ")}</span>
               {(estimate.location.city || estimate.location.zip) && <span className="hidden md:inline">{[estimate.location.city, estimate.location.state, estimate.location.zip].filter(Boolean).join(", ")}</span>}
               <span className="hidden md:inline">#{estimate.estimateNumber}</span>
               <span className="hidden lg:inline">{estimate.estimateDate}{estimate.expirationDate ? ` → ${estimate.expirationDate}` : ""}</span>
@@ -271,7 +348,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
               <SaveBadge state={save} signedIn={Boolean(user)} />
             </div>
           </div>
-          <div className="flex w-full items-start justify-end gap-2 sm:w-auto">
+          <div className="flex w-full flex-wrap items-start justify-end gap-2 lg:w-auto lg:flex-nowrap">
             {credits && !credits.unlimited && <UpgradeLink compact className="border-transparent text-xs sm:text-sm" />}
             {step === "estimate" && (
               <Button size="sm" variant="ghost" onClick={() => setCustomerView(!customerView)} aria-pressed={customerView} className="hidden md:inline-flex">
@@ -279,6 +356,9 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
               </Button>
             )}
             <Button size="sm" variant="secondary" onClick={() => setPreviewOpen(true)}><Eye className="h-4 w-4" /> <span className="hidden sm:inline">Preview My Bid</span><span className="sm:hidden">Preview</span></Button>
+            <Button size="sm" variant="secondary" onClick={startSend} disabled={exporting} aria-label="Send via My Email" data-testid="send-email-header">
+              <Mail className="h-4 w-4" aria-hidden /> <span className="max-[419px]:hidden"><span className="sm:hidden">Email</span><span className="hidden sm:inline xl:hidden">Send by email</span><span className="hidden xl:inline">Send via My Email</span></span>
+            </Button>
             <div className="flex flex-col items-end">
               <Button size="sm" variant="accent" onClick={doExport} disabled={exporting} aria-label="Download PDF">
                 {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} <span><span className="max-[360px]:hidden">Download </span>PDF</span>
@@ -298,11 +378,15 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
                   aria-current={step === s.id ? "step" : undefined}
                   className={cn("flex min-h-11 items-center gap-2 whitespace-nowrap border-b-2 px-3 text-sm font-semibold", step === s.id ? "border-navy text-navy" : "border-transparent text-muted hover:text-ink")}
                 >
-                  <span className={cn("grid h-5 w-5 place-items-center rounded-full text-[11px] font-bold", complete[s.id] ? "bg-teal text-navy" : step === s.id ? "bg-navy text-white" : "bg-black/5 text-ink-soft")} aria-hidden>
-                    {complete[s.id] ? <Check className="h-3 w-3" strokeWidth={3} /> : i + 1}
+                  <span className={cn("grid h-5 w-5 place-items-center rounded-full text-[11px] font-bold",
+                    status[s.id] === "complete" ? "bg-teal text-navy"
+                      : status[s.id] === "needs_attention" && step !== s.id ? "bg-warn-tint text-warn ring-1 ring-warn/40"
+                        : step === s.id ? "bg-navy text-white" : "bg-black/5 text-ink-soft")} aria-hidden>
+                    {status[s.id] === "complete" ? <Check className="h-3 w-3" strokeWidth={3} /> : status[s.id] === "needs_attention" && step !== s.id ? <AlertCircle className="h-3 w-3" strokeWidth={3} /> : i + 1}
                   </span>
                   {s.label}
-                  {complete[s.id] && <span className="sr-only">(done)</span>}
+                  {status[s.id] === "complete" && <span className="sr-only">(done)</span>}
+                  {status[s.id] === "needs_attention" && <span className="sr-only">(needs details)</span>}
                 </button>
               </li>
             ))}
@@ -316,6 +400,19 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
             <span className="flex items-center justify-between gap-3">{exportMsg.text}<button onClick={() => setExportMsg(null)} className="text-xs underline">Dismiss</button></span>
           </Notice>
         )}
+        {missingNow.length > 0 && (
+          <Notice tone="warn" className="mb-4" title="A few details are needed before you download">
+            <ul className="mt-1 space-y-1" data-testid="export-missing">
+              {missingNow.map((m) => (
+                <li key={m.code} className="flex flex-wrap items-center justify-between gap-x-3">
+                  <span>{m.message}</span>
+                  <button type="button" className="min-h-9 text-sm font-semibold text-brand underline" onClick={() => fixIssue(m)}>{m.step === "company" ? "Go to company" : m.step === "project" ? "Go to customer & project" : "Go to estimate"}</button>
+                </li>
+              ))}
+            </ul>
+            <button type="button" className="mt-1 text-xs underline" onClick={() => setMissing([])}>Dismiss</button>
+          </Notice>
+        )}
         {user && !(user.verified ?? user.emailVerified) && <Notice tone="warn" className="mb-4" title="Verify your email">Check your inbox for the verification link to unlock PDF downloads.</Notice>}
         {lastTrash && (
           <div className="on-dark fixed bottom-20 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-full bg-ink px-4 py-2 text-sm text-white shadow-lg lg:bottom-6" role="status">
@@ -324,8 +421,8 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
           </div>
         )}
 
-        {step === "company" && <CompanyStep business={business} onChange={setBusiness} signedIn={Boolean(user)} />}
-        {step === "project" && <ProjectStep estimate={estimate} dispatch={dispatch} signedIn={Boolean(user)} />}
+        {step === "company" && <CompanyStep business={business} onChange={setBusiness} signedIn={Boolean(user)} missing={missingCodes} />}
+        {step === "project" && <ProjectStep estimate={estimate} dispatch={dispatch} signedIn={Boolean(user)} missing={missingCodes} />}
         {step === "estimate" && (customerView ? (
           <div className="rounded-xl bg-[#e4eaf1] p-3 sm:p-6">
             <p className="mb-3 text-center text-xs font-semibold uppercase tracking-wider text-muted">Customer view: this is all your customer sees</p>
@@ -347,7 +444,10 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
             {stepIndex < STEPS.length - 1 ? (
               <Button size="lg" onClick={() => goTo(STEPS[stepIndex + 1].id)}>{STEPS[stepIndex].next} <ArrowRight className="h-4 w-4" /></Button>
             ) : (
-              <Button size="lg" variant="accent" onClick={() => setPreviewOpen(true)}><Eye className="h-4 w-4" /> Preview &amp; download</Button>
+              <span className="flex flex-wrap justify-end gap-2">
+                <Button size="lg" variant="secondary" onClick={startSend} disabled={exporting}><Mail className="h-4 w-4" aria-hidden /> Send via My Email</Button>
+                <Button size="lg" variant="accent" onClick={() => setPreviewOpen(true)}><Eye className="h-4 w-4" /> Preview &amp; download</Button>
+              </span>
             )}
           </div>
         </div>
@@ -369,9 +469,11 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
         <div className="-mx-6 bg-[#e4eaf1] p-3 sm:p-5"><ProposalView doc={doc} /></div>
         <div className="mt-4 flex flex-wrap justify-end gap-2">
           <Button variant="secondary" onClick={() => { setPreviewOpen(false); setStep("proposal"); }}>Customize proposal</Button>
+          <Button variant="secondary" onClick={() => { setPreviewOpen(false); startSend(); }}><Mail className="h-4 w-4" aria-hidden /> Send via My Email</Button>
           <Button variant="accent" onClick={() => { setPreviewOpen(false); void doExport(); }}><Download className="h-4 w-4" /> Download PDF</Button>
         </div>
       </Modal>
+      <SendEmailDialog key={sendKey} open={sendOpen} onOpenChange={(o) => { if (!o && sendPhase.k === "preparing") return; setSendOpen(o); }} phase={sendPhase} email={shareEmail} onRetry={() => void prepareSend()} />
       <AuthDialog open={authOpen} onOpenChange={setAuthOpen} next={`/builder?draft=${estimate.id}&export=1`} onVerified={() => { window.location.assign(`/builder?draft=${estimate.id}&export=1`); }} />
       <UpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} nextCycleAt={credits?.nextCycleAt} />
     </div>

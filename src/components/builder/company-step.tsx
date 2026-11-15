@@ -23,7 +23,7 @@ const IMPORT_FIELDS: { key: keyof Imported; label: string; target: keyof Biz }[]
   { key: "secondaryColor", label: "Secondary color", target: "secondaryColor" },
 ];
 
-export function CompanyStep({ business, onChange, signedIn, onDone }: { business: Biz; onChange: (b: Biz) => void; signedIn: boolean; onDone?: () => void }) {
+export function CompanyStep({ business, onChange, signedIn, onDone, missing }: { business: Biz; onChange: (b: Biz) => void; signedIn: boolean; onDone?: () => void; /** Readiness codes still blocking download (shown inline). */ missing?: ReadonlySet<string> }) {
   const [hasSite, setHasSite] = useState<boolean | null>(business.website ? true : null);
   const [url, setUrl] = useState(business.website ?? "");
   const [importing, setImporting] = useState(false);
@@ -148,7 +148,7 @@ export function CompanyStep({ business, onChange, signedIn, onDone }: { business
         <h3 className="font-bold">Business information</h3>
         <p className="text-sm text-muted">Fields marked <span className="text-danger">*</span> are required for a professional proposal. Everything appears only on proposals you create.</p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <Field label="Company name" required htmlFor="b-name"><input id="b-name" className="field" value={business.companyName} onChange={(e) => set({ companyName: e.target.value })} autoComplete="organization" /></Field>
+          <Field label="Company name" required htmlFor="b-name" error={missing?.has("company_name") ? "Add your company name before downloading this proposal." : undefined}><input id="b-name" className="field" value={business.companyName} onChange={(e) => set({ companyName: e.target.value })} autoComplete="organization" /></Field>
           <Field label="Contact name" required htmlFor="b-contact"><input id="b-contact" className="field" value={business.contactName ?? ""} onChange={(e) => set({ contactName: e.target.value })} autoComplete="name" /></Field>
           <Field label="Business email" required htmlFor="b-email" hint="Shown on proposals so customers can reach you."><input id="b-email" type="email" className="field" value={business.email ?? ""} onChange={(e) => set({ email: e.target.value })} autoComplete="email" /></Field>
           <Field label="Phone number" required htmlFor="b-phone"><input id="b-phone" type="tel" className="field" value={business.phone ?? ""} onChange={(e) => set({ phone: e.target.value })} autoComplete="tel" /></Field>
