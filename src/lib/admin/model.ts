@@ -226,7 +226,7 @@ export interface RevenueModel {
 }
 
 /** Was this subscription paid for at time T? Unknown start is treated as "before T" and counted in unknownStart. */
-function payingAt(f: AccountFact, T: number) {
+export function payingAt(f: AccountFact, T: number) {
   if (!f.sub || !f.everPaid) return false;
   const start = f.paidStartedAt ? t(f.paidStartedAt) : -Infinity;
   const end = f.paidEndedAt ? t(f.paidEndedAt) : Infinity;
@@ -512,3 +512,92 @@ export function usageModel(sc: Scoped, facts: AccountFact[], range: Range, now: 
 }
 
 export type { Channel, AccountClass };
+
+// ---------------------------------------------------------------------------------------------
+// Activation timing, repeat usage and signup cohorts (business level where it matters)
+// ---------------------------------------------------------------------------------------------
+const median = (xs: number[]) => { if (!xs.length) return null; const s = [...xs].sort((a, b) => a - b); const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+
+export interface ActivationTiming {
+  cohort: number;
+  medianHoursToFirstBid: number | null; medianHoursToFinalized: number | null; firstBidSample: number; finalizedSample: number;
+  firstBidWithin24h: Ratio; finalizedWithin24h: Ratio;
+  /** Second bid within 30 days of the first, among accounts whose first bid is at least 30 days old. */
+  secondBid30d: Ratio;
+  repeat30: Ratio; repeat60: Ratio;
+  /** Median hours from a signing request to its signature (signed requests created in the window). */
+  medianHoursToSign: number | null; signSample: number;
+}
+
+/**
+ * Time from signup to value for accounts that signed up in the window. Uses real timestamps only.
+ * Observation windows: an account counts toward a "within N days" denominator only once it has been
+ * observable for N days, so recent signups never drag a rate down.
+ */
+export function activationTiming(sc: Scoped, facts: AccountFact[], start: number, end: number, now: Date): ActivationTiming {
+  const nowMs = now.getTime();
+  const c = facts.filter((f) => inWindow(f.createdAt, start, end));
+  const h = (a: string | null, b: string) => Math.max(0, t(a) - t(b)) / 3_600_000;
+  const firstBidH = c.filter((f) => f.firstEstimateAt).map((f) => h(f.firstEstimateAt, f.createdAt));
+  const finalH = c.filter((f) => f.firstFinalizedAt).map((f) => h(f.firstFinalizedAt, f.createdAt));
+  const old24 = c.filter((f) => t(f.createdAt) <= nowMs - DAY);
+  const bidsByUser = new Map<string, number[]>();
+  for (const e of sc.d.estimates) { const a = bidsByUser.get(e.user_id); if (a) a.push(t(e.created_at)); else bidsByUser.set(e.user_id, [t(e.created_at)]); }
+  for (const a of bidsByUser.values()) a.sort((x, y) => x - y);
+  const secondWithin = (f: AccountFact, days: number) => { const b = bidsByUser.get(f.id) ?? []; return b.length > 1 && b[1] - b[0] <= days * DAY; };
+  const eligible = (days: number) => facts.filter((f) => inWindow(f.createdAt, start, end) && f.firstEstimateAt && t(f.firstEstimateAt) <= nowMs - days * DAY);
+  // Repeat usage: any bid action 23–37 (≈30) or 53–67 (≈60) days after signup, among accounts old enough.
+  const acted = (f: AccountFact, from: number, to: number) => (bidsByUser.get(f.id) ?? []).some((x) => x >= t(f.createdAt) + from * DAY && x <= t(f.createdAt) + to * DAY);
+  const old = (days: number) => c.filter((f) => t(f.createdAt) <= nowMs - days * DAY && f.firstEstimateAt);
+  const signed = sc.d.signingRequests.filter((r) => r.status === "signed" && r.signed_at && inWindow(r.created_at, start, end)).map((r) => h(r.signed_at, r.created_at));
+  return {
+    cohort: c.length,
+    medianHoursToFirstBid: median(firstBidH), medianHoursToFinalized: median(finalH), firstBidSample: firstBidH.length, finalizedSample: finalH.length,
+    firstBidWithin24h: ratio(old24.filter((f) => f.firstEstimateAt && h(f.firstEstimateAt, f.createdAt) <= 24).length, old24.length),
+    finalizedWithin24h: ratio(old24.filter((f) => f.firstFinalizedAt && h(f.firstFinalizedAt, f.createdAt) <= 24).length, old24.length),
+    secondBid30d: ratio(eligible(30).filter((f) => secondWithin(f, 30)).length, eligible(30).length),
+    repeat30: ratio(old(37).filter((f) => acted(f, 23, 37)).length, old(37).length),
+    repeat60: ratio(old(67).filter((f) => acted(f, 53, 67)).length, old(67).length),
+    medianHoursToSign: median(signed), signSample: signed.length,
+  };
+}
+
+export interface CohortRow { month: string; label: string; registered: number; firstFinalized: number; secondBid: number; paid: number; retainedPaid: number; ageDays: number; immature: boolean }
+
+/** Signup-month cohorts (UTC months), newest first. A cohort under 60 days old is flagged immature. */
+export function signupCohorts(sc: Scoped, facts: AccountFact[], now: Date, months = 12): CohortRow[] {
+  const bids = new Map<string, number>(); for (const e of sc.d.estimates) bids.set(e.user_id, (bids.get(e.user_id) ?? 0) + 1);
+  const rows = new Map<string, AccountFact[]>();
+  for (const f of facts) { const k = f.createdAt.slice(0, 7); const a = rows.get(k); if (a) a.push(f); else rows.set(k, [f]); }
+  return [...rows.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1)).slice(0, months).map(([month, fs]) => {
+    const startMs = Date.parse(`${month}-01T00:00:00Z`);
+    const ageDays = Math.floor((now.getTime() - startMs) / DAY);
+    return {
+      month, label: new Date(startMs).toLocaleDateString("en-US", { month: "short", year: "numeric", timeZone: "UTC" }),
+      registered: fs.length, firstFinalized: fs.filter((f) => f.firstFinalizedAt).length, secondBid: fs.filter((f) => (bids.get(f.id) ?? 0) > 1).length,
+      paid: fs.filter((f) => f.everPaid).length, retainedPaid: fs.filter((f) => f.paying).length, ageDays, immature: ageDays < 60,
+    };
+  });
+}
+
+export interface LandingRow { path: string; signups: number; firstBid: number; activated: number; paid: number; activation: Ratio; paidRate: Ratio }
+
+/** First-touch landing page → value, for accounts that signed up in the window. */
+export function landingReport(facts: AccountFact[], start: number, end: number): LandingRow[] {
+  const m = new Map<string, AccountFact[]>();
+  for (const f of facts) if (inWindow(f.createdAt, start, end)) { const k = f.landing ?? "(not recorded)"; const a = m.get(k); if (a) a.push(f); else m.set(k, [f]); }
+  return [...m.entries()].map(([path, fs]) => {
+    const activated = fs.filter((f) => f.firstFinalizedAt).length, paid = fs.filter((f) => f.everPaid).length;
+    return { path, signups: fs.length, firstBid: fs.filter((f) => f.firstEstimateAt).length, activated, paid, activation: ratio(activated, fs.length), paidRate: ratio(paid, fs.length) };
+  }).sort((a, b) => b.paid - a.paid || b.activated - a.activated || b.signups - a.signups);
+}
+
+/** Marketing spend rows scaled to the part of their month that falls inside the window. */
+export function prorateCosts(costs: CostRow[], start: number, end: number): CostRow[] {
+  return costsInWindow(costs, start, end).map((c) => {
+    const ms = Date.parse(`${c.period_start}T00:00:00Z`); const d = new Date(ms);
+    const me = Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1);
+    const overlap = Math.max(0, Math.min(me, end + 1) - Math.max(ms, start));
+    return { ...c, amount_usd: (Number(c.amount_usd) || 0) * (overlap / (me - ms)) };
+  });
+}
