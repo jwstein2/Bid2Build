@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Sparkles, CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, Plug, LayoutTemplate, LogOut, X, UserCog, Receipt, Gauge, SquareKanban } from "lucide-react";
+import { Sparkles, CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, Plug, LayoutTemplate, LogOut, X, UserCog, Receipt, Gauge, SquareKanban, CalendarRange } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ButtonLink } from "@/components/ui/button";
 import { Logo } from "./logo";
@@ -11,7 +11,8 @@ import { ReplayTourButton } from "../onboarding/replay-tour-button";
 import { FeatureTourButton } from "../features/tour-buttons";
 import type { FeatureId } from "@/lib/features/registry";
 
-const nav: { href: string; label: string; icon: typeof Library; exact?: boolean; premium?: boolean; feature?: FeatureId }[] = [
+type NavItem = { href: string; label: string; icon: typeof Library; exact?: boolean; premium?: boolean; feature?: FeatureId };
+const NAV: NavItem[] = [
   { href: "/dashboard", label: "Bids", icon: LayoutDashboard, exact: true },
   // Directly below Bids: contractors set this up first and their proposals depend on it.
   { href: "/settings/company", label: "Company profile", icon: Building2 },
@@ -35,7 +36,11 @@ export type CompanyNav = { name: string; links: { href: CompanyHref; label: stri
 const COMPANY_ICONS = { "/company": Gauge, "/company/pipeline": SquareKanban, "/company/users": UserCog, "/company/billing": Receipt } as const;
 const companyExact = (href: CompanyHref) => href === "/company";
 
-export function AppSidebar({ isAdmin, email, company }: { isAdmin: boolean; email: string | null; company?: CompanyNav | null }) {
+/** Projects (schedules) sit right below Bids when project scheduling is switched on. */
+const PROJECTS: NavItem = { href: "/projects", label: "Projects", icon: CalendarRange };
+
+export function AppSidebar({ isAdmin, email, company, projects = false }: { isAdmin: boolean; email: string | null; company?: CompanyNav | null; projects?: boolean }) {
+  const nav: NavItem[] = projects ? [NAV[0], PROJECTS, ...NAV.slice(1)] : NAV;
   const path = usePathname();
   const [open, setOpen] = useState(false);
   // eslint-disable-next-line react-hooks/set-state-in-effect -- close the mobile menu after navigating
