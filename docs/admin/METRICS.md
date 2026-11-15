@@ -1,8 +1,8 @@
 # Owner command center: metric dictionary
 
-Mirrors `src/lib/admin/definitions.ts` (the in-app Definitions page and info tips). Calculations live in `src/lib/admin/model.ts`; tests in `tests/admin-model.test.ts`.
+Mirrors `src/lib/admin/definitions.ts` (the in-app Definitions page and info tips). Calculations live in `src/lib/admin/model.ts` (accounts, revenue, usage), `src/lib/admin/finance.ts` (Business Scorecard) and `src/lib/admin/costs.ts` (Tech Stack & Costs); tests in `tests/admin-model.test.ts` and `tests/admin-finance.test.ts`.
 
-All business metrics default to **genuine accounts only** (see *Genuine account*). The owner toggle in the header (“Genuine accounts only” / “Including test data”) adds internal, test and demo accounts back.
+All business metrics default to **genuine accounts only** (see *Genuine account*). The owner toggle in the header adds internal, test and demo accounts back.
 
 ## Registered account
 
@@ -161,25 +161,106 @@ Where an account first came from, by its first visit's campaign tags, ad click i
 
 ## CAC
 
-Marketing spend ÷ new paying customers from that channel's signups in the window.
+Acquisition spend ÷ new paying customers in the same window. Blended = all spend (advertising + marketing and prospecting tools); channel and campaign CAC use first-touch attribution.
 
-- **Source:** marketing_costs (entered on the Marketing page)
-- **Rules:** Shown only where spend was entered. Cost per activation uses activated businesses instead.
-- **Window:** Selected range (spend months overlapping it)
+- **Source:** marketing_costs (Marketing page) + Tech Stack & Costs (marketing/prospecting, allocated)
+- **Rules:** Monthly spend is prorated to the days inside the window. No number is shown when there are no new paying customers. Cost per activation uses activated businesses instead.
+- **Window:** Selected range
 - **Refresh:** When spend is entered
-- **Limits:** First-touch model; no ad-platform API is connected.
+- **Limits:** First-touch model; no ad-platform API is connected. Sales labor is not measured.
 
 ## Churn (paid)
 
-Paid subscriptions that ended in the window.
+Customer churn: paid subscriptions that ended in the window ÷ paying subscriptions at the start of the window. Revenue churn: MRR lost ÷ MRR at the start.
 
 - **Source:** subscriptions
-- **Rules:** Scheduled cancellations (cancel at period end) are listed separately and are not churn until they end. Free-account inactivity is never churn.
+- **Rules:** Scheduled cancellations (cancel at period end) are listed separately and are not churn until they end. Free-account inactivity and expired complimentary access are never churn.
 - **Window:** Selected range
 - **Refresh:** Live
+- **Limits:** Very small paying base: read as counts, not rates.
+
+## Repeat active customer
+
+An account with two or more bids and a bid action in the last 30 days.
+
+- **Source:** estimates, estimate_versions, signing_requests
+- **Rules:** Not logging in is never churn.
+- **Window:** Last 30 days
+- **Refresh:** Live
+
+## Time to first bid
+
+Median hours from account creation to the first bid started (and, separately, to the first finalized bid).
+
+- **Source:** auth.users, estimates, estimate_versions
+- **Rules:** Accounts that signed up in the window. “Within 24 h / 30 days” rates only count accounts old enough to have had that long.
+- **Window:** Signup cohort
+- **Refresh:** Live
+
+## Revenue
+
+Net cash received: paid Stripe invoices minus refunds in the window.
+
+- **Source:** Stripe API (read-only)
+- **Rules:** Genuine customers only for invoices; refunds cover the whole Stripe account. Complimentary access is never revenue. Shown as unavailable (not zero) when Stripe cannot be reached.
+- **Window:** Selected range
+- **Refresh:** Live on page load
+- **Limits:** Cash basis, not recognized (accrual) revenue.
+
+## ARR run rate
+
+Current list-price MRR × 12.
+
+- **Source:** subscriptions
+- **Rules:** Annual plans contribute $149 ÷ 12 per month, so they are not double counted.
+- **Window:** Right now
+- **Refresh:** Live
+- **Limits:** A run rate, not a forecast or booked revenue.
+
+## Operating profit (provisional)
+
+Revenue minus owner-entered and measured operating costs in the window.
+
+- **Source:** Stripe, Tech Stack & Costs (allocated), Marketing spend, AI usage log
+- **Rules:** Recurring costs are spread over the window (annual ÷ 12); usage charges use their dates; shared tools use the Built2Bid allocation %. Missing costs are listed, never treated as zero.
+- **Window:** Selected range
+- **Refresh:** Live
+- **Limits:** Not accounting profit. Excludes taxes, owner pay and anything not entered.
+
+## Enterprise value (illustrative)
+
+ARR run rate × owner-chosen conservative / base / optimistic revenue multiples; a profit multiple only with 12 months of revenue and complete costs.
+
+- **Source:** subscriptions + owner assumptions
+- **Rules:** Rounded to avoid false precision.
+- **Window:** Right now
+- **Refresh:** Live
+- **Limits:** Not an appraisal. Enterprise value is not equity value (debt and cash change that).
+
+## Infrastructure cost per active business
+
+Infrastructure and AI costs in the window ÷ monthly active businesses.
+
+- **Source:** Tech Stack & Costs, AI usage log, product activity
+- **Rules:** Infrastructure = hosting, database, domain, email, monitoring, AI.
+- **Window:** Selected range / last 30 days
+- **Refresh:** Live
+- **Limits:** Only as complete as the costs entered.
+
+## Infrastructure cost per finalized bid
+
+Infrastructure and AI costs in the window ÷ bids finalized in the window.
+
+- **Source:** Tech Stack & Costs, AI usage log, estimate_versions
+- **Rules:** –
+- **Window:** Selected range
+- **Refresh:** Live
+- **Limits:** Only as complete as the costs entered.
 
 ## Conventions
 
 - Percentages show their numerator and denominator. Denominators under 20 are flagged *small sample*; period-over-period % change is shown only when the previous value is at least 5.
 - Ranges: 7 days and 30 days are bucketed by day, 90 days by week, 12 months by month. Windows end now.
 - “Not connected” means the source is not configured on this deploy. Nothing is estimated or simulated in its place.
+- Every cost carries a source label: Verified actual, Provider API, Imported invoice, Manual entry, Estimated or Unknown. Unknown is never summed as zero.
+- Provider-powered sections show Live / Stale / Unavailable with the time they were read.

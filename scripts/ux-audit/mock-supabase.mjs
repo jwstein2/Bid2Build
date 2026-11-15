@@ -65,6 +65,7 @@ if (process.env.MOCK_COMMAND_CENTER) {
   const seed = commandCenterSeed(USER.id);
   Object.assign(tables, seed.tables);
   rpcs.admin_metrics = seed.adminMetrics;
+  rpcs.admin_platform_usage = { db_bytes: 17_192_627, auth_users: 24, buckets: [{ bucket: "documents", objects: 15, bytes: 1_081_580 }, { bucket: "logos", objects: 3, bytes: 464_838 }], measured_at: new Date().toISOString() };
   // Read-only stand-in for admin_comp_list so the Complimentary Access screen can be screenshotted.
   const compRow = (g, state, name) => ({ id: g.id, email: g.email, user_id: g.user_id, plan: g.plan, state, status: g.status, duration_days: g.plan === "enterprise" ? 90 : 30, included_seats: g.plan === "enterprise" ? 3 : 1, extra_seats: 0, company_id: null, starts_at: g.starts_at, expires_at: g.expires_at, paused_at: null, activated_at: g.starts_at, invite_expires_at: g.invite_expires_at, invite_sent_at: g.created_at, invite_send_count: 1, note: g.note, created_at: g.created_at, revoked_at: null, revoke_reason: null, granted_by_email: USER.email, account_name: name, last_activity_at: null, paid_now: false, converted: false });
   const [g1, g2, g3] = seed.tables.complimentary_grants;
