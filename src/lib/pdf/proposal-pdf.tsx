@@ -1,4 +1,5 @@
 import { Document, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
+import type { ReactNode } from "react";
 import type { ProposalDocument, ProposalSection } from "../proposal/types";
 import { onColor, templateStyle } from "../proposal/templates";
 
@@ -20,7 +21,16 @@ export function pdfSafe(s: string | undefined | null): string {
 
 const T = (s?: string | null) => pdfSafe(s);
 
-export function ProposalPdf({ doc, logo }: { doc: ProposalDocument; logo?: { data: Buffer; format: "png" | "jpg" } | null }) {
+/** Filled into the customer acceptance line of a signed copy (e-signatures). */
+export interface PdfAcceptance { name: string; date: string; image?: Buffer | null; typed?: string | null }
+
+export function ProposalPdf({ doc, logo, acceptance, appendix }: {
+  doc: ProposalDocument;
+  logo?: { data: Buffer; format: "png" | "jpg" } | null;
+  acceptance?: PdfAcceptance | null;
+  /** Extra pages after the proposal (the signature certificate of a signed copy). */
+  appendix?: ReactNode;
+}) {
   const st = templateStyle(doc.template);
   const brand = doc.brand.primaryColor;
   const accent = doc.brand.secondaryColor;
@@ -147,11 +157,20 @@ export function ProposalPdf({ doc, logo }: { doc: ProposalDocument; logo?: { dat
 
           {doc.signature && (
             <View style={{ flexDirection: "row", gap: 30, marginTop: st.sectionGap * 2 }} wrap={false}>
-              {["Customer acceptance", doc.brand.companyName].map((who) => (
+              {["Customer acceptance", doc.brand.companyName].map((who, i) => (
                 <View key={who} style={{ flex: 1 }}>
-                  <View style={{ height: 28, borderBottomWidth: 0.75, borderBottomColor: "#16202e" }} />
+                  <View style={{ height: 28, borderBottomWidth: 0.75, borderBottomColor: "#16202e", flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between" }}>
+                    {i === 0 && acceptance ? (
+                      <>
+                        {acceptance.image
+                          ? <Image src={{ data: acceptance.image, format: "png" }} style={{ height: 26, maxWidth: 160, objectFit: "contain" }} />
+                          : <Text style={{ fontFamily: "Times-Italic", fontSize: fs * 1.5 }}>{T(acceptance.typed ?? acceptance.name)}</Text>}
+                        <Text style={[s.small, { marginBottom: 2 }]}>{T(acceptance.date)}</Text>
+                      </>
+                    ) : null}
+                  </View>
                   <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 3 }}>
-                    <Text style={[s.muted, s.small]}>{T(who)}</Text>
+                    <Text style={[s.muted, s.small]}>{T(i === 0 && acceptance ? `${who}: ${acceptance.name} (electronic signature)` : who)}</Text>
                     <Text style={[s.muted, s.small]}>Date</Text>
                   </View>
                 </View>
@@ -165,6 +184,7 @@ export function ProposalPdf({ doc, logo }: { doc: ProposalDocument; logo?: { dat
           <Text render={({ pageNumber, totalPages }) => `${T(doc.meta.number)}  ·  Page ${pageNumber} of ${totalPages}`} />
         </View>
       </Page>
+      {appendix}
     </Document>
   );
 }

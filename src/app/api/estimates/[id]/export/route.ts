@@ -1,24 +1,14 @@
-import { buildProposal } from "@/lib/proposal/build";
-import { computeEstimate } from "@/lib/estimate/engine";
-import { contentHash, versionSnapshot } from "@/lib/export/snapshot";
-import { renderProposalPdf, pdfFilename } from "@/lib/pdf/render";
-import { loadBusiness, loadEstimate } from "@/lib/data/server";
-import { createAdminClient, createClient, getUser } from "@/lib/supabase/server";
-import { fail, json, logError, rateLimit, sameOrigin } from "@/lib/http/api";
-import { captureObservation } from "@/lib/market/server";
-import type { CreditSource } from "@/lib/credits/status";
-import { exportReadiness } from "@/lib/estimate/readiness";
+import { createAdminClient, getUser } from "@/lib/supabase/server";
+import { fail, json, rateLimit, sameOrigin } from "@/lib/http/api";
+import { finalizeProposal } from "@/lib/export/finalize";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 /**
- * Finalize + export. Order matters:
- *  1. authenticate (verified server-side) and load data with the user's RLS-bound client
- *  2. build the canonical proposal and render the PDF (failures here never consume a credit)
- *  3. finalize_bid() atomically checks credits / idempotency, spends at most one credit per bid,
- *     and creates the version (all-or-nothing in one database transaction)
- *  4. store the PDF privately and return a short-lived signed URL
+ * Finalize + export. Authentication happens here; readiness, rendering, finalize_bid (credits and
+ * idempotency) and private storage happen in finalizeProposal, the same path Create Signing Link uses.
+ * Returns a short-lived signed URL (or the bytes for "Send via My Email").
  */
 export async function POST(req: Request, ctx: RouteContext<"/api/estimates/[id]/export">) {
   const { id } = await ctx.params;
@@ -28,86 +18,20 @@ export async function POST(req: Request, ctx: RouteContext<"/api/estimates/[id]/
   if (!user) return fail(401, "not_authenticated", "Create a free account to download your PDF.");
   if (!user.verified) return fail(403, "email_not_verified", "Please verify your phone or email first.");
 
-  const supabase = await createClient();
-  const data = await loadEstimate(supabase, id);
-  if (!data) return fail(404, "not_found", "Save your estimate before exporting.");
-  const { business } = await loadBusiness(supabase, user.id, { signedLogo: false });
-  const { estimate, proposalConfig } = data;
-
   // "Send via My Email" asks for the PDF bytes so the browser can attach them to a share sheet
   // without fetching the private storage URL. Same checks, same finalize_bid, same credit rules.
   const body = (await req.json().catch(() => null)) as { deliver?: unknown } | null;
   const deliverBytes = body?.deliver === "bytes";
 
-  const totals = computeEstimate(estimate);
-  if (totals.issues.length) return fail(422, "invalid_estimate", "Fix the highlighted entries before exporting.", { issues: totals.issues.slice(0, 5) });
-  if (!estimate.items.length) return fail(422, "empty_estimate", "Add at least one line item before exporting.");
-  // The same readiness check the builder runs, so a proposal with missing required details
-  // never reaches finalize_bid and never consumes a bid credit.
-  const missing = exportReadiness(estimate, business, totals);
-  if (missing.length) return fail(422, "not_ready", missing[0].message, { missing: missing.map(({ code, step, fieldId, message }) => ({ code, step, fieldId, message })) });
+  const out = await finalizeProposal(user.id, id);
+  if (out instanceof Response) return out;
+  const { r, pdf, filename, storagePath, stored } = out;
 
-  const admin = createAdminClient();
-  let logo: { data: Buffer; format: "png" } | null = null;
-  if (business.logoPath) {
-    const { data: file } = await admin.storage.from("logos").download(business.logoPath);
-    if (file) logo = { data: Buffer.from(await file.arrayBuffer()), format: "png" };
-  }
-
-  const doc = buildProposal(estimate, business, proposalConfig);
-  const snapshot = versionSnapshot(estimate, business, proposalConfig);
-  const hash = contentHash(snapshot);
-
-  let pdf: Buffer;
-  try {
-    pdf = await renderProposalPdf(doc, logo);
-  } catch (e) {
-    logError("pdf.render", e, { user: user.id });
-    await admin.from("pdf_errors").insert({ user_id: user.id, estimate_id: id, error: String((e as Error).message).slice(0, 500) });
-    return fail(500, "pdf_failed", "We could not create the PDF. No bid credit was used. Please try again.");
-  }
-
-  const { data: rec, error } = await admin.rpc("finalize_bid", {
-    p_user_id: user.id,
-    p_estimate_id: id,
-    p_content_hash: hash,
-    p_snapshot: snapshot,
-    p_proposal: doc,
-    p_total_cost: totals.totalCost.toFixed(2),
-    p_subtotal: totals.subtotal.toFixed(2),
-    p_tax: totals.tax.toFixed(2),
-    p_total: totals.total.toFixed(2),
-  });
-  if (error) {
-    if (error.message.includes("credits_exhausted")) return fail(402, "credits_exhausted", "You've used your free bid credits. Your bid is saved.");
-    if (error.message.includes("email_not_verified")) return fail(403, "email_not_verified", "Please verify your email address first.");
-    if (error.message.includes("estimate_not_found")) return fail(404, "not_found", "Estimate not found.");
-    logError("export.record", error, { user: user.id });
-    return fail(500, "export_failed", "Export failed. Please try again.");
-  }
-  const r = (Array.isArray(rec) ? rec[0] : rec) as {
-    version_id: string; version_number: number; new_version: boolean; charged: boolean; credit_source: CreditSource;
-    starter_balance: number; monthly_balance: number; unlimited: boolean; next_cycle_at: string;
-  };
-
-  const path = `${user.id}/${id}/v${r.version_number}-${hash.slice(0, 12)}.pdf`;
-  const up = await admin.storage.from("documents").upload(path, pdf, { contentType: "application/pdf", upsert: true });
-  if (up.error) {
-    logError("export.upload", up.error, { user: user.id });
-    await admin.from("pdf_errors").insert({ user_id: user.id, estimate_id: id, error: `upload: ${up.error.message}`.slice(0, 500) });
-  } else {
-    await admin.from("generated_documents").upsert({ version_id: r.version_id, user_id: user.id, storage_path: path, bytes: pdf.length }, { onConflict: "version_id" });
-  }
-
-  const filename = pdfFilename(doc, r.version_number);
   let url: string | null = null;
-  if (!up.error) {
-    const { data: signed } = await admin.storage.from("documents").createSignedUrl(path, 300, { download: filename });
+  if (stored) {
+    const { data: signed } = await createAdminClient().storage.from("documents").createSignedUrl(storagePath, 300, { download: filename });
     url = signed?.signedUrl ?? null;
   }
-  // Market intelligence: one de-identified observation per finalized version, only with opt-in consent.
-  await captureObservation(admin, user.id, r.version_id, estimate, totals);
-  if (r.new_version) await admin.from("analytics_events").insert({ user_id: user.id, event: "export_succeeded", trade: estimate.trades[0] ?? null });
 
   return json({
     url,

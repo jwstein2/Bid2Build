@@ -137,6 +137,59 @@ const send = (res, code, body, extra = {}) => { res.writeHead(code, { "content-t
 
 // Complimentary Access browser walk (scripts/complimentary/walk.mjs): when COMP_PG_URL points at a throwaway
 // test database with the real migrations, these RPCs run the real SQL there instead of returning canned data.
+// E-signature walk (MOCK_ESIGN_FIXTURE=<json from scripts/esign/fixture.ts>): signing tables, the
+// accept/record RPCs and an in-memory storage bucket, so the real signing routes run end to end.
+const ESIGN = process.env.MOCK_ESIGN_FIXTURE ? JSON.parse((await import("node:fs")).readFileSync(process.env.MOCK_ESIGN_FIXTURE, "utf8")) : null;
+export const ESIGN_TOKEN = "walkTokenAbcdefghijklmnopqrstuvwxyz01234567";
+const { createHash } = await import("node:crypto");
+const sha = (s) => createHash("sha256").update(s).digest("hex");
+const storage = new Map();
+const esignRpc = {};
+if (ESIGN) {
+  const E = (n) => `11111111-1111-4111-8111-11111111111${n}`;
+  const V = (n) => `44444444-4444-4444-8444-00000000000${n}`;
+  tables.estimates.push(
+    { id: E(4), user_id: USER.id, title: "Roof repair – Chen", customer_name: "Lin Chen", trades: ["roofing"], status: "finalized", updated_at: iso(12), estimate_number: "B-1001" },
+    { id: E(5), user_id: USER.id, title: "Fence install – Garcia", customer_name: "Maria Garcia", trades: ["fencing"], status: "finalized", updated_at: iso(6), estimate_number: "B-0999" },
+  );
+  const ver = (id, est, n, total, doc) => ({ id, estimate_id: est, user_id: USER.id, version_number: n, total, created_at: iso(3), proposal: doc, snapshot: { business: {} }, content_hash: "c".repeat(64) });
+  tables.estimate_versions = [
+    ver(V(1), E(2), 1, 17985, ESIGN.signedDoc),
+    ver(V(2), E(1), 1, 17985, ESIGN.pendingDoc),
+    ver(V(3), E(4), 1, 6420, ESIGN.signedDoc),
+    ver(V(4), E(5), 1, 4310.25, { ...ESIGN.signedDoc, meta: { ...ESIGN.signedDoc.meta, title: "Fence install – Garcia" } }),
+  ];
+  const reqRow = (id, est, v, status, token, o = {}) => ({ id, estimate_id: est, version_id: v, user_id: USER.id, company_id: null, token_hash: sha(token), document_hash: "d".repeat(64), content_hash: "c".repeat(64), status, expires_at: iso(-20), created_at: iso(2), revoked_at: null, revoke_reason: null, signed_at: null, ...o });
+  tables.signing_requests = [
+    reqRow("77777777-7777-4777-8777-000000000001", E(2), V(1), "signed", "signed-token", { signed_at: new Date(NOW - 2 * 3600e3).toISOString(), created_at: iso(1) }),
+    reqRow("77777777-7777-4777-8777-000000000002", E(1), V(2), "pending", ESIGN_TOKEN),
+    reqRow("77777777-7777-4777-8777-000000000003", E(4), V(3), "pending", "expired-token", { expires_at: iso(1), created_at: iso(31) }),
+    reqRow("77777777-7777-4777-8777-000000000004", E(5), V(4), "signed", "fence-token", { signed_at: iso(5), created_at: iso(6) }),
+  ];
+  const sigRow = (id, req, est, v, total, at, name, title, o = {}) => ({ id, request_id: req, estimate_id: est, version_id: v, user_id: USER.id, company_id: null, signer_name: name, signer_email: "john@example.test", method: "typed", signature_text: name, signature_image: null, consent_version: "esign-consent-2026-11-15", consent_text: "I agree to use electronic records and signatures.", acceptance_text: "I accept this proposal.", consented_at: at, document_hash: "d".repeat(64), content_hash: "c".repeat(64), total, version_number: 1, proposal_number: "B-1003", project_title: title, customer_name: name, verification: "link_possession", ip_address: "203.0.113.9", user_agent: "Mozilla/5.0 (iPhone)", signed_at: at, pdf_status: "ready", pdf_path: null, pdf_hash: null, pdf_error: null, pdf_attempts: 1, ...o });
+  tables.signatures = [
+    sigRow("88888888-8888-4888-8888-000000000001", tables.signing_requests[0].id, E(2), V(1), 17985, new Date(NOW - 2 * 3600e3).toISOString(), "John Smith", "Backyard Deck Replacement", { pdf_status: "failed" }),
+    sigRow("88888888-8888-4888-8888-000000000002", tables.signing_requests[3].id, E(5), V(4), 4310.25, iso(5), "Maria Garcia", "Fence install – Garcia"),
+  ];
+  esignRpc.accept_signing_request = (a) => {
+    const r = tables.signing_requests.find((x) => x.token_hash === a.p_token_hash);
+    if (!r) return [400, { message: "link_invalid" }];
+    if (r.status === "signed") return [400, { message: "already_signed" }];
+    if (r.status === "revoked") return [400, { message: "link_revoked" }];
+    if (new Date(r.expires_at) <= new Date()) return [400, { message: "link_expired" }];
+    const v = tables.estimate_versions.find((x) => x.id === r.version_id);
+    const at = new Date().toISOString();
+    const s = { id: crypto.randomUUID(), request_id: r.id, estimate_id: r.estimate_id, version_id: r.version_id, user_id: r.user_id, company_id: null, signer_name: a.p_signer_name, signer_email: a.p_signer_email, method: a.p_method, signature_text: a.p_signature_text, signature_image: a.p_signature_image, consent_version: a.p_consent_version, consent_text: a.p_consent_text, acceptance_text: a.p_acceptance_text, consented_at: a.p_consented_at, document_hash: r.document_hash, content_hash: r.content_hash, total: v.total, version_number: v.version_number, proposal_number: v.proposal.meta.number, project_title: v.proposal.meta.title, customer_name: v.proposal.customer.name, verification: "link_possession", ip_address: a.p_ip, user_agent: a.p_user_agent, signed_at: at, pdf_status: "pending", pdf_path: null, pdf_hash: null, pdf_error: null, pdf_attempts: 0 };
+    tables.signatures.push(s);
+    Object.assign(r, { status: "signed", signed_at: at });
+    return [200, [{ signature_id: s.id, created: true, request_id: r.id }]];
+  };
+  esignRpc.record_signed_pdf = (a) => {
+    const s = tables.signatures.find((x) => x.id === a.p_signature_id);
+    if (s && s.pdf_status !== "ready") Object.assign(s, a.p_ok ? { pdf_status: "ready", pdf_path: a.p_path, pdf_hash: a.p_hash, pdf_error: null } : { pdf_status: "failed", pdf_error: a.p_error }, { pdf_attempts: s.pdf_attempts + 1 });
+    return [200, null];
+  };
+}
 const COMP_RPC = /^(admin_comp_\w+|my_comp_access|claim_comp_grant_by_token|has_paid_subscription|credit_status|library_access)$/;
 const compPool = process.env.COMP_PG_URL ? new (await import("pg")).default.Pool({ connectionString: process.env.COMP_PG_URL, max: 5 }) : null;
 const inviteLog = [];
@@ -162,8 +215,9 @@ async function compRpc(name, args, res) {
 let onboardingMode = "ok";
 http.createServer((req, res) => {
   const u = new URL(req.url, "http://x");
-  let raw = ""; req.on("data", (c) => (raw += c));
+  let raw = ""; const bufs = []; req.on("data", (c) => bufs.push(c));
   req.on("end", () => {
+    const bodyBuf = Buffer.concat(bufs); raw = bodyBuf.toString("utf8");
     if (req.method === "OPTIONS") return send(res, 204);
     if (u.pathname === "/__scenario") {
       authDelayMs = Number(u.searchParams.get("authDelayMs") ?? 0);
@@ -218,8 +272,23 @@ http.createServer((req, res) => {
     if (u.pathname === "/auth/v1/invite") { try { inviteLog.push({ ...JSON.parse(raw || "{}"), redirect_to: u.searchParams.get("redirect_to") }); } catch { /* ignore */ } return send(res, 200, { id: crypto.randomUUID(), email: inviteLog.at(-1)?.email }); }
     if (u.pathname === "/__invites") return send(res, 200, inviteLog);
     if (u.pathname.startsWith("/auth/v1/")) return send(res, 200, {});
+    if (ESIGN && u.pathname.startsWith("/storage/v1/object/")) {
+      const signedM = u.pathname.match(/^\/storage\/v1\/object\/sign\/(.+)$/);
+      if (signedM && req.method === "POST") return storage.has(signedM[1]) ? send(res, 200, { signedURL: `/object/sign/${signedM[1]}?token=mock` }) : send(res, 400, { statusCode: "404", error: "not_found", message: "Object not found" });
+      const key = decodeURIComponent(u.pathname.replace(/^\/storage\/v1\/object\/(authenticated\/|sign\/)?/, ""));
+      if (req.method === "POST" || req.method === "PUT") {
+        storage.set(key, bodyBuf);
+        return send(res, 200, { Key: key });
+      }
+      if (req.method === "GET") {
+        const b = storage.get(key);
+        if (!b) return send(res, 400, { statusCode: "404", error: "not_found", message: "Object not found" });
+        res.writeHead(200, { "content-type": "application/pdf" }); return void res.end(b);
+      }
+    }
     if (u.pathname.startsWith("/storage/v1/")) return send(res, 400, { error: "not available in mock" });
     const rpc = u.pathname.match(/^\/rest\/v1\/rpc\/(\w+)/);
+    if (rpc && esignRpc[rpc[1]]) { let args = {}; try { args = JSON.parse(raw || "{}"); } catch { /* ignore */ } const [st, body] = esignRpc[rpc[1]](args); return send(res, st, body); }
     if (rpc && compPool && COMP_RPC.test(rpc[1])) { let args = {}; try { args = JSON.parse(raw || "{}"); } catch { /* ignore */ } return void compRpc(rpc[1], args, res); }
     if (rpc) return send(res, 200, rpcs[rpc[1]] ?? null);
     const t = u.pathname.match(/^\/rest\/v1\/(\w+)/);

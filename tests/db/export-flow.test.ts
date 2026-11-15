@@ -66,7 +66,7 @@ const { GET } = await import("@/app/api/credits/route");
 async function newBid(title: string): Promise<string> {
   const r = await ctx.pool!.query("insert into public.estimates (user_id, title) values ($1, $2) returning id", [ctx.userId, title]);
   const id = r.rows[0].id as string;
-  ctx.estimates.set(id, est({ id, title, items: [item("g1", "10", "25")] }));
+  ctx.estimates.set(id, est({ id, title, customer: { name: "Pat Flow", projectAddress: "12 Main St" }, items: [item("g1", "10", "25")] }));
   return id;
 }
 async function exportBid(id: string) {
