@@ -8,7 +8,7 @@
  *    tips), under strict rules: no market prices, statistics or dated claims; dollar figures only
  *    in labelled worked examples.
  * 3. Runs the automated checks (banned claims, length, example math) and a second Haiku pass
- *    acting as an estimating editor. Problems go back for one rewrite; if it still fails, nothing
+ *    acting as an estimating editor. Problems go back for up to two rewrites; if it still fails, nothing
  *    is published and the job exits non-zero (GitHub emails the repo owner).
  * 4. Appends the guide to src/lib/learn/generated-articles.json. The workflow commits it to main
  *    and Netlify deploys it like any other change.
@@ -25,6 +25,8 @@ import type { Article } from "../../src/lib/learn/articles";
 import { checkArticle, nextTopic, topicPlan, type Topic } from "../../src/lib/learn/article-checks";
 
 const MODEL = process.env.ARTICLE_MODEL?.trim() || "claude-haiku-5-5";
+/** Rewrites allowed after the first draft before the run gives up without publishing. */
+const MAX_REWRITES = 2;
 const root = join(import.meta.dirname, "../..");
 const STORE = join(root, "src/lib/learn/generated-articles.json");
 const args = process.argv.slice(2);
@@ -62,6 +64,7 @@ const SYSTEM = `You write practical pricing guides for Built2Bid, a free estimat
 Hard rules (an automated checker rejects drafts that break them):
 - Never state what work, materials or labor cost or typically cost, in any region. No price ranges, no "average cost", no market or national claims, no statistics, studies, surveys or "according to". No years or "current prices".
 - Dollar figures may appear ONLY inside formula blocks as a clearly labelled worked example. Start such lines with "Example:" or put "Example" in the section heading, and say the numbers are for illustration only. Use simple round numbers.
+- The worked example is a deliberately simplified illustration of the math, not a complete bid. Head it "Simplified example" and open it with one sentence naming exactly which lines it covers and saying a real estimate includes every section above. Describe the example scope only as those lines (do not call it a full job). Keep it consistent with the method you describe (same units and the same way of pricing labor).
 - Every calculation must be arithmetically correct. Write one calculation per formula line in the form "Example: 12 squares × $95 = $1,140". Use × for multiply and ÷ for divide. Keep percentages as markup/margin math consistent with: Price = Cost × (1 + Markup); Price = Cost ÷ (1 − Margin).
 - Tell the reader to use their own costs: supplier quotes, recent invoices, their labor rate, local permit fees.
 - For codes, permits, licensing, tax and contract terms, say requirements vary and point to the local building department, state licensing board, a tax professional or an attorney. Do not state specific code requirements.
@@ -121,7 +124,7 @@ function toArticle(topic: Topic, draft: z.infer<typeof DraftSchema>, today: stri
 
 async function review(a: Article): Promise<string[]> {
   const r = await ask(
-    `You are a senior construction estimator and editor reviewing a guide before it is published on a contractor software website. Approve only if a careful estimator would sign off on it. Reject for: wrong or misleading estimating advice; arithmetic errors; any price, cost range or statistic presented as fact rather than a labelled example; specific building code, legal or tax requirements stated as universal; claims about Built2Bid beyond this list: ${FEATURES.join(" ")}; filler, repetition or generic text that does not help a contractor price this work; safety advice that is wrong. Ignore style preferences. List concrete problems only.`,
+    `You are a senior construction estimator and editor reviewing a guide before it is published on a contractor software website. Approve only if a careful estimator would sign off on it. Reject for: wrong or misleading estimating advice; arithmetic errors; any price, cost range or statistic presented as fact rather than a labelled example; specific building code, legal or tax requirements stated as universal; claims about Built2Bid beyond this list: ${FEATURES.join(" ")}; filler, repetition or generic text that does not help a contractor price this work; safety advice that is wrong. The worked example is intentionally a simplified illustration of the arithmetic: do not reject it for leaving out line items, as long as it says which lines it covers and does not claim to be a complete bid. Ignore style preferences. List concrete problems only.`,
     `Review this guide:\n\n${JSON.stringify(a, null, 2)}`,
     ReviewSchema,
     "medium",
@@ -155,8 +158,8 @@ Return the title (you may refine it, keep it under 70 characters), a meta descri
   let article = toArticle(topic, await ask(SYSTEM, brief, DraftSchema, "medium"), today);
   let problems = checkArticle(article, { knownTrades, existingSlugs: published }).problems;
   if (!problems.length) problems = await review(article);
-  if (problems.length) {
-    console.log(`First draft needs fixes:\n- ${problems.join("\n- ")}`);
+  for (let attempt = 1; attempt <= MAX_REWRITES && problems.length; attempt++) {
+    console.log(`Draft ${attempt} needs fixes:\n- ${problems.join("\n- ")}`);
     const fix = `${brief}\n\nYour previous draft is below. Rewrite it to fix every problem listed, keeping what was good.\n\nProblems:\n- ${problems.join("\n- ")}\n\nPrevious draft:\n${JSON.stringify({ title: article.title, description: article.description, blocks: article.blocks })}`;
     article = toArticle(topic, await ask(SYSTEM, fix, DraftSchema, "medium"), today);
     problems = checkArticle(article, { knownTrades, existingSlugs: published }).problems;
@@ -164,7 +167,7 @@ Return the title (you may refine it, keep it under 70 characters), a meta descri
   }
   const cost = (spend.input * 0.1 + spend.output * 0.5) / 1_000_000;
   if (problems.length) {
-    summary([`### Not published: ${topic.title}`, "", "The draft failed quality checks twice, so nothing went live. The next run tries again.", "", ...problems.map((p) => `- ${p}`), "", `API cost: $${cost.toFixed(4)}`]);
+    summary([`### Not published: ${topic.title}`, "", "The draft failed quality checks after every rewrite, so nothing went live. The next run tries again.", "", ...problems.map((p) => `- ${p}`), "", `API cost: $${cost.toFixed(4)}`]);
     process.exit(1);
   }
   if (dryRun) {
