@@ -16,7 +16,8 @@ export const MODEL_PRICING: Record<string, { input: number; output: number }> = 
   "claude-haiku-5-5": { input: 0.1, output: 0.5 },
 };
 
-export const DEFAULT_MODEL = "claude-opus-5-5";
+// Haiku keeps short drafting tasks low-cost; set AI_MODEL to use a larger model.
+export const DEFAULT_MODEL = "claude-haiku-5-5";
 
 export function aiSettings() {
   if (typeof window !== "undefined") throw new Error("aiSettings() must not run in the browser");

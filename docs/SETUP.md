@@ -48,7 +48,7 @@ npm run typecheck && npm run lint && npm run build
 
 Optional. The builder's "Generate Scope from Bid" and "Generate Exclusions from Bid" buttons always work: without an API key they draft from the estimate's line items using built-in rules.
 
-To turn on AI drafting, add `ANTHROPIC_API_KEY` in Netlify (Site configuration > Environment variables) and redeploy. Optional settings: `AI_MODEL` (default `claude-opus-5-5`), `AI_DAILY_LIMIT_PER_USER` (default 40), `AI_MONTHLY_BUDGET_USD` (default 25; past it, drafting falls back to the rules), `AI_TEXT_GENERATION=off` to pause it.
+To turn on AI drafting, add `ANTHROPIC_API_KEY` in Netlify (Site configuration > Environment variables) and redeploy. Optional settings: `AI_MODEL` (default `claude-haiku-5-5`), `AI_DAILY_LIMIT_PER_USER` (default 40), `AI_MONTHLY_BUDGET_USD` (default 25; past it, drafting falls back to the rules), `AI_TEXT_GENERATION=off` to pause it.
 
 Apply `supabase/migrations/20261112000600_proposal_text_ai.sql` for per-user limits, cost tracking and the admin "Scope & exclusions" report. Without it the feature still works; limits fall back to a per-server counter.
 

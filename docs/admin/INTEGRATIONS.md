@@ -35,11 +35,24 @@ Scopes requested: `analytics.readonly` and `webmasters.readonly` only.
 | Monitor | Status | How it works / what it would need |
 | --- | --- | --- |
 | Supabase database size, file storage, auth users | **Live** after migration 20261115003000 | `admin_platform_usage()` reads aggregates from the database itself (service role only). |
-| Supabase egress, API requests, compute | Not connected | Needs a Supabase Management API personal token, which has account-wide access. Not requested. |
+| Supabase project status, API request counts | Live once `SUPABASE_MANAGEMENT_TOKEN` is set | Management API, GET only. Egress is not exposed by the API. |
 | Stripe fees, refunds, checkout outcomes | **Live** | Existing secret key, read-only list calls (balance transactions, invoices, checkout sessions). |
-| Anthropic API (in-app AI) | **Live** | Built2Bid's own `ai_generations` log (tokens and cost per request). Account billing would need an Anthropic Admin API key: not connected. |
-| Netlify credits, bandwidth, functions | Not connected | Needs a Netlify personal access token (account-wide). Enter the invoice instead. |
+| Anthropic API (in-app AI) | **Live** | Built2Bid's own `ai_generations` log (tokens and cost per request). |
+| Anthropic API (whole account) | Live once `ANTHROPIC_ADMIN_KEY` is set | Usage and Cost Analytics API, this month's cost by model. API billing only; a Claude subscription is separate. |
+| Netlify plan, build minutes | Live once `NETLIFY_API_TOKEN` is set | Netlify API, GET only (`/accounts`, `/{account}/builds/status`). Bandwidth and credits are not in the public API. Optional `NETLIFY_ACCOUNT_ID` if the token sees several teams. |
+| Google Ads, Meta Ads | Setup state only | No API calls yet. Both need provider review first (Google Ads developer token; Meta app with `ads_read`). The page lists which settings exist. |
 | Google Cloud / Places | Not in use | Places autofill is off until a key is set. |
 | Resend, Instantly, Apollo, Apify | Not connected | Resend's sending key cannot read usage; no Built2Bid Apollo/Apify account was found. |
 
-Approval needed before connecting any account-wide token. None of these cost money to connect; all are optional. Until then, record invoices on Tech Stack & Costs (manual entry or CSV import, de-duplicated by invoice id).
+Approved by the owner on 2026-11-15. Every monitor is server-side, read-only, and shows **Not connected** until its variable is set. Tokens are read only on the server; errors show the HTTP status, never the token.
+
+### Adding the tokens (Netlify → Production, mark each as secret)
+
+[Site configuration → Environment variables](https://app.netlify.com/projects/built2bid/configuration/env), then redeploy.
+
+| Variable | Where to create it | Permission to choose |
+| --- | --- | --- |
+| `NETLIFY_API_TOKEN` | [Netlify → User settings → Applications → Personal access tokens](https://app.netlify.com/user/applications#personal-access-tokens) | Netlify tokens are account-wide; set an expiry date. |
+| `SUPABASE_MANAGEMENT_TOKEN` | [Supabase → Account → Access tokens](https://supabase.com/dashboard/account/tokens) | A scoped token limited to project asiiqmegvajtuspeumio with read-only analytics/project access, if your account offers scoped tokens; otherwise a classic token. |
+| `ANTHROPIC_ADMIN_KEY` | [Claude Console → Settings → Admin keys](https://console.anthropic.com/settings/admin-keys) | Admin keys are organization-wide; only the cost report is read. |
+
