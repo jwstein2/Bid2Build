@@ -1,3 +1,5 @@
+import { site } from "@/lib/site";
+import { openGraphFor } from "@/lib/seo/open-graph";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/ui/misc";
@@ -6,10 +8,14 @@ import { familyTint, TradeIcon } from "@/components/trade-icon";
 import { trades } from "@/lib/trades/catalog";
 import { pickerTrades } from "@/lib/trades/picker";
 
+const pageTitle = "Estimate Builders for Every Trade";
+const pageDescription = "Free estimate and proposal builders for roofing, decks, concrete, kitchens, electrical, plumbing, HVAC and 30 more construction trades.";
+
 export const metadata: Metadata = {
-  title: "Estimate Builders for Every Trade",
-  description: "Free estimate and proposal builders for roofing, decks, concrete, kitchens, electrical, plumbing, HVAC and 30 more construction trades.",
+  title: pageTitle,
+  description: pageDescription,
   alternates: { canonical: "/bids" },
+  openGraph: openGraphFor({ title: `${pageTitle} | ${site.name}`, description: pageDescription, path: "/bids" }),
 };
 
 export default function BidsIndex() {

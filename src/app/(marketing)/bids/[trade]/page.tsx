@@ -1,3 +1,4 @@
+import { openGraphFor } from "@/lib/seo/open-graph";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -23,7 +24,7 @@ export async function generateMetadata({ params }: PageProps<"/bids/[trade]">): 
     title: t.seoTitle,
     description: `${t.intro} ${plans.starterCredits} free bids to start, plus ${plans.monthlyCredits} free every month.`,
     alternates: { canonical: `/bids/${t.slug}` },
-    openGraph: { title: `${t.seoTitle} | ${site.name}`, description: t.intro },
+    openGraph: openGraphFor({ title: `${t.seoTitle} | ${site.name}`, description: t.intro, path: `/bids/${t.slug}` }),
   };
 }
 

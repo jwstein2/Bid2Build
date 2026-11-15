@@ -1,12 +1,18 @@
+import { site } from "@/lib/site";
+import { openGraphFor } from "@/lib/seo/open-graph";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/ui/misc";
 import { articles } from "@/lib/learn/articles";
 
+const pageTitle = "Learn: Estimating and Proposal Guides";
+const pageDescription = "Practical guides on markup vs. margin, writing estimates, building proposals, and handling sales tax.";
+
 export const metadata: Metadata = {
-  title: "Learn: Estimating and Proposal Guides",
-  description: "Practical guides on markup vs. margin, writing estimates, building proposals, and handling sales tax.",
+  title: pageTitle,
+  description: pageDescription,
   alternates: { canonical: "/learn" },
+  openGraph: openGraphFor({ title: `${pageTitle} | ${site.name}`, description: pageDescription, path: "/learn" }),
 };
 
 export default function LearnIndex() {
