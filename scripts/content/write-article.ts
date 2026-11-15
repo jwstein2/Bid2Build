@@ -14,7 +14,7 @@
  *    market prices, statistics or dated claims; dollar figures only in labelled worked examples;
  *    code sections named and described, never paraphrased into measurements.
  * 4. Runs the automated checks (banned claims, length, example math) and a second Haiku pass
- *    acting as an estimating editor. Problems go back for up to two rewrites; if it still fails, nothing
+ *    acting as an estimating editor. Problems go back for up to three rewrites; if it still fails, nothing
  *    is published and the job exits non-zero (GitHub emails the repo owner).
  * 5. Appends the guide to src/lib/learn/generated-articles.json. The workflow commits it to main
  *    and Netlify deploys it like any other change.
@@ -34,7 +34,7 @@ import { codeRefsFor } from "../../src/lib/learn/code-references";
 
 const MODEL = process.env.ARTICLE_MODEL?.trim() || "claude-haiku-5-5";
 /** Rewrites allowed after the first draft before the run gives up without publishing. */
-const MAX_REWRITES = 2;
+const MAX_REWRITES = 3;
 /** Web searches allowed in the research step ($0.01 each). */
 const MAX_SEARCHES = 4;
 const root = join(import.meta.dirname, "../..");
@@ -79,7 +79,7 @@ Hard rules (an automated checker rejects drafts that break them):
 - Every calculation must be arithmetically correct. Write one calculation per formula line in the form "Example: 12 squares × $95 = $1,140". Use × for multiply and ÷ for divide. Keep percentages as markup/margin math consistent with: Price = Cost × (1 + Markup); Price = Cost ÷ (1 − Margin).
 - Tell the reader to use their own costs: supplier quotes, recent invoices, their labor rate, local permit fees.
 - For permits, licensing, tax and contract terms, say requirements vary and point to the local building department, state licensing board, a tax professional or an attorney.
-- Building code: you may cite ONLY the International Residential Code (IRC) sections given in the brief, by number and title, exactly as listed. Say what topic the section covers and that inspectors check it. Never state a dimension, spacing, load, rating or other value from any code, never name a code edition or year, and never cite a section that is not listed. Say that local editions and amendments vary and to confirm with the local building department. Also tell readers to follow manufacturer installation instructions.
+- Building code: you may cite ONLY the International Residential Code (IRC) sections given in the brief, by number and title, exactly as listed. Say what topic the section covers and that it is something an inspector may look at, and tell readers to ask the building department which inspections apply. Do not claim when or how inspections happen, and do not attribute topics to a section beyond its listed title. Never state a dimension, spacing, load, rating or other value from any code, never name a code edition or year, and never cite a section that is not listed. Say that local editions and amendments vary and to confirm with the local building department. Also tell readers to follow manufacturer installation instructions.
 - Market trends: use only what the research notes support, phrased qualitatively with no numbers, percentages, prices or dates, and tied to what the contractor should do when pricing (confirm lead times, check supplier quotes, set a price validity date, ask the building department). Do not write "according to". Do not present a trend as certain everywhere; say to check how it applies locally.
 - Use the search phrases from the research notes only where they read naturally, for example in a heading. Never stuff keywords.
 - Plain text only. No markdown, no emojis, no exclamation marks, no hype, no superlatives. Short paragraphs. American English.
@@ -104,7 +104,7 @@ function codeContext(trade: string | undefined, required: boolean): string {
   if (!refs.length) return `Building code: the International Residential Code does not cover this work directly. Include a headed "Quality tips" section with 4-6 practical, trade-specific quality tips (doing the work right the first time, protecting the property, call-backs to avoid, following product labels and manufacturer instructions, local rules to check). Do not cite any code section.`;
   return `Building code sections you may cite (International Residential Code, ICC). Cite only these, by number and title:
 ${refs.map((r) => `- ${r.code}: ${r.title}`).join("\n")}
-${required ? `Include a headed section such as "Quality tips and code items inspectors check" with 4-6 bullet tips specific to this trade. Where a tip relates to one of the sections above, name it (for example "${refs[0].code} (${refs[0].title.replace(/ \(.*$/, "")})") and say what it covers, without any measurements or values. Explain how each tip affects the estimate: the labor, materials or inspection time to include so the job is priced to be done right.` : "Mention a listed section only where it genuinely helps."}`;
+${required ? `Include a headed section such as "Quality tips and code items inspectors check" with 4-6 bullet tips specific to this trade. Where a tip relates to one of the sections above, name it (for example "${refs[0].code} (${refs[0].title.replace(/ \(.*$/, "")})") and say what it covers in the words of its title, without any measurements or values. Explain how each tip affects the estimate: the labor, materials or inspection time to include so the job is priced to be done right.` : "Mention a listed section only where it genuinely helps."}`;
 }
 
 const client = new Anthropic({ timeout: 120_000, maxRetries: 2 });
@@ -196,7 +196,7 @@ function toArticle(topic: Topic, draft: z.infer<typeof DraftSchema>, today: stri
 async function review(a: Article, researchNotes: string): Promise<string[]> {
   const refs = codeRefsFor(a.trade).map((r) => `${r.code}: ${r.title}`).join("; ") || "none";
   const r = await ask(
-    `You are a senior construction estimator and editor reviewing a guide before it is published on a contractor software website. Approve only if a careful estimator would sign off on it. Reject for: wrong or misleading estimating advice; arithmetic errors; any price, cost range or statistic presented as fact rather than a labelled example; building code, legal or tax requirements stated as specific universal values; a building code section described as covering something it does not (the vetted IRC sections and titles for this guide are: ${refs}); quality tips that are wrong, unsafe or generic rather than specific to this trade; market trend statements not supported by the research notes provided, or stated as certain everywhere; claims about Built2Bid beyond this list: ${FEATURES.join(" ")}; filler, repetition or generic text that does not help a contractor price this work; safety advice that is wrong. The worked example is intentionally a simplified illustration of the arithmetic: do not reject it for leaving out line items, as long as it says which lines it covers and does not claim to be a complete bid. Ignore style preferences. List concrete problems only.`,
+    `You are a senior construction estimator and editor reviewing a guide before it is published on a contractor software website. Approve only if a careful estimator would sign off on it. Reject for: wrong or misleading estimating advice; arithmetic errors; any price, cost range or statistic presented as fact rather than a labelled example; building code, legal or tax requirements stated as specific universal values; a building code section described as covering something outside its title (the vetted IRC sections and titles for this guide are: ${refs}); saying an inspector "may" look at a listed topic is acceptable when the guide also says to confirm inspections with the local building department; quality tips that are wrong, unsafe or generic rather than specific to this trade; market trend statements not supported by the research notes provided, or stated as certain everywhere; claims about Built2Bid beyond this list: ${FEATURES.join(" ")}; filler, repetition or generic text that does not help a contractor price this work; safety advice that is wrong. The worked example is intentionally a simplified illustration of the arithmetic: do not reject it for leaving out line items, as long as it says which lines it covers and does not claim to be a complete bid. Ignore style preferences. List concrete problems only.`,
     `Research notes the writer was given (trend statements must be supported by these):\n${researchNotes || "(none: the guide should have no market trends section)"}\n\nReview this guide:\n\n${JSON.stringify(a, null, 2)}`,
     ReviewSchema,
     "medium",

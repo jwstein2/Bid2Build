@@ -42,6 +42,7 @@ const flashing = R("R703.4", "Flashing (around windows, doors and wall penetrati
 const veneer = R("R703.8", "Anchored stone and masonry veneer");
 const masonry = R("R606", "General masonry construction");
 const roofVent = R("R806", "Roof ventilation");
+const sheathing = R("R803", "Roof sheathing");
 const roofDrain = R("R801.3", "Roof drainage");
 const weather = R("R903", "Weather protection (roof flashing and drainage)");
 const roofCoverings = R("R905", "Requirements for roof coverings (underlayment, fastening and installation by material)");
@@ -66,7 +67,7 @@ const waterHeaters = R("P2801", "Water heaters (Chapter 28)");
 const decks = R("R507", "Exterior decks (footings, ledger attachment, joists, beams and posts)");
 
 const CODE_REFS: Record<string, CodeRef[]> = {
-  roofing: [roofCoverings, reroof, weather, roofVent, roofFraming, design],
+  roofing: [roofCoverings, reroof, weather, roofVent, sheathing, roofFraming],
   siding: [exteriorCovering, flashing, veneer, foam],
   decks: [decks, guards, stairs, decay, footings, permits],
   concrete: [footings, slab, fdnWalls, drainage],

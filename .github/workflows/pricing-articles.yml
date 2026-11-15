@@ -1,7 +1,7 @@
 # Publishes one pricing guide every Monday and Thursday (7:00 AM US Central, 13:00 UTC).
 # Needs one repository secret: ANTHROPIC_API_KEY (Settings → Secrets and variables → Actions).
 # Each run drafts with Claude Haiku 5.5, runs the automated quality checks plus an editor pass,
-# commits the guide to main, and Netlify deploys it. If a draft fails the checks twice, nothing is
+# commits the guide to main, and Netlify deploys it. If a draft fails the checks after three rewrites, nothing is
 # published and the run fails (GitHub emails the repo owner). Pause it any time from the Actions
 # tab ("Disable workflow"). See docs/seo/PRICING_ARTICLES.md.
 name: Pricing articles

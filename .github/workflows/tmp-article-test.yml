@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        topic: [how-to-price-roofing-jobs, decks-estimate-checklist, how-to-price-pressure-washing-jobs]
+        topic: [how-to-price-roofing-jobs, how-to-price-siding-jobs]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
