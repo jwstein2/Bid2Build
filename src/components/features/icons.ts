@@ -1,4 +1,4 @@
-import { BarChart3, Calculator, FileSpreadsheet, LayoutTemplate, Library, SquareKanban, type LucideIcon } from "lucide-react";
+import { BarChart3, CalendarRange, Calculator, FileSpreadsheet, LayoutTemplate, Library, SquareKanban, type LucideIcon } from "lucide-react";
 import type { FeatureId } from "@/lib/features/registry";
 
 export const FEATURE_ICONS: Record<FeatureId, LucideIcon> = {
@@ -8,4 +8,5 @@ export const FEATURE_ICONS: Record<FeatureId, LucideIcon> = {
   analytics: BarChart3,
   sales_pay: Calculator,
   internal_report: FileSpreadsheet,
+  project_scheduling: CalendarRange,
 };

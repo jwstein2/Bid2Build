@@ -19,6 +19,7 @@ const item = (n, g, name, cost_type, qty, unit, cost, sort) => ({
 });
 
 const tables = {
+  pm_editors: [],
   business_profiles: process.env.MOCK_EMPTY_PROFILE ? [] : [{ user_id: USER.id, company_name: "Summit Exteriors LLC", contact_name: "Alex Rivera", email: "office@summit.test", phone: "(555) 010-2030", address: "120 Main St, Springfield", website: null, license_number: "CBC-12345", logo_path: null, accent_color: "#00C2E0", default_terms: null, default_payment_terms: null }],
   estimates: [
     { id: EST, user_id: USER.id, title: "Siding replacement – Johnson residence", customer_name: "Pat Johnson", customer_email: "pat@example.test", customer_phone: null, project_address: "48 Oak Lane", customer_notes: null, trades: ["siding"], status: "draft", updated_at: iso(0), estimate_number: "B-1004", estimate_date: iso(0).slice(0, 10), expiration_date: iso(-30).slice(0, 10), location_zip: null, location_city: null, location_state: null, pricing_mode: "markup", pricing_percent: 25, fixed_adjustment: 0, adjustment_label: null, tax_rate: 0, display_mode: "itemized", default_group_visibility: "itemized", template_trade: "siding", template_version: 1, customer_id: null, proposal_config: null },
@@ -306,6 +307,20 @@ http.createServer((req, res) => {
       const onlyNull = u.searchParams.get("onboarding_status") === "is.null";
       if (!(onlyNull && p.onboarding_status)) Object.assign(p, body);
       return send(res, 200, [p]);
+    }
+    // Project scheduling: GET /__pm?state=<json for my_pm_access>. company_pm_assign toggles tables.pm_editors.
+    if (u.pathname === "/__pm") { tables.pm_editors ??= []; rpcs.my_pm_access = u.searchParams.get("state") ? JSON.parse(u.searchParams.get("state")) : null; return send(res, 200, { ok: true }); }
+    if (u.pathname === "/rest/v1/rpc/company_pm_assign") {
+      let a = {}; try { a = JSON.parse(raw || "{}"); } catch { /* ignore */ }
+      tables.pm_editors ??= [];
+      const pm = rpcs.my_pm_access ?? { editorLimit: 0, editorsAssigned: 0 };
+      const has = tables.pm_editors.some((e) => e.user_id === a.p_user_id);
+      if (a.p_assign && !has) {
+        if (tables.pm_editors.length >= pm.editorLimit) return send(res, 400, { code: "P0001", message: "editor_limit" });
+        tables.pm_editors.push({ user_id: a.p_user_id });
+      } else if (!a.p_assign) tables.pm_editors = tables.pm_editors.filter((e) => e.user_id !== a.p_user_id);
+      rpcs.my_pm_access = { ...pm, editorsAssigned: tables.pm_editors.length };
+      return send(res, 200, { ok: true, changed: true });
     }
     // Feature discovery state (auth user_metadata.b2b_features): reset, or set created_at for "new account" checks.
     if (u.pathname === "/__features") { USER.user_metadata = {}; if (u.searchParams.get("created")) USER.created_at = u.searchParams.get("created"); return send(res, 200, { ok: true }); }

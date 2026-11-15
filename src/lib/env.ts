@@ -16,6 +16,9 @@ export function serverEnv() {
     stripePriceAnnual: process.env.STRIPE_PRICE_ANNUAL ?? "",
     stripePriceEnterpriseBase: process.env.STRIPE_PRICE_ENTERPRISE_BASE ?? "",
     stripePriceEnterpriseSeat: process.env.STRIPE_PRICE_ENTERPRISE_SEAT ?? "",
+    stripePricePmAddon: process.env.STRIPE_PRICE_PM_ADDON ?? "",
+    stripePricePmAddonAnnual: process.env.STRIPE_PRICE_PM_ADDON_ANNUAL ?? "",
+    stripePricePmEditor: process.env.STRIPE_PRICE_PM_EDITOR ?? "",
   };
 }
 
@@ -33,5 +36,21 @@ export const isEnterpriseConfigured = () => {
   const e = serverEnv();
   if (!isStripeConfigured() || !e.stripePriceEnterpriseBase || !e.stripePriceEnterpriseSeat) return false;
   if (/^(sk|rk)_live_/.test(e.stripeSecretKey) && process.env.ENTERPRISE_CHECKOUT_LIVE !== "true") return false;
+  return true;
+};
+
+/** Project scheduling is shown only when switched on (it stays off in production until Phases 6-7 ship). */
+export const isPmEnabled = () => process.env.NEXT_PUBLIC_PROJECT_SCHEDULING === "on";
+
+/**
+ * PM add-on purchases need the feature switched on and its Stripe prices configured. With a live key
+ * they also need PM_BILLING_LIVE=true, separately from STRIPE_ALLOW_LIVE, so PM billing can be verified
+ * before customers can buy it.
+ */
+export const isPmBillingConfigured = (kind: "addon" | "editor") => {
+  const e = serverEnv();
+  if (!isPmEnabled() || !isStripeConfigured()) return false;
+  if (kind === "addon" ? !e.stripePricePmAddon : !e.stripePricePmEditor) return false;
+  if (/^(sk|rk)_live_/.test(e.stripeSecretKey) && process.env.PM_BILLING_LIVE !== "true") return false;
   return true;
 };

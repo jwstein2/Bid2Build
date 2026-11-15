@@ -5,10 +5,10 @@ import { Badge, Notice } from "@/components/ui/misc";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/builder/dialogs";
 import { DURATION_PRESETS, INCLUDED_SEATS, MAX_EXTRA_SEATS, MAX_GRANT_DAYS, STATE_LABELS, STATE_TONES, daysLeft, type CompHistoryEntry, type CompRow } from "@/lib/comp/grants";
-import { extendGrant, grantDetail, pauseGrant, resendInvitation, resumeGrant, revokeGrant, setExtraSeats, type ActionResult } from "./actions";
+import { extendGrant, grantDetail, pauseGrant, resendInvitation, resumeGrant, revokeGrant, setExtraSeats, setPmEditors, type ActionResult } from "./actions";
 import { CopyLink } from "./copy-link";
 
-type Dialog = { kind: "extend" | "revoke" | "pause" | "resume" | "resend" | "seats" | "details"; row: CompRow } | null;
+type Dialog = { kind: "extend" | "revoke" | "pause" | "resume" | "resend" | "seats" | "pm" | "details"; row: CompRow } | null;
 
 function LocalDate({ iso, time }: { iso: string | null; time?: boolean }) {
   if (!iso) return <span className="text-muted">—</span>;
@@ -25,12 +25,13 @@ function actionsFor(r: CompRow): Exclude<Dialog, null>["kind"][] {
   if (r.state === "paused") a.push("resume");
   if (r.state === "pending" || r.state === "invite_expired") a.push("resend");
   if (r.plan === "enterprise" && r.state !== "revoked") a.push("seats");
+  if (r.state !== "revoked") a.push("pm");
   if (r.state !== "revoked") a.push("revoke");
   a.push("details");
   return a;
 }
 
-const ACTION_LABELS = { extend: "Extend", pause: "Pause", resume: "Resume", resend: "Resend invitation", seats: "Seats", revoke: "Revoke", details: "Details" } as const;
+const ACTION_LABELS = { extend: "Extend", pause: "Pause", resume: "Resume", resend: "Resend invitation", seats: "Seats", pm: "Scheduling", revoke: "Revoke", details: "Details" } as const;
 
 function Paid({ r }: { r: CompRow }) {
   if (r.converted) return <Badge tone="ok">Converted</Badge>;
@@ -124,6 +125,7 @@ function ActionDialog({ dialog, onClose }: { dialog: Exclude<Dialog, null>; onCl
   const [reason, setReason] = useState("");
   const [seats, setSeats] = useState(String(row.extra_seats));
   const [approve, setApprove] = useState(false);
+  const [pmEd, setPmEd] = useState(row.pm_editors == null ? "" : String(row.pm_editors));
   const [detail, setDetail] = useState<{ history: CompHistoryEntry[]; row: CompRow } | null | "error">(null);
 
   const run = (fn: () => Promise<ActionResult>) => start(async () => { const r = await fn(); setResult(r); if (r.ok) router.refresh(); });
@@ -138,7 +140,7 @@ function ActionDialog({ dialog, onClose }: { dialog: Exclude<Dialog, null>; onCl
   const done = result?.ok;
   const titles = {
     extend: "Extend complimentary access", pause: "Pause complimentary access", resume: "Resume complimentary access",
-    resend: "Resend invitation", seats: "Complimentary Enterprise seats", revoke: "Revoke complimentary access", details: "Grant details",
+    resend: "Resend invitation", seats: "Complimentary Enterprise seats", pm: "Project scheduling editors", revoke: "Revoke complimentary access", details: "Grant details",
   } as const;
 
   const footer = (confirmLabel: string, onConfirm: () => void, danger = false, disabled = false) => (
@@ -191,6 +193,23 @@ function ActionDialog({ dialog, onClose }: { dialog: Exclude<Dialog, null>; onCl
         </label>
         {footer("Save seats", () => run(() => setExtraSeats({ id: row.id, extraSeats: s, approve: true })), false, !seatsOk)}
       </>)}
+
+      {kind === "pm" && (() => {
+        const def = row.plan === "enterprise" ? 1 : 0;
+        const n = pmEd.trim() === "" ? null : Number(pmEd);
+        const ok = approve && (n === null || (Number.isInteger(n) && n >= 0 && n <= 50)) && n !== (row.pm_editors ?? null);
+        return (<>
+          <p className="text-sm text-ink-soft">Plan default: {row.plan === "enterprise" ? "Enterprise grants include 1 schedule editor." : "Unlimited grants don't include project scheduling."} Leave blank to use the default ({def}). Complimentary editors are never charged.</p>
+          <label className="mt-3 flex items-center gap-2 text-sm font-medium">Schedule editors
+            <input type="number" min={0} max={50} placeholder={String(def)} value={pmEd} onChange={(e) => { setPmEd(e.target.value); setApprove(false); }} className="min-h-10 w-24 rounded-md border border-line-strong px-2" />
+          </label>
+          <label className="mt-3 flex items-start gap-2 rounded-md border border-warn/40 bg-warn-tint px-3 py-2 text-sm">
+            <input type="checkbox" checked={approve} onChange={(e) => setApprove(e.target.checked)} className="mt-1" />
+            <span>As the Built2Bid platform owner, I authorize this exception.</span>
+          </label>
+          {footer("Save", () => run(() => setPmEditors({ id: row.id, editors: n, approve: true })), false, !ok)}
+        </>);
+      })()}
 
       {kind === "revoke" && (<>
         <p className="text-sm text-ink-soft">Complimentary access ends immediately{row.state === "pending" ? " and the invitation link stops working" : ""}. Their account, bids, customers and any paid subscription are not affected. This can&apos;t be undone; you can create a new grant later.</p>
