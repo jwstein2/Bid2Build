@@ -2,7 +2,8 @@ import Link from "next/link";
 import { Change, FunnelSteps, Kpi, PageHead, PairColumns, Panel, PanelLink, Pct, ago, fmt, usd } from "@/components/admin/cc";
 import { RangeControl, ReportUnavailable, ScopeNote } from "@/components/admin/report";
 import { tip } from "@/lib/admin/definitions";
-import { ga4Report } from "@/lib/admin/integrations";
+import { envPresent, ga4Report } from "@/lib/admin/integrations";
+import { costIssues, serviceViews } from "@/lib/admin/costs";
 import { activityFeed, cohortFunnel, kpis, momentum, needsAttention, ratio, windowOf, type FeedKind } from "@/lib/admin/model";
 import { loadReport } from "@/lib/admin/load";
 import { href } from "@/lib/admin/view";
@@ -13,7 +14,7 @@ export const metadata = { title: "Owner overview" };
 const FEED_TONE: Record<FeedKind, string> = { joined: "var(--cc-blue)", first_bid: "var(--cc-blue)", paid: "var(--cc-green)", canceled: "var(--cc-amber)", signed: "var(--cc-green)", comp_granted: "var(--cc-violet)", comp_expired: "var(--cc-amber)" };
 
 export default async function Overview({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  const { r, error, view } = await loadReport(await searchParams);
+  const { r, error, view } = await loadReport(await searchParams, { costs: true });
   if (!r) return <ReportUnavailable error={error} />;
   const { facts, sc, now } = r;
   const range = view.range;
@@ -22,7 +23,10 @@ export default async function Overview({ searchParams }: { searchParams: Promise
   const funnel = cohortFunnel(facts, w.start, w.end);
   const ga = await ga4Report(range.days);
   const m = momentum(facts, range, now);
-  const issues = needsAttention(sc, facts, now);
+  const monthStart = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1);
+  const aiMonth = Math.round((r.costs?.ai ?? []).filter((a) => Date.parse(a.created_at) >= monthStart).reduce((n, a) => n + (Number(a.cost_usd) || 0), 0) * 100);
+  const aiBudget = Number(process.env.AI_MONTHLY_BUDGET_USD);
+  const issues = [...needsAttention(sc, facts, now), ...(r.costs ? costIssues(serviceViews(r.costs.services, r.costs.expenses, envPresent, now), now, { monthCents: aiMonth, budgetCents: Number.isFinite(aiBudget) && aiBudget > 0 ? Math.round(aiBudget * 100) : null }) : [])];
   const feed = activityFeed(sc, facts, now, 9);
   const nowMs = now.getTime();
 

@@ -34,6 +34,9 @@ export function integrationStatus(snap: Snapshot): Integration[] {
     { key: "auth_email", name: "Sign-in email delivery (Supabase SMTP)", state: "not_connected", detail: "Supabase Auth logs are not readable by the app. Check Supabase → Logs → Auth." },
     { key: "sentry", name: "Error monitoring (Sentry)", state: has("NEXT_PUBLIC_SENTRY_DSN") ? "ok" : "missing", detail: has("NEXT_PUBLIC_SENTRY_DSN") ? "DSN set" : "No NEXT_PUBLIC_SENTRY_DSN" },
     { key: "instantly", name: "Instantly outreach sync", state: has("INSTANTLY_API_KEY") && env("INSTANTLY_SYNC_ENABLED") === "true" ? "ok" : "not_connected", detail: has("INSTANTLY_API_KEY") ? `Key set · sync ${env("INSTANTLY_SYNC_ENABLED") === "true" ? "on" : "off"}` : "Not connected (outreach links still attribute through UTM tags)" },
+    { key: "netlify_api", name: "Netlify usage monitor", state: has("NETLIFY_API_TOKEN") ? "ok" : "not_connected", detail: has("NETLIFY_API_TOKEN") ? "Token set · plan and build minutes on Tech Stack & Costs" : "Needs NETLIFY_API_TOKEN (read-only use)" },
+    { key: "supabase_mgmt", name: "Supabase Management API monitor", state: has("SUPABASE_MANAGEMENT_TOKEN") ? "ok" : "not_connected", detail: has("SUPABASE_MANAGEMENT_TOKEN") ? "Token set · request counts on Tech Stack & Costs" : "Needs SUPABASE_MANAGEMENT_TOKEN (read-only use)" },
+    { key: "anthropic_admin", name: "Anthropic account cost monitor", state: has("ANTHROPIC_ADMIN_KEY") ? "ok" : "not_connected", detail: has("ANTHROPIC_ADMIN_KEY") ? "Admin key set · monthly API cost on Tech Stack & Costs" : "Needs ANTHROPIC_ADMIN_KEY (cost report only)" },
     { key: "ads", name: "Google Ads / Meta Ads / YouTube", state: "not_connected", detail: "No ad-platform API. Enter monthly spend on the Marketing page for CAC." },
   ];
 }
@@ -122,7 +125,7 @@ export async function searchConsoleReport(days: number): Promise<SearchReport | 
 // ---------------------------------------------------------------------------------------------
 // Stripe read-only reconciliation
 // ---------------------------------------------------------------------------------------------
-export interface StripeRecon { active: number; pastDue: number; paidCents: number; invoices: number; refundsNote: string }
+export interface StripeRecon { active: number; pastDue: number; paidCents: number; invoices: number; refundsNote: string; fetchedAt: string }
 
 const timeout = <T,>(p: Promise<T>, ms: number) => Promise.race([p, new Promise<never>((_, rej) => setTimeout(() => rej(new Error("timeout")), ms))]);
 
@@ -147,9 +150,53 @@ export async function stripeReconcile(days: number, excludedCustomers: Set<strin
       active: keep(active as unknown as { customer: string | { id: string } | null }[]).length,
       pastDue: keep(pastDue as unknown as { customer: string | { id: string } | null }[]).length,
       paidCents: paid.reduce((n, i) => n + (i.amount_paid ?? 0), 0), invoices: paid.length,
-      refundsNote: "Gross of refunds and Stripe fees",
+      refundsNote: "Gross of refunds and Stripe fees", fetchedAt: new Date().toISOString(),
     };
   } catch {
     return null;
   }
 }
+
+/**
+ * Cash in the window from Stripe, read-only: paid invoices (genuine customers only), refunds and
+ * processing fees from balance transactions. Balance transactions do not carry the customer without
+ * extra lookups, so refunds and fees cover the whole Stripe account (labeled as such on the page).
+ */
+export async function stripeMoney(days: number, excludedCustomers: Set<string>): Promise<import("./finance").StripeMoney | null> {
+  if (!has("STRIPE_SECRET_KEY")) return null;
+  try {
+    const stripe = getStripe();
+    const gte = Math.floor((Date.now() - days * 86_400_000) / 1000);
+    const [invoices, txns] = await timeout(Promise.all([
+      stripe.invoices.list({ status: "paid", created: { gte }, limit: 100 }).autoPagingToArray({ limit: 2000 }),
+      stripe.balanceTransactions.list({ created: { gte }, limit: 100 }).autoPagingToArray({ limit: 5000 }),
+    ]), 8000);
+    const cust = (c: string | { id: string } | null) => (typeof c === "string" ? c : c?.id ?? "");
+    const paid = (invoices as unknown as { customer: string | { id: string } | null; amount_paid: number }[]).filter((x) => !excludedCustomers.has(cust(x.customer)));
+    const tx = txns as unknown as { type: string; amount: number; fee: number }[];
+    return {
+      grossCents: paid.reduce((n, x) => n + (x.amount_paid ?? 0), 0), invoices: paid.length,
+      refundsCents: -tx.filter((x) => x.type === "refund" || x.type === "payment_refund").reduce((n, x) => n + x.amount, 0),
+      feesCents: tx.reduce((n, x) => n + (x.fee ?? 0), 0) + -tx.filter((x) => x.type === "stripe_fee").reduce((n, x) => n + x.amount, 0),
+      fetchedAt: new Date().toISOString(), feesScope: "account",
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** Checkout Sessions created in the window by outcome (read-only). Expired = abandoned or canceled. */
+export async function stripeCheckouts(days: number): Promise<{ complete: number; expired: number; open: number; fetchedAt: string } | null> {
+  if (!has("STRIPE_SECRET_KEY")) return null;
+  try {
+    const gte = Math.floor((Date.now() - days * 86_400_000) / 1000);
+    const list = await timeout(getStripe().checkout.sessions.list({ created: { gte }, limit: 100 }).autoPagingToArray({ limit: 2000 }), 8000);
+    const by = (s: string) => (list as unknown as { status: string | null }[]).filter((x) => x.status === s).length;
+    return { complete: by("complete"), expired: by("expired"), open: by("open"), fetchedAt: new Date().toISOString() };
+  } catch {
+    return null;
+  }
+}
+
+/** Whether a server environment variable is set on this deploy. Never returns or logs the value. */
+export const envPresent = (name: string) => has(name);

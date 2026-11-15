@@ -16,7 +16,8 @@ export const MODEL_PRICING: Record<string, { input: number; output: number }> = 
   "claude-haiku-5-5": { input: 0.1, output: 0.5 },
 };
 
-export const DEFAULT_MODEL = "claude-opus-5-5";
+// Haiku keeps short drafting tasks low-cost; set AI_MODEL to use a larger model.
+export const DEFAULT_MODEL = "claude-haiku-5-5";
 
 export function aiSettings() {
   if (typeof window !== "undefined") throw new Error("aiSettings() must not run in the browser");
@@ -63,13 +64,13 @@ function getClient(apiKey: string) {
 }
 
 /** One structured-output request. Throws AiUnavailableError on any failure so callers can fall back. */
-export async function generateStructured<S extends z.ZodType>(opts: { system: string; user: string; schema: S; maxTokens?: number }): Promise<StructuredResult<z.infer<S>>> {
+export async function generateStructured<S extends z.ZodType>(opts: { system: string; user: string; schema: S; maxTokens?: number; model?: string }): Promise<StructuredResult<z.infer<S>>> {
   const s = aiSettings();
   if (!s.enabled || !s.apiKey) throw new AiUnavailableError("AI is not configured", "not_configured");
   let response;
   try {
     response = await getClient(s.apiKey).messages.parse({
-      model: s.model,
+      model: opts.model || s.model,
       max_tokens: opts.maxTokens ?? 8000,
       // Short, well-specified writing task: low effort keeps cost and latency down.
       output_config: { effort: "low", format: zodOutputFormat(opts.schema) },
@@ -80,7 +81,7 @@ export async function generateStructured<S extends z.ZodType>(opts: { system: st
     if (e instanceof Anthropic.APIError) throw new AiUnavailableError(`AI request failed (${e.status ?? "network"})`, "api_error");
     throw new AiUnavailableError("AI request failed", "api_error");
   }
-  const usage = { inputTokens: response.usage.input_tokens ?? 0, outputTokens: response.usage.output_tokens ?? 0, model: response.model ?? s.model };
+  const usage = { inputTokens: response.usage.input_tokens ?? 0, outputTokens: response.usage.output_tokens ?? 0, model: response.model ?? opts.model ?? s.model };
   if (response.stop_reason === "refusal") throw new AiUnavailableError("AI declined the request", "refused", usage);
   if (response.stop_reason === "max_tokens" || !response.parsed_output) throw new AiUnavailableError("AI returned no usable output", "invalid_output", usage);
   return { data: response.parsed_output as z.infer<S>, ...usage, costUsd: estimateCostUsd(usage.model, usage.inputTokens, usage.outputTokens) };

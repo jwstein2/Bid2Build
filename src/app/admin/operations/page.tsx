@@ -13,7 +13,7 @@ export const metadata = { title: "Operations" };
 const STATE: Record<IntegrationState, { tone: Tone; label: string }> = { ok: { tone: "green", label: "OK" }, warn: { tone: "amber", label: "Check" }, missing: { tone: "red", label: "Missing" }, not_connected: { tone: "muted", label: "Not connected" } };
 
 export default async function Operations({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  const { r, error, view } = await loadReport(await searchParams);
+  const { r, error, view } = await loadReport(await searchParams, { costs: true });
   if (!r) return <ReportUnavailable error={error} />;
   const { facts, sc, snap, now } = r;
   const nowMs = now.getTime();
@@ -101,6 +101,9 @@ export default async function Operations({ searchParams }: { searchParams: Promi
           <li className="flex flex-wrap justify-between gap-2"><span className="text-ink-soft">Paid subscriptions with no recorded start event</span><span className="cc-mono text-white">{fmt(paidNoStart)}</span></li>
           <li className="flex flex-wrap justify-between gap-2"><span className="text-ink-soft">Referrer / click id / device capture</span><span className="cc-mono">{snap.attributionV2 ? <span className="text-[var(--cc-green)]">Installed</span> : <span className="text-[var(--cc-amber)]">Needs migration 20261115002000</span>}</span></li>
           <li className="flex flex-wrap justify-between gap-2"><span className="text-ink-soft">Owner account labels</span><span className="cc-mono">{snap.labelsInstalled ? <span className="text-[var(--cc-green)]">Installed · {fmt(snap.labels.length)} labeled</span> : <span className="text-[var(--cc-amber)]">Needs migration 20261115002000</span>}</span></li>
+          <li className="flex flex-wrap justify-between gap-2"><span className="text-ink-soft">Cost tracking and usage monitors</span><span className="cc-mono">{r.costs?.installed ? <span className="text-[var(--cc-green)]">Installed · {fmt(r.costs.services.length)} services recorded</span> : <span className="text-[var(--cc-amber)]">Needs migration 20261115003000</span>}</span></li>
+          <li className="flex flex-wrap justify-between gap-2"><span className="text-ink-soft">Database size (Supabase Pro includes 8 GB)</span><span className="cc-mono text-white">{r.costs?.usage ? `${(r.costs.usage.db_bytes / 1024 ** 2).toFixed(1)} MB${r.costs.usage.db_bytes > 6.4 * 1024 ** 3 ? " · over 80%" : ""}` : "–"}</span></li>
+          <li className="flex flex-wrap justify-between gap-2"><span className="text-ink-soft">Analytics instrumentation gaps</span><span className="cc-mono text-xs text-ink-soft">Verification failures and proposal views are not recorded (by design)</span></li>
           <li className="flex flex-wrap justify-between gap-2"><span className="text-ink-soft">Market Intelligence sharing</span><span className="cc-mono text-white">{fmt(sharing)} of 20 businesses opted in <span className="text-muted">(pricing views stay hidden below 20 by design)</span></span></li>
         </ul>
       </Panel>

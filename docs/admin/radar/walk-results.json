@@ -1,0 +1,207 @@
+[
+  {
+    "n": "Marketing page links to Opportunity Radar",
+    "ok": true,
+    "d": ""
+  },
+  {
+    "n": "Radar heading",
+    "ok": true,
+    "d": ""
+  },
+  {
+    "n": "Empty state",
+    "ok": true,
+    "d": ""
+  },
+  {
+    "n": "7 discussions imported",
+    "ok": true,
+    "d": "7"
+  },
+  {
+    "n": "Reddit A post scored high",
+    "ok": true,
+    "d": "{\"title\":\"What estimating software do you guys use?\",\"source_key\":\"reddit\",\"priority\":\"A\",\"score\":99,\"status\":\"new\",\"platform_thread_id\":\"t3_1qx7ab\",\"injection_suspected\":false}"
+  },
+  {
+    "n": "Skool post routed to the skool source",
+    "ok": true,
+    "d": ""
+  },
+  {
+    "n": "Takeoff post is poor fit (D) under 60",
+    "ok": true,
+    "d": ""
+  },
+  {
+    "n": "Truck post is irrelevant and archived",
+    "ok": true,
+    "d": ""
+  },
+  {
+    "n": "Injection attempt flagged",
+    "ok": true,
+    "d": ""
+  },
+  {
+    "n": "Duplicate import lands on the existing discussion",
+    "ok": true,
+    "d": ""
+  },
+  {
+    "n": "Still 7 discussions",
+    "ok": true,
+    "d": ""
+  },
+  {
+    "n": "Open queue lists relevant discussions",
+    "ok": true,
+    "d": ""
+  },
+  {
+    "n": "Intent filter works",
+    "ok": true,
+    "d": ""
+  },
+  {
+    "n": "Draft 1 discloses founder",
+    "ok": true,
+    "d": "Good question. Whatever you pick, I'd check three things: can it use your own labor and material costs, does it handle m"
+  },
+  {
+    "n": "Draft 1 offers 3 free bids",
+    "ok": true,
+    "d": ""
+  },
+  {
+    "n": "Draft 1 has no link on Reddit (links off by default)",
+    "ok": true,
+    "d": ""
+  },
+  {
+    "n": "Publish via API is disabled for Reddit",
+    "ok": true,
+    "d": ""
+  },
+  {
+    "n": "After reply 1: active, 1 used",
+    "ok": true,
+    "d": "{\"status\":\"active\",\"owner_replies_used\":1}"
+  },
+  {
+    "n": "Reply 2 answers price and trade",
+    "ok": true,
+    "d": "Thanks for asking. It's free for your first 3 bids and 1 bid a month after that. Unlimited is $19.99/month, or $149/year if you pay annually. It has templates f"
+  },
+  {
+    "n": "Reply 2 doesn't repeat the website",
+    "ok": true,
+    "d": ""
+  },
+  {
+    "n": "Follow-up linked to the owner's reply 1",
+    "ok": true,
+    "d": "https://www.reddit.com/r/Contractor/comments/1qx7ab/comment/abc123/"
+  },
+  {
+    "n": "After reply 2: completed, 2 used",
+    "ok": true,
+    "d": "{\"status\":\"completed\",\"owner_replies_used\":2}"
+  },
+  {
+    "n": "No follow-up form or draft buttons on a completed conversation",
+    "ok": true,
+    "d": ""
+  },
+  {
+    "n": "Database refuses a third reply",
+    "ok": true,
+    "d": "radar_reply_cap: conversation is complete"
+  },
+  {
+    "n": "Reopened: follow-up form is back",
+    "ok": true,
+    "d": ""
+  },
+  {
+    "n": "Edited draft: missing disclosure blocks approval",
+    "ok": true,
+    "d": ""
+  },
+  {
+    "n": "Edited draft flags unsupported claims",
+    "ok": true,
+    "d": ""
+  },
+  {
+    "n": "Edited draft flags the link on Skool",
+    "ok": true,
+    "d": ""
+  },
+  {
+    "n": "Irrelevant post offers no reply",
+    "ok": true,
+    "d": ""
+  },
+  {
+    "n": "Compliance matrix shows Skool prohibited",
+    "ok": true,
+    "d": ""
+  },
+  {
+    "n": "Skool authorization boxes are disabled",
+    "ok": true,
+    "d": ""
+  },
+  {
+    "n": "Digest lists promising discussions",
+    "ok": true,
+    "d": ""
+  },
+  {
+    "n": "No horizontal page scroll on phone: /admin/marketing/radar",
+    "ok": true,
+    "d": "0"
+  },
+  {
+    "n": "No horizontal page scroll on phone: /admin/marketing/radar/:id",
+    "ok": true,
+    "d": "0"
+  },
+  {
+    "n": "No horizontal page scroll on phone: /admin/marketing/radar/sources",
+    "ok": true,
+    "d": "0"
+  },
+  {
+    "n": "No horizontal page scroll on phone: /admin/marketing/radar/digest",
+    "ok": true,
+    "d": "0"
+  },
+  {
+    "n": "Existing /admin still renders",
+    "ok": true,
+    "d": ""
+  },
+  {
+    "n": "Existing /admin/marketing still renders",
+    "ok": true,
+    "d": ""
+  },
+  {
+    "n": "Existing /admin/operations still renders",
+    "ok": true,
+    "d": ""
+  },
+  {
+    "n": "Existing /admin/complimentary still renders",
+    "ok": true,
+    "d": ""
+  },
+  {
+    "n": "No browser errors",
+    "ok": true,
+    "d": ""
+  }
+]

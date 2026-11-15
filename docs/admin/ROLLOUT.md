@@ -25,3 +25,16 @@ The code tolerates the migration not being applied yet: labels show as “Needs 
 ## Unchanged on purpose
 
 Complimentary access grant/extend/revoke logic and RPCs, Stripe billing, checkout, webhooks, entitlements, and all customer-facing pages.
+
+## V3 (Tech Stack & Costs, Business Scorecard, forecast)
+
+Migration `supabase/migrations/20261115003000_admin_costs.sql` (additive, safe to re-run):
+
+- `admin_services`: provider inventory overrides (plan, charge, interval, renewal, allocation %, budget, cost source). NULL amount = unknown.
+- `admin_expenses`: dated charges; unique `(service_key, external_id)` prevents counting an invoice twice.
+- `admin_platform_usage()`: aggregate database/storage/auth-user sizes for the usage monitor.
+
+All three are service-role only. Without the migration the new pages load read-only and show costs as Unknown.
+Rollback: `supabase/rollback/20261115003000_admin_costs_down.sql` (deletes the owner's cost records only).
+
+After merging: open **Tools → Tech Stack & Costs**, set each active provider's plan price (or mark it Discontinued/Unknown), set the Google Workspace allocation, and add renewal dates.

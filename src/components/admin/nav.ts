@@ -10,9 +10,13 @@ export const PRIMARY = [
 ];
 /** Existing owner tools, kept reachable from every page (and listed on Operations). */
 export const TOOLS = [
+  { href: "/admin/costs", label: "Tech Stack & Costs" },
+  { href: "/admin/costs/forecast", label: "Scaling forecast" },
+  { href: "/admin/revenue/scorecard", label: "Business Scorecard" },
   { href: "/admin/complimentary", label: "Complimentary access" },
   { href: "/admin/states", label: "Bids by state" },
   { href: "/admin/definitions", label: "Metric definitions" },
+  { href: "/admin/marketing/radar", label: "Opportunity Radar" },
   { href: "/admin/sales", label: "Outreach funnel (Sales)" },
   { href: "/admin/referrals", label: "Referrals" },
   { href: "/admin/market", label: "Market intelligence" },

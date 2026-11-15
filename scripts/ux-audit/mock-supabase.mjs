@@ -1,6 +1,7 @@
 // Local stand-in for Supabase used ONLY to render signed-in pages for UX screenshots.
 // Answers /auth/v1/user and simple PostgREST reads/RPCs with canned test data. Never point production at it.
 import http from "node:http";
+import { handleRadarRest, radarRestEnabled } from "../radar/pg-rest.mjs";
 
 const PORT = Number(process.env.MOCK_PORT ?? 54321);
 const NOW = Date.now();
@@ -65,6 +66,7 @@ if (process.env.MOCK_COMMAND_CENTER) {
   const seed = commandCenterSeed(USER.id);
   Object.assign(tables, seed.tables);
   rpcs.admin_metrics = seed.adminMetrics;
+  rpcs.admin_platform_usage = { db_bytes: 17_192_627, auth_users: 24, buckets: [{ bucket: "documents", objects: 15, bytes: 1_081_580 }, { bucket: "logos", objects: 3, bytes: 464_838 }], measured_at: new Date().toISOString() };
   // Read-only stand-in for admin_comp_list so the Complimentary Access screen can be screenshotted.
   const compRow = (g, state, name) => ({ id: g.id, email: g.email, user_id: g.user_id, plan: g.plan, state, status: g.status, duration_days: g.plan === "enterprise" ? 90 : 30, included_seats: g.plan === "enterprise" ? 3 : 1, extra_seats: 0, company_id: null, starts_at: g.starts_at, expires_at: g.expires_at, paused_at: null, activated_at: g.starts_at, invite_expires_at: g.invite_expires_at, invite_sent_at: g.created_at, invite_send_count: 1, note: g.note, created_at: g.created_at, revoked_at: null, revoke_reason: null, granted_by_email: USER.email, account_name: name, last_activity_at: null, paid_now: false, converted: false });
   const [g1, g2, g3] = seed.tables.complimentary_grants;
@@ -303,6 +305,8 @@ http.createServer((req, res) => {
       }
     }
     if (u.pathname.startsWith("/storage/v1/")) return send(res, 400, { error: "not available in mock" });
+    // Opportunity Radar walk (scripts/radar/walk.mjs): radar_* tables and RPCs run real SQL when RADAR_PG_URL is set.
+    if (radarRestEnabled() && /^\/rest\/v1\/(rpc\/)?radar_/.test(u.pathname)) return void handleRadarRest(req, res, u, raw, send);
     const rpc = u.pathname.match(/^\/rest\/v1\/rpc\/(\w+)/);
     if (rpc && esignRpc[rpc[1]]) { let args = {}; try { args = JSON.parse(raw || "{}"); } catch { /* ignore */ } const [st, body] = esignRpc[rpc[1]](args); return send(res, st, body); }
     if (rpc && compPool && COMP_RPC.test(rpc[1])) { let args = {}; try { args = JSON.parse(raw || "{}"); } catch { /* ignore */ } return void compRpc(rpc[1], args, res); }
