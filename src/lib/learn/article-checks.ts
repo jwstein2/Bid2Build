@@ -146,7 +146,7 @@ export function checkArticle(a: Article, opts: CheckOptions = {}): CheckResult {
  * contractors), plus anything whose title advertises prices.
  */
 const BLOCKED_SOURCE_HOSTS = /(?:^|\.)(?:angi|angieslist|homeadvisor|thumbtack|homeguide|fixr|porch|modernize|houzz|yelp|bark|networx|homeyou|costhelper|costowl|improvenet|forbes|bankrate|nerdwallet|insuranceopedia|lendingtree|reddit|quora|youtube|facebook|pinterest|tiktok|instagram)\.com$/i;
-const BLOCKED_SOURCE_TITLE = /\$|\bhow much\b|\bcheapest\b|\bcost (?:guide|calculator|data)\b|\bdata\]|\bquotes? near\b/i;
+const BLOCKED_SOURCE_TITLE = /\$|\bcosts?\b|\bhow much\b|\bcheapest\b|\bcost (?:guide|calculator|data)\b|\bdata\]|\bquotes? near\b/i;
 export function usableSource(url: string, title: string): boolean {
   try {
     const u = new URL(url);
