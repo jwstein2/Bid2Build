@@ -52,6 +52,74 @@ const tables = {
   billing_customers: [], profiles: [{ id: USER.id, marketing_opt_in: false, created_at: iso(30) }], market_consent: [],
   estimate_project_profiles: [], trade_templates: [], feature_flags: [], audit_logs: [], import_logs: [], pdf_errors: [],
 };
+
+// Project schedules (scripts/schedule/walk.mjs): in-memory stand-ins for the schedule RPCs. The real SQL
+// is covered by tests/db/project-schedules.test.ts; this only has to behave like it for the browser walk.
+const sched = { list: new Map() };
+const scheduleRpc = {
+  can_schedule_estimate: () => [200, Boolean(rpcs.my_pm_access?.canEdit)],
+  schedule_get: ({ p_schedule_id }) => {
+    const s = sched.list.get(p_schedule_id);
+    return [200, s ? { schedule: s.row, snapshot: s.snapshot, canEdit: Boolean(rpcs.my_pm_access?.canEdit), tasks: s.tasks, deps: s.deps, revisions: [...s.revisions].reverse() } : null];
+  },
+  schedule_list: () => [200, [...sched.list.values()].map((s) => {
+    const kids = new Set(s.tasks.map((t) => t.parent_id).filter(Boolean));
+    const leaves = s.tasks.filter((t) => !kids.has(t.id));
+    const w = leaves.reduce((a, t) => a + t.duration_days, 0);
+    return { ...s.row, customer_name: s.snapshot.estimate.customerName, finish_date: s.tasks.reduce((m, t) => (t.planned_end > m ? t.planned_end : m), s.row.start_date),
+      progress: w ? Math.round(leaves.reduce((a, t) => a + t.duration_days * t.percent_complete, 0) / w) : 0 };
+  })],
+  schedule_create: ({ p_estimate_id, p_provisional, p }) => {
+    if (!rpcs.my_pm_access?.canEdit) return [403, { code: "42501", message: "forbidden" }];
+    const e = tables.estimates.find((x) => x.id === p_estimate_id);
+    const existing = [...sched.list.values()].find((x) => x.row.estimate_id === p_estimate_id);
+    if (existing) return [409, { code: "23505", message: "schedule_exists", details: existing.row.id }];
+    const accepted = ["won", "scheduled", "in_progress", "completed"].includes(e?.pipeline_stage);
+    if (!accepted && !p_provisional) return [403, { code: "42501", message: "not_accepted" }];
+    const id = crypto.randomUUID();
+    const snapshot = { estimate: { id: e.id, title: e.title, number: e.estimate_number, customerName: e.customer_name, projectAddress: e.project_address ?? null }, trades: e.trades ?? [], version: null,
+      sections: tables.estimate_groups.filter((g) => g.estimate_id === e.id).map((g) => ({ id: g.id, name: g.name, trade: (e.trades ?? [])[0] ?? null, sortOrder: g.sort_order,
+        items: tables.estimate_items.filter((i) => i.group_id === g.id).map((i) => ({ id: i.id, name: i.name, quantity: i.quantity, unit: i.unit, sortOrder: i.sort_order })) })) };
+    const keys = {};
+    const tasks = p.tasks.map((t) => { const tid = crypto.randomUUID(); keys[t.key] = tid; return taskRow({ ...t, id: tid }); });
+    sched.list.set(id, {
+      row: { id, estimate_id: e.id, company_id: null, name: p.name, status: "draft", provisional: !accepted, calendar: p.calendar, start_date: p.startDate, target_end_date: p.targetEndDate, progress_method: "duration", revision: 1, updated_at: iso(0) },
+      snapshot, tasks, deps: (p.deps ?? []).map((d) => ({ predecessor_id: keys[d.from], successor_id: keys[d.to], lag_days: d.lagDays, max_overlap: d.maxOverlap })),
+      revisions: [{ revision: 1, summary: accepted ? "Schedule created as a draft" : "Provisional schedule created (bid not yet accepted)", created_at: iso(0), actor_id: USER.id, changes: [] }],
+    });
+    tables.project_schedules = [...sched.list.values()].map((x) => x.row);
+    return [200, id];
+  },
+  schedule_save: ({ p_schedule_id, p_base_revision, p }) => {
+    const s = sched.list.get(p_schedule_id);
+    if (!s || !rpcs.my_pm_access?.canEdit) return [403, { code: "42501", message: "forbidden" }];
+    if (s.row.revision !== p_base_revision) return [409, { code: "40001", message: "stale_revision", details: String(s.row.revision) }];
+    if (p.schedule) {
+      const m = p.schedule;
+      Object.assign(s.row, { ...(m.status ? { status: m.status } : {}), ...(m.progressMethod ? { progress_method: m.progressMethod } : {}), ...(m.name ? { name: m.name } : {}), ...("targetEndDate" in m ? { target_end_date: m.targetEndDate } : {}) });
+    }
+    const del = new Set(p.delete ?? []);
+    s.tasks = s.tasks.filter((t) => !del.has(t.id));
+    const keys = {};
+    for (const t of p.tasks ?? []) {
+      if (t.id) { const i = s.tasks.findIndex((x) => x.id === t.id); if (i >= 0) s.tasks[i] = taskRow(t); }
+      else {
+        if (t.sourceItemId && !t.splitFrom && s.tasks.some((x) => x.source_item_id === t.sourceItemId && !x.split_from)) return [409, { code: "23505", message: "duplicate key value violates unique constraint" }];
+        const tid = crypto.randomUUID(); keys[t.key] = tid; s.tasks.push(taskRow({ ...t, id: tid }));
+      }
+    }
+    if (p.deps) s.deps = p.deps.map((d) => ({ predecessor_id: keys[d.from] ?? d.from, successor_id: keys[d.to] ?? d.to, lag_days: d.lagDays, max_overlap: d.maxOverlap }));
+    s.row.revision += 1; s.row.updated_at = iso(0);
+    s.revisions.push({ revision: s.row.revision, summary: p.summary, created_at: iso(0), actor_id: USER.id, changes: p.changes ?? [] });
+    return [200, s.row.revision];
+  },
+};
+const taskRow = (t) => ({
+  id: t.id, parent_id: t.kind === "item" ? t.parentId ?? null : null, kind: t.kind, source_group_id: t.sourceGroupId, source_item_id: t.sourceItemId ?? null, split_from: t.splitFrom ?? null,
+  name: t.name, sort_order: t.sortOrder ?? 0, planned_start: t.plannedStart, planned_end: t.plannedEnd, duration_days: t.durationDays, actual_start: t.actualStart ?? null,
+  actual_finish: t.actualFinish ?? null, percent_complete: t.percentComplete ?? 0, status: t.status ?? "not_started", weight: t.weight ?? null, assignee: t.assignee ?? null, notes: t.notes ?? null,
+});
+
 const rpcs = {
   is_admin: process.env.MOCK_ADMIN === "1",
   credit_status: [{ starter_balance: 2, starter_total: 3, monthly_balance: 0, monthly_eligible: false, next_cycle_at: iso(-12), unlimited: Boolean(process.env.MOCK_UNLIMITED), email_verified: true, starter_granted: true }],
@@ -380,12 +448,22 @@ http.createServer((req, res) => {
     const rpc = u.pathname.match(/^\/rest\/v1\/rpc\/(\w+)/);
     if (u.pathname === "/__pipeline_calls") return send(res, 200, pipelineRpc.calls ?? []);
     if (rpc && typeof pipelineRpc[rpc[1]] === "function") { let args = {}; try { args = JSON.parse(raw || "{}"); } catch { /* ignore */ } const [st, body] = pipelineRpc[rpc[1]](args); return send(res, st, body); }
+    if (u.pathname === "/__sched") {
+      if (u.searchParams.get("reset")) { sched.list.clear(); tables.project_schedules = []; }
+      const st = u.searchParams.get("stage"); if (st) tables.estimates[0].pipeline_stage = st;
+      return send(res, 200, { ok: true, schedules: [...sched.list.keys()] });
+    }
+    if (rpc && scheduleRpc[rpc[1]]) { let args = {}; try { args = JSON.parse(raw || "{}"); } catch { /* ignore */ } const [st, body] = scheduleRpc[rpc[1]](args); return send(res, st, body); }
     if (rpc && esignRpc[rpc[1]]) { let args = {}; try { args = JSON.parse(raw || "{}"); } catch { /* ignore */ } const [st, body] = esignRpc[rpc[1]](args); return send(res, st, body); }
     if (rpc && compPool && COMP_RPC.test(rpc[1])) { let args = {}; try { args = JSON.parse(raw || "{}"); } catch { /* ignore */ } return void compRpc(rpc[1], args, res); }
     if (rpc) return send(res, 200, rpcs[rpc[1]] ?? null);
     const t = u.pathname.match(/^\/rest\/v1\/(\w+)/);
     if (!t) return send(res, 404, { message: "unknown" });
-    const matches = (r) => [...u.searchParams].every(([k, v]) => !v.startsWith("eq.") || r[k] === undefined || String(r[k]) === v.slice(3));
+    const matches = (r) => [...u.searchParams].every(([k, v]) => {
+      if (v.startsWith("in.") && r[k] !== undefined) return v.slice(4, -1).split(",").map((x) => x.replace(/^"|"$/g, "")).includes(String(r[k]));
+      if (v.startsWith("neq.") && r[k] !== undefined) return String(r[k]) !== v.slice(4);
+      return !v.startsWith("eq.") || r[k] === undefined || String(r[k]) === v.slice(3);
+    });
     // Library tables keep writes in memory so saved items can be created, edited and deleted in browser walks.
     const LIVE = new Set(["saved_items", "assemblies", "assembly_items"]);
     if (req.method !== "GET" && req.method !== "HEAD") {

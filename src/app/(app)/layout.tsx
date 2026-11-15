@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { getUser, createClient, createAdminClient } from "@/lib/supabase/server";
-import { isSupabaseConfigured, serverEnv } from "@/lib/env";
+import { isPmEnabled, isSupabaseConfigured, serverEnv } from "@/lib/env";
 import { ATTRIBUTION_COOKIE, decodeAttribution } from "@/lib/growth/attribution";
 import { syncSignedInUser } from "@/lib/growth/leads";
 import { REFERRAL_COOKIE } from "@/lib/growth/referral";
@@ -37,7 +37,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
       <aside className="on-dark bg-navy text-white md:sticky md:top-0 md:flex md:h-screen md:w-64 md:shrink-0 md:flex-col no-print">
-        <AppSidebar isAdmin={Boolean(isAdmin)} company={companyNav(company)} email={user.email ?? (user.phone ? formatPhone(user.phone) : null)} />
+        <AppSidebar isAdmin={Boolean(isAdmin)} projects={isPmEnabled()} company={companyNav(company)} email={user.email ?? (user.phone ? formatPhone(user.phone) : null)} />
       </aside>
       <main id="main" className="min-w-0 flex-1 px-4 py-6 sm:px-8">{children}</main>
       <FeatureHost />

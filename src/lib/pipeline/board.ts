@@ -121,8 +121,11 @@ export function checkMove(b: BoardBid, to: Column): MoveCheck {
 
 export type NextAction = { label: string; href?: string; move?: Column } | null;
 
-/** One context-aware action per card. */
-export function nextAction(b: BoardBid, esign: boolean): NextAction {
+/**
+ * One context-aware action per card. With project scheduling switched on, Schedule Now opens the
+ * schedule wizard (which moves the bid to Scheduled once a draft schedule is saved).
+ */
+export function nextAction(b: BoardBid, esign: boolean, scheduling = false): NextAction {
   const col = columnOf(b);
   const edit = `/estimates/${b.id}`, proposal = `/estimates/${b.id}?step=proposal`;
   switch (col) {
@@ -132,7 +135,7 @@ export function nextAction(b: BoardBid, esign: boolean): NextAction {
     case "awaiting":
       if (b.signing?.state === "expired") return { label: "Resend signing link", href: proposal };
       return { label: "Review customer response", href: proposal };
-    case "won": return { label: "Schedule Now", move: "scheduled" };
+    case "won": return scheduling ? { label: "Schedule Now", href: `/projects/new?estimate=${b.id}` } : { label: "Schedule Now", move: "scheduled" };
     case "scheduled": return { label: "Start job", move: "in_progress" };
     case "in_progress": return { label: "Mark completed", move: "completed" };
     case "completed": return b.signing?.signed ? { label: "View signed proposal", href: `/signed/${b.signing.signed.id}` } : { label: "Review proposal", href: proposal };

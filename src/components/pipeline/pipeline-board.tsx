@@ -9,6 +9,7 @@ import {
   nextAction, stageForColumn, valueOf, type BoardBid, type Column, type Stage,
 } from "@/lib/pipeline/board";
 import { cn } from "@/lib/cn";
+import { isPmEnabled } from "@/lib/env";
 import { MoveDialog, type MoveExtras } from "./move-dialog";
 import { money, relDay } from "./format";
 
@@ -171,7 +172,7 @@ function BidCard({ b, esign, onMove, onDragStart, onDragEnd }: { b: BoardBid; es
   const col = columnOf(b);
   const value = valueOf(b);
   const approval = approvalOf(b);
-  const action = nextAction(b, esign);
+  const action = nextAction(b, esign, isPmEnabled());
   return (
     <article
       draggable onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", b.id); onDragStart(b.id); }} onDragEnd={onDragEnd}

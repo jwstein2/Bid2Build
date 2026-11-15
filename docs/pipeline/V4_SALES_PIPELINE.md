@@ -95,6 +95,23 @@ Placement rules: a real signature puts a bid at Won or later; an active signing 
 - **Migration:** `supabase/migrations/20261116003000_pm_entitlements.sql`. Rollback: `docs/pipeline/rollback_20261116003000.sql`. The app works before the SQL runs (cards stay hidden; webhook mirroring only runs when PM prices are configured).
 - **Tests:** `tests/pm-billing.test.ts` (16, Stripe mocked), `tests/db/pm-entitlements.test.ts` (11 on real Postgres), `scripts/pm/walk.mjs` (14 browser checks, mock Supabase).
 
+## Phases 6-7: Schedule Now, Gantt scheduling, progress and delays
+
+- **Where:** a new **Projects** item under Bids in the sidebar (`/projects`), Schedule Now on the Won pipeline card, in the bid header (accepted bids only; "Open schedule" when one exists), and on the signed proposal page. One schedule per bid: Schedule Now on a scheduled bid opens the existing schedule.
+- **Wizard (8 steps):** confirm the source estimate, choose sections (only the estimate's own, grouped by trade on multi-trade bids), start date + working days + holidays + business time zone, working days per section, dependencies (with the project start / after a section, wait days, allowed overlap), optional target date, review timeline, save as **draft**. The customer is never notified. Unaccepted bids need an explicit "provisional" choice and stay labelled Provisional.
+- **Target dates:** if the plan misses the target, the conflict is explained in working days with choices: use only the overlaps the contractor allowed, start earlier (never a past date), move the target, or change durations. Durations are never compressed.
+- **Snapshot:** saving freezes the estimate's sections and line items (names, quantities, units, section trade, latest version id; never costs or prices). Later bid edits never rewrite the schedule.
+- **Gantt:** day/week/month zoom, sticky labels, section grouping with expand/collapse, drag to move, drag either edge to change dates, overlaps, dependency arrows, planned bar with % complete fill, actual-dates line, today line, target line, status colors plus text labels. Keyboard: arrow keys move a bar a day, Shift+arrows change its finish, Enter opens the editor. Phones get a List view with Edit / Schedule items / Shift section buttons (no dragging needed).
+- **Line items:** a section's "Schedule individual items" lists its estimate line items; chosen ones become tasks linked to the line item (unique per schedule, so repeats are refused). Each has dates, status, % complete, optional assignee and notes.
+- **Editing:** manual start/finish/duration, group shift (section + its items), split a task into two parts, dependency editing (loops refused), undo, conflict warnings (dependency broken, non-working day, item outside its section, past planned finish, target missed). The scheduler warns but never fixes anything by itself.
+- **Delays:** extending a task that others depend on opens a preview with four choices: keep later tasks unchanged, move dependent tasks, shift the rest of the section, recalculate the project finish. Each shows exactly which tasks move and the new finish before anything is saved. Unrelated tasks never move. Every save records a revision with each task's old and new dates (History).
+- **Progress:** planned vs actual dates kept separately; status Not started / In progress / Complete / Delayed / On hold. Complete requires an actual finish and means 100%; reaching a planned date never marks anything complete and 100% never changes planned dates. Project progress is duration-weighted by default (or explicit task weights), counts sections through their line items, and has a drilldown. "Time elapsed" is shown separately and labelled as time, not progress.
+- **Access (server-side):** viewing follows the bid's existing visibility, so a downgraded account keeps read-only access and no data is deleted. Creating/editing needs `pm_entitlement().can_edit` and, for company bids, an assigned editor seat in that company who can see the bid. All writes go through `schedule_create` / `schedule_save` with an optimistic revision check; the API re-validates dates, durations (recomputed from the calendar), completion rules, dependency loops and section membership.
+- **Hidden in production:** everything stays behind `NEXT_PUBLIC_PROJECT_SCHEDULING=on`; `project_scheduling` is still `unreleased` in the feature registry.
+- **Code:** `src/lib/schedule/` (calendar, engine, progress, payload, server), `src/app/api/schedules/`, `src/app/(app)/projects/`, `src/components/schedule/`.
+- **Migration:** `supabase/migrations/20261116004000_project_schedules.sql`. Rollback: `docs/pipeline/rollback_20261116004000.sql` (deletes schedules; export first).
+- **Tests:** `tests/schedule-engine.test.ts` (29), `tests/schedule-route.test.ts` (9), `tests/db/project-schedules.test.ts` (10 on real Postgres), `scripts/schedule/walk.mjs` (38 browser checks, desktop/390/320, mock Supabase).
+
 ## Migration and rollback
 
 - Migration: `supabase/migrations/20261116002000_sales_pipeline.sql` (idempotent, tested twice in a row).
@@ -122,8 +139,8 @@ Placement rules: a real signature puts a bid at Won or later; an active signing 
 | 9 | Enterprise PM permissions and seat assignment | none |
 | 10 | Owner analytics: pipeline adoption, PM MRR split, regression run | none |
 
-## Production approval checklist (Phase 5 PR)
+## Production approval checklist (Phases 6-7 PR)
 
-1. Run `20261116003000_pm_entitlements.sql` in the Supabase SQL Editor.
-2. Say "merge". Nothing becomes visible: the flag stays off and no live prices exist.
-3. Later, before the scheduler launches: approve creating the live $4.99/mo and $1.99/mo prices (and an annual add-on price if wanted), then set the price env vars, `PM_BILLING_LIVE=true` and the flag.
+1. Run `20261116004000_project_schedules.sql` in the Supabase SQL Editor.
+2. Say "merge". Nothing becomes visible: the flag stays off.
+3. To launch scheduling later: approve the live Stripe prices from Phase 5, set the price env vars and `PM_BILLING_LIVE=true`, mark `project_scheduling` released in the registry, then set `NEXT_PUBLIC_PROJECT_SCHEDULING=on` and redeploy.
