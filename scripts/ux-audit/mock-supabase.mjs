@@ -83,6 +83,8 @@ let authDelayMs = 0;
 const otpLog = [];
 const KNOWN_PHONES = new Set(["15552345678"]);
 const TAKEN_PHONE = "15559990000";
+// Texts to this number fail the way Twilio does before Trust Hub approval (error 20003).
+const FAILING_PHONE = "15558880000";
 function applyScenario(name) {
   const sc = SCENARIOS[name];
   if (!sc) return false;
@@ -258,6 +260,7 @@ http.createServer((req, res) => {
     if (u.pathname === "/auth/v1/user" && req.method === "PUT") {
       let body = {}; try { body = JSON.parse(raw || "{}"); } catch { /* ignore */ }
       otpLog.push({ kind: "update_user", phone: body.phone, email: body.email });
+      if (body.phone && String(body.phone).replace(/\D/g, "") === FAILING_PHONE) return send(res, 422, { code: 422, error_code: "sms_send_failed", msg: "Error sending phone change OTP to provider: Primary compliance profile is not approved." });
       if (body.phone && String(body.phone).replace(/\D/g, "") === TAKEN_PHONE) return send(res, 422, { code: 422, error_code: "phone_exists", msg: "A user with this phone number has already been registered" });
       return send(res, 200, { ...USER, new_phone: body.phone, new_email: body.email });
     }

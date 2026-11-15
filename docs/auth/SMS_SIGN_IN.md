@@ -1,6 +1,6 @@
 # SMS sign-in (phone verification codes)
 
-**Status (2026-11-14):** merged (PR #19) and the SQL is applied. Production is back on email sign-in (`NEXT_PUBLIC_SMS_SIGNIN=off`) while Twilio reviews the Trust Hub primary customer profile (error 20003 blocked sends). Deploy previews have it on.
+**Status (2026-11-14):** merged (PR #19) and the SQL is applied. Production is back on email sign-in (`NEXT_PUBLIC_SMS_SIGNIN=off`) while Twilio reviews the Trust Hub primary customer profile (error 20003 blocked sends). Deploy previews were switched off too on 2026-11-15 (a failed send showed a confusing phone-confirm box); turn previews back on first once Twilio approves.
 
 Code shipped behind a flag. Sign-in stays email-only until every step in "Turning it on" is done
 and `NEXT_PUBLIC_SMS_SIGNIN=on` is set in Netlify. Nothing here changes existing accounts.
@@ -114,4 +114,4 @@ Captcha, Fraud Guard and Geo permissions bring that down further.
 - `src/app/(app)/settings/account/sign-in-methods.tsx`: add/change phone, add email.
 - `src/lib/supabase/server.ts`: `SessionUser` now has `phone`, `phoneVerified`, `verified`.
 - `supabase/migrations/20261114000100_phone_sign_in.sql` + `tests/db/phone-sign-in.test.ts`.
-- `scripts/sms-auth/run.mjs`: 13 browser checks against the mock Supabase (accepts code 123456).
+- `scripts/sms-auth/run.mjs`: 14 browser checks against the mock Supabase (accepts code 123456).
