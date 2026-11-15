@@ -43,7 +43,7 @@ export async function POST(req: Request, ctx: Ctx) {
   const supabase = await createClient();
   const data = await loadSchedule(supabase, id);
   if (!data) return fail(404, "not_found", "Schedule not found.");
-  if (!data.canEdit) return fail(403, "forbidden", "You can view this schedule but can't publish customer updates.");
+  if (!data.permissions.publish) return fail(403, "forbidden", "Your company role can't publish customer updates for this schedule.");
   if (data.schedule.revision !== p.data.baseRevision) return fail(409, "stale_revision", "The schedule changed after this preview. Review the preview again before publishing.");
 
   const admin = createAdminClient();

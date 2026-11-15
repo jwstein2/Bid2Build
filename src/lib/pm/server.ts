@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { serverEnv } from "@/lib/env";
 import type Stripe from "stripe";
 import { pmPriceMismatch, type PmPrices } from "./billing";
+import { parsePmSeats, type PmSeat, type PmSeats } from "./seats";
 
 export type PmAccess = {
   scope: "company" | "individual" | "none";
@@ -53,4 +54,37 @@ export async function verifyPmPrice(stripe: Stripe, priceId: string, cents: numb
   const why = pmPriceMismatch(await stripe.prices.retrieve(priceId), cents, interval);
   if (why) throw Object.assign(new Error(`PM Stripe price ${priceId} does not match the advertised pricing: ${why}`), { code: "pricing_mismatch" });
   verifiedAt.set(priceId, Date.now());
+}
+
+export type SeatMember = { id: string; name: string; role: string };
+
+/**
+ * Everything the seat card needs (V4 Phase 9): the seats from company_pm_seats() plus the active roster.
+ * Before the Phase 9 SQL runs, falls back to the plain pm_editors list ranked by assignment time.
+ */
+export async function loadSeatCard(supabase: SupabaseClient, extraPaid: number): Promise<{ seats: PmSeats; members: SeatMember[] } | null> {
+  const [pm, { data: roster }, seatsRes] = await Promise.all([
+    loadPmAccess(supabase),
+    supabase.rpc("company_roster"),
+    supabase.rpc("company_pm_seats"),
+  ]);
+  if (!pm) return null;
+  const members = ((roster ?? []) as { user_id: string; display_name: string | null; email: string | null; role: string; status: string }[])
+    .filter((m) => m.status === "active").map((m) => ({ id: m.user_id, name: m.display_name || m.email || "Team member", role: m.role }));
+  let seats = seatsRes.error ? null : parsePmSeats(seatsRes.data);
+  if (!seats) {
+    const active = new Set(members.map((m) => m.id));
+    const { data: eds } = await supabase.from("pm_editors").select("user_id, assigned_at, assigned_by").order("assigned_at");
+    const paid = pm.source === "stripe";
+    seats = {
+      limit: pm.editorLimit, source: pm.source, paid, extraPaid, schedules: {},
+      seats: ((eds ?? []) as { user_id: string; assigned_at: string; assigned_by: string | null }[]).filter((e) => active.has(e.user_id)).map((e, i) => {
+        const rank = i + 1;
+        const covered = rank <= pm.editorLimit;
+        return { userId: e.user_id, rank, covered, assignedAt: e.assigned_at, changedAt: e.assigned_at, changedBy: e.assigned_by,
+          seatType: !covered ? "uncovered" : paid && rank === 1 ? "included" : paid && rank <= 1 + extraPaid ? "paid" : "complimentary" } satisfies PmSeat;
+      }),
+    };
+  }
+  return { seats, members };
 }

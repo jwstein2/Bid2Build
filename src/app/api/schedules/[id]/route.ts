@@ -5,6 +5,7 @@ import { normalizeCalendar } from "@/lib/schedule/calendar";
 import { diffTasks, validateSchedule } from "@/lib/schedule/engine";
 import { NEW_ID, saveSchema } from "@/lib/schedule/payload";
 import { loadSchedule, scheduleDbError } from "@/lib/schedule/server";
+import { changeKinds } from "@/lib/schedule/permissions";
 import type { Task } from "@/lib/schedule/types";
 
 export const runtime = "nodejs";
@@ -70,6 +71,13 @@ export async function PATCH(req: Request, ctx: Ctx) {
   const depsChanged = cur.deps.map(depKey).sort().join("|") !== b.deps.map(depKey).sort().join("|");
   const meta = b.schedule && Object.keys(b.schedule).length ? b.schedule : null;
   if (!changed.length && !removed.length && !depsChanged && !meta) return json({ revision: cur.schedule.revision, unchanged: true });
+
+  // Phase 9: dates/structure, progress and dependencies each need their own permission.
+  const need = changeKinds(cur.tasks, changed, removed.length > 0, depsChanged, meta);
+  const perm = cur.permissions;
+  if (need.edit && !perm.edit) return fail(403, "forbidden_edit", perm.progress ? "Your company role can update progress here but can't change dates or tasks." : "You can view this schedule but can't edit it.");
+  if (need.progress && !perm.progress) return fail(403, "forbidden_progress", "Your company role can't update progress on this schedule.");
+  if (need.dependencies && !perm.dependencies) return fail(403, "forbidden_dependencies", "Your company role can't change task dependencies.");
 
   const patch: Record<string, unknown> = {
     summary: b.summary,

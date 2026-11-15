@@ -1,22 +1,26 @@
 "use client";
-import { CalendarRange, Loader2, Minus, Plus } from "lucide-react";
+import { ArrowRightLeft, CalendarRange, Loader2, Minus, Plus, UserMinus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { Button } from "../ui/button";
-import { Card } from "../ui/misc";
+import { Badge, Card, Notice } from "../ui/misc";
 import { formatCents } from "@/lib/enterprise/pricing";
 import { PM_EDITOR_CENTS, PM_INCLUDED_ENTERPRISE_EDITORS } from "@/lib/pm/billing";
+import { SEAT_TYPE_LABEL, seatBilling, type PmSeats } from "@/lib/pm/seats";
 
 type Preview = { fromExtra: number; toExtra: number; beforeCents: number; afterCents: number; deltaCents: number; dueNowCents: number; creditCents: number; effective: string; prorationDate: number; nextInvoiceAt: string | null };
 type Member = { id: string; name: string; role: string };
 const day = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("en-US", { dateStyle: "long" }) : "your next invoice");
+const when = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
 /**
- * Enterprise schedule editors: one included, more at $1.99/month each (separate from licensed users),
- * and who holds them. Everyone else in the company can view schedules.
+ * Enterprise scheduling editor seats (V4 Phase 9): who holds each seat, its kind and billing status,
+ * when it last changed, and controls to assign, reassign or remove. Moving a seat never buys another
+ * one, and removing someone warns first: their schedules stay, they just become view-only.
+ * canManage = manage_pm_seats; canBuy = manage_pm_addons plus an active paid subscription.
  */
-export function PmEditorsCard({ limit, extra, canBuy, comp, members, assigned }: {
-  limit: number; extra: number; canBuy: boolean; comp: boolean; members: Member[]; assigned: string[];
+export function PmEditorsCard({ seats, members, extra, canManage, canBuy, comp, billingHref }: {
+  seats: PmSeats; members: Member[]; extra: number; canManage: boolean; canBuy: boolean; comp: boolean; billingHref?: string;
 }) {
   const router = useRouter();
   const id = useId();
@@ -25,7 +29,12 @@ export function PmEditorsCard({ limit, extra, canBuy, comp, members, assigned }:
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
+  const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
+  const [moving, setMoving] = useState<{ from: string; to: string } | null>(null);
   const [attempt] = useState(() => crypto.randomUUID());
+  const assigned = seats.seats.map((x) => x.userId);
+  const limit = seats.limit;
+  const nameOf = (uid: string | null) => members.find((m) => m.id === uid)?.name ?? (uid ? "A former member" : "—");
   const minExtra = Math.max(0, assigned.length - PM_INCLUDED_ENTERPRISE_EDITORS);
   const set = (n: number) => { setTarget(Math.max(minExtra, Math.min(1000, Math.round(n) || 0))); setPreview(null); setErr(null); setDone(null); };
 
@@ -42,14 +51,18 @@ export function PmEditorsCard({ limit, extra, canBuy, comp, members, assigned }:
     else { setPreview(null); setDone(`You now have ${PM_INCLUDED_ENTERPRISE_EDITORS + d.extra} schedule editor seats.`); router.refresh(); }
   }
 
-  async function toggle(userId: string, on: boolean) {
-    setBusy(userId); setErr(null); setDone(null);
-    const r = await fetch("/api/company/pm-editors/assign", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ userId, assign: on }) }).catch(() => null);
+  async function post(url: string, body: unknown, key: string, ok: string) {
+    setBusy(key); setErr(null); setDone(null);
+    const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }).catch(() => null);
     const d = await r?.json().catch(() => null);
     setBusy(null);
-    if (!r?.ok) { setErr(d?.error?.message ?? "Couldn't update editors."); return; }
-    router.refresh();
+    if (!r?.ok) { setErr(d?.error?.message ?? "Couldn't update seats. Nothing was changed."); return false; }
+    setDone(ok); setConfirmRemove(null); setMoving(null); router.refresh();
+    return true;
   }
+  const assign = (m: Member) => post("/api/company/pm-editors/assign", { userId: m.id, assign: true }, m.id, `${m.name} can now edit schedules.`);
+  const remove = (uid: string) => post("/api/company/pm-editors/assign", { userId: uid, assign: false }, uid, `${nameOf(uid)} is now view-only. Their schedules are unchanged.`);
+  const reassign = (from: string, to: string) => post("/api/company/pm-editors/reassign", { from, to }, from, `Seat moved to ${nameOf(to)}. Your billed seats didn't change.`);
 
   const adding = target > extra;
   const full = assigned.length >= limit;
@@ -67,23 +80,78 @@ export function PmEditorsCard({ limit, extra, canBuy, comp, members, assigned }:
       </div>
       <p className="mt-3 text-sm font-semibold" data-testid="pm-editor-summary">{assigned.length} of {limit} editor seat{limit === 1 ? "" : "s"} assigned{extra > 0 ? ` (${PM_INCLUDED_ENTERPRISE_EDITORS} included + ${extra} paid)` : ""}</p>
 
-      <ul className="mt-2 divide-y divide-line rounded-lg border border-line">
-        {members.map((m) => {
-          const on = assigned.includes(m.id);
+      <ul className="mt-2 divide-y divide-line rounded-lg border border-line" data-testid="pm-seats">
+        {seats.seats.length === 0 && <li className="px-3 py-3 text-sm text-muted">No one holds a seat yet. Everyone can view schedules.</li>}
+        {seats.seats.map((x) => {
+          const n = seats.schedules[x.userId] ?? 0;
+          const others = members.filter((m) => !assigned.includes(m.id));
           return (
-            <li key={m.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm">
-              <span className="min-w-0"><span className="font-medium">{m.name}</span> <span className="text-muted capitalize">· {m.role}</span></span>
-              <span className="flex items-center gap-2">
-                <span className={on ? "text-ok" : "text-muted"}>{on ? "Can edit" : "View only"}</span>
-                <Button size="sm" variant={on ? "ghost" : "secondary"} disabled={busy !== null || (!on && full)} onClick={() => toggle(m.id, !on)} aria-label={`${on ? "Remove" : "Make"} ${m.name} ${on ? "as" : "a"} schedule editor`}>
-                  {busy === m.id && <Loader2 className="h-4 w-4 animate-spin" />}{on ? "Remove" : "Make editor"}
-                </Button>
-              </span>
+            <li key={x.userId} className="space-y-2 px-3 py-3 text-sm" data-testid={`seat-${x.userId}`}>
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-semibold">{nameOf(x.userId)} <span className="font-normal capitalize text-muted">· {members.find((m) => m.id === x.userId)?.role ?? ""}</span></p>
+                  <p className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-ink-soft">
+                    <Badge tone={x.covered ? (x.seatType === "paid" ? "accent" : "ok") : "warn"}>{SEAT_TYPE_LABEL[x.seatType]}</Badge>
+                    <span>{seatBilling(x)}</span>
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted">Effective {when(x.changedAt)} · Last change by {nameOf(x.changedBy)}{x.changedAt !== x.assignedAt ? ` · seat first assigned ${when(x.assignedAt)}` : ""}</p>
+                </div>
+                {canManage && (
+                  <span className="flex flex-wrap gap-2">
+                    <Button size="sm" variant="secondary" disabled={busy !== null || others.length === 0} onClick={() => { setMoving({ from: x.userId, to: "" }); setConfirmRemove(null); }} data-testid={`reassign-${x.userId}`}><ArrowRightLeft className="h-4 w-4" aria-hidden /> Reassign</Button>
+                    <Button size="sm" variant="ghost" disabled={busy !== null} onClick={() => { setConfirmRemove(x.userId); setMoving(null); }} data-testid={`remove-${x.userId}`}><UserMinus className="h-4 w-4" aria-hidden /> Remove</Button>
+                  </span>
+                )}
+              </div>
+              {moving?.from === x.userId && (
+                <div className="rounded-lg border border-line bg-paper p-3" role="group" aria-label={`Reassign ${nameOf(x.userId)}'s seat`} data-testid="reassign-panel">
+                  <label className="block"><span className="label">Give this seat to</span>
+                    <select className="field" value={moving.to} onChange={(e) => setMoving({ ...moving, to: e.target.value })} data-testid="reassign-to">
+                      <option value="">Choose a team member…</option>
+                      {others.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+                    </select>
+                  </label>
+                  <p className="mt-2 text-xs text-ink-soft">The seat keeps its place and kind, so nothing is bought or charged again. {nameOf(x.userId)} becomes view-only{n ? ` on ${n} schedule${n === 1 ? "" : "s"}` : ""}; every schedule and its history stay as they are.</p>
+                  <div className="mt-2 flex gap-2">
+                    <Button size="sm" disabled={!moving.to || busy !== null} onClick={() => reassign(x.userId, moving.to)} data-testid="reassign-confirm">{busy === x.userId && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}Move seat</Button>
+                    <Button size="sm" variant="secondary" onClick={() => setMoving(null)}>Cancel</Button>
+                  </div>
+                </div>
+              )}
+              {confirmRemove === x.userId && (
+                <div role="alertdialog" aria-labelledby={`${id}-rm-${x.userId}`} data-testid="remove-confirm">
+                  <Notice tone="warn" title={`Remove ${nameOf(x.userId)}'s editor seat?`}>
+                    <span id={`${id}-rm-${x.userId}`}>{n ? `They can currently edit ${n} company schedule${n === 1 ? "" : "s"}. ` : ""}After this they can still view schedules but can&apos;t change them. No schedule, task or customer update is deleted.{x.seatType === "paid" ? " The paid seat stays on your subscription until you remove it under Billing." : ""}</span>
+                  </Notice>
+                  <div className="mt-2 flex gap-2">
+                    <Button size="sm" variant="danger" disabled={busy !== null} onClick={() => remove(x.userId)} data-testid="remove-yes">{busy === x.userId && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}Remove seat</Button>
+                    <Button size="sm" variant="secondary" onClick={() => setConfirmRemove(null)}>Keep</Button>
+                  </div>
+                </div>
+              )}
             </li>
           );
         })}
       </ul>
-      {full && <p className="mt-1 text-xs text-ink-soft">All editor seats are in use. {canBuy ? "Add a seat below or remove someone first." : comp ? "Contact Built2Bid to arrange more." : ""}</p>}
+
+      {canManage && (() => {
+        const others = members.filter((m) => !assigned.includes(m.id));
+        if (!others.length) return null;
+        return (
+          <div className="mt-3">
+            <p className="text-sm font-semibold">View-only members</p>
+            <ul className="mt-1 divide-y divide-line rounded-lg border border-line">
+              {others.map((m) => (
+                <li key={m.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm">
+                  <span className="min-w-0"><span className="font-medium">{m.name}</span> <span className="capitalize text-muted">· {m.role}</span></span>
+                  <Button size="sm" variant="secondary" disabled={busy !== null || full} onClick={() => assign(m)} aria-label={`Make ${m.name} a schedule editor`}>{busy === m.id && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}Make editor</Button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      })()}
+      {full && canManage && <p className="mt-1 text-xs text-ink-soft">All editor seats are in use. Reassign a seat, or {canBuy ? "add a seat below." : comp ? "contact Built2Bid to arrange more." : billingHref ? <>ask your company owner to add one under <a className="underline" href={billingHref}>Billing</a>.</> : "ask your company owner to add one."}</p>}
 
       {canBuy && (
         <div className="mt-4 border-t border-line pt-4">

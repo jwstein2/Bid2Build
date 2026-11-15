@@ -79,11 +79,17 @@ export interface TaskChange {
   to: { start: string; end: string } | null;
 }
 
+/** What the viewer may change (Phase 9). Company schedules need a seat and the matching permission. */
+export interface SchedulePermissions { edit: boolean; progress: boolean; dependencies: boolean; publish: boolean; pdf: boolean }
+export const NO_PERMISSIONS: SchedulePermissions = { edit: false, progress: false, dependencies: false, publish: false, pdf: false };
+
 export interface ScheduleData {
   schedule: ScheduleMeta;
   snapshot: Snapshot;
   tasks: Task[];
   deps: Dep[];
   revisions: Revision[];
+  /** Any change at all (dates/structure or progress). */
   canEdit: boolean;
+  permissions: SchedulePermissions;
 }

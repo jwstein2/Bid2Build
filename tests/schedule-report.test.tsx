@@ -24,7 +24,7 @@ function data(tasks: Task[]): ScheduleData {
         { id: "g-pt", name: "Paint", trade: "painting", sortOrder: 2, items: [] },
       ],
     },
-    tasks, deps: [], revisions: [], canEdit: true,
+    tasks, deps: [], revisions: [], canEdit: true, permissions: { edit: true, progress: true, dependencies: true, publish: true, pdf: true },
   };
 }
 // Framing Nov 13-18 complete; drywall in progress; paint upcoming. Private fields set to catch leaks.

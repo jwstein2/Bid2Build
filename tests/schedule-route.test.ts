@@ -19,13 +19,14 @@ const S = {
   revision: 3,
   calls: [] as { name: string; args: Record<string, unknown> }[],
   rpcError: null as null | { message: string; details?: string },
+  perms: null as null | Record<string, boolean>,
 };
 const schedule = () => ({
   schedule: { id: SID, estimate_id: EID, company_id: null, name: "Kitchen", status: "draft", provisional: false, calendar: CAL, start_date: "2026-11-16", target_end_date: null, progress_method: "duration", revision: S.revision, updated_at: "2026-11-15T00:00:00Z" },
   snapshot: { estimate: { id: EID, title: "Kitchen", number: "1", customerName: "Pat", projectAddress: null }, trades: [], version: null, sections: [] },
   tasks: [row(T1, G1, "Framing", "2026-11-16", "2026-11-19", 4), row(T2, G2, "Flooring", "2026-11-20", "2026-11-24", 3)],
   deps: [{ predecessor_id: T1, successor_id: T2, lag_days: 0, max_overlap: 0 }],
-  revisions: [], canEdit: S.canEdit,
+  revisions: [], canEdit: S.canEdit, ...(S.perms ? { permissions: S.perms } : {}),
 });
 const chain = (data: unknown) => {
   const c: Record<string, unknown> = {};
@@ -60,9 +61,27 @@ const deps = [{ from: T1, to: T2, lagDays: 0, maxOverlap: 0 }];
 const patch = (body: object) => PATCH(new Request(`http://localhost/api/schedules/${SID}`, { method: "PATCH", body: JSON.stringify({ baseRevision: S.revision, summary: "Edit", tasks: base(), deps, ...body }) }), { params: Promise.resolve({ id: SID }) } as never);
 const saved = () => S.calls.find((c) => c.name === "schedule_save")?.args;
 
-beforeEach(() => { S.canEdit = true; S.revision = 3; S.calls = []; S.rpcError = null; });
+beforeEach(() => { S.canEdit = true; S.revision = 3; S.calls = []; S.rpcError = null; S.perms = null; });
 
 describe("schedule save API", () => {
+  it("Phase 9: progress, dates and dependencies each need their own permission", async () => {
+    S.perms = { edit: false, progress: true, dependencies: false, publish: false, pdf: true };
+    const dated = base(); dated[0] = { ...dated[0], plannedEnd: "2026-11-23" };
+    let r = await patch({ tasks: dated });
+    expect(r.status).toBe(403);
+    expect((await r.json()).error.code).toBe("forbidden_edit");
+    const prog = base(); prog[0] = { ...prog[0], status: "in_progress", percentComplete: 30, actualStart: "2026-11-16" } as never;
+    expect((await patch({ tasks: prog })).status).toBe(200);
+    r = await patch({ deps: [] });
+    expect((await r.json()).error.code).toBe("forbidden_dependencies");
+    S.perms = { edit: true, progress: false, dependencies: true, publish: false, pdf: true };
+    S.calls = [];
+    r = await patch({ tasks: prog });
+    expect((await r.json()).error.code).toBe("forbidden_progress");
+    expect(saved()).toBeUndefined();
+    expect((await patch({ deps: [] })).status).toBe(200);
+  });
+
   it("saves only changed tasks, recomputes duration and records the date change", async () => {
     const t = base(); t[0] = { ...t[0], plannedEnd: "2026-11-23", durationDays: 99 };
     const r = await patch({ tasks: t });

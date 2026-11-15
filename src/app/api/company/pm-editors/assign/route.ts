@@ -6,7 +6,7 @@ import { fail, json, logError, sameOrigin } from "@/lib/http/api";
 const Body = z.object({ userId: z.string().uuid(), assign: z.boolean() });
 
 const CODES: Record<string, [number, string, string]> = {
-  forbidden: [403, "forbidden", "Only company admins can assign scheduling editors."],
+  forbidden: [403, "forbidden", "Your company role can't manage scheduling editor seats."],
   not_member: [404, "not_member", "That person isn't an active member of your company."],
   editor_limit: [409, "editor_limit", "All scheduling editor seats are in use. Add an editor seat or remove someone first."],
 };

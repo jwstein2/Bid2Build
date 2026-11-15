@@ -82,7 +82,7 @@ export function UpdateComposer({ data, lastVersion, customerEmail, contactName, 
       </div>
 
       {error && <Notice tone="danger">{error}</Notice>}
-      {published && <UpdateDelivery scheduleId={data.schedule.id} publication={published} customerEmail={customerEmail} contactName={contactName} onChange={setPublished} />}
+      {published && <UpdateDelivery scheduleId={data.schedule.id} publication={published} customerEmail={customerEmail} contactName={contactName} onChange={setPublished} canPdf={data.permissions.pdf} />}
 
       {!published && (
         <div className="inline-flex rounded-lg border border-line bg-surface p-0.5 lg:hidden" role="tablist" aria-label="Customer update">

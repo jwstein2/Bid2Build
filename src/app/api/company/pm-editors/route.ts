@@ -35,7 +35,7 @@ export async function POST(req: Request) {
   if (!p.success) return fail(400, "invalid", "Choose a number of editors.");
   const supabase = await createClient();
   const company = await loadMyCompany(supabase);
-  if (!company || !can(company, "manage_billing")) return fail(403, "forbidden", "Only your company's billing administrator can change scheduling editors.");
+  if (!company || !can(company, "manage_pm_addons")) return fail(403, "forbidden", "Only your company owner can buy or remove paid scheduling editor seats.");
 
   try {
     assertModeAllowed();

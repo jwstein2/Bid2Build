@@ -13,14 +13,14 @@ const T1 = "44444444-4444-4444-8444-444444444441";
 const CAL = { workdays: [1, 2, 3, 4, 5], holidays: [], timezone: "America/Chicago" };
 
 const S = {
-  canEdit: true, revision: 3, calls: [] as { name: string; args: Record<string, unknown> }[],
+  canEdit: true, perms: null as null | Record<string, boolean>, revision: 3, calls: [] as { name: string; args: Record<string, unknown> }[],
   pub: null as null | Record<string, unknown>,
 };
 const schedule = () => ({
   schedule: { id: SID, estimate_id: EID, company_id: null, name: "Kitchen", status: "active", provisional: false, calendar: CAL, start_date: "2026-11-16", target_end_date: null, progress_method: "duration", revision: S.revision, updated_at: "" },
   snapshot: { estimate: { id: EID, title: "Kitchen", number: "1", customerName: "Pat", projectAddress: null }, trades: [], version: null, sections: [{ id: "g1", name: "Framing", trade: null, sortOrder: 0, items: [] }] },
   tasks: [{ id: T1, parent_id: null, kind: "section", source_group_id: "g1", source_item_id: null, split_from: null, name: "Framing", sort_order: 0, planned_start: "2026-11-16", planned_end: "2026-11-19", duration_days: 4, actual_start: null, actual_finish: null, percent_complete: 25, status: "in_progress", weight: 3, assignee: "Bob", notes: "PRIVATE note" }],
-  deps: [], revisions: [], canEdit: S.canEdit,
+  deps: [], revisions: [], canEdit: S.canEdit, ...(S.perms ? { permissions: S.perms } : {}),
 });
 const pubRow = (over: Record<string, unknown> = {}) => ({
   id: PID, schedule_id: SID, version: 1, schedule_revision: 3, published_at: "2026-11-16T00:00:00Z", published_by: "u1", publisher_name: "Sam",
@@ -70,7 +70,7 @@ const req = (body: object) => new Request("http://localhost/x", { method: "POST"
 const ctx = { params: Promise.resolve({ id: SID }) } as never;
 const pctx = { params: Promise.resolve({ id: SID, pid: PID }) } as never;
 
-beforeEach(() => { S.canEdit = true; S.revision = 3; S.calls = []; S.pub = null; });
+beforeEach(() => { S.canEdit = true; S.perms = null; S.revision = 3; S.calls = []; S.pub = null; });
 
 describe("customer update API", () => {
   it("preview is built on the server and leaves out private fields", async () => {
@@ -88,6 +88,14 @@ describe("customer update API", () => {
     expect((await preview(req({ options: {} }), ctx)).status).toBe(403);
     expect((await publish(req({ options: {}, baseRevision: 3, confirm: true }), ctx)).status).toBe(403);
     expect(S.calls.some((c) => c.name === "schedule_publish")).toBe(false);
+  });
+
+  it("Phase 9: an editor without Publish customer updates can't preview or publish", async () => {
+    S.perms = { edit: true, progress: true, dependencies: true, publish: false, pdf: true };
+    expect((await preview(req({ options: {} }), ctx)).status).toBe(403);
+    expect((await publish(req({ options: {}, baseRevision: 3, confirm: true }), ctx)).status).toBe(403);
+    S.perms = { edit: false, progress: false, dependencies: false, publish: true, pdf: false };
+    expect((await preview(req({ options: {} }), ctx)).status).toBe(200);
   });
 
   it("publishing needs explicit confirmation, the previewed revision, and rebuilds content on the server", async () => {

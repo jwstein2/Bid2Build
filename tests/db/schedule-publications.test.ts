@@ -101,6 +101,9 @@ d("Customer schedule updates (database)", () => {
   it("Enterprise: the PM editor publishes; view-only members see the history but can't publish or share", async () => {
     await asUser(pool, owner, (q) => q("select public.company_pm_assign($1, true)", [est]));
     const sid = await schedule(est, company);
+    // Phase 9: publishing is its own permission; estimators don't have it by default.
+    expect(await fails(publish(est, sid, 1))).toMatch(/forbidden/);
+    await pool.query("update public.company_members set permissions_granted = '{publish_customer_updates}' where user_id = $1", [est]);
     const { id } = await publish(est, sid, 1);
     const audit = await pool.query("select action from public.company_audit_log where company_id = $1 and action = 'schedule.update_published'", [company]);
     expect(audit.rows).toHaveLength(1);

@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { Button, ButtonLink } from "../ui/button";
 import { Badge, Card, Notice } from "../ui/misc";
-import { OWNER_ONLY_PERMISSIONS, PERMISSION_KEYS, PERMISSION_LABELS, ROLE_LABELS, ROLE_PERMISSIONS, effectivePermissions, type CompanyRole, type Permission } from "@/lib/enterprise/permissions";
+import { OWNER_ONLY_PERMISSIONS, PERMISSION_GROUPS, PERMISSION_KEYS, PERMISSION_LABELS, ROLE_LABELS, ROLE_PERMISSIONS, effectivePermissions, type CompanyRole, type Permission } from "@/lib/enterprise/permissions";
 
 export type Member = { user_id: string; display_name: string | null; email: string | null; role: CompanyRole; status: "active" | "deactivated"; team_ids: string[]; managed_team_ids: string[]; joined_at: string; last_active_at: string | null; permissions_granted?: string[]; permissions_revoked?: string[] };
 export type Team = { id: string; name: string; trade: string | null; member_count: number; manager_count: number };
@@ -204,15 +204,21 @@ function AccessEditor({ m, myPermissions, isOwner, busy, onSave }: { m: Member; 
     <div>
       <label htmlFor={`${id}-role`} className="text-sm font-semibold">Role</label>
       <select id={`${id}-role`} value={role} onChange={(e) => changeRole(e.target.value as typeof role)} className="mt-1 block h-11 w-full max-w-xs rounded-lg border border-line bg-surface px-2 text-base">{ROLES.map((r) => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}</select>
-      <fieldset className="mt-3">
+      <fieldset className="mt-3" data-testid="permission-groups">
         <legend className="text-sm font-semibold">Permissions</legend>
-        <div className="mt-1 grid gap-1 sm:grid-cols-2">{PERMISSION_KEYS.map((k) => (
-          <label key={k} className={`flex min-h-9 items-center gap-2 text-sm ${canGrant(k) ? "" : "opacity-60"}`}>
-            <input type="checkbox" className="h-4 w-4" checked={perms.has(k)} disabled={!canGrant(k) && !perms.has(k)}
-              onChange={(e) => { const n = new Set(perms); if (e.target.checked) n.add(k); else n.delete(k); setPerms(n); }} />
-            {PERMISSION_LABELS[k]}{OWNER_ONLY_PERMISSIONS.includes(k) && <span className="text-xs text-ink-soft">(owner grants only)</span>}
-          </label>
-        ))}</div>
+        {PERMISSION_GROUPS.map((g) => (
+          <div key={g.title} className="mt-2">
+            <p className="text-xs font-bold uppercase tracking-wider text-muted">{g.title}</p>
+            {g.note && <p className="text-xs text-ink-soft">{g.note}</p>}
+            <div className="mt-1 grid gap-1 sm:grid-cols-2">{g.keys.map((k) => (
+              <label key={k} className={`flex min-h-9 items-center gap-2 text-sm ${canGrant(k) ? "" : "opacity-60"}`}>
+                <input type="checkbox" className="h-4 w-4" checked={perms.has(k)} disabled={!canGrant(k) && !perms.has(k)} data-testid={`perm-${k}`}
+                  onChange={(e) => { const n = new Set(perms); if (e.target.checked) n.add(k); else n.delete(k); setPerms(n); }} />
+                {PERMISSION_LABELS[k]}{OWNER_ONLY_PERMISSIONS.includes(k) && <span className="text-xs text-ink-soft">(owner grants only)</span>}
+              </label>
+            ))}</div>
+          </div>
+        ))}
       </fieldset>
       <Button size="sm" className="mt-3" onClick={save} disabled={busy}>Save access</Button>
     </div>
