@@ -245,7 +245,7 @@ http.createServer((req, res) => {
       if (u.searchParams.get("reset")) otpLog.length = 0;
       return send(res, 200, otpLog);
     }
-    // Email/SMS OTP for checkout and sign-in tests: code 123456 succeeds, anything else is "expired or invalid".
+    // Email/SMS OTP for checkout and sign-in tests: code 123456 (or 012345) succeeds, anything else is "expired or invalid".
     // SMS: numbers in KNOWN_PHONES have accounts; others get Supabase's "Signups not allowed" unless create_user is set.
     // Email with create_user=false (linking a phone to an existing account): only USER.email exists.
     if (u.pathname === "/auth/v1/otp") {
@@ -263,7 +263,8 @@ http.createServer((req, res) => {
     }
     if (u.pathname === "/auth/v1/verify") {
       let body = {}; try { body = JSON.parse(raw || "{}"); } catch { /* ignore */ }
-      if (body.token !== "123456") return send(res, 403, { code: "otp_expired", error_code: "otp_expired", msg: "Token has expired or is invalid" });
+      // "012345" also works, to prove leading zeros reach Supabase intact.
+      if (body.token !== "123456" && body.token !== "012345") return send(res, 403, { code: "otp_expired", error_code: "otp_expired", msg: "Token has expired or is invalid" });
       otpLog.push({ kind: "verify", type: body.type, phone: body.phone, email: body.email });
       const b64u = (x) => Buffer.from(x).toString("base64url");
       const jwt = `${b64u('{"alg":"HS256","typ":"JWT"}')}.${b64u(JSON.stringify({ sub: USER.id, exp: 4102444800, role: "authenticated", aud: "authenticated", email: body.email }))}.sig`;

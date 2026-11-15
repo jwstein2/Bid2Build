@@ -16,12 +16,11 @@ accounts, saving, and PDF export need Supabase.
 3. Run `supabase/seed.sql` (trades, v1 templates, flags, disabled pricing sources). Regenerate it with `npm run db:seed:generate` after editing the trade catalog.
 4. Project settings > API: copy the URL, publishable key, and secret key into env vars.
 5. Auth > URL configuration: set Site URL to your domain and add `https://YOUR_DOMAIN/auth/callback` and `https://YOUR_DOMAIN/auth/confirm` (plus localhost equivalents) to Redirect URLs.
-6. Auth > Email templates > Magic Link: include both the link and the code so users can sign in on another device:
-   ```html
-   <p><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/dashboard">Sign in to Built2Bid</a></p>
-   <p>Or enter this code: <strong>{{ .Token }}</strong></p>
-   ```
-7. Configure custom SMTP (Auth > SMTP) before launch; the built-in sender is rate-limited.
+6. Auth > Sign In / Providers > Email: set **Email OTP Length = 6**. Auth > Emails > Templates: paste
+   `supabase/templates/magic-link.html` into **Magic Link** and `supabase/templates/confirm-signup.html` into
+   **Confirm sign up** (subject for both: "Your Built2Bid verification code"). Sign-in is a 6-digit code, no link.
+   See docs/auth/EMAIL_SIGN_IN.md.
+7. Configure custom SMTP (Auth > SMTP, Resend) before launch; the built-in sender is rate-limited and only delivers to team members. See docs/auth/EMAIL_SIGN_IN.md.
 8. Make yourself an admin (SQL editor): `insert into admin_roles (user_id, role) select id, 'admin' from auth.users where email = 'you@example.com';`
 
 ## 2. Stripe (test mode first)

@@ -1,0 +1,14 @@
+Subject: Your Built2Bid verification code
+
+Hi,
+
+Use this code to securely sign in to Built2Bid:
+
+{{ .Token }}
+
+Enter this code on the Built2Bid website to continue.
+
+If you didn't request this code, you can safely ignore this email.
+
+Built2Bid
+built2bid.org

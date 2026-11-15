@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Modal } from "../builder/dialogs";
 import { AuthDialog } from "../auth/auth-dialog";
+import { emailOtpLength } from "@/lib/auth/config";
 import { Button } from "../ui/button";
 import { ANNUAL_MONTHLY_EQUIVALENT, isPlanId, planDisplay, type PlanId } from "@/lib/billing/plans";
 import { clearCheckoutLock, clearIntent, readIntent, resumePath, saveIntent, updateIntent } from "@/lib/billing/checkout-intent";
@@ -192,7 +193,7 @@ export function CheckoutFlowProvider({ signedIn: signedInProp, subscribed, userE
           copy={{
             title: "You're almost there!",
             emailDescription: `Verify your email to continue with ${name(phase.plan)}.`,
-            sentDescription: (email) => `We sent a 6-digit code to ${email}. Enter it to continue with ${name(phase.plan)}.`,
+            sentDescription: (email) => `We sent a ${emailOtpLength()}-digit code to ${email}. Enter it to continue with ${name(phase.plan)}. Your plan stays selected.`,
             phoneDescription: `Verify your mobile number to continue with ${name(phase.plan)}. Your plan stays selected.`,
             phoneSentDescription: (phone) => `We texted a 6-digit code to ${phone}. Enter it here to continue with ${name(phase.plan)}.`,
             submitLabel: "Verify and continue",

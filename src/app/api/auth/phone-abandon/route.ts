@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/server";
-import { isAbandonedPhoneSignup, isSmsSignInEnabled, phoneDigits } from "@/lib/auth/phone";
+import { isAbandonedPhoneSignup, phoneDigits } from "@/lib/auth/phone";
+import { isSmsAuthAllowedOnServer } from "@/lib/auth/config";
 import { fail, json, logError, rateLimit, sameOrigin } from "@/lib/http/api";
 
 export const runtime = "nodejs";
@@ -15,7 +16,8 @@ const MAX_PAGES = 20;
  * same way so it can't be used to learn whether a number has an account.
  */
 export async function POST(req: Request) {
-  if (!isSmsSignInEnabled()) return fail(404, "not_found", "Not found.");
+  // SMS auth is off: this route does nothing and looks like it doesn't exist.
+  if (!isSmsAuthAllowedOnServer()) return fail(404, "not_found", "Not found.");
   if (!(await sameOrigin())) return fail(403, "bad_origin", "Cross-site request refused.");
   if (!(await rateLimit("phone-abandon", 5, 10 * 60_000))) return fail(429, "rate_limited", "Too many requests.");
   const p = z.object({ phone: z.string().min(8).max(20) }).safeParse(await req.json().catch(() => null));
