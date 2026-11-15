@@ -7,7 +7,7 @@ import { GrantsTable } from "./grants-table";
 
 export const dynamic = "force-dynamic";
 
-interface Filters { q?: string; plan?: string; state?: string; from?: string; to?: string }
+interface Filters { q?: string; plan?: string; state?: string; from?: string; to?: string; email?: string }
 
 const isDate = (s?: string) => Boolean(s && /^\d{4}-\d{2}-\d{2}$/.test(s));
 
@@ -36,6 +36,7 @@ export default async function ComplimentaryAccess({ searchParams }: { searchPara
   return (
     <div className="space-y-8">
       <div>
+        <p className="text-sm"><Link href="/admin/customers" className="text-ink-soft underline">Customers</Link> <span className="text-muted">/</span></p>
         <h1 className="text-3xl font-extrabold">Complimentary Access</h1>
         <p className="mt-1 max-w-3xl text-sm text-ink-soft">
           Give a prospect or customer free, time-limited Unlimited or Enterprise access. Grants never create Stripe customers,
@@ -55,7 +56,7 @@ export default async function ComplimentaryAccess({ searchParams }: { searchPara
         <Stat k="All grants" v={metrics.total} sub={filters.plan || filters.from || filters.to ? "Matching plan/date filters" : undefined} />
       </section>
 
-      <GrantForm />
+      <div id="grant" className="scroll-mt-24"><GrantForm defaultEmail={/^[^\s@]{1,64}@[^\s@]{1,255}$/.test(sp.email ?? "") ? sp.email!.trim().toLowerCase() : ""} /></div>
 
       <section aria-labelledby="grants-heading" className="space-y-3">
         <h2 id="grants-heading" className="font-display text-xl font-bold">Grants</h2>

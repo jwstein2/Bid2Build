@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { BarList, Chip, Empty, Kpi, PageHead, Panel, fmt } from "@/components/admin/cc";
 import { UsTileMap } from "@/components/admin/us-tile-map";
-import { loadCommandCenter } from "@/lib/admin/load";
+import { loadReport } from "@/lib/admin/load";
+import { ReportUnavailable, ScopeNote } from "@/components/admin/report";
 import { parseStateFilters, stateReport, type StateFilters } from "@/lib/admin/metrics";
 import { US_STATES } from "@/lib/market/geo";
 import { tradeName } from "@/lib/trades/catalog";
@@ -12,16 +13,18 @@ export const metadata = { title: "Bids by state" };
 const SORTS = [["bids", "Total bids"], ["businesses", "Businesses"], ["signed", "Signed"], ["name", "A–Z"]] as const;
 
 export default async function BidsByState({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  const f = parseStateFilters(await searchParams);
-  const { p, error } = await loadCommandCenter();
-  if (!p) return <Panel title="Report unavailable"><p className="text-sm text-ink-soft">The platform data could not be loaded{error ? `: ${error}` : ""}.</p></Panel>;
-  const r = stateReport(p, f, new Date());
+  const sp = await searchParams;
+  const f = parseStateFilters(sp);
+  const { r: rep, error, view } = await loadReport(sp);
+  if (!rep) return <ReportUnavailable error={error} />;
+  const r = stateReport(rep.sc.d, f, rep.now);
   const qs = (patch: Partial<Record<keyof StateFilters, string>>) => {
     const m = new URLSearchParams();
     for (const [k, v] of Object.entries({ ...f, ...patch })) {
       if (!v || (k === "plan" && v === "all") || (k === "status" && v === "all") || (k === "sort" && v === "bids")) continue;
       m.set(k, String(v));
     }
+    if (view.includeTest) m.set("data", "all");
     const s = m.toString();
     return s ? `/admin/states?${s}` : "/admin/states";
   };
@@ -30,9 +33,11 @@ export default async function BidsByState({ searchParams }: { searchParams: Prom
 
   return (
     <div className="space-y-6">
+      <p className="text-sm"><Link href="/admin/operations#reports" className="text-ink-soft underline">Operations</Link> <span className="text-muted">/ report</span></p>
       <PageHead kicker="Geography · counts only" title="Bids by state"
         intro="Where contractors are bidding, across every account's bids. Counts only, never prices, so no 20-business minimum applies. A bid's state comes from its ZIP, its state field, or the typed project address." />
 
+      <ScopeNote sc={rep.sc} />
       <form method="get" action="/admin/states" className="cc-panel cc-rise grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-[repeat(5,minmax(0,1fr))_auto]">
         <label className="text-xs"><span className="cc-kicker mb-1 block">From</span><input type="date" name="from" defaultValue={f.from} className="field field-sm" /></label>
         <label className="text-xs"><span className="cc-kicker mb-1 block">To</span><input type="date" name="to" defaultValue={f.to} className="field field-sm" /></label>
@@ -43,6 +48,7 @@ export default async function BidsByState({ searchParams }: { searchParams: Prom
         <label className="text-xs"><span className="cc-kicker mb-1 block">Bid status</span>
           <select name="status" defaultValue={f.status} className="field field-sm"><option value="all">All bids</option><option value="finalized">Finalized</option><option value="draft">Not finalized</option></select></label>
         <input type="hidden" name="sort" value={f.sort} />
+        {view.includeTest && <input type="hidden" name="data" value="all" />}
         <div className="flex items-end gap-2">
           <button type="submit" className="cc-mono rounded-md bg-[var(--cc-green)] px-3 py-1.5 text-sm font-bold text-[#03140c] shadow-[0_0_16px_rgb(61_255_168/0.45)] hover:brightness-110">Apply</button>
           {filtered && <Link href={qs({ from: "", to: "", trade: "", plan: "all", status: "all" })} className="cc-mono px-2 py-1.5 text-xs text-ink-soft underline hover:text-white">Reset</Link>}
@@ -66,10 +72,10 @@ export default async function BidsByState({ searchParams }: { searchParams: Prom
         </Panel>
       </div>
 
-      <Panel kicker="All states" title="State report" action={
+      <Panel kicker="All states" title="State report" action={<div className="flex flex-wrap items-center gap-3"><a href={`/admin/export/states${qs({}).replace("/admin/states", "")}`} className="cc-mono text-[11px] text-[var(--cc-blue)] underline">CSV</a>
         <div className="cc-mono flex flex-wrap gap-1 text-[11px]">
           {SORTS.map(([k, label]) => <Link key={k} href={qs({ sort: k })} aria-current={f.sort === k ? "true" : undefined} className={f.sort === k ? "rounded border border-[var(--cc-line-strong)] px-2 py-1 text-[var(--cc-green)]" : "rounded border border-transparent px-2 py-1 text-ink-soft hover:text-white"}>{label}</Link>)}
-        </div>}>
+        </div></div>}>
         {r.rows.length === 0 ? <Empty>No bids with a location match these filters yet</Empty> : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[760px] text-sm">

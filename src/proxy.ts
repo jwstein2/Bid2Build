@@ -1,11 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { ATTRIBUTION_COOKIE, ATTRIBUTION_MAX_AGE, encodeAttribution, parseAttribution } from "@/lib/growth/attribution";
+import { ATTRIBUTION_COOKIE, ATTRIBUTION_MAX_AGE, captureAttribution, encodeAttribution } from "@/lib/growth/attribution";
 
-/** First-touch campaign attribution: set once from UTM/ic/ref parameters, never overwritten. */
+/** First-touch attribution: set once from UTM/ic/ref parameters, an ad click id or an outside referrer host; never overwritten. */
 function withAttribution(request: NextRequest, response: NextResponse): NextResponse {
   if (request.cookies.has(ATTRIBUTION_COOKIE) || request.method !== "GET") return response;
-  const a = parseAttribution(request.nextUrl);
+  const a = captureAttribution(request.nextUrl, request.headers.get("referer"), request.headers.get("user-agent"));
   if (a) response.cookies.set(ATTRIBUTION_COOKIE, encodeAttribution(a), { maxAge: ATTRIBUTION_MAX_AGE, httpOnly: true, sameSite: "lax", secure: request.nextUrl.protocol === "https:", path: "/" });
   return response;
 }

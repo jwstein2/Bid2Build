@@ -1,8 +1,10 @@
 import "server-only";
 import type { createAdminClient } from "@/lib/supabase/server";
-import { bidState } from "@/lib/geo/address";
-import { tradeName } from "@/lib/trades/catalog";
-import { businessKey, tradeOf, type PlatformData } from "./metrics";
+import type { EstimateRow } from "./metrics";
+import type {
+  BusinessRow, CompanyRow, ConsentRow, CostRow, EventRow, GrantRow, LabelRow, LeadRow, MemberRow, OutboxRow, SignatureRow,
+  SigningRequestRow, Snapshot, StripeEventRow, SubscriptionRow, UserRow, VersionRow,
+} from "./model";
 
 type Db = ReturnType<typeof createAdminClient>;
 const PAGE = 1000;
@@ -20,69 +22,75 @@ async function all<T>(db: Db, table: string, columns: string, order = "created_a
   return out;
 }
 
-export interface PlatformSnapshot extends PlatformData {
-  /** Business display names for the leaderboard and activity feed (company or business profile name). */
-  names: Map<string, string>;
-  funnel30d: Record<string, number>;
-  /** Checkout and subscription funnel events (event name + time only). */
-  events: { event: string; created_at: string }[];
-  importFailures7d: number; pdfErrors7d: number;
-  loadedAt: string;
+/** Like all(), but a table that is not installed yet (or not readable) yields null instead of failing the page. */
+async function optional<T>(db: Db, table: string, columns: string, order = "created_at"): Promise<T[] | null> {
+  try { return await all<T>(db, table, columns, order); } catch { return null; }
+}
+
+/** Every auth account with its email and sign-in state (service role only). */
+async function authUsers(db: Db): Promise<UserRow[] | null> {
+  const out: UserRow[] = [];
+  try {
+    for (let page = 1; page <= 50; page++) {
+      const { data, error } = await db.auth.admin.listUsers({ page, perPage: PAGE });
+      if (error) return null;
+      const users = data?.users ?? [];
+      for (const u of users) out.push({ id: u.id, email: u.email ?? null, created_at: u.created_at, email_confirmed_at: u.email_confirmed_at ?? null, last_sign_in_at: u.last_sign_in_at ?? null });
+      if (users.length < PAGE) break;
+    }
+    return out;
+  } catch {
+    return null;
+  }
 }
 
 /**
- * Load the raw rows behind the command center. Called only after requireAdmin(). Selects no prices,
- * line items, customer names, emails or notes. The project address is read only to derive a state
- * on the server and is never sent to the browser.
+ * Load the raw rows behind the owner command center. Called only after requireAdmin(). Selects no
+ * prices, line items, homeowner names or notes. The project address is read only to derive a state on
+ * the server and is never sent to the browser. Emails are read for the owner's Customers page only.
  */
-export async function loadPlatform(db: Db, callerId: string): Promise<PlatformSnapshot> {
-  const [metrics, estimates, versions, signatures, subscriptions, profiles, businesses, companies, grants, consents, events] = await Promise.all([
+export async function loadSnapshot(db: Db, callerId: string): Promise<Snapshot> {
+  const since7 = new Date(Date.now() - 7 * 86_400_000).toISOString();
+  const [
+    metrics, users, profiles, labels, admins, estimates, versions, signatures, signingRequests, subscriptions,
+    businesses, companies, members, grants, consents, events, leads, leadsV2, costs, outbox, stripeEvents,
+  ] = await Promise.all([
     db.rpc("admin_metrics", { p_caller: callerId }),
-    all<PlatformData["estimates"][number]>(db, "estimates", "id,user_id,company_id,trades,template_trade,status,created_at,location_state,location_zip,project_address"),
-    all<PlatformData["versions"][number]>(db, "estimate_versions", "estimate_id,user_id,created_at,version_number"),
-    all<PlatformData["signatures"][number]>(db, "signatures", "estimate_id,user_id,signed_at", "signed_at"),
-    all<PlatformData["subscriptions"][number]>(db, "subscriptions", "user_id,status,plan,cancel_at_period_end,canceled_at,ended_at,updated_at,seat_quantity,current_period_end", "updated_at"),
-    all<PlatformData["profiles"][number]>(db, "profiles", "id,created_at"),
-    all<{ user_id: string; created_at: string; company_name: string | null }>(db, "business_profiles", "user_id,created_at,company_name"),
-    all<{ id: string; created_at: string; name: string | null }>(db, "companies", "id,created_at,name"),
-    all<PlatformData["grants"][number]>(db, "complimentary_grants", "user_id,status,plan,starts_at,expires_at"),
-    all<PlatformData["consents"][number]>(db, "market_consent", "user_id,share_prices", "updated_at"),
-    db.from("analytics_events").select("event,created_at").in("event", ["checkout_started", "subscribed"]).order("created_at", { ascending: false }).limit(5000),
+    authUsers(db),
+    all<{ id: string; created_at: string }>(db, "profiles", "id,created_at"),
+    optional<LabelRow>(db, "admin_account_labels", "user_id,label,note,updated_at", "updated_at"),
+    optional<{ user_id: string }>(db, "admin_roles", "user_id", "user_id"),
+    all<EstimateRow>(db, "estimates", "id,user_id,company_id,trades,template_trade,status,created_at,location_state,location_zip,project_address"),
+    all<VersionRow>(db, "estimate_versions", "estimate_id,user_id,created_at,version_number"),
+    all<SignatureRow>(db, "signatures", "estimate_id,user_id,signed_at,pdf_status", "signed_at"),
+    optional<SigningRequestRow>(db, "signing_requests", "id,estimate_id,user_id,company_id,status,created_at,signed_at,expires_at"),
+    all<SubscriptionRow>(db, "subscriptions", "stripe_subscription_id,user_id,stripe_customer_id,status,plan,cancel_at_period_end,canceled_at,ended_at,updated_at,seat_quantity,current_period_end,company_id", "updated_at"),
+    all<BusinessRow>(db, "business_profiles", "user_id,created_at,company_name"),
+    optional<CompanyRow>(db, "companies", "id,created_at,name,owner_user_id"),
+    optional<MemberRow>(db, "company_members", "company_id,user_id,role,status", "company_id"),
+    optional<GrantRow>(db, "complimentary_grants", "id,email,user_id,status,plan,starts_at,expires_at,created_at,company_id,granted_by,note,extra_seats,invite_expires_at,revoked_at"),
+    all<ConsentRow>(db, "market_consent", "user_id,share_prices", "updated_at"),
+    db.from("analytics_events").select("event,user_id,created_at").in("event", ["checkout_started", "subscribed", "account_created"]).order("created_at", { ascending: false }).limit(10_000),
+    optional<LeadRow>(db, "leads", "user_id,source,utm_source,utm_medium,utm_campaign,landing_path,first_touch_at,first_campaign_id,first_campaign_name,stage,created_at"),
+    optional<{ user_id: string | null; referrer_host: string | null; click_id_type: string | null; device_type: string | null }>(db, "leads", "user_id,referrer_host,click_id_type,device_type"),
+    optional<CostRow>(db, "marketing_costs", "id,period_start,channel,campaign_id,amount_usd,note,created_at"),
+    optional<OutboxRow>(db, "email_outbox", "kind,user_id,status,last_error,attempts,created_at,updated_at"),
+    db.from("stripe_events").select("id,type,received_at,processed_at,error").gte("received_at", since7).order("received_at", { ascending: false }).limit(2000),
   ]);
-  const m = (metrics.data ?? {}) as { accounts?: number; verified_accounts?: number; funnel_30d?: Record<string, number>; import_failures_7d?: number; pdf_errors_7d?: number };
-  const names = new Map<string, string>();
-  for (const b of businesses) if (b.company_name?.trim()) names.set(`u:${b.user_id}`, b.company_name.trim());
-  for (const c of companies) if (c.name?.trim()) names.set(c.id, c.name.trim());
+  const m = (metrics.data ?? {}) as { import_failures_7d?: number; pdf_errors_7d?: number };
+  const extra = new Map((leadsV2 ?? []).filter((l) => l.user_id).map((l) => [l.user_id!, l]));
   return {
-    estimates, versions, signatures, subscriptions, profiles, companies, grants, consents,
-    businesses: businesses.map((b) => ({ user_id: b.user_id, created_at: b.created_at, has_name: Boolean(b.company_name?.trim()) })),
-    accounts: m.accounts ?? profiles.length, verifiedAccounts: m.verified_accounts ?? 0,
-    names, funnel30d: m.funnel_30d ?? {}, events: (events.data ?? []) as { event: string; created_at: string }[], importFailures7d: m.import_failures_7d ?? 0, pdfErrors7d: m.pdf_errors_7d ?? 0,
+    users: users ?? profiles.map((p) => ({ id: p.id, email: null, created_at: p.created_at, email_confirmed_at: null, last_sign_in_at: null })),
+    usersSource: users ? "auth" : "profiles",
+    labels: labels ?? [], labelsInstalled: labels !== null,
+    adminIds: new Set((admins ?? []).map((a) => a.user_id)),
+    estimates, versions, signatures, signingRequests: signingRequests ?? [], subscriptions, businesses,
+    companies: companies ?? [], members: members ?? [], grants: grants ?? [], consents,
+    events: (events.data ?? []) as EventRow[],
+    leads: (leads ?? []).map((l) => ({ ...l, ...(l.user_id ? extra.get(l.user_id) : undefined) })),
+    leadsInstalled: leads !== null, attributionV2: leadsV2 !== null,
+    costs: costs ?? [], outbox: outbox ?? [], stripeEvents: (stripeEvents.data ?? []) as StripeEventRow[],
+    pdfErrors7d: m.pdf_errors_7d ?? 0, importFailures7d: m.import_failures_7d ?? 0,
     loadedAt: new Date().toISOString(),
   };
-}
-
-export type ActivityKind = "signup" | "business" | "finalized" | "signed" | "paid";
-export interface ActivityItem { kind: ActivityKind; at: string; title: string; detail: string }
-
-/** Recent platform events for the activity feed: business name, trade and state only. */
-export function recentActivity(p: PlatformSnapshot, limit = 14): ActivityItem[] {
-  const est = new Map(p.estimates.map((e) => [e.id, e]));
-  const label = (key: string) => p.names.get(key) ?? "A contractor";
-  const items: ActivityItem[] = [];
-  for (const pr of p.profiles) items.push({ kind: "signup", at: pr.created_at, title: "New account", detail: p.names.get(`u:${pr.id}`) ?? "Account created" });
-  for (const b of p.businesses) if (b.has_name) items.push({ kind: "business", at: b.created_at, title: "Business profile added", detail: label(`u:${b.user_id}`) });
-  for (const c of p.companies) items.push({ kind: "business", at: c.created_at, title: "Enterprise company created", detail: label(c.id) });
-  const firstVersion = new Map<string, string>();
-  for (const v of p.versions) if (v.version_number === 1 || !firstVersion.has(v.estimate_id)) firstVersion.set(v.estimate_id, v.created_at);
-  for (const [id, at] of firstVersion) {
-    const e = est.get(id); if (!e) continue;
-    items.push({ kind: "finalized", at, title: "Bid finalized", detail: [label(businessKey(e)), tradeName(tradeOf(e)), bidState(e).state].filter(Boolean).join(" · ") });
-  }
-  for (const s of p.signatures) {
-    const e = est.get(s.estimate_id); if (!e) continue;
-    items.push({ kind: "signed", at: s.signed_at, title: "Bid signed by customer", detail: [label(businessKey(e)), tradeName(tradeOf(e)), bidState(e).state].filter(Boolean).join(" · ") });
-  }
-  for (const s of p.subscriptions) if (s.status === "active" && s.updated_at) items.push({ kind: "paid", at: s.updated_at, title: `Subscription active: ${s.plan}`, detail: label(`u:${s.user_id}`) });
-  return items.filter((i) => i.at).sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, limit);
 }
