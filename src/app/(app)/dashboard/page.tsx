@@ -63,6 +63,11 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     // Referral code + counts. Missing function (migration not run yet) just hides the card.
     supabase.rpc("my_referral"),
   ]);
+  // Creator Partner Program: gifted members get a welcome line with their mentor and end date.
+  // Missing function (migration not applied) or no gift: nothing is shown.
+  const { data: gifts } = await supabase.rpc("my_mentorship");
+  const gift = ((gifts ?? []) as { state: string; program_state: string; channel_name: string | null; workspace_name: string; expires_at: string | null }[])
+    .find((g) => g.state === "active" && g.program_state === "active") ?? null;
   const [history, { data: payRow }] = await Promise.all([
     loadHistory(supabase, user.id),
     supabase.from("sales_pay_settings").select("method, rate, flat_fee, base_salary, base_exclusions").eq("user_id", user.id).maybeSingle(),
@@ -111,6 +116,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     <div className="mx-auto max-w-7xl space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
+          {gift && <p className="text-sm font-semibold text-accent-ink">{biz?.company_name ? `Welcome back, ${biz.company_name}` : "Let's build your next professional bid"}</p>}
           <h1 className="text-3xl font-extrabold text-navy">Your bids</h1>
           <p className="text-ink-soft">{biz?.company_name ? biz.company_name : <Link href="/settings/company" className="text-accent-ink underline">Set up your company profile</Link>}</p>
         </div>
@@ -119,6 +125,12 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
           <ButtonLink href="/bids" variant="accent" className="hidden md:inline-flex">Create New Bid</ButtonLink>
         </div>
       </div>
+      {gift && (
+        <Card className="flex flex-wrap items-center justify-between gap-3 p-4" data-testid="gift-banner">
+          <p className="text-sm">Complimentary Unlimited from <span className="font-semibold">{gift.channel_name ?? gift.workspace_name}</span>{gift.expires_at ? ` through ${new Date(gift.expires_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "America/Chicago" })}` : ""}. No payment needed.</p>
+          <div className="flex gap-3 text-sm font-semibold"><Link href="/welcome" className="underline">Branding setup</Link><Link href="/mentorship" className="underline">Mentorship</Link></div>
+        </Card>
+      )}
       <LocalDraftsBanner />
       {esign && <RefreshOnFocus />}
       {esign && recentSigned.length > 0 && <RecentlySigned bids={recentSigned} days={RECENT_SIGNED_DAYS} />}

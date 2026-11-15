@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, Plug, LayoutTemplate, LogOut, X, UserCog, Receipt, Gauge, SquareKanban } from "lucide-react";
+import { CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, Plug, LayoutTemplate, LogOut, X, UserCog, Receipt, Gauge, SquareKanban, GraduationCap } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ButtonLink } from "@/components/ui/button";
 import { Logo } from "./logo";
@@ -33,7 +33,10 @@ export type CompanyNav = { name: string; links: { href: CompanyHref; label: stri
 const COMPANY_ICONS = { "/company": Gauge, "/company/pipeline": SquareKanban, "/company/users": UserCog, "/company/billing": Receipt } as const;
 const companyExact = (href: CompanyHref) => href === "/company";
 
-export function AppSidebar({ isAdmin, email, company }: { isAdmin: boolean; email: string | null; company?: CompanyNav | null }) {
+/** Invitation-only Creator Partner Program links (only rendered for creators / gifted participants). */
+export type LearningNav = { creator: boolean; participant: boolean };
+
+export function AppSidebar({ isAdmin, email, company, learning }: { isAdmin: boolean; email: string | null; company?: CompanyNav | null; learning?: LearningNav | null }) {
   const path = usePathname();
   const [open, setOpen] = useState(false);
   // eslint-disable-next-line react-hooks/set-state-in-effect -- close the mobile menu after navigating
@@ -82,6 +85,20 @@ export function AppSidebar({ isAdmin, email, company }: { isAdmin: boolean; emai
                 </Link>
               );
             })}
+          </>
+        )}
+        {learning && (learning.creator || learning.participant) && (
+          <>
+            {learning.creator && (
+              <Link href="/learning" aria-current={active("/learning") ? "page" : undefined} className={cn(item, active("/learning") ? "bg-white/10 text-white shadow-[inset_3px_0_0_var(--color-cyan)]" : "text-[#C9D6E3] hover:bg-white/5 hover:text-white")}>
+                <GraduationCap className={cn("h-4 w-4", active("/learning") ? "text-cyan" : "")} aria-hidden /> Learning Enterprise
+              </Link>
+            )}
+            {learning.participant && (
+              <Link href="/mentorship" aria-current={active("/mentorship") ? "page" : undefined} className={cn(item, active("/mentorship") ? "bg-white/10 text-white shadow-[inset_3px_0_0_var(--color-cyan)]" : "text-[#C9D6E3] hover:bg-white/5 hover:text-white")}>
+                <GraduationCap className={cn("h-4 w-4", active("/mentorship") ? "text-cyan" : "")} aria-hidden /> Mentorship
+              </Link>
+            )}
           </>
         )}
         <p className="mt-3 px-3 pb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#B8C6D4]">Help</p>
