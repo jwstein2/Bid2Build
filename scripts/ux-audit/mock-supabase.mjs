@@ -83,7 +83,7 @@ const scheduleRpc = {
     const keys = {};
     const tasks = p.tasks.map((t) => { const tid = crypto.randomUUID(); keys[t.key] = tid; return taskRow({ ...t, id: tid }); });
     sched.list.set(id, {
-      row: { id, estimate_id: e.id, company_id: null, name: p.name, status: "draft", provisional: !accepted, calendar: p.calendar, start_date: p.startDate, target_end_date: p.targetEndDate, progress_method: "duration", revision: 1, updated_at: iso(0) },
+      row: { id, estimate_id: e.id, user_id: USER.id, company_id: null, name: p.name, status: "draft", provisional: !accepted, calendar: p.calendar, start_date: p.startDate, target_end_date: p.targetEndDate, progress_method: "duration", revision: 1, updated_at: iso(0) },
       snapshot, tasks, deps: (p.deps ?? []).map((d) => ({ predecessor_id: keys[d.from], successor_id: keys[d.to], lag_days: d.lagDays, max_overlap: d.maxOverlap })),
       revisions: [{ revision: 1, summary: accepted ? "Schedule created as a draft" : "Provisional schedule created (bid not yet accepted)", created_at: iso(0), actor_id: USER.id, changes: [] }],
     });
@@ -114,6 +114,42 @@ const scheduleRpc = {
     return [200, s.row.revision];
   },
 };
+// Customer updates (Phase 8): published copies are kept newest first, like the real query's order.
+tables.schedule_publications = [];
+const pubFind = (id) => tables.schedule_publications.find((x) => x.id === id);
+Object.assign(scheduleRpc, {
+  schedule_publish: ({ p_schedule_id, p_base_revision, p }) => {
+    const s = sched.list.get(p_schedule_id);
+    if (!s || !rpcs.my_pm_access?.canEdit) return [403, { code: "42501", message: "forbidden" }];
+    if (s.row.revision !== p_base_revision) return [409, { code: "40001", message: "stale_revision", details: String(s.row.revision) }];
+    const version = tables.schedule_publications.filter((x) => x.schedule_id === p_schedule_id).length + 1;
+    const row = { id: crypto.randomUUID(), schedule_id: p_schedule_id, estimate_id: s.row.estimate_id, version, schedule_revision: s.row.revision, published_at: new Date().toISOString(),
+      published_by: USER.id, publisher_name: p.publisherName ?? null, options: p.options, content: p.content, content_hash: p.contentHash, logo_path: p.logoPath ?? null,
+      token_hash: null, link_created_at: null, link_expires_at: null, link_revoked_at: null, view_count: 0, last_viewed_at: null, delivery: [] };
+    tables.schedule_publications.unshift(row);
+    return [200, { id: row.id, version, publishedAt: row.published_at }];
+  },
+  schedule_publication_link: ({ p_publication_id, p_token_hash, p_days }) => {
+    const r = pubFind(p_publication_id);
+    if (!r || !rpcs.my_pm_access?.canEdit) return [403, { code: "42501", message: "forbidden" }];
+    Object.assign(r, { token_hash: p_token_hash, link_created_at: new Date().toISOString(), link_expires_at: new Date(Date.now() + (p_days ?? 30) * 864e5).toISOString(), link_revoked_at: null });
+    r.delivery = [...r.delivery, { method: "link_created", at: new Date().toISOString(), by: USER.id }];
+    return [200, r.link_expires_at];
+  },
+  schedule_publication_revoke_link: ({ p_publication_id }) => {
+    const r = pubFind(p_publication_id);
+    if (!r || !rpcs.my_pm_access?.canEdit) return [403, { code: "42501", message: "forbidden" }];
+    if (r.token_hash && !r.link_revoked_at) r.link_revoked_at = new Date().toISOString();
+    return [200, null];
+  },
+  schedule_publication_delivery: ({ p_publication_id, p_method }) => {
+    const r = pubFind(p_publication_id);
+    if (!r || !rpcs.my_pm_access?.canEdit) return [403, { code: "42501", message: "forbidden" }];
+    r.delivery = [...r.delivery, { method: p_method, at: new Date().toISOString(), by: USER.id }];
+    return [200, null];
+  },
+});
+
 const taskRow = (t) => ({
   id: t.id, parent_id: t.kind === "item" ? t.parentId ?? null : null, kind: t.kind, source_group_id: t.sourceGroupId, source_item_id: t.sourceItemId ?? null, split_from: t.splitFrom ?? null,
   name: t.name, sort_order: t.sortOrder ?? 0, planned_start: t.plannedStart, planned_end: t.plannedEnd, duration_days: t.durationDays, actual_start: t.actualStart ?? null,
@@ -449,7 +485,7 @@ http.createServer((req, res) => {
     if (u.pathname === "/__pipeline_calls") return send(res, 200, pipelineRpc.calls ?? []);
     if (rpc && typeof pipelineRpc[rpc[1]] === "function") { let args = {}; try { args = JSON.parse(raw || "{}"); } catch { /* ignore */ } const [st, body] = pipelineRpc[rpc[1]](args); return send(res, st, body); }
     if (u.pathname === "/__sched") {
-      if (u.searchParams.get("reset")) { sched.list.clear(); tables.project_schedules = []; }
+      if (u.searchParams.get("reset")) { sched.list.clear(); tables.project_schedules = []; tables.schedule_publications = []; }
       const st = u.searchParams.get("stage"); if (st) tables.estimates[0].pipeline_stage = st;
       return send(res, 200, { ok: true, schedules: [...sched.list.keys()] });
     }
@@ -465,7 +501,7 @@ http.createServer((req, res) => {
       return !v.startsWith("eq.") || r[k] === undefined || String(r[k]) === v.slice(3);
     });
     // Library tables keep writes in memory so saved items can be created, edited and deleted in browser walks.
-    const LIVE = new Set(["saved_items", "assemblies", "assembly_items"]);
+    const LIVE = new Set(["saved_items", "assemblies", "assembly_items", "schedule_publications"]);
     if (req.method !== "GET" && req.method !== "HEAD") {
       if (!LIVE.has(t[1])) return send(res, 201, []);
       const list = (tables[t[1]] ??= []);

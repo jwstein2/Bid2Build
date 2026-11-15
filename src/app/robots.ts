@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
   // the owner sets NEXT_PUBLIC_ALLOW_INDEXING=true for the production context.
   if (!deploy.allowIndexing) return { rules: { userAgent: "*", disallow: "/" } };
   return {
-    rules: { userAgent: "*", allow: "/", disallow: ["/api/", "/admin", "/dashboard", "/settings", "/builder", "/start/", "/estimates/", "/auth/", "/login", "/sign/", "/signed/"] },
+    rules: { userAgent: "*", allow: "/", disallow: ["/api/", "/admin", "/dashboard", "/settings", "/builder", "/start/", "/estimates/", "/auth/", "/login", "/sign/", "/signed/", "/updates/", "/projects"] },
     sitemap: `${site.url}/sitemap.xml`,
     host: site.url,
   };

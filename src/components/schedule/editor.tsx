@@ -1,7 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { AlertTriangle, ArrowLeft, CalendarRange, History, List, MoveHorizontal, RefreshCw, Undo2, GanttChart } from "lucide-react";
+import { AlertTriangle, ArrowLeft, CalendarRange, History, List, MoveHorizontal, RefreshCw, Send, Undo2, GanttChart } from "lucide-react";
 import { Modal } from "@/components/builder/dialogs";
 import { Button } from "@/components/ui/button";
 import { Badge, Notice } from "@/components/ui/misc";
@@ -15,11 +15,13 @@ import { statusLabel, type Dep, type ScheduleData, type ScheduleMeta, type Task 
 import { api, newId, STATUS_STYLE } from "./client";
 import { Gantt, type GanttRow, type Zoom } from "./gantt";
 import { TaskDialog } from "./task-dialog";
+import { PublicationHistory } from "./published-update";
+import type { Publication } from "@/lib/schedule/publications";
 
 type UndoEntry = { tasks: Task[]; deps: Dep[]; summary: string };
 type SaveMeta = Partial<Pick<ScheduleMeta, "status" | "progressMethod" | "targetEndDate">>;
 
-export function ScheduleEditor({ initial, tradeLabels, editHint, created }: { initial: ScheduleData; tradeLabels: Record<string, string>; editHint: "addon" | "seat" | null; created?: boolean }) {
+export function ScheduleEditor({ initial, tradeLabels, editHint, created, publications = [] }: { initial: ScheduleData; tradeLabels: Record<string, string>; editHint: "addon" | "seat" | null; created?: boolean; publications?: Publication[] }) {
   const [data, setData] = useState(initial);
   const [undo, setUndo] = useState<UndoEntry[]>([]);
   const [saving, setSaving] = useState(false);
@@ -31,7 +33,7 @@ export function ScheduleEditor({ initial, tradeLabels, editHint, created }: { in
   const [delay, setDelay] = useState<{ edit: DateEdit; base: Task[]; deps: Dep[]; summary: string; mode: EditMode } | null>(null);
   const [itemsFor, setItemsFor] = useState<string | null>(null);
   const [shiftFor, setShiftFor] = useState<string | null>(null);
-  const [panel, setPanel] = useState<"progress" | "history" | null>(null);
+  const [panel, setPanel] = useState<"progress" | "history" | "updates" | null>(null);
   const [highlight, setHighlight] = useState<string | null>(null);
 
   const { schedule: meta, tasks, deps, snapshot, canEdit } = data;
@@ -114,6 +116,7 @@ export function ScheduleEditor({ initial, tradeLabels, editHint, created }: { in
           </div>
           {canEdit && (
             <div className="flex flex-wrap gap-2">
+              <Link href={`/projects/${meta.id}/update`} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-navy px-3 text-sm font-semibold text-white hover:bg-navy/90" data-testid="customer-update"><Send className="h-4 w-4" aria-hidden /> Preview customer update</Link>
               {meta.status === "draft" && <Button size="sm" variant="secondary" onClick={() => commit(tasks, deps, "Marked the schedule active", { status: "active" })}>Mark active</Button>}
               {meta.status === "active" && <Button size="sm" variant="secondary" onClick={() => commit(tasks, deps, "Marked the project completed", { status: "completed" })}>Mark project completed</Button>}
               {meta.status === "completed" && <Button size="sm" variant="secondary" onClick={() => commit(tasks, deps, "Reopened the project", { status: "active" })}>Reopen</Button>}
@@ -204,9 +207,12 @@ export function ScheduleEditor({ initial, tradeLabels, editHint, created }: { in
         <div className="ml-auto flex flex-wrap items-center gap-2">
           {saving && <span className="inline-flex items-center gap-1 text-xs text-muted"><RefreshCw className="h-3.5 w-3.5 animate-spin" aria-hidden /> Saving…</span>}
           {canEdit && <Button size="sm" variant="secondary" onClick={undoLast} disabled={!undo.length || saving} data-testid="undo"><Undo2 className="h-4 w-4" aria-hidden /> Undo</Button>}
+          <Button size="sm" variant="secondary" onClick={() => setPanel(panel === "updates" ? null : "updates")} data-testid="updates-button"><Send className="h-4 w-4" aria-hidden /> Customer updates{publications.length ? ` (${publications.length})` : ""}</Button>
           <Button size="sm" variant="secondary" onClick={() => setPanel(panel === "history" ? null : "history")} data-testid="history-button"><History className="h-4 w-4" aria-hidden /> History</Button>
         </div>
       </div>
+
+      {panel === "updates" && <PublicationHistory scheduleId={meta.id} publications={publications} canEdit={canEdit} timezone={cal.timezone} />}
 
       {panel === "history" && (
         <section className="rounded-xl border border-line bg-surface p-4" data-testid="history-panel">
