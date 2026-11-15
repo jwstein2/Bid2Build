@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { FileCheck2 } from "lucide-react";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/misc";
 import { ButtonLink } from "@/components/ui/button";
@@ -12,6 +13,10 @@ import { PremiumTiles } from "./library-tile";
 import { hasPremiumAccess } from "@/lib/billing/entitlement";
 import { can, loadMyCompany } from "@/lib/enterprise/server";
 import { ROLE_LABELS } from "@/lib/enterprise/permissions";
+import { isEsignEnabled, RECENT_SIGNED_DAYS } from "@/lib/esign/config";
+import { recentSignatures, signingByEstimate, type RequestRow, type SignatureRow } from "@/lib/esign/status";
+import { RecentlySigned, type SignedBid } from "./recently-signed";
+import { RefreshOnFocus } from "@/components/esign/refresh-on-focus";
 
 export const metadata: Metadata = { title: "Dashboard", robots: { index: false } };
 
@@ -28,6 +33,16 @@ export default async function Dashboard() {
     hasPremiumAccess(supabase),
     loadMyCompany(supabase),
   ]);
+  // Signing status (personal bids, like the list below). A missing table (migration not run yet)
+  // just means no signing data: the dashboard never fails because of it.
+  const esign = isEsignEnabled();
+  const [{ data: reqRows }, { data: sigRows }] = esign ? await Promise.all([
+    supabase.from("signing_requests").select("id, estimate_id, version_id, status, expires_at, created_at, revoke_reason, signed_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1000),
+    supabase.from("signatures").select("id, estimate_id, version_id, version_number, total, signed_at, signer_name, pdf_status, customer_name, project_title, proposal_number").eq("user_id", user.id).order("signed_at", { ascending: false }).limit(1000),
+  ]) : [{ data: null }, { data: null }];
+  const signing = signingByEstimate((reqRows ?? []) as RequestRow[], (sigRows ?? []) as SignatureRow[]);
+  const recentSigned: SignedBid[] = recentSignatures((sigRows ?? []) as SignatureRow[], RECENT_SIGNED_DAYS)
+    .map((x) => ({ id: x.id, estimateId: x.estimate_id, customer: x.customer_name || x.signer_name, project: x.project_title || "Untitled bid", total: Number(x.total), signedAt: x.signed_at, versionNumber: x.version_number, pdfStatus: x.pdf_status }));
   const enterprise = company?.entitlement.active ? {
     companyName: company.name, role: ROLE_LABELS[company.role], complimentary: company.entitlement.source === "complimentary",
     expiresAt: company.entitlement.expiresAt, manageHref: can(company, "manage_billing") ? "/company/billing" as const : "/company/users" as const,
@@ -37,6 +52,7 @@ export default async function Dashboard() {
   const rows: BidRow[] = (estimates ?? []).map((e) => ({
     id: e.id, title: e.title || "Untitled bid", customer: e.customer_name, trades: e.trades, status: e.status, updatedAt: e.updated_at, number: e.estimate_number,
     latestVersion: latest.get(e.id) ? { id: latest.get(e.id)!.id, number: latest.get(e.id)!.version_number, total: Number(latest.get(e.id)!.total) } : null,
+    signing: esign ? signing.get(e.id) ?? { state: "none", signed: null, latest: null } : null,
   }));
 
   // Details that make proposals look complete. None are required to create or export a bid.
@@ -56,10 +72,19 @@ export default async function Dashboard() {
         </div>
       </div>
       <LocalDraftsBanner />
+      {esign && <RefreshOnFocus />}
+      {esign && recentSigned.length > 0 && <RecentlySigned bids={recentSigned} days={RECENT_SIGNED_DAYS} />}
       <ProfileReminder missing={missing} />
       <div className="grid gap-4 lg:grid-cols-3">
         {credits && <CreditBalances credits={credits} className="lg:col-span-2" showUpgrade={false} enterprise={enterprise} />}
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-1">
+        <div className={`grid gap-4 lg:grid-cols-1 ${esign ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-2"}`}>
+          {esign && (
+            <Card className="col-span-2 border-ok/30 p-4 sm:col-span-1 lg:col-span-1" data-testid="signed-count">
+              <p className="flex items-center gap-1 text-sm text-muted"><FileCheck2 className="h-4 w-4 text-ok" aria-hidden />Recently Signed Bids</p>
+              <p className="text-2xl font-extrabold text-ok">{recentSigned.length}</p>
+              <p className="text-xs text-muted">Last {RECENT_SIGNED_DAYS} days</p>
+            </Card>
+          )}
           <Card className="p-4"><p className="text-sm text-muted">Drafts</p><p className="text-2xl font-extrabold">{rows.filter((r) => r.status === "draft").length}</p></Card>
           <Card className="p-4"><p className="text-sm text-muted">Finalized proposals</p><p className="text-2xl font-extrabold">{rows.filter((r) => r.status === "finalized").length}</p></Card>
         </div>

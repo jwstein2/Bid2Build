@@ -34,7 +34,17 @@ const nextConfig: NextConfig = {
     },
   },
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    // Signing links carry a secret token in the path: never send it as a referrer, never cache or index.
+    const signingHeaders = [
+      { key: "Referrer-Policy", value: "no-referrer" },
+      { key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" },
+      { key: "Cache-Control", value: "private, no-store, max-age=0" },
+    ];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      { source: "/sign/:path*", headers: signingHeaders },
+      { source: "/api/sign/:path*", headers: signingHeaders },
+    ];
   },
 };
 

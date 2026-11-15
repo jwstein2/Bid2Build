@@ -10,6 +10,8 @@ export interface ShareEmailInput {
   companyName?: string | null;
   contactName?: string | null;
   phone?: string | null;
+  /** When set, the message links to the online signing page instead of mentioning an attachment. */
+  signingUrl?: string | null;
 }
 
 export interface ShareEmail {
@@ -45,6 +47,7 @@ export function buildShareEmail(i: ShareEmailInput): ShareEmail {
   const contact = oneLine(i.contactName);
   const phone = oneLine(i.phone);
   const greetName = firstName(i.customerName);
+  const signingUrl = /^https?:\/\/\S+$/.test(oneLine(i.signingUrl)) ? oneLine(i.signingUrl) : "";
 
   const subject = company && project ? `Your Estimate from ${company} — ${project}`
     : company ? `Your Estimate from ${company}`
@@ -59,7 +62,14 @@ export function buildShareEmail(i: ShareEmailInput): ShareEmail {
       ? `Thank you for the opportunity to provide an estimate for ${project}.`
       : "Thank you for the opportunity to provide an estimate for your project.",
     "",
-    "I've attached our proposal for your review. Please let me know if you have any questions or would like to discuss anything further.",
+    ...(signingUrl
+      ? [
+        "You can review the full proposal and sign it online here:",
+        signingUrl,
+        "",
+        "It works on your phone or computer, and you don't need to create an account. You can also download a copy from that page. Please let me know if you have any questions or would like to discuss anything further.",
+      ]
+      : ["I've attached our proposal for your review. Please let me know if you have any questions or would like to discuss anything further."]),
     "",
     "Thank you,",
     ...signature,

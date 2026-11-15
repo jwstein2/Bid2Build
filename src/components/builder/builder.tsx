@@ -1,5 +1,5 @@
 "use client";
-import { AlertCircle, ArrowLeft, ArrowRight, Check, CloudOff, Download, Eye, EyeOff, Loader2, Mail, RotateCcw, Undo2 } from "lucide-react";
+import { AlertCircle, ArrowLeft, ArrowRight, Check, CloudOff, Download, Eye, EyeOff, Loader2, Link2, Mail, RotateCcw, Undo2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
@@ -30,6 +30,8 @@ import { reducer } from "./state";
 import { Workspace } from "./workspace";
 import { WashingJobPanel, isWashingEstimate } from "./calculators/washing-job-panel";
 import { SendEmailDialog, type SendPhase } from "./send-email";
+import { SigningLinkDialog, SigningPanel, type CreatedLink } from "../esign/signing-panel";
+import { isEsignEnabled } from "@/lib/esign/config";
 import { exportReadiness, type ReadinessIssue } from "@/lib/estimate/readiness";
 import { stepStatuses } from "@/lib/estimate/step-status";
 import { buildShareEmail } from "@/lib/proposal/share-email";
@@ -101,6 +103,9 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
   const [sendOpen, setSendOpen] = useState(false);
   const [sendPhase, setSendPhase] = useState<SendPhase>({ k: "preparing" });
   const [sendKey, setSendKey] = useState(0);
+  const [signingLink, setSigningLink] = useState<CreatedLink | null>(null);
+  const [signingRefresh, setSigningRefresh] = useState(0);
+  const esign = isEsignEnabled() && Boolean(user);
   // One export at a time, across Download PDF and Send via My Email (double taps included).
   const exportLock = useRef(false);
   const [cloudMode, setCloudMode] = useState(mode === "cloud");
@@ -223,7 +228,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
    * the bid-credit rules (an unchanged, already-finalized proposal is never charged again), so
    * switching between the two actions never uses an extra credit. Returns null when it stopped.
    */
-  const runExport = useCallback(async (deliver: "download" | "bytes"): Promise<{ file?: File; message: string } | { error: string } | null> => {
+  const runExport = useCallback(async (deliver: "download" | "bytes" | "signing"): Promise<{ file?: File; message: string; link?: CreatedLink } | { error: string } | null> => {
     setExportMsg(null);
     // Missing details first, so nobody signs up only to be told the proposal isn't ready yet.
     if (readiness.length) { setMissing(readiness); fixIssue(readiness[0]); return null; }
@@ -235,7 +240,9 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
     setExporting(true);
     try {
       if (!(await saveCloud())) return { error: "We couldn't save your latest changes, so we didn't export. Check your connection and try again." };
-      const r = await fetch(`/api/estimates/${estimate.id}/export`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ deliver }) }).catch(() => null);
+      // Create Signing Link finalizes through the same server path (same credit rules), then freezes the version.
+      const target = deliver === "signing" ? `/api/estimates/${estimate.id}/signing` : `/api/estimates/${estimate.id}/export`;
+      const r = await fetch(target, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ deliver }) }).catch(() => null);
       if (!r) return { error: "We couldn't reach Built2Bid. Check your connection and try again. No bid credit was used." };
       const data = await r.json().catch(() => ({}));
       if (r.status === 402) { await refreshCredits(); setUpgradeOpen(true); return null; }
@@ -247,6 +254,11 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
       const message = exportMessage(data.creditSource as CreditSource, data.versionNumber, data.credits);
       setFinalizedHere(true);
       await refreshCredits();
+      if (deliver === "signing") {
+        const file = data.pdfBase64 ? base64File(data.pdfBase64, data.filename) : undefined;
+        const linkMsg = data.charged ? message : "This version was already finalized, so creating the link used no credit.";
+        return { message: linkMsg, link: { url: data.url, requestId: data.requestId, expiresAt: data.expiresAt, versionNumber: data.versionNumber, total: data.total, file, message: linkMsg } };
+      }
       if (deliver === "bytes") {
         if (!data.pdfBase64) return { error: "We couldn't prepare the PDF for sharing. Please try again." };
         return { file: base64File(data.pdfBase64, data.filename), message };
@@ -273,6 +285,15 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
     if (!res) { setSendOpen(false); return; }
     if ("error" in res) { setSendPhase({ k: "error", message: res.error }); return; }
     setSendPhase({ k: "ready", file: res.file!, note: res.message });
+  }, [runExport]);
+
+  const createSigning = useCallback(async () => {
+    const res = await runExport("signing");
+    if (!res) return;
+    if ("error" in res) { setExportMsg({ tone: "danger", text: res.error }); return; }
+    setSigningLink(res.link ?? null);
+    setSigningRefresh((n) => n + 1);
+    setStep("proposal");
   }, [runExport]);
 
   const startSend = useCallback(() => {
@@ -432,6 +453,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
           <>{isWashingEstimate(estimate) && <WashingJobPanel estimate={estimate} dispatch={dispatch} />}<Workspace estimate={estimate} dispatch={dispatch} lib={lib} /></>
         ))}
         {step === "scope" && <ScopeStep estimate={estimate} config={config} onConfig={onConfig} signedIn={Boolean(user)} estimateId={cloudMode ? estimate.id : null} />}
+        {step === "proposal" && esign && cloudMode && <SigningPanel estimateId={estimate.id} onCreate={() => void createSigning()} creating={exporting} refreshKey={signingRefresh} />}
         {step === "proposal" && <ProposalStep estimate={estimate} business={business} config={config} onConfig={onConfig} />}
 
         {/* Step footer: Back / Next on every step */}
@@ -445,6 +467,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
               <Button size="lg" onClick={() => goTo(STEPS[stepIndex + 1].id)}>{STEPS[stepIndex].next} <ArrowRight className="h-4 w-4" /></Button>
             ) : (
               <span className="flex flex-wrap justify-end gap-2">
+                {esign && cloudMode && <Button size="lg" variant="secondary" onClick={() => void createSigning()} disabled={exporting}><Link2 className="h-4 w-4" aria-hidden /> Create Signing Link</Button>}
                 <Button size="lg" variant="secondary" onClick={startSend} disabled={exporting}><Mail className="h-4 w-4" aria-hidden /> Send via My Email</Button>
                 <Button size="lg" variant="accent" onClick={() => setPreviewOpen(true)}><Eye className="h-4 w-4" /> Preview &amp; download</Button>
               </span>
@@ -469,10 +492,13 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
         <div className="-mx-6 bg-[#e4eaf1] p-3 sm:p-5"><ProposalView doc={doc} /></div>
         <div className="mt-4 flex flex-wrap justify-end gap-2">
           <Button variant="secondary" onClick={() => { setPreviewOpen(false); setStep("proposal"); }}>Customize proposal</Button>
+          {esign && cloudMode && <Button variant="secondary" onClick={() => { setPreviewOpen(false); void createSigning(); }}><Link2 className="h-4 w-4" aria-hidden /> Create Signing Link</Button>}
           <Button variant="secondary" onClick={() => { setPreviewOpen(false); startSend(); }}><Mail className="h-4 w-4" aria-hidden /> Send via My Email</Button>
           <Button variant="accent" onClick={() => { setPreviewOpen(false); void doExport(); }}><Download className="h-4 w-4" /> Download PDF</Button>
         </div>
       </Modal>
+      <SigningLinkDialog open={Boolean(signingLink)} onOpenChange={(o) => { if (!o) setSigningLink(null); }} link={signingLink}
+        email={{ customerName: estimate.customer.name, customerEmail: estimate.customer.email, projectTitle: estimate.title, companyName: business.companyName, contactName: business.contactName, phone: displayPhone(business.phone) }} />
       <SendEmailDialog key={sendKey} open={sendOpen} onOpenChange={(o) => { if (!o && sendPhase.k === "preparing") return; setSendOpen(o); }} phase={sendPhase} email={shareEmail} onRetry={() => void prepareSend()} />
       <AuthDialog open={authOpen} onOpenChange={setAuthOpen} next={`/builder?draft=${estimate.id}&export=1`} onVerified={() => { window.location.assign(`/builder?draft=${estimate.id}&export=1`); }} />
       <UpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} nextCycleAt={credits?.nextCycleAt} />

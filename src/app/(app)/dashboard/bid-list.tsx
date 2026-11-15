@@ -1,17 +1,22 @@
 "use client";
 import Link from "next/link";
-import { Archive, Copy, Download, Eye, Pencil, Search, Trash2, ArchiveRestore, Loader2 } from "lucide-react";
+import { Archive, Copy, Download, Eye, Pencil, Search, Trash2, ArchiveRestore, Loader2, CheckCircle2, Clock, XCircle, Hourglass } from "lucide-react";
 import { useState, useTransition } from "react";
 import { tradeName } from "@/lib/trades/catalog";
 import { formatCurrency } from "@/lib/estimate/money";
 import { Badge, Card } from "@/components/ui/misc";
 import { Button } from "@/components/ui/button";
 import { deleteEstimate, duplicateEstimate, renameEstimate, setArchived } from "./actions";
+import { SIGNING_LABELS, type BidSigning } from "@/lib/esign/status";
 
 export interface BidRow {
   id: string; title: string; customer: string; trades: string[]; status: "draft" | "finalized" | "archived"; updatedAt: string; number: string;
   latestVersion: { id: string; number: number; total: number } | null;
+  /** Signing status (null when e-signatures are off). Separate from the draft/finalized/archived status. */
+  signing?: BidSigning | null;
 }
+
+const SIGN_FILTERS = [["all", "All bids"], ["awaiting", "Awaiting Signature"], ["signed", "Signed"]] as const;
 
 const FILTERS = [["active", "All active"], ["draft", "Drafts"], ["finalized", "Finalized"], ["archived", "Archived"]] as const;
 
@@ -19,10 +24,15 @@ export function BidList({ rows }: { rows: BidRow[] }) {
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<(typeof FILTERS)[number][0]>("active");
   const [trade, setTrade] = useState("");
+  const [sign, setSign] = useState<(typeof SIGN_FILTERS)[number][0]>("all");
+  const esign = rows.some((r) => r.signing);
   const tradesUsed = Array.from(new Set(rows.flatMap((r) => r.trades)));
   const list = rows.filter((r) => {
     if (filter === "active" ? r.status === "archived" : r.status !== filter) return false;
     if (trade && !r.trades.includes(trade)) return false;
+    // "Signed" = any signature on the bid (a revision may be out for signature again).
+    if (sign === "signed" && !r.signing?.signed) return false;
+    if (sign === "awaiting" && r.signing?.state !== "awaiting") return false;
     const s = q.trim().toLowerCase();
     return !s || r.title.toLowerCase().includes(s) || r.customer.toLowerCase().includes(s) || r.number.toLowerCase().includes(s);
   });
@@ -39,6 +49,13 @@ export function BidList({ rows }: { rows: BidRow[] }) {
             <button key={v} aria-pressed={filter === v} onClick={() => setFilter(v)} className={`min-h-9 rounded-md px-3 py-1.5 text-sm font-medium ${filter === v ? "bg-navy text-white" : "text-ink-soft hover:bg-black/5"}`}>{l}</button>
           ))}
         </div>
+        {esign && (
+          <div role="group" aria-label="Filter by signature" className="flex flex-wrap gap-1 border-l border-line pl-2 max-sm:border-l-0 max-sm:pl-0">
+            {SIGN_FILTERS.map(([v, l]) => (
+              <button key={v} aria-pressed={sign === v} onClick={() => setSign(v)} className={`min-h-9 rounded-md px-3 py-1.5 text-sm font-medium ${sign === v ? "bg-ok text-white" : "text-ink-soft hover:bg-black/5"}`}>{l}</button>
+            ))}
+          </div>
+        )}
         {tradesUsed.length > 1 && (
           <select aria-label="Filter by trade" className="field w-auto" value={trade} onChange={(e) => setTrade(e.target.value)}>
             <option value="">All trades</option>{tradesUsed.map((t) => <option key={t} value={t}>{tradeName(t)}</option>)}
@@ -47,7 +64,8 @@ export function BidList({ rows }: { rows: BidRow[] }) {
       </div>
       {list.length === 0 ? (
         <div className="p-10 text-center">
-          <p className="font-semibold">{rows.length ? "No bids match." : "No bids yet."}</p>
+          <p className="font-semibold">{!rows.length ? "No bids yet." : sign === "signed" ? "No signed bids here yet." : sign === "awaiting" ? "No bids are waiting for a signature." : "No bids match."}</p>
+          {rows.length > 0 && sign !== "all" && <p className="mt-1 text-sm text-muted">{sign === "signed" ? "When a customer signs a proposal you sent with Create Signing Link, it shows up here." : "Open a bid and choose Create Signing Link on the Proposal step to send it for signature."}{filter !== "active" ? "" : " Archived bids are under the Archived filter."}</p>}
           {!rows.length && <><p className="mt-1 text-sm text-muted">Pick a trade and you&apos;ll have a draft in seconds.</p><Link href="/bids" className="mt-4 inline-flex min-h-11 items-center rounded-lg bg-accent px-4 font-semibold text-navy hover:bg-accent-hover">Create your first bid</Link></>}
         </div>
       ) : (
@@ -97,16 +115,23 @@ function Row({ r }: { r: BidRow }) {
       </div>
       <div className="flex items-center gap-2">
         <Badge tone={r.status === "finalized" ? "ok" : r.status === "archived" ? "neutral" : "brand"}>{r.status === "finalized" ? `Finalized v${r.latestVersion?.number ?? 1}` : r.status === "archived" ? "Archived" : "Draft"}</Badge>
-        {r.latestVersion && <span className="tabular text-sm font-semibold">{formatCurrency(String(r.latestVersion.total))}</span>}
+        {r.signing && r.signing.state !== "none" && <SigningBadge s={r.signing} />}
+        {r.signing?.signed && r.signing.state !== "signed" && <SigningBadge s={{ ...r.signing, state: "signed" }} />}
+        {r.latestVersion && <span className="tabular text-sm font-semibold">{formatCurrency(String(r.signing?.state === "signed" && r.signing.signed ? r.signing.signed.total : r.latestVersion.total))}</span>}
       </div>
       <div className="flex flex-wrap items-center gap-1">
+        {r.signing?.signed && (
+            <Link href={`/signed/${r.signing.signed.id}`} className="inline-flex min-h-10 items-center gap-1 rounded-md px-2 text-sm font-semibold text-ok hover:bg-ok-tint" aria-label={`View signed proposal: ${r.title}`}><CheckCircle2 className="h-4 w-4" aria-hidden />View signed</Link>
+        )}
         <IconLink href={`/estimates/${r.id}`} label="Open / edit"><Pencil className="h-4 w-4" /></IconLink>
         <IconLink href={`/estimates/${r.id}?step=proposal`} label="Preview"><Eye className="h-4 w-4" /></IconLink>
         <IconBtn label={r.latestVersion ? "Download latest PDF (no credit used)" : "Export from the editor first"} onClick={download} disabled={!r.latestVersion || dl}>{dl ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}</IconBtn>
         <IconBtn label="Duplicate" onClick={() => start(() => duplicateEstimate(r.id))} disabled={pending}><Copy className="h-4 w-4" /></IconBtn>
         <IconBtn label="Rename" onClick={() => setRenaming(true)}><span className="text-xs font-bold">Aa</span></IconBtn>
         <IconBtn label={r.status === "archived" ? "Restore" : "Archive"} onClick={() => start(() => setArchived(r.id, r.status !== "archived"))} disabled={pending}>{r.status === "archived" ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}</IconBtn>
-        {confirmDelete ? (
+        {r.signing?.signed ? (
+          <span className="sr-only">Signed bids can be archived but not deleted.</span>
+        ) : confirmDelete ? (
           <span className="flex items-center gap-1 text-sm">
             <Button size="sm" variant="danger" onClick={() => start(() => deleteEstimate(r.id))} disabled={pending}>Delete forever</Button>
             <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(false)}>Cancel</Button>
@@ -117,6 +142,13 @@ function Row({ r }: { r: BidRow }) {
       </div>
     </li>
   );
+}
+
+function SigningBadge({ s }: { s: BidSigning }) {
+  const icon = s.state === "signed" ? <CheckCircle2 className="h-3.5 w-3.5" aria-hidden /> : s.state === "awaiting" ? <Hourglass className="h-3.5 w-3.5" aria-hidden /> : s.state === "expired" ? <Clock className="h-3.5 w-3.5" aria-hidden /> : <XCircle className="h-3.5 w-3.5" aria-hidden />;
+  const tone = s.state === "signed" ? "bg-ok-tint text-ok" : s.state === "awaiting" ? "bg-accent-tint text-accent-dark" : "bg-black/5 text-ink-soft";
+  const label = s.state === "signed" && s.signed ? `Signed v${s.signed.versionNumber}` : SIGNING_LABELS[s.state];
+  return <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold ${tone}`} data-testid="signing-badge">{icon}{label}</span>;
 }
 
 function IconBtn({ label, onClick, disabled, children }: { label: string; onClick: () => void; disabled?: boolean; children: React.ReactNode }) {
