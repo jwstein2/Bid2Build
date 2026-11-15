@@ -20,7 +20,7 @@ Look More Professional. Get Back to Building." Never invent testimonials, number
 | Domain | `built2bid.org`, bought through Netlify, **not attached yet**; Google Workspace email on it |
 | Database/auth | Supabase project `asiiqmegvajtuspeumio` (org "Build2Bid", us-east-1, Postgres 17) |
 | Payments | Stripe: **no account yet** |
-| AI | Anthropic key in Netlify (Production); default model `claude-opus-5-5` |
+| AI | Anthropic key in Netlify (Production); default model `claude-haiku-5-5` |
 | Outreach | Instantly: **no workspace yet**; code on branch below |
 
 ## Code map

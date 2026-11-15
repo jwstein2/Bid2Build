@@ -4,6 +4,7 @@ import { ReportUnavailable, SectionTitle } from "@/components/admin/report";
 import { CATALOG, CATEGORIES, COST_TYPES, INTERVALS, SOURCES, STATUSES, costTotals, renewals, serviceViews, type Category, type ServiceStatus, type ServiceView } from "@/lib/admin/costs";
 import { envPresent } from "@/lib/admin/integrations";
 import { loadReport } from "@/lib/admin/load";
+import { adsSetup, anthropicCost, netlifyUsage, supabaseUsage, type Monitor } from "@/lib/admin/monitors";
 import { str } from "@/lib/admin/view";
 import { addExpense, deleteExpense, importExpenses, saveService } from "./actions";
 
@@ -23,6 +24,12 @@ function Meter({ label, value, max, text }: { label: string; value: number; max:
       <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-[rgb(56_182_255/0.08)]" role="img" aria-label={`${label}: ${p}% of allowance`}><div className="h-full rounded-full" style={{ width: `${Math.max(1, p)}%`, background: p >= 80 ? "var(--cc-amber)" : "var(--cc-blue)" }} /></div>
     </div>
   );
+}
+
+function MonitorState<T>({ m, now }: { m: Monitor<T>; now: number }) {
+  if (m.state === "not_connected") return <NotConnected>Not connected · add {m.env}</NotConnected>;
+  if (m.state === "error") return <span className="cc-mono rounded border border-[var(--cc-amber)]/50 px-1.5 py-0.5 text-[11px] text-[var(--cc-amber)]">{m.message}</span>;
+  return <Fresh at={m.fetchedAt} state="live" now={now} />;
 }
 
 const money = (c: number | null) => (c == null ? <span className="text-[var(--cc-amber)]">Unknown</span> : usd(c));
@@ -53,6 +60,8 @@ export default async function Costs({ searchParams }: { searchParams: Promise<Re
   const recent = [...costs.expenses].sort((a, b) => (a.incurred_on < b.incurred_on ? 1 : -1)).slice(0, 15);
   const nameOf = new Map(views.map((v) => [v.key, v.name]));
   const today = now.toISOString().slice(0, 10);
+  const [netlify, supa, anth] = await Promise.all([netlifyUsage(), supabaseUsage(), anthropicCost(now)]);
+  const ads = adsSetup();
 
   return (
     <div className="space-y-6">
@@ -80,7 +89,7 @@ export default async function Costs({ searchParams }: { searchParams: Promise<Re
               <Meter label="Database size" value={usage.db_bytes} max={8 * GB} text={`${gb(usage.db_bytes)} of 8 GB`} />
               <Meter label="File storage" value={storage} max={100 * GB} text={`${gb(storage)} of 100 GB`} />
               <Meter label="Auth users" value={usage.auth_users} max={100_000} text={`${fmt(usage.auth_users)} of 100,000 MAU`} />
-              <p className="text-xs text-muted">Measured from the database itself. Allowances are the Pro plan&apos;s published inclusions; confirm on the Supabase usage page. Egress and API request counts need the Supabase Management API, which needs a broad account token, so they are not connected.</p>
+              <p className="text-xs text-muted">Measured from the database itself. Allowances are the Pro plan&apos;s published inclusions; confirm on the Supabase usage page. Request counts come from the Supabase Management API monitor below.</p>
             </div>
           ) : <p className="text-sm text-ink-soft">Database and storage size appear after migration 20261115003000 adds the read-only usage function.</p>}
         </Panel>
@@ -92,19 +101,69 @@ export default async function Costs({ searchParams }: { searchParams: Promise<Re
               <Row k="Failed requests">{aiFailed ? <span className="text-[var(--cc-amber)]">{fmt(aiFailed)}</span> : "0"}</Row>
             </dl>
           ) : <p className="text-sm text-ink-soft">The AI usage log could not be read.</p>}
-          <p className="mt-2 text-xs text-muted">From Built2Bid&apos;s own request log (model, tokens, cost per request). It does not include the GitHub pricing-guide job or any Claude subscription. Account-level billing needs an Anthropic Admin API key: not connected.</p>
+          <p className="mt-2 text-xs text-muted">From Built2Bid&apos;s own request log (model, tokens, cost per request). It does not include the GitHub pricing-guide job or any Claude subscription; the account-wide figure is in the Anthropic monitor below.</p>
         </Panel>
         <Panel title="Other providers">
           <ul className="space-y-2.5 text-sm">
             <li className="flex flex-wrap items-center justify-between gap-2"><span className="text-ink-soft">Stripe fees and refunds</span><Link href="/admin/revenue/scorecard" className="cc-mono text-xs text-[var(--cc-blue)] underline">On the scorecard</Link></li>
-            <li className="flex flex-wrap items-center justify-between gap-2"><span className="text-ink-soft">Netlify credits, bandwidth, functions</span><NotConnected /></li>
             <li className="flex flex-wrap items-center justify-between gap-2"><span className="text-ink-soft">Google Cloud / Places quota</span><NotConnected>Not in use</NotConnected></li>
             <li className="flex flex-wrap items-center justify-between gap-2"><span className="text-ink-soft">Resend sending volume</span><NotConnected /></li>
             <li className="flex flex-wrap items-center justify-between gap-2"><span className="text-ink-soft">Apify, Apollo, Instantly</span><NotConnected>No Built2Bid account found</NotConnected></li>
           </ul>
-          <p className="mt-3 text-xs text-muted">Each of these needs a provider API token with account-wide access. They are left as setup items until you approve one; see docs/admin/INTEGRATIONS.md. Enter their invoices below in the meantime.</p>
+          <p className="mt-3 text-xs text-muted">Enter their invoices below. Netlify, Supabase, Anthropic and advertising have their own monitors underneath.</p>
         </Panel>
       </div>
+
+      <SectionTitle id="monitors" kicker="Provider API monitors" title="Read-only account usage from each provider" />
+      <div className="grid gap-6 lg:grid-cols-3">
+        <Panel title="Netlify" action={<MonitorState m={netlify} now={nowMs} />}>
+          {netlify.state === "ok" ? (
+            <div className="space-y-3">
+              <dl>
+                <Row k="Team">{netlify.data.team ?? "–"}</Row>
+                <Row k="Plan">{netlify.data.plan ?? "–"}{netlify.data.billingPeriod ? ` · ${netlify.data.billingPeriod}` : ""}</Row>
+              </dl>
+              {netlify.data.buildMinutes?.used != null && netlify.data.buildMinutes.included ? (
+                <Meter label="Build minutes this period" value={netlify.data.buildMinutes.used} max={netlify.data.buildMinutes.included} text={`${fmt(netlify.data.buildMinutes.used)} of ${fmt(netlify.data.buildMinutes.included)}`} />
+              ) : <p className="text-xs text-muted">Build minutes: not reported for this token.</p>}
+              {netlify.data.buildMinutes?.periodEnd && <p className="text-[11px] text-muted">Period ends {day(netlify.data.buildMinutes.periodEnd)}.</p>}
+            </div>
+          ) : <p className="text-sm text-ink-soft">Plan and build minutes from the Netlify API.</p>}
+          <p className="mt-2 text-xs text-muted">Bandwidth, function and credit usage are not in Netlify&apos;s public API; check the Netlify usage page.</p>
+        </Panel>
+        <Panel title="Supabase (Management API)" action={<MonitorState m={supa} now={nowMs} />}>
+          {supa.state === "ok" ? (
+            <dl>
+              <Row k="Project status">{supa.data.status ?? "–"}{supa.data.region ? ` · ${supa.data.region}` : ""}</Row>
+              <Row k="API requests (recent window)">{supa.data.requestsTotal == null ? "Unavailable" : fmt(supa.data.requestsTotal)}</Row>
+              {supa.data.requests.slice(0, 5).map((r) => <Row key={r.label} k={<span className="capitalize">{r.label}</span>}>{fmt(r.count)}</Row>)}
+            </dl>
+          ) : <p className="text-sm text-ink-soft">Project health and API request counts.</p>}
+          <p className="mt-2 text-xs text-muted">Egress is not exposed by the Management API; check the Supabase usage page.</p>
+        </Panel>
+        <Panel title="Anthropic (whole account)" action={<MonitorState m={anth} now={nowMs} />}>
+          {anth.state === "ok" ? (
+            <dl>
+              <Row k="API cost this month">{usd(anth.data.totalCents)}</Row>
+              {anth.data.byModel.slice(0, 5).map((r) => <Row key={r.model} k={r.model}>{usd(r.cents)}</Row>)}
+              <Row k="Complete through">{anth.data.refreshedAt ? day(anth.data.refreshedAt) : "No data yet"}</Row>
+            </dl>
+          ) : <p className="text-sm text-ink-soft">API spend for the whole organization, by model, including the pricing-guide job.</p>}
+          <p className="mt-2 text-xs text-muted">API billing only, at list price before credits; data lags up to a day. A Claude or Claude Code subscription is billed separately and is not included.</p>
+        </Panel>
+      </div>
+      <Panel kicker="Advertising" title="Ad platform connections">
+        <div className="grid gap-4 md:grid-cols-2">
+          {ads.map((a) => (
+            <div key={a.key}>
+              <div className="flex flex-wrap items-center justify-between gap-2"><p className="font-semibold text-white">{a.name}</p><NotConnected>{a.missing.length ? "Setup needed" : "Settings present · awaiting review"}</NotConnected></div>
+              <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-ink-soft">{a.needs.map((n) => <li key={n}>{n}</li>)}</ul>
+              <p className="mt-2 text-[11px] text-muted">Settings: {[...a.present.map((n) => `${n} ✓`), ...a.missing].join(", ")}</p>
+            </div>
+          ))}
+        </div>
+        <p className="mt-3 text-xs text-muted">Read-only spend reporting only; nothing here can create, change or start a campaign. Until connected, enter ad spend on Marketing.</p>
+      </Panel>
 
       <SectionTitle id="services" kicker="Service directory" title={`${list.length} provider${list.length === 1 ? "" : "s"}`} right={<Link href="/admin/costs?edit=new#edit" className="cc-mono rounded-md border border-[var(--cc-line)] px-2.5 py-1.5 text-xs text-[var(--cc-blue)] hover:border-[var(--cc-blue)]">+ Add a service</Link>} />
       <Panel>

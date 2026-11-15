@@ -34,6 +34,9 @@ export function integrationStatus(snap: Snapshot): Integration[] {
     { key: "auth_email", name: "Sign-in email delivery (Supabase SMTP)", state: "not_connected", detail: "Supabase Auth logs are not readable by the app. Check Supabase → Logs → Auth." },
     { key: "sentry", name: "Error monitoring (Sentry)", state: has("NEXT_PUBLIC_SENTRY_DSN") ? "ok" : "missing", detail: has("NEXT_PUBLIC_SENTRY_DSN") ? "DSN set" : "No NEXT_PUBLIC_SENTRY_DSN" },
     { key: "instantly", name: "Instantly outreach sync", state: has("INSTANTLY_API_KEY") && env("INSTANTLY_SYNC_ENABLED") === "true" ? "ok" : "not_connected", detail: has("INSTANTLY_API_KEY") ? `Key set · sync ${env("INSTANTLY_SYNC_ENABLED") === "true" ? "on" : "off"}` : "Not connected (outreach links still attribute through UTM tags)" },
+    { key: "netlify_api", name: "Netlify usage monitor", state: has("NETLIFY_API_TOKEN") ? "ok" : "not_connected", detail: has("NETLIFY_API_TOKEN") ? "Token set · plan and build minutes on Tech Stack & Costs" : "Needs NETLIFY_API_TOKEN (read-only use)" },
+    { key: "supabase_mgmt", name: "Supabase Management API monitor", state: has("SUPABASE_MANAGEMENT_TOKEN") ? "ok" : "not_connected", detail: has("SUPABASE_MANAGEMENT_TOKEN") ? "Token set · request counts on Tech Stack & Costs" : "Needs SUPABASE_MANAGEMENT_TOKEN (read-only use)" },
+    { key: "anthropic_admin", name: "Anthropic account cost monitor", state: has("ANTHROPIC_ADMIN_KEY") ? "ok" : "not_connected", detail: has("ANTHROPIC_ADMIN_KEY") ? "Admin key set · monthly API cost on Tech Stack & Costs" : "Needs ANTHROPIC_ADMIN_KEY (cost report only)" },
     { key: "ads", name: "Google Ads / Meta Ads / YouTube", state: "not_connected", detail: "No ad-platform API. Enter monthly spend on the Marketing page for CAC." },
   ];
 }

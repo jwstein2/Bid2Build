@@ -62,7 +62,7 @@ with these keys talks to production data. See PRODUCTION_LAUNCH_CHECKLIST.md ite
 | Name | Scope | Contexts | Required | Purpose |
 |---|---|---|---|---|
 | `ANTHROPIC_API_KEY` | **secret** | Production | No | Enables AI drafting; without it, built-in rules draft. **Rotate: it was pasted in chat on 2026-11-12.** |
-| `AI_MODEL` | server | All | No | Default `claude-opus-5-5`. |
+| `AI_MODEL` | server | All | No | Default `claude-haiku-5-5`. |
 | `AI_DAILY_LIMIT_PER_USER` | server | All | No | Default 40. |
 | `AI_MONTHLY_BUDGET_USD` | server | All | No | Default 25; above it drafting falls back to rules. |
 | `AI_TEXT_GENERATION` | server | All | No | `off` pauses AI without removing the key. |
