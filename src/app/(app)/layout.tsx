@@ -11,6 +11,8 @@ import { recordReferral } from "@/lib/growth/referral-server";
 import { AppSidebar } from "@/components/layout/app-nav";
 import { FeatureHost } from "@/components/features/feature-host";
 import { formatPhone } from "@/lib/auth/phone";
+import { hasPremiumAccess } from "@/lib/billing/entitlement";
+import { PremiumAccessProvider } from "@/components/billing/premium";
 
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -24,7 +26,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const user = await getUser();
   if (!user) redirect("/login?next=/dashboard");
   const supabase = await createClient();
-  const [{ data: isAdmin }, company] = await Promise.all([supabase.rpc("is_admin", { p_user_id: user.id }), loadMyCompany(supabase)]);
+  const [{ data: isAdmin }, company, premium] = await Promise.all([supabase.rpc("is_admin", { p_user_id: user.id }), loadMyCompany(supabase), hasPremiumAccess(supabase)]);
   // Link the account to its lead + first-touch attribution (best effort, one indexed lookup when already linked).
   if (serverEnv().supabaseServiceKey) {
     const jar = await cookies();
@@ -35,6 +37,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     if (ref) await recordReferral(admin, user.id, ref);
   }
   return (
+    <PremiumAccessProvider unlocked={premium}>
     <div className="flex min-h-screen flex-col md:flex-row">
       <aside className="on-dark bg-navy text-white md:sticky md:top-0 md:flex md:h-screen md:w-64 md:shrink-0 md:flex-col no-print">
         <AppSidebar isAdmin={Boolean(isAdmin)} projects={isPmEnabled()} company={companyNav(company)} email={user.email ?? (user.phone ? formatPhone(user.phone) : null)} />
@@ -42,5 +45,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <main id="main" className="min-w-0 flex-1 px-4 py-6 sm:px-8">{children}</main>
       <FeatureHost />
     </div>
+    </PremiumAccessProvider>
   );
 }

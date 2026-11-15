@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { createContext, useContext } from "react";
 import { Gem } from "lucide-react";
 import { ANNUAL, MONTHLY } from "@/lib/billing/plans";
 import { cn } from "@/lib/cn";
@@ -9,10 +10,21 @@ import { PREMIUM_FEATURES, type PremiumFeature } from "@/lib/billing/premium-fea
 export { PREMIUM_FEATURES, type PremiumFeature };
 
 /**
+ * Whether the signed-in account already has premium (library_access(): Unlimited, Enterprise,
+ * complimentary or admin). Provided by the signed-in app layout; null where nobody provided it.
+ */
+const PremiumAccess = createContext<boolean | null>(null);
+export function PremiumAccessProvider({ unlocked, children }: { unlocked: boolean; children: React.ReactNode }) {
+  return <PremiumAccess.Provider value={unlocked}>{children}</PremiumAccess.Provider>;
+}
+
+/**
  * Small diamond that marks an Unlimited feature. `tone="dark"` for the navy sidebar, `"light"` on
  * white cards. Hover shows "Unlimited feature"; screen readers hear the same words.
+ * Never shown to an account that already has premium.
  */
 export function PremiumDiamond({ tone = "light", className }: { tone?: "light" | "dark"; className?: string }) {
+  if (useContext(PremiumAccess) === true) return null;
   return (
     <span title="Unlimited feature" className={cn("inline-flex shrink-0 items-center", className)}>
       <Gem className={cn("h-3.5 w-3.5", tone === "dark" ? "text-cyan" : "text-accent-ink")} aria-hidden />

@@ -68,9 +68,13 @@ for (const scenario of ["unlimited", "starter"]) {
     await page.goto(`${BASE}/dashboard`, { waitUntil: "networkidle" });
     if (vp.width < 768) await page.getByRole("button", { name: /Menu/ }).click();
     const nav = page.getByRole("navigation", { name: "Account" });
-    const navItems = nav.getByRole("link", { name: "Saved Items & Pricing (Unlimited feature)" });
-    const navTpl = nav.getByRole("link", { name: "Proposal Templates (Unlimited feature)" });
-    check(T("sidebar marks both features with the Unlimited diamond"), (await navItems.count()) === 1 && (await navTpl.count()) === 1 && (await nav.locator('[title="Unlimited feature"]').count()) === 2);
+    if (plan === "free") {
+      const navItems = nav.getByRole("link", { name: "Saved Items & Pricing (Unlimited feature)" });
+      const navTpl = nav.getByRole("link", { name: "Proposal Templates (Unlimited feature)" });
+      check(T("sidebar marks both features with the Unlimited diamond"), (await navItems.count()) === 1 && (await navTpl.count()) === 1 && (await nav.locator('[title="Unlimited feature"]').count()) === 2);
+    } else {
+      check(T("sidebar shows no diamonds once premium is on"), (await nav.getByRole("link", { name: "Saved Items & Pricing", exact: true }).count()) === 1 && (await nav.locator('[title="Unlimited feature"]').count()) === 0);
+    }
     if (vp.id !== "tablet") await shot(page, `${plan}__sidebar__${vp.id}`);
     if (vp.width < 768) await page.getByRole("button", { name: /Close/ }).click();
 
@@ -80,7 +84,9 @@ for (const scenario of ["unlimited", "starter"]) {
     const tplTile = main.getByRole("link", { name: /^Proposal Templates/ });
     const libText = await libTile.innerText();
     const tplText = await tplTile.innerText();
-    check(T("dashboard cards show the diamond"), (await libTile.locator('[title="Unlimited feature"]').count()) === 1 && (await tplTile.locator('[title="Unlimited feature"]').count()) === 1);
+    const tileDiamonds = (await libTile.locator('[title="Unlimited feature"]').count()) + (await tplTile.locator('[title="Unlimited feature"]').count());
+    check(T(plan === "free" ? "dashboard cards show the diamond" : "dashboard cards show no diamond"), tileDiamonds === (plan === "free" ? 2 : 0));
+    check(T(plan === "free" ? "page has diamonds" : "no diamonds anywhere on the dashboard"), plan === "free" ? (await page.locator('[title="Unlimited feature"]').count()) > 0 : (await page.locator('[title="Unlimited feature"]').count()) === 0);
     if (plan === "free") {
       check(T("free cards explain what is included with Unlimited"),
         libText.includes("Save your labor rates, material costs, and frequently used estimating items. Included with Unlimited.") &&
@@ -102,6 +108,7 @@ for (const scenario of ["unlimited", "starter"]) {
         (await page.getByRole("button", { name: "Save as my defaults" }).isDisabled()));
     } else {
       check(T("templates page works for Unlimited"), !/is an Unlimited feature/.test(tplMain) && (await page.getByRole("button", { name: "Save as my defaults" }).isEnabled()));
+      check(T("templates page has no diamonds"), (await page.locator('[title="Unlimited feature"]').count()) === 0);
     }
     if (vp.id !== "tablet") await shot(page, `${plan}__templates__${vp.id}`);
     await page.goto(`${BASE}/dashboard/items`, { waitUntil: "networkidle" });
@@ -112,6 +119,9 @@ for (const scenario of ["unlimited", "starter"]) {
     } else {
       await page.waitForSelector("text=Dumpster rental (20 yd)");
       check(T("Saved Items page lists saved items for Unlimited"), true);
+      check(T("Saved Items page has no diamonds"), (await page.locator('[title="Unlimited feature"]').count()) === 0);
+      await page.goto(`${BASE}/whats-new`, { waitUntil: "load" }); await page.waitForTimeout(1500);
+      check(T("What's New has no diamonds"), (await page.locator('[title="Unlimited feature"]').count()) === 0);
     }
 
     // ---- Selection toolbar
