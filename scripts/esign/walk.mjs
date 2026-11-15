@@ -232,7 +232,7 @@ let newSignatureId = null;
   const dlg = await p.getByRole("dialog").innerText();
   check("link opens in Email Proposal on the Signing link tab, with Copy and Gmail/Outlook/Other", /Email Proposal/.test(dlg) && /Copy/.test(dlg) && /Gmail/.test(dlg) && /Other email app/.test(dlg) && (await p.getByRole("radio", { name: "Signing link" }).getAttribute("aria-checked")) === "true");
   const href = await p.getByTestId("se-gmail").getAttribute("href");
-  check("Gmail draft with link, customer address and subject, no attachment claim", href.startsWith("https://mail.google.com/mail/?") && decodeURIComponent(href).includes("/sign/NNNN") && decodeURIComponent(href).includes("to=pat@example.test") && decodeURIComponent(href).includes("Your Estimate from Summit Exteriors LLC") && !/attached/.test(decodeURIComponent(href)));
+  check("Gmail draft with link, customer address and subject, no attachment claim", href.startsWith("https://mail.google.com/mail/?") && decodeURIComponent(href).includes("/sign/NNNN") && decodeURIComponent(href).includes("to=pat@example.test") && new URL(href).searchParams.get("su") === "Please Review & Sign Your Proposal — Siding replacement – Johnson residence" && !/attached/.test(decodeURIComponent(href)));
   await shot(p, "15-builder-link-dialog__desktop", false);
   await ctx.close();
   for (const w of [390, 768]) {
