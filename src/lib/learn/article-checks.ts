@@ -7,13 +7,14 @@
  * figures only inside clearly labelled worked examples whose arithmetic must add up.
  */
 import type { Article, ArticleBlock } from "./articles";
+import { CODE_CITATION, codeRefsFor } from "./code-references";
 
 export interface CheckResult { ok: boolean; problems: string[] }
 
 /** Phrases that signal invented data, sourcing we can't back up, or hype. */
 const BANNED: { re: RegExp; why: string }[] = [
   { re: /\baverage\s+(?:cost|price|rate|wage|charge|bid)s?\b/i, why: "quotes an 'average cost/price' (we have no source for market averages)" },
-  { re: /\bnational(?:ly)?\b|\bnationwide\b/i, why: "makes a national/market-wide claim" },
+  { re: /\bnational(?:ly)?\b(?! electrical code| fire protection)|\bnationwide\b/i, why: "makes a national/market-wide claim" },
   { re: /\baccording to\b|\bstud(?:y|ies)\b|\bsurvey(?:s|ed)?\b|\bresearch (?:shows|suggests|finds)\b|\bstatistic/i, why: "cites a study, survey or statistic" },
   { re: /\bin 20\d\d\b|\bthis year\b|\bcurrent(?:ly)? (?:prices?|rates?)\b/i, why: "makes a dated or current-price claim" },
   { re: /\btypically (?:costs?|runs?|charges?)\b|\bcosts? (?:about|around|roughly|between)\b/i, why: "states what work typically costs" },
@@ -64,7 +65,20 @@ export function checkFormulaMath(line: string): string | null {
 }
 const round = (n: number) => Math.round(n * 100) / 100;
 
-export function checkArticle(a: Article, opts: { knownTrades?: Set<string>; existingSlugs?: Set<string> } = {}): CheckResult {
+export interface CheckOptions {
+  knownTrades?: Set<string>;
+  existingSlugs?: Set<string>;
+  /** URLs the research step actually found. Sources outside this set are rejected (writer only). */
+  allowedSources?: Set<string>;
+  /** Require a building-code quality tips section (writer only, for trades with code references). */
+  requireCodeSection?: boolean;
+}
+
+/** A measurement in the same sentence as a code reference reads as a code requirement. */
+const MEASURE = /\d+(?:\.\d+)?\s*(?:-\s*)?(?:inch(?:es)?|in\.|feet|foot|ft\b|psf|psi|pounds|lbs?\b|mph|percent|%|"|″|′)/i;
+const CODE_WORDS = /\b[RNMPE]\d{3,4}\b|\bIRC\b|\bcodes?\b|\bInternational Residential Code\b/i;
+
+export function checkArticle(a: Article, opts: CheckOptions = {}): CheckResult {
   const problems: string[] = [];
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(a.slug) || a.slug.length > 80) problems.push("slug must be lowercase words joined by hyphens");
   if (opts.existingSlugs?.has(a.slug)) problems.push(`slug ${a.slug} is already published`);
@@ -99,6 +113,29 @@ export function checkArticle(a: Article, opts: { knownTrades?: Set<string>; exis
     if (err) problems.push(err);
   }
   if (!/\b(?:local|your (?:own|supplier|recent)|supplier quotes?)\b/i.test(prose)) problems.push("must tell readers to use their own or local costs");
+
+  // Building code references: only vetted IRC sections for this trade, named not paraphrased.
+  const allowed = new Set(codeRefsFor(a.trade).map((r) => r.code));
+  const cited = [...new Set(prose.match(CODE_CITATION) ?? [])];
+  for (const c of cited) if (!allowed.has(c)) problems.push(`cites code section ${c}, which is not in the vetted list for this trade`);
+  for (const sentence of prose.split(/(?<=[.!?])\s+|\n/)) {
+    if (CODE_WORDS.test(sentence) && MEASURE.test(sentence)) problems.push(`states a measurement next to a code reference (editions and local amendments vary): "${sentence.slice(0, 120)}"`);
+  }
+  if (cited.length && !/\bbuilding department\b/i.test(prose)) problems.push("cites the building code without telling readers to confirm with their local building department");
+  if (opts.requireCodeSection) {
+    if (!cited.length) problems.push("needs a quality tips section that names the relevant IRC sections");
+    if (!a.blocks.some((b) => b.h && /\b(?:quality|code|inspection)s?\b/i.test(b.h))) problems.push("needs a headed quality tips / code section");
+  }
+
+  // Further reading: real pages the research step found, at most five, https only.
+  const sources = a.sources ?? [];
+  if (sources.length > 5) problems.push("at most 5 sources");
+  for (const src of sources) {
+    if (!/^https:\/\/[^\s]+$/.test(src.url)) problems.push(`source URL must be https: ${src.url}`);
+    if (!src.title.trim()) problems.push(`source needs a title: ${src.url}`);
+    if (opts.allowedSources && !opts.allowedSources.has(src.url)) problems.push(`source was not found by the research step: ${src.url}`);
+  }
+  if (new Set(sources.map((x) => x.url)).size !== sources.length) problems.push("duplicate source URLs");
   return { ok: problems.length === 0, problems };
 }
 

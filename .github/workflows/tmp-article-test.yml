@@ -1,0 +1,25 @@
+# TEMPORARY: dry-run test of the trends + code changes on this branch. Removed before merge.
+name: Tmp article test
+on:
+  push:
+    branches: [claude/articles-trends-code]
+permissions:
+  contents: read
+jobs:
+  dry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        topic: [how-to-price-roofing-jobs, decks-estimate-checklist, how-to-price-pressure-washing-jobs]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: npx tsx scripts/content/write-article.ts --dry-run --topic ${{ matrix.topic }}

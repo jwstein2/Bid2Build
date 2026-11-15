@@ -3,6 +3,7 @@ import generated from "@/lib/learn/generated-articles.json";
 import { articles, articlesForTrade, type Article } from "@/lib/learn/articles";
 import { checkArticle, checkFormulaMath, nextTopic, topicPlan } from "@/lib/learn/article-checks";
 import { trades } from "@/lib/trades/catalog";
+import { codeRefsFor } from "@/lib/learn/code-references";
 
 const knownTrades = new Set(trades.map((t) => t.slug));
 
@@ -52,6 +53,47 @@ describe("article checks", () => {
     const text = checkArticle(bad, { knownTrades }).problems.join(" ");
     expect(text).toMatch(/unknown trade/);
     expect(text).toMatch(/labelled as an example/);
+  });
+
+  it("allows only vetted building code sections, named without measurements", () => {
+    const ok = structuredClone(good);
+    ok.blocks[6] = { h: "Quality tips and code items inspectors check", list: ["Ledger attachment and footings fall under R507 (Exterior decks); price the hardware and inspection time. Confirm the edition your local building department enforces and follow the manufacturer instructions."] };
+    expect(checkArticle(ok, { knownTrades, requireCodeSection: true }).problems).toEqual([]);
+
+    const invented = structuredClone(ok);
+    invented.blocks[6].list = ["R905.2.8.5 covers drip edge. Ask your local building department."];
+    expect(checkArticle(invented, { knownTrades }).problems.join(" ")).toMatch(/R905\.2\.8\.5, which is not in the vetted list/);
+
+    const measured = structuredClone(ok);
+    measured.blocks[6].list = ["R312 requires guards at 36 inches. Ask your local building department."];
+    expect(checkArticle(measured, { knownTrades }).problems.join(" ")).toMatch(/measurement next to a code reference/);
+
+    const noDept = structuredClone(ok);
+    noDept.blocks[6].list = ["Ledger attachment falls under R507 (Exterior decks)."];
+    expect(checkArticle(noDept, { knownTrades }).problems.join(" ")).toMatch(/local building department/);
+
+    expect(checkArticle(good, { knownTrades, requireCodeSection: true }).problems.join(" ")).toMatch(/quality tips section/);
+  });
+
+  it("allows the National Electrical Code by name but not national market claims", () => {
+    const nec = structuredClone(good);
+    nec.blocks[2].p = ["Many areas adopt the National Electrical Code directly. Use your local supplier quotes."];
+    expect(checkArticle(nec, { knownTrades }).problems).toEqual([]);
+    nec.blocks[2].p = ["Prices are rising nationally. Use your local supplier quotes."];
+    expect(checkArticle(nec, { knownTrades }).problems.join(" ")).toMatch(/national/);
+  });
+
+  it("only lists https sources the research step found", () => {
+    const withSources = structuredClone(good);
+    withSources.sources = [{ title: "Deck code guide", url: "https://www.iccsafe.org/example" }];
+    expect(checkArticle(withSources, { knownTrades, allowedSources: new Set(["https://www.iccsafe.org/example"]) }).problems).toEqual([]);
+    expect(checkArticle(withSources, { knownTrades, allowedSources: new Set() }).problems.join(" ")).toMatch(/not found by the research step/);
+    withSources.sources = [{ title: "Plain", url: "http://example.com" }];
+    expect(checkArticle(withSources, { knownTrades }).problems.join(" ")).toMatch(/https/);
+  });
+
+  it("every trade code reference is a well-formed IRC section", () => {
+    for (const t of trades) for (const r of codeRefsFor(t.slug)) expect(r.code).toMatch(/^[RNMPE]\d{3,4}(?:\.\d+)*$/);
   });
 
   it("core guides keep correct example math", () => {
