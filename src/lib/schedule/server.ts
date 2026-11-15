@@ -1,7 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { normalizeCalendar } from "./calendar";
-import type { Dep, Revision, ScheduleData, Snapshot, Task, TaskChange } from "./types";
+import type { Dep, Revision, ScheduleData, SchedulePermissions, Snapshot, Task, TaskChange } from "./types";
 
 type Row = Record<string, unknown>;
 const s = (v: unknown) => (v === null || v === undefined ? null : String(v));
@@ -35,7 +35,15 @@ export function mapSchedule(raw: Row): ScheduleData {
       revision: Number(r.revision), summary: String(r.summary), createdAt: String(r.created_at), actorId: s(r.actor_id), changes: (r.changes as TaskChange[]) ?? [],
     })),
     canEdit: Boolean(raw.canEdit),
+    permissions: mapPermissions(raw.permissions, Boolean(raw.canEdit)),
   };
+}
+
+/** Before the Phase 9 SQL runs, schedule_get has no permissions: everything follows canEdit. */
+export function mapPermissions(raw: unknown, canEdit: boolean): SchedulePermissions {
+  const r = (raw && typeof raw === "object" ? raw : null) as Record<string, unknown> | null;
+  if (!r) return { edit: canEdit, progress: canEdit, dependencies: canEdit, publish: canEdit, pdf: true };
+  return { edit: r.edit === true, progress: r.progress === true, dependencies: r.dependencies === true, publish: r.publish === true, pdf: r.pdf === true };
 }
 
 /** The schedule if the caller can read it (RLS), else null. Also null before the migration runs. */
@@ -87,6 +95,9 @@ export function scheduleDbError(e: { message?: string; code?: string; details?: 
   if (m.includes("schedule_exists")) return { status: 409, code: "schedule_exists", message: "This bid already has a schedule.", existingId: e?.details };
   if (m.includes("not_accepted")) return { status: 409, code: "not_accepted", message: "This bid hasn't been accepted yet. Schedule it as provisional, or mark it Won first." };
   if (m.includes("stale_revision")) return { status: 409, code: "stale_revision", message: "Someone else changed this schedule. Reload to see the latest version.", revision: Number(e?.details) || undefined };
+  if (m.includes("forbidden_progress")) return { status: 403, code: "forbidden_progress", message: "Your company role can't update progress on this schedule." };
+  if (m.includes("forbidden_dependencies")) return { status: 403, code: "forbidden_dependencies", message: "Your company role can't change task dependencies." };
+  if (m.includes("forbidden_edit")) return { status: 403, code: "forbidden_edit", message: "Your company role can update progress here but can't change dates or tasks." };
   if (m.includes("forbidden")) return { status: 403, code: "forbidden", message: "You can view this schedule but can't edit it." };
   if (m.includes("cannot_delete_section")) return { status: 400, code: "cannot_delete_section", message: "Sections from the estimate can't be deleted." };
   if (/unknown_source|bad_parent|unknown_task|no_tasks/.test(m) || e?.code === "23514" || e?.code === "22023") return { status: 400, code: "invalid", message: "That change isn't valid. Reload and try again." };

@@ -1,6 +1,7 @@
 /**
  * Internal report endpoint authorization, enforced server-side on every request: free accounts get
- * 402, company members without cost + margin permissions get 403, other users' bids are not found.
+ * 402, company members without cost + margin + internal-report permissions get 403, download and send
+ * are separate permissions, other users' bids are not found.
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { est, item } from "./helpers";
@@ -65,10 +66,24 @@ describe("internal report route", () => {
     S.company = { id: "c2", permissions: ["view_costs", "view_margin"] };
     expect((await call()).status).toBe(403);
     S.company = { id: "c1", permissions: ["view_costs", "view_margin"] };
+    expect((await call()).status).toBe(403); // Phase 9: View internal reports is its own permission
+    S.company = { id: "c1", permissions: ["view_costs", "view_margin", "view_internal_reports"] };
     expect((await call()).status).toBe(200);
+  }, 30_000);
+  it("downloading and sending are separate permissions on company bids (Phase 9)", async () => {
+    S.estimateRow = { id: ID, user_id: "u9", company_id: "c1" };
+    S.company = { id: "c1", permissions: ["view_costs", "view_margin", "view_internal_reports"] };
+    expect(await (await call("?check=1")).json()).toEqual({ allowed: true, canDownload: false, canSend: false });
+    expect((await call("?download=1")).status).toBe(403);
+    expect((await call("?download=1&purpose=send")).status).toBe(403);
+    S.company.permissions.push("download_internal_reports");
+    expect((await call("?download=1")).status).toBe(200);
+    expect((await call("?download=1&purpose=send")).status).toBe(403);
+    S.company.permissions.push("send_internal_reports");
+    expect((await call("?download=1&purpose=send")).status).toBe(200);
   }, 30_000);
   it("the check response never contains financial data", async () => {
     const body = await (await call("?check=1")).text();
-    expect(body).toBe('{"allowed":true}');
+    expect(body).toBe('{"allowed":true,"canDownload":true,"canSend":true}');
   });
 });

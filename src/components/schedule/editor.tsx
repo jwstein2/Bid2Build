@@ -36,7 +36,9 @@ export function ScheduleEditor({ initial, tradeLabels, editHint, created, public
   const [panel, setPanel] = useState<"progress" | "history" | "updates" | null>(null);
   const [highlight, setHighlight] = useState<string | null>(null);
 
-  const { schedule: meta, tasks, deps, snapshot, canEdit } = data;
+  const { schedule: meta, tasks, deps, snapshot, permissions: perms } = data;
+  // Phase 9: each control follows its own permission; the server enforces the same split.
+  const canEdit = perms.edit || perms.progress || perms.dependencies;
   const cal = meta.calendar;
   const today = todayIn(cal.timezone);
   const progress = useMemo(() => progressOf(tasks, meta.progressMethod), [tasks, meta.progressMethod]);
@@ -114,12 +116,12 @@ export function ScheduleEditor({ initial, tradeLabels, editHint, created, public
             </p>
             <p className="mt-1 text-xs text-muted">From estimate {snapshot.estimate.number || snapshot.estimate.title}{snapshot.version ? `, version ${snapshot.version.number}` : ""}. Later edits to the bid don&apos;t change this schedule.</p>
           </div>
-          {canEdit && (
+          {(perms.publish || perms.progress) && (
             <div className="flex flex-wrap gap-2">
-              <Link href={`/projects/${meta.id}/update`} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-navy px-3 text-sm font-semibold text-white hover:bg-navy/90" data-testid="customer-update"><Send className="h-4 w-4" aria-hidden /> Preview customer update</Link>
-              {meta.status === "draft" && <Button size="sm" variant="secondary" onClick={() => commit(tasks, deps, "Marked the schedule active", { status: "active" })}>Mark active</Button>}
-              {meta.status === "active" && <Button size="sm" variant="secondary" onClick={() => commit(tasks, deps, "Marked the project completed", { status: "completed" })}>Mark project completed</Button>}
-              {meta.status === "completed" && <Button size="sm" variant="secondary" onClick={() => commit(tasks, deps, "Reopened the project", { status: "active" })}>Reopen</Button>}
+              {perms.publish && <Link href={`/projects/${meta.id}/update`} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-navy px-3 text-sm font-semibold text-white hover:bg-navy/90" data-testid="customer-update"><Send className="h-4 w-4" aria-hidden /> Preview customer update</Link>}
+              {perms.progress && meta.status === "draft" && <Button size="sm" variant="secondary" onClick={() => commit(tasks, deps, "Marked the schedule active", { status: "active" })}>Mark active</Button>}
+              {perms.progress && meta.status === "active" && <Button size="sm" variant="secondary" onClick={() => commit(tasks, deps, "Marked the project completed", { status: "completed" })}>Mark project completed</Button>}
+              {perms.progress && meta.status === "completed" && <Button size="sm" variant="secondary" onClick={() => commit(tasks, deps, "Reopened the project", { status: "active" })}>Reopen</Button>}
             </div>
           )}
         </div>
@@ -132,6 +134,9 @@ export function ScheduleEditor({ initial, tradeLabels, editHint, created, public
             : editHint === "seat" ? "Ask your company admin to assign you a scheduling editor seat to make changes."
               : "You can view this schedule but can't edit it."}
         </Notice>
+      )}
+      {canEdit && !perms.edit && (
+        <div data-testid="progress-only"><Notice title="Progress updates only">Your company role lets you update status and % complete. Changing dates, tasks or dependencies needs permission to edit this schedule.</Notice></div>
       )}
       {error && (
         <Notice tone="danger">{error.message} {error.stale && <button type="button" className="font-semibold underline" onClick={reload}>Reload</button>}</Notice>
@@ -161,7 +166,7 @@ export function ScheduleEditor({ initial, tradeLabels, editHint, created, public
         <section className="rounded-xl border border-line bg-surface p-4" data-testid="progress-panel">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="font-display font-extrabold text-navy">How progress is calculated</h2>
-            {canEdit && (
+            {perms.edit && (
               <select className="field w-auto" value={meta.progressMethod} onChange={(e) => commit(tasks, deps, "Changed how progress is calculated", { progressMethod: e.target.value as ScheduleMeta["progressMethod"] })} aria-label="Progress method">
                 {PROGRESS_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
               </select>
@@ -212,7 +217,7 @@ export function ScheduleEditor({ initial, tradeLabels, editHint, created, public
         </div>
       </div>
 
-      {panel === "updates" && <PublicationHistory scheduleId={meta.id} publications={publications} canEdit={canEdit} timezone={cal.timezone} />}
+      {panel === "updates" && <PublicationHistory scheduleId={meta.id} publications={publications} canEdit={perms.publish} timezone={cal.timezone} />}
 
       {panel === "history" && (
         <section className="rounded-xl border border-line bg-surface p-4" data-testid="history-panel">
@@ -233,19 +238,19 @@ export function ScheduleEditor({ initial, tradeLabels, editHint, created, public
       )}
 
       {view === "timeline" ? (
-        <Gantt rows={rows} deps={deps} cal={cal} zoom={zoom} today={today} target={meta.targetEndDate} canEdit={canEdit && !saving} collapsed={collapsed} highlight={highlight}
+        <Gantt rows={rows} deps={deps} cal={cal} zoom={zoom} today={today} target={meta.targetEndDate} canEdit={perms.edit && !saving} collapsed={collapsed} highlight={highlight}
           onToggle={(id) => setCollapsed((c) => { const n = new Set(c); if (n.has(id)) n.delete(id); else n.add(id); return n; })}
           onEdit={(e) => applyEdit(e)} onOpen={setOpen} onItems={setItemsFor} />
       ) : (
-        <ListView rows={rows} canEdit={canEdit} onOpen={setOpen} onItems={setItemsFor} onShift={setShiftFor} />
+        <ListView rows={rows} canEdit={canEdit} canPlan={perms.edit} onOpen={setOpen} onItems={setItemsFor} onShift={setShiftFor} />
       )}
       <p className="text-xs text-muted">
-        Drag a bar to move it, or drag its ends to change dates. Keyboard: Tab to a bar, arrow keys move it a day, Shift + arrow keys change its finish, Enter edits.
-        {" "}Work week: {cal.workdays.map((d) => ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d]).join(", ")}{cal.holidays.length ? ` · ${cal.holidays.length} non-working date${cal.holidays.length === 1 ? "" : "s"}` : ""} · {cal.timezone.replace("_", " ")}
+        {perms.edit && <>Drag a bar to move it, or drag its ends to change dates. Keyboard: Tab to a bar, arrow keys move it a day, Shift + arrow keys change its finish, Enter edits.{" "}</>}
+        Work week: {cal.workdays.map((d) => ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d]).join(", ")}{cal.holidays.length ? ` · ${cal.holidays.length} non-working date${cal.holidays.length === 1 ? "" : "s"}` : ""} · {cal.timezone.replace("_", " ")}
       </p>
 
       {openTask && (
-        <TaskDialog key={openTask.id} task={openTask} tasks={tasks} deps={deps} cal={cal} today={today} canEdit={canEdit} onClose={() => setOpen(null)}
+        <TaskDialog key={openTask.id} task={openTask} tasks={tasks} deps={deps} cal={cal} today={today} perms={perms} onClose={() => setOpen(null)}
           onSave={({ task, deps: nd }) => {
             setOpen(null);
             const base = tasks.map((t) => (t.id === task.id ? { ...task, plannedStart: openTask.plannedStart, plannedEnd: openTask.plannedEnd, durationDays: openTask.durationDays } : t));
@@ -383,7 +388,7 @@ function ShiftDialog({ section, onClose, preview, onApply }: { section: Task; on
 }
 
 /** Touch-friendly alternative to dragging: one card per task with Edit, Items and Shift buttons. */
-function ListView({ rows, canEdit, onOpen, onItems, onShift }: { rows: GanttRow[]; canEdit: boolean; onOpen: (id: string) => void; onItems: (id: string) => void; onShift: (id: string) => void }) {
+function ListView({ rows, canEdit, canPlan, onOpen, onItems, onShift }: { rows: GanttRow[]; canEdit: boolean; canPlan: boolean; onOpen: (id: string) => void; onItems: (id: string) => void; onShift: (id: string) => void }) {
   return (
     <ul className="space-y-2" data-testid="schedule-list">
       {rows.map((r) => {
@@ -398,8 +403,8 @@ function ListView({ rows, canEdit, onOpen, onItems, onShift }: { rows: GanttRow[
             <p className="mt-0.5 text-sm text-ink-soft">{formatRange(t.plannedStart, t.plannedEnd)} · {t.durationDays} working day{t.durationDays === 1 ? "" : "s"} · {r.progress}%</p>
             <div className="mt-2 flex flex-wrap gap-2">
               <Button size="sm" variant="secondary" onClick={() => onOpen(t.id)}>{canEdit ? "Edit" : "Details"}</Button>
-              {canEdit && r.isSectionHead && <Button size="sm" variant="secondary" onClick={() => onItems(t.id)}>Schedule items</Button>}
-              {canEdit && r.isSectionHead && <Button size="sm" variant="secondary" onClick={() => onShift(t.id)} data-testid={`shift-${t.id}`}><MoveHorizontal className="h-4 w-4" aria-hidden /> Shift section</Button>}
+              {canPlan && r.isSectionHead && <Button size="sm" variant="secondary" onClick={() => onItems(t.id)}>Schedule items</Button>}
+              {canPlan && r.isSectionHead && <Button size="sm" variant="secondary" onClick={() => onShift(t.id)} data-testid={`shift-${t.id}`}><MoveHorizontal className="h-4 w-4" aria-hidden /> Shift section</Button>}
             </div>
           </li>
         );

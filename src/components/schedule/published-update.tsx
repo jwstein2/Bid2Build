@@ -28,8 +28,8 @@ export function DeliveryList({ p, tz }: { p: Publication; tz: string }) {
   );
 }
 
-export function PublishedUpdate({ scheduleId, scheduleName, initial, canEdit, logoUrl, customerEmail, contactName, timezone }: {
-  scheduleId: string; scheduleName: string; initial: Publication; canEdit: boolean; logoUrl: string | null; customerEmail: string | null; contactName: string | null; timezone: string;
+export function PublishedUpdate({ scheduleId, scheduleName, initial, canEdit, canPdf = true, logoUrl, customerEmail, contactName, timezone }: {
+  scheduleId: string; scheduleName: string; initial: Publication; canEdit: boolean; canPdf?: boolean; logoUrl: string | null; customerEmail: string | null; contactName: string | null; timezone: string;
 }) {
   const [p, setP] = useState(initial);
   return (
@@ -40,7 +40,7 @@ export function PublishedUpdate({ scheduleId, scheduleName, initial, canEdit, lo
         <p className="mt-1 text-sm text-ink-soft">Published {when(p.publishedAt, timezone)}{p.publisherName ? ` by ${p.publisherName}` : ""}. This is the saved copy; later schedule changes don&apos;t alter it.</p>
         <div className="mt-2"><DeliveryList p={p} tz={timezone} /></div>
       </div>
-      {canEdit && <UpdateDelivery scheduleId={scheduleId} publication={p} customerEmail={customerEmail} contactName={contactName} onChange={setP} />}
+      {canEdit && <UpdateDelivery scheduleId={scheduleId} publication={p} customerEmail={customerEmail} contactName={contactName} onChange={setP} canPdf={canPdf} />}
       <p className="flex items-center gap-2 text-sm font-semibold text-ink-soft"><Eye className="h-4 w-4" aria-hidden /> What your customer sees</p>
       <ReportView r={p.content} logoUrl={logoUrl} version={p.version} />
     </div>

@@ -56,12 +56,18 @@ const tables = {
 // Project schedules (scripts/schedule/walk.mjs): in-memory stand-ins for the schedule RPCs. The real SQL
 // is covered by tests/db/project-schedules.test.ts; this only has to behave like it for the browser walk.
 const sched = { list: new Map() };
+// Phase 9: /__pm?state={..., permissions: {edit, progress, dependencies, publish, pdf}} narrows what the caller may do.
+const schedPerms = () => {
+  const c = Boolean(rpcs.my_pm_access?.canEdit);
+  return { edit: c, progress: c, dependencies: c, publish: c, pdf: true, ...(rpcs.my_pm_access?.permissions ?? {}) };
+};
 const scheduleRpc = {
   can_schedule_estimate: () => [200, Boolean(rpcs.my_pm_access?.canEdit)],
   schedule_get: ({ p_schedule_id }) => {
     const s = sched.list.get(p_schedule_id);
-    return [200, s ? { schedule: s.row, snapshot: s.snapshot, canEdit: Boolean(rpcs.my_pm_access?.canEdit), tasks: s.tasks, deps: s.deps, revisions: [...s.revisions].reverse() } : null];
+    return [200, s ? { schedule: s.row, snapshot: s.snapshot, canEdit: schedPerms().edit || schedPerms().progress, permissions: schedPerms(), tasks: s.tasks, deps: s.deps, revisions: [...s.revisions].reverse() } : null];
   },
+  schedule_permissions: () => [200, schedPerms()],
   schedule_list: () => [200, [...sched.list.values()].map((s) => {
     const kids = new Set(s.tasks.map((t) => t.parent_id).filter(Boolean));
     const leaves = s.tasks.filter((t) => !kids.has(t.id));
@@ -92,7 +98,7 @@ const scheduleRpc = {
   },
   schedule_save: ({ p_schedule_id, p_base_revision, p }) => {
     const s = sched.list.get(p_schedule_id);
-    if (!s || !rpcs.my_pm_access?.canEdit) return [403, { code: "42501", message: "forbidden" }];
+    if (!s || !(schedPerms().edit || schedPerms().progress)) return [403, { code: "42501", message: "forbidden" }];
     if (s.row.revision !== p_base_revision) return [409, { code: "40001", message: "stale_revision", details: String(s.row.revision) }];
     if (p.schedule) {
       const m = p.schedule;
@@ -120,7 +126,7 @@ const pubFind = (id) => tables.schedule_publications.find((x) => x.id === id);
 Object.assign(scheduleRpc, {
   schedule_publish: ({ p_schedule_id, p_base_revision, p }) => {
     const s = sched.list.get(p_schedule_id);
-    if (!s || !rpcs.my_pm_access?.canEdit) return [403, { code: "42501", message: "forbidden" }];
+    if (!s || !schedPerms().publish) return [403, { code: "42501", message: "forbidden" }];
     if (s.row.revision !== p_base_revision) return [409, { code: "40001", message: "stale_revision", details: String(s.row.revision) }];
     const version = tables.schedule_publications.filter((x) => x.schedule_id === p_schedule_id).length + 1;
     const row = { id: crypto.randomUUID(), schedule_id: p_schedule_id, estimate_id: s.row.estimate_id, version, schedule_revision: s.row.revision, published_at: new Date().toISOString(),
@@ -131,20 +137,20 @@ Object.assign(scheduleRpc, {
   },
   schedule_publication_link: ({ p_publication_id, p_token_hash, p_days }) => {
     const r = pubFind(p_publication_id);
-    if (!r || !rpcs.my_pm_access?.canEdit) return [403, { code: "42501", message: "forbidden" }];
+    if (!r || !schedPerms().publish) return [403, { code: "42501", message: "forbidden" }];
     Object.assign(r, { token_hash: p_token_hash, link_created_at: new Date().toISOString(), link_expires_at: new Date(Date.now() + (p_days ?? 30) * 864e5).toISOString(), link_revoked_at: null });
     r.delivery = [...r.delivery, { method: "link_created", at: new Date().toISOString(), by: USER.id }];
     return [200, r.link_expires_at];
   },
   schedule_publication_revoke_link: ({ p_publication_id }) => {
     const r = pubFind(p_publication_id);
-    if (!r || !rpcs.my_pm_access?.canEdit) return [403, { code: "42501", message: "forbidden" }];
+    if (!r || !schedPerms().publish) return [403, { code: "42501", message: "forbidden" }];
     if (r.token_hash && !r.link_revoked_at) r.link_revoked_at = new Date().toISOString();
     return [200, null];
   },
   schedule_publication_delivery: ({ p_publication_id, p_method }) => {
     const r = pubFind(p_publication_id);
-    if (!r || !rpcs.my_pm_access?.canEdit) return [403, { code: "42501", message: "forbidden" }];
+    if (!r || !schedPerms().publish) return [403, { code: "42501", message: "forbidden" }];
     r.delivery = [...r.delivery, { method: p_method, at: new Date().toISOString(), by: USER.id }];
     return [200, null];
   },
@@ -183,7 +189,9 @@ if (process.env.MOCK_COMMAND_CENTER) {
 // GET /__scenario?name=<key>&authDelayMs=<n>. MOCK_UNLIMITED keeps its old meaning for the UX audit scripts.
 const sub = (o) => [{ stripe_subscription_id: "sub_test", id: "sub_test", user_id: USER.id, status: "active", plan: "monthly", price_id: "price_test", current_period_end: iso(-20), cancel_at_period_end: false, canceled_at: null, ended_at: null, updated_at: iso(1), ...o }];
 const COMPANY = "55555555-5555-4555-8555-000000000001";
-const ALL_PERMS = ["view_own_bids", "view_team_bids", "view_company_bids", "create_estimates", "edit_team_estimates", "view_costs", "view_margin", "approve_bids", "manage_company_pricing", "view_analytics", "manage_teams", "manage_users", "manage_billing"];
+const ALL_PERMS = ["view_own_bids", "view_team_bids", "view_company_bids", "create_estimates", "edit_team_estimates", "view_costs", "view_margin", "approve_bids", "manage_company_pricing", "view_analytics", "manage_teams", "manage_users", "manage_billing",
+  "view_schedules", "create_schedules", "edit_assigned_schedules", "edit_all_schedules", "manage_dependencies", "update_progress", "publish_customer_updates", "download_schedule_pdf",
+  "view_internal_reports", "download_internal_reports", "send_internal_reports", "manage_pm_seats", "manage_pm_addons"];
 const company = (role, o) => ({ id: COMPANY, name: "Summit Exteriors LLC", role, isOwner: role === "owner", permissions: role === "owner" ? ALL_PERMS : ["view_own_bids", "create_estimates", "view_costs"], entitlement: { active: true, source: "stripe", seatLimit: 5, expiresAt: null }, seatsUsed: 3, ...o });
 const credit = (o) => [{ starter_balance: 2, starter_total: 3, monthly_balance: 0, monthly_eligible: false, next_cycle_at: iso(-12), unlimited: false, email_verified: true, starter_granted: true, ...o }];
 export const SCENARIOS = {
@@ -414,6 +422,24 @@ http.createServer((req, res) => {
     }
     // Project scheduling: GET /__pm?state=<json for my_pm_access>. company_pm_assign toggles tables.pm_editors.
     if (u.pathname === "/__pm") { tables.pm_editors ??= []; rpcs.my_pm_access = u.searchParams.get("state") ? JSON.parse(u.searchParams.get("state")) : null; return send(res, 200, { ok: true }); }
+    // Phase 9 seat overview and reassignment, from tables.pm_editors (order = rank).
+    if (u.pathname === "/rest/v1/rpc/company_pm_seats") {
+      const pm = rpcs.my_pm_access ?? { editorLimit: 0 };
+      tables.pm_editors ??= [];
+      return send(res, 200, { limit: pm.editorLimit, source: "stripe", paid: true, extraPaid: Math.max(0, pm.editorLimit - 1),
+        seats: tables.pm_editors.map((e, i) => ({ userId: e.user_id, rank: i + 1, seatType: i + 1 > pm.editorLimit ? "uncovered" : i === 0 ? "included" : "paid", covered: i + 1 <= pm.editorLimit,
+          assignedAt: e.assigned_at ?? iso(10), changedAt: e.changed_at ?? e.assigned_at ?? iso(10), changedBy: e.changed_by ?? USER.id })),
+        schedules: Object.fromEntries(tables.pm_editors.map((e) => [e.user_id, 2])) });
+    }
+    if (u.pathname === "/rest/v1/rpc/company_pm_reassign") {
+      let a = {}; try { a = JSON.parse(raw || "{}"); } catch { /* ignore */ }
+      tables.pm_editors ??= [];
+      const seat = tables.pm_editors.find((e) => e.user_id === a.p_from);
+      if (!seat) return send(res, 400, { code: "P0002", message: "not_editor" });
+      if (tables.pm_editors.some((e) => e.user_id === a.p_to)) return send(res, 400, { code: "23505", message: "already_editor" });
+      Object.assign(seat, { user_id: a.p_to, changed_at: new Date().toISOString(), changed_by: USER.id });
+      return send(res, 200, { ok: true });
+    }
     if (u.pathname === "/rest/v1/rpc/company_pm_assign") {
       let a = {}; try { a = JSON.parse(raw || "{}"); } catch { /* ignore */ }
       tables.pm_editors ??= [];
@@ -421,7 +447,7 @@ http.createServer((req, res) => {
       const has = tables.pm_editors.some((e) => e.user_id === a.p_user_id);
       if (a.p_assign && !has) {
         if (tables.pm_editors.length >= pm.editorLimit) return send(res, 400, { code: "P0001", message: "editor_limit" });
-        tables.pm_editors.push({ user_id: a.p_user_id });
+        tables.pm_editors.push({ user_id: a.p_user_id, assigned_at: new Date().toISOString() });
       } else if (!a.p_assign) tables.pm_editors = tables.pm_editors.filter((e) => e.user_id !== a.p_user_id);
       rpcs.my_pm_access = { ...pm, editorsAssigned: tables.pm_editors.length };
       return send(res, 200, { ok: true, changed: true });

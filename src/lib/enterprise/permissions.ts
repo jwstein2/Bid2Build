@@ -18,6 +18,20 @@ export const PERMISSION_KEYS = [
   "manage_teams",
   "manage_users",
   "manage_billing",
+  // V4 Phase 9: project management and documents (20261116006000_pm_permissions.sql).
+  "view_schedules",
+  "create_schedules",
+  "edit_assigned_schedules",
+  "edit_all_schedules",
+  "manage_dependencies",
+  "update_progress",
+  "publish_customer_updates",
+  "download_schedule_pdf",
+  "view_internal_reports",
+  "download_internal_reports",
+  "send_internal_reports",
+  "manage_pm_seats",
+  "manage_pm_addons",
 ] as const;
 export type Permission = (typeof PERMISSION_KEYS)[number];
 
@@ -26,13 +40,18 @@ export type CompanyRole = (typeof COMPANY_ROLES)[number];
 
 export const ROLE_PERMISSIONS: Record<CompanyRole, readonly Permission[]> = {
   owner: PERMISSION_KEYS,
-  manager: ["view_own_bids", "view_team_bids", "create_estimates", "edit_team_estimates", "view_costs", "view_margin", "approve_bids", "view_analytics"],
-  estimator: ["view_own_bids", "create_estimates", "view_costs"],
-  viewer: ["view_own_bids", "view_team_bids", "view_analytics"],
+  manager: [
+    "view_own_bids", "view_team_bids", "create_estimates", "edit_team_estimates", "view_costs", "view_margin", "approve_bids", "view_analytics",
+    "view_schedules", "create_schedules", "edit_assigned_schedules", "edit_all_schedules", "manage_dependencies",
+    "update_progress", "publish_customer_updates", "download_schedule_pdf",
+    "view_internal_reports", "download_internal_reports", "send_internal_reports",
+  ],
+  estimator: ["view_own_bids", "create_estimates", "view_costs", "view_schedules", "create_schedules", "edit_assigned_schedules", "manage_dependencies", "update_progress", "download_schedule_pdf"],
+  viewer: ["view_own_bids", "view_team_bids", "view_analytics", "view_schedules", "download_schedule_pdf"],
 };
 
 /** Only the company owner may grant these. */
-export const OWNER_ONLY_PERMISSIONS: readonly Permission[] = ["manage_billing", "manage_users"];
+export const OWNER_ONLY_PERMISSIONS: readonly Permission[] = ["manage_billing", "manage_users", "manage_pm_seats", "manage_pm_addons"];
 
 export const ROLE_LABELS: Record<CompanyRole, string> = {
   owner: "Company Owner",
@@ -55,7 +74,32 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   manage_teams: "Manage team assignments",
   manage_users: "Manage users",
   manage_billing: "Manage billing",
+  view_schedules: "View project schedules",
+  create_schedules: "Create schedules from estimates",
+  edit_assigned_schedules: "Edit assigned schedules (own bids)",
+  edit_all_schedules: "Edit all company schedules",
+  manage_dependencies: "Manage task dependencies",
+  update_progress: "Update progress and actual dates",
+  publish_customer_updates: "Publish customer schedule updates",
+  download_schedule_pdf: "Download customer schedule PDFs",
+  view_internal_reports: "View internal cost reports",
+  download_internal_reports: "Download internal estimate PDFs",
+  send_internal_reports: "Send internal financial documents",
+  manage_pm_seats: "Manage scheduling editor seats",
+  manage_pm_addons: "Manage paid scheduling add-ons",
 };
+
+/** How the Users & Permissions screen groups permissions. */
+export const PERMISSION_GROUPS: { title: string; keys: readonly Permission[]; note?: string }[] = [
+  { title: "Bids", keys: ["view_own_bids", "view_team_bids", "view_company_bids", "create_estimates", "edit_team_estimates", "approve_bids", "manage_company_pricing"] },
+  { title: "Costs and internal reports", keys: ["view_costs", "view_margin", "view_internal_reports", "download_internal_reports", "send_internal_reports", "view_analytics"] },
+  {
+    title: "Project scheduling",
+    keys: ["view_schedules", "create_schedules", "edit_assigned_schedules", "edit_all_schedules", "manage_dependencies", "update_progress", "publish_customer_updates", "download_schedule_pdf"],
+    note: "Changing a schedule also needs a scheduling editor seat.",
+  },
+  { title: "Administration", keys: ["manage_teams", "manage_users", "manage_billing", "manage_pm_seats", "manage_pm_addons"] },
+];
 
 /** Same rule as public.member_permissions(): role defaults + grants - revocations; the owner holds everything. */
 export function effectivePermissions(role: CompanyRole, granted: readonly string[] = [], revoked: readonly string[] = []): Permission[] {

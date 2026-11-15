@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Pool } from "pg";
 import { applyMigration, asUser, createUser, dbAvailable, freshDb } from "./harness";
-import { PERMISSION_KEYS, ROLE_PERMISSIONS } from "../../src/lib/enterprise/permissions";
+import { PERMISSION_GROUPS, PERMISSION_KEYS, ROLE_PERMISSIONS } from "../../src/lib/enterprise/permissions";
 
 const available = await dbAvailable();
 const d = available ? describe : describe.skip;
@@ -57,11 +57,15 @@ d("Enterprise workspace, roles and entitlement (database)", () => {
   afterAll(async () => { await drop?.(); });
 
   it("role defaults in SQL match the TypeScript mirror", async () => {
+    // This database stops before later migrations; the V4 Phase 9 keys are mirrored in tests/db/pm-permissions.test.ts.
+    const phase9 = new Set<string>(PERMISSION_GROUPS.find((g) => g.title.startsWith("Project scheduling"))!.keys);
+    for (const k of ["view_internal_reports", "download_internal_reports", "send_internal_reports", "manage_pm_seats", "manage_pm_addons"]) phase9.add(k);
+    const pre = (list: readonly string[]) => list.filter((k) => !phase9.has(k));
     const keys = (await pool.query("select public.company_permission_keys() as k")).rows[0].k;
-    expect(keys).toEqual([...PERMISSION_KEYS]);
+    expect(keys).toEqual(pre(PERMISSION_KEYS));
     for (const role of Object.keys(ROLE_PERMISSIONS) as (keyof typeof ROLE_PERMISSIONS)[]) {
       const r = (await pool.query("select public.company_role_permissions($1) as p", [role])).rows[0].p;
-      expect(r, role).toEqual([...ROLE_PERMISSIONS[role]]);
+      expect(r, role).toEqual(pre(ROLE_PERMISSIONS[role]));
     }
   });
 

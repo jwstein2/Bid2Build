@@ -124,6 +124,18 @@ Placement rules: a real signature puts a bid at Won or later; an active signing 
 - **Migration:** `supabase/migrations/20261116005000_schedule_publications.sql`. Rollback: `docs/pipeline/rollback_20261116005000.sql` (deletes published updates and turns off their links).
 - **Tests:** `tests/schedule-report.test.tsx` (8, including PDF text), `tests/schedule-updates-route.test.ts` (5), `tests/db/schedule-publications.test.ts` (4 on real Postgres), `scripts/schedule/updates-walk.mjs` (37 browser checks, desktop/390/320, mock Supabase).
 
+## Phase 9: Enterprise PM permissions and seat reassignment
+
+- **13 new company permissions**, in the existing role / grant / revoke model (Users & Permissions shows them grouped: Bids; Costs and internal reports; Project scheduling; Administration):
+  view schedules, create schedule from estimate, edit assigned schedules, edit all company schedules, manage dependencies, update progress, publish customer updates, download schedule PDF, view / download / send internal reports, manage scheduling editor seats, manage paid scheduling add-ons.
+- **Defaults**: managers get all schedule and internal-report permissions; estimators can view, create, edit their own (assigned) schedules, manage dependencies, update progress and download the schedule PDF; viewers can view schedules and download the PDF. Publishing customer updates and sending internal financial documents are opt-in grants. Seat and add-on permissions are owner-only grants (like billing and user administration), so nobody can escalate.
+- **Seat + permission**: every schedule write needs an assigned editor seat AND the permission. A company admin can't edit just by being an admin. Progress and publishing can be granted alone (a field lead who only reports progress; an office manager who only publishes); dates/tasks and dependencies need edit scope.
+- **Enforced server-side** in `schedule_save` (classifies each change as edit / progress / dependencies and raises `forbidden_edit`, `forbidden_progress`, `forbidden_dependencies`), the publication RPCs (`schedule_can_publish`), RLS (`view_schedules` for company schedules), and repeated in the API (PATCH schedule, preview/publish, schedule PDF, internal report `?download=1` and `&purpose=send`). The UI hides what you can't do; it isn't the gate.
+- **No one loses access**: members who had user administration or billing grants get the seat permission; billing grants get the add-on permission; estimators/viewers who could open internal reports (costs + margin) keep view/download/send.
+- **Seat card** (Users & Permissions for seat managers, Billing for the owner): assigned user, seat type (included / paid / complimentary / not covered), billing status, effective date and last change. **Reassign** moves one seat in a single step (`company_pm_reassign`): it keeps its place and kind, so nothing is bought or billed twice and `pm_extra_editors` is untouched. **Remove** warns first with how many schedules the person can edit and says nothing is deleted. Buying seats needs "Manage paid scheduling add-ons".
+- Migration `20261116006000_pm_permissions.sql` (re-runnable), rollback `docs/pipeline/rollback_20261116006000.sql`. Before the SQL runs the app falls back to the Phase 8 rule (seat = full edit).
+- Tests: `tests/db/pm-permissions.test.ts` (6, real Postgres: SQL/TS mirror, admin without seat, progress-only, dependencies, publish, view_schedules revoked, reassign keeps count/rank/subscription, owner-only grants), `tests/pm-permissions.test.ts`, `tests/pm-reassign-route.test.ts`, route tests for schedule save, updates and internal reports; `scripts/schedule/permissions-walk.mjs` 30 browser checks with screenshots.
+
 ## Migration and rollback
 
 - Migration: `supabase/migrations/20261116002000_sales_pipeline.sql` (idempotent, tested twice in a row).
@@ -151,8 +163,8 @@ Placement rules: a real signature puts a bid at Won or later; an active signing 
 | 9 | Enterprise PM permissions and seat assignment | none |
 | 10 | Owner analytics: pipeline adoption, PM MRR split, regression run | none |
 
-## Production approval checklist (Phase 8 PR)
+## Production approval checklist (Phase 9 PR)
 
-1. Run `20261116005000_schedule_publications.sql` in the Supabase SQL Editor (Phases 6-7 SQL already applied).
+1. Run `20261116006000_pm_permissions.sql` in the Supabase SQL Editor (Phase 8 SQL already applied).
 2. Say "merge". Nothing becomes visible: the flag stays off.
 3. To launch scheduling later: approve the live Stripe prices from Phase 5, set the price env vars and `PM_BILLING_LIVE=true`, mark `project_scheduling` released in the registry, then set `NEXT_PUBLIC_PROJECT_SCHEDULING=on` and redeploy.

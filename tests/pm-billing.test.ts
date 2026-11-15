@@ -161,13 +161,16 @@ describe("Enterprise PM editors route", () => {
     vi.stubEnv("STRIPE_SECRET_KEY", "sk_test_x"); vi.stubEnv("STRIPE_PRICE_MONTHLY", "price_monthly"); vi.stubEnv("STRIPE_PRICE_ANNUAL", "price_annual");
     vi.stubEnv("STRIPE_PRICE_PM_ADDON", "price_pm_m"); vi.stubEnv("STRIPE_PRICE_PM_EDITOR", "price_pm_ed");
     Object.assign(S, { user: { id: "u1" }, items: [entBase], previewLines: [proration(140)], updates: [], audit: [], pm: { editorsAssigned: 1 },
-      company: { id: "c1", permissions: ["manage_billing"], entitlement: { source: "stripe" } },
+      company: { id: "c1", permissions: ["manage_billing", "manage_pm_addons"], entitlement: { source: "stripe" } },
       subRow: { stripe_subscription_id: "sub_1", stripe_customer_id: "cus_1", status: "active", current_period_end: "2026-12-01T00:00:00Z" } });
   });
   afterEach(() => vi.unstubAllEnvs());
 
   it("only billing admins", async () => {
     S.company = { id: "c1", permissions: ["manage_users"], entitlement: { source: "stripe" } };
+    expect((await post("editors", { action: "preview", extra: 1, fromExtra: 0 })).status).toBe(403);
+    // Phase 9: billing alone isn't enough; buying seats is "Manage paid scheduling add-ons".
+    S.company = { id: "c1", permissions: ["manage_billing", "manage_pm_seats"], entitlement: { source: "stripe" } };
     expect((await post("editors", { action: "preview", extra: 1, fromExtra: 0 })).status).toBe(403);
   });
   it("previews and buys extra editors, with an audit entry", async () => {
@@ -188,7 +191,7 @@ describe("Enterprise PM editors route", () => {
   it("complimentary companies arrange editors with Built2Bid; stale previews are refused", async () => {
     S.items = [entBase, editors(1)];
     expect((await (await post("editors", { action: "preview", extra: 2, fromExtra: 0 })).json()).error.code).toBe("editors_changed");
-    S.subRow = null; S.company = { id: "c1", permissions: ["manage_billing"], entitlement: { source: "complimentary" } };
+    S.subRow = null; S.company = { id: "c1", permissions: ["manage_billing", "manage_pm_addons"], entitlement: { source: "complimentary" } };
     const j = await (await post("editors", { action: "preview", extra: 1, fromExtra: 0 })).json();
     expect(j.error.message).toMatch(/complimentary/);
   });

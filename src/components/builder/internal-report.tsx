@@ -8,7 +8,7 @@ import { PremiumDiamond, PremiumUpgrade } from "../billing/premium";
 import { canShareFile, mailtoHref, validEmail, webComposeHref } from "@/lib/proposal/share-email";
 import { downloadFile } from "./send-email";
 
-type Check = { k: "loading" } | { k: "allowed" } | { k: "blocked"; code: string; message: string } | { k: "error" };
+type Check = { k: "loading" } | { k: "allowed"; canDownload: boolean; canSend: boolean } | { k: "blocked"; code: string; message: string } | { k: "error" };
 
 const domain = (e?: string | null) => (validEmail(e) ? validEmail(e).split("@")[1].toLowerCase() : "");
 
@@ -43,7 +43,7 @@ function InternalReportDialog({ estimateId, saved, signedIn, businessEmail, titl
   const base = `/api/estimates/${estimateId}/internal-report`;
   useEffect(() => {
     let live = true;
-    fetch(`${base}?check=1`).then((r) => r.json()).then((d) => { if (live) setCheck(d?.allowed ? { k: "allowed" } : d?.code ? { k: "blocked", code: d.code, message: d.message } : { k: "error" }); })
+    fetch(`${base}?check=1`).then((r) => r.json()).then((d) => { if (live) setCheck(d?.allowed ? { k: "allowed", canDownload: d.canDownload !== false, canSend: d.canSend !== false } : d?.code ? { k: "blocked", code: d.code, message: d.message } : { k: "error" }); })
       .catch(() => { if (live) setCheck({ k: "error" }); });
     return () => { live = false; };
   }, [base]);
@@ -67,8 +67,8 @@ function InternalReportDialog({ estimateId, saved, signedIn, businessEmail, titl
               {!saved && <Notice tone="warn">Saving your latest changes… the report uses the saved estimate.</Notice>}
               <div className="grid gap-2 sm:grid-cols-3">
                 <a href={base} target="_blank" rel="noopener" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-line-strong bg-surface px-4 font-semibold hover:bg-paper" data-testid="internal-report-preview"><Eye className="h-4 w-4" aria-hidden />Preview</a>
-                <a href={`${base}?download=1`} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-accent px-4 font-semibold text-navy hover:bg-accent-hover" data-testid="internal-report-download"><Download className="h-4 w-4" aria-hidden />Download PDF</a>
-                <Button variant="secondary" onClick={() => setSending(true)} data-testid="internal-report-send"><Mail className="h-4 w-4" aria-hidden />Send via My Email</Button>
+                {check.canDownload && <a href={`${base}?download=1`} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-accent px-4 font-semibold text-navy hover:bg-accent-hover" data-testid="internal-report-download"><Download className="h-4 w-4" aria-hidden />Download PDF</a>}
+                {check.canSend && <Button variant="secondary" onClick={() => setSending(true)} data-testid="internal-report-send"><Mail className="h-4 w-4" aria-hidden />Send via My Email</Button>}
               </div>
               <p className="text-xs text-muted">Confidential: contains costs and profit. It&apos;s never added to proposals, signing links or anything your customer sees.</p>
             </div>
@@ -91,7 +91,7 @@ function SendInternal({ base, title, businessEmail, onBack }: { base: string; ti
   async function go(app: "gmail" | "outlook" | "other") {
     setBusy(true); setMsg(null);
     try {
-      const r = await fetch(`${base}?download=1`);
+      const r = await fetch(`${base}?download=1&purpose=send`);
       if (!r.ok) { const d = await r.json().catch(() => null); throw new Error(d?.error?.message ?? "Couldn't create the report."); }
       const name = /filename="([^"]+)"/.exec(r.headers.get("content-disposition") ?? "")?.[1] ?? "internal-report.pdf";
       const file = new File([await r.blob()], name, { type: "application/pdf" });

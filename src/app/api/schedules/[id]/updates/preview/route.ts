@@ -28,7 +28,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   const supabase = await createClient();
   const data = await loadSchedule(supabase, id);
   if (!data) return fail(404, "not_found", "Schedule not found.");
-  if (!data.canEdit) return fail(403, "forbidden", "You can view this schedule but can't publish customer updates.");
+  if (!data.permissions.publish) return fail(403, "forbidden", "Your company role can't publish customer updates for this schedule.");
   const { report, last } = await previewReport(supabase, createAdminClient(), data, p.data.options);
   return json({ report, revision: data.schedule.revision, lastVersion: last?.version ?? null });
 }

@@ -16,7 +16,7 @@ export default async function UpdatePage({ params }: { params: Promise<{ id: str
   const supabase = await createClient();
   const data = await loadSchedule(supabase, id);
   if (!data) notFound();
-  if (!data.canEdit) redirect(`/projects/${id}`);
+  if (!data.permissions.publish) redirect(`/projects/${id}`);
   const admin = createAdminClient();
   const [pubs, brand, { data: est }] = await Promise.all([
     listPublications(supabase, id),

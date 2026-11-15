@@ -16,8 +16,8 @@ type Status = { tone: "ok" | "warn" | "danger"; text: string } | null;
  * customer: Gmail, Outlook or the email app opens with a filled-in draft that the contractor sends.
  * Recorded as "email draft opened", never as delivered.
  */
-export function UpdateDelivery({ scheduleId, publication, customerEmail, contactName, onChange }: {
-  scheduleId: string; publication: Publication; customerEmail: string | null; contactName: string | null; onChange: (p: Publication) => void;
+export function UpdateDelivery({ scheduleId, publication, customerEmail, contactName, onChange, canPdf = true }: {
+  scheduleId: string; publication: Publication; customerEmail: string | null; contactName: string | null; onChange: (p: Publication) => void; canPdf?: boolean;
 }) {
   const pub = publication;
   const [url, setUrl] = useState<string | null>(null);
@@ -72,6 +72,7 @@ export function UpdateDelivery({ scheduleId, publication, customerEmail, contact
     setStatus(null);
     const name = app === "gmail" ? "Gmail" : app === "outlook" ? "Outlook" : "your email app";
     if (!url) {
+      if (!canPdf) { setStatus({ tone: "warn", text: "Create a secure link first. Your company role can't download schedule PDFs to attach." }); return; }
       const f = await pdfFile();
       if (!f) return;
       if (app === "other" && canShareFile(f)) {
@@ -98,10 +99,10 @@ export function UpdateDelivery({ scheduleId, publication, customerEmail, contact
         <p className="text-sm text-ink-soft">Nothing has been sent yet. Choose how your customer gets it.</p>
       </div>
 
-      <div className="grid gap-2 sm:grid-cols-2">
+      {canPdf && <div className="grid gap-2 sm:grid-cols-2">
         <a className={tile} href={`${base}/pdf?download=1`} onClick={() => void record("pdf_download")} data-testid="update-pdf"><Download className="h-4 w-4 text-brand" aria-hidden /> Download PDF</a>
         <a className={tile} href={`${base}/pdf`} target="_blank" rel="noopener noreferrer"><Share2 className="h-4 w-4 text-brand" aria-hidden /> Preview PDF</a>
-      </div>
+      </div>}
 
       <div className="rounded-xl border border-line p-3">
         <p className="flex items-center gap-2 font-bold text-navy"><Link2 className="h-4 w-4 text-brand" aria-hidden /> Secure link</p>
@@ -126,7 +127,7 @@ export function UpdateDelivery({ scheduleId, publication, customerEmail, contact
       <div className="rounded-xl border border-line p-3">
         <p className="flex items-center gap-2 font-bold text-navy"><Mail className="h-4 w-4 text-brand" aria-hidden /> Send via My Email</p>
         <label className="mt-2 block"><span className="label">To</span><input type="email" className="field" value={to} onChange={(e) => setTo(e.target.value)} placeholder="Customer email" /></label>
-        <p className="mt-1 text-xs text-muted">{url ? "The email includes the secure link." : "Create a secure link first to include it, or we'll download the PDF for you to attach."}</p>
+        <p className="mt-1 text-xs text-muted">{url ? "The email includes the secure link." : canPdf ? "Create a secure link first to include it, or we'll download the PDF for you to attach." : "Create a secure link first to include it."}</p>
         <div className="mt-2 grid grid-cols-3 gap-2">
           <button type="button" className={tile} onClick={() => openDraft("gmail")} disabled={busy !== null} data-testid="update-gmail">Gmail</button>
           <button type="button" className={tile} onClick={() => openDraft("outlook")} disabled={busy !== null}>Outlook</button>

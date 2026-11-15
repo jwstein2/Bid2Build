@@ -26,7 +26,7 @@ export default async function PublishedUpdatePage({ params }: { params: Promise<
   const { data: signed } = logoPath ? await admin.storage.from("logos").createSignedUrl(logoPath, 3600) : { data: null };
   return (
     <div className="mx-auto max-w-4xl">
-      <PublishedUpdate scheduleId={id} scheduleName={data.schedule.name} initial={pub} canEdit={data.canEdit} logoUrl={signed?.signedUrl ?? null}
+      <PublishedUpdate scheduleId={id} scheduleName={data.schedule.name} initial={pub} canEdit={data.permissions.publish} canPdf={data.permissions.pdf} logoUrl={signed?.signedUrl ?? null}
         customerEmail={(est as { customer_email?: string | null } | null)?.customer_email ?? null} contactName={brand.contactName} timezone={data.schedule.calendar.timezone} />
     </div>
   );

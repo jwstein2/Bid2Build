@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 const UUID = /^[0-9a-f-]{36}$/i;
 
-/** PDF of a published update, from its frozen content. Anyone who can view the schedule. */
+/** PDF of a published update, from its frozen content. Needs download_schedule_pdf (Phase 9). */
 export async function GET(req: Request, ctx: { params: Promise<{ id: string; pid: string }> }) {
   if (!isPmEnabled()) return fail(404, "not_found", "Not found.");
   const user = await getUser();
@@ -20,6 +20,9 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string; pid
   const supabase = await createClient();
   const pub = await getPublication(supabase, id, pid);
   if (!pub) return fail(404, "not_found", "Update not found.");
+  // Before the Phase 9 SQL is applied the function doesn't exist; viewing the schedule was the rule then.
+  const { data: perm, error: permError } = await supabase.rpc("schedule_permissions", { p_schedule_id: id });
+  if (!permError && !(perm as { pdf?: boolean } | null)?.pdf) return fail(403, "forbidden", "Your company role can't download schedule PDFs.");
   const admin = createAdminClient();
   const { data: row } = await admin.from("schedule_publications").select("logo_path").eq("id", pid).maybeSingle();
   let pdf: Buffer;
