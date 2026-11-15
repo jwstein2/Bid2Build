@@ -4,7 +4,10 @@
 - **Share images:** every marketing page (home, pricing, /bids, 44 trade pages, /learn and guides) sends
   `og:image`, `og:url`, `og:type` and `og:site_name`. Pages that set their own share title use
   `openGraphFor()` in `src/lib/seo/open-graph.ts`, because a page-level `openGraph` replaces the root
-  one in Next.js and would otherwise drop the image.
+  one in Next.js and would otherwise drop the image. Trade pages and guides have their own generated
+  card (`opengraph-image.tsx` / `twitter-image.tsx` in their route folders, rendered by
+  `src/lib/seo/share-card.tsx` with a real builder screenshot) and pass `ownImage: true`.
+- **Weekly pricing guides:** see `docs/seo/PRICING_ARTICLES.md`.
 - **Structured data:** the homepage has one JSON-LD graph: Organization (name, logo, support email),
   WebSite and SoftwareApplication (plans). Trade pages keep FAQPage + BreadcrumbList; guides keep Article.
 - **One host:** `netlify.toml` 301-redirects `https://built2bid.netlify.app/*` to `https://built2bid.org`.

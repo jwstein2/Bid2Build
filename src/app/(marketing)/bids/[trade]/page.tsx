@@ -6,6 +6,7 @@ import { Check } from "lucide-react";
 import { Container } from "@/components/ui/misc";
 import { familyTint, TradeIcon } from "@/components/trade-icon";
 import { getTrade, trades, UNIT_ABBR } from "@/lib/trades/catalog";
+import { articlesForTrade } from "@/lib/learn/articles";
 import { plans, site } from "@/lib/site";
 import { AccountCtas } from "@/components/account/account-ctas";
 import { getAccountStatus } from "@/lib/account/server";
@@ -24,7 +25,7 @@ export async function generateMetadata({ params }: PageProps<"/bids/[trade]">): 
     title: t.seoTitle,
     description: `${t.intro} ${plans.starterCredits} free bids to start, plus ${plans.monthlyCredits} free every month.`,
     alternates: { canonical: `/bids/${t.slug}` },
-    openGraph: openGraphFor({ title: `${t.seoTitle} | ${site.name}`, description: t.intro, path: `/bids/${t.slug}` }),
+    openGraph: openGraphFor({ title: `${t.seoTitle} | ${site.name}`, description: t.intro, path: `/bids/${t.slug}`, ownImage: true }),
   };
 }
 
@@ -44,6 +45,7 @@ export default async function TradePage({ params }: PageProps<"/bids/[trade]">) 
   const secondary = status.kind === "no_credits"
     ? { action: "draft" as const, label: CTA_LABELS.draft, href: start }
     : { action: "draft" as const, label: "Start from blank", href: `${start}?blank=1` };
+  const guides = articlesForTrade(t.slug);
   const related = trades.filter((x) => x.family === t.family && x.slug !== t.slug).slice(0, 4);
   const jsonLd = {
     "@context": "https://schema.org",
@@ -130,6 +132,20 @@ export default async function TradePage({ params }: PageProps<"/bids/[trade]">) 
             </div>
           ))}
         </div>
+
+        {guides.length > 0 && (
+          <>
+            <h2 className="mt-14 text-xl font-extrabold">{t.name} pricing guides</h2>
+            <ul className="mt-4 grid gap-3 md:grid-cols-2">
+              {guides.map((g) => (
+                <li key={g.slug} className="rounded-xl border border-line bg-surface p-4 hover:border-line-strong">
+                  <Link href={`/learn/${g.slug}`} className="font-bold hover:underline">{g.title}</Link>
+                  <p className="mt-1 text-sm text-ink-soft">{g.description}</p>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
 
         {related.length > 0 && (
           <>
