@@ -4,7 +4,8 @@ import { Card } from "@/components/ui/misc";
 import { PremiumDiamond } from "@/components/billing/premium";
 import { PREMIUM_FEATURES, type PremiumFeature } from "@/lib/billing/premium-features";
 
-const TILES: Record<PremiumFeature, { href: string; icon: typeof Library; unlockedText: string }> = {
+type TileFeature = Exclude<PremiumFeature, "internal_report">;
+const TILES: Record<TileFeature, { href: string; icon: typeof Library; unlockedText: string }> = {
   library: { href: "/dashboard/items", icon: Library, unlockedText: "Your labor rates, material prices and saved stacks, ready for every bid." },
   templates: { href: "/dashboard/templates", icon: LayoutTemplate, unlockedText: "Your default proposal style, wording and payment schedule for new bids." },
 };
@@ -13,7 +14,7 @@ const TILES: Record<PremiumFeature, { href: string; icon: typeof Library; unlock
  * Dashboard tile for an Unlimited feature. Free accounts see what it does and that it is included
  * with Unlimited; the tile still opens the feature page, which shows the upgrade options.
  */
-export function PremiumTile({ feature, unlocked }: { feature: PremiumFeature; unlocked: boolean }) {
+export function PremiumTile({ feature, unlocked }: { feature: TileFeature; unlocked: boolean }) {
   const t = TILES[feature];
   const f = PREMIUM_FEATURES[feature];
   const Icon = unlocked ? t.icon : Lock;

@@ -1,6 +1,6 @@
 # Built2Bid V4: sales pipeline, internal reports and project scheduling
 
-V4 ships in phases, one reviewable PR per phase. **This PR is Phase 1 (audit) + Phase 2 (sales pipeline, analytics, sales pay calculator).**
+V4 ships in phases, one reviewable PR per phase. Phases 1–2 (audit, sales pipeline, analytics, sales pay calculator) shipped in PR #45. Phase 3 (Internal Estimate Report) is described below.
 Nothing here changes billing, Stripe, subscriptions, credits, proposals, e-signature evidence or customer-facing documents.
 
 ## Phase 1: baseline UX audit
@@ -58,6 +58,16 @@ Placement rules: a real signature puts a bid at Won or later; an active signing 
 **Sales pay calculator** (Analytics tab, optional): percent of sale (pre-tax), percent of gross profit (sale − version cost, never negative), percent of a commissionable base (sale minus an excluded %), or flat fee, plus optional base pay. Settings live in `sales_pay_settings` with RLS to the owner only (teammates and company owners can't read them). It never changes a bid. Labeled as a planning estimate, not payroll.
 
 **Enterprise**: shares the same stages. `company_pipeline_summary` now counts job stages as won; the Command Center gains three stage bars.
+
+## Phase 3: Internal Estimate Report
+
+- **Where:** "Internal report" button in the estimate builder header (signed-in, cloud bids). Locked users see a diamond and the standard premium upgrade card.
+- **Who:** the existing Unlimited/premium entitlement (`library_access()`), checked on the server for every request. Company bids also need both `view_costs` and `view_margin`. Anyone else gets 401/402/403/404; nothing is rendered.
+- **What:** direct cost, selling price, gross profit, gross margin and markup (kept distinct), per line and per section; direct cost by type (only types that exist on the bid); project adjustment, tax, rounding, customer total; pass-through and discount notes; engine warnings. Numbers come only from `computeEstimate`, so they match the builder exactly.
+- **Privacy:** the PDF is generated on demand, never stored, served `private, no-store` with `noindex`, carries a red "INTERNAL - CONFIDENTIAL" banner and an `INTERNAL_..._cost-report.pdf` filename. Send via My Email starts with an empty recipient, always shows a confidentiality warning, and requires a confirmation checkbox when the recipient is outside the business email domain. Tests assert the customer proposal data and PDF contain none of the costs or profit.
+- **Code:** `src/lib/reports/internal-estimate.ts`, `src/lib/reports/access.ts`, `src/lib/pdf/internal-report-pdf.tsx`, `src/app/api/estimates/[id]/internal-report/route.ts`, `src/components/builder/internal-report.tsx`.
+- **Tests:** `tests/internal-report.test.tsx`, `tests/internal-report-route.test.ts`, `scripts/internal-report/walk.mjs` (mock Supabase; free mode and `MOCK_UNLIMITED=1`).
+- **Migration:** none.
 
 ## Migration and rollback
 
