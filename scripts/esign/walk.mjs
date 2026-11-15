@@ -230,9 +230,9 @@ let newSignatureId = null;
   await p.getByTestId("signing-url").waitFor();
   check("Create Signing Link: one request even on a double click", created === 1, String(created));
   const dlg = await p.getByRole("dialog").innerText();
-  check("link dialog: copy, Send via My Email, Download PDF", /Copy/.test(dlg) && /Send via My Email/.test(dlg) && /Download PDF/.test(dlg));
-  const href = await p.getByRole("link", { name: "Send via My Email" }).getAttribute("href");
-  check("Send via My Email: mailto with link, customer address and subject, no attachment claim", href.startsWith("mailto:pat@example.test?") && decodeURIComponent(href).includes("/sign/NNNN") && decodeURIComponent(href).includes("Your Estimate from Summit Exteriors LLC") && !/attached/.test(decodeURIComponent(href)));
+  check("link opens in Email Proposal on the Signing link tab, with Copy and Gmail/Outlook/Other", /Email Proposal/.test(dlg) && /Copy/.test(dlg) && /Gmail/.test(dlg) && /Other email app/.test(dlg) && (await p.getByRole("radio", { name: "Signing link" }).getAttribute("aria-checked")) === "true");
+  const href = await p.getByTestId("se-gmail").getAttribute("href");
+  check("Gmail draft with link, customer address and subject, no attachment claim", href.startsWith("https://mail.google.com/mail/?") && decodeURIComponent(href).includes("/sign/NNNN") && decodeURIComponent(href).includes("to=pat@example.test") && decodeURIComponent(href).includes("Your Estimate from Summit Exteriors LLC") && !/attached/.test(decodeURIComponent(href)));
   await shot(p, "15-builder-link-dialog__desktop", false);
   await ctx.close();
   for (const w of [390, 768]) {

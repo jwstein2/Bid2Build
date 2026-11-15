@@ -1,15 +1,13 @@
 "use client";
 import Link from "next/link";
-import { CheckCircle2, Clock, Copy, Check, Download, FileSignature, Hourglass, Link2, Loader2, Mail, XCircle } from "lucide-react";
+import { CheckCircle2, Clock, FileSignature, Hourglass, Link2, Loader2, XCircle } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { bidSigning, SIGNING_LABELS, type RequestRow, type SignatureRow } from "@/lib/esign/status";
-import { buildShareEmail, mailtoHref, type ShareEmailInput } from "@/lib/proposal/share-email";
 import { Button } from "../ui/button";
-import { Notice } from "../ui/misc";
-import { Modal } from "../builder/dialogs";
 import { LocalTime } from "./local-time";
 import { SignedPdfButton } from "./signed-pdf-button";
 
+/** A signing link just created; shown in the Email Proposal dialog. */
 export interface CreatedLink { url: string; requestId: string; expiresAt: string; versionNumber: number; total: string; file?: File; message: string }
 
 /** Signing status of this bid + Create Signing Link, on the Proposal step. */
@@ -71,38 +69,5 @@ export function SigningPanel({ estimateId, onCreate, creating, refreshKey }: {
         </div>
       )}
     </section>
-  );
-}
-
-/** Shown after a link is created: copy it, open the contractor's own email app, or download the PDF. */
-export function SigningLinkDialog({ open, onOpenChange, link, email }: { open: boolean; onOpenChange: (o: boolean) => void; link: CreatedLink | null; email: ShareEmailInput }) {
-  const [copied, setCopied] = useState(false);
-  if (!link) return null;
-  const msg = buildShareEmail({ ...email, signingUrl: link.url });
-  return (
-    <Modal open={open} onOpenChange={onOpenChange} title="Your signing link is ready" description="Send it to your customer. They can review the full proposal and sign without an account.">
-      <div className="space-y-4">
-        <div>
-          <label htmlFor="signing-url" className="mb-1 block text-sm font-semibold">Signing link</label>
-          <div className="flex gap-2">
-            <input id="signing-url" readOnly value={link.url} className="field min-w-0 flex-1 font-mono text-xs" onFocus={(e) => e.currentTarget.select()} data-testid="signing-url" />
-            <Button variant="secondary" onClick={async () => { try { await navigator.clipboard.writeText(link.url); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch { /* clipboard blocked: the field stays selectable */ } }}>
-              {copied ? <Check className="h-4 w-4" aria-hidden /> : <Copy className="h-4 w-4" aria-hidden />}{copied ? "Copied" : "Copy"}
-            </Button>
-          </div>
-          <p className="mt-1 text-xs text-muted">Version {link.versionNumber} · {link.total} · works until <LocalTime iso={link.expiresAt} relative={false} />. Anyone with this link can view and sign, so send it only to your customer. Creating a new link turns this one off.</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <a href={mailtoHref(msg)} className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-navy px-4 font-semibold text-white hover:bg-navy/90"><Mail className="h-4 w-4" aria-hidden /> Send via My Email</a>
-          {link.file && (
-            <Button variant="secondary" onClick={() => { const url = URL.createObjectURL(link.file!); Object.assign(document.createElement("a"), { href: url, download: link.file!.name }).click(); setTimeout(() => URL.revokeObjectURL(url), 10_000); }}>
-              <Download className="h-4 w-4" aria-hidden /> Download PDF
-            </Button>
-          )}
-        </div>
-        <p className="text-xs text-muted">Send via My Email opens your own email app with the link and a short message filled in. Built2Bid doesn&apos;t send anything for you. {msg.to ? "" : "Add your customer's email on the Customer & project step to fill in the To line."}</p>
-        {link.message && <Notice tone="ok">{link.message}</Notice>}
-      </div>
-    </Modal>
   );
 }

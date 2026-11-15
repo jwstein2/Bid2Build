@@ -29,12 +29,12 @@ import { ScopeStep } from "./scope-step";
 import { reducer } from "./state";
 import { Workspace } from "./workspace";
 import { WashingJobPanel, isWashingEstimate } from "./calculators/washing-job-panel";
-import { SendEmailDialog, type SendPhase } from "./send-email";
-import { SigningLinkDialog, SigningPanel, type CreatedLink } from "../esign/signing-panel";
+import { SendEmailDialog, type SendMode, type SendPhase } from "./send-email";
+import { SigningPanel, type CreatedLink } from "../esign/signing-panel";
 import { isEsignEnabled } from "@/lib/esign/config";
 import { exportReadiness, type ReadinessIssue } from "@/lib/estimate/readiness";
 import { stepStatuses } from "@/lib/estimate/step-status";
-import { buildShareEmail } from "@/lib/proposal/share-email";
+import type { ShareEmailInput } from "@/lib/proposal/share-email";
 import { displayPhone } from "@/lib/proposal/customer-text";
 
 type Biz = BusinessProfile & { logoPath?: string | null };
@@ -102,6 +102,8 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
   const [missing, setMissing] = useState<ReadinessIssue[]>([]);
   const [sendOpen, setSendOpen] = useState(false);
   const [sendPhase, setSendPhase] = useState<SendPhase>({ k: "preparing" });
+  const [sendMode, setSendMode] = useState<SendMode>("pdf");
+  const [creatingLink, setCreatingLink] = useState(false);
   const [sendKey, setSendKey] = useState(0);
   const [signingLink, setSigningLink] = useState<CreatedLink | null>(null);
   const [signingRefresh, setSigningRefresh] = useState(0);
@@ -287,25 +289,47 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
     setSendPhase({ k: "ready", file: res.file!, note: res.message });
   }, [runExport]);
 
-  const createSigning = useCallback(async () => {
-    const res = await runExport("signing");
-    if (!res) return;
-    if ("error" in res) { setExportMsg({ tone: "danger", text: res.error }); return; }
+  /**
+   * Create Signing Link, from the Proposal step or from the Email Proposal dialog. Either way the new
+   * link lands in the Email Proposal dialog, in "Signing link" mode, ready to send.
+   */
+  const createSigning = useCallback(async (fromDialog = false) => {
+    if (fromDialog) setCreatingLink(true);
+    const res = await runExport("signing").finally(() => setCreatingLink(false));
+    if (!res) { if (fromDialog) setSendOpen(false); return; }
+    if ("error" in res) {
+      if (fromDialog) setSendOpen(false);
+      setExportMsg({ tone: "danger", text: res.error }); return;
+    }
     setSigningLink(res.link ?? null);
     setSigningRefresh((n) => n + 1);
     setStep("proposal");
+    if (!fromDialog) {
+      setSendKey((k) => k + 1);
+      setSendPhase({ k: "idle" });
+      setSendMode("link");
+      setSendOpen(true);
+    }
   }, [runExport]);
+
+  const changeSendMode = useCallback((m: SendMode) => {
+    setSendMode(m);
+    if (m === "pdf" && sendPhase.k === "idle") void prepareSend();
+  }, [sendPhase.k, prepareSend]);
 
   const startSend = useCallback(() => {
     // Checks that need another screen (sign-in, missing details) run before the dialog opens.
     if (!user || !(user.verified ?? user.emailVerified) || readiness.length) { void runExport("bytes"); return; }
     if (exportLock.current) return;
     setSendKey((k) => k + 1);
+    setSendMode("pdf");
+    // A link from an earlier send may point at an older version: make a fresh one if needed.
+    setSigningLink(null);
     setSendOpen(true);
     void prepareSend();
   }, [user, readiness.length, runExport, prepareSend]);
 
-  const shareEmail = useMemo(() => buildShareEmail({
+  const shareEmail = useMemo<ShareEmailInput>(() => ({
     customerName: estimate.customer.name, customerEmail: estimate.customer.email, projectTitle: estimate.title,
     companyName: business.companyName, contactName: business.contactName, phone: displayPhone(business.phone),
   }), [estimate.customer.name, estimate.customer.email, estimate.title, business.companyName, business.contactName, business.phone]);
@@ -497,9 +521,10 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
           <Button variant="accent" onClick={() => { setPreviewOpen(false); void doExport(); }}><Download className="h-4 w-4" /> Download PDF</Button>
         </div>
       </Modal>
-      <SigningLinkDialog open={Boolean(signingLink)} onOpenChange={(o) => { if (!o) setSigningLink(null); }} link={signingLink}
-        email={{ customerName: estimate.customer.name, customerEmail: estimate.customer.email, projectTitle: estimate.title, companyName: business.companyName, contactName: business.contactName, phone: displayPhone(business.phone) }} />
-      <SendEmailDialog key={sendKey} open={sendOpen} onOpenChange={(o) => { if (!o && sendPhase.k === "preparing") return; setSendOpen(o); }} phase={sendPhase} email={shareEmail} onRetry={() => void prepareSend()} />
+      <SendEmailDialog key={sendKey} open={sendOpen} onOpenChange={(o) => { if (!o && (sendPhase.k === "preparing" || creatingLink)) return; setSendOpen(o); }}
+        phase={sendPhase} emailInput={shareEmail} onRetry={() => void prepareSend()}
+        mode={sendMode} onModeChange={changeSendMode} allowLink={esign && cloudMode}
+        link={signingLink} onCreateLink={() => void createSigning(true)} creatingLink={creatingLink} />
       <AuthDialog open={authOpen} onOpenChange={setAuthOpen} next={`/builder?draft=${estimate.id}&export=1`} onVerified={() => { window.location.assign(`/builder?draft=${estimate.id}&export=1`); }} />
       <UpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} nextCycleAt={credits?.nextCycleAt} />
     </div>

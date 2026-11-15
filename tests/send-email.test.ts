@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildShareEmail, canShareFile, firstName, mailtoHref, validEmail } from "@/lib/proposal/share-email";
+import { buildShareEmail, canShareFile, firstName, mailtoHref, plainEmail, validEmail, webComposeHref } from "@/lib/proposal/share-email";
 
 const full = { customerName: "Pat Smith", customerEmail: "pat@example.com", projectTitle: "Smith backyard deck", companyName: "Acme Decks", contactName: "Dana Lee", phone: "(555) 555-0100" };
 
@@ -62,5 +62,59 @@ describe("file sharing feature detection", () => {
     expect(canShareFile(file, { canShare: () => true })).toBe(false);
     expect(canShareFile(file, { share: async () => {}, canShare: () => { throw new Error("x"); } })).toBe(false);
     expect(canShareFile(file, undefined)).toBe(false);
+  });
+});
+
+describe("Gmail and Outlook compose links", () => {
+  const m = buildShareEmail(full);
+  it("Gmail: opens a full-screen compose with recipient, subject and message", () => {
+    const u = new URL(webComposeHref("gmail", m));
+    expect(u.origin + u.pathname).toBe("https://mail.google.com/mail/");
+    expect(u.searchParams.get("view")).toBe("cm");
+    expect(u.searchParams.get("fs")).toBe("1");
+    expect(u.searchParams.get("to")).toBe("pat@example.com");
+    expect(u.searchParams.get("su")).toBe(m.subject);
+    expect(u.searchParams.get("body")).toBe(m.body);
+  });
+  it("Outlook (work and personal): deeplink compose with %20 spaces, never +", () => {
+    for (const app of ["outlook", "outlook-personal"] as const) {
+      const href = webComposeHref(app, m);
+      expect(href.startsWith(app === "outlook" ? "https://outlook.office.com/mail/deeplink/compose?" : "https://outlook.live.com/mail/0/deeplink/compose?")).toBe(true);
+      expect(href).not.toMatch(/\+|\s/);
+      const u = new URL(href);
+      expect(u.searchParams.get("to")).toBe("pat@example.com");
+      expect(u.searchParams.get("subject")).toBe(m.subject);
+      expect(u.searchParams.get("body")).toBe(m.body);
+    }
+  });
+  it("keeps a literal + and & in the text and can't add parameters", () => {
+    const u = new URL(webComposeHref("outlook", { to: "pat@example.com", subject: "A + B & C", body: "x&cc=evil@x.com" }));
+    expect(u.searchParams.get("subject")).toBe("A + B & C");
+    expect(u.searchParams.get("body")).toBe("x&cc=evil@x.com");
+    expect(u.searchParams.get("cc")).toBeNull();
+  });
+  it("drops an invalid recipient and header-breaking characters", () => {
+    const u = new URL(webComposeHref("gmail", { to: "a@b.co\r\nbcc:x@y.z", subject: "Hi\r\nBcc: x@y.z", body: "b" }));
+    expect(u.searchParams.has("to")).toBe(false);
+    expect(u.searchParams.get("su")).not.toMatch(/[\r\n]/);
+  });
+  it("cuts a very long message instead of making an unusable link", () => {
+    const href = webComposeHref("gmail", { to: "", subject: "s", body: "x".repeat(20000) });
+    expect(href.length).toBeLessThan(8000);
+    expect(new URL(href).searchParams.get("body")!.endsWith("…")).toBe(true);
+  });
+  it("signing-link messages carry the link and never mention an attachment", () => {
+    const s = buildShareEmail({ ...full, signingUrl: "https://built2bid.org/sign/abc" });
+    const body = new URL(webComposeHref("gmail", s)).searchParams.get("body")!;
+    expect(body).toContain("https://built2bid.org/sign/abc");
+    expect(body).not.toMatch(/attached/i);
+  });
+});
+
+describe("Copy message", () => {
+  it("is the whole email as plain text", () => {
+    const m = buildShareEmail(full);
+    expect(plainEmail(m)).toBe(`To: pat@example.com\nSubject: ${m.subject}\n\n${m.body}`);
+    expect(plainEmail({ to: "", subject: "S", body: "B" })).toBe("Subject: S\n\nB");
   });
 });

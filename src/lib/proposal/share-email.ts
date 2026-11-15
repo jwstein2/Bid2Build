@@ -97,3 +97,46 @@ export function canShareFile(file: File, nav: Partial<Pick<Navigator, "share" | 
     return false;
   }
 }
+
+/**
+ * Web compose links for Gmail and Outlook. They open a new message in the contractor's own,
+ * already signed-in mailbox with the recipient, subject and message filled in. Like mailto:, they
+ * can't carry an attachment: Built2Bid downloads the PDF first and the contractor drags it in.
+ * (Attaching automatically would need the contractor to connect their mailbox through OAuth.)
+ */
+export type WebMail = "gmail" | "outlook" | "outlook-personal";
+
+const WEBMAIL_BASE: Record<WebMail, string> = {
+  gmail: "https://mail.google.com/mail/",
+  // Work or school accounts (Microsoft 365) and most personal accounts, which are redirected.
+  outlook: "https://outlook.office.com/mail/deeplink/compose",
+  // Outlook.com / Hotmail / Live accounts, when the work URL doesn't keep the draft.
+  "outlook-personal": "https://outlook.live.com/mail/0/deeplink/compose",
+};
+
+/** Keep compose URLs well under the ~8 KB most servers accept; long messages are cut, not dropped. */
+const MAX_BODY = 3000;
+
+export function webComposeHref(app: WebMail, e: { to?: string; subject: string; body: string }): string {
+  const to = validEmail(e.to);
+  const subject = oneLine(e.subject);
+  let body = multiLine(e.body);
+  if (body.length > MAX_BODY) body = `${body.slice(0, MAX_BODY).trimEnd()}…`;
+  const q = new URLSearchParams();
+  if (app === "gmail") {
+    q.set("view", "cm"); q.set("fs", "1");
+    if (to) q.set("to", to);
+    q.set("su", subject); q.set("body", body);
+  } else {
+    if (to) q.set("to", to);
+    q.set("subject", subject); q.set("body", body);
+  }
+  // URLSearchParams writes spaces as "+", which Outlook shows literally: use %20 instead.
+  return `${WEBMAIL_BASE[app]}?${q.toString().replace(/\+/g, "%20")}`;
+}
+
+/** Plain-text copy of the whole email, for pasting into any email app. */
+export function plainEmail(e: { to?: string; subject: string; body: string }): string {
+  const to = validEmail(e.to);
+  return [to ? `To: ${to}` : "", `Subject: ${oneLine(e.subject)}`, "", multiLine(e.body)].filter((l, i) => i > 0 || l).join("\n");
+}
