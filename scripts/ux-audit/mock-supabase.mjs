@@ -1,6 +1,7 @@
 // Local stand-in for Supabase used ONLY to render signed-in pages for UX screenshots.
 // Answers /auth/v1/user and simple PostgREST reads/RPCs with canned test data. Never point production at it.
 import http from "node:http";
+import { handleRadarRest, radarRestEnabled } from "../radar/pg-rest.mjs";
 
 const PORT = Number(process.env.MOCK_PORT ?? 54321);
 const NOW = Date.now();
@@ -303,6 +304,8 @@ http.createServer((req, res) => {
       }
     }
     if (u.pathname.startsWith("/storage/v1/")) return send(res, 400, { error: "not available in mock" });
+    // Opportunity Radar walk (scripts/radar/walk.mjs): radar_* tables and RPCs run real SQL when RADAR_PG_URL is set.
+    if (radarRestEnabled() && /^\/rest\/v1\/(rpc\/)?radar_/.test(u.pathname)) return void handleRadarRest(req, res, u, raw, send);
     const rpc = u.pathname.match(/^\/rest\/v1\/rpc\/(\w+)/);
     if (rpc && esignRpc[rpc[1]]) { let args = {}; try { args = JSON.parse(raw || "{}"); } catch { /* ignore */ } const [st, body] = esignRpc[rpc[1]](args); return send(res, st, body); }
     if (rpc && compPool && COMP_RPC.test(rpc[1])) { let args = {}; try { args = JSON.parse(raw || "{}"); } catch { /* ignore */ } return void compRpc(rpc[1], args, res); }
