@@ -12,7 +12,7 @@ export const CHANNELS: { key: Channel; label: string; rule: string }[] = [
   { key: "youtube", label: "YouTube", rule: "utm_source youtube, or referred by youtube.com" },
   { key: "organic_search", label: "Organic Search", rule: "Referred by a search engine (google, bing, duckduckgo, yahoo, ecosia…) with no paid tags" },
   { key: "email_outreach", label: "Email Outreach", rule: "utm_medium email, utm_source instantly, an Instantly campaign id (?ic=), or a lead first contacted by outreach" },
-  { key: "social", label: "Organic Social", rule: "Referred by a social site, or a Facebook click id without paid tags" },
+  { key: "social", label: "Organic Social", rule: "utm_medium social (e.g. Facebook posts, group chats), utm_source facebook/instagram without paid tags, a social referring site, or a Facebook click id without paid tags" },
   { key: "referral", label: "Referral", rule: "Any other outside referring site, a ?ref= code, or other utm_source" },
   { key: "direct", label: "Direct", rule: "Signed up with no tags, click id or outside referrer recorded (tracked since attribution v2)" },
   { key: "unknown", label: "Unknown", rule: "No lead record, or signed up before referrers were recorded" },
@@ -31,6 +31,7 @@ const SEARCH = /(^|\.)(google\.[a-z.]+|bing\.com|duckduckgo\.com|search\.yahoo\.
 const SOCIAL = /(^|\.)(facebook\.com|fb\.com|instagram\.com|linkedin\.com|lnkd\.in|t\.co|x\.com|twitter\.com|reddit\.com|tiktok\.com|pinterest\.com|nextdoor\.com|threads\.net)$/;
 const YT = /(^|\.)(youtube\.com|youtu\.be)$/;
 const META_SRC = /^(facebook|fb|instagram|ig|meta)$/i;
+const SOCIAL_MED = /^(social|organic_social|organic-social|social_organic|social-network|social-media|sm)$/i;
 
 export function classifyChannel(l: LeadAttribution | null | undefined): Channel {
   if (!l) return "unknown";
@@ -42,6 +43,8 @@ export function classifyChannel(l: LeadAttribution | null | undefined): Channel 
   if (META_SRC.test(src) && PAID.test(med)) return "meta_ads";
   if (src === "youtube" || (!src && YT.test(ref))) return "youtube";
   if (med === "email" || src === "instantly" || l.first_campaign_id) return "email_outreach";
+  // Organic posts tagged by hand (Facebook groups, group chats, other social sites): utm_medium social.
+  if (SOCIAL_MED.test(med)) return "social";
   if (src) return META_SRC.test(src) ? "social" : src === "google" || src === "bing" ? "organic_search" : "referral";
   if (click === "fbclid") return "social";
   if (ref && ref !== "(none)") return SEARCH.test(ref) ? "organic_search" : SOCIAL.test(ref) ? "social" : "referral";

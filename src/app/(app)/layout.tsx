@@ -6,6 +6,8 @@ import { getUser, createClient, createAdminClient } from "@/lib/supabase/server"
 import { isSupabaseConfigured, serverEnv } from "@/lib/env";
 import { ATTRIBUTION_COOKIE, decodeAttribution } from "@/lib/growth/attribution";
 import { syncSignedInUser } from "@/lib/growth/leads";
+import { REFERRAL_COOKIE } from "@/lib/growth/referral";
+import { recordReferral } from "@/lib/growth/referral-server";
 import { AppSidebar } from "@/components/layout/app-nav";
 import { formatPhone } from "@/lib/auth/phone";
 
@@ -24,7 +26,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const [{ data: isAdmin }, company] = await Promise.all([supabase.rpc("is_admin", { p_user_id: user.id }), loadMyCompany(supabase)]);
   // Link the account to its lead + first-touch attribution (best effort, one indexed lookup when already linked).
   if (serverEnv().supabaseServiceKey) {
-    await syncSignedInUser(createAdminClient(), user, decodeAttribution((await cookies()).get(ATTRIBUTION_COOKIE)?.value));
+    const jar = await cookies();
+    const admin = createAdminClient();
+    await syncSignedInUser(admin, user, decodeAttribution(jar.get(ATTRIBUTION_COOKIE)?.value));
+    // Arrived through a member's referral link: record it (only new accounts count; idempotent).
+    const ref = jar.get(REFERRAL_COOKIE)?.value;
+    if (ref) await recordReferral(admin, user.id, ref);
   }
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
