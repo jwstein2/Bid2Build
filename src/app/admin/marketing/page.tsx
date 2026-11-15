@@ -47,7 +47,7 @@ export default async function Marketing({ searchParams }: { searchParams: Promis
     <div className="space-y-6">
       <PageHead kicker={`Marketing · signups in the last ${range.label}`} title="Which marketing creates paying contractors"
         intro="First-touch attribution from Built2Bid's own signup records. Website traffic comes from GA4 only when it is connected; nothing here is estimated."
-        right={<RangeControl view={view} path="/admin/marketing" />} />
+        right={<div className="flex flex-wrap items-center gap-2"><Link href="/admin/marketing/radar" data-testid="radar-link" className="cc-mono rounded-md border border-[var(--cc-green)] px-2.5 py-1.5 text-xs text-[var(--cc-green)] hover:bg-[rgb(61_255_168/0.08)]">Opportunity Radar →</Link><RangeControl view={view} path="/admin/marketing" /></div>} />
       <ScopeNote sc={sc} />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">

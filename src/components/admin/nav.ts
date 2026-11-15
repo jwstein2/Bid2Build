@@ -13,6 +13,7 @@ export const TOOLS = [
   { href: "/admin/complimentary", label: "Complimentary access" },
   { href: "/admin/states", label: "Bids by state" },
   { href: "/admin/definitions", label: "Metric definitions" },
+  { href: "/admin/marketing/radar", label: "Opportunity Radar" },
   { href: "/admin/sales", label: "Outreach funnel (Sales)" },
   { href: "/admin/market", label: "Market intelligence" },
   { href: "/admin/templates", label: "Trade templates" },
