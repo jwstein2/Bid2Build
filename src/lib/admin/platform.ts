@@ -94,3 +94,22 @@ export async function loadSnapshot(db: Db, callerId: string): Promise<Snapshot> 
     loadedAt: new Date().toISOString(),
   };
 }
+
+export interface PlatformUsage { db_bytes: number; auth_users: number; buckets: { bucket: string; objects: number; bytes: number }[]; measured_at: string }
+export interface AiUse { created_at: string; cost_usd: number | string; status: string }
+export interface CostData {
+  services: import("./costs").ServiceRow[]; expenses: import("./costs").ExpenseRow[]; installed: boolean;
+  usage: PlatformUsage | null; ai: AiUse[] | null;
+}
+
+/** Owner cost records, platform usage aggregates and the AI usage log (cost and status only). Admin only. */
+export async function loadCosts(db: Db): Promise<CostData> {
+  const since = new Date(Date.now() - 400 * 86_400_000).toISOString();
+  const [services, expenses, usage, ai] = await Promise.all([
+    optional<import("./costs").ServiceRow>(db, "admin_services", "provider_key,name,purpose,category,status,plan,cost_type,amount_cents,billing_interval,next_renewal,allocation_pct,budget_monthly_cents,cost_source,dashboard_url,invoice_ref,notes,updated_at", "provider_key"),
+    optional<import("./costs").ExpenseRow>(db, "admin_expenses", "id,service_key,incurred_on,amount_cents,kind,source,external_id,note,created_at", "incurred_on"),
+    db.rpc("admin_platform_usage").then((r) => (r.error ? null : (r.data as PlatformUsage | null)), () => null),
+    db.from("ai_generations").select("created_at,cost_usd,status").gte("created_at", since).limit(50_000).then((r) => (r.error ? null : (r.data as AiUse[])), () => null),
+  ]);
+  return { services: services ?? [], expenses: expenses ?? [], installed: services !== null && expenses !== null, usage, ai };
+}
