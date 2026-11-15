@@ -106,7 +106,7 @@ Built2Bid
 built2bid.org
 ```
 
-No sign-in button or link, no images, no tracking pixel, no shortened links. `{{ .Token }}` is filled by
+Branded card layout (navy Built2Bid header in text, no image) with the code; no sign-in button or link, no images, no tracking pixel, no shortened links. `{{ .Token }}` is filled by
 Supabase. Old emails with a link still work because `/auth/callback` and `/auth/confirm` are kept.
 
 Left alone on purpose (they need a link or are separate flows): **Reset password** (the admin "Send secure
