@@ -1,3 +1,4 @@
+import { openGraphFor } from "@/lib/seo/open-graph";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -13,7 +14,7 @@ export function generateStaticParams() { return articles.map((a) => ({ slug: a.s
 export async function generateMetadata({ params }: PageProps<"/learn/[slug]">): Promise<Metadata> {
   const a = getArticle((await params).slug);
   if (!a) return {};
-  return { title: a.title, description: a.description, alternates: { canonical: `/learn/${a.slug}` }, openGraph: { title: a.title, description: a.description, type: "article" } };
+  return { title: a.title, description: a.description, alternates: { canonical: `/learn/${a.slug}` }, openGraph: openGraphFor({ title: a.title, description: a.description, path: `/learn/${a.slug}`, type: "article" }) };
 }
 
 export default async function ArticlePage({ params }: PageProps<"/learn/[slug]">) {

@@ -1,3 +1,4 @@
+import { openGraphFor } from "@/lib/seo/open-graph";
 import type { Metadata } from "next";
 import { Check, Minus } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
@@ -15,10 +16,14 @@ import { isEnterpriseConfigured } from "@/lib/env";
 import { site } from "@/lib/site";
 import { createClient } from "@/lib/supabase/server";
 
+const pageTitle = "Pricing";
+const pageDescription = `Free: ${plans.starterCredits} bids to start, plus ${plans.monthlyCredits} free bid every month. Unlimited: ${MONTHLY.price}/month billed monthly, or ${ANNUAL.price}/year billed annually.`;
+
 export const metadata: Metadata = {
-  title: "Pricing",
-  description: `Free: ${plans.starterCredits} bids to start, plus ${plans.monthlyCredits} free bid every month. Unlimited: ${MONTHLY.price}/month billed monthly, or ${ANNUAL.price}/year billed annually.`,
+  title: pageTitle,
+  description: pageDescription,
   alternates: { canonical: "/pricing" },
+  openGraph: openGraphFor({ title: `${pageTitle} | ${site.name}`, description: pageDescription, path: "/pricing" }),
 };
 
 const rows: [string, boolean | string, boolean | string, boolean | string][] = [
