@@ -112,6 +112,18 @@ Placement rules: a real signature puts a bid at Won or later; an active signing 
 - **Migration:** `supabase/migrations/20261116004000_project_schedules.sql`. Rollback: `docs/pipeline/rollback_20261116004000.sql` (deletes schedules; export first).
 - **Tests:** `tests/schedule-engine.test.ts` (29), `tests/schedule-route.test.ts` (9), `tests/db/project-schedules.test.ts` (10 on real Postgres), `scripts/schedule/walk.mjs` (38 browser checks, desktop/390/320, mock Supabase).
 
+## Phase 8: customer schedule updates
+
+- **Internal vs published:** schedule edits never reach the customer. From the schedule page, **Preview customer update** (editors only) opens `/projects/[id]/update`: options on the left, the exact customer view on the right (Options / Preview tabs on phones). **Publish update** needs a ticked "I reviewed this preview" box, and any option change clears it. Publishing sends nothing; dragging a bar never emails anyone.
+- **Preview options:** overall progress, timeline, completed sections, current work, upcoming work, scheduled line items, scope summaries (per section, editable, prefilled with line item names only), optional progress notes, company logo and color. Defaults hide line items, scope and notes.
+- **Never in a customer update:** prices, unit costs, margins, profit, quantities, task weights, assignees, private task notes. The report is built only by `buildCustomerReport` in `src/lib/schedule/report.ts`, on the server, from the saved schedule; the browser can't send report content.
+- **Report:** contractor company and contact, customer, project, report date, overall % complete (work-based), completed / current / upcoming sections with scheduled dates, recorded completion dates, revised forecast completion with the previous forecast when it moved, approved notes, scope where enabled. Completion is shown only once recorded (Complete needs an actual finish). A section that slipped since the last published update says so ("Finish moved later: was Nov 18, now Nov 21.").
+- **Delivery (contractor stays in control):** Download / Preview PDF, **Send via My Email** (Gmail, Outlook or the email app open with a filled-in draft; on phones the PDF goes through the share sheet), and an optional **secure link** (`/updates/<token>`, 256-bit token, only its SHA-256 stored, 30 days, one per update, can be turned off). Built2Bid never emails the customer and never records an email as delivered: history says "Email draft opened (you send it)". Link opens are counted.
+- **History:** each publication is a numbered, write-once snapshot (trigger `schedule_publications_freeze`) with date, publisher, the customer-visible content, options, delivery actions and link status. Later edits never change an old update, and an old link keeps showing its own frozen copy. View-only members see the history but can't publish or share.
+- **Access (server-side):** publish, link, revoke and delivery go through `schedule_publish`, `schedule_publication_link`, `schedule_publication_revoke_link` and `schedule_publication_delivery`, all checking `schedule_can_edit()`. Publishing also checks the schedule revision, so a schedule changed after the preview must be reviewed again. Company publications are written to the company audit log.
+- **Migration:** `supabase/migrations/20261116005000_schedule_publications.sql`. Rollback: `docs/pipeline/rollback_20261116005000.sql` (deletes published updates and turns off their links).
+- **Tests:** `tests/schedule-report.test.tsx` (8, including PDF text), `tests/schedule-updates-route.test.ts` (5), `tests/db/schedule-publications.test.ts` (4 on real Postgres), `scripts/schedule/updates-walk.mjs` (37 browser checks, desktop/390/320, mock Supabase).
+
 ## Migration and rollback
 
 - Migration: `supabase/migrations/20261116002000_sales_pipeline.sql` (idempotent, tested twice in a row).
@@ -139,8 +151,8 @@ Placement rules: a real signature puts a bid at Won or later; an active signing 
 | 9 | Enterprise PM permissions and seat assignment | none |
 | 10 | Owner analytics: pipeline adoption, PM MRR split, regression run | none |
 
-## Production approval checklist (Phases 6-7 PR)
+## Production approval checklist (Phase 8 PR)
 
-1. Run `20261116004000_project_schedules.sql` in the Supabase SQL Editor.
+1. Run `20261116005000_schedule_publications.sql` in the Supabase SQL Editor (Phases 6-7 SQL already applied).
 2. Say "merge". Nothing becomes visible: the flag stays off.
 3. To launch scheduling later: approve the live Stripe prices from Phase 5, set the price env vars and `PM_BILLING_LIVE=true`, mark `project_scheduling` released in the registry, then set `NEXT_PUBLIC_PROJECT_SCHEDULING=on` and redeploy.
