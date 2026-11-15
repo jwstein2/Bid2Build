@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { assertModeAllowed, getStripe } from "@/lib/billing/stripe";
 import { applySubscription } from "@/lib/billing/apply";
+import { previewTaxParams } from "@/lib/billing/tax";
 import { addonItemUpdates, pmFromItems, PM_ADDON_CENTS, planInterval, type PmItem } from "@/lib/pm/billing";
 import { individualSubscription, loadPmAccess, pmPrices, prorationCents, verifyPmPrice } from "@/lib/pm/server";
 import { loadMyCompany } from "@/lib/enterprise/server";
@@ -73,6 +74,7 @@ export async function POST(req: Request) {
         customer: row.stripe_customer_id,
         subscription: row.stripe_subscription_id,
         subscription_details: { items: updates, proration_behavior: "always_invoice", proration_date: prorationDate },
+        ...previewTaxParams(sub),
       });
       const now = prorationCents(preview.lines.data as never);
       return json({
