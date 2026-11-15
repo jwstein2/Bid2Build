@@ -133,10 +133,27 @@ export function checkArticle(a: Article, opts: CheckOptions = {}): CheckResult {
   for (const src of sources) {
     if (!/^https:\/\/[^\s]+$/.test(src.url)) problems.push(`source URL must be https: ${src.url}`);
     if (!src.title.trim()) problems.push(`source needs a title: ${src.url}`);
+    else if (/^https:/.test(src.url) && !usableSource(src.url, src.title)) problems.push(`source is a cost guide or lead-generation page: ${src.url}`);
     if (opts.allowedSources && !opts.allowedSources.has(src.url)) problems.push(`source was not found by the research step: ${src.url}`);
   }
   if (new Set(sources.map((x) => x.url)).size !== sources.length) problems.push("duplicate source URLs");
   return { ok: problems.length === 0, problems };
+}
+
+/**
+ * Pages we never link as further reading: homeowner cost guides and lead-generation marketplaces
+ * (they quote the market prices our guides deliberately avoid, and several compete for the same
+ * contractors), plus anything whose title advertises prices.
+ */
+const BLOCKED_SOURCE_HOSTS = /(?:^|\.)(?:angi|angieslist|homeadvisor|thumbtack|homeguide|fixr|porch|modernize|houzz|yelp|bark|networx|homeyou|costhelper|costowl|improvenet|forbes|bankrate|nerdwallet|insuranceopedia|lendingtree|reddit|quora|youtube|facebook|pinterest|tiktok|instagram)\.com$/i;
+const BLOCKED_SOURCE_TITLE = /\$|\bhow much\b|\bcheapest\b|\bcost (?:guide|calculator|data)\b|\bdata\]|\bquotes? near\b/i;
+export function usableSource(url: string, title: string): boolean {
+  try {
+    const u = new URL(url);
+    return u.protocol === "https:" && !BLOCKED_SOURCE_HOSTS.test(u.hostname.replace(/^www\./, "")) && !BLOCKED_SOURCE_TITLE.test(title);
+  } catch {
+    return false;
+  }
 }
 
 /* ------------------------------------------------------------------ topic plan */

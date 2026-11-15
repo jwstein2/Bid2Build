@@ -29,7 +29,7 @@ import { readFileSync, writeFileSync, appendFileSync } from "node:fs";
 import { join } from "node:path";
 import { tradeSeeds } from "../../src/lib/trades/data";
 import type { Article } from "../../src/lib/learn/articles";
-import { checkArticle, nextTopic, topicPlan, type Topic } from "../../src/lib/learn/article-checks";
+import { checkArticle, nextTopic, topicPlan, usableSource, type Topic } from "../../src/lib/learn/article-checks";
 import { codeRefsFor } from "../../src/lib/learn/code-references";
 
 const MODEL = process.env.ARTICLE_MODEL?.trim() || "claude-haiku-5-5";
@@ -138,7 +138,7 @@ async function research(topic: Topic): Promise<Research | null> {
       max_tokens: 6000,
       output_config: { effort: "low" },
       tools: [{ type: "web_search_20250305", name: "web_search", max_uses: MAX_SEARCHES, user_location: { type: "approximate", country: "US" } }],
-      system: "You research background notes for a practical pricing guide for small US contractors. Rely only on what your searches return. Prefer trade associations, manufacturers, government agencies, the International Code Council and established trade publications over blogs and lead-generation sites.",
+      system: "You research background notes for a practical pricing guide for small US contractors. Rely only on what your searches return. Prefer trade associations, manufacturers, government agencies, the International Code Council and established trade publications over blogs. Skip homeowner cost guides, price-quote and lead-generation sites (Angi, HomeAdvisor, Thumbtack and similar) and pages that advertise prices.",
       messages: [{ role: "user", content: `Research ${subject}. Find:
 1. Recent changes that affect how US contractors in this trade plan and price jobs: material availability and lead times, product or installation method shifts, energy or building code adoption, insurance, permitting, labor availability, customer demand. Include worldwide supply or market changes only if they affect US jobs.
 2. The questions and phrases homeowners and contractors search for about pricing or estimating this work.
@@ -154,7 +154,7 @@ Leave out anything your search results do not support.` }],
     const found = new Map<string, string>();
     for (const b of res.content) {
       if (b.type === "web_search_tool_result" && Array.isArray(b.content)) {
-        for (const r of b.content) if (r.url.startsWith("https://")) found.set(r.url, r.title.trim() || new URL(r.url).hostname);
+        for (const r of b.content) if (usableSource(r.url, r.title)) found.set(r.url, r.title.trim() || new URL(r.url).hostname);
       }
     }
     const notes = res.content.flatMap((b) => (b.type === "text" ? [b.text] : [])).join("").trim();

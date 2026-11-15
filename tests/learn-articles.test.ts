@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import generated from "@/lib/learn/generated-articles.json";
 import { articles, articlesForTrade, type Article } from "@/lib/learn/articles";
-import { checkArticle, checkFormulaMath, nextTopic, topicPlan } from "@/lib/learn/article-checks";
+import { checkArticle, checkFormulaMath, nextTopic, topicPlan, usableSource } from "@/lib/learn/article-checks";
 import { trades } from "@/lib/trades/catalog";
 import { codeRefsFor } from "@/lib/learn/code-references";
 
@@ -88,6 +88,10 @@ describe("article checks", () => {
     withSources.sources = [{ title: "Deck code guide", url: "https://www.iccsafe.org/example" }];
     expect(checkArticle(withSources, { knownTrades, allowedSources: new Set(["https://www.iccsafe.org/example"]) }).problems).toEqual([]);
     expect(checkArticle(withSources, { knownTrades, allowedSources: new Set() }).problems.join(" ")).toMatch(/not found by the research step/);
+    withSources.sources = [{ title: "How Much Does It Cost to Build a Deck? [2026 Data]", url: "https://www.angi.com/articles/deck-cost.htm" }];
+    expect(checkArticle(withSources, { knownTrades }).problems.join(" ")).toMatch(/lead-generation/);
+    expect(usableSource("https://www.finehomebuilding.com/deck-ledger-flashing", "Learn to Flash a Deck Ledger")).toBe(true);
+    expect(usableSource("https://www.insuranceopedia.com/x", "Insurance Cost: $70/mo")).toBe(false);
     withSources.sources = [{ title: "Plain", url: "http://example.com" }];
     expect(checkArticle(withSources, { knownTrades }).problems.join(" ")).toMatch(/https/);
   });
