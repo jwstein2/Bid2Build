@@ -2,20 +2,22 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, Plug, LayoutTemplate, LogOut, X, UserCog, Receipt, Gauge, SquareKanban } from "lucide-react";
+import { Sparkles, CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, Plug, LayoutTemplate, LogOut, X, UserCog, Receipt, Gauge, SquareKanban } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ButtonLink } from "@/components/ui/button";
 import { Logo } from "./logo";
 import { PremiumDiamond } from "../billing/premium";
 import { ReplayTourButton } from "../onboarding/replay-tour-button";
+import { FeatureTourButton } from "../features/tour-buttons";
+import type { FeatureId } from "@/lib/features/registry";
 
-const nav: { href: string; label: string; icon: typeof Library; exact?: boolean; premium?: boolean }[] = [
+const nav: { href: string; label: string; icon: typeof Library; exact?: boolean; premium?: boolean; feature?: FeatureId }[] = [
   { href: "/dashboard", label: "Bids", icon: LayoutDashboard, exact: true },
   // Directly below Bids: contractors set this up first and their proposals depend on it.
   { href: "/settings/company", label: "Company profile", icon: Building2 },
   { href: "/dashboard/customers", label: "Saved customers", icon: Users },
-  { href: "/dashboard/items", label: "Saved Items & Pricing", icon: Library, premium: true },
-  { href: "/dashboard/templates", label: "Proposal Templates", icon: LayoutTemplate, premium: true },
+  { href: "/dashboard/items", label: "Saved Items & Pricing", icon: Library, premium: true, feature: "library" },
+  { href: "/dashboard/templates", label: "Proposal Templates", icon: LayoutTemplate, premium: true, feature: "templates" },
   { href: "/settings/billing", label: "Subscription", icon: CreditCard },
   { href: "/settings/pricing", label: "Pricing data", icon: Plug },
   { href: "/settings/account", label: "Account settings", icon: Settings },
@@ -64,7 +66,7 @@ export function AppSidebar({ isAdmin, email, company }: { isAdmin: boolean; emai
         {nav.map((n) => {
           const on = active(n.href, n.exact);
           return (
-            <Link key={n.href} href={n.href} aria-current={on ? "page" : undefined} className={cn(item, on ? "bg-white/10 text-white shadow-[inset_3px_0_0_var(--color-cyan)]" : "text-[#C9D6E3] hover:bg-white/5 hover:text-white")}>
+            <Link key={n.href} href={n.href} data-feature={n.feature} aria-current={on ? "page" : undefined} className={cn(item, on ? "bg-white/10 text-white shadow-[inset_3px_0_0_var(--color-cyan)]" : "text-[#C9D6E3] hover:bg-white/5 hover:text-white")}>
               <n.icon className={cn("h-4 w-4", on ? "text-cyan" : "")} aria-hidden /> {n.label}
               {n.premium && <PremiumDiamond tone="dark" className="ml-auto pl-2" />}
             </Link>
@@ -86,6 +88,8 @@ export function AppSidebar({ isAdmin, email, company }: { isAdmin: boolean; emai
         )}
         <p className="mt-3 px-3 pb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#B8C6D4]">Help</p>
         <ReplayTourButton className={cn(item, "w-full text-left text-[#C9D6E3] hover:bg-white/5 hover:text-white")} />
+        <FeatureTourButton className={cn(item, "w-full text-left text-[#C9D6E3] hover:bg-white/5 hover:text-white")} />
+        <Link href="/whats-new" aria-current={active("/whats-new") ? "page" : undefined} className={cn(item, active("/whats-new") ? "bg-white/10 text-white" : "text-[#C9D6E3] hover:bg-white/5 hover:text-white")} data-testid="nav-whats-new"><Sparkles className="h-4 w-4" aria-hidden /> What&apos;s New</Link>
         {isAdmin && (
           <Link href="/admin" className={cn(item, "text-[#C9D6E3] hover:bg-white/5 hover:text-white")}><Shield className="h-4 w-4" aria-hidden /> Admin</Link>
         )}

@@ -9,6 +9,7 @@ import { syncSignedInUser } from "@/lib/growth/leads";
 import { REFERRAL_COOKIE } from "@/lib/growth/referral";
 import { recordReferral } from "@/lib/growth/referral-server";
 import { AppSidebar } from "@/components/layout/app-nav";
+import { FeatureHost } from "@/components/features/feature-host";
 import { formatPhone } from "@/lib/auth/phone";
 
 
@@ -39,6 +40,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <AppSidebar isAdmin={Boolean(isAdmin)} company={companyNav(company)} email={user.email ?? (user.phone ? formatPhone(user.phone) : null)} />
       </aside>
       <main id="main" className="min-w-0 flex-1 px-4 py-6 sm:px-8">{children}</main>
+      <FeatureHost />
     </div>
   );
 }

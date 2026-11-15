@@ -307,6 +307,8 @@ http.createServer((req, res) => {
       if (!(onlyNull && p.onboarding_status)) Object.assign(p, body);
       return send(res, 200, [p]);
     }
+    // Feature discovery state (auth user_metadata.b2b_features): reset, or set created_at for "new account" checks.
+    if (u.pathname === "/__features") { USER.user_metadata = {}; if (u.searchParams.get("created")) USER.created_at = u.searchParams.get("created"); return send(res, 200, { ok: true }); }
     if (u.pathname === "/__reset_library") { Object.assign(tables, JSON.parse(LIBRARY_SEED)); return send(res, 200, { ok: true }); }
     if (u.pathname === "/auth/v1/user" && req.method === "GET") return void setTimeout(() => send(res, 200, USER), authDelayMs);
     if (u.pathname === "/__otp-log") {
@@ -326,6 +328,7 @@ http.createServer((req, res) => {
     if (u.pathname === "/auth/v1/user" && req.method === "PUT") {
       let body = {}; try { body = JSON.parse(raw || "{}"); } catch { /* ignore */ }
       otpLog.push({ kind: "update_user", phone: body.phone, email: body.email });
+      if (body.data && typeof body.data === "object") USER.user_metadata = { ...USER.user_metadata, ...body.data };
       if (body.phone && String(body.phone).replace(/\D/g, "") === TAKEN_PHONE) return send(res, 422, { code: 422, error_code: "phone_exists", msg: "A user with this phone number has already been registered" });
       return send(res, 200, { ...USER, new_phone: body.phone, new_email: body.email });
     }
