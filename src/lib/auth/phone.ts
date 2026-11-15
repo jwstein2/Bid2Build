@@ -144,3 +144,46 @@ export function markSent(phone: string, now = Date.now(), storage: Pick<Storage,
 function safeSession(): Storage | null {
   try { return typeof window === "undefined" ? null : window.sessionStorage; } catch { return null; }
 }
+
+/** How long after a failed sign-up text the half-made account may still be cleaned up. */
+export const ABANDONED_SIGNUP_WINDOW_MS = 15 * 60_000;
+
+type AbandonCandidate = {
+  phone?: string | null; email?: string | null; phone_confirmed_at?: string | null; email_confirmed_at?: string | null;
+  confirmed_at?: string | null; last_sign_in_at?: string | null; created_at?: string | null; identities?: { provider?: string }[] | null;
+};
+
+/**
+ * "I'm new here" asks Supabase to create the account before it texts the code. When the text then
+ * fails (carrier refuses, Twilio not approved yet) a phone-only account is left behind that nobody
+ * can sign in to, and that later blocks linking the number to an email account. This decides whether
+ * an account is exactly that leftover and nothing more: this phone, no email, never confirmed, never
+ * signed in, only a phone identity, and created in the last few minutes. Anything else is left alone.
+ */
+export function isAbandonedPhoneSignup(u: AbandonCandidate | null | undefined, phone: string, now = Date.now()): boolean {
+  if (!u) return false;
+  const want = phoneDigits(phone);
+  if (!want || phoneDigits(u.phone) !== want) return false;
+  if (u.email || u.phone_confirmed_at || u.email_confirmed_at || u.confirmed_at || u.last_sign_in_at) return false;
+  if ((u.identities ?? []).some((i) => i.provider !== "phone")) return false;
+  const created = u.created_at ? Date.parse(u.created_at) : NaN;
+  return Number.isFinite(created) && created <= now + 60_000 && now - created <= ABANDONED_SIGNUP_WINDOW_MS;
+}
+
+/**
+ * The text itself failed (provider refused, carrier rejected the number). Rate limits, captcha and
+ * network errors are not: there the account may be fine, or the code may still arrive.
+ */
+export function isSendFailure(e: AuthErr): boolean {
+  if (!e) return false;
+  const msg = (e.message ?? "").toLowerCase();
+  const code = e.code ?? "";
+  if (e.status === 429 || code.startsWith("over_") || msg.includes("rate limit") || msg.includes("for security purposes")) return false;
+  if (code === "captcha_failed" || msg.includes("captcha") || msg.includes("fetch") || msg.includes("network")) return false;
+  return code === "sms_send_failed" || code === "phone_provider_disabled" || msg.includes("sending confirmation otp") || msg.includes("provider") || msg.includes("sms");
+}
+
+/** Best-effort: ask the server to remove the leftover account after a failed sign-up text. */
+export async function abandonPhoneSignup(phone: string, f: typeof fetch = fetch): Promise<void> {
+  await f("/api/auth/phone-abandon", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ phone }) }).catch(() => {});
+}
