@@ -45,3 +45,14 @@ describe("owner UTM links land in the right channel", () => {
     expect(classifyChannel({ utm_source: "newsletter" })).toBe("referral");
   });
 });
+
+describe("/r/<code> route", () => {
+  it("redirects with a relative Location so visitors stay on the domain they used", async () => {
+    const { GET } = await import("@/app/r/[code]/route");
+    const res = await GET(new Request("https://abc123--built2bid.netlify.app/r/ab3de7gh"), { params: Promise.resolve({ code: "ab3de7gh" }) } as never);
+    expect(res.status).toBe(307);
+    expect(res.headers.get("location")).toBe("/?ref=AB3DE7GH&utm_source=referral&utm_medium=referral&utm_campaign=refer_a_contractor");
+    const bad = await GET(new Request("https://built2bid.org/r/x"), { params: Promise.resolve({ code: "<x>" }) } as never);
+    expect(bad.headers.get("location")).toBe("/");
+  });
+});
