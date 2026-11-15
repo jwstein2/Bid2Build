@@ -19,17 +19,43 @@ import { RecentlySigned, type SignedBid } from "./recently-signed";
 import { RefreshOnFocus } from "@/components/esign/refresh-on-focus";
 import { ReferCard } from "./refer-card";
 import { referralLink, type MyReferral } from "@/lib/growth/referral";
+import { BidsWorkspace, type BidsView } from "@/components/pipeline/bids-workspace";
+import { isStage, type BoardBid, type HistoryRow } from "@/lib/pipeline/board";
+import { DEFAULT_PAY, sanitizePay } from "@/lib/pipeline/sales-pay";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+const EST_COLS = "id, title, customer_name, trades, status, updated_at, estimate_number, created_at";
+
+/** Personal bids with their pipeline fields. Falls back to the pre-V4 columns until the migration runs. */
+async function loadBids(supabase: SupabaseClient, userId: string) {
+  const full = await supabase.from("estimates").select(`${EST_COLS}, pipeline_stage, stage_changed_at, won_at, lost_reason`).eq("user_id", userId).order("updated_at", { ascending: false }).limit(500);
+  if (!full.error) return { rows: full.data ?? [], migrated: true };
+  const basic = await supabase.from("estimates").select(`${EST_COLS}, pipeline_stage, stage_changed_at, lost_reason`).eq("user_id", userId).order("updated_at", { ascending: false }).limit(500);
+  if (!basic.error) return { rows: basic.data ?? [], migrated: false };
+  const legacy = await supabase.from("estimates").select(EST_COLS).eq("user_id", userId).order("updated_at", { ascending: false }).limit(500);
+  return { rows: legacy.data ?? [], migrated: false };
+}
+
+async function loadHistory(supabase: SupabaseClient, userId: string): Promise<HistoryRow[]> {
+  const sel = (cols: string) => supabase.from("estimate_stage_history").select(`${cols}, estimates!inner(user_id)`).eq("estimates.user_id", userId).order("created_at", { ascending: false }).limit(1000);
+  const a = await sel("estimate_id, from_stage, to_stage, created_at, effective_at, note");
+  if (!a.error) return (a.data ?? []) as unknown as HistoryRow[];
+  const b = await sel("estimate_id, from_stage, to_stage, created_at, note");
+  return (b.data ?? []) as unknown as HistoryRow[];
+}
 
 export const metadata: Metadata = { title: "Dashboard", robots: { index: false } };
 
-export default async function Dashboard() {
+export default async function Dashboard({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const sp = await searchParams;
+  const initialView = (["pipeline", "table", "analytics"] as const).find((v) => v === sp.view) as BidsView | undefined;
   const user = (await getUser())!;
   const supabase = await createClient();
-  const [{ data: estimates }, { data: versions }, credits, { data: biz }, libraryAccess, company, { data: referralData }] = await Promise.all([
+  const [{ rows: estimates, migrated }, { data: versions }, credits, { data: biz }, libraryAccess, company, { data: referralData }] = await Promise.all([
     // "My bids" stays personal: Enterprise owners/managers can also read teammates' company bids (RLS),
     // which belong in the company Command Center, not here.
-    supabase.from("estimates").select("id, title, customer_name, trades, status, updated_at, estimate_number").eq("user_id", user.id).order("updated_at", { ascending: false }).limit(500),
-    supabase.from("estimate_versions").select("id, estimate_id, version_number, total, created_at").order("version_number", { ascending: false }),
+    loadBids(supabase, user.id),
+    supabase.from("estimate_versions").select("id, estimate_id, version_number, total, subtotal, total_cost, created_at").order("version_number", { ascending: false }),
     loadCreditStatus(supabase),
     supabase.from("business_profiles").select("company_name, logo_path, phone, email, address").eq("user_id", user.id).maybeSingle(),
     hasPremiumAccess(supabase),
@@ -37,6 +63,11 @@ export default async function Dashboard() {
     // Referral code + counts. Missing function (migration not run yet) just hides the card.
     supabase.rpc("my_referral"),
   ]);
+  const [history, { data: payRow }] = await Promise.all([
+    loadHistory(supabase, user.id),
+    supabase.from("sales_pay_settings").select("method, rate, flat_fee, base_salary, base_exclusions").eq("user_id", user.id).maybeSingle(),
+  ]);
+  const pay = payRow ? sanitizePay({ method: payRow.method, rate: Number(payRow.rate), flatFee: Number(payRow.flat_fee), baseSalary: Number(payRow.base_salary), baseExclusions: Number(payRow.base_exclusions) }) : DEFAULT_PAY;
   const referral = (referralData as MyReferral | null)?.code ? referralData as MyReferral : null;
   // Signing status (personal bids, like the list below). A missing table (migration not run yet)
   // just means no signing data: the dashboard never fails because of it.
@@ -52,9 +83,21 @@ export default async function Dashboard() {
     companyName: company.name, role: ROLE_LABELS[company.role], complimentary: company.entitlement.source === "complimentary",
     expiresAt: company.entitlement.expiresAt, manageHref: can(company, "manage_billing") ? "/company/billing" as const : "/company/users" as const,
   } : null;
-  const latest = new Map<string, { id: string; version_number: number; total: number }>();
+  const latest = new Map<string, { id: string; version_number: number; total: number; subtotal?: number | string | null; total_cost?: number | string | null }>();
   for (const v of versions ?? []) if (!latest.has(v.estimate_id)) latest.set(v.estimate_id, v);
-  const rows: BidRow[] = (estimates ?? []).map((e) => ({
+  type Est = { id: string; title: string; customer_name: string; trades: string[]; status: BidRow["status"]; updated_at: string; estimate_number: string; created_at: string; pipeline_stage?: string; stage_changed_at?: string | null; won_at?: string | null; lost_reason?: string | null };
+  const ests = (estimates ?? []) as Est[];
+  const board: BoardBid[] = ests.map((e) => {
+    const v = latest.get(e.id);
+    return {
+      id: e.id, title: e.title || "Untitled bid", customer: e.customer_name, number: e.estimate_number, trades: e.trades, status: e.status,
+      stage: isStage(e.pipeline_stage) ? e.pipeline_stage : "draft", createdAt: e.created_at ?? e.updated_at, updatedAt: e.updated_at,
+      stageChangedAt: e.stage_changed_at ?? null, wonAt: e.won_at ?? null, lostReason: e.lost_reason ?? null,
+      latestVersion: v ? { id: v.id, number: v.version_number, total: Number(v.total), subtotal: v.subtotal == null ? null : Number(v.subtotal), cost: v.total_cost == null ? null : Number(v.total_cost) } : null,
+      signing: esign ? signing.get(e.id) ?? { state: "none", signed: null, latest: null } : null,
+    };
+  });
+  const rows: BidRow[] = ests.map((e) => ({
     id: e.id, title: e.title || "Untitled bid", customer: e.customer_name, trades: e.trades, status: e.status, updatedAt: e.updated_at, number: e.estimate_number,
     latestVersion: latest.get(e.id) ? { id: latest.get(e.id)!.id, number: latest.get(e.id)!.version_number, total: Number(latest.get(e.id)!.total) } : null,
     signing: esign ? signing.get(e.id) ?? { state: "none", signed: null, latest: null } : null,
@@ -65,7 +108,7 @@ export default async function Dashboard() {
     .filter((x): x is string => Boolean(x));
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
+    <div className="mx-auto max-w-7xl space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-3xl font-extrabold text-navy">Your bids</h1>
@@ -80,23 +123,21 @@ export default async function Dashboard() {
       {esign && <RefreshOnFocus />}
       {esign && recentSigned.length > 0 && <RecentlySigned bids={recentSigned} days={RECENT_SIGNED_DAYS} />}
       <ProfileReminder missing={missing} />
+      <BidsWorkspace bids={board} history={history} esign={esign} pay={pay} paySaved={Boolean(payRow)} migrated={migrated} initialView={initialView} table={<BidList rows={rows} />} />
       <div className="grid gap-4 lg:grid-cols-3">
         {credits && <CreditBalances credits={credits} className="lg:col-span-2" showUpgrade={false} enterprise={enterprise} />}
-        <div className={`grid gap-4 lg:grid-cols-1 ${esign ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-2"}`}>
+        <div className="grid gap-4">
           {esign && (
-            <Card className="col-span-2 border-ok/30 p-4 sm:col-span-1 lg:col-span-1" data-testid="signed-count">
+            <Card className="border-ok/30 p-4" data-testid="signed-count">
               <p className="flex items-center gap-1 text-sm text-muted"><FileCheck2 className="h-4 w-4 text-ok" aria-hidden />Recently Signed Bids</p>
               <p className="text-2xl font-extrabold text-ok">{recentSigned.length}</p>
               <p className="text-xs text-muted">Last {RECENT_SIGNED_DAYS} days</p>
             </Card>
           )}
-          <Card className="p-4"><p className="text-sm text-muted">Drafts</p><p className="text-2xl font-extrabold">{rows.filter((r) => r.status === "draft").length}</p></Card>
-          <Card className="p-4"><p className="text-sm text-muted">Finalized proposals</p><p className="text-2xl font-extrabold">{rows.filter((r) => r.status === "finalized").length}</p></Card>
         </div>
       </div>
       <PremiumTiles unlocked={libraryAccess} />
       {referral && <ReferCard link={referralLink(referral.code)} signedUp={referral.signed_up} paying={referral.paying} monthsEarned={referral.months_earned} eligible={referral.eligible} />}
-      <BidList rows={rows} />
     </div>
   );
 }

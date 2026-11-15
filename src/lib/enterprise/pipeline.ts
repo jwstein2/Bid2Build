@@ -1,12 +1,14 @@
 /** Bid pipeline stages, filters and CSV for the Enterprise Command Center. Server rules live in SQL (set_estimate_stage). */
-export const STAGES = ["draft", "ready_for_review", "approved", "sent", "pending", "won", "lost"] as const;
+export const STAGES = ["draft", "ready_for_review", "approved", "sent", "pending", "won", "scheduled", "in_progress", "completed", "lost"] as const;
 export type Stage = (typeof STAGES)[number];
 
 export const STAGE_LABELS: Record<Stage, string> = {
-  draft: "Draft", ready_for_review: "Ready for Review", approved: "Approved", sent: "Sent", pending: "Pending", won: "Won", lost: "Lost",
+  draft: "Draft", ready_for_review: "Ready for Review", approved: "Approved", sent: "Sent", pending: "Pending", won: "Won",
+  scheduled: "Scheduled", in_progress: "In Progress", completed: "Completed", lost: "Lost",
 };
 export const STAGE_TONES: Record<Stage, "neutral" | "warn" | "brand" | "accent" | "ok" | "danger"> = {
-  draft: "neutral", ready_for_review: "warn", approved: "brand", sent: "accent", pending: "accent", won: "ok", lost: "danger",
+  draft: "neutral", ready_for_review: "warn", approved: "brand", sent: "accent", pending: "accent", won: "ok",
+  scheduled: "ok", in_progress: "ok", completed: "ok", lost: "danger",
 };
 export const isStage = (s: unknown): s is Stage => typeof s === "string" && (STAGES as readonly string[]).includes(s);
 

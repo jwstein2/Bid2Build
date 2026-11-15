@@ -206,6 +206,58 @@ if (ESIGN) {
     return [200, null];
   };
 }
+// V4 sales pipeline walk (MOCK_PIPELINE=1, together with MOCK_ESIGN_FIXTURE): bids in every stage, stage history,
+// and a set_estimate_stage stand-in that applies the same transition rules as the SQL so moves persist in memory.
+const pipelineRpc = {};
+if (process.env.MOCK_PIPELINE && ESIGN) {
+  const E = (n) => `11111111-1111-4111-8111-11111111111${n}`;
+  const P = (n) => `11111111-1111-4111-8111-2222222222${String(n).padStart(2, "0")}`;
+  const base = { user_id: USER.id, status: "finalized", lost_reason: null, won_at: null, stage_changed_at: null };
+  const set = (id, o) => Object.assign(tables.estimates.find((e) => e.id === id), o);
+  set(E(1), { created_at: iso(6), pipeline_stage: "ready_for_review", stage_changed_at: iso(4), won_at: null, lost_reason: null });
+  set(E(2), { created_at: iso(14), pipeline_stage: "sent", stage_changed_at: iso(2), won_at: null, lost_reason: null });
+  set(E(3), { created_at: iso(9), pipeline_stage: "draft", stage_changed_at: null, won_at: null, lost_reason: null });
+  set(E(4), { created_at: iso(35), pipeline_stage: "pending", stage_changed_at: iso(31), won_at: null, lost_reason: null });
+  set(E(5), { created_at: iso(12), pipeline_stage: "scheduled", stage_changed_at: iso(3), won_at: iso(5), lost_reason: null });
+  const add = (n, title, customer, trades, stage, total, cost, o = {}) => {
+    tables.estimates.push({ ...base, id: P(n), title, customer_name: customer, trades, estimate_number: `B-${1100 + n}`, pipeline_stage: stage, created_at: iso(30), updated_at: iso(2), ...o });
+    if (total !== null) tables.estimate_versions.push({ id: `44444444-4444-4444-8444-0000000001${String(n).padStart(2, "0")}`, estimate_id: P(n), user_id: USER.id, version_number: 1, total, subtotal: total, total_cost: cost, created_at: iso(10), proposal: {}, snapshot: {}, content_hash: "e".repeat(64) });
+  };
+  add(1, "Primary bath remodel", "Priya Patel", ["bathroom-remodeling"], "sent", 12400, 8900, { created_at: iso(11), updated_at: iso(5), stage_changed_at: iso(5) });
+  add(2, "Seamless gutters", "Tran Nguyen", ["gutters"], "ready_for_review", 3250, 2100, { created_at: iso(3), updated_at: iso(1), stage_changed_at: iso(1) });
+  add(3, "Roof replacement", "Dana Brooks", ["roofing"], "won", 22800, 16000, { created_at: iso(24), updated_at: iso(9), stage_changed_at: iso(9), won_at: iso(9) });
+  add(4, "Exterior paint", "Jordan Kim", ["painting"], "in_progress", 7900, 5200, { created_at: iso(45), updated_at: iso(1), stage_changed_at: iso(1), won_at: iso(20) });
+  add(5, "Window package", "Chris Davis", ["windows"], "completed", 15200, 11300, { created_at: iso(80), updated_at: iso(8), stage_changed_at: iso(8), won_at: iso(40) });
+  add(6, "Composite deck", "Riley Wright", ["decks"], "lost", 9600, 6800, { created_at: iso(28), updated_at: iso(7), stage_changed_at: iso(7), lost_reason: "Went with a lower bid" });
+  add(7, "Driveway replacement", "Sam Lopez", ["concrete"], "lost", 4100, 2900, { created_at: iso(70), updated_at: iso(50), stage_changed_at: iso(50), lost_reason: "Postponed to next year" });
+  add(8, "Siding + trim", "Avery Moore", ["siding"], "sent", 13750, 9900, { created_at: iso(16), updated_at: iso(6), stage_changed_at: iso(6) });
+  add(9, "Basement finish (estimating)", "Morgan Reyes", ["basement-finishing"], "draft", null, null, { status: "draft", created_at: iso(1), updated_at: iso(0) });
+  const h = (est, from, to, d, note = null) => ({ id: tables.estimate_stage_history?.length ?? 0, estimate_id: est, from_stage: from, to_stage: to, created_at: iso(d), effective_at: iso(d), note, changed_by: USER.id });
+  tables.estimate_stage_history = [
+    h(E(2), "ready_for_review", "sent", 2), h(E(4), "ready_for_review", "pending", 31), h(E(5), "won", "scheduled", 3),
+    h(P(1), "ready_for_review", "sent", 5), h(P(3), "sent", "won", 9, "Approved by phone"), h(P(4), "sent", "won", 20), h(P(4), "scheduled", "in_progress", 1),
+    h(P(5), "sent", "won", 40), h(P(5), "in_progress", "completed", 8), h(P(6), "sent", "lost", 7, "Went with a lower bid"), h(P(7), "sent", "lost", 50, "Postponed to next year"),
+    h(P(8), "ready_for_review", "sent", 6),
+  ];
+  const WON = ["won", "scheduled", "in_progress", "completed"];
+  pipelineRpc.set_estimate_stage = (a) => {
+    const e = tables.estimates.find((x) => x.id === a.p_estimate_id);
+    if (!e) return [400, { code: "P0002", message: "estimate_not_found" }];
+    const signed = (tables.signatures ?? []).some((s) => s.estimate_id === e.id);
+    if (signed && ["draft", "ready_for_review", "approved", "sent", "pending"].includes(a.p_stage)) return [400, { code: "42501", message: "bid_signed" }];
+    if (["scheduled", "in_progress", "completed"].includes(a.p_stage) && !(WON.includes(e.pipeline_stage) || signed)) return [400, { code: "42501", message: "not_won" }];
+    const at = a.p_effective_at ?? new Date().toISOString();
+    tables.estimate_stage_history.push({ id: tables.estimate_stage_history.length, estimate_id: e.id, from_stage: e.pipeline_stage, to_stage: a.p_stage, created_at: new Date().toISOString(), effective_at: at, note: a.p_note, changed_by: USER.id });
+    const wasWon = WON.includes(e.pipeline_stage);
+    Object.assign(e, {
+      pipeline_stage: a.p_stage, stage_changed_at: new Date().toISOString(), lost_reason: a.p_stage === "lost" ? a.p_note : null,
+      won_at: a.p_stage === "won" && (a.p_effective_at || !wasWon) ? at : WON.includes(a.p_stage) ? e.won_at ?? at : null,
+    });
+    pipelineRpc.calls.push(a);
+    return [200, null];
+  };
+  pipelineRpc.calls = [];
+}
 const COMP_RPC = /^(admin_comp_\w+|my_comp_access|claim_comp_grant_by_token|has_paid_subscription|credit_status|library_access)$/;
 const compPool = process.env.COMP_PG_URL ? new (await import("pg")).default.Pool({ connectionString: process.env.COMP_PG_URL, max: 5 }) : null;
 const inviteLog = [];
@@ -308,6 +360,8 @@ http.createServer((req, res) => {
     // Opportunity Radar walk (scripts/radar/walk.mjs): radar_* tables and RPCs run real SQL when RADAR_PG_URL is set.
     if (radarRestEnabled() && /^\/rest\/v1\/(rpc\/)?radar_/.test(u.pathname)) return void handleRadarRest(req, res, u, raw, send);
     const rpc = u.pathname.match(/^\/rest\/v1\/rpc\/(\w+)/);
+    if (u.pathname === "/__pipeline_calls") return send(res, 200, pipelineRpc.calls ?? []);
+    if (rpc && typeof pipelineRpc[rpc[1]] === "function") { let args = {}; try { args = JSON.parse(raw || "{}"); } catch { /* ignore */ } const [st, body] = pipelineRpc[rpc[1]](args); return send(res, st, body); }
     if (rpc && esignRpc[rpc[1]]) { let args = {}; try { args = JSON.parse(raw || "{}"); } catch { /* ignore */ } const [st, body] = esignRpc[rpc[1]](args); return send(res, st, body); }
     if (rpc && compPool && COMP_RPC.test(rpc[1])) { let args = {}; try { args = JSON.parse(raw || "{}"); } catch { /* ignore */ } return void compRpc(rpc[1], args, res); }
     if (rpc) return send(res, 200, rpcs[rpc[1]] ?? null);

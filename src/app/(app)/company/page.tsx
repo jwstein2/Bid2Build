@@ -16,7 +16,7 @@ type Summary = {
 };
 
 const BAR: Record<Stage, string> = {
-  draft: "bg-line-strong", ready_for_review: "bg-warn", approved: "bg-brand", sent: "bg-accent", pending: "bg-accent/70", won: "bg-ok", lost: "bg-danger",
+  draft: "bg-line-strong", ready_for_review: "bg-warn", approved: "bg-brand", sent: "bg-accent", pending: "bg-accent/70", won: "bg-ok", scheduled: "bg-ok/80", in_progress: "bg-ok/60", completed: "bg-ok/40", lost: "bg-danger",
 };
 
 export default async function CompanyOverviewPage({ searchParams }: PageProps<"/company">) {
