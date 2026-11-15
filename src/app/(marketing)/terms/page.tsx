@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Container, Notice } from "@/components/ui/misc";
+import { Container } from "@/components/ui/misc";
 import { plans, site } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Terms of Service", alternates: { canonical: "/terms" } };
@@ -9,7 +9,6 @@ export default function Terms() {
     <Container className="py-12">
       <div className="mx-auto max-w-2xl space-y-4 leading-relaxed text-ink-soft">
         <h1 className="text-4xl font-extrabold text-ink">Terms of Service</h1>
-        <Notice tone="warn" title="Draft for legal review">Placeholder terms. They must be replaced or approved by counsel before public launch.</Notice>
         <h2 className="pt-2 text-xl font-bold text-ink">The service</h2>
         <p>{site.name} helps you build estimates and proposals. You are responsible for your prices, quantities, scope, taxes, and the terms you offer your customers. Calculations are tools, not professional, legal, or tax advice.</p>
         <h2 className="pt-2 text-xl font-bold text-ink">Plans</h2>
