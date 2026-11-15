@@ -14,6 +14,8 @@
  * licensed users.
  */
 export const PM_ADDON_CENTS = 499;
+/** The add-on on an annual Unlimited plan is billed yearly at this price. */
+export const PM_ADDON_ANNUAL_CENTS = 4999;
 export const PM_EDITOR_CENTS = 199;
 export const PM_INCLUDED_ENTERPRISE_EDITORS = 1;
 export const PM_MAX_EXTRA_EDITORS = 1000;
@@ -84,6 +86,6 @@ export function pmPriceMismatch(p: PriceLike, cents: number, interval: "month" |
   if (p.currency !== "usd") return `currency ${p.currency} != usd`;
   if (!p.recurring || p.recurring.interval !== interval || p.recurring.interval_count !== 1) return `price is not billed every ${interval}`;
   if (p.recurring.usage_type && p.recurring.usage_type !== "licensed") return "price is metered";
-  if (interval === "month" && p.unit_amount !== cents) return `amount ${p.unit_amount} != ${cents}`;
+  if (p.unit_amount !== cents) return `amount ${p.unit_amount} != ${cents}`;
   return null;
 }

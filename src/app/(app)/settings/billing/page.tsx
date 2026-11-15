@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { createAdminClient, createClient, getUser } from "@/lib/supabase/server";
-import { isPmEnabled, isStripeConfigured } from "@/lib/env";
+import { isPmBillingConfigured, isPmEnabled, isStripeConfigured } from "@/lib/env";
 import { loadPmAccess } from "@/lib/pm/server";
 import { PmAddonCard } from "@/components/billing/pm-addon";
 import { getStripe } from "@/lib/billing/stripe";
@@ -79,7 +79,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
       </Card>
 
       {pm && pm.scope !== "company" && (paidActive || pm.source === "complimentary") && (
-        <PmAddonCard state={pm} periodEnd={current?.current_period_end ?? null} annual={current?.plan === "annual" && !process.env.STRIPE_PRICE_PM_ADDON_ANNUAL} />
+        <PmAddonCard state={pm} periodEnd={current?.current_period_end ?? null} annual={current?.plan === "annual" && !process.env.STRIPE_PRICE_PM_ADDON_ANNUAL} yearly={current?.plan === "annual" && Boolean(process.env.STRIPE_PRICE_PM_ADDON_ANNUAL)} purchasable={isPmBillingConfigured("addon")} />
       )}
       {credits && !credits.unlimited && <CreditBalances credits={credits} showUpgrade={false} />}
 

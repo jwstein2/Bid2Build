@@ -191,3 +191,8 @@ Placement rules: a real signature puts a bid at Won or later; an active signing 
 1. Run `20261116007000_report_generations.sql` in the Supabase SQL Editor (Phase 9 SQL already applied).
 2. Say "merge". Your owner dashboard gains Revenue → By product and Usage → Premium features; customers see nothing new (the scheduling flag stays off).
 3. To launch scheduling later: approve the live Stripe prices from Phase 5, set the price env vars and `PM_BILLING_LIVE=true`, mark `project_scheduling` released in the registry, then set `NEXT_PUBLIC_PROJECT_SCHEDULING=on` and redeploy.
+
+
+## Turning scheduling on (2026-11-15)
+- `NEXT_PUBLIC_PROJECT_SCHEDULING=on` in Production. Until the live add-on prices exist, Unlimited customers see "Coming soon" instead of a buy button; Enterprise owners get their included editor seat and complimentary accounts are unaffected.
+- Live prices: add-on $4.99/month (`STRIPE_PRICE_PM_ADDON`), add-on $49.99/year (`STRIPE_PRICE_PM_ADDON_ANNUAL`), extra Enterprise editor $1.99/month (`STRIPE_PRICE_PM_EDITOR`), then `PM_BILLING_LIVE=true`. Each price is checked against these amounts and intervals before any charge.

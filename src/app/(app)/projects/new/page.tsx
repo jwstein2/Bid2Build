@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient, getUser } from "@/lib/supabase/server";
-import { isPmEnabled } from "@/lib/env";
+import { isPmBillingConfigured, isPmEnabled } from "@/lib/env";
 import { estimateAccepted } from "@/lib/schedule/server";
 import { loadPmAccess } from "@/lib/pm/server";
 import { tradeName } from "@/lib/trades/catalog";
@@ -40,7 +40,7 @@ export default async function NewSchedulePage({ searchParams }: { searchParams: 
       <div className="mx-auto max-w-2xl space-y-4">
         <h1 className="text-2xl font-extrabold text-navy">Schedule Now</h1>
         <Notice tone="warn" title="You can't create schedules yet">
-          {pm?.scope === "company" ? "Ask your company admin to assign you a scheduling editor seat." : <>Project scheduling is a $4.99/month add-on for Unlimited. <Link className="font-semibold underline" href="/settings/billing">Add it on the Billing page</Link>.</>}
+          {pm?.scope === "company" ? "Ask your company admin to assign you a scheduling editor seat." : !isPmBillingConfigured("addon") ? "Project scheduling for Unlimited is coming soon as a $4.99/month add-on." : <>Project scheduling is a $4.99/month add-on for Unlimited. <Link className="font-semibold underline" href="/settings/billing">Add it on the Billing page</Link>.</>}
         </Notice>
         <Link href="/projects" className="font-semibold text-accent-ink underline">Back to Projects</Link>
       </div>
