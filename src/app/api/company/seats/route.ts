@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { assertModeAllowed, getStripe } from "@/lib/billing/stripe";
 import { applySubscription } from "@/lib/billing/apply";
+import { previewTaxParams } from "@/lib/billing/tax";
 import { checkSeatTarget, licensedUsers, monthlyChange, seatItemUpdates, type SeatItem } from "@/lib/enterprise/seats";
 import { can, companySubscription, loadMyCompany } from "@/lib/enterprise/server";
 import { createAdminClient, createClient, getUser } from "@/lib/supabase/server";
@@ -64,6 +65,7 @@ export async function POST(req: Request) {
         customer: row.stripe_customer_id,
         subscription: row.stripe_subscription_id,
         subscription_details: { items: updates, proration_behavior: "always_invoice", proration_date: prorationDate },
+        ...previewTaxParams(sub),
       });
       const prorationCents = preview.lines.data
         .filter((l) => (l as { parent?: { subscription_item_details?: { proration?: boolean } } }).parent?.subscription_item_details?.proration)

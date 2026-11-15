@@ -95,6 +95,26 @@ describe("POST /api/stripe/checkout", () => {
     expect(state.created[1].params.line_items).toEqual([{ price: "price_year", quantity: 1 }]);
   });
 
+  it("turns on Stripe Tax and collects the billing address", async () => {
+    expect((await call({ plan: "monthly" })).status).toBe(200);
+    expect(state.created[0].params).toMatchObject({
+      automatic_tax: { enabled: true },
+      billing_address_collection: "required",
+      customer_update: { address: "auto", name: "auto" },
+    });
+  });
+
+  it("leaves tax off when STRIPE_AUTOMATIC_TAX=off", async () => {
+    process.env.STRIPE_AUTOMATIC_TAX = "off";
+    try {
+      expect((await call({ plan: "monthly" })).status).toBe(200);
+      expect(state.created[0].params.automatic_tax).toBeUndefined();
+      expect(state.created[0].params.customer_update).toBeUndefined();
+    } finally {
+      delete process.env.STRIPE_AUTOMATIC_TAX;
+    }
+  });
+
   it("ignores client-supplied prices", async () => {
     expect((await call({ plan: "price_live_cheap" })).status).toBe(400);
     const r = await call({ plan: "monthly", price: "price_cheap", amount: 1 });
