@@ -10,6 +10,7 @@ import { fail, logError } from "@/lib/http/api";
 import { captureObservation } from "@/lib/market/server";
 import type { CreditSource } from "@/lib/credits/status";
 import { exportReadiness } from "@/lib/estimate/readiness";
+import { fillLocationFromAddress } from "@/lib/geo/address";
 import type { ProposalDocument } from "@/lib/proposal/types";
 import type { Estimate } from "@/lib/estimate/types";
 
@@ -106,7 +107,9 @@ export async function finalizeProposal(userId: string, id: string): Promise<Fina
   }
 
   // Market intelligence: one de-identified observation per finalized version, only with opt-in consent.
-  await captureObservation(admin, userId, r.version_id, estimate, totals);
+  // Bids saved before address parsing existed may only have a typed address: derive the location for it.
+  const located = { ...estimate, location: fillLocationFromAddress(estimate.location, estimate.customer.projectAddress) };
+  await captureObservation(admin, userId, r.version_id, located, totals);
   if (r.new_version) await admin.from("analytics_events").insert({ user_id: userId, event: "export_succeeded", trade: estimate.trades[0] ?? null });
 
   return { r, pdf, pdfHash: sha256(pdf), hash, doc, estimate, filename: pdfFilename(doc, r.version_number), storagePath, stored: !up.error };

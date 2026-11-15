@@ -58,6 +58,14 @@ const rpcs = {
   library_access: Boolean(process.env.MOCK_UNLIMITED) || process.env.MOCK_ADMIN === "1",
 };
 
+// Admin command center screenshots: synthetic platform-wide data (scripts/admin-cc/seed.mjs).
+if (process.env.MOCK_COMMAND_CENTER) {
+  const { commandCenterSeed } = await import("../admin-cc/seed.mjs");
+  const seed = commandCenterSeed();
+  Object.assign(tables, seed.tables);
+  rpcs.admin_metrics = seed.adminMetrics;
+}
+
 // Account scenarios for the account-aware CTA checks (scripts/account-ctas/run.mjs). Switch at runtime with
 // GET /__scenario?name=<key>&authDelayMs=<n>. MOCK_UNLIMITED keeps its old meaning for the UX audit scripts.
 const sub = (o) => [{ stripe_subscription_id: "sub_test", id: "sub_test", user_id: USER.id, status: "active", plan: "monthly", price_id: "price_test", current_period_end: iso(-20), cancel_at_period_end: false, canceled_at: null, ended_at: null, updated_at: iso(1), ...o }];

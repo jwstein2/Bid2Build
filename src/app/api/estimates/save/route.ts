@@ -4,6 +4,7 @@ import { createClient, getUser } from "@/lib/supabase/server";
 import { fail, json, logError, sameOrigin } from "@/lib/http/api";
 import { saveProjectProfile } from "@/lib/market/server";
 import { estimateOptionsToStore, worksheetToStore } from "@/lib/data/mappers";
+import { fillLocationFromAddress } from "@/lib/geo/address";
 
 const body = z.object({ estimate: estimateSchema, proposalConfig: proposalConfigSchema });
 
@@ -13,7 +14,11 @@ export async function POST(req: Request) {
   if (!user) return fail(401, "not_authenticated", "Sign in to save to your account.");
   const parsed = body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return fail(400, "invalid", "Some estimate fields are invalid.", { issues: parsed.error.issues.slice(0, 10).map((i) => ({ path: i.path.join("."), message: i.message })) });
-  const { estimate, proposalConfig } = parsed.data;
+  const { proposalConfig } = parsed.data;
+  // Fill EMPTY ZIP/state/city from a typed project address ("..., Austin, TX 78701") so reports and
+  // regional pricing know where the job is. Never overwrites what the contractor entered. Location is
+  // not part of the proposal or its content hash, so this never creates a new version.
+  const estimate = { ...parsed.data.estimate, location: fillLocationFromAddress(parsed.data.estimate.location, parsed.data.estimate.customer.projectAddress) };
   const supabase = await createClient();
   // The worksheet (calculator inputs, minimum charge) and the final-bid rounding preference ride
   // inside proposal_config: no schema change.
