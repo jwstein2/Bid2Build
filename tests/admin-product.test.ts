@@ -36,7 +36,7 @@ function snap(product: ProductData = EMPTY_PRODUCT): Snapshot {
 describe("MRR by product", () => {
   it("splits core, PM add-on and Enterprise editor MRR per subscription", () => {
     expect(mrrParts({ plan: "monthly", seat_quantity: null, pm_addon: true })).toEqual({ core: 1999, pmAddon: 499, pmEditors: 0, total: 2498 });
-    expect(mrrParts({ plan: "annual", seat_quantity: null, pm_addon: true })).toEqual({ core: 1242, pmAddon: 499, pmEditors: 0, total: 1741 });
+    expect(mrrParts({ plan: "annual", seat_quantity: null, pm_addon: true })).toEqual({ core: 1242, pmAddon: 417, pmEditors: 0, total: 1659 });
     const ent = mrrParts({ plan: "enterprise", seat_quantity: 5, pm_extra_editors: 3, pm_addon: true });
     expect(ent.pmAddon).toBe(0); // Enterprise includes an editor; no Standard add-on on it
     expect(ent.pmEditors).toBe(597);
@@ -51,7 +51,7 @@ describe("MRR by product", () => {
     expect(split.totalCents).toBe(rev.mrrCents);
     expect(split.totalCents).toBe(split.coreCents + split.pmAddonCents + split.pmEditorCents);
     expect(split.pmAddonSubs).toBe(2); // a + b; c removed it; t is a test account; x ended
-    expect(split.pmAddonCents).toBe(998);
+    expect(split.pmAddonCents).toBe(499 + 417); // monthly $4.99 + annual $49.99 / 12
     expect(split.pmAddonAnnual).toBe(1);
     expect(split.pmEditorSeats).toBe(3);
     expect(split.pmEditorCents).toBe(597);

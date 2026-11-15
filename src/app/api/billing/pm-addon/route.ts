@@ -2,7 +2,7 @@ import { z } from "zod";
 import { assertModeAllowed, getStripe } from "@/lib/billing/stripe";
 import { applySubscription } from "@/lib/billing/apply";
 import { previewTaxParams } from "@/lib/billing/tax";
-import { addonItemUpdates, pmFromItems, PM_ADDON_CENTS, planInterval, type PmItem } from "@/lib/pm/billing";
+import { addonItemUpdates, pmFromItems, PM_ADDON_ANNUAL_CENTS, PM_ADDON_CENTS, planInterval, type PmItem } from "@/lib/pm/billing";
 import { individualSubscription, loadPmAccess, pmPrices, prorationCents, verifyPmPrice } from "@/lib/pm/server";
 import { loadMyCompany } from "@/lib/enterprise/server";
 import { createAdminClient, createClient, getUser } from "@/lib/supabase/server";
@@ -66,7 +66,7 @@ export async function POST(req: Request) {
     const updates = addonItemUpdates(items, prices, on);
     if ("error" in updates) { const [s, m] = ERRORS[updates.error] ?? [409, "Not available."]; return fail(s, updates.error, m); }
     const periodEnd = row.current_period_end;
-    if (on) for (const u of updates) if (u.price) await verifyPmPrice(stripe, u.price, PM_ADDON_CENTS, interval === "year" ? "year" : "month");
+    if (on) for (const u of updates) if (u.price) await verifyPmPrice(stripe, u.price, interval === "year" ? PM_ADDON_ANNUAL_CENTS : PM_ADDON_CENTS, interval === "year" ? "year" : "month");
 
     if (p.data.action === "preview") {
       const prorationDate = p.data.prorationDate ?? Math.floor(Date.now() / 1000);
@@ -78,7 +78,7 @@ export async function POST(req: Request) {
       });
       const now = prorationCents(preview.lines.data as never);
       return json({
-        monthlyCents: PM_ADDON_CENTS, interval, effective: new Date(prorationDate * 1000).toISOString(),
+        monthlyCents: interval === "year" ? PM_ADDON_ANNUAL_CENTS : PM_ADDON_CENTS, interval, effective: new Date(prorationDate * 1000).toISOString(),
         dueNowCents: Math.max(0, now), nextInvoiceAt: periodEnd, prorationDate,
       });
     }

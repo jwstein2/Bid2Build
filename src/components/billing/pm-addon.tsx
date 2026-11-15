@@ -5,7 +5,7 @@ import { useId, useState } from "react";
 import { Button } from "../ui/button";
 import { Badge, Card } from "../ui/misc";
 import { formatCents } from "@/lib/enterprise/pricing";
-import { PM_ADDON_CENTS } from "@/lib/pm/billing";
+import { PM_ADDON_ANNUAL_CENTS, PM_ADDON_CENTS } from "@/lib/pm/billing";
 
 type Preview = { monthlyCents: number; interval: "month" | "year" | null; effective: string; dueNowCents: number; nextInvoiceAt: string | null; prorationDate: number };
 const day = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("en-US", { dateStyle: "long" }) : "your next billing date");
@@ -14,11 +14,16 @@ const day = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("en-
  * Standard Unlimited "Project scheduling" add-on: $4.99/month, one schedule editor. Preview shows the
  * exact charge before anything changes; removal keeps editing until the end of the paid period.
  */
-export function PmAddonCard({ state, periodEnd, annual }: {
+export function PmAddonCard({ state, periodEnd, annual, yearly = false, purchasable = true }: {
   state: { addon: boolean; addonUntil: string | null; source: string | null; canEdit: boolean } | null;
   periodEnd: string | null; annual: boolean;
+  /** On an annual plan with the yearly add-on price set: shown as $49.99/year. */
+  yearly?: boolean;
+  /** False until the add-on's Stripe price is configured: the card says it's coming instead of offering a button that can only fail. */
+  purchasable?: boolean;
 }) {
   const router = useRouter();
+  const price = yearly ? `${formatCents(PM_ADDON_ANNUAL_CENTS)}/year` : `${formatCents(PM_ADDON_CENTS)}/month`;
   const id = useId();
   const [preview, setPreview] = useState<Preview | null>(null);
   const [confirmRemove, setConfirmRemove] = useState(false);
@@ -52,7 +57,7 @@ export function PmAddonCard({ state, periodEnd, annual }: {
           <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-accent/15 text-accent-ink"><CalendarRange className="h-5 w-5" aria-hidden /></span>
           <div>
             <h2 className="font-display text-lg font-bold">Project scheduling add-on</h2>
-            <p className="text-sm text-ink-soft">Turn won bids into job schedules with a timeline, tasks and progress tracking. {formatCents(PM_ADDON_CENTS)}/month, includes one schedule editor (you).</p>
+            <p className="text-sm text-ink-soft">Turn won bids into job schedules with a timeline, tasks and progress tracking. {price}, includes one schedule editor (you).</p>
           </div>
         </div>
         {active ? <Badge tone="ok">active</Badge> : ending ? <Badge tone="neutral">ending</Badge> : comp ? <Badge tone="ok">complimentary</Badge> : null}
@@ -62,7 +67,7 @@ export function PmAddonCard({ state, periodEnd, annual }: {
         {comp && <p className="text-sm text-ink-soft">Included with your complimentary access. Nothing is charged.</p>}
         {active && !confirmRemove && (
           <div className="flex flex-wrap items-center gap-3">
-            <p className="text-sm text-ink-soft">{formatCents(PM_ADDON_CENTS)}/month, billed with your plan. Next charge {day(periodEnd)}.</p>
+            <p className="text-sm text-ink-soft">{price}, billed with your plan. Next charge {day(periodEnd)}.</p>
             <Button variant="secondary" size="sm" onClick={() => setConfirmRemove(true)}>Remove add-on</Button>
           </div>
         )}
@@ -83,7 +88,9 @@ export function PmAddonCard({ state, periodEnd, annual }: {
         {!active && !comp && !preview && (
           <div className="flex flex-wrap items-center gap-3">
             {ending && <p className="text-sm text-ink-soft">Removed. Editing stays on until {day(state!.addonUntil)}.</p>}
-            {annual
+            {!purchasable
+              ? <p className="text-sm text-ink-soft" data-testid="pm-addon-soon">Coming soon. You&apos;ll be able to add project scheduling here shortly.</p>
+              : annual
               ? <p className="text-sm text-ink-soft">Available on monthly plans now; annual plans are coming soon.</p>
               : <Button onClick={() => call("preview")} disabled={busy !== null}>{busy === "preview" && <Loader2 className="h-4 w-4 animate-spin" />}{ending ? "Turn it back on" : "Add project scheduling"}</Button>}
           </div>

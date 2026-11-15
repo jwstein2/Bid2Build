@@ -5,7 +5,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   addonItemUpdates, checkEditorTarget, editorItemUpdates, editorMonthlyCents, planInterval, pmFromItems, pmPriceMismatch,
-  PM_ADDON_CENTS, PM_EDITOR_CENTS,
+  PM_ADDON_ANNUAL_CENTS, PM_ADDON_CENTS, PM_EDITOR_CENTS,
 } from "@/lib/pm/billing";
 import { subscriptionToUpdate } from "@/lib/billing/sync";
 
@@ -19,6 +19,7 @@ const editors = (q: number) => ({ id: "si_ed", price: { id: "price_pm_ed", recur
 describe("PM billing rules", () => {
   it("prices match the brief: $4.99 add-on, $1.99 per extra editor", () => {
     expect(PM_ADDON_CENTS).toBe(499);
+    expect(PM_ADDON_ANNUAL_CENTS).toBe(4999);
     expect(PM_EDITOR_CENTS).toBe(199);
     expect(editorMonthlyCents(3)).toBe(597);
   });
@@ -52,6 +53,9 @@ describe("PM billing rules", () => {
     expect(pmPriceMismatch(ok, 499)).toBeNull();
     expect(pmPriceMismatch({ ...ok, unit_amount: 500 }, 499)).toMatch(/amount/);
     expect(pmPriceMismatch({ ...ok, recurring: { ...ok.recurring, interval: "year" } }, 499)).toMatch(/every month/);
+    const yr = { ...ok, unit_amount: 4999, recurring: { ...ok.recurring, interval: "year" } };
+    expect(pmPriceMismatch(yr, PM_ADDON_ANNUAL_CENTS, "year")).toBeNull();
+    expect(pmPriceMismatch({ ...yr, unit_amount: 499 }, PM_ADDON_ANNUAL_CENTS, "year")).toMatch(/amount/);
   });
   it("the webhook mapping keeps the plan item (not the add-on) as the subscription's plan and price", () => {
     const sub = { id: "sub_1", customer: "cus_1", status: "active", cancel_at_period_end: false, canceled_at: null, ended_at: null,

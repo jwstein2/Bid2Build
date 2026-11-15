@@ -8,7 +8,7 @@
  * address is only used to derive a state.
  */
 import { enterpriseMonthlyCents, ENTERPRISE_INCLUDED_USERS } from "@/lib/enterprise/pricing";
-import { editorMonthlyCents, PM_ADDON_CENTS } from "@/lib/pm/billing";
+import { editorMonthlyCents, PM_ADDON_ANNUAL_CENTS, PM_ADDON_CENTS } from "@/lib/pm/billing";
 import { scopeProduct, type ProductData } from "./product";
 import { classifyAccount, type AccountClass, type Classification } from "./classify";
 import { campaignOf, classifyChannel, CHANNELS, isChannel, type Channel, type LeadAttribution } from "./channels";
@@ -119,7 +119,7 @@ export function mrrParts(s: Pick<SubscriptionRow, "plan" | "seat_quantity" | "pm
   const core = s.plan === "monthly" ? 1999
     : s.plan === "annual" ? Math.round(14900 / 12)
       : s.plan === "enterprise" ? enterpriseMonthlyCents(Math.max(ENTERPRISE_INCLUDED_USERS, s.seat_quantity ?? ENTERPRISE_INCLUDED_USERS)) : 0;
-  const pmAddon = s.plan !== "enterprise" && core > 0 && s.pm_addon ? PM_ADDON_CENTS : 0;
+  const pmAddon = s.plan !== "enterprise" && core > 0 && s.pm_addon ? (s.plan === "annual" ? Math.round(PM_ADDON_ANNUAL_CENTS / 12) : PM_ADDON_CENTS) : 0;
   const pmEditors = s.plan === "enterprise" ? editorMonthlyCents(s.pm_extra_editors ?? 0) : 0;
   return { core, pmAddon, pmEditors, total: core + pmAddon + pmEditors };
 }

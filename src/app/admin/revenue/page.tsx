@@ -86,7 +86,7 @@ export default async function Revenue({ searchParams }: { searchParams: Promise<
           <div className="lg:col-span-2">
             <Table head={["Revenue stream", "Subscriptions", "MRR"]} align={["l", "r", "r"]} minWidth={320}>
               <tr><td className="font-sans">Core subscriptions (Unlimited + Enterprise licenses)</td><td className="text-right text-white">{fmt(rev.paying)}</td><td className="text-right">{usd(split.coreCents)}</td></tr>
-              <tr><td className="font-sans">Project scheduling add-on ($4.99/mo)</td><td className="text-right text-white">{fmt(split.pmAddonSubs)}</td><td className="text-right">{usd(split.pmAddonCents)}</td></tr>
+              <tr><td className="font-sans">Project scheduling add-on ($4.99/mo or $49.99/yr)</td><td className="text-right text-white">{fmt(split.pmAddonSubs)}</td><td className="text-right">{usd(split.pmAddonCents)}</td></tr>
               <tr><td className="font-sans">Enterprise scheduling editors ($1.99/mo each beyond the included one)</td><td className="text-right text-white">{fmt(split.pmEditorSeats)} seats · {fmt(split.pmEditorCompanies)} co.</td><td className="text-right">{usd(split.pmEditorCents)}</td></tr>
               <tr><td className="font-sans font-bold text-white">Total recurring revenue</td><td /><td className="text-right font-bold text-white" data-testid="total-mrr">{usd(split.totalCents)}</td></tr>
             </Table>
@@ -97,7 +97,7 @@ export default async function Revenue({ searchParams }: { searchParams: Promise<
             <Row k="Add-ons on annual plans">{fmt(split.pmAddonAnnual)}</Row>
           </dl>
         </div>
-        <p className="mt-3 text-xs text-muted">Each Stripe subscription is counted once with its items, so add-ons are never double counted. List price: proration, credits, discounts and tax are not in MRR (payments received above come from Stripe). A removed add-on stops counting immediately even though editing continues until the paid period ends; it becomes a cancellation when that period ends. Add-ons on annual plans are shown at the $4.99 monthly rate until a yearly add-on price exists. Total equals the headline MRR.</p>
+        <p className="mt-3 text-xs text-muted">Each Stripe subscription is counted once with its items, so add-ons are never double counted. List price: proration, credits, discounts and tax are not in MRR (payments received above come from Stripe). A removed add-on stops counting immediately even though editing continues until the paid period ends; it becomes a cancellation when that period ends. Add-ons on annual plans count as $49.99 ÷ 12. Total equals the headline MRR.</p>
       </Panel>
 
       <SectionTitle id="at-risk" kicker="Retention" title="Failed payments and cancellations" />
