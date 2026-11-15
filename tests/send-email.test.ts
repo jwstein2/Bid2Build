@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildShareEmail, canShareFile, firstName, mailtoHref, plainEmail, validEmail, webComposeHref } from "@/lib/proposal/share-email";
+import { buildShareEmail, canShareFile, firstName, mailtoHref, plainEmail, validEmail, webComposeFits, webComposeHref } from "@/lib/proposal/share-email";
 
 const full = { customerName: "Pat Smith", customerEmail: "pat@example.com", projectTitle: "Smith backyard deck", companyName: "Acme Decks", contactName: "Dana Lee", phone: "(555) 555-0100" };
 
@@ -103,11 +103,44 @@ describe("Gmail and Outlook compose links", () => {
     expect(href.length).toBeLessThan(8000);
     expect(new URL(href).searchParams.get("body")!.endsWith("…")).toBe(true);
   });
+  it("a message too long for a web draft is reported, so the dialog can offer Copy message instead", () => {
+    expect(webComposeFits("x".repeat(3000))).toBe(true);
+    expect(webComposeFits("x".repeat(3001))).toBe(false);
+  });
   it("signing-link messages carry the link and never mention an attachment", () => {
     const s = buildShareEmail({ ...full, signingUrl: "https://built2bid.org/sign/abc" });
     const body = new URL(webComposeHref("gmail", s)).searchParams.get("body")!;
     expect(body).toContain("https://built2bid.org/sign/abc");
     expect(body).not.toMatch(/attached/i);
+  });
+});
+
+describe("Signing-link email", () => {
+  it("uses the review-and-sign subject and message with the estimate's details", () => {
+    const m = buildShareEmail({ ...full, signingUrl: "https://built2bid.org/sign/abc" });
+    expect(m.to).toBe("pat@example.com");
+    expect(m.subject).toBe("Please Review & Sign Your Proposal — Smith backyard deck");
+    expect(m.body).toBe([
+      "Hi Pat,", "",
+      "Thank you for the opportunity to provide an estimate for your project.", "",
+      "Please review your proposal and electronically sign it using the secure link below:", "",
+      "https://built2bid.org/sign/abc", "",
+      "If you have any questions or would like to discuss anything before signing, please let me know.", "",
+      "Thank you,", "Dana Lee", "Acme Decks", "(555) 555-0100",
+    ].join("\n"));
+  });
+  it("leaves out missing details instead of inventing them", () => {
+    const m = buildShareEmail({ signingUrl: "https://built2bid.org/sign/abc" });
+    expect(m.subject).toBe("Please Review & Sign Your Proposal");
+    expect(m.body.startsWith("Hi,\n")).toBe(true);
+    expect(m.body.trimEnd().endsWith("Thank you,")).toBe(true);
+    expect(m.body).not.toMatch(/undefined|null|\[|attached/i);
+  });
+  it("the PDF email keeps its own subject and attachment wording", () => {
+    const pdf = buildShareEmail(full);
+    expect(pdf.subject).toBe("Your Estimate from Acme Decks — Smith backyard deck");
+    expect(pdf.body).toMatch(/I've attached our proposal/);
+    expect(pdf.body).not.toMatch(/sign/i);
   });
 });
 

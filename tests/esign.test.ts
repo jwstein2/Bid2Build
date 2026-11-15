@@ -120,7 +120,7 @@ describe("config, tokens and wording", () => {
   });
   it("the signing-link email carries the link and no attachment wording", () => {
     const e = buildShareEmail({ customerName: "John Smith", customerEmail: "john@example.com", projectTitle: "Backyard Deck Replacement", companyName: "Acme Decks", contactName: "Sam", phone: "(555) 010-0000", signingUrl: "https://built2bid.org/sign/abc" });
-    expect(e.subject).toBe("Your Estimate from Acme Decks — Backyard Deck Replacement");
+    expect(e.subject).toBe("Please Review & Sign Your Proposal — Backyard Deck Replacement");
     expect(e.body).toContain("https://built2bid.org/sign/abc");
     expect(e.body).not.toMatch(/attached/);
     expect(buildShareEmail({ signingUrl: "javascript:alert(1)" }).body).not.toContain("javascript");

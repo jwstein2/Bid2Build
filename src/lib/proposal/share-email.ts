@@ -10,7 +10,10 @@ export interface ShareEmailInput {
   companyName?: string | null;
   contactName?: string | null;
   phone?: string | null;
-  /** When set, the message links to the online signing page instead of mentioning an attachment. */
+  /**
+   * When set, this is a signing request: its own subject and message, with the online signing link
+   * and no mention of an attachment.
+   */
   signingUrl?: string | null;
 }
 
@@ -49,27 +52,43 @@ export function buildShareEmail(i: ShareEmailInput): ShareEmail {
   const greetName = firstName(i.customerName);
   const signingUrl = /^https?:\/\/\S+$/.test(oneLine(i.signingUrl)) ? oneLine(i.signingUrl) : "";
 
+  const signature = [contact, company && company !== contact ? company : "", phone].filter(Boolean);
+  const greeting = greetName ? `Hi ${greetName},` : "Hi,";
+
+  if (signingUrl) {
+    return {
+      to: validEmail(i.customerEmail),
+      subject: project ? `Please Review & Sign Your Proposal — ${project}` : "Please Review & Sign Your Proposal",
+      body: [
+        greeting,
+        "",
+        "Thank you for the opportunity to provide an estimate for your project.",
+        "",
+        "Please review your proposal and electronically sign it using the secure link below:",
+        "",
+        signingUrl,
+        "",
+        "If you have any questions or would like to discuss anything before signing, please let me know.",
+        "",
+        "Thank you,",
+        ...signature,
+      ].join("\n"),
+    };
+  }
+
   const subject = company && project ? `Your Estimate from ${company} — ${project}`
     : company ? `Your Estimate from ${company}`
     : project ? `Your Estimate — ${project}`
     : "Your Estimate";
 
-  const signature = [contact, company && company !== contact ? company : "", phone].filter(Boolean);
   const body = [
-    greetName ? `Hi ${greetName},` : "Hi,",
+    greeting,
     "",
     project
       ? `Thank you for the opportunity to provide an estimate for ${project}.`
       : "Thank you for the opportunity to provide an estimate for your project.",
     "",
-    ...(signingUrl
-      ? [
-        "You can review the full proposal and sign it online here:",
-        signingUrl,
-        "",
-        "It works on your phone or computer, and you don't need to create an account. You can also download a copy from that page. Please let me know if you have any questions or would like to discuss anything further.",
-      ]
-      : ["I've attached our proposal for your review. Please let me know if you have any questions or would like to discuss anything further."]),
+    "I've attached our proposal for your review. Please let me know if you have any questions or would like to discuss anything further.",
     "",
     "Thank you,",
     ...signature,
@@ -116,6 +135,11 @@ const WEBMAIL_BASE: Record<WebMail, string> = {
 
 /** Keep compose URLs well under the ~8 KB most servers accept; long messages are cut, not dropped. */
 const MAX_BODY = 3000;
+
+/** Whether the whole message fits a web draft link (longer ones are cut, so offer Copy message). */
+export function webComposeFits(body: string): boolean {
+  return multiLine(body).length <= MAX_BODY;
+}
 
 export function webComposeHref(app: WebMail, e: { to?: string; subject: string; body: string }): string {
   const to = validEmail(e.to);
