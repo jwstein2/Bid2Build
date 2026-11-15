@@ -3,7 +3,8 @@ import { AreaChart, Change, Fresh, Kpi, NotConnected, PageHead, PairColumns, Pan
 import { RangeControl, ReportUnavailable, ScopeNote, SectionTitle } from "@/components/admin/report";
 import { tip } from "@/lib/admin/definitions";
 import { stripeCheckouts, stripeReconcile } from "@/lib/admin/integrations";
-import { inWindow, monthlyCents, ratio, revenueModel, windowOf } from "@/lib/admin/model";
+import { inWindow, monthlyCents, mrrParts, ratio, revenueModel, windowOf } from "@/lib/admin/model";
+import { revenueSplit } from "@/lib/admin/product";
 import { loadReport } from "@/lib/admin/load";
 import { href } from "@/lib/admin/view";
 
@@ -24,8 +25,9 @@ export default async function Revenue({ searchParams }: { searchParams: Promise<
   const mix = [
     { label: "Monthly ($19.99)", n: rev.monthly, mrr: rev.monthly * 1999 },
     { label: "Annual ($149 ÷ 12)", n: rev.annual, mrr: rev.annual * Math.round(14900 / 12) },
-    { label: "Enterprise (by seats)", n: rev.enterprise, mrr: facts.filter((f) => f.paying && f.sub?.plan === "enterprise").reduce((n, f) => n + monthlyCents(f.sub!), 0) },
+    { label: "Enterprise (by seats)", n: rev.enterprise, mrr: facts.filter((f) => f.paying && f.sub?.plan === "enterprise").reduce((n, f) => n + mrrParts(f.sub!).core, 0) },
   ];
+  const split = revenueSplit(facts, range, now);
   const reconOk = stripe ? stripe.active + stripe.pastDue === rev.paying : null;
 
   return (
@@ -37,7 +39,7 @@ export default async function Revenue({ searchParams }: { searchParams: Promise<
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         <Kpi label="Paying subscribers" value={rev.paying} def={tip("paying")} sub={`${rev.monthly} monthly · ${rev.annual} annual · ${rev.enterprise} enterprise`} />
-        <Kpi label="MRR (list price)" value={usd(rev.mrrCents)} tone="blue" def={tip("mrr")} sub={`${usd(rev.arrCents)} annual run rate`} />
+        <Kpi label="MRR (list price)" value={usd(rev.mrrCents)} tone="blue" def={tip("mrr")} sub={`${usd(rev.arrCents)} annual run rate${split.pmAddonCents + split.pmEditorCents ? ` · incl. ${usd(split.pmAddonCents + split.pmEditorCents)} scheduling add-ons` : ""}`} />
         <Kpi label="Net MRR change" value={`${rev.netMrrCents >= 0 ? "+" : "−"}${usd(Math.abs(rev.netMrrCents))}`} tone={rev.netMrrCents < 0 ? "amber" : "green"} def={tip("net_mrr")} sub={`+${usd(rev.newMrrCents)} new · −${usd(rev.lostMrrCents)} lost`} />
         <Kpi label="New paid subscriptions" value={rev.newPaid.current} delta={<Change {...rev.newPaid} />} def={tip("paying")} sub={`${rev.newPaid.previous} the ${range.label} before`} />
         <Kpi label="Cancellations (ended)" value={rev.ended.current} tone={rev.ended.current ? "amber" : "green"} delta={<Change {...rev.ended} good="down" />} def={tip("churn")} sub={`${rev.scheduledCancel} more scheduled at period end`} />
@@ -78,6 +80,25 @@ export default async function Revenue({ searchParams }: { searchParams: Promise<
           <p className="mt-3 text-xs text-muted">Annual plans count once, at $149 ÷ 12 per month. Complimentary (not revenue): {rev.comp.active} active ({rev.comp.unlimited} Unlimited, {rev.comp.enterprise} Enterprise).</p>
         </Panel>
       </div>
+
+      <Panel kicker="By product" title="Recurring revenue: plans and scheduling add-ons" className="scroll-mt-24">
+        <div id="by-product" className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <Table head={["Revenue stream", "Subscriptions", "MRR"]} align={["l", "r", "r"]} minWidth={320}>
+              <tr><td className="font-sans">Core subscriptions (Unlimited + Enterprise licenses)</td><td className="text-right text-white">{fmt(rev.paying)}</td><td className="text-right">{usd(split.coreCents)}</td></tr>
+              <tr><td className="font-sans">Project scheduling add-on ($4.99/mo)</td><td className="text-right text-white">{fmt(split.pmAddonSubs)}</td><td className="text-right">{usd(split.pmAddonCents)}</td></tr>
+              <tr><td className="font-sans">Enterprise scheduling editors ($1.99/mo each beyond the included one)</td><td className="text-right text-white">{fmt(split.pmEditorSeats)} seats · {fmt(split.pmEditorCompanies)} co.</td><td className="text-right">{usd(split.pmEditorCents)}</td></tr>
+              <tr><td className="font-sans font-bold text-white">Total recurring revenue</td><td /><td className="text-right font-bold text-white" data-testid="total-mrr">{usd(split.totalCents)}</td></tr>
+            </Table>
+          </div>
+          <dl>
+            <Row k="Add-ons ending at period end">{fmt(split.pmAddonEnding)}</Row>
+            <Row k={`Add-ons ended · ${range.label}`}>{fmt(split.pmAddonEnded)}</Row>
+            <Row k="Add-ons on annual plans">{fmt(split.pmAddonAnnual)}</Row>
+          </dl>
+        </div>
+        <p className="mt-3 text-xs text-muted">Each Stripe subscription is counted once with its items, so add-ons are never double counted. List price: proration, credits, discounts and tax are not in MRR (payments received above come from Stripe). A removed add-on stops counting immediately even though editing continues until the paid period ends; it becomes a cancellation when that period ends. Add-ons on annual plans are shown at the $4.99 monthly rate until a yearly add-on price exists. Total equals the headline MRR.</p>
+      </Panel>
 
       <SectionTitle id="at-risk" kicker="Retention" title="Failed payments and cancellations" />
       <div className="grid gap-6 lg:grid-cols-3">

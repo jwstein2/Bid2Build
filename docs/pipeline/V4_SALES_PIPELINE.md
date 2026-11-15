@@ -136,6 +136,29 @@ Placement rules: a real signature puts a bid at Won or later; an active signing 
 - Migration `20261116006000_pm_permissions.sql` (re-runnable), rollback `docs/pipeline/rollback_20261116006000.sql`. Before the SQL runs the app falls back to the Phase 8 rule (seat = full edit).
 - Tests: `tests/db/pm-permissions.test.ts` (6, real Postgres: SQL/TS mirror, admin without seat, progress-only, dependencies, publish, view_schedules revoked, reassign keeps count/rank/subscription, owner-only grants), `tests/pm-permissions.test.ts`, `tests/pm-reassign-route.test.ts`, route tests for schedule save, updates and internal reports; `scripts/schedule/permissions-walk.mjs` 30 browser checks with screenshots.
 
+## Phase 10: owner analytics and final regression
+
+- **Revenue → By product** splits list-price MRR into core subscriptions, the $4.99/mo scheduling add-on and $1.99/mo Enterprise editors beyond the included one, plus total recurring revenue. The headline MRR now includes add-ons, and the total always equals it. Each Stripe subscription is one row whose items are counted once, so nothing is double counted. Annual plans count $149 ÷ 12. A removed add-on stops counting right away (it's no longer billed) and is listed as "ending at period end", then counted as ended when `pm_addon_until` passes. Proration, credits, discounts and tax stay out of MRR; collected cash still comes from Stripe. There's no yearly add-on price yet, so add-ons on annual plans show at the monthly rate (labelled).
+- **Usage → Premium features**: accounts using the pipeline, bids by stage, internal reports generated, premium report adoption, scheduled projects, customer updates published, scheduling subscriptions and Enterprise editor seats.
+  These are counts only. No bid values, estimate amounts or customer details are read, and nothing goes to third-party analytics. Rows are scoped to genuine accounts by the same rule as every other owner page, and "Include test data" adds them back the same way.
+- **Report log**: the Internal Estimate Report route writes one row per preview, download or email attachment to `report_generations` (who, action, when). It is server-only: RLS is on with no policies, and users can't read or write it.
+- Migration `20261116007000_report_generations.sql` (re-runnable), rollback `docs/pipeline/rollback_20261116007000.sql`. Every new owner query is optional, so the dashboard works before the SQL runs; report counts start once it has.
+- Tests: `tests/admin-product.test.ts` (split, totals equal headline, no double counting, ending/ended add-ons, adoption counts, test-data scoping), `tests/db/report-generations.test.ts`, internal report route logging, and `scripts/admin-cc/analytics-walk.mjs` (desktop + 390 px).
+
+### Final regression (brief section 43)
+
+| # | Requirement | Evidence |
+|---|---|---|
+| 1–9 | Bids pipeline: access, stages, drag-and-drop, mobile ⋮, signatures can't be faked, e-sign authoritative, date filters, no double counting, sales pay doesn't alter bids | `tests/pipeline.test.ts`, `tests/db/sales-pipeline.test.ts`, `tests/db/esign.test.ts`, `scripts/pipeline/walk.mjs` |
+| 10–13 | Internal reports: free refused, paid allowed, never in customer PDFs, Enterprise permissions server-side | `tests/internal-report-route.test.ts`, `tests/internal-report.test.tsx`, `tests/pdf.test.tsx`, `scripts/internal-report/walk.mjs` (free + paid) |
+| 14–16 | Onboarding / walkthrough / feature registry | `tests/feature-registry.test.ts`, `tests/features-route.test.ts`, `tests/onboarding.test.ts`, `scripts/features/walk.mjs` |
+| 17–22 | PM billing: $4.99, 1 included editor, $1.99 extra, licenses still enforced, confirmation, data kept when disabled | `tests/pm-billing.test.ts`, `tests/db/pm-entitlements.test.ts`, `scripts/pm/walk.mjs` |
+| 23–30 | Scheduling: approved bids, source references, overlap, line items, drag dates, dependencies, % ≠ elapsed time, delays | `tests/schedule-engine.test.ts`, `tests/schedule-route.test.ts`, `tests/db/project-schedules.test.ts`, `scripts/schedule/walk.mjs` |
+| 31–34 | Customer updates: private costs hidden, scope toggles, preview before publish, frozen snapshots | `tests/schedule-report.test.tsx`, `tests/schedule-updates-route.test.ts`, `tests/db/schedule-publications.test.ts`, `scripts/schedule/updates-walk.mjs` |
+| 35–37 | View-only can't edit, no cross-company access, reassignment doesn't double bill | `tests/db/pm-permissions.test.ts`, `tests/db/isolation.test.ts`, `tests/pm-reassign-route.test.ts`, `scripts/schedule/permissions-walk.mjs` |
+| 38–39 | Complimentary access, Stripe and checkout | `tests/complimentary-access.test.ts`, `tests/db/complimentary-access.test.ts`, `tests/checkout-*.test.ts`, `tests/billing*.test.ts`, `tests/stripe-live-guard.test.ts` |
+| 40 | No production deploy or billing change without approval | Every PR merged only after James's SQL + "merge"; scheduling flag still off; no live Stripe prices created |
+
 ## Migration and rollback
 
 - Migration: `supabase/migrations/20261116002000_sales_pipeline.sql` (idempotent, tested twice in a row).
@@ -163,8 +186,8 @@ Placement rules: a real signature puts a bid at Won or later; an active signing 
 | 9 | Enterprise PM permissions and seat assignment | none |
 | 10 | Owner analytics: pipeline adoption, PM MRR split, regression run | none |
 
-## Production approval checklist (Phase 9 PR)
+## Production approval checklist (Phase 10 PR)
 
-1. Run `20261116006000_pm_permissions.sql` in the Supabase SQL Editor (Phase 8 SQL already applied).
-2. Say "merge". Nothing becomes visible: the flag stays off.
+1. Run `20261116007000_report_generations.sql` in the Supabase SQL Editor (Phase 9 SQL already applied).
+2. Say "merge". Your owner dashboard gains Revenue → By product and Usage → Premium features; customers see nothing new (the scheduling flag stays off).
 3. To launch scheduling later: approve the live Stripe prices from Phase 5, set the price env vars and `PM_BILLING_LIVE=true`, mark `project_scheduling` released in the registry, then set `NEXT_PUBLIC_PROJECT_SCHEDULING=on` and redeploy.
