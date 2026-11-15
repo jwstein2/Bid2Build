@@ -1,0 +1,10 @@
+<!-- Supabase > Authentication > Emails > "Confirm sign up". Subject: Your Built2Bid verification code -->
+<!-- Sent the first time a new email asks for a code (this creates the account). {{ .Token }} is filled in by Supabase. -->
+<div style="font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.5;color:#0B2D4D;max-width:480px;margin:0 auto;padding:24px 16px;">
+  <p style="margin:0 0 16px;">Hi,</p>
+  <p style="margin:0 0 16px;">Use this code to securely sign in to Built2Bid:</p>
+  <p style="margin:0 0 16px;font-size:32px;font-weight:bold;letter-spacing:6px;font-family:'Courier New',Courier,monospace;">{{ .Token }}</p>
+  <p style="margin:0 0 16px;">Enter this code on the Built2Bid website to continue.</p>
+  <p style="margin:0 0 24px;color:#4A5A6A;">If you didn't request this code, you can safely ignore this email.</p>
+  <p style="margin:0;">Built2Bid<br>built2bid.org</p>
+</div>

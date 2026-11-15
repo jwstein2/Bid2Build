@@ -203,18 +203,21 @@ await test("Email-link return (two tabs at once) → exactly one checkout reques
   await ctx.close();
 });
 
-// 10. Old login link (/login?next=/pricing?upgrade=monthly) now resumes too: this was the reported bug.
-await test("Login page path (original bug) → verify → automatic checkout", async () => {
-  const { ctx, page, calls } = await setup();
-  await page.goto(`${BASE}/login?next=${encodeURIComponent("/pricing?upgrade=monthly")}`);
-  await page.getByLabel("Business email").fill("legacy@example.test");
-  await page.getByRole("button", { name: /Email me a sign-in link/ }).click();
-  await page.getByLabel("Verification code").fill("123456");
-  await page.getByRole("button", { name: /Verify and continue/ }).click();
-  await page.waitForURL(/checkout\.stripe\.test/, { timeout: 15000 });
-  expect(calls.length === 1 && calls[0].plan === "monthly", `calls ${JSON.stringify(calls)}`);
-  await ctx.close();
-});
+// 10. Old login link (/login?next=/pricing?upgrade=<plan>) now resumes too: this was the reported bug.
+//     Email-only sign-in: the button asks for a 6-digit code, never a link.
+for (const plan of ["monthly", "annual"]) {
+  await test(`Login page path (original bug, ${plan}) → 6-digit code → automatic checkout`, async () => {
+    const { ctx, page, calls } = await setup();
+    await page.goto(`${BASE}/login?next=${encodeURIComponent(`/pricing?upgrade=${plan}`)}`);
+    await page.getByLabel("Business email").fill(`legacy-${plan}@example.test`);
+    await page.getByRole("button", { name: /Email me a verification code/ }).click();
+    await page.getByLabel("Verification code").fill("123456");
+    await page.getByRole("button", { name: /Verify and continue/ }).click();
+    await page.waitForURL(/checkout\.stripe\.test/, { timeout: 15000 });
+    expect(calls.length === 1 && calls[0].plan === plan, `calls ${JSON.stringify(calls)}`);
+    await ctx.close();
+  });
+}
 
 // 11. Cancelled checkout → plan preserved, no automatic redirect.
 await test("Checkout cancellation → plan preserved, no auto-redirect, Continue works", async () => {

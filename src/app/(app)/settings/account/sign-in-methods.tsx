@@ -81,7 +81,7 @@ function PhoneRow({ phone, verified, canChange }: { phone: string | null; verifi
         <div className="min-w-0">
           <p className="flex items-center gap-1.5 text-sm text-muted"><MessageSquareText className="h-4 w-4" aria-hidden /> Mobile phone (text codes)</p>
           <p className="font-semibold">{phone ? formatPhone(phone) : "Not added"}</p>
-          <p className="text-sm text-ink-soft">{phone ? (verified ? "Verified. You can sign in with a texted code." : "Not verified yet.") : "Add your mobile number to sign in by text instead of waiting for an email."}</p>
+          <p className="text-sm text-ink-soft">{phone ? (!canChange ? "Saved on your account. Sign-in by text is paused for now, so sign in with an emailed code." : verified ? "Verified. You can sign in with a texted code." : "Not verified yet.") : "Add your mobile number to sign in by text instead of waiting for an email."}</p>
         </div>
         {canChange && mode === "view" && <Button variant="secondary" size="sm" onClick={() => { setMode("enter"); setErr(null); setDone(false); }}>{phone ? "Change number" : "Add phone"}</Button>}
       </div>

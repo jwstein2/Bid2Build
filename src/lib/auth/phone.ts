@@ -5,9 +5,13 @@
  * leading "+", so compare by digits (phoneDigits) rather than by string.
  */
 
-/** SMS sign-in is off until the owner sets NEXT_PUBLIC_SMS_SIGNIN=on (after Twilio + Supabase are configured). */
-export const isSmsSignInEnabled = (env: Record<string, string | undefined> = { NEXT_PUBLIC_SMS_SIGNIN: process.env.NEXT_PUBLIC_SMS_SIGNIN }) =>
-  ["on", "true", "1"].includes((env.NEXT_PUBLIC_SMS_SIGNIN ?? "").trim().toLowerCase());
+import { isSmsAuthEnabled } from "./config";
+
+/**
+ * SMS sign-in UI switch. Kept as an alias of isSmsAuthEnabled (src/lib/auth/config.ts): off unless
+ * NEXT_PUBLIC_SMS_AUTH_ENABLED=true. Display only; see config.ts for the real controls.
+ */
+export const isSmsSignInEnabled = isSmsAuthEnabled;
 
 export type Country = { iso: string; name: string; dial: string; flag: string };
 
