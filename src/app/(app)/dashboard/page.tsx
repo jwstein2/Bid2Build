@@ -17,13 +17,15 @@ import { isEsignEnabled, RECENT_SIGNED_DAYS } from "@/lib/esign/config";
 import { recentSignatures, signingByEstimate, type RequestRow, type SignatureRow } from "@/lib/esign/status";
 import { RecentlySigned, type SignedBid } from "./recently-signed";
 import { RefreshOnFocus } from "@/components/esign/refresh-on-focus";
+import { ReferCard } from "./refer-card";
+import { referralLink, type MyReferral } from "@/lib/growth/referral";
 
 export const metadata: Metadata = { title: "Dashboard", robots: { index: false } };
 
 export default async function Dashboard() {
   const user = (await getUser())!;
   const supabase = await createClient();
-  const [{ data: estimates }, { data: versions }, credits, { data: biz }, libraryAccess, company] = await Promise.all([
+  const [{ data: estimates }, { data: versions }, credits, { data: biz }, libraryAccess, company, { data: referralData }] = await Promise.all([
     // "My bids" stays personal: Enterprise owners/managers can also read teammates' company bids (RLS),
     // which belong in the company Command Center, not here.
     supabase.from("estimates").select("id, title, customer_name, trades, status, updated_at, estimate_number").eq("user_id", user.id).order("updated_at", { ascending: false }).limit(500),
@@ -32,7 +34,10 @@ export default async function Dashboard() {
     supabase.from("business_profiles").select("company_name, logo_path, phone, email, address").eq("user_id", user.id).maybeSingle(),
     hasPremiumAccess(supabase),
     loadMyCompany(supabase),
+    // Referral code + counts. Missing function (migration not run yet) just hides the card.
+    supabase.rpc("my_referral"),
   ]);
+  const referral = (referralData as MyReferral | null)?.code ? referralData as MyReferral : null;
   // Signing status (personal bids, like the list below). A missing table (migration not run yet)
   // just means no signing data: the dashboard never fails because of it.
   const esign = isEsignEnabled();
@@ -90,6 +95,7 @@ export default async function Dashboard() {
         </div>
       </div>
       <PremiumTiles unlocked={libraryAccess} />
+      {referral && <ReferCard link={referralLink(referral.code)} signedUp={referral.signed_up} paying={referral.paying} monthsEarned={referral.months_earned} eligible={referral.eligible} />}
       <BidList rows={rows} />
     </div>
   );

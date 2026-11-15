@@ -14,6 +14,7 @@ export const TOOLS = [
   { href: "/admin/states", label: "Bids by state" },
   { href: "/admin/definitions", label: "Metric definitions" },
   { href: "/admin/sales", label: "Outreach funnel (Sales)" },
+  { href: "/admin/referrals", label: "Referrals" },
   { href: "/admin/market", label: "Market intelligence" },
   { href: "/admin/templates", label: "Trade templates" },
   { href: "/admin/proposal-text", label: "Scope & exclusions" },

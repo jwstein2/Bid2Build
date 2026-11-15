@@ -7,6 +7,7 @@ import { logError } from "@/lib/http/api";
 import { markChurned, markCustomer } from "@/lib/growth/leads";
 import { isFirstPaidSubscriptionInvoice } from "@/lib/email/founder-welcome";
 import { deliverFounderEmails, enqueueFounderWelcome } from "@/lib/email/outbox";
+import { rewardReferrer } from "@/lib/growth/referral-server";
 
 export const runtime = "nodejs";
 
@@ -85,6 +86,11 @@ export async function POST(req: Request) {
         const inv = obj as { id?: string; billing_reason?: string | null; amount_paid?: number | null; status?: string | null; customer_email?: string | null };
         if (isFirstPaidSubscriptionInvoice(inv)) {
           welcomeQueued = (await enqueueFounderWelcome(admin, { userId: res.userId, email: inv.customer_email ?? null, sourceRef: inv.id ?? event.id })) === "queued";
+        }
+        // Referral program: the first non-zero paid invoice of a referred account earns the referrer one
+        // free month. Claimed once in the database, so Stripe retries never reward twice; never throws.
+        if ((inv.amount_paid ?? 0) > 0 && (inv.status == null || inv.status === "paid")) {
+          await rewardReferrer(admin, stripe, res.userId, inv.id ?? event.id);
         }
       }
     }

@@ -33,8 +33,8 @@ export type DeviceType = "mobile" | "tablet" | "desktop";
 
 /** Our own hosts and sign-in/payment hops: never an acquisition source. */
 const INTERNAL_REFERRERS = /(^|\.)(built2bid\.org|built2bid\.netlify\.app|netlify\.app|localhost|supabase\.co|stripe\.com|accounts\.google\.com)$/;
-/** Landing paths that are never a first visit from marketing (sign-in links, customer signing links). */
-const SKIP_PATHS = /^\/(auth|api|sign|complimentary|company\/join)(\/|$)/;
+/** Landing paths that are never a first visit from marketing (sign-in links, customer signing links, the /r/<code> referral hop, which redirects to a tagged URL). */
+const SKIP_PATHS = /^\/(auth|api|sign|complimentary|company\/join|r)(\/|$)/;
 
 export function referrerHost(referer: string | null | undefined): string | undefined {
   if (!referer) return undefined;
