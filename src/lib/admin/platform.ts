@@ -1,0 +1,96 @@
+import "server-only";
+import type { createAdminClient } from "@/lib/supabase/server";
+import type { EstimateRow } from "./metrics";
+import type {
+  BusinessRow, CompanyRow, ConsentRow, CostRow, EventRow, GrantRow, LabelRow, LeadRow, MemberRow, OutboxRow, SignatureRow,
+  SigningRequestRow, Snapshot, StripeEventRow, SubscriptionRow, UserRow, VersionRow,
+} from "./model";
+
+type Db = ReturnType<typeof createAdminClient>;
+const PAGE = 1000;
+const MAX_ROWS = 50_000;
+
+/** Read every row of a table (selected columns only), a page at a time. Admin reporting only. */
+async function all<T>(db: Db, table: string, columns: string, order = "created_at"): Promise<T[]> {
+  const out: T[] = [];
+  for (let from = 0; from < MAX_ROWS; from += PAGE) {
+    const { data, error } = await db.from(table).select(columns).order(order, { ascending: true }).range(from, from + PAGE - 1);
+    if (error) throw new Error(`${table}: ${error.message}`);
+    out.push(...((data ?? []) as T[]));
+    if (!data || data.length < PAGE) break;
+  }
+  return out;
+}
+
+/** Like all(), but a table that is not installed yet (or not readable) yields null instead of failing the page. */
+async function optional<T>(db: Db, table: string, columns: string, order = "created_at"): Promise<T[] | null> {
+  try { return await all<T>(db, table, columns, order); } catch { return null; }
+}
+
+/** Every auth account with its email and sign-in state (service role only). */
+async function authUsers(db: Db): Promise<UserRow[] | null> {
+  const out: UserRow[] = [];
+  try {
+    for (let page = 1; page <= 50; page++) {
+      const { data, error } = await db.auth.admin.listUsers({ page, perPage: PAGE });
+      if (error) return null;
+      const users = data?.users ?? [];
+      for (const u of users) out.push({ id: u.id, email: u.email ?? null, created_at: u.created_at, email_confirmed_at: u.email_confirmed_at ?? null, last_sign_in_at: u.last_sign_in_at ?? null });
+      if (users.length < PAGE) break;
+    }
+    return out;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Load the raw rows behind the owner command center. Called only after requireAdmin(). Selects no
+ * prices, line items, homeowner names or notes. The project address is read only to derive a state on
+ * the server and is never sent to the browser. Emails are read for the owner's Customers page only.
+ */
+export async function loadSnapshot(db: Db, callerId: string): Promise<Snapshot> {
+  const since7 = new Date(Date.now() - 7 * 86_400_000).toISOString();
+  const [
+    metrics, users, profiles, labels, admins, estimates, versions, signatures, signingRequests, subscriptions,
+    businesses, companies, members, grants, consents, events, leads, leadsV2, costs, outbox, stripeEvents,
+  ] = await Promise.all([
+    db.rpc("admin_metrics", { p_caller: callerId }),
+    authUsers(db),
+    all<{ id: string; created_at: string }>(db, "profiles", "id,created_at"),
+    optional<LabelRow>(db, "admin_account_labels", "user_id,label,note,updated_at", "updated_at"),
+    optional<{ user_id: string }>(db, "admin_roles", "user_id", "user_id"),
+    all<EstimateRow>(db, "estimates", "id,user_id,company_id,trades,template_trade,status,created_at,location_state,location_zip,project_address"),
+    all<VersionRow>(db, "estimate_versions", "estimate_id,user_id,created_at,version_number"),
+    all<SignatureRow>(db, "signatures", "estimate_id,user_id,signed_at,pdf_status", "signed_at"),
+    optional<SigningRequestRow>(db, "signing_requests", "id,estimate_id,user_id,company_id,status,created_at,signed_at,expires_at"),
+    all<SubscriptionRow>(db, "subscriptions", "stripe_subscription_id,user_id,stripe_customer_id,status,plan,cancel_at_period_end,canceled_at,ended_at,updated_at,seat_quantity,current_period_end,company_id", "updated_at"),
+    all<BusinessRow>(db, "business_profiles", "user_id,created_at,company_name"),
+    optional<CompanyRow>(db, "companies", "id,created_at,name,owner_user_id"),
+    optional<MemberRow>(db, "company_members", "company_id,user_id,role,status", "company_id"),
+    optional<GrantRow>(db, "complimentary_grants", "id,email,user_id,status,plan,starts_at,expires_at,created_at,company_id,granted_by,note,extra_seats,invite_expires_at,revoked_at"),
+    all<ConsentRow>(db, "market_consent", "user_id,share_prices", "updated_at"),
+    db.from("analytics_events").select("event,user_id,created_at").in("event", ["checkout_started", "subscribed", "account_created"]).order("created_at", { ascending: false }).limit(10_000),
+    optional<LeadRow>(db, "leads", "user_id,source,utm_source,utm_medium,utm_campaign,landing_path,first_touch_at,first_campaign_id,first_campaign_name,stage,created_at"),
+    optional<{ user_id: string | null; referrer_host: string | null; click_id_type: string | null; device_type: string | null }>(db, "leads", "user_id,referrer_host,click_id_type,device_type"),
+    optional<CostRow>(db, "marketing_costs", "id,period_start,channel,campaign_id,amount_usd,note,created_at"),
+    optional<OutboxRow>(db, "email_outbox", "kind,user_id,status,last_error,attempts,created_at,updated_at"),
+    db.from("stripe_events").select("id,type,received_at,processed_at,error").gte("received_at", since7).order("received_at", { ascending: false }).limit(2000),
+  ]);
+  const m = (metrics.data ?? {}) as { import_failures_7d?: number; pdf_errors_7d?: number };
+  const extra = new Map((leadsV2 ?? []).filter((l) => l.user_id).map((l) => [l.user_id!, l]));
+  return {
+    users: users ?? profiles.map((p) => ({ id: p.id, email: null, created_at: p.created_at, email_confirmed_at: null, last_sign_in_at: null })),
+    usersSource: users ? "auth" : "profiles",
+    labels: labels ?? [], labelsInstalled: labels !== null,
+    adminIds: new Set((admins ?? []).map((a) => a.user_id)),
+    estimates, versions, signatures, signingRequests: signingRequests ?? [], subscriptions, businesses,
+    companies: companies ?? [], members: members ?? [], grants: grants ?? [], consents,
+    events: (events.data ?? []) as EventRow[],
+    leads: (leads ?? []).map((l) => ({ ...l, ...(l.user_id ? extra.get(l.user_id) : undefined) })),
+    leadsInstalled: leads !== null, attributionV2: leadsV2 !== null,
+    costs: costs ?? [], outbox: outbox ?? [], stripeEvents: (stripeEvents.data ?? []) as StripeEventRow[],
+    pdfErrors7d: m.pdf_errors_7d ?? 0, importFailures7d: m.import_failures_7d ?? 0,
+    loadedAt: new Date().toISOString(),
+  };
+}

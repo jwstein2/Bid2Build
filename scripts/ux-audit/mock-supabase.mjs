@@ -58,6 +58,20 @@ const rpcs = {
   library_access: Boolean(process.env.MOCK_UNLIMITED) || process.env.MOCK_ADMIN === "1",
 };
 
+// Admin command center screenshots: synthetic platform-wide data (scripts/admin-cc/seed.mjs).
+let authAdminUsers = null;
+if (process.env.MOCK_COMMAND_CENTER) {
+  const { commandCenterSeed } = await import("../admin-cc/seed.mjs");
+  const seed = commandCenterSeed(USER.id);
+  Object.assign(tables, seed.tables);
+  rpcs.admin_metrics = seed.adminMetrics;
+  // Read-only stand-in for admin_comp_list so the Complimentary Access screen can be screenshotted.
+  const compRow = (g, state, name) => ({ id: g.id, email: g.email, user_id: g.user_id, plan: g.plan, state, status: g.status, duration_days: g.plan === "enterprise" ? 90 : 30, included_seats: g.plan === "enterprise" ? 3 : 1, extra_seats: 0, company_id: null, starts_at: g.starts_at, expires_at: g.expires_at, paused_at: null, activated_at: g.starts_at, invite_expires_at: g.invite_expires_at, invite_sent_at: g.created_at, invite_send_count: 1, note: g.note, created_at: g.created_at, revoked_at: null, revoke_reason: null, granted_by_email: USER.email, account_name: name, last_activity_at: null, paid_now: false, converted: false });
+  const [g1, g2, g3] = seed.tables.complimentary_grants;
+  rpcs.admin_comp_list = { rows: [compRow(g2, "active", "Motor City Baths (demo)"), compRow(g1, "active", "Steel City Kitchens (demo)"), compRow(g3, "pending", null)], metrics: { active: 2, pending: 1, expiring_soon: 1, expired: 0, invite_expired: 1, revoked: 0, paused: 0, unlimited: 2, enterprise: 1, converted: 0, total: 3 } };
+  authAdminUsers = [{ id: USER.id, aud: "authenticated", role: "authenticated", email: USER.email, created_at: "2026-11-01T00:00:00Z", email_confirmed_at: "2026-11-01T00:00:00Z", last_sign_in_at: new Date().toISOString(), app_metadata: {}, user_metadata: {} }, ...seed.authUsers];
+}
+
 // Account scenarios for the account-aware CTA checks (scripts/account-ctas/run.mjs). Switch at runtime with
 // GET /__scenario?name=<key>&authDelayMs=<n>. MOCK_UNLIMITED keeps its old meaning for the UX audit scripts.
 const sub = (o) => [{ stripe_subscription_id: "sub_test", id: "sub_test", user_id: USER.id, status: "active", plan: "monthly", price_id: "price_test", current_period_end: iso(-20), cancel_at_period_end: false, canceled_at: null, ended_at: null, updated_at: iso(1), ...o }];
@@ -272,6 +286,7 @@ http.createServer((req, res) => {
     }
     if (u.pathname === "/auth/v1/invite") { try { inviteLog.push({ ...JSON.parse(raw || "{}"), redirect_to: u.searchParams.get("redirect_to") }); } catch { /* ignore */ } return send(res, 200, { id: crypto.randomUUID(), email: inviteLog.at(-1)?.email }); }
     if (u.pathname === "/__invites") return send(res, 200, inviteLog);
+    if (u.pathname === "/auth/v1/admin/users" && req.method === "GET" && authAdminUsers) return send(res, 200, { users: authAdminUsers, aud: "authenticated" }, { "x-total-count": String(authAdminUsers.length) });
     if (u.pathname.startsWith("/auth/v1/")) return send(res, 200, {});
     if (ESIGN && u.pathname.startsWith("/storage/v1/object/")) {
       const signedM = u.pathname.match(/^\/storage\/v1\/object\/sign\/(.+)$/);

@@ -7,10 +7,11 @@ import { COMP_PLAN_LABELS, DURATION_PRESETS, INCLUDED_SEATS, MAX_EXTRA_SEATS, MA
 import { createGrant, type ActionResult } from "./actions";
 import { CopyLink } from "./copy-link";
 
+const fmtDay = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 const input = "w-full rounded-md border border-line-strong px-3 py-2 min-h-11";
 
-export function GrantForm() {
-  const [email, setEmail] = useState("");
+export function GrantForm({ defaultEmail = "" }: { defaultEmail?: string }) {
+  const [email, setEmail] = useState(defaultEmail);
   const [plan, setPlan] = useState<CompPlan>("unlimited");
   const [preset, setPreset] = useState<string>("30");
   const [custom, setCustom] = useState("45");
@@ -20,6 +21,7 @@ export function GrantForm() {
   const [note, setNote] = useState("");
   const [confirming, setConfirming] = useState(false);
   const [result, setResult] = useState<ActionResult | null>(null);
+  const [today] = useState(() => Date.now());
   const [pending, start] = useTransition();
 
   const days = preset === "custom" ? Number(custom) : Number(preset);
@@ -77,6 +79,7 @@ export function GrantForm() {
           )}
           {!daysOk && <span className="mt-1 block text-xs text-danger">Choose between 1 and {MAX_GRANT_DAYS} days.</span>}
           <span className="mt-1 block text-xs text-muted">New recipients: the clock starts when they accept. Existing accounts: starts now.</span>
+          {daysOk && <span className="mt-1 block text-xs text-ink-soft">If it starts today: {fmtDay(new Date(today))} → expires {fmtDay(new Date(today + days * 86_400_000))}</span>}
         </fieldset>
 
         {plan === "enterprise" ? (
@@ -121,6 +124,7 @@ export function GrantForm() {
           <dt className="text-ink-soft">Email</dt><dd className="break-all font-semibold">{email.trim().toLowerCase()}</dd>
           <dt className="text-ink-soft">Access</dt><dd className="font-semibold">{COMP_PLAN_LABELS[plan]}</dd>
           <dt className="text-ink-soft">Duration</dt><dd className="font-semibold">{days} days</dd>
+          <dt className="text-ink-soft">Dates</dt><dd>Starts {fmtDay(new Date(today))} for an existing account (otherwise on acceptance); expires {fmtDay(new Date(today + days * 86_400_000))} if it starts today</dd>
           {plan === "enterprise" && <><dt className="text-ink-soft">Licensed users</dt><dd className="font-semibold">{INCLUDED_SEATS.enterprise + seats}{seats > 0 && ` (${seats} extra authorized)`}</dd></>}
           <dt className="text-ink-soft">Invitation</dt><dd>{sendInvite ? "Email it if they have no verified account" : "Don't email (link shown after)"}</dd>
         </dl>
