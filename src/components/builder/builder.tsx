@@ -105,7 +105,9 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
   const [sendMode, setSendMode] = useState<SendMode>("pdf");
   const [creatingLink, setCreatingLink] = useState(false);
   const [sendKey, setSendKey] = useState(0);
-  const [signingLink, setSigningLink] = useState<CreatedLink | null>(null);
+  // The signing link made in this session, with the edit counters it was made at. It is reused while
+  // the bid is unchanged (no new request, no extra credit), and dropped after an edit, a revoke or expiry.
+  const [signingLinkState, setSigningLinkState] = useState<{ link: CreatedLink; stamp: string } | null>(null);
   const [signingRefresh, setSigningRefresh] = useState(0);
   const esign = isEsignEnabled() && Boolean(user);
   // One export at a time, across Download PDF and Send via My Email (double taps included).
@@ -113,6 +115,8 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
   const [cloudMode, setCloudMode] = useState(mode === "cloud");
   const lib = useLibrary(Boolean(user));
   const estimate = state.estimate;
+  const editStamp = `${state.dirty}|${configDirty}|${bizDirty}`;
+  const signingLink = signingLinkState && signingLinkState.stamp === editStamp ? signingLinkState.link : null;
   const totals = useMemo(() => computeEstimate(estimate), [estimate]);
   const doc = useMemo(() => buildProposal(estimate, business, config), [estimate, business, config]);
 
@@ -294,6 +298,12 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
    * link lands in the Email Proposal dialog, in "Signing link" mode, ready to send.
    */
   const createSigning = useCallback(async (fromDialog = false) => {
+    const stamp = editStamp;
+    // The bid hasn't changed since this session's link was made: show that link, no new request.
+    if (!fromDialog && signingLink && Date.parse(signingLink.expiresAt) > Date.now()) {
+      setSendKey((k) => k + 1); setSendPhase({ k: "idle" }); setSendMode("link"); setSendOpen(true);
+      return;
+    }
     if (fromDialog) setCreatingLink(true);
     const res = await runExport("signing").finally(() => setCreatingLink(false));
     if (!res) { if (fromDialog) setSendOpen(false); return; }
@@ -301,7 +311,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
       if (fromDialog) setSendOpen(false);
       setExportMsg({ tone: "danger", text: res.error }); return;
     }
-    setSigningLink(res.link ?? null);
+    setSigningLinkState(res.link ? { link: res.link, stamp } : null);
     setSigningRefresh((n) => n + 1);
     setStep("proposal");
     if (!fromDialog) {
@@ -310,7 +320,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
       setSendMode("link");
       setSendOpen(true);
     }
-  }, [runExport]);
+  }, [runExport, editStamp, signingLink]);
 
   const changeSendMode = useCallback((m: SendMode) => {
     setSendMode(m);
@@ -323,8 +333,6 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
     if (exportLock.current) return;
     setSendKey((k) => k + 1);
     setSendMode("pdf");
-    // A link from an earlier send may point at an older version: make a fresh one if needed.
-    setSigningLink(null);
     setSendOpen(true);
     void prepareSend();
   }, [user, readiness.length, runExport, prepareSend]);
@@ -477,7 +485,8 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
           <>{isWashingEstimate(estimate) && <WashingJobPanel estimate={estimate} dispatch={dispatch} />}<Workspace estimate={estimate} dispatch={dispatch} lib={lib} /></>
         ))}
         {step === "scope" && <ScopeStep estimate={estimate} config={config} onConfig={onConfig} signedIn={Boolean(user)} estimateId={cloudMode ? estimate.id : null} />}
-        {step === "proposal" && esign && cloudMode && <SigningPanel estimateId={estimate.id} onCreate={() => void createSigning()} creating={exporting} refreshKey={signingRefresh} />}
+        {step === "proposal" && esign && cloudMode && <SigningPanel estimateId={estimate.id} onCreate={() => void createSigning()} creating={exporting} refreshKey={signingRefresh}
+          onRevoked={(id) => setSigningLinkState((s) => (s?.link.requestId === id ? null : s))} />}
         {step === "proposal" && <ProposalStep estimate={estimate} business={business} config={config} onConfig={onConfig} />}
 
         {/* Step footer: Back / Next on every step */}

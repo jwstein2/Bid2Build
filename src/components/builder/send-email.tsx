@@ -1,7 +1,7 @@
 "use client";
 import { Check, ChevronDown, Copy, Download, FileText, Link2, Loader2, Mail, Pencil, Share2 } from "lucide-react";
 import { useMemo, useRef, useState, type ReactNode } from "react";
-import { buildShareEmail, canShareFile, mailtoHref, plainEmail, webComposeHref, type ShareEmailInput, type WebMail } from "@/lib/proposal/share-email";
+import { buildShareEmail, canShareFile, mailtoHref, plainEmail, webComposeFits, webComposeHref, type ShareEmailInput, type WebMail } from "@/lib/proposal/share-email";
 import type { CreatedLink } from "../esign/signing-panel";
 import { LocalTime } from "../esign/local-time";
 import { Button } from "../ui/button";
@@ -62,12 +62,18 @@ export function SendEmailDialog({ open, onOpenChange, phase, emailInput, onRetry
   onCreateLink: () => void;
   creatingLink: boolean;
 }) {
+  // Never offer a link that has run out (a revoked one is cleared by the builder). The dialog is
+  // remounted on every open, so "now" is when it opened.
+  const [openedAt] = useState(() => Date.now());
+  const liveLink = link && Date.parse(link.expiresAt) > openedAt ? link : null;
+  // Each mode has its own subject and message. The subject is known before the link exists.
   const built = useMemo(() => ({
     pdf: buildShareEmail(emailInput),
-    link: link ? buildShareEmail({ ...emailInput, signingUrl: link.url }) : null,
-  }), [emailInput, link]);
+    link: buildShareEmail({ ...emailInput, signingUrl: liveLink?.url ?? "https://built2bid.org/sign/pending" }),
+  }), [emailInput, liveLink]);
   const [to, setTo] = useState(built.pdf.to);
-  const [subject, setSubject] = useState(built.pdf.subject);
+  // What the contractor typed, per mode: kept when they switch tabs and back, never overwritten.
+  const [subjects, setSubjects] = useState<Partial<Record<SendMode, string>>>({});
   const [edits, setEdits] = useState<Partial<Record<SendMode, string>>>({});
   const [editing, setEditing] = useState(false);
   const [status, setStatus] = useState<Status>(null);
@@ -77,9 +83,11 @@ export function SendEmailDialog({ open, onOpenChange, phase, emailInput, onRetry
 
   const file = phase.k === "ready" ? phase.file : null;
   const shareable = useMemo(() => (file ? canShareFile(file) : false), [file]);
-  const body = edits[mode] ?? (mode === "link" ? built.link?.body ?? "" : built.pdf.body);
+  const subject = subjects[mode] ?? built[mode].subject;
+  const body = edits[mode] ?? (mode === "link" ? (liveLink ? built.link.body : "") : built.pdf.body);
   const email = { to, subject, body };
-  const ready = mode === "pdf" ? Boolean(file) : Boolean(link);
+  const ready = mode === "pdf" ? Boolean(file) : Boolean(liveLink);
+  const setSubject = (v: string) => setSubjects((x) => ({ ...x, [mode]: v }));
 
   function flash(key: string) { setCopied(key); setTimeout(() => setCopied((c) => (c === key ? null : c)), 1500); }
   function switchMode(m: SendMode) { if (m !== mode) { setStatus(null); onModeChange(m); } }
@@ -115,14 +123,22 @@ export function SendEmailDialog({ open, onOpenChange, phase, emailInput, onRetry
   /** Gmail or Outlook. Returns false to stop the link opening (the share sheet is used instead). */
   function webmail(app: WebMail, e: React.MouseEvent) {
     const name = app === "gmail" ? "Gmail" : "Outlook";
+    const personal = app === "outlook" && <> Using Outlook.com and no draft opened? <a className="font-semibold underline" href={webComposeHref("outlook-personal", email)} target="_blank" rel="noopener noreferrer">Open Outlook.com</a>.</>;
+    // A very long message would be cut short in the link: copy the whole thing so it can be pasted.
+    if (!webComposeFits(body) && !(mode === "pdf" && shareable && isTouchDevice())) {
+      void copyText(plainEmail(email));
+      setStatus({ tone: "warn", text: <>Your message is too long for a {name} link, so the draft has only the start of it. We copied the full message: paste it into the draft{mode === "pdf" ? " and attach the downloaded PDF" : ""}.</> });
+      if (mode === "pdf" && file) ensureDownloaded(file);
+      return;
+    }
     if (mode === "link") {
-      setStatus({ tone: "ok", text: <>{name} opened in a new tab with your signing link in the message. Review it, then press Send there.{app === "outlook" && <> Personal Outlook.com account and no draft? <a className="font-semibold underline" href={webComposeHref("outlook-personal", email)} target="_blank" rel="noopener noreferrer">Open Outlook.com</a>.</>}</> });
+      setStatus({ tone: "ok", text: <>{name} opened in a new tab with your signing link. Check it, then press Send there.{personal}</> });
       return;
     }
     if (!file) { e.preventDefault(); return; }
     if (shareable && isTouchDevice()) { e.preventDefault(); void share(name); return; }
     const fresh = ensureDownloaded(file);
-    setStatus({ tone: "ok", text: <>{name} opened in a new tab with your message. {fresh ? "We downloaded" : "Use the downloaded"} <b>{file.name}</b>: drag it into the email (or click the paperclip), then press Send.{app === "outlook" && <> Personal Outlook.com account and no draft? <a className="font-semibold underline" href={webComposeHref("outlook-personal", email)} target="_blank" rel="noopener noreferrer">Open Outlook.com</a>.</>}</> });
+    setStatus({ tone: "ok", text: <>{name} opened in a new tab. Attach <b>{file.name}</b> ({fresh ? "just downloaded" : "already in your downloads"}): drag it into the email or click the paperclip, then press Send.{personal}</> });
   }
 
   function otherApp() {
@@ -133,7 +149,7 @@ export function SendEmailDialog({ open, onOpenChange, phase, emailInput, onRetry
       setStatus({ tone: "ok", text: <>Your email app should open with this message. {fresh ? "We downloaded" : "Attach the downloaded"} <b>{file.name}</b>{fresh ? ", so attach it" : ""}, then press Send. Nothing opened? Use Copy message below.</> });
       return;
     }
-    if (mode === "link" && link) {
+    if (mode === "link" && liveLink) {
       window.location.assign(mailtoHref(email));
       setStatus({ tone: "ok", text: <>Your email app should open with the signing link in the message. Nothing opened? Use Copy message below.</> });
     }
@@ -144,14 +160,20 @@ export function SendEmailDialog({ open, onOpenChange, phase, emailInput, onRetry
   const linkBtn = "inline-flex min-h-10 items-center gap-1.5 rounded-lg px-2.5 text-sm font-semibold text-brand hover:bg-black/5 disabled:opacity-40";
 
   return (
-    <Modal open={open} onOpenChange={onOpenChange} title="Email Proposal" description="Opens a draft in your own email. You review it and press Send; Built2Bid never emails your customer.">
+    <Modal open={open} onOpenChange={onOpenChange} title="Email Proposal" description="You review and send it from your own email. Built2Bid never emails your customer.">
       <div className="space-y-3" data-testid="email-proposal">
         {allowLink && (
-          <div role="radiogroup" aria-label="What to send" className="grid grid-cols-2 gap-1 rounded-lg bg-black/5 p-1 text-sm font-semibold">
+          <div role="radiogroup" aria-label="What to send" onKeyDown={(e) => {
+            if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) return;
+            e.preventDefault();
+            const next: SendMode = mode === "pdf" ? "link" : "pdf";
+            switchMode(next);
+            (e.currentTarget.querySelector(`[data-mode="${next}"]`) as HTMLElement | null)?.focus();
+          }} className="grid grid-cols-2 gap-1 rounded-lg bg-black/5 p-1 text-sm font-semibold">
             {([["pdf", "PDF attachment", FileText], ["link", "Signing link", Link2]] as const).map(([m, label, Icon]) => (
-              <button key={m} type="button" role="radio" aria-checked={mode === m} onClick={() => switchMode(m)}
+              <button key={m} type="button" role="radio" aria-checked={mode === m} aria-label={label} data-mode={m} tabIndex={mode === m ? 0 : -1} onClick={() => switchMode(m)}
                 className={`inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md ${mode === m ? "bg-surface text-navy shadow-sm" : "text-ink-soft hover:text-navy"}`}>
-                <Icon className="h-4 w-4" aria-hidden />{label}
+                <Icon className="h-4 w-4" aria-hidden />{m === "pdf" ? <><span className="min-[360px]:hidden">PDF</span><span className="max-[359px]:hidden">PDF attachment</span></> : label}
               </button>
             ))}
           </div>
@@ -180,13 +202,13 @@ export function SendEmailDialog({ open, onOpenChange, phase, emailInput, onRetry
                 </span>
               )}
               {mode === "link" && creatingLink && <span className="inline-flex items-center gap-1.5 text-ink-soft" role="status"><Loader2 className="h-4 w-4 animate-spin" aria-hidden />Creating signing link…</span>}
-              {mode === "link" && !creatingLink && !link && (
+              {mode === "link" && !creatingLink && !liveLink && (
                 <Button size="sm" variant="accent" onClick={onCreateLink} data-testid="se-create-link"><Link2 className="h-4 w-4" aria-hidden /> Create signing link</Button>
               )}
-              {mode === "link" && !creatingLink && link && (
+              {mode === "link" && !creatingLink && liveLink && (
                 <span className="flex min-w-0 items-center gap-2">
-                  <input readOnly value={link.url} aria-label="Signing link" className="min-w-0 flex-1 truncate bg-transparent font-mono text-xs outline-none" onFocus={(e) => e.currentTarget.select()} data-testid="signing-url" />
-                  <button type="button" className={linkBtn} onClick={async () => { if (await copyText(link.url)) flash("url"); }}>{copied === "url" ? <Check className="h-4 w-4" aria-hidden /> : <Copy className="h-4 w-4" aria-hidden />}{copied === "url" ? "Copied" : "Copy"}</button>
+                  <input readOnly value={liveLink.url} aria-label="Signing link" className="min-w-0 flex-1 truncate bg-transparent font-mono text-xs outline-none" onFocus={(e) => e.currentTarget.select()} data-testid="signing-url" />
+                  <button type="button" className={linkBtn} onClick={async () => { if (await copyText(liveLink.url)) flash("url"); }}>{copied === "url" ? <Check className="h-4 w-4" aria-hidden /> : <Copy className="h-4 w-4" aria-hidden />}{copied === "url" ? "Copied" : "Copy"}</button>
                 </span>
               )}
             </dd>
@@ -200,11 +222,11 @@ export function SendEmailDialog({ open, onOpenChange, phase, emailInput, onRetry
             <div className="flex justify-end"><Button size="sm" onClick={onRetry}>Try again</Button></div>
           </div>
         )}
-        {mode === "link" && !link && !creatingLink && (
-          <p className="text-xs text-muted">Your customer reviews this exact version and signs online, no account needed. The link comes with no attachment. Creating a new link turns off any earlier one.</p>
+        {mode === "link" && !liveLink && !creatingLink && (
+          <p className="text-xs text-muted">Your customer reviews and signs this exact version online. No attachment or account needed. A new link turns off any earlier one.</p>
         )}
-        {mode === "link" && link && (
-          <p className="text-xs text-muted">{link.message ? <>{link.message} </> : null}Version {link.versionNumber} · {link.total} · works until <LocalTime iso={link.expiresAt} relative={false} />. Anyone with the link can view and sign, so send it only to your customer.</p>
+        {mode === "link" && liveLink && (
+          <p className="text-xs text-muted">{liveLink.message ? <>{liveLink.message} </> : null}Version {liveLink.versionNumber} · {liveLink.total} · works until <LocalTime iso={liveLink.expiresAt} relative={false} />. Anyone with the link can view and sign, so send it only to your customer.</p>
         )}
 
         <div>
@@ -250,8 +272,8 @@ export function SendEmailDialog({ open, onOpenChange, phase, emailInput, onRetry
             <ChevronDown className="h-4 w-4 transition group-open:rotate-180" aria-hidden /> More options
           </summary>
           <div className="mt-1 flex flex-wrap gap-1">
-            {(mode === "pdf" ? file : link?.file) && (
-              <button type="button" className={linkBtn} onClick={() => { const f = (mode === "pdf" ? file : link?.file)!; downloaded.current = true; downloadFile(f); }}><Download className="h-4 w-4" aria-hidden /> Download PDF</button>
+            {(mode === "pdf" ? file : liveLink?.file) && (
+              <button type="button" className={linkBtn} onClick={() => { const f = (mode === "pdf" ? file : liveLink?.file)!; downloaded.current = true; downloadFile(f); }}><Download className="h-4 w-4" aria-hidden /> Download PDF</button>
             )}
             <button type="button" className={linkBtn} disabled={!ready} onClick={async () => { if (await copyText(plainEmail(email))) flash("msg"); }}>
               {copied === "msg" ? <Check className="h-4 w-4" aria-hidden /> : <Copy className="h-4 w-4" aria-hidden />}{copied === "msg" ? "Copied" : "Copy message"}

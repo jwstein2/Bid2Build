@@ -11,8 +11,10 @@ import { SignedPdfButton } from "./signed-pdf-button";
 export interface CreatedLink { url: string; requestId: string; expiresAt: string; versionNumber: number; total: string; file?: File; message: string }
 
 /** Signing status of this bid + Create Signing Link, on the Proposal step. */
-export function SigningPanel({ estimateId, onCreate, creating, refreshKey }: {
+export function SigningPanel({ estimateId, onCreate, creating, refreshKey, onRevoked }: {
   estimateId: string; onCreate: () => void; creating: boolean; refreshKey: number;
+  /** A revoked link must never be offered again in the Email Proposal dialog. */
+  onRevoked?: (requestId: string) => void;
 }) {
   const [data, setData] = useState<{ requests: RequestRow[]; signatures: SignatureRow[] } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -28,6 +30,7 @@ export function SigningPanel({ estimateId, onCreate, creating, refreshKey }: {
     setBusy(id); setErr(null);
     const r = await fetch(`/api/estimates/${estimateId}/signing/${id}`, { method: "DELETE" }).catch(() => null);
     if (!r?.ok) setErr("Couldn't revoke the link. Please try again.");
+    else onRevoked?.(id);
     await load(); setBusy(null);
   }
 
