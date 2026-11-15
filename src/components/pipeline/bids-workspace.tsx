@@ -1,4 +1,6 @@
 "use client";
+import type { FeatureId } from "@/lib/features/registry";
+import { FeatureHelp } from "@/components/features/feature-help";
 import { useMemo, useState, type ReactNode } from "react";
 import { BarChart3, Columns3, List, Search } from "lucide-react";
 import {
@@ -13,10 +15,10 @@ import { AnalyticsView } from "./analytics-view";
 import { money } from "./format";
 
 export type BidsView = "pipeline" | "table" | "analytics";
-const VIEWS: { id: BidsView; label: string; icon: typeof List }[] = [
-  { id: "pipeline", label: "Pipeline", icon: Columns3 },
+const VIEWS: { id: BidsView; label: string; icon: typeof List; feature?: FeatureId }[] = [
+  { id: "pipeline", label: "Pipeline", icon: Columns3, feature: "pipeline" },
   { id: "table", label: "Table", icon: List },
-  { id: "analytics", label: "Analytics", icon: BarChart3 },
+  { id: "analytics", label: "Analytics", icon: BarChart3, feature: "analytics" },
 ];
 
 /** Bids dashboard: Pipeline (default), Table (the existing list with every bid action) and Analytics. */
@@ -47,13 +49,16 @@ export function BidsWorkspace({ bids, history, esign, table, pay, paySaved, migr
   return (
     <section aria-label="Your bids" className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-1">
         <div role="tablist" aria-label="Bids view" className="inline-flex rounded-lg border border-line bg-surface p-1">
-          {VIEWS.map(({ id, label, icon: Icon }) => (
-            <button key={id} role="tab" type="button" aria-selected={view === id} onClick={() => pick(id)} data-testid={`view-${id}`}
+          {VIEWS.map(({ id, label, icon: Icon, feature }) => (
+            <button key={id} role="tab" type="button" aria-selected={view === id} onClick={() => pick(id)} data-testid={`view-${id}`} data-feature={feature}
               className={cn("inline-flex min-h-9 items-center gap-1.5 rounded-md px-3 text-sm font-semibold", view === id ? "bg-navy text-white" : "text-ink-soft hover:bg-black/5")}>
               <Icon className="h-4 w-4" aria-hidden />{label}
             </button>
           ))}
+        </div>
+        <FeatureHelp id={view === "analytics" ? "analytics" : "pipeline"} className="max-[379px]:hidden" />
         </div>
         {view !== "table" && (
           <div className="flex flex-wrap items-center gap-2">

@@ -69,6 +69,17 @@ Placement rules: a real signature puts a bid at Won or later; an active signing 
 - **Tests:** `tests/internal-report.test.tsx`, `tests/internal-report-route.test.ts`, `scripts/internal-report/walk.mjs` (mock Supabase; free mode and `MOCK_UNLIMITED=1`).
 - **Migration:** none.
 
+## Phase 4: feature registry, unlocked-features modal, walkthrough, What's New
+
+- **Registry:** `src/lib/features/registry.ts` lists every feature with id, name, entitlement, route, walkthrough target (`data-feature`), description, upgrade pitch, walkthrough copy and release version. `PREMIUM_FEATURES` (locks and upgrade copy) is derived from it. Release notes are written by hand there; nothing is generated from code changes. Features marked `unreleased` are never shown.
+- **CI:** `.github/workflows/feature-registry.yml` runs `tests/feature-registry.test.ts` on every PR: complete metadata, valid releases, premium locks registered, every `data-feature` registered, every walkthrough target present, premium sidebar links registered.
+- **Your New Features Are Ready:** opens once when the account's server-checked access (`library_access()`) includes premium features it hasn't been told about. After checkout it re-checks for ~24s while the webhook lands. Explore Features, Maybe Later and Close all acknowledge, so it doesn't reopen. Long-time paying customers are told only about premium features from the latest release (today: Internal Estimate Report).
+- **Walkthrough:** highlights the real control when it's on screen (Try it clicks it), otherwise explains where it is with Open Feature. Next, Back, Skip, Finish, Escape. Never forced. Start it from the modal, the dashboard notice, What's New, or Help > Feature walkthrough.
+- **What's New:** `/whats-new` lists releases from the registry with Included / All plans / Unlimited + Upgrade per feature. The dashboard shows a dismissible notice for the latest release, limited to features the account can use; accounts created after the release don't see it.
+- **Contextual help:** `?` next to the Bids view tabs shows the registry description.
+- **Storage:** per account in Supabase auth `user_metadata.b2b_features` (acknowledged ids, last notice version, walkthrough outcome), via `/api/features`. It never grants access. **No migration.**
+- **Tests:** `tests/feature-registry.test.ts`, `tests/features-route.test.ts`, `scripts/features/walk.mjs` (mock Supabase).
+
 ## Migration and rollback
 
 - Migration: `supabase/migrations/20261116002000_sales_pipeline.sql` (idempotent, tested twice in a row).

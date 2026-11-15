@@ -35,7 +35,7 @@ export function SalesPayCalculator({ wonBids, initial, saved }: { wonBids: Analy
   }
 
   return (
-    <Card data-testid="sales-pay">
+    <Card data-testid="sales-pay" data-feature="sales_pay">
       <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex w-full items-center justify-between gap-3 p-4 text-left">
         <span>
           <span className="flex items-center gap-2 font-bold text-navy"><Calculator className="h-4 w-4" aria-hidden />Sales pay calculator <span className="text-xs font-semibold text-muted">(optional)</span></span>

@@ -29,7 +29,7 @@ export function InternalReportButton({ estimateId, locked, saved, signedIn, busi
   const [open, setOpen] = useState(false);
   return (
     <>
-      <Button size="sm" variant="ghost" onClick={() => setOpen(true)} data-testid="internal-report-open" aria-label={`Internal estimate report${locked ? " (Unlimited feature)" : ""}`}>
+      <Button size="sm" variant="ghost" onClick={() => setOpen(true)} data-testid="internal-report-open" data-feature="internal_report" aria-label={`Internal estimate report${locked ? " (Unlimited feature)" : ""}`}>
         <FileSpreadsheet className="h-4 w-4" aria-hidden /><span className="hidden lg:inline">Internal report</span>{locked && <PremiumDiamond />}
       </Button>
       {open && <InternalReportDialog estimateId={estimateId} saved={saved} signedIn={signedIn} businessEmail={businessEmail} title={title} onClose={() => setOpen(false)} />}
