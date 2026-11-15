@@ -50,6 +50,16 @@ export default async function ArticlePage({ params }: PageProps<"/learn/[slug]">
             </section>
           ))}
         </div>
+        {a.sources && a.sources.length > 0 && (
+          <section className="mt-8">
+            <h2 className="mb-2 text-lg font-bold">Further reading</h2>
+            <ul className="list-disc space-y-1 pl-5 text-sm text-ink-soft">
+              {a.sources.map((s) => (
+                <li key={s.url}><a href={s.url} target="_blank" rel="nofollow noopener noreferrer" className="underline">{s.title}</a></li>
+              ))}
+            </ul>
+          </section>
+        )}
         {trade && (
           <p className="mt-8 text-ink-soft">
             Building a {trade.name.toLowerCase()} bid? See the <Link href={`/bids/${trade.slug}`} className="font-semibold text-ink underline">{trade.seoTitle}</Link> for the sections and items most {trade.name.toLowerCase()} estimates include.

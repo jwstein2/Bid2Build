@@ -16,6 +16,8 @@ export interface Article {
   /** Trade slug for trade pricing guides: links the guide and its trade page both ways. */
   trade?: string;
   blocks: ArticleBlock[];
+  /** "Further reading" links found by the writer's research step (generated guides only). */
+  sources?: { title: string; url: string }[];
 }
 
 const coreArticles: Article[] = [
