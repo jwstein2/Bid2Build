@@ -6,7 +6,7 @@ import { getBrowserClient, getOtpClient } from "@/lib/supabase/client";
 import { plans } from "@/lib/site";
 import {
   COUNTRIES, DEFAULT_COUNTRY, RESEND_COOLDOWN_S, cooldownLeft, countryByIso, formatAsYouType, formatPhone,
-  isNoAccountError, isSmsSignInEnabled, markSent, normalizePhone, smsErrorMessage, type Country,
+  abandonPhoneSignup, isNoAccountError, isSendFailure, isSmsSignInEnabled, markSent, normalizePhone, smsErrorMessage, type Country,
 } from "@/lib/auth/phone";
 import { Button } from "../ui/button";
 import { Notice } from "../ui/misc";
@@ -137,7 +137,13 @@ export function AuthDialog({ open, onOpenChange, next, onVerified, title, copy, 
     setBusy(false);
     setPhone(e164);
     if (error && !create && isNoAccountError(error)) { go("phone-new"); return; }
-    if (error) { setErr(smsErrorMessage(error, "send")); return; }
+    if (error) {
+      setErr(smsErrorMessage(error, "send"));
+      // A failed text after "I'm new here" leaves a half-made phone account behind; ask the server
+      // to remove it (it checks the account is exactly that leftover before deleting anything).
+      if (create && isSendFailure(error)) void abandonPhoneSignup(e164);
+      return;
+    }
     markSent(e164);
     go("phone-code"); setCooldown(RESEND_COOLDOWN_S);
     if (resend) setInfo(`We texted a new code to ${formatPhone(e164)}. Use the newest one.`);
