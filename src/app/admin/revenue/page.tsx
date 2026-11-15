@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { AreaChart, Change, Kpi, NotConnected, PageHead, PairColumns, Panel, Pct, Row, Table, day, fmt, usd } from "@/components/admin/cc";
+import { AreaChart, Change, Fresh, Kpi, NotConnected, PageHead, PairColumns, Panel, PanelLink, Pct, Row, Table, day, fmt, usd } from "@/components/admin/cc";
 import { RangeControl, ReportUnavailable, ScopeNote, SectionTitle } from "@/components/admin/report";
 import { tip } from "@/lib/admin/definitions";
-import { stripeReconcile } from "@/lib/admin/integrations";
+import { stripeCheckouts, stripeReconcile } from "@/lib/admin/integrations";
 import { inWindow, monthlyCents, ratio, revenueModel, windowOf } from "@/lib/admin/model";
 import { loadReport } from "@/lib/admin/load";
+import { href } from "@/lib/admin/view";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Revenue" };
@@ -17,7 +18,7 @@ export default async function Revenue({ searchParams }: { searchParams: Promise<
   const w = windowOf(range, now);
   const rev = revenueModel(facts, range, now);
   const excluded = new Set(view.includeTest ? [] : snap.subscriptions.filter((s) => sc.classes.get(s.user_id)?.cls !== "genuine" && s.stripe_customer_id).map((s) => s.stripe_customer_id!));
-  const stripe = await stripeReconcile(range.days, excluded);
+  const [stripe, sessions] = await Promise.all([stripeReconcile(range.days, excluded), stripeCheckouts(range.days)]);
   const started = sc.d.events.filter((e) => e.event === "checkout_started" && inWindow(e.created_at, w.start, w.end)).length;
   const done = sc.d.events.filter((e) => e.event === "subscribed" && inWindow(e.created_at, w.start, w.end)).length;
   const mix = [
@@ -31,7 +32,7 @@ export default async function Revenue({ searchParams }: { searchParams: Promise<
     <div className="space-y-6">
       <PageHead kicker={`Revenue · ${range.label}`} title="Recurring revenue and risk"
         intro="Paid subscriptions only. Complimentary access is never counted as revenue. MRR is list price; money actually collected comes from Stripe."
-        right={<RangeControl view={view} path="/admin/revenue" />} />
+        right={<div className="flex flex-wrap items-center gap-2"><RangeControl view={view} path="/admin/revenue" /><PanelLink href={href("/admin/revenue/scorecard", view)}>Business Scorecard</PanelLink></div>} />
       <ScopeNote sc={sc} />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
@@ -48,7 +49,7 @@ export default async function Revenue({ searchParams }: { searchParams: Promise<
           <AreaChart height={190} totals={false} series={[{ name: "MRR ($)", tone: "blue", points: rev.mrrSeries }]} />
           <p className="mt-2 text-xs text-muted">Reconstructed from subscription start (Stripe-confirmed &ldquo;subscribed&rdquo; event) and end dates.{rev.unknownStart ? ` ${rev.unknownStart} subscription${rev.unknownStart === 1 ? " has" : "s have"} no recorded start and ${rev.unknownStart === 1 ? "is" : "are"} treated as older than the window.` : ""}</p>
         </Panel>
-        <Panel kicker="Source of truth" title="Stripe reconciliation">
+        <Panel kicker="Source of truth" title="Stripe reconciliation" action={<Fresh at={stripe?.fetchedAt} state={stripe ? "live" : "error"} now={now.getTime()} />}>
           {stripe ? (
             <>
               <dl>
@@ -58,7 +59,7 @@ export default async function Revenue({ searchParams }: { searchParams: Promise<
                 <Row k={`Payments received · ${range.label}`}><span className="text-[var(--cc-green)]">{usd(stripe.paidCents)}</span></Row>
                 <Row k="Paid invoices">{fmt(stripe.invoices)}</Row>
               </dl>
-              <p className={`mt-2 text-xs ${reconOk ? "text-muted" : "text-[var(--cc-amber)]"}`}>{reconOk ? "Snapshot matches Stripe." : "Snapshot and Stripe differ: a webhook may have been missed. Check Operations."} Payments are {stripe.refundsNote.toLowerCase()}.</p>
+              <p className={`mt-2 text-xs ${reconOk ? "text-muted" : "text-[var(--cc-amber)]"}`}>{reconOk ? "Reconciled: snapshot matches Stripe." : "Snapshot and Stripe differ: a webhook may have been missed. Check Operations."} Snapshot last updated by a Stripe webhook {snap.stripeEvents[0] ? day(snap.stripeEvents[0].received_at) : "more than 7 days ago"}. Payments are {stripe.refundsNote.toLowerCase()}.</p>
             </>
           ) : (
             <div className="space-y-2 text-sm text-ink-soft"><NotConnected>Stripe not reachable from this deploy</NotConnected><p>Numbers on this page come from the webhook snapshot in Supabase. Open Stripe for collected payments.</p></div>
@@ -97,7 +98,12 @@ export default async function Revenue({ searchParams }: { searchParams: Promise<
           <div><p className="cc-kicker">Subscriptions confirmed</p><p className="cc-mono mt-1 text-2xl font-bold text-white">{fmt(done)}</p></div>
           <div><p className="cc-kicker">Completion</p><p className="mt-2"><Pct r={ratio(done, started)} /></p></div>
         </div>
-        <p className="mt-3 text-xs text-muted">Event-based (not a cohort): checkout_started and subscribed events in the window. Built2Bid has no free trial, so trial conversion does not apply.</p>
+        <div className="mt-4 grid gap-4 border-t border-[var(--cc-line)] pt-4 sm:grid-cols-3">
+          <div><p className="cc-kicker">Stripe sessions completed</p><p className="cc-mono mt-1 text-xl font-bold text-white">{sessions ? fmt(sessions.complete) : "–"}</p></div>
+          <div><p className="cc-kicker">Abandoned or canceled (expired)</p><p className="cc-mono mt-1 text-xl font-bold text-white">{sessions ? fmt(sessions.expired) : "–"}</p></div>
+          <div><p className="cc-kicker">Still open</p><p className="cc-mono mt-1 text-xl font-bold text-white">{sessions ? fmt(sessions.open) : "–"}</p><p className="mt-1"><Fresh at={sessions?.fetchedAt} state={sessions ? "live" : "error"} now={now.getTime()} /></p></div>
+        </div>
+        <p className="mt-3 text-xs text-muted">Event-based (not a cohort): checkout_started and subscribed events in the window. Session outcomes come from Stripe Checkout (read-only, whole Stripe account, including any internal test purchases). Built2Bid has no free trial, so trial conversion does not apply.</p>
       </Panel>
     </div>
   );

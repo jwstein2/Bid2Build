@@ -29,3 +29,17 @@ No new npm dependencies. Google calls use a signed service-account JWT built wit
 6. Redeploy. Operations → Integrations should show both as OK. GA4 data can lag 24–48 hours.
 
 Scopes requested: `analytics.readonly` and `webmasters.readonly` only.
+
+## Tech Stack & Costs: provider monitors (V3)
+
+| Monitor | Status | How it works / what it would need |
+| --- | --- | --- |
+| Supabase database size, file storage, auth users | **Live** after migration 20261115003000 | `admin_platform_usage()` reads aggregates from the database itself (service role only). |
+| Supabase egress, API requests, compute | Not connected | Needs a Supabase Management API personal token, which has account-wide access. Not requested. |
+| Stripe fees, refunds, checkout outcomes | **Live** | Existing secret key, read-only list calls (balance transactions, invoices, checkout sessions). |
+| Anthropic API (in-app AI) | **Live** | Built2Bid's own `ai_generations` log (tokens and cost per request). Account billing would need an Anthropic Admin API key: not connected. |
+| Netlify credits, bandwidth, functions | Not connected | Needs a Netlify personal access token (account-wide). Enter the invoice instead. |
+| Google Cloud / Places | Not in use | Places autofill is off until a key is set. |
+| Resend, Instantly, Apollo, Apify | Not connected | Resend's sending key cannot read usage; no Built2Bid Apollo/Apify account was found. |
+
+Approval needed before connecting any account-wide token. None of these cost money to connect; all are optional. Until then, record invoices on Tech Stack & Costs (manual entry or CSV import, de-duplicated by invoice id).

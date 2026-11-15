@@ -122,7 +122,7 @@ export async function searchConsoleReport(days: number): Promise<SearchReport | 
 // ---------------------------------------------------------------------------------------------
 // Stripe read-only reconciliation
 // ---------------------------------------------------------------------------------------------
-export interface StripeRecon { active: number; pastDue: number; paidCents: number; invoices: number; refundsNote: string }
+export interface StripeRecon { active: number; pastDue: number; paidCents: number; invoices: number; refundsNote: string; fetchedAt: string }
 
 const timeout = <T,>(p: Promise<T>, ms: number) => Promise.race([p, new Promise<never>((_, rej) => setTimeout(() => rej(new Error("timeout")), ms))]);
 
@@ -147,9 +147,53 @@ export async function stripeReconcile(days: number, excludedCustomers: Set<strin
       active: keep(active as unknown as { customer: string | { id: string } | null }[]).length,
       pastDue: keep(pastDue as unknown as { customer: string | { id: string } | null }[]).length,
       paidCents: paid.reduce((n, i) => n + (i.amount_paid ?? 0), 0), invoices: paid.length,
-      refundsNote: "Gross of refunds and Stripe fees",
+      refundsNote: "Gross of refunds and Stripe fees", fetchedAt: new Date().toISOString(),
     };
   } catch {
     return null;
   }
 }
+
+/**
+ * Cash in the window from Stripe, read-only: paid invoices (genuine customers only), refunds and
+ * processing fees from balance transactions. Balance transactions do not carry the customer without
+ * extra lookups, so refunds and fees cover the whole Stripe account (labeled as such on the page).
+ */
+export async function stripeMoney(days: number, excludedCustomers: Set<string>): Promise<import("./finance").StripeMoney | null> {
+  if (!has("STRIPE_SECRET_KEY")) return null;
+  try {
+    const stripe = getStripe();
+    const gte = Math.floor((Date.now() - days * 86_400_000) / 1000);
+    const [invoices, txns] = await timeout(Promise.all([
+      stripe.invoices.list({ status: "paid", created: { gte }, limit: 100 }).autoPagingToArray({ limit: 2000 }),
+      stripe.balanceTransactions.list({ created: { gte }, limit: 100 }).autoPagingToArray({ limit: 5000 }),
+    ]), 8000);
+    const cust = (c: string | { id: string } | null) => (typeof c === "string" ? c : c?.id ?? "");
+    const paid = (invoices as unknown as { customer: string | { id: string } | null; amount_paid: number }[]).filter((x) => !excludedCustomers.has(cust(x.customer)));
+    const tx = txns as unknown as { type: string; amount: number; fee: number }[];
+    return {
+      grossCents: paid.reduce((n, x) => n + (x.amount_paid ?? 0), 0), invoices: paid.length,
+      refundsCents: -tx.filter((x) => x.type === "refund" || x.type === "payment_refund").reduce((n, x) => n + x.amount, 0),
+      feesCents: tx.reduce((n, x) => n + (x.fee ?? 0), 0) + -tx.filter((x) => x.type === "stripe_fee").reduce((n, x) => n + x.amount, 0),
+      fetchedAt: new Date().toISOString(), feesScope: "account",
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** Checkout Sessions created in the window by outcome (read-only). Expired = abandoned or canceled. */
+export async function stripeCheckouts(days: number): Promise<{ complete: number; expired: number; open: number; fetchedAt: string } | null> {
+  if (!has("STRIPE_SECRET_KEY")) return null;
+  try {
+    const gte = Math.floor((Date.now() - days * 86_400_000) / 1000);
+    const list = await timeout(getStripe().checkout.sessions.list({ created: { gte }, limit: 100 }).autoPagingToArray({ limit: 2000 }), 8000);
+    const by = (s: string) => (list as unknown as { status: string | null }[]).filter((x) => x.status === s).length;
+    return { complete: by("complete"), expired: by("expired"), open: by("open"), fetchedAt: new Date().toISOString() };
+  } catch {
+    return null;
+  }
+}
+
+/** Whether a server environment variable is set on this deploy. Never returns or logs the value. */
+export const envPresent = (name: string) => has(name);

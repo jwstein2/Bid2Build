@@ -355,3 +355,12 @@ export function Row({ k, children }: { k: ReactNode; children: ReactNode }) {
 
 export const usdWhole = (dollars: number) => dollars.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 export const day = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "America/Chicago" }) : "–");
+
+/** Data freshness for a provider-powered section: connection status and when it was last read. */
+export function Fresh({ at, state, now, staleAfterH = 24 }: { at?: string | null; state: "live" | "not_connected" | "error" | "manual"; now: number; staleAfterH?: number }) {
+  if (state === "not_connected") return <NotConnected />;
+  if (state === "error") return <span className="cc-mono rounded border border-[var(--cc-amber)]/50 px-1.5 py-0.5 text-[11px] text-[var(--cc-amber)]">Unavailable · not shown</span>;
+  if (!at) return <span className="cc-mono text-[11px] text-muted">{state === "manual" ? "Owner-entered" : "–"}</span>;
+  const stale = now - Date.parse(at) > staleAfterH * 3_600_000;
+  return <span className={cn("cc-mono text-[11px]", stale ? "text-[var(--cc-amber)]" : "text-muted")} title={new Date(at).toISOString()}>{state === "manual" ? "Updated" : stale ? "Stale ·" : "Live ·"} {ago(at, now)}</span>;
+}

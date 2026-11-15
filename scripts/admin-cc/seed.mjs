@@ -108,6 +108,18 @@ export function commandCenterSeed(adminId) {
       stripe_events: Array.from({ length: 6 }, (_, i) => ({ id: `evt_demo_${i}`, type: i % 2 ? "invoice.paid" : "customer.subscription.updated", received_at: iso(i * 0.7), processed_at: iso(i * 0.7), error: null })),
       admin_roles: adminId ? [{ user_id: adminId, role: "admin" }] : [],
       admin_account_labels: [{ user_id: testUsers[2].id, label: "demo", note: "Sales demo account", updated_at: iso(2) }],
+      admin_services: [
+        { provider_key: "netlify", name: "Netlify", purpose: null, category: "hosting", status: "active", plan: "Pro (demo)", cost_type: "fixed", amount_cents: 1900, billing_interval: "monthly", next_renewal: iso(-4).slice(0, 10), allocation_pct: 100, budget_monthly_cents: 5000, cost_source: "manual", dashboard_url: "https://app.netlify.com/", invoice_ref: null, notes: null, updated_at: iso(1) },
+        { provider_key: "supabase", name: "Supabase", purpose: null, category: "database", status: "active", plan: "Pro", cost_type: "fixed", amount_cents: 2500, billing_interval: "monthly", next_renewal: iso(-12).slice(0, 10), allocation_pct: 100, budget_monthly_cents: null, cost_source: "invoice", dashboard_url: "https://supabase.com/dashboard", invoice_ref: "INV-demo-1", notes: null, updated_at: iso(1) },
+        { provider_key: "domain", name: "built2bid.org domain", purpose: null, category: "domains", status: "active", plan: null, cost_type: "fixed", amount_cents: 1800, billing_interval: "annual", next_renewal: iso(-360).slice(0, 10), allocation_pct: 100, budget_monthly_cents: null, cost_source: "manual", dashboard_url: null, invoice_ref: null, notes: null, updated_at: iso(1) },
+        { provider_key: "google-workspace", name: "Google Workspace", purpose: null, category: "email", status: "active", plan: "Business Starter", cost_type: "fixed", amount_cents: 840, billing_interval: "monthly", next_renewal: null, allocation_pct: 50, budget_monthly_cents: null, cost_source: "manual", dashboard_url: null, invoice_ref: null, notes: "Shared with another venture", updated_at: iso(1) },
+        { provider_key: "anthropic-api", name: "Anthropic API", purpose: null, category: "ai", status: "active", plan: null, cost_type: "variable", amount_cents: null, billing_interval: "usage", next_renewal: null, allocation_pct: 100, budget_monthly_cents: 1000, cost_source: "provider_api", dashboard_url: null, invoice_ref: null, notes: null, updated_at: iso(1) },
+      ],
+      admin_expenses: [
+        { id: 1, service_key: "netlify", incurred_on: iso(3).slice(0, 10), amount_cents: 1900, kind: "fixed", source: "invoice", external_id: "NF-1001", note: null, created_at: iso(3) },
+        { id: 2, service_key: "supabase", incurred_on: iso(5).slice(0, 10), amount_cents: 2500, kind: "fixed", source: "invoice", external_id: "SB-2001", note: null, created_at: iso(5) },
+      ],
+      ai_generations: Array.from({ length: 14 }, (_, i) => ({ created_at: iso(i * 2), cost_usd: (0.008 + (i % 4) * 0.002).toFixed(6), status: i === 5 ? "failed" : "ok" })),
     },
     authUsers: allAuth.map((u, i) => ({ id: u.id, aud: "authenticated", role: "authenticated", email: u.email, created_at: iso(u.created), email_confirmed_at: i % 7 === 3 ? null : iso(u.created), last_sign_in_at: iso(Math.max(0, u.created - 3)), app_metadata: {}, user_metadata: {} })),
     adminMetrics: {

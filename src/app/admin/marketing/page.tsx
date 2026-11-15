@@ -3,8 +3,8 @@ import { Chip, FunnelSteps, Kpi, NotConnected, PageHead, Panel, Pct, Table, fmt,
 import { RangeControl, ReportUnavailable, ScopeNote, SectionTitle } from "@/components/admin/report";
 import { CHANNELS, CHANNEL_LABEL, isChannel } from "@/lib/admin/channels";
 import { tip } from "@/lib/admin/definitions";
-import { ga4Report, searchConsoleReport } from "@/lib/admin/integrations";
-import { campaignReport, channelReport, cohortFunnel, costsInWindow, insights, inWindow, ratio, windowOf } from "@/lib/admin/model";
+import { ga4Report, searchConsoleReport, stripeCheckouts } from "@/lib/admin/integrations";
+import { activationTiming, campaignReport, channelReport, cohortFunnel, insights, inWindow, landingReport, prorateCosts, ratio, windowOf } from "@/lib/admin/model";
 import { loadReport } from "@/lib/admin/load";
 import { href, str } from "@/lib/admin/view";
 import { addCost, deleteCost } from "./actions";
@@ -21,7 +21,8 @@ export default async function Marketing({ searchParams }: { searchParams: Promis
   const { facts, sc, snap, now } = r;
   const range = view.range;
   const w = windowOf(range, now);
-  const [ga, gsc] = await Promise.all([ga4Report(range.days), searchConsoleReport(range.days)]);
+  const [ga, gsc, sessions] = await Promise.all([ga4Report(range.days), searchConsoleReport(range.days), stripeCheckouts(range.days)]);
+  const costs = prorateCosts(snap.costs, w.start, w.end);
 
   // Funnel drilldown filters (validated against known values).
   const fChannel = isChannel(str(sp.channel)) ? str(sp.channel) : "";
@@ -35,10 +36,15 @@ export default async function Marketing({ searchParams }: { searchParams: Promis
 
   const all = cohortFunnel(facts, w.start, w.end);
   const fun = cohortFunnel(filtered, w.start, w.end);
-  const channels = channelReport(facts, snap.costs, w.start, w.end);
-  const camp = campaignReport(facts, snap.costs, w.start, w.end, now);
-  const ins = insights(facts, snap.costs, sc.d.events, w.start, w.end, now, ga?.sessions ?? null);
-  const spend = costsInWindow(snap.costs, w.start, w.end).reduce((n, c) => n + (Number(c.amount_usd) || 0), 0);
+  const channels = channelReport(facts, costs, w.start, w.end);
+  const camp = campaignReport(facts, costs, w.start, w.end, now);
+  const ins = insights(facts, costs, sc.d.events, w.start, w.end, now, ga?.sessions ?? null);
+  const spend = costs.reduce((n, c) => n + (Number(c.amount_usd) || 0), 0);
+  const landingRows = landingReport(facts, w.start, w.end);
+  const timing = activationTiming(sc, facts, w.start, w.end, now);
+  const cohort = facts.filter((f) => inWindow(f.createdAt, w.start, w.end));
+  const ev = (name: string) => sc.d.events.filter((e) => e.event === name && inWindow(e.created_at, w.start, w.end)).length;
+  const outreach = channels.find((c) => c.key === "email_outreach");
   const known = facts.filter((f) => inWindow(f.createdAt, w.start, w.end) && f.channel !== "unknown").length;
   const thisMonth = now.toISOString().slice(0, 7);
   const recentCosts = [...snap.costs].sort((a, b) => b.period_start.localeCompare(a.period_start) || b.id - a.id).slice(0, 12);
@@ -56,7 +62,7 @@ export default async function Marketing({ searchParams }: { searchParams: Promis
         <Kpi label="Started a bid" value={all.firstBid} tone="blue" def={tip("first_bid")} sub={<Pct r={all.steps[1].ofPrev} />} />
         <Kpi label="Activated" value={all.finalized} def={tip("signup_activation")} sub={<Pct r={all.steps[2].ofCohort} />} />
         <Kpi label="New paying" value={all.paid} tone="violet" def={tip("signup_paid")} sub={<Pct r={all.steps[3].ofCohort} />} />
-        <Kpi label="Spend entered" value={spend ? usdWhole(spend) : "None entered"} na={!spend} tone="amber" def={tip("cac")} sub={spend && all.paid ? `CAC ${usdWhole(spend / all.paid)}` : spend ? "No paying customers yet in this cohort" : "Add spend below to see CAC"} />
+        <Kpi label="Spend entered (manual)" value={spend ? usdWhole(spend) : "None entered"} na={!spend} tone="amber" def={tip("cac")} sub={spend && all.paid ? `CAC ${usdWhole(spend / all.paid)}` : spend ? "No paying customers yet in this cohort" : "Add spend below to see CAC"} />
       </div>
 
       <SectionTitle id="channels" kicker="Attribution · first touch" title="Channel performance" right={<span className="cc-mono text-[11px] text-muted">{fmt(known)} of {fmt(all.cohort)} signups have a recorded source</span>} />
@@ -130,6 +136,48 @@ export default async function Marketing({ searchParams }: { searchParams: Promis
           </Table>
         )}
         <p className="mt-3 text-xs text-muted">Ad clicks are never counted as customers. Live campaign status needs an ad-platform connection, which is not set up.</p>
+      </Panel>
+
+      <div className="grid gap-6 lg:grid-cols-5">
+        <Panel kicker="Landing pages · first touch" title="Which pages bring valuable users" className="lg:col-span-3">
+          {landingRows.length === 0 ? <p className="text-sm text-ink-soft">No signups in this window.</p> : (
+            <Table head={["Landing page", "Signups", "First bid", "Activated", "Paying", "Activation"]} align={["l", "r", "r", "r", "r", "r"]} minWidth={560}>
+              {landingRows.slice(0, 15).map((l) => (
+                <tr key={l.path}>
+                  <td className="max-w-[16rem] truncate font-sans">{l.path === "(not recorded)" ? <span className="text-muted">(not recorded)</span> : <Link href={href("/admin/marketing", view, { landing: l.path })} className="text-white hover:underline">{l.path}</Link>}</td>
+                  <td className="text-right text-white">{fmt(l.signups)}</td><td className="text-right">{fmt(l.firstBid)}</td><td className="text-right">{fmt(l.activated)}</td><td className="text-right">{fmt(l.paid)}</td>
+                  <td className="text-right"><Pct r={l.activation} /></td>
+                </tr>
+              ))}
+            </Table>
+          )}
+          <p className="mt-3 text-xs text-muted">The first Built2Bid page each account visited (first-party cookie). Page traffic needs GA4 reporting: {ga ? "connected" : "not connected"}. Sorted by paying, then activated, so valuable pages rise above busy ones.</p>
+        </Panel>
+        <Panel kicker="Outbound" title="Email outreach" className="lg:col-span-2">
+          <dl className="text-sm">
+            {[["Signups from outreach", outreach?.signups ?? 0], ["First bids", outreach?.firstBid ?? 0], ["Activated", outreach?.activated ?? 0], ["Paying", outreach?.paid ?? 0]].map(([k, v]) => <div key={k as string} className="flex justify-between border-t border-[var(--cc-line)] py-1.5 first:border-t-0"><dt className="text-ink-soft">{k}</dt><dd className="cc-mono text-white">{fmt(v as number)}</dd></div>)}
+          </dl>
+          <p className="mt-3 text-xs text-muted">Accounts whose first visit carried email-outreach tags (e.g. utm_medium=email or an Instantly campaign id). Contacts, replies and positive replies live in the <Link href="/admin/sales" className="underline">Outreach funnel</Link> when Instantly sync is enabled. No Apollo account was found for Built2Bid. Opens are not used as a conversion signal. Nothing here sends email.</p>
+        </Panel>
+      </div>
+
+      <Panel kicker="Diagnostics" title="Marketing to purchase, step by step">
+        <Table head={["Step", "Count", "Source"]} align={["l", "r", "l"]} minWidth={520}>
+          {([
+            ["Accounts created (signup)", cohort.length, "Auth record"],
+            ["Email verified", cohort.filter((f) => f.confirmed).length, "Auth record (verification timestamp)"],
+            ["Verification requested but not completed", cohort.filter((f) => !f.confirmed).length, "Auth record (inferred: no verification yet)"],
+            ["Verification failed", null, "Not instrumented (Supabase Auth logs only)"],
+            ["First bid started", cohort.filter((f) => f.firstEstimateAt).length, "Product record"],
+            ["First bid finalized", cohort.filter((f) => f.firstFinalizedAt).length, "Product record"],
+            ["Checkout started", ev("checkout_started"), "Product event"],
+            ["Checkout abandoned or canceled", sessions ? sessions.expired : null, sessions ? "Stripe Checkout sessions (whole account)" : "Stripe not reachable"],
+            ["Subscription confirmed", ev("subscribed"), "Product event (Stripe webhook)"],
+          ] as [string, number | null, string][]).map(([k, v, src]) => (
+            <tr key={k}><td className="font-sans text-white">{k}</td><td className="text-right">{v == null ? <span className="text-muted">–</span> : fmt(v)}</td><td className="font-sans text-xs text-ink-soft">{src}</td></tr>
+          ))}
+        </Table>
+        <p className="mt-3 text-xs text-muted">Signup and product steps are this window&apos;s signup cohort; checkout rows are events in the window, a different population, so they are not turned into one percentage. Median signup → first bid: {timing.medianHoursToFirstBid == null ? "–" : timing.medianHoursToFirstBid < 1 ? `${Math.round(timing.medianHoursToFirstBid * 60)} min` : `${timing.medianHoursToFirstBid.toFixed(1)} h`}. No sign-in codes, tokens or payment details are logged.</p>
       </Panel>
 
       <div className="grid gap-6 lg:grid-cols-2">

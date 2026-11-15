@@ -7,7 +7,7 @@ import { cn } from "@/lib/cn";
 import { PRIMARY, TOOLS } from "./nav";
 
 /** Pages that render on the dark command-center theme; the rest keep the light theme. */
-const DARK = ["/admin", "/admin/marketing", "/admin/customers", "/admin/revenue", "/admin/usage", "/admin/operations", "/admin/states", "/admin/definitions", "/admin/complimentary"];
+const DARK = ["/admin", "/admin/marketing", "/admin/customers", "/admin/revenue", "/admin/usage", "/admin/operations", "/admin/states", "/admin/definitions", "/admin/complimentary", "/admin/costs"];
 
 const under = (path: string, href: string) => (href === "/admin" ? path === "/admin" : path === href || path.startsWith(`${href}/`));
 
