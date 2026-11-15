@@ -1,3 +1,4 @@
+import { WhatsNewNotice } from "@/components/features/whats-new-notice";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { FileCheck2 } from "lucide-react";
@@ -131,6 +132,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
           <div className="flex gap-3 text-sm font-semibold"><Link href="/welcome" className="underline">Branding setup</Link><Link href="/mentorship" className="underline">Mentorship</Link></div>
         </Card>
       )}
+      <WhatsNewNotice />
       <LocalDraftsBanner />
       {esign && <RefreshOnFocus />}
       {esign && recentSigned.length > 0 && <RecentlySigned bids={recentSigned} days={RECENT_SIGNED_DAYS} />}
