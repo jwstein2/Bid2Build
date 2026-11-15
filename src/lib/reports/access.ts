@@ -4,7 +4,7 @@ import { hasPremiumAccess } from "@/lib/billing/entitlement";
 import { can, loadMyCompany } from "@/lib/enterprise/server";
 
 export type ReportAccess =
-  | { ok: true; ownerId: string; canDownload: boolean; canSend: boolean }
+  | { ok: true; ownerId: string; companyId: string | null; canDownload: boolean; canSend: boolean }
   | { ok: false; status: 401 | 402 | 403 | 404; code: "not_authenticated" | "upgrade_required" | "forbidden" | "not_found"; message: string };
 
 /**
@@ -26,9 +26,9 @@ export async function internalReportAccess(supabase: SupabaseClient, userId: str
     const company = await loadMyCompany(supabase);
     if (!company || company.id !== est.company_id || !can(company, "view_costs") || !can(company, "view_margin") || !can(company, "view_internal_reports"))
       return { ok: false, status: 403, code: "forbidden", message: "Your company role can't open internal cost reports. Ask your company owner for the View underlying costs, View gross margin and View internal reports permissions." };
-    return { ok: true, ownerId: est.user_id as string, canDownload: can(company, "download_internal_reports"), canSend: can(company, "send_internal_reports") };
+    return { ok: true, ownerId: est.user_id as string, companyId: est.company_id as string, canDownload: can(company, "download_internal_reports"), canSend: can(company, "send_internal_reports") };
   } else if (est.user_id !== userId) {
     return { ok: false, status: 404, code: "not_found", message: "Estimate not found." };
   }
-  return { ok: true, ownerId: est.user_id as string, canDownload: true, canSend: true };
+  return { ok: true, ownerId: est.user_id as string, companyId: null, canDownload: true, canSend: true };
 }

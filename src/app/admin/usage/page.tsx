@@ -3,6 +3,7 @@ import { RangeControl, ReportUnavailable, ScopeNote, SectionTitle } from "@/comp
 import { tip } from "@/lib/admin/definitions";
 import { activationTiming, ratio, signupCohorts, usageModel, windowOf } from "@/lib/admin/model";
 import { loadReport } from "@/lib/admin/load";
+import { adoption, EMPTY_PRODUCT, revenueSplit } from "@/lib/admin/product";
 import { href } from "@/lib/admin/view";
 import { tradeName } from "@/lib/trades/catalog";
 
@@ -20,6 +21,9 @@ export default async function Usage({ searchParams }: { searchParams: Promise<Re
   const w = windowOf(range, now);
   const at = activationTiming(sc, facts, w.start, w.end, now);
   const cohorts = signupCohorts(sc, facts, now);
+  const product = sc.d.product ?? EMPTY_PRODUCT;
+  const ad = adoption(product, facts, range, now);
+  const split = revenueSplit(facts, range, now);
 
   return (
     <div className="space-y-6">
@@ -118,6 +122,26 @@ export default async function Usage({ searchParams }: { searchParams: Promise<Re
         )}
         <p className="mt-3 text-xs text-muted">Counts only. No pricing or profitability is inferred. Geography: <a href={href("/admin/states", view)} className="underline">Bids by state</a>.</p>
       </Panel>
+
+      <SectionTitle id="v4" kicker="Premium features" title="Pipeline, internal reports and project scheduling" />
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6" data-testid="product-adoption">
+        <Kpi label="Accounts using the pipeline" value={ad.pipelineAccounts} def="Accounts with at least one bid moved past Draft on the Bids pipeline, all time." sub={`${ad.pipelineMovers.current} moved a bid this ${range.label}`} delta={<Change {...ad.pipelineMovers} />} />
+        <Kpi label="Internal reports generated" value={ad.reports.current} tone="blue" delta={<Change {...ad.reports} />} def="Internal Estimate Report previews, downloads and email attachments in the window. Only who and when is logged, never the figures in it." sub={`${ad.reportAccounts} account${ad.reportAccounts === 1 ? "" : "s"} this ${range.label}`} />
+        <Kpi label="Premium report adoption" value={ad.reportAdoption.pct === null ? "–" : `${ad.reportAdoption.pct}%`} def="Accounts that have ever generated an Internal Estimate Report ÷ accounts with paid or complimentary premium access now." sub={`${ad.reportAdoption.n} of ${ad.reportAdoption.d} premium accounts`} />
+        <Kpi label="Scheduled projects" value={ad.schedules} tone="violet" delta={<Change {...ad.schedulesNew} />} def="Project schedules that aren't archived (all time); change = schedules created in the window." sub={`${ad.schedulesNew.current} new · ${ad.scheduleAccounts} account${ad.scheduleAccounts === 1 ? "" : "s"}`} />
+        <Kpi label="Customer updates published" value={ad.publications.current} delta={<Change {...ad.publications} />} def="Customer schedule updates published in the window (a publish, not a delivery)." sub={`${ad.publicationsAll} all time`} />
+        <Kpi label="Scheduling subscriptions" value={split.pmAddonSubs} tone="amber" def="Standard subscriptions with the project scheduling add-on, and Enterprise editor seats assigned." sub={`${ad.editorSeats} Enterprise editor${ad.editorSeats === 1 ? "" : "s"} assigned · ${split.pmAddonEnded} add-on${split.pmAddonEnded === 1 ? "" : "s"} ended`} />
+      </div>
+      <Panel kicker="Bids pipeline" title="Bids by stage, now">
+        {ad.bidsByStage.length === 0 ? <p className="text-sm text-ink-soft">No bids yet.</p> : (
+          <Table head={["Stage", "Bids"]} align={["l", "r"]} minWidth={240}>
+            {ad.bidsByStage.map((b) => <tr key={b.stage}><td className="font-sans">{(STAGE as Record<string, string>)[b.stage] ?? b.stage}</td><td className="text-right text-white">{fmt(b.n)}</td></tr>)}
+          </Table>
+        )}
+        <p className="mt-3 text-xs text-muted">Counts only: no bid values, estimate amounts or customer details are read for this section, and nothing here is sent to third-party analytics. {!product.installed.reports && "Report counts start once the Phase 10 SQL is applied. "}Scheduling revenue is on <a href={href("/admin/revenue", view) + "#by-product"} className="underline">Revenue</a>.</p>
+      </Panel>
     </div>
   );
 }
+
+const STAGE = { draft: "Draft", sent: "Sent", pending: "Awaiting signature", ready_for_review: "Ready for review", approved: "Approved", won: "Won", scheduled: "Scheduled", in_progress: "In progress", completed: "Completed", lost: "Lost" };

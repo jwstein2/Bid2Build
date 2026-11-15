@@ -1,6 +1,7 @@
 import "server-only";
 import type { createAdminClient } from "@/lib/supabase/server";
 import type { EstimateRow } from "./metrics";
+import type { ProductData } from "./product";
 import type {
   BusinessRow, CompanyRow, ConsentRow, CostRow, EventRow, GrantRow, LabelRow, LeadRow, MemberRow, OutboxRow, SignatureRow,
   SigningRequestRow, Snapshot, StripeEventRow, SubscriptionRow, UserRow, VersionRow,
@@ -77,6 +78,8 @@ export async function loadSnapshot(db: Db, callerId: string): Promise<Snapshot> 
     optional<OutboxRow>(db, "email_outbox", "kind,user_id,status,last_error,attempts,created_at,updated_at"),
     db.from("stripe_events").select("id,type,received_at,processed_at,error").gte("received_at", since7).order("received_at", { ascending: false }).limit(2000),
   ]);
+  const product = await loadProduct(db);
+  const pm = new Map((product.pmSubs ?? []).map((x) => [x.stripe_subscription_id, x]));
   const m = (metrics.data ?? {}) as { import_failures_7d?: number; pdf_errors_7d?: number };
   const extra = new Map((leadsV2 ?? []).filter((l) => l.user_id).map((l) => [l.user_id!, l]));
   return {
@@ -84,14 +87,38 @@ export async function loadSnapshot(db: Db, callerId: string): Promise<Snapshot> 
     usersSource: users ? "auth" : "profiles",
     labels: labels ?? [], labelsInstalled: labels !== null,
     adminIds: new Set((admins ?? []).map((a) => a.user_id)),
-    estimates, versions, signatures, signingRequests: signingRequests ?? [], subscriptions, businesses,
+    estimates, versions, signatures, signingRequests: signingRequests ?? [], subscriptions: subscriptions.map((x) => ({ ...x, ...pm.get(x.stripe_subscription_id) })), businesses,
     companies: companies ?? [], members: members ?? [], grants: grants ?? [], consents,
     events: (events.data ?? []) as EventRow[],
     leads: (leads ?? []).map((l) => ({ ...l, ...(l.user_id ? extra.get(l.user_id) : undefined) })),
     leadsInstalled: leads !== null, attributionV2: leadsV2 !== null,
     costs: costs ?? [], outbox: outbox ?? [], stripeEvents: (stripeEvents.data ?? []) as StripeEventRow[],
     pdfErrors7d: m.pdf_errors_7d ?? 0, importFailures7d: m.import_failures_7d ?? 0,
+    product: product.data,
     loadedAt: new Date().toISOString(),
+  };
+}
+
+/**
+ * V4 pipeline / scheduling rows for owner analytics (Phase 10). Each table is optional, so the dashboard
+ * keeps working before a migration is applied. Columns are ids, stages and timestamps only.
+ */
+async function loadProduct(db: Db): Promise<{ data: ProductData; pmSubs: { stripe_subscription_id: string; pm_addon: boolean | null; pm_addon_until: string | null; pm_extra_editors: number | null }[] | null }> {
+  const [pmSubs, stages, moves, schedules, publications, editors, reports] = await Promise.all([
+    optional<{ stripe_subscription_id: string; pm_addon: boolean | null; pm_addon_until: string | null; pm_extra_editors: number | null }>(db, "subscriptions", "stripe_subscription_id,pm_addon,pm_addon_until,pm_extra_editors", "updated_at"),
+    optional<ProductData["stages"][number]>(db, "estimates", "user_id,pipeline_stage"),
+    optional<ProductData["stageMoves"][number]>(db, "estimate_stage_history", "changed_by,created_at"),
+    optional<ProductData["schedules"][number]>(db, "project_schedules", "id,user_id,company_id,status,created_at"),
+    optional<ProductData["publications"][number]>(db, "schedule_publications", "schedule_id,published_by,published_at", "published_at"),
+    optional<ProductData["editors"][number]>(db, "pm_editors", "company_id,user_id,assigned_at", "assigned_at"),
+    optional<ProductData["reports"][number]>(db, "report_generations", "user_id,action,created_at"),
+  ]);
+  return {
+    pmSubs,
+    data: {
+      installed: { pipeline: stages !== null && moves !== null, schedules: schedules !== null, publications: publications !== null, editors: editors !== null, reports: reports !== null },
+      stages: stages ?? [], stageMoves: moves ?? [], schedules: schedules ?? [], publications: publications ?? [], editors: editors ?? [], reports: reports ?? [],
+    },
   };
 }
 

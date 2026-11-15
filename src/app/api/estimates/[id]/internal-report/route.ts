@@ -55,6 +55,9 @@ export async function GET(req: Request, ctx: RouteContext<"/api/estimates/[id]/i
     logError("internal-report.render", e);
     return fail(500, "pdf_failed", "We couldn't create the report. Please try again.");
   }
+  // Owner analytics (Phase 10): who generated a report and how, never what was in it. Best effort.
+  const action = url.searchParams.get("purpose") === "send" ? "send" : download ? "download" : "preview";
+  try { await admin.from("report_generations").insert({ user_id: user!.id, company_id: access.companyId, kind: "internal_estimate", action }); } catch { /* the report still downloads */ }
   const name = internalReportFilename(report);
   return new Response(new Uint8Array(pdf), {
     headers: {

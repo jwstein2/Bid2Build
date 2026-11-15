@@ -8,6 +8,8 @@
  * address is only used to derive a state.
  */
 import { enterpriseMonthlyCents, ENTERPRISE_INCLUDED_USERS } from "@/lib/enterprise/pricing";
+import { editorMonthlyCents, PM_ADDON_CENTS } from "@/lib/pm/billing";
+import { scopeProduct, type ProductData } from "./product";
 import { classifyAccount, type AccountClass, type Classification } from "./classify";
 import { campaignOf, classifyChannel, CHANNELS, isChannel, type Channel, type LeadAttribution } from "./channels";
 import { businessKey, series, tradeOf, type EstimateRow, type Point } from "./metrics";
@@ -28,7 +30,9 @@ export interface LabelRow { user_id: string; label: string; note: string | null;
 export interface VersionRow { estimate_id: string; user_id: string; created_at: string; version_number: number }
 export interface SignatureRow { estimate_id: string; user_id: string; signed_at: string; pdf_status?: string | null }
 export interface SigningRequestRow { id: string; estimate_id: string; user_id: string; company_id?: string | null; status: string; created_at: string; signed_at: string | null; expires_at: string }
-export interface SubscriptionRow { stripe_subscription_id: string; user_id: string; status: string; plan: string | null; cancel_at_period_end: boolean | null; canceled_at: string | null; ended_at: string | null; updated_at: string | null; seat_quantity: number | null; current_period_end: string | null; company_id?: string | null; stripe_customer_id?: string | null }
+export interface SubscriptionRow { stripe_subscription_id: string; user_id: string; status: string; plan: string | null; cancel_at_period_end: boolean | null; canceled_at: string | null; ended_at: string | null; updated_at: string | null; seat_quantity: number | null; current_period_end: string | null; company_id?: string | null; stripe_customer_id?: string | null;
+  /** V4 PM add-ons (Phase 5 columns; absent before that migration). */
+  pm_addon?: boolean | null; pm_addon_until?: string | null; pm_extra_editors?: number | null }
 export interface BusinessRow { user_id: string; created_at: string; company_name: string | null }
 export interface CompanyRow { id: string; created_at: string; name: string | null; owner_user_id: string | null }
 export interface MemberRow { company_id: string; user_id: string; role: string; status: string }
@@ -52,6 +56,8 @@ export interface Snapshot {
   leads: LeadRow[]; leadsInstalled: boolean; attributionV2: boolean;
   costs: CostRow[]; outbox: OutboxRow[]; stripeEvents: StripeEventRow[];
   pdfErrors7d: number; importFailures7d: number;
+  /** V4 pipeline / scheduling adoption rows (Phase 10); empty before those migrations. */
+  product?: ProductData;
   loadedAt: string;
 }
 
@@ -94,6 +100,7 @@ export function scope(snap: Snapshot, includeTest: boolean): Scoped {
       events: snap.events.filter((e) => keep(e.user_id)),
       leads: snap.leads.filter((l) => keep(l.user_id)),
       outbox: snap.outbox.filter((o) => keep(o.user_id)),
+      product: snap.product ? scopeProduct(snap.product, keep) : undefined,
     },
   };
 }
@@ -101,12 +108,25 @@ export function scope(snap: Snapshot, includeTest: boolean): Scoped {
 // ---------------------------------------------------------------------------------------------
 // Subscriptions and complimentary access
 // ---------------------------------------------------------------------------------------------
-/** List-price monthly equivalent of one subscription, in cents. Annual = $149 / 12 (never counted twice). */
-export function monthlyCents(s: Pick<SubscriptionRow, "plan" | "seat_quantity">): number {
-  if (s.plan === "monthly") return 1999;
-  if (s.plan === "annual") return Math.round(14900 / 12);
-  if (s.plan === "enterprise") return enterpriseMonthlyCents(Math.max(ENTERPRISE_INCLUDED_USERS, s.seat_quantity ?? ENTERPRISE_INCLUDED_USERS));
-  return 0;
+/** List-price monthly equivalent of one subscription, by product, in cents (V4 Phase 10).
+ *   core:      the plan itself. Annual = $149 / 12 (never counted twice); Enterprise from its licensed seats.
+ *   pmAddon:   Standard project-scheduling add-on, $4.99/month, while it's on the subscription. A removed
+ *              add-on (editing kept until period end, pm_addon_until) is no longer billed, so it's 0.
+ *   pmEditors: Enterprise scheduling editors beyond the included one, $1.99/month each.
+ * Each Stripe subscription is one row, and its items are counted once here, so nothing is double counted.
+ */
+export function mrrParts(s: Pick<SubscriptionRow, "plan" | "seat_quantity" | "pm_addon" | "pm_extra_editors">): { core: number; pmAddon: number; pmEditors: number; total: number } {
+  const core = s.plan === "monthly" ? 1999
+    : s.plan === "annual" ? Math.round(14900 / 12)
+      : s.plan === "enterprise" ? enterpriseMonthlyCents(Math.max(ENTERPRISE_INCLUDED_USERS, s.seat_quantity ?? ENTERPRISE_INCLUDED_USERS)) : 0;
+  const pmAddon = s.plan !== "enterprise" && core > 0 && s.pm_addon ? PM_ADDON_CENTS : 0;
+  const pmEditors = s.plan === "enterprise" ? editorMonthlyCents(s.pm_extra_editors ?? 0) : 0;
+  return { core, pmAddon, pmEditors, total: core + pmAddon + pmEditors };
+}
+
+/** Total list-price monthly recurring revenue of one subscription (plan + PM add-ons), in cents. */
+export function monthlyCents(s: Pick<SubscriptionRow, "plan" | "seat_quantity" | "pm_addon" | "pm_extra_editors">): number {
+  return mrrParts(s).total;
 }
 
 /** When a subscription stopped being paid for (null = still on). */

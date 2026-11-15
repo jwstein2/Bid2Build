@@ -11,6 +11,7 @@ const S = {
   estimateRow: { id: "e1", user_id: "u1", company_id: null as string | null } as Record<string, unknown> | null,
   premium: true,
   company: null as null | { id: string; permissions: string[] },
+  logged: [] as Record<string, unknown>[],
 };
 const chain = (result: () => unknown) => {
   const c: Record<string, unknown> = {};
@@ -25,7 +26,7 @@ const supabase = {
 vi.mock("@/lib/supabase/server", () => ({
   getUser: async () => S.user,
   createClient: async () => supabase,
-  createAdminClient: () => ({ from: () => chain(() => ({ company_name: "Acme Decks" })), storage: { from: () => ({ download: async () => ({ data: null }) }) } }),
+  createAdminClient: () => ({ from: (t: string) => Object.assign(chain(() => ({ company_name: "Acme Decks" })), { insert: async (row: Record<string, unknown>) => { S.logged.push({ table: t, ...row }); return { error: null }; } }), storage: { from: () => ({ download: async () => ({ data: null }) }) } }),
 }));
 vi.mock("@/lib/data/server", () => ({ loadEstimate: async () => ({ estimate: est({ items: [item("g1", "2", "41.17")] }) }) }));
 vi.mock("@/lib/http/api", async (orig) => ({ ...(await orig<typeof import("@/lib/http/api")>()), rateLimit: async () => true }));
@@ -34,7 +35,7 @@ const { GET } = await import("@/app/api/estimates/[id]/internal-report/route");
 const ID = "11111111-1111-4111-8111-111111111111";
 const call = (q = "") => GET(new Request(`http://localhost/api/estimates/${ID}/internal-report${q}`), { params: Promise.resolve({ id: ID }) } as never);
 
-beforeEach(() => { S.user = { id: "u1" }; S.estimateRow = { id: ID, user_id: "u1", company_id: null }; S.premium = true; S.company = null; });
+beforeEach(() => { S.user = { id: "u1" }; S.estimateRow = { id: ID, user_id: "u1", company_id: null }; S.premium = true; S.company = null; S.logged = []; });
 
 describe("internal report route", () => {
   it("paid owner gets a private, uncached PDF", async () => {
@@ -81,6 +82,15 @@ describe("internal report route", () => {
     expect((await call("?download=1&purpose=send")).status).toBe(403);
     S.company.permissions.push("send_internal_reports");
     expect((await call("?download=1&purpose=send")).status).toBe(200);
+  }, 30_000);
+  it("logs who generated a report and how, never its contents (owner analytics)", async () => {
+    await call("?download=1");
+    await call("?download=1&purpose=send");
+    await call("?check=1");
+    expect(S.logged).toEqual([
+      { table: "report_generations", user_id: "u1", company_id: null, kind: "internal_estimate", action: "download" },
+      { table: "report_generations", user_id: "u1", company_id: null, kind: "internal_estimate", action: "send" },
+    ]);
   }, 30_000);
   it("the check response never contains financial data", async () => {
     const body = await (await call("?check=1")).text();
