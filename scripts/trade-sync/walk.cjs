@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports -- standalone CommonJS walkthrough script */
 const { chromium } = require("playwright");
 // Browser walk-through of trade sync (anonymous draft flow). Usage: next start on :3000, then
 // node scripts/trade-sync/walk.cjs <screenshotDir>
