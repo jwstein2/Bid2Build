@@ -29,6 +29,8 @@ create table if not exists storage.buckets (
 create table if not exists storage.objects (
   id uuid primary key default gen_random_uuid(), bucket_id text references storage.buckets (id), name text
 );
+-- Supabase's storage.objects has a metadata jsonb (file size etc.), read by admin cost reports.
+alter table storage.objects add column if not exists metadata jsonb;
 alter table storage.objects enable row level security;
 create or replace function storage.foldername(name text) returns text[] language sql immutable as $$
   select (string_to_array(name, '/'))[1:array_length(string_to_array(name, '/'), 1) - 1]
