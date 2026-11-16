@@ -23,7 +23,7 @@ export interface WsTask {
   /** V4.2 directory resource, when assigned. */
   resourceId?: string | null; assignmentStatus?: AssignmentStatus | null;
 }
-export type AssignmentStatus = "unassigned" | "assigned" | "confirmed" | "in_progress" | "completed";
+export type AssignmentStatus = "tentative" | "requested" | "confirmed" | "declined";
 export interface WsDep { from: string; to: string; lagDays: number }
 export interface Workspace { me: string; people: WsPerson[]; projects: WsProject[]; tasks: WsTask[]; deps: WsDep[]; from: string; to: string }
 

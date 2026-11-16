@@ -84,7 +84,7 @@ for (const [label, vp] of [["desktop", { width: 1360, height: 1000 }], ["m390", 
   // Save sends offsets/durations; server rebuilds dates.
   let body = null;
   page.on("request", (r) => { if (r.url().endsWith("/api/schedules") && r.method() === "POST") body = JSON.parse(r.postData()); });
-  await page.getByTestId("wizard-next").click();
+  await page.getByTestId("wizard-next").click(); await page.getByTestId("wizard-next").click();
   await page.getByTestId("save-schedule").click();
   await page.waitForTimeout(1500);
   check(`${label}: save sends the dragged start as an offset or wait`, Boolean(body && (body.sections.some((s) => s.offsetDays > 0) || body.deps.some((d) => d.lagDays !== 0))));

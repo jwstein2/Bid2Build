@@ -14,6 +14,8 @@ import { TimelineView } from "./timeline";
 import { WorkloadView } from "./workload";
 import { MyWorkView } from "./my-work";
 import { TaskDrawer, type ResourceInfo } from "./task-drawer";
+import { AssignPanel } from "./assign-panel";
+import type { Team } from "@/lib/projects/team";
 
 export type View = "overview" | "calendar" | "timeline" | "workload" | "mywork";
 const VIEWS: { v: View; label: string; icon: typeof LayoutDashboard; tip: string }[] = [
@@ -31,6 +33,8 @@ export interface WorkspaceExtras {
   resourceInfo?: Record<string, ResourceInfo>;
   myResourceKeys?: string[];
   teamHref?: string | null;
+  /** Full directory, for the drawer's "Who's doing this?" panel. */
+  team?: Team;
 }
 
 /**
@@ -159,6 +163,8 @@ export function ProjectsWorkspace({ initial, today, myName, extras = {} }: { ini
         <TaskDrawer key={`${open.task.id}-${open.start ?? ""}`} task={open.task} project={project} people={people} today={today}
           resource={(() => { const k = assigneeKey(open.task); return k ? extras.resourceInfo?.[k] ?? null : null; })()}
           initialStart={open.start} initialEnd={open.end}
+          extra={extras.team ? <AssignPanel task={open.task} project={project} team={extras.team} tasks={ws.tasks} people={ws.people} me={ws.me} myName={myName}
+            onSaved={() => { void refresh(); router.refresh(); }} /> : undefined}
           onClose={() => setOpen(null)} onSaved={() => { void refresh(); router.refresh(); }} />
       )}
     </div>

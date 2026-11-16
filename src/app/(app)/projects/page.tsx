@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CalendarRange, ChevronRight } from "lucide-react";
+import { CalendarRange, ChevronRight, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { isPmEnabled } from "@/lib/env";
 import { formatDay, formatRange } from "@/lib/schedule/calendar";
 import { Suspense } from "react";
 import { listSchedules, readyToSchedule } from "@/lib/schedule/server";
-import { defaultWindow, loadWorkspace } from "@/lib/projects/server";
+import { defaultWindow, loadTeam, loadWorkspace } from "@/lib/projects/server";
+import { myResourceKeys, toResourceRefs } from "@/lib/projects/team";
+import type { ResourceInfo } from "@/components/projects/task-drawer";
 import { todayIn } from "@/lib/schedule/calendar";
 import { ProjectsWorkspace } from "@/components/projects/workspace";
 import { loadPmAccess } from "@/lib/pm/server";
@@ -27,13 +29,20 @@ export default async function ProjectsPage() {
   if (!isPmEnabled()) notFound();
   const supabase = await createClient();
   const win = defaultWindow();
-  const [list, pm, ws] = await Promise.all([listSchedules(supabase), loadPmAccess(supabase), loadWorkspace(supabase, win.from, win.to)]);
+  const [list, pm, ws, team] = await Promise.all([listSchedules(supabase), loadPmAccess(supabase), loadWorkspace(supabase, win.from, win.to), loadTeam(supabase)]);
+  // V4.2 directory: workload capacity/crews, contact info in the drawer, "my" tasks for linked staff.
+  const resourceInfo: Record<string, ResourceInfo> = {};
+  for (const r of team?.resources ?? []) resourceInfo[`r:${r.id}`] = { id: r.id, label: r.name, kind: r.kind === "subcontractor" ? "Subcontractor" : r.kind === "crew" ? "Crew" : "Staff", email: r.email, phone: r.phone, trade: r.trades.join(", ") || null };
+  const extras = team ? { resources: toResourceRefs(team), resourceInfo, myResourceKeys: myResourceKeys(team, ws?.me ?? null), teamHref: "/projects/team", team } : {};
   const ready = list ? await readyToSchedule(supabase, new Set(list.map((s) => s.estimate_id))) : [];
   const tz = ws?.projects[0]?.calendar.timezone ?? "America/Chicago";
   return (
     <div className={`mx-auto space-y-6 ${ws ? "max-w-7xl" : "max-w-5xl"}`}>
       <div>
-        <h1 className="flex items-center gap-2 text-3xl font-extrabold text-navy"><CalendarRange className="h-7 w-7 text-accent-ink" aria-hidden /> Projects</h1>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h1 className="flex items-center gap-2 text-3xl font-extrabold text-navy"><CalendarRange className="h-7 w-7 text-accent-ink" aria-hidden /> Projects</h1>
+          {team && <ButtonLink href="/projects/team" variant="secondary" size="sm" data-testid="team-link"><Users className="h-4 w-4" aria-hidden /> Team &amp; Subcontractors</ButtonLink>}
+        </div>
         <p className="mt-1 text-ink-soft">{ws ? "Every job in one place: who sold it, who runs it, what's happening this week and what the customer should hear." : "Turn won bids into job schedules built from the estimate, then track progress."}</p>
       </div>
       {list === null && <Notice tone="warn" title="Project Command Center is being set up">The database update for schedules hasn&apos;t been applied yet.</Notice>}
@@ -45,7 +54,7 @@ export default async function ProjectsPage() {
 
       {ws && (
         <Suspense>
-          <ProjectsWorkspace initial={ws} today={todayIn(tz)} myName={ws.people.find((p) => p.id === ws.me)?.name ?? ""} />
+          <ProjectsWorkspace initial={ws} today={todayIn(tz)} myName={ws.people.find((p) => p.id === ws.me)?.name ?? ""} extras={extras} />
         </Suspense>
       )}
 

@@ -6,6 +6,7 @@ import { hashSigningToken, isSigningToken } from "@/lib/esign/token";
 import { tradeName } from "@/lib/trades/catalog";
 import { todayIn } from "./calendar";
 import { buildCustomerReport, type CustomerReport, type DeliveryMethod, type ReportOptions } from "./report";
+import { reportAssignee, type ReportAssignees } from "@/lib/projects/team";
 import type { ScheduleData } from "./types";
 
 type Row = Record<string, unknown>;
@@ -74,16 +75,44 @@ export async function ownerBranding(supabase: SupabaseClient, admin: SupabaseCli
   };
 }
 
+/**
+ * V4.2: "who's doing it" per section, from Team & Subcontractors assignments only, limited by the
+ * project's report setting. Empty before that SQL runs or when the setting is "hidden".
+ */
+export async function reportAssignees(supabase: SupabaseClient, scheduleId: string): Promise<{ mode: ReportAssignees; bySection: Record<string, string> }> {
+  // Never let this optional detail break previewing or publishing an update.
+  try { return await loadReportAssignees(supabase, scheduleId); } catch { return { mode: "names", bySection: {} }; }
+}
+async function loadReportAssignees(supabase: SupabaseClient, scheduleId: string): Promise<{ mode: ReportAssignees; bySection: Record<string, string> }> {
+  const none = { mode: "names" as ReportAssignees, bySection: {} };
+  const { data: s, error } = await supabase.from("project_schedules").select("report_assignees").eq("id", scheduleId).maybeSingle();
+  if (error || !s) return none;
+  const mode = ((s as { report_assignees?: string }).report_assignees ?? "names") as ReportAssignees;
+  if (mode === "hidden") return { mode, bySection: {} };
+  const { data: rows } = await supabase.from("schedule_tasks").select("id, resource_id").eq("schedule_id", scheduleId).eq("kind", "section").not("resource_id", "is", null);
+  const ids = [...new Set(((rows ?? []) as { resource_id: string }[]).map((r) => r.resource_id))];
+  if (!ids.length) return { mode, bySection: {} };
+  const { data: res } = await supabase.from("pm_resources").select("id, name, phone, email").in("id", ids);
+  const byId = new Map(((res ?? []) as { id: string; name: string; phone: string | null; email: string | null }[]).map((r) => [r.id, r]));
+  const bySection: Record<string, string> = {};
+  for (const r of (rows ?? []) as { id: string; resource_id: string }[]) {
+    const line = reportAssignee(mode, byId.get(r.resource_id) ?? null, null);
+    if (line) bySection[r.id] = line;
+  }
+  return { mode, bySection };
+}
+
 /** Builds the report the customer would see now, compared with the last published update. */
 export async function previewReport(supabase: SupabaseClient, admin: SupabaseClient, data: ScheduleData, options: Partial<ReportOptions>) {
-  const [brand, pubs] = await Promise.all([ownerBranding(supabase, admin, data.schedule.id), listPublications(supabase, data.schedule.id)]);
+  const [brand, pubs, asg] = await Promise.all([ownerBranding(supabase, admin, data.schedule.id), listPublications(supabase, data.schedule.id), reportAssignees(supabase, data.schedule.id)]);
   const report = buildCustomerReport(data, options, {
+    assignees: asg.bySection,
     company: brand.company,
     today: todayIn(data.schedule.calendar.timezone),
     tradeLabel: tradeName,
     previous: pubs[0]?.content ?? null,
   });
-  return { report, brand, last: pubs[0] ?? null };
+  return { report, brand, last: pubs[0] ?? null, assigneeMode: asg.mode };
 }
 
 export const contentHash = (r: CustomerReport) => createHash("sha256").update(JSON.stringify(r)).digest("hex");
