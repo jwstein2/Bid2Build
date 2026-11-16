@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Notice } from "@/components/ui/misc";
 import { cn } from "@/lib/cn";
 import { DEFAULT_REPORT_OPTIONS, defaultScopeText, type CustomerReport, type ReportOptions } from "@/lib/schedule/report";
+import { REPORT_ASSIGNEE_OPTIONS, type ReportAssignees } from "@/lib/projects/team";
 import type { Publication } from "@/lib/schedule/publications";
 import type { ScheduleData } from "@/lib/schedule/types";
 import { api } from "./client";
@@ -26,9 +27,13 @@ const TOGGLES: { key: keyof ReportOptions; label: string; hint?: string }[] = [
  * Preview Customer Update -> Publish. The preview is built by the server from the saved schedule, so
  * it is exactly what the customer will see. Publishing needs an explicit confirmation and sends nothing.
  */
-export function UpdateComposer({ data, lastVersion, customerEmail, contactName, logoUrl }: {
+export function UpdateComposer({ data, lastVersion, customerEmail, contactName, logoUrl, assigneeMode = null }: {
   data: ScheduleData; lastVersion: number | null; customerEmail: string | null; contactName: string | null; logoUrl: string | null;
+  /** V4.2: what the report shows about who's doing the work (null when that feature isn't set up). */
+  assigneeMode?: ReportAssignees | null;
 }) {
+  const [aMode, setAMode] = useState<ReportAssignees | null>(assigneeMode);
+  const [aErr, setAErr] = useState<string | null>(null);
   const sections = data.tasks.filter((t) => t.kind === "section" && !t.splitFrom).sort((a, b) => a.sortOrder - b.sortOrder);
   const [o, setO] = useState<ReportOptions>(DEFAULT_REPORT_OPTIONS);
   const [preview, setPreview] = useState<{ report: CustomerReport; revision: number } | null>(null);
@@ -107,8 +112,25 @@ export function UpdateComposer({ data, lastVersion, customerEmail, contactName, 
                   </li>
                 ))}
               </ul>
-              <p className="mt-2 text-xs text-muted">Never shown: prices, costs, margins, quantities, task weights, assignees or your private task notes.</p>
+              <p className="mt-2 text-xs text-muted">Never shown: prices, costs, margins, quantities, task weights or your private task notes.</p>
             </section>
+
+            {aMode && (
+              <section className="rounded-2xl border border-line bg-surface p-4">
+                <label htmlFor="upd-assignees" className="font-display font-extrabold text-navy">Who&apos;s doing the work</label>
+                <p className="text-xs text-muted">For sections assigned from Team &amp; Subcontractors. Saved for this project. Phone and email are hidden unless you choose to show them.</p>
+                <select id="upd-assignees" className="field mt-2 text-sm" value={aMode} data-testid="opt-assignees" onChange={async (e) => {
+                  const mode = e.target.value as ReportAssignees; const prev = aMode;
+                  setAMode(mode); setAErr(null);
+                  const r = await api(`/api/projects/${data.schedule.id}/report-assignees`, { method: "POST", body: JSON.stringify({ mode }) });
+                  if (!r.ok) { setAMode(prev); setAErr(r.message); return; }
+                  setConfirmed(false); setNonce((n) => n + 1);
+                }}>
+                  {REPORT_ASSIGNEE_OPTIONS.map((x) => <option key={x.value} value={x.value}>{x.label}</option>)}
+                </select>
+                {aErr && <p role="alert" className="mt-1 text-sm text-danger">{aErr}</p>}
+              </section>
+            )}
 
             <section className="rounded-2xl border border-line bg-surface p-4">
               <label className="flex min-h-11 cursor-pointer items-start gap-3">

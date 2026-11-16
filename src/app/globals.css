@@ -238,6 +238,8 @@ html[data-theme]:has(.app-theme) {
   --color-accent-dark: #7ee4f4;
   --color-accent-tint: #0c3a4f;
   --color-focus: #4fd8ef;
+  /* Feature walkthrough dimming around the highlighted control: navy at 55% barely shows on navy. */
+  --tour-scrim: rgba(0, 0, 0, 0.62);
 
   --color-ok: #3fd5c0;
   --color-ok-tint: #0d3a3a;

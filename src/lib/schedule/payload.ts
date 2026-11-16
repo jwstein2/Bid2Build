@@ -19,7 +19,7 @@ export const createSchema = z.object({
   calendar: calendarSchema,
   startDate: day,
   targetEndDate: day.nullable().optional(),
-  sections: z.array(z.object({ sourceGroupId: uuid, durationDays: z.number().int().min(1).max(3650), sortOrder: z.number().int().min(0).max(10_000) })).min(1).max(300),
+  sections: z.array(z.object({ sourceGroupId: uuid, durationDays: z.number().int().min(1).max(3650), sortOrder: z.number().int().min(0).max(10_000), offsetDays: z.number().int().min(0).max(3650).optional() })).min(1).max(300),
   deps: z.array(z.object({ from: uuid, to: uuid, lagDays: z.number().int().min(-365).max(365), maxOverlap: z.number().int().min(0).max(365) })).max(1000).default([]),
 });
 

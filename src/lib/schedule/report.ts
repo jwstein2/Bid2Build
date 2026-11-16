@@ -6,7 +6,9 @@
  * What a report may contain is decided here and nowhere else. It is built only from schedule dates,
  * statuses and % complete, the frozen scope names in the schedule snapshot, and text the contractor
  * typed for the customer. It never contains prices, unit costs, margins, profit, quantities, task
- * weights, assignees or the private notes on tasks. Defaults hide line-item detail and scope.
+ * weights, free-text assignees or the private notes on tasks. Defaults hide line-item detail and scope.
+ * Who's doing a section appears only for Team & Subcontractors assignments, and only as the project's
+ * report setting allows (names by default; contact details only when the contractor turns them on).
  */
 import { z } from "zod";
 import { formatDay } from "./calendar";
@@ -55,6 +57,8 @@ export interface ReportSection {
   state: ReportState;
   progress: number | null;
   scope: string | null;
+  /** Who's doing the work (V4.2), already limited by the project's report setting. Absent in older reports. */
+  assignedTo?: string | null;
   /** What changed since the last published update, in plain words. */
   change: string | null;
   tasks: ReportTask[] | null;
@@ -88,6 +92,8 @@ export interface ReportContext {
   tradeLabel?: (trade: string) => string;
   /** The last published report, to describe what changed. */
   previous?: CustomerReport | null;
+  /** Section task id → the customer-safe "who's doing it" line (see reportAssignee in lib/projects/team). */
+  assignees?: Record<string, string>;
 }
 
 const CONTROL = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g;
@@ -171,6 +177,7 @@ export function buildCustomerReport(data: ScheduleData, rawOptions: Partial<Repo
       state,
       progress: o.showProgress ? sectionProgress(tasks, h.id, schedule.progressMethod) : null,
       scope: scopeText || null,
+      ...(ctx.assignees?.[h.id] ? { assignedTo: oneLine(ctx.assignees[h.id], 300) } : {}),
       change: changeText({ key: h.id, plannedStart, plannedEnd, status: h.status }, ctx.previous),
       tasks: o.showTaskDetails && itemHeads.length
         ? itemHeads.map((i) => {

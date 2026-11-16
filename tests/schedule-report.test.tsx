@@ -128,4 +128,11 @@ describe("customer report", () => {
     expect(text).not.toContain("PRIVATE");
     expect(text).not.toMatch(/\$\d/);
   });
+
+  it("shows who's doing a section only from directory assignments passed in (free-text assignees never)", () => {
+    const r = buildCustomerReport(data(base()), {}, { ...ctx, assignees: { fr: "Stone Works" } });
+    expect(r.sections.find((x) => x.key === "fr")?.assignedTo).toBe("Stone Works");
+    expect(r.sections.filter((x) => x.key !== "fr").every((x) => x.assignedTo === undefined)).toBe(true);
+    expect(JSON.stringify(r)).not.toContain("Bob Crew");
+  });
 });

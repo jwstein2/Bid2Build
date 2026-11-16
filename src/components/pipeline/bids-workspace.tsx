@@ -1,7 +1,8 @@
 "use client";
-import type { FeatureId } from "@/lib/features/registry";
+import { getFeature, type FeatureId } from "@/lib/features/registry";
+import { REVEAL_FEATURE_EVENT } from "@/lib/features/state";
 import { FeatureHelp } from "@/components/features/feature-help";
-import { useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { BarChart3, Columns3, List, Search } from "lucide-react";
 import {
   RANGES, analytics, boardSummary, filterBoard, isRange, resolveRange, MIN_DECIDED,
@@ -31,10 +32,20 @@ export function BidsWorkspace({ bids, history, esign, table, pay, paySaved, migr
   const [field, setField] = useState<BoardDateField>("activity");
   const [q, setQ] = useState("");
 
-  function pick(v: BidsView) {
+  const pick = useCallback((v: BidsView) => {
     setView(v);
     const u = new URL(window.location.href); u.searchParams.set("view", v); window.history.replaceState(null, "", u);
-  }
+  }, []);
+
+  // The feature walkthrough opens the view a step's control lives in (e.g. Analytics for Sales pay).
+  useEffect(() => {
+    const on = (e: Event) => {
+      const v = getFeature(String((e as CustomEvent).detail ?? ""))?.view;
+      if (v) pick(v);
+    };
+    window.addEventListener(REVEAL_FEATURE_EVENT, on);
+    return () => window.removeEventListener(REVEAL_FEATURE_EVENT, on);
+  }, [pick]);
 
   const r = useMemo(() => resolveRange(range, new Date(), custom), [range, custom]);
   const searched = useMemo(() => {

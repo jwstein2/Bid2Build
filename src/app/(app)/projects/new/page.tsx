@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { isPmBillingConfigured, isPmEnabled } from "@/lib/env";
 import { estimateAccepted } from "@/lib/schedule/server";
+import { loadTeam } from "@/lib/projects/server";
 import { loadPmAccess } from "@/lib/pm/server";
 import { tradeName } from "@/lib/trades/catalog";
 import { validTimeZone } from "@/lib/schedule/calendar";
@@ -12,7 +13,7 @@ import { ScheduleWizard, type WizardSection } from "@/components/schedule/wizard
 
 export const metadata: Metadata = { title: "Schedule Now", robots: { index: false } };
 
-/** Schedule Now: the 8-step wizard for one bid. One schedule per bid, so an existing one opens instead. */
+/** Schedule Now: the 9-step wizard for one bid. One schedule per bid, so an existing one opens instead. */
 export default async function NewSchedulePage({ searchParams }: { searchParams: Promise<{ estimate?: string }> }) {
   if (!isPmEnabled()) notFound();
   const { estimate: id } = await searchParams;
@@ -25,7 +26,7 @@ export default async function NewSchedulePage({ searchParams }: { searchParams: 
   const { data: existing } = await supabase.from("project_schedules").select("id").eq("estimate_id", id).neq("status", "archived").maybeSingle();
   if (existing?.id) redirect(`/projects/${existing.id}`);
 
-  const [pm, can, groupsRes, itemsRes, versionRes, profileRes, acc] = await Promise.all([
+  const [pm, can, groupsRes, itemsRes, versionRes, profileRes, acc, team, peopleRes] = await Promise.all([
     loadPmAccess(supabase),
     supabase.rpc("can_schedule_estimate", { p_estimate_id: id }),
     supabase.from("estimate_groups").select("id, name, sort_order").eq("estimate_id", id).order("sort_order"),
@@ -33,6 +34,8 @@ export default async function NewSchedulePage({ searchParams }: { searchParams: 
     supabase.from("estimate_versions").select("version_number").eq("estimate_id", id).order("version_number", { ascending: false }).limit(1),
     supabase.from("profiles").select("timezone").eq("id", user.id).maybeSingle(),
     estimateAccepted(supabase, id, est.pipeline_stage as string | null),
+    loadTeam(supabase),
+    supabase.rpc("pm_people"),
   ]);
 
   if (!pm?.canEdit || can.data !== true) {
@@ -64,6 +67,7 @@ export default async function NewSchedulePage({ searchParams }: { searchParams: 
       accepted={acc.accepted} signed={acc.signed} sections={sections}
       timezone={tz && validTimeZone(tz) ? tz : "America/Chicago"}
       tradeLabels={Object.fromEntries(trades.map((t) => [t, tradeName(t)]))}
+      team={team} people={peopleRes.error ? [] : ((peopleRes.data as { id: string; name: string }[]) ?? [])} me={user.id}
     />
   );
 }
