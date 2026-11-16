@@ -10,6 +10,7 @@ import { EDIT_MODES, type EditMode } from "@/lib/schedule/engine";
 import { statusLabel, type ScheduleData } from "@/lib/schedule/types";
 import { projectDot, type WsProject, type WsTask } from "@/lib/projects/workspace";
 import { STATUS_STYLE } from "@/components/schedule/client";
+import { statusLabelOf } from "@/lib/projects/team";
 import { loadFull, planEdit, saveTasks, withProgress, type PlannedEdit } from "./edit";
 
 export function Drawer({ open, onOpenChange, title, children }: { open: boolean; onOpenChange: (o: boolean) => void; title: string; children: ReactNode }) {
@@ -28,7 +29,7 @@ export function Drawer({ open, onOpenChange, title, children }: { open: boolean;
   );
 }
 
-export interface ResourceInfo { label: string; kind: string; email?: string | null; phone?: string | null; trade?: string | null }
+export interface ResourceInfo { id?: string; label: string; kind: string; email?: string | null; phone?: string | null; trade?: string | null }
 
 /**
  * Quick detail for a calendar/timeline/My Work task, with the actions the viewer is allowed: move
@@ -106,7 +107,7 @@ export function TaskDrawer({ task, project, people, resource, today, onClose, on
           <dt className="text-muted">Customer</dt><dd>{project.customerName || "—"}</dd>
           <dt className="text-muted">Dates</dt><dd className="font-semibold">{formatRange(task.plannedStart, task.plannedEnd)}</dd>
           <dt className="text-muted">Status</dt><dd><span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${st.chip}`}>{statusLabel(task.status)}</span> · {task.percentComplete}%</dd>
-          <dt className="text-muted">Assigned</dt><dd data-testid="drawer-assignee">{resource ? <>{resource.label} <Badge>{resource.kind}</Badge></> : task.assignee || "Unassigned"}</dd>
+          <dt className="text-muted">Assigned</dt><dd data-testid="drawer-assignee">{resource ? <>{resource.label} <Badge>{resource.kind}</Badge>{task.assignmentStatus && <> <Badge tone={task.assignmentStatus === "confirmed" ? "ok" : task.assignmentStatus === "declined" ? "danger" : "neutral"}>{statusLabelOf(task.assignmentStatus)}</Badge></>}</> : task.assignee || "Unassigned"}</dd>
           {resource?.trade && <><dt className="text-muted">Trade</dt><dd>{resource.trade}</dd></>}
           {resource?.phone && <><dt className="text-muted">Phone</dt><dd><a className="text-accent-ink underline" href={`tel:${resource.phone}`}>{resource.phone}</a></dd></>}
           {resource?.email && <><dt className="text-muted">Email</dt><dd className="break-all"><a className="text-accent-ink underline" href={`mailto:${resource.email}`}>{resource.email}</a></dd></>}

@@ -26,3 +26,32 @@ existing revision-checked `schedule_save` route (`PATCH /api/schedules/[id]`), s
 - `tests/projects-workspace.test.ts`: filters, metrics, conflicts, My Work buckets.
 - `tests/db/projects-workspace.test.ts`: access, people rules, activity, closeout, rollback (real Postgres).
 - `scripts/projects/walk.mjs`: browser walk against the mock Supabase (desktop, 390px, 320px, dark, black).
+
+# Team & Subcontractors V4.2
+
+Projects → Team & Subcontractors (`/projects/team`): a directory of staff, subcontractors and crews, and
+"who's doing the work" on every section and task.
+
+## Database (migration `20261118002000_team_assignments.sql`, needs V4.1 first)
+- `pm_resources` (company or solo account; staff may link to an active company member; subcontractors never
+  get a login) and `pm_crew_members`. Read with "View project schedules"; changed only through RPCs by people
+  who can create/edit schedules.
+- `schedule_tasks`: `resource_id`, `assignment_status` (tentative / requested / confirmed / declined),
+  `assignment_inherited`, `assignment_confirmed_at/by`. Assigning a section fills tasks with no assignment of
+  their own; task overrides survive a section reassignment. Typing a different Gantt "Assigned to" name
+  replaces a directory assignment.
+- `project_schedules.report_assignees`: hidden / names (default) / names_contacts for customer updates.
+- RPCs: `pm_team`, `pm_resource_save`, `pm_resource_set_status`, `schedule_assign` (revision-checked, one
+  revision per call), `schedule_set_report_assignees`, `pm_task_assignments`.
+
+## Screens
+- Directory page with search, filters, archive/restore, copy phone/email, call/email links (your own apps).
+- Schedule Now step 8 "Assign who's doing the work": trade- and section-name suggestions, quick add.
+- Task drawer "Who's doing this?": status, busy-elsewhere hint, quick add, draft notice (mailto / copy).
+- Workload uses crews, members and capacity; My Work includes linked staff and their crews.
+- Customer update composer: "Who's doing the work" setting. Contact details only when chosen.
+- Nothing is ever sent automatically.
+
+## Rollback
+Revert the PR, then run `rollback_20261118002000.sql` (checked in `tests/db/team-assignments.test.ts`).
+Task "Assigned to" text is kept.

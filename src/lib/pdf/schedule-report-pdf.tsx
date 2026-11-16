@@ -100,6 +100,7 @@ export function ScheduleReportPdf({ r, version, logo }: { r: CustomerReport; ver
                 </View>
                 <Text style={{ marginTop: 3 }}>Scheduled {formatRange(x.plannedStart, x.plannedEnd)}{x.actualFinish ? `  |  Completed ${formatDay(x.actualFinish, { month: "short", day: "numeric", year: "numeric" })}` : ""}</Text>
                 {x.change && <Text style={{ marginTop: 2, color: "#92400e" }}>{T(x.change)}</Text>}
+                {x.assignedTo && <Text style={{ marginTop: 3, ...s.muted }}>Done by: {T(x.assignedTo)}</Text>}
                 {x.scope && <Text style={{ marginTop: 3, ...s.muted }}>Scope: {T(x.scope)}</Text>}
                 {x.tasks && x.tasks.map((t, i) => <Text key={i} style={{ marginTop: 2, marginLeft: 8, fontSize: 8.5 }}>• {T(t.name)}: {formatRange(t.plannedStart, t.plannedEnd)} ({T(t.statusLabel)})</Text>)}
               </View>

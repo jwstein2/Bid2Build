@@ -11,6 +11,8 @@ import { applyReviewEdit, checkTarget, finishOf, planSections, wouldCycle, type 
 import type { Dep } from "@/lib/schedule/types";
 import { api, COMMON_TIMEZONES } from "./client";
 import { MiniTimeline, type MiniEdit } from "./mini-timeline";
+import { AssignStep, type SectionAssignment } from "./assign-step";
+import type { Team } from "@/lib/projects/team";
 
 export interface WizardSection { id: string; name: string; trade: string | null; items: { id: string; name: string }[] }
 export interface WizardProps {
@@ -20,13 +22,18 @@ export interface WizardProps {
   sections: WizardSection[];
   timezone: string;
   tradeLabels: Record<string, string>;
+  /** V4.2 Team & Subcontractors (null until that SQL runs: the assign step then just explains). */
+  team?: Team | null;
+  people?: { id: string; name: string }[];
+  me?: string | null;
 }
 
-const STEPS = ["Source estimate", "Sections", "Start date", "Durations", "Dependencies", "Target date", "Review", "Save"] as const;
+const STEPS = ["Source estimate", "Sections", "Start date", "Durations", "Dependencies", "Target date", "Review", "Assign", "Save"] as const;
+const LAST = STEPS.length - 1;
 
 type Link_ = { after: string | null; lag: number; overlap: number };
 
-export function ScheduleWizard({ estimate, accepted, signed, sections, timezone, tradeLabels }: WizardProps) {
+export function ScheduleWizard({ estimate, accepted, signed, sections, timezone, tradeLabels, team = null, people = [], me = null }: WizardProps) {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [provisional, setProvisional] = useState(false);
@@ -43,6 +50,8 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [existing, setExisting] = useState<string | null>(null);
+  // Who's doing the work, per section (saved right after the schedule is created).
+  const [assign, setAssign] = useState<Record<string, SectionAssignment>>({});
 
   const chosen = sections.filter((s) => included.includes(s.id));
   const planInput: PlanSection[] = chosen.map((s, i) => ({ key: s.id, sourceGroupId: s.id, name: s.name, durationDays: durations[s.id] || 1, sortOrder: i, offsetDays: offsets[s.id] ?? 0 }));
@@ -63,6 +72,7 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
     Boolean(plan),
     !target || (isIsoDate(target) && target >= start),
     Boolean(plan),
+    true,
     true,
   ][step];
 
@@ -87,8 +97,22 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
         sections: planInput.map((p) => ({ sourceGroupId: p.sourceGroupId, durationDays: p.durationDays, sortOrder: p.sortOrder, offsetDays: p.offsetDays ?? 0 })), deps,
       }),
     });
+    if (r.ok) {
+      const picks = chosen.filter((s) => assign[s.id]?.resourceId);
+      if (picks.length) {
+        // Section tasks get their ids on create: look them up, then assign in one revision.
+        const full = await api<{ schedule: { revision: number }; tasks: { id: string; kind: string; sourceGroupId: string; splitFrom?: string | null }[] }>(`/api/schedules/${r.data.id}`);
+        const items = full.ok ? picks.flatMap((s) => {
+          const t = full.data.tasks.find((x) => x.kind === "section" && x.sourceGroupId === s.id && !x.splitFrom);
+          return t ? [{ taskId: t.id, resourceId: assign[s.id].resourceId, status: assign[s.id].status }] : [];
+        }) : [];
+        const a = full.ok && items.length ? await api(`/api/projects/${r.data.id}/assign`, { method: "POST", body: JSON.stringify({ baseRevision: full.data.schedule.revision, items, summary: `Assigned ${items.length} section${items.length === 1 ? "" : "s"} in Schedule Now` }) }) : null;
+        if (!a || !a.ok) { setSaving(false); router.push(`/projects/${r.data.id}?created=1&assign=failed`); return; }
+      }
+      setSaving(false);
+      router.push(`/projects/${r.data.id}?created=1`); return;
+    }
     setSaving(false);
-    if (r.ok) { router.push(`/projects/${r.data.id}?created=1`); return; }
     if (r.code === "schedule_exists" && typeof r.extra.scheduleId === "string") setExisting(r.extra.scheduleId);
     setError(r.message);
   }
@@ -113,7 +137,7 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
       </ol>
 
       <section className="rounded-2xl border border-line bg-surface p-4 sm:p-6" aria-labelledby="step-title">
-        <h2 id="step-title" className="font-display text-lg font-extrabold text-navy">Step {step + 1} of 8: {STEPS[step]}</h2>
+        <h2 id="step-title" className="font-display text-lg font-extrabold text-navy">Step {step + 1} of {STEPS.length}: {step === 7 ? "Assign who's doing the work" : STEPS[step]}</h2>
 
         {step === 0 && (
           <div className="mt-3 space-y-3">
@@ -269,7 +293,12 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
         )}
 
         {step === 7 && plan && (
+          <AssignStep sections={chosen} plan={plan} tradeLabels={tradeLabels} team={team} people={people} me={me} value={assign} onChange={setAssign} />
+        )}
+
+        {step === LAST && plan && (
           <div className="mt-3 space-y-3">
+            {chosen.some((s) => assign[s.id]?.resourceId) && <p className="text-sm text-ink-soft">{chosen.filter((s) => assign[s.id]?.resourceId).length} section{chosen.filter((s) => assign[s.id]?.resourceId).length === 1 ? "" : "s"} will be assigned. No one is notified.</p>}
             <p className="text-ink-soft">Save this as a <strong>draft schedule</strong>. You can drag tasks, schedule individual line items and track progress next. Nothing is sent to your customer.</p>
             {!accepted && <Badge tone="warn">Provisional: bid not yet accepted</Badge>}
             {error && <Notice tone="danger">{error} {existing && <Link className="font-semibold underline" href={`/projects/${existing}`}>Open the existing schedule</Link>}</Notice>}
@@ -280,7 +309,7 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
 
       <div className="flex justify-between gap-2">
         <Button type="button" variant="secondary" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0}><ArrowLeft className="h-4 w-4" aria-hidden /> Back</Button>
-        {step < 7 && <Button type="button" onClick={() => setStep((s) => s + 1)} disabled={!canNext} data-testid="wizard-next">Next <ArrowRight className="h-4 w-4" aria-hidden /></Button>}
+        {step < LAST && <Button type="button" onClick={() => setStep((s) => s + 1)} disabled={!canNext} data-testid="wizard-next">Next <ArrowRight className="h-4 w-4" aria-hidden /></Button>}
       </div>
       {step === 4 && !plan && <Notice tone="danger"><AlertTriangle className="mr-1 inline h-4 w-4" aria-hidden />These dependencies loop back on themselves.</Notice>}
     </div>

@@ -114,6 +114,7 @@ export function ReportView({ r, logoUrl, version }: { r: CustomerReport; logoUrl
                     {x.actualFinish && <span className="font-semibold text-ok">Completed {short(x.actualFinish)}</span>}
                   </p>
                   {x.change && <p className="mt-1 flex items-start gap-1 text-sm font-semibold text-warn" data-testid="report-change"><Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />{x.change}</p>}
+                  {x.assignedTo && <p className="mt-1 text-sm text-ink" data-testid="report-assigned"><span className="font-semibold">Done by:</span> {x.assignedTo}</p>}
                   {x.scope && <p className="mt-1 text-sm text-ink"><span className="font-semibold">Scope:</span> {x.scope}</p>}
                   {x.tasks && (
                     <ul className="mt-2 space-y-0.5 border-t border-line pt-2 text-sm">
