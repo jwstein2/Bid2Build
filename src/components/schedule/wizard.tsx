@@ -7,10 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Badge, Notice } from "@/components/ui/misc";
 import { cn } from "@/lib/cn";
 import { WEEKDAY_NAMES, formatDay, formatRange, isIsoDate, normalizeCalendar, todayIn, workdaysBetween, type WorkCalendar } from "@/lib/schedule/calendar";
-import { checkTarget, finishOf, planSections, wouldCycle, type PlanSection } from "@/lib/schedule/engine";
+import { applyReviewEdit, checkTarget, finishOf, planSections, wouldCycle, type PlanSection } from "@/lib/schedule/engine";
 import type { Dep } from "@/lib/schedule/types";
 import { api, COMMON_TIMEZONES } from "./client";
-import { MiniTimeline } from "./mini-timeline";
+import { MiniTimeline, type MiniEdit } from "./mini-timeline";
 
 export interface WizardSection { id: string; name: string; trade: string | null; items: { id: string; name: string }[] }
 export interface WizardProps {
@@ -37,13 +37,15 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
   const [durations, setDurations] = useState<Record<string, number>>(() => Object.fromEntries(sections.map((s) => [s.id, Math.min(10, Math.max(1, s.items.length || 1))])));
   // Default: each section after the one before it. Any section can be changed to start with the project.
   const [links, setLinks] = useState<Record<string, Link_>>(() => Object.fromEntries(sections.map((s, i) => [s.id, { after: i ? sections[i - 1].id : null, lag: 0, overlap: 0 }])));
+  // "Don't start before" offsets (working days after the project start), set by dragging bars in Review.
+  const [offsets, setOffsets] = useState<Record<string, number>>({});
   const [target, setTarget] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [existing, setExisting] = useState<string | null>(null);
 
   const chosen = sections.filter((s) => included.includes(s.id));
-  const planInput: PlanSection[] = chosen.map((s, i) => ({ key: s.id, sourceGroupId: s.id, name: s.name, durationDays: durations[s.id] || 1, sortOrder: i }));
+  const planInput: PlanSection[] = chosen.map((s, i) => ({ key: s.id, sourceGroupId: s.id, name: s.name, durationDays: durations[s.id] || 1, sortOrder: i, offsetDays: offsets[s.id] ?? 0 }));
   const deps: Dep[] = chosen.flatMap((s) => {
     const l = links[s.id];
     return l?.after && included.includes(l.after) ? [{ from: l.after, to: s.id, lagDays: l.lag, maxOverlap: l.overlap }] : [];
@@ -66,6 +68,15 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
 
   const setLink = (id: string, patch: Partial<Link_>) => setLinks((m) => ({ ...m, [id]: { ...m[id], ...patch } }));
 
+  /** Review step: a dragged or date-edited bar becomes a duration, a wait/overlap or a start offset. */
+  const reviewEdit = (e: MiniEdit) => {
+    const r = applyReviewEdit(planInput, deps, start, cal, { key: e.id, start: e.start, end: e.end, durationDays: e.durationDays });
+    if (!r) return;
+    setDurations((d) => ({ ...d, [e.id]: r.durationDays }));
+    setOffsets((o) => ({ ...o, [e.id]: r.offsetDays }));
+    if (r.dep) setLink(e.id, { lag: r.dep.lagDays, overlap: r.dep.maxOverlap });
+  };
+
   async function save() {
     if (!plan) return;
     setSaving(true); setError(null);
@@ -73,7 +84,7 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
       method: "POST",
       body: JSON.stringify({
         estimateId: estimate.id, provisional: !accepted && provisional, calendar: cal, startDate: start, targetEndDate: target || null,
-        sections: planInput.map((p) => ({ sourceGroupId: p.sourceGroupId, durationDays: p.durationDays, sortOrder: p.sortOrder })), deps,
+        sections: planInput.map((p) => ({ sourceGroupId: p.sourceGroupId, durationDays: p.durationDays, sortOrder: p.sortOrder, offsetDays: p.offsetDays ?? 0 })), deps,
       }),
     });
     setSaving(false);
@@ -253,7 +264,7 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
         {step === 6 && plan && (
           <div className="mt-3 space-y-3">
             <p className="text-sm text-ink-soft">{formatRange(plan.reduce((m, p) => (p.plannedStart < m ? p.plannedStart : m), plan[0].plannedStart), finishOf(plan))} · {workdaysBetween(start, finishOf(plan), cal)} working days{target ? ` · target ${formatDay(target)}` : ""}</p>
-            <MiniTimeline rows={plan.map((p) => ({ id: p.key, name: p.name, start: p.plannedStart, end: p.plannedEnd }))} />
+            <MiniTimeline rows={plan.map((p) => ({ id: p.key, name: p.name, start: p.plannedStart, end: p.plannedEnd, durationDays: p.durationDays }))} onEdit={reviewEdit} />
           </div>
         )}
 
