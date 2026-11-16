@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LIFECYCLE_STEPS, stepOfKind, type LifecycleStep } from "@/lib/email/lifecycle";
 import { Chip, PageHead, Panel, Row, Table, ago, fmt, type Tone } from "@/components/admin/cc";
 import { ReportUnavailable, ScopeNote, SectionTitle } from "@/components/admin/report";
 import { TOOLS } from "@/components/admin/nav";
@@ -6,6 +7,7 @@ import { integrationStatus, type IntegrationState } from "@/lib/admin/integratio
 import { locationQuality } from "@/lib/admin/metrics";
 import { loadReport } from "@/lib/admin/load";
 import { href } from "@/lib/admin/view";
+import { previewLifecycle, sendLifecycleSamplesAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Operations" };
@@ -13,7 +15,9 @@ export const metadata = { title: "Operations" };
 const STATE: Record<IntegrationState, { tone: Tone; label: string }> = { ok: { tone: "green", label: "OK" }, warn: { tone: "amber", label: "Check" }, missing: { tone: "red", label: "Missing" }, not_connected: { tone: "muted", label: "Not connected" } };
 
 export default async function Operations({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  const { r, error, view } = await loadReport(await searchParams, { costs: true });
+  const sp = await searchParams;
+  const lifecycleNote = typeof sp.lifecycle === "string" ? sp.lifecycle.slice(0, 300) : null;
+  const { r, error, view } = await loadReport(sp, { costs: true });
   if (!r) return <ReportUnavailable error={error} />;
   const { facts, sc, snap, now } = r;
   const nowMs = now.getTime();
@@ -24,6 +28,10 @@ export default async function Operations({ searchParams }: { searchParams: Promi
   const sigPdfFailed = d.signatures.filter((s) => s.pdf_status === "failed").length;
   const outboxFailed = d.outbox.filter((o) => o.status === "failed");
   const outboxPending = d.outbox.filter((o) => o.status === "pending").length;
+  const lifecycleByStep = Object.fromEntries(LIFECYCLE_STEPS.map((st) => [st, 0])) as Record<LifecycleStep, number>;
+  for (const o of d.outbox) { const st = stepOfKind(o.kind); if (st && o.status === "sent" && Date.parse(o.updated_at ?? o.created_at) >= nowMs - 30 * 86_400_000) lifecycleByStep[st]++; }
+  const lifecycleSent = Object.values(lifecycleByStep).reduce((a, b) => a + b, 0);
+  const lifecycleMode = `sending ${process.env.LIFECYCLE_EMAIL_MODE === "live" ? "live" : process.env.LIFECYCLE_EMAIL_MODE === "test" ? "to test addresses only" : "off"}`;
   const unverified = facts.filter((f) => !f.confirmed && Date.parse(f.createdAt) < nowMs - 86_400_000);
   const loc = locationQuality(d.estimates);
   const coverage = loc.total ? Math.round((loc.withState / loc.total) * 100) : null;
@@ -58,13 +66,19 @@ export default async function Operations({ searchParams }: { searchParams: Promi
           </dl>
           {hookErrors.slice(0, 3).map((e) => <p key={e.id} className="cc-mono mt-2 truncate text-[11px] text-[var(--cc-red)]" title={e.error ?? ""}>{e.type}: {e.error}</p>)}
         </Panel>
-        <Panel title="Background email" >
+        <Panel title="Background email">
           <dl>
             <Row k="Failed (gave up)">{outboxFailed.length ? <span className="text-[var(--cc-red)]">{fmt(outboxFailed.length)}</span> : "0"}</Row>
             <Row k="Waiting to send">{fmt(outboxPending)}</Row>
+            <Row k="Lifecycle emails sent (30 days)">{lifecycleSent ? `${fmt(lifecycleSent)} (${LIFECYCLE_STEPS.map((st) => `${st.toUpperCase()} ${lifecycleByStep[st]}`).join(" · ")})` : `0 · ${lifecycleMode}`}</Row>
           </dl>
           {outboxFailed[0]?.last_error && <p className="cc-mono mt-2 truncate text-[11px] text-[var(--cc-red)]" title={outboxFailed[0].last_error}>{outboxFailed[0].last_error}</p>}
-          <p className="mt-2 text-xs text-muted">Founder welcome emails (Resend). Sign-in emails are sent by Supabase and are not in this queue.</p>
+          <p className="mt-2 text-xs text-muted">Founder welcome and lifecycle emails A–E (Resend). Sign-in emails are sent by Supabase and are not in this queue.</p>
+          {lifecycleNote && <p className="mt-2 text-xs" role="status">{lifecycleNote}</p>}
+          <div className="mt-2 flex flex-wrap gap-2">
+            <form action={previewLifecycle}><button type="submit" className="cc-mono rounded-md border border-[var(--cc-line)] px-3 py-1.5 text-xs text-white hover:border-[var(--cc-blue)]">Preview lifecycle emails due now</button></form>
+            <form action={sendLifecycleSamplesAction}><button type="submit" className="cc-mono rounded-md border border-[var(--cc-line)] px-3 py-1.5 text-xs text-white hover:border-[var(--cc-blue)]">Send me the 5 samples</button></form>
+          </div>
         </Panel>
       </div>
 
