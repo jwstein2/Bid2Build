@@ -69,6 +69,8 @@ describe("lifecycle copy", () => {
       expect(r.text).toContain(ctx.unsubscribeUrl);
       expect(r.html).toContain("Unsubscribe from these emails");
       expect(r.text).toContain(ctx.postalAddress);
+      expect(r.text).toContain("Questions? support@built2bid.org");
+      expect(r.html).toContain("Questions? support@built2bid.org");
       expect(r.text + r.subject).not.toMatch(/\$\s?\d|\d+\s?%|minutes?|guarantee|win more|testimonial/i);
       expect(r.html).not.toMatch(/<script/i);
     }
