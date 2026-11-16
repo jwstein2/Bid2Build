@@ -1,1 +1,129 @@
-[]
+[
+  {
+    "slug": "how-to-price-roofing-jobs",
+    "title": "How to Price Roofing Jobs: A Step-by-Step Method",
+    "description": "A step-by-step method for pricing roofing jobs by the square, covering takeoff, waste, labor hours, disposal, permits, overhead and markup or margin.",
+    "updated": "2026-11-16",
+    "published": "2026-11-16",
+    "trade": "roofing",
+    "blocks": [
+      {
+        "p": [
+          "Pricing a roof is mostly a matter of counting the right things in the right units and then pricing each line with your own numbers. This guide walks through the method in the order you would build it in Built2Bid, from measurements to the final price.",
+          "The example in this guide uses round numbers for illustration only. Replace every figure with your own supplier quotes, recent invoices, labor rate and local permit fees."
+        ]
+      },
+      {
+        "h": "Measure in squares and count each roof plane",
+        "p": [
+          "Roofing is priced by the square, which is 100 square feet of roof surface. Measure each roof plane separately, including garages, porches and dormers, then add the totals. Write each quantity on its own line with its unit so the takeoff matches the estimate.",
+          "Count linear items the same way. Eaves and rakes give you drip edge in linear feet, and the ridge gives you ridge cap and ridge vent. Count pipe penetrations as each."
+        ]
+      },
+      {
+        "h": "Add waste to materials, not to labor",
+        "p": [
+          "Shingles, underlayment and ridge cap are ordered with extra for cuts, valleys, hips and breakage. Choose a waste allowance based on roof complexity and your own job history, then apply it to material quantities only. Labor is priced on the measured squares, not the ordered squares.",
+          "Confirm the waste figure with your supplier, since bundle and roll sizes change what you can order."
+        ]
+      },
+      {
+        "h": "Price labor by the square and by the hour",
+        "p": [
+          "Use separate labor lines. Shingle installation labor is priced per square. Flashing and detail work is priced per hour because it varies with the number of penetrations, valleys and transitions. Tear-off is also labor, so set a labor-hours figure for it per square based on your crew's own records.",
+          "Labor cost equals labor hours multiplied by your hourly rate. Your rate should cover wages, payroll taxes, insurance, vehicles and tools, not just the hourly wage. Track actual hours on a few jobs and use those figures in future estimates."
+        ]
+      },
+      {
+        "h": "Equipment, disposal and decking",
+        "p": [
+          "Tear-off generates debris. Price the dumpster as each and include it in the Tear-Off and Disposal section. If you use a lift, a magnet sweeper or other equipment, add it as an equipment cost type line with its own quantity and unit.",
+          "Hidden deck damage cannot be measured until the old roofing is off. Price replacement decking per sheet so the customer sees a clear unit price for each sheet that needs replacing. Agree on how extra sheets will be approved before you start that work."
+        ]
+      },
+      {
+        "h": "Permits and pass-through charges",
+        "p": [
+          "Building permit fees are set by the local building department, and requirements vary by location. Ask the department whether a roof permit is required, what it costs and which inspections apply to your job.",
+          "You can show the permit as a pass-through charge at cost, so it appears on the proposal without markup. Confirm with a tax professional how sales tax applies to permit fees and materials in your area, and ask an attorney to review how pass-through charges are written in your contract."
+        ]
+      },
+      {
+        "h": "Overhead and the markup or margin decision",
+        "p": [
+          "Add overhead as a percentage of direct cost, based on your own annual overhead divided by your annual direct costs. Then choose how to price the job. Built2Bid can price an estimate with either markup on cost or target gross margin, and it shows the other number for reference.",
+          "Markup and margin are different. Markup is added to cost, so Price = Cost × (1 + Markup). Margin is a share of the final price, so Price = Cost ÷ (1 − Margin). Check both before you choose one."
+        ]
+      },
+      {
+        "h": "Simplified example",
+        "p": [
+          "This simplified example covers only the tear-off, shingle, dumpster and building permit lines. A real estimate includes every section above, including decking, flashing, ventilation, cleanup and any equipment.",
+          "All figures below are for illustration only. Replace them with your own quotes, hours and rates."
+        ],
+        "formula": [
+          "Example: 20 squares × 1.10 = 22 squares of shingles (illustration only, 10 percent waste)",
+          "Example: 20 squares × 1 labor hour per square = 20 labor hours (illustration only)",
+          "Example: 20 labor hours × $50 per hour = $1,000 tear-off and shingle labor",
+          "Example: 22 squares × $100 per square = $2,200 shingle material",
+          "Example: 1 dumpster × $400 = $400 disposal",
+          "Example: $1,000 + $2,200 + $400 = $3,600 direct cost",
+          "Example: $3,600 × 0.10 = $360 overhead",
+          "Example: $3,600 + $360 = $3,960 total cost",
+          "Example: $3,960 × 1.25 = $4,950 price with 25% markup",
+          "Example: $3,960 ÷ (1 − 0.20) = $4,950 price with 20% margin",
+          "Example: 1 building permit × $200 = $200 passed through at cost",
+          "Example: $4,950 + $200 = $5,150 total on the proposal for these lines"
+        ]
+      },
+      {
+        "h": "Quality tips and code items inspectors check",
+        "p": [
+          "Local editions and amendments of the International Residential Code vary, so confirm requirements with your local building department and ask which inspections apply to your job. Follow manufacturer installation instructions for every product. These tips show where each code topic should change what you include in the estimate."
+        ],
+        "list": [
+          "R905 (Requirements for roof coverings) covers underlayment, fastening and installation by material, which an inspector may look at. Include the underlayment, ice and water shield, nails and labor that your chosen installation method calls for.",
+          "R908 (Reroofing) covers recovering versus replacing and reinstalling flashing. Decide whether the job is a tear-off or a recover before you price it. A second layer adds tear-off labor and disposal, so price those lines separately and confirm with the building department whether recovering is allowed.",
+          "R903 (Weather protection) covers roof flashing and drainage. Include drip edge, step and counter flashing by the linear foot, and allow flashing and detail work hours for valleys, walls and penetrations.",
+          "R806 (Roof ventilation) covers roof ventilation. Price ridge vent by the linear foot and pipe boots as each. If the design combines ridge vents with a powered attic fan, check the manufacturer warranty before you quote and state the arrangement in the proposal.",
+          "R803 (Roof sheathing) covers roof sheathing, and R802 (Wood roof framing) covers wood roof framing. Price replacement decking per sheet. If framing repairs are found, price them as a separate line with labor hours, and ask the building department what review applies before that work starts."
+        ]
+      },
+      {
+        "h": "What is changing for roofing contractors and how to reflect it in a bid",
+        "p": [
+          "Some roofing products face long order backlogs, and specialty items and large orders can be hit hardest. Confirm delivery with your supplier before you quote a start date, and set a price validity date on the proposal so a long wait does not leave you holding a price that no longer covers the materials.",
+          "Storm work is getting harder to get paid for. State regulators are looking at how insurers handle roof claims, and some contractors are moving away from contracts that depend on insurance money. If you take storm work, have an attorney review your contract terms and state clearly in the proposal who is responsible for payment.",
+          "Insurance settlement terms are tightening, with higher deductibles, more actual-cash-value payouts and stricter matching rules. That makes documentation more important. Keep dated photos, measurements, a line-item estimate and a signed scope so you can show what the claim covers. How these changes apply varies by state and insurer, so check locally.",
+          "Ventilation is also drawing attention. Under R806 (Roof ventilation), attic ventilation is the topic to check, and combining ridge vents with powered attic fans is flagged as a likely warranty problem. Check manufacturer instructions and warranty terms, and confirm with the building department how the design will be reviewed in your area."
+        ]
+      },
+      {
+        "h": "Putting it together",
+        "p": [
+          "Work the method in order: measure squares and linear items, add waste to materials, price labor by the square and by the hour, add equipment and disposal, pass permits through at cost, then add overhead and choose markup or margin. Check each line against your own supplier quotes and recent invoices before you send anything.",
+          "In Built2Bid, you can organise the estimate into the sections above, with line items for quantity, unit, unit cost and cost type. Per-section settings let you choose whether the customer sees item names, prices or totals only, which keeps the proposal easy to read at a glance. Sales tax applies only to lines marked taxable, and adjustments and discounts apply before tax.",
+          "Licensing and contract terms vary, so check requirements with your state licensing board, a tax professional or an attorney."
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "title": "Ongoing Roofing Materials Shortage May Require Federal Aid, Says Industry Leader - Construction Reporter",
+        "url": "https://constructionreporter.com/ongoing-roofing-materials-shortage-may-require-federal-aid-says-industry-leader/"
+      },
+      {
+        "title": "Insurance Battles Push Roofers to Rethink Storm Contracts",
+        "url": "https://www.roofingcontractor.com/articles/102665-insurance-battles-push-roofers-to-rethink-storm-contracts"
+      },
+      {
+        "title": "Insurance Claims Put Roofing Contractors in a Documentation-Heavy Role",
+        "url": "https://www.constructionbusinessreview.com/news/insurance-claims-put-roofing-contractors-in-a-documentation-heavy-role-nwid-2523.html"
+      },
+      {
+        "title": "IRC Roof Ventilation Requirements: Code, NFA, Baffles, And Fan Mistakes",
+        "url": "https://buildingcodegeek.com/irc-roof-ventilation-requirements/"
+      }
+    ]
+  }
+]

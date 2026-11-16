@@ -8,8 +8,8 @@ import { EXPIRY_FORMAT } from "@/lib/trial/text";
 const KEY = "b2b_trial_invite";
 
 const REASONS: Record<string, string> = {
-  invalid: "This invite link isn't valid anymore. Ask for a new one in the Built2Bid Messenger chat, or email support@built2bid.org.",
-  invite_expired: "This invite expired. Send your email again in the Built2Bid Messenger chat and we'll send a fresh link.",
+  invalid: "This invite link isn't valid anymore. Request a new one at built2bid.org/bid-check or in the Built2Bid Messenger chat, or email support@built2bid.org.",
+  invite_expired: "This invite expired. Request it again at built2bid.org/bid-check (or send your email in the Built2Bid Messenger chat) and we'll send a fresh link.",
   email_unverified: "Please confirm your email address first: sign out, then sign in again with the 6-digit code we email you.",
   already_has_access: "Good news: your account already has Unlimited access, so there's nothing to activate. Your current plan stays exactly as it is.",
   already_used: "This account has already used its free week.",
@@ -74,7 +74,7 @@ export function ActivateTrial({ signedInAs }: { signedInAs: string | null | unde
     return (
       <>
         <h1 className="mt-6 font-display text-2xl font-extrabold">Activate your free week</h1>
-        <Notice tone="warn" className="mt-4">Open this page from the button in your Built2Bid invite email. Lost it? Send your email again in the Built2Bid Messenger chat for a fresh one.</Notice>
+        <Notice tone="warn" className="mt-4">Open this page from the button in your Built2Bid invite email. Lost it? Request it again at built2bid.org/bid-check or in the Built2Bid Messenger chat for a fresh one.</Notice>
       </>
     );
   }

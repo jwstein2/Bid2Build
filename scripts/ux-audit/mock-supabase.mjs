@@ -1,7 +1,7 @@
 // Local stand-in for Supabase used ONLY to render signed-in pages for UX screenshots.
 // Answers /auth/v1/user and simple PostgREST reads/RPCs with canned test data. Never point production at it.
 import http from "node:http";
-import { handleRadarRest, radarRestEnabled } from "../radar/pg-rest.mjs";
+import { handleRadarRest, pgRestPath, radarRestEnabled } from "../radar/pg-rest.mjs";
 
 const PORT = Number(process.env.MOCK_PORT ?? 54321);
 const NOW = Date.now();
@@ -344,7 +344,15 @@ if (process.env.MOCK_COMMAND_CENTER) {
   // Read-only stand-in for admin_comp_list so the Complimentary Access screen can be screenshotted.
   const compRow = (g, state, name) => ({ id: g.id, email: g.email, user_id: g.user_id, plan: g.plan, state, status: g.status, duration_days: g.plan === "enterprise" ? 90 : 30, included_seats: g.plan === "enterprise" ? 3 : 1, extra_seats: 0, company_id: null, starts_at: g.starts_at, expires_at: g.expires_at, paused_at: null, activated_at: g.starts_at, invite_expires_at: g.invite_expires_at, invite_sent_at: g.created_at, invite_send_count: 1, note: g.note, created_at: g.created_at, revoked_at: null, revoke_reason: null, granted_by_email: USER.email, account_name: name, last_activity_at: null, paid_now: false, converted: false });
   const [g1, g2, g3] = seed.tables.complimentary_grants;
-  rpcs.admin_comp_list = { rows: [compRow(g2, "active", "Motor City Baths (demo)"), compRow(g1, "active", "Steel City Kitchens (demo)"), compRow(g3, "pending", null)], metrics: { active: 2, pending: 1, expiring_soon: 1, expired: 0, invite_expired: 1, revoked: 0, paused: 0, unlimited: 2, enterprise: 1, converted: 0, total: 3 } };
+  const compRows = [compRow(g2, "active", "Motor City Baths (demo)"), compRow(g1, "active", "Steel City Kitchens (demo)"), compRow(g3, "pending", null)];
+  // Applies the state/plan filters like the SQL function (expiring_soon = active and ends within 7 days).
+  rpcs.admin_comp_list = (args) => {
+    const f = args?.p_filters ?? {};
+    const soon = (r) => r.state === "active" && Date.parse(r.expires_at) < Date.now() + 7 * 864e5;
+    const rows = compRows.filter((r) => (!f.plan || r.plan === f.plan) && (!f.state || r.state === f.state || (f.state === "expiring_soon" && soon(r))));
+    return { rows, metrics: COMP_METRICS };
+  };
+  const COMP_METRICS = { active: 2, pending: 1, expiring_soon: 1, expired: 0, invite_expired: 1, revoked: 0, paused: 0, unlimited: 2, enterprise: 1, converted: 0, total: 3 };
   authAdminUsers = [{ id: USER.id, aud: "authenticated", role: "authenticated", email: USER.email, created_at: "2026-11-01T00:00:00Z", email_confirmed_at: "2026-11-01T00:00:00Z", last_sign_in_at: new Date().toISOString(), app_metadata: {}, user_metadata: {} }, ...seed.authUsers];
 }
 
@@ -678,8 +686,9 @@ http.createServer((req, res) => {
       }
     }
     if (u.pathname.startsWith("/storage/v1/")) return send(res, 400, { error: "not available in mock" });
-    // Opportunity Radar walk (scripts/radar/walk.mjs): radar_* tables and RPCs run real SQL when RADAR_PG_URL is set.
-    if (radarRestEnabled() && /^\/rest\/v1\/(rpc\/)?radar_/.test(u.pathname)) return void handleRadarRest(req, res, u, raw, send);
+    // Opportunity Radar walk (scripts/radar/walk.mjs) and bid check walk (scripts/bid-check/walk.mjs): tables and
+    // RPCs with the PG_REST_PREFIXES prefixes (default radar_) run real SQL when RADAR_PG_URL is set.
+    if (radarRestEnabled() && pgRestPath.test(u.pathname)) return void handleRadarRest(req, res, u, raw, send);
     const rpc = u.pathname.match(/^\/rest\/v1\/rpc\/(\w+)/);
     if (u.pathname === "/__pipeline_calls") return send(res, 200, pipelineRpc.calls ?? []);
     if (rpc && typeof pipelineRpc[rpc[1]] === "function") { let args = {}; try { args = JSON.parse(raw || "{}"); } catch { /* ignore */ } const [st, body] = pipelineRpc[rpc[1]](args); return send(res, st, body); }
@@ -698,6 +707,7 @@ http.createServer((req, res) => {
     if (rpc && scheduleRpc[rpc[1]]) { let args = {}; try { args = JSON.parse(raw || "{}"); } catch { /* ignore */ } const [st, body] = scheduleRpc[rpc[1]](args); return send(res, st, body); }
     if (rpc && esignRpc[rpc[1]]) { let args = {}; try { args = JSON.parse(raw || "{}"); } catch { /* ignore */ } const [st, body] = esignRpc[rpc[1]](args); return send(res, st, body); }
     if (rpc && compPool && COMP_RPC.test(rpc[1])) { let args = {}; try { args = JSON.parse(raw || "{}"); } catch { /* ignore */ } return void compRpc(rpc[1], args, res); }
+    if (rpc && typeof rpcs[rpc[1]] === "function") { let args = {}; try { args = JSON.parse(raw || "{}"); } catch { /* ignore */ } return send(res, 200, rpcs[rpc[1]](args)); }
     if (rpc) return send(res, 200, rpcs[rpc[1]] ?? null);
     const t = u.pathname.match(/^\/rest\/v1\/(\w+)/);
     if (!t) return send(res, 404, { message: "unknown" });

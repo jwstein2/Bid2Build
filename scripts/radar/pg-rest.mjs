@@ -8,11 +8,14 @@ let pool = null;
 let types = null;
 
 export function radarRestEnabled() { return Boolean(process.env.RADAR_PG_URL); }
+/** Table/RPC prefixes served from the test database (PG_REST_PREFIXES=radar_,bid_check_,trial_). */
+export const PREFIXES = (process.env.PG_REST_PREFIXES ?? "radar_").split(",").map((s) => s.trim()).filter((s) => /^[a-z_]+$/.test(s));
+export const pgRestPath = new RegExp(`^/rest/v1/(rpc/)?(${PREFIXES.join("|")})`);
 
 async function columnTypes() {
   if (types) return types;
   pool ??= new pg.Pool({ connectionString: process.env.RADAR_PG_URL, max: 5 });
-  const r = await pool.query("select table_name, column_name, data_type from information_schema.columns where table_schema = 'public' and table_name like 'radar_%'");
+  const r = await pool.query("select table_name, column_name, data_type from information_schema.columns where table_schema = 'public' and table_name like any($1)", [PREFIXES.map((p) => `${p}%`)]);
   types = {};
   for (const x of r.rows) (types[x.table_name] ??= {})[x.column_name] = x.data_type;
   return types;
@@ -52,7 +55,7 @@ const val = (type, v) => (v !== null && typeof v === "object" && (type === "json
 
 export async function handleRadarRest(req, res, u, raw, send) {
   const t = await columnTypes();
-  const rpc = u.pathname.match(/^\/rest\/v1\/rpc\/(radar_\w+)$/);
+  const rpc = u.pathname.match(/^\/rest\/v1\/rpc\/(\w+)$/);
   try {
     if (rpc) {
       const args = JSON.parse(raw || "{}");
@@ -60,7 +63,7 @@ export async function handleRadarRest(req, res, u, raw, send) {
       const r = await pool.query(`select public.${rpc[1]}(${keys.map((k, i) => `${k} => $${i + 1}`).join(", ")}) as v`, keys.map((k) => args[k]));
       return send(res, 200, r.rows[0].v);
     }
-    const table = u.pathname.match(/^\/rest\/v1\/(radar_\w+)$/)?.[1];
+    const table = u.pathname.match(/^\/rest\/v1\/(\w+)$/)?.[1];
     if (!table || !t[table]) return send(res, 404, { message: "unknown radar table" });
     const tt = t[table];
     const one = (req.headers.accept ?? "").includes("vnd.pgrst.object");
@@ -81,12 +84,14 @@ export async function handleRadarRest(req, res, u, raw, send) {
       const rows = (Array.isArray(body) ? body : [body]).filter(Boolean);
       const out = [];
       const upsert = (req.headers.prefer ?? "").includes("merge-duplicates");
+      const ignore = (req.headers.prefer ?? "").includes("ignore-duplicates");
       const conflict = u.searchParams.get("on_conflict");
       for (const r of rows) {
         const cols = Object.keys(r).filter((c) => ID.test(c) && c in tt);
         const p = cols.map((c) => val(tt[c], r[c]));
         let sql = `insert into public.${table} (${cols.join(", ")}) values (${cols.map((_, i) => `$${i + 1}`).join(", ")})`;
-        if (upsert && conflict && ID.test(conflict)) sql += ` on conflict (${conflict}) do update set ${cols.filter((c) => c !== conflict).map((c) => `${c} = excluded.${c}`).join(", ")}`;
+        if (ignore && conflict && conflict.split(",").every((c) => ID.test(c))) sql += ` on conflict (${conflict}) do nothing`;
+        else if (upsert && conflict && ID.test(conflict)) sql += ` on conflict (${conflict}) do update set ${cols.filter((c) => c !== conflict).map((c) => `${c} = excluded.${c}`).join(", ")}`;
         out.push(...(await pool.query(sql + ret, p)).rows);
       }
       return reply(out);

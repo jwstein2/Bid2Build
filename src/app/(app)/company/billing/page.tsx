@@ -11,6 +11,7 @@ import { enterpriseQuote, formatCents } from "@/lib/enterprise/pricing";
 import { PortalButton } from "@/components/billing/checkout-button";
 import { SeatChanger } from "@/components/company/seat-changer";
 import { Badge, Card, Notice } from "@/components/ui/misc";
+import { MetricCard } from "@/components/ui/metric-card";
 import { ButtonLink } from "@/components/ui/button";
 
 export const metadata: Metadata = { title: "Billing & Licenses", robots: { index: false } };
@@ -67,6 +68,7 @@ export default async function CompanyBillingPage({ searchParams }: PageProps<"/c
   }
   const end = row?.current_period_end ? new Date(row.current_period_end).toLocaleDateString(undefined, { dateStyle: "long" }) : null;
   const comp = company.entitlement.source === "complimentary";
+  const canChangeSeats = Boolean(row && !comp && ready && (row.status === "active" || row.status === "trialing"));
   // Project scheduling editor seats (shown only once scheduling is switched on). Phase 9: managing who holds
   // a seat needs manage_pm_seats; buying seats needs manage_pm_addons (both owner-level by default).
   let pmCard: Awaited<ReturnType<typeof loadSeatCard>> & { extra: number } | null = null;
@@ -98,11 +100,11 @@ export default async function CompanyBillingPage({ searchParams }: PageProps<"/c
           </div>
           <Badge tone={company.entitlement.active ? "ok" : "warn"}>{row?.status?.replace("_", " ") ?? (company.entitlement.active ? "active" : "inactive")}</Badge>
         </div>
-        <dl className="mt-4 grid grid-cols-3 gap-3 text-center">
-          <div className="rounded-lg bg-paper p-3"><dt className="text-xs text-muted">Licensed users</dt><dd className="text-xl font-extrabold" data-testid="licensed">{licensed}</dd></div>
-          <div className="rounded-lg bg-paper p-3"><dt className="text-xs text-muted">Active users</dt><dd className="text-xl font-extrabold">{activeMembers ?? "—"}</dd></div>
-          <div className="rounded-lg bg-paper p-3"><dt className="text-xs text-muted">Seats free</dt><dd className="text-xl font-extrabold">{Math.max(0, licensed - company.seatsUsed)}</dd></div>
-        </dl>
+        <div className="mt-4 grid grid-cols-1 gap-3 min-[420px]:grid-cols-3">
+          <MetricCard size="sm" className="bg-paper shadow-none" title="Licensed users" value={<span data-testid="licensed">{licensed}</span>} href={canChangeSeats ? "#seats" : "/company/users"} action={canChangeSeats ? "Add or remove licenses" : "View your team"} testId="kpi-licensed" />
+          <MetricCard size="sm" className="bg-paper shadow-none" title="Active users" value={activeMembers ?? "—"} href="/company/users" action="View active users" testId="kpi-active-users" />
+          <MetricCard size="sm" className="bg-paper shadow-none" title="Seats free" value={Math.max(0, licensed - company.seatsUsed)} href="/company/users" action="Invite a teammate" testId="kpi-seats-free" />
+        </div>
         {!comp && (
           <dl className="mt-4 space-y-1 border-t border-line pt-3 text-sm">
             {quote.lines.map((l) => <div key={l.label} className="flex justify-between gap-3"><dt className="text-ink-soft">{l.label}{l.label.startsWith("Users") ? ` × ${formatCents(l.unitCents)}` : ""}</dt><dd>{formatCents(l.totalCents)}</dd></div>)}
@@ -111,8 +113,8 @@ export default async function CompanyBillingPage({ searchParams }: PageProps<"/c
         )}
       </Card>
 
-      {row && !comp && ready && (row.status === "active" || row.status === "trialing") && (
-        <Card className="p-5">
+      {canChangeSeats && (
+        <Card className="scroll-mt-24 p-5" id="seats">
           <h2 className="font-display text-lg font-bold">Add or remove licensed users</h2>
           <p className="mb-3 text-sm text-ink-soft">Each person on your team needs their own license. Inviting someone uses a free license; it never buys one. Buy licenses here first, and you&apos;ll see the exact charge before confirming.</p>
           <SeatChanger current={licensed} seatsInUse={company.seatsUsed} />

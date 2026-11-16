@@ -5,7 +5,7 @@ import { CalendarDays, ChevronDown, GanttChart, LayoutDashboard, ListTodo, Rotat
 import { cn } from "@/lib/cn";
 import { addDays, formatDay, isIsoDate } from "@/lib/schedule/calendar";
 import {
-  DEFAULT_FILTERS, assigneeKey, cleanFilters, filterWorkspace, isDefaultFilters, myTasks, type Filters, type ResourceRef, type Workspace, type WsTask,
+  DEFAULT_FILTERS, assigneeKey, cleanFilters, filterWorkspace, isDefaultFilters, isOverviewFocus, myTasks, type Filters, type OverviewFocus, type ResourceRef, type Workspace, type WsTask,
 } from "@/lib/projects/workspace";
 import { api } from "@/components/schedule/client";
 import { Overview } from "./overview";
@@ -77,9 +77,17 @@ export function ProjectsWorkspace({ initial, today, myName, extras = {} }: { ini
     if (anchor < addDays(ws.from, 7) || anchor > addDays(ws.to, -45)) void refresh(addDays(anchor, -60), addDays(anchor, 120));
   }, [anchor, ws.from, ws.to, refresh]);
 
+  // Overview KPI card filter lives in the URL (?focus=): Back undoes it, refresh and shared links keep it.
+  const focus = isOverviewFocus(params.get("focus")) ? (params.get("focus") as OverviewFocus) : null;
+  const setFocus = (f: OverviewFocus | null) => {
+    const q = new URLSearchParams(params.toString());
+    q.delete("view");
+    if (f) q.set("focus", f); else q.delete("focus");
+    router.push(`${pathname}${q.size ? `?${q}` : ""}`, { scroll: false });
+  };
   const setView = (v: View) => {
     const q = new URLSearchParams(params.toString());
-    if (v === "overview") q.delete("view"); else q.set("view", v);
+    if (v === "overview") q.delete("view"); else { q.set("view", v); q.delete("focus"); }
     router.replace(`${pathname}${q.size ? `?${q}` : ""}`, { scroll: false });
     setMoreOpen(false);
   };
@@ -149,7 +157,7 @@ export function ProjectsWorkspace({ initial, today, myName, extras = {} }: { ini
       </div>
 
       {view === "overview" && <Overview projects={projects} allProjects={filterWorkspace(ws, { ...filters, status: "all" }, today).projects} nameOf={nameOf} today={today} periodStart={addDays(today, -30)}
-        onCalendar={(id) => { set({ project: id }); setView("calendar"); }} />}
+        onCalendar={(id) => { set({ project: id }); setView("calendar"); }} focus={focus} onFocus={setFocus} />}
       {view === "calendar" && <CalendarView projects={projects} tasks={tasks} today={today} anchor={anchor} setAnchor={setAnchor} mode={calMode} setMode={setCalMode}
         labelOf={labelOf} onOpen={(t) => setOpen({ task: t })}
         onDropMove={(t, day) => { const len = Math.round((Date.parse(t.plannedEnd) - Date.parse(t.plannedStart)) / 864e5); setOpen({ task: t, start: day, end: addDays(day, len) }); }} />}

@@ -6,6 +6,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import { MetricShell, type MetricDrawerSpec } from "@/components/ui/metric-card";
 
 export type Tone = "green" | "blue" | "amber" | "red" | "violet" | "muted";
 export const TONE: Record<Tone, string> = { green: "var(--cc-green)", blue: "var(--cc-blue)", amber: "var(--cc-amber)", red: "var(--cc-red)", violet: "var(--cc-violet)", muted: "#5b7383" };
@@ -33,9 +34,9 @@ export function PageHead({ kicker, title, intro, right }: { kicker: string; titl
   );
 }
 
-export function Panel({ title, kicker, action, children, className }: { title?: string; kicker?: string; action?: ReactNode; children: ReactNode; className?: string }) {
+export function Panel({ title, kicker, action, children, className, id }: { title?: string; kicker?: string; action?: ReactNode; children: ReactNode; className?: string; id?: string }) {
   return (
-    <section className={cn("cc-panel cc-rise min-w-0 p-5", className)}>
+    <section id={id} className={cn("cc-panel cc-rise min-w-0 scroll-mt-24 p-5", className)}>
       {(title || action) && (
         <header className="mb-4 flex items-start justify-between gap-3">
           <div>{kicker && <p className="cc-kicker">{kicker}</p>}{title && <h2 className="mt-0.5 text-base font-bold text-white">{title}</h2>}</div>
@@ -63,19 +64,21 @@ export function Info({ text }: { text: string }) {
   return <span title={text} className="cc-mono inline-grid h-4 w-4 shrink-0 cursor-help place-items-center rounded-full border border-[var(--cc-line-strong)] text-[9px] leading-none text-muted" aria-label={`Definition: ${text}`} role="img">i</span>;
 }
 
-export function Kpi({ label, value, sub, tone = "green", spark, delta, href, def, na }: { label: string; value: string | number; sub?: ReactNode; tone?: Tone; spark?: number[]; delta?: ReactNode; href?: string; def?: string; na?: boolean }) {
-  const body = (
-    <div className="cc-panel cc-rise flex min-w-0 h-full flex-col p-4 transition hover:border-[var(--cc-line-strong)]">
-      <div className="flex items-start justify-between gap-2"><p className="cc-kicker flex items-center gap-1.5">{label}{def && <Info text={def} />}</p>{delta}</div>
+/**
+ * Owner KPI card. Pass `href` (filtered records page) or `drawer` (quick inspection) so the number is
+ * actionable; the whole card becomes the link/button (see components/ui/metric-card.tsx).
+ */
+export function Kpi({ label, value, sub, tone = "green", spark, delta, href, drawer, action, def, na, testId }: { label: string; value: string | number; sub?: ReactNode; tone?: Tone; spark?: number[]; delta?: ReactNode; href?: string; drawer?: MetricDrawerSpec; action?: string; def?: string; na?: boolean; testId?: string }) {
+  return (
+    <MetricShell href={href} drawer={drawer} action={action} testId={testId ?? "kpi"} className="cc-panel cc-rise p-4">
+      <span className="flex items-start justify-between gap-2"><span className="cc-kicker flex items-center gap-1.5">{label}{def && <Info text={def} />}</span>{delta}</span>
       {na
-        ? <p className="cc-mono mt-2 text-lg font-semibold leading-tight text-muted">{value}</p>
-        : <p className={cn("cc-mono mt-2 text-[2rem] font-bold leading-none", tone === "blue" ? "cc-glow-blue" : tone === "green" ? "cc-glow-green" : "")} style={tone !== "green" && tone !== "blue" ? { color: TONE[tone] } : undefined}>{typeof value === "number" ? fmt(value) : value}</p>}
-      {sub && <p className="mt-1.5 text-xs text-muted">{sub}</p>}
-      {spark && spark.length > 1 && <div className="mt-auto pt-3"><Sparkline values={spark} tone={tone} /></div>}
-      {href && <p className="cc-mono mt-auto pt-2 text-[10px] uppercase tracking-wider text-[var(--cc-blue)]">Details →</p>}
-    </div>
+        ? <span className="cc-mono mt-2 block text-lg font-semibold leading-tight text-muted">{value}</span>
+        : <span className={cn("cc-mono mt-2 block text-[2rem] font-bold leading-none", tone === "blue" ? "cc-glow-blue" : tone === "green" ? "cc-glow-green" : "")} style={tone !== "green" && tone !== "blue" ? { color: TONE[tone] } : undefined}>{typeof value === "number" ? fmt(value) : value}</span>}
+      {sub && <span className="mt-1.5 block text-xs text-muted">{sub}</span>}
+      {spark && spark.length > 1 && <span className="mt-auto block pt-3"><Sparkline values={spark} tone={tone} /></span>}
+    </MetricShell>
   );
-  return href ? <Link href={href} className="block h-full">{body}</Link> : body;
 }
 
 /** Change vs the previous period, without percentages from tiny baselines. */

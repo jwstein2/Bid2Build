@@ -30,3 +30,11 @@ export function href(path: string, v: View, patch: Record<string, string | undef
 }
 
 export const str = one;
+
+/**
+ * Link to another owner report that carries only the shared controls (date range, test-data toggle)
+ * plus the drilldown filter, never the current page's own filters. Used by clickable KPI cards.
+ */
+export function carry(path: string, v: View, patch: Record<string, string | undefined> = {}, hash?: string): string {
+  return href(path, { ...v, sp: {} }, patch) + (hash ? `#${hash}` : "");
+}

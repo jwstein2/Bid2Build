@@ -4,6 +4,7 @@ import { Building2, CalendarClock, Infinity as InfinityIcon, Layers } from "luci
 import { cn } from "@/lib/cn";
 import { formatCycleDate, monthlyHint, type CreditStatus } from "@/lib/credits/status";
 import { Card } from "../ui/misc";
+import { MetricFormula, MetricRecords, MetricShell } from "../ui/metric-card";
 
 /** Subtle, always-available upgrade entry point. Never a popup. */
 export function UpgradeLink({ className, compact }: { className?: string; compact?: boolean }) {
@@ -21,20 +22,33 @@ export function UpgradeLink({ className, compact }: { className?: string; compac
   );
 }
 
-function Tile({ icon, label, value, total, note, tone }: { icon: React.ReactNode; label: string; value: number; total: number; note: string; tone: "cyan" | "teal" }) {
+function Tile({ icon, label, value, total, note, tone, detail }: { icon: React.ReactNode; label: string; value: number; total: number; note: string; tone: "cyan" | "teal"; detail: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-line bg-paper p-3">
-      <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted">{icon}{label}</p>
-      <p className="mt-1 font-display text-2xl font-extrabold text-navy tabular">
+    <MetricShell className="rounded-lg border border-line bg-paper p-3" testId={`credit-${label.toLowerCase()}`} action="How credits work"
+      drawer={{ id: `credits-${label.toLowerCase()}`, title: `${label} credits`, description: `${value} of ${total} left`, body: detail }}>
+      <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted">{icon}{label}</span>
+      <span className="mt-1 block font-display text-2xl font-extrabold text-navy tabular">
         {value} <span className="text-sm font-semibold text-muted">of {total}</span>
-      </p>
-      <div className="mt-1.5 flex gap-1" aria-hidden>
+      </span>
+      <span className="mt-1.5 flex gap-1" aria-hidden>
         {Array.from({ length: total }, (_, i) => (
           <span key={i} className={cn("h-1.5 flex-1 rounded-full", i < value ? (tone === "cyan" ? "bg-accent" : "bg-teal") : "bg-black/10")} />
         ))}
-      </div>
-      <p className="mt-1.5 text-xs text-ink-soft" suppressHydrationWarning>{note}</p>
-    </div>
+      </span>
+      <span className="mt-1.5 block text-xs text-ink-soft" suppressHydrationWarning>{note}</span>
+    </MetricShell>
+  );
+}
+
+function CreditHelp({ children }: { children: React.ReactNode }) {
+  return (
+    <>
+      <MetricFormula>{children}<p className="mt-2">One credit finalizes one new bid. Updates, new versions and re-downloads of a finalized bid are free. Your monthly credit is used before starter credits.</p></MetricFormula>
+      <MetricRecords title="Next steps" empty="" rows={[
+        { key: "bids", label: "Your finalized bids", detail: "See which bids used a credit", href: "/dashboard?view=table" },
+        { key: "unlimited", label: "Go Unlimited", detail: "Finalize as many bids as you like", href: "/pricing" },
+      ]} />
+    </>
   );
 }
 
@@ -76,8 +90,10 @@ export function CreditBalances({ credits, className, showUpgrade = true, enterpr
         <p className="mt-3 rounded-lg bg-warn-tint px-3 py-2 text-sm text-ink-soft">Verify your email to unlock your {credits.starterTotal} starter credits.</p>
       ) : (
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <Tile icon={<CalendarClock className="h-3.5 w-3.5" aria-hidden />} label="Monthly" value={credits.monthly} total={1} tone="cyan" note={monthlyHint(credits)} />
-          <Tile icon={<Layers className="h-3.5 w-3.5" aria-hidden />} label="Starter" value={credits.starter} total={credits.starterTotal} tone="teal" note={credits.starter > 0 ? "Never expire. Used after your monthly bid." : "All starter credits used."} />
+          <Tile icon={<CalendarClock className="h-3.5 w-3.5" aria-hidden />} label="Monthly" value={credits.monthly} total={1} tone="cyan" note={monthlyHint(credits)}
+            detail={<CreditHelp><p>You get one free monthly credit. {monthlyHint(credits)}</p></CreditHelp>} />
+          <Tile icon={<Layers className="h-3.5 w-3.5" aria-hidden />} label="Starter" value={credits.starter} total={credits.starterTotal} tone="teal" note={credits.starter > 0 ? "Never expire. Used after your monthly bid." : "All starter credits used."}
+            detail={<CreditHelp><p>{credits.starterTotal} starter credits come with a verified account and never expire. {credits.starter} left.</p></CreditHelp>} />
         </div>
       )}
       {empty && credits.emailVerified && (

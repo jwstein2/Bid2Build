@@ -45,10 +45,15 @@ function Expiry({ r }: { r: CompRow }) {
   return <span><LocalDate iso={r.expires_at} />{r.state === "active" && left !== null && <span className={`block text-xs ${left <= 7 ? "font-semibold text-warn" : "text-muted"}`}>{left} day{left === 1 ? "" : "s"} left</span>}</span>;
 }
 
-export function GrantsTable({ rows, filtered }: { rows: CompRow[]; filtered: boolean }) {
+export function GrantsTable({ rows, filtered, emptyText }: { rows: CompRow[]; filtered: boolean; emptyText?: string }) {
   const [dialog, setDialog] = useState<Dialog>(null);
   if (rows.length === 0) {
-    return <p className="rounded-xl border border-line bg-surface p-6 text-center text-sm text-muted">{filtered ? "No grants match these filters." : "No complimentary grants yet. Use the form above to grant access."}</p>;
+    return (
+      <div className="rounded-xl border border-line bg-surface p-6 text-center text-sm text-muted" data-testid="metric-empty">
+        <p>{emptyText ?? (filtered ? "No grants match these filters." : "No complimentary grants yet. Use the form above to grant access.")}</p>
+        <a href="#grant" className="mt-2 inline-block font-semibold text-accent-ink underline">Grant Complimentary Access</a>
+      </div>
+    );
   }
   const actionButtons = (r: CompRow) => (
     <div className="flex flex-wrap gap-1">

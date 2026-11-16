@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/misc";
 import { loadReport } from "@/lib/market/admin";
-import { parseFilters } from "@/lib/market/filters";
+import { parseFilters, toQuery } from "@/lib/market/filters";
 import { CoverageLine, FilterBar, Methodology, PageHeader, ReportError, Stat, count } from "../ui";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +19,7 @@ const pct = (a: number, b: number) => (b ? `${Math.round((a / b) * 100)}%` : "�
 export default async function DataQuality({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const filters = parseFilters(await searchParams);
   const { data: d, error } = await loadReport<Quality>("quality", filters);
+  const q = toQuery(filters);
   const bucketLabels = ["0–20%", "20–40%", "40–60%", "60–80%", "80–100%"];
   return (
     <div className="space-y-6">
@@ -27,13 +28,13 @@ export default async function DataQuality({ searchParams }: { searchParams: Prom
       {!d ? <ReportError error={error} /> : <>
         <CoverageLine c={d.coverage} />
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat k="Usable observations" v={count(d.usable_precise_lines)} sub={`${pct(d.usable_precise_lines, d.lines)} of ${count(d.lines)} line items`} />
-          <Stat k="Unique contributors" v={count(d.contributors)} sub={`${count(d.bids)} bids`} />
-          <Stat k="Unclassified items" v={count(d.unclassified_lines)} sub={`${count(d.review_queue)} item texts awaiting review`} />
+          <Stat k="Usable observations" v={count(d.usable_precise_lines)} href={`/admin/market/materials${q}`} action="Pricing by item" sub={`${pct(d.usable_precise_lines, d.lines)} of ${count(d.lines)} line items`} />
+          <Stat k="Unique contributors" v={count(d.contributors)} href={`/admin/market/trades${q}`} action="Coverage by trade" sub={`${count(d.bids)} bids`} />
+          <Stat k="Unclassified items" v={count(d.unclassified_lines)} href={`/admin/market/classifications${q}`} action="Review the queue" sub={`${count(d.review_queue)} item texts awaiting review`} />
           <Stat k="Costs shared" v={pct(d.costs_shared_bids, d.bids)} sub={`${count(d.costs_shared_bids)} bids`} />
           <Stat k="Missing scope" v={count(d.missing_work_type)} sub={`work type · ${count(d.missing_project_type)} without project type`} />
           <Stat k="Missing project size" v={count(d.missing_size)} sub={`${count(d.inferred_size)} sizes inferred from line items`} />
-          <Stat k="Missing location" v={count(d.missing_location)} sub={`${count(d.state_conflicts)} ZIP/state conflicts`} />
+          <Stat k="Missing location" v={count(d.missing_location)} href={`/admin/market/geography${q}`} action="Geographic coverage" sub={`${count(d.state_conflicts)} ZIP/state conflicts`} />
           <Stat k="Freshness" v={d.freshness.latest_capture ? new Date(d.freshness.latest_capture).toLocaleDateString("en-US") : "–"} sub={`${count(d.freshness.last_90_days)} bids in the last 90 days`} />
         </div>
         <div className="grid gap-6 lg:grid-cols-2">

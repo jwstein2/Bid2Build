@@ -6,7 +6,7 @@ import { envPresent, ga4Report } from "@/lib/admin/integrations";
 import { costIssues, serviceViews } from "@/lib/admin/costs";
 import { activityFeed, cohortFunnel, kpis, momentum, needsAttention, ratio, windowOf, type FeedKind } from "@/lib/admin/model";
 import { loadReport } from "@/lib/admin/load";
-import { href } from "@/lib/admin/view";
+import { carry, href } from "@/lib/admin/view";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Owner overview" };
@@ -37,13 +37,13 @@ export default async function Overview({ searchParams }: { searchParams: Promise
       <ScopeNote sc={sc} />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Kpi label="Paying customers" value={k.paying.now} def={tip("paying")} href={href("/admin/revenue", view)}
+        <Kpi label="Paying customers" value={k.paying.now} def={tip("paying")} href={carry("/admin/customers", view, { plan: "paying" }, "accounts")} action="View paying customers"
           sub={<>{k.paying.pastDue ? <span className="text-[var(--cc-amber)]">{k.paying.pastDue} past due · </span> : null}net {k.paying.net >= 0 ? "+" : ""}{k.paying.net} in {range.label}</>} />
-        <Kpi label="MRR (list-price estimate)" value={usd(k.mrrCents)} tone="blue" def={tip("mrr")} href={href("/admin/revenue", view)}
+        <Kpi label="MRR (list-price estimate)" value={usd(k.mrrCents)} tone="blue" def={tip("mrr")} href={carry("/admin/revenue", view, {}, "by-product")} action="Subscription revenue breakdown"
           sub={`Net ${k.netMrrCents >= 0 ? "+" : "−"}${usd(Math.abs(k.netMrrCents))} in ${range.label} · not cash collected`} />
-        <Kpi label="Newly activated businesses" value={k.activated.current} def={tip("activated")} href={href("/admin/usage", view)}
+        <Kpi label="Newly activated businesses" value={k.activated.current} def={tip("activated")} href={carry("/admin/customers", view, { cohort: "activated", sort: "activity" }, "accounts")} action="View newly activated accounts"
           delta={<Change {...k.activated} />} sub={`Finalized a first bid · ${k.activated.previous} the ${range.label} before`} />
-        <Kpi label="Free-to-paid (all time)" value={k.freeToPaid.pct === null ? "–" : `${k.freeToPaid.pct}%`} tone="violet" def={tip("signup_paid")} href={href("/admin/customers", view)}
+        <Kpi label="Free-to-paid (all time)" value={k.freeToPaid.pct === null ? "–" : `${k.freeToPaid.pct}%`} tone="violet" def={tip("signup_paid")} href={carry("/admin/customers", view, { cohort: "ever_paid" }, "accounts")} action="View accounts that paid"
           sub={<>{fmt(k.freeToPaid.n)} of {fmt(k.freeToPaid.d)} accounts ever paid{k.freeToPaid.small ? " · small sample" : ""} · complimentary excluded</>} />
       </div>
 

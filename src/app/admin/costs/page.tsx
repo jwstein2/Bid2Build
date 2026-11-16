@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MetricEmpty, MetricFormula, MetricRecords } from "@/components/ui/metric-card";
 import { Chip, Fresh, Kpi, NotConnected, PageHead, Panel, PanelLink, Row, Table, day, fmt, usd, type Tone } from "@/components/admin/cc";
 import { ReportUnavailable, SectionTitle } from "@/components/admin/report";
 import { CATALOG, CATEGORIES, COST_TYPES, INTERVALS, SOURCES, STATUSES, costTotals, renewals, serviceViews, type Category, type ServiceStatus, type ServiceView } from "@/lib/admin/costs";
@@ -62,6 +63,11 @@ export default async function Costs({ searchParams }: { searchParams: Promise<Re
   const today = now.toISOString().slice(0, 10);
   const [netlify, supa, anth] = await Promise.all([netlifyUsage(), supabaseUsage(), anthropicCost(now)]);
   const ads = adsSetup();
+  // KPI drilldowns.
+  const recurring = views.filter((v) => v.status === "active" && v.interval !== "usage" && (v.monthlyAllocatedCents ?? 0) > 0).sort((a, b) => (b.monthlyAllocatedCents ?? 0) - (a.monthlyAllocatedCents ?? 0));
+  const variable = views.filter((v) => v.status === "active" && (v.interval === "usage" || v.costType === "variable") && v.monthToDateCents > 0).sort((a, b) => b.monthToDateCents - a.monthToDateCents);
+  const monthCharges = costs.expenses.filter((e) => Date.parse(`${e.incurred_on}T00:00:00Z`) >= monthStart).sort((a, b) => (a.incurred_on < b.incurred_on ? 1 : -1));
+  const soon = upcoming.filter((u) => Date.parse(u.renewal!) <= nowMs + 30 * 86_400_000);
 
   return (
     <div className="space-y-6">
@@ -73,12 +79,25 @@ export default async function Costs({ searchParams }: { searchParams: Promise<Re
       {str(sp.error) && <p role="alert" className="rounded-md border border-[var(--cc-red)]/50 px-3 py-2 text-xs text-[var(--cc-red)]">{str(sp.error)}</p>}
       {str(sp.saved) && <p role="status" className="rounded-md border border-[var(--cc-green)]/50 px-3 py-2 text-xs text-[var(--cc-green)]">Saved {str(sp.saved)}.</p>}
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
-        <Kpi label="Known monthly cost" value={usd(totals.totalMonthlyKnownCents)} tone="blue" sub="Recurring, monthly equivalent, Built2Bid share" def="Fixed subscriptions and plans (annual ÷ 12), multiplied by each service's Built2Bid allocation. Excludes usage-based charges and advertising." />
-        <Kpi label="Variable, this month" value={usd(totals.variableMonthToDateCents)} sub="Dated usage charges recorded so far" def="Charges you entered or imported for usage-based services this calendar month (allocated)." />
-        <Kpi label="Cash recorded, this month" value={usd(totals.cashThisMonthCents)} sub="Every dated charge, including yearly renewals paid now" def="Actual charges dated this month, allocated. A yearly renewal appears here in full in the month it is paid." />
-        <Kpi label="Active services, cost unknown" value={totals.missing.length} tone={totals.missing.length ? "amber" : "green"} sub={totals.missing.length ? totals.missing.slice(0, 3).map((m) => m.name).join(", ") + (totals.missing.length > 3 ? "…" : "") : "Every active service has a cost"} />
-        <Kpi label="Renewals next 30 days" value={upcoming.filter((u) => Date.parse(u.renewal!) <= nowMs + 30 * 86_400_000).length} tone={over.length ? "amber" : "green"} sub={over.length ? `${over.length} projected over budget` : "No service projected over budget"} />
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+        <Kpi label="Known monthly cost" value={usd(totals.totalMonthlyKnownCents)} tone="blue" sub="Recurring, monthly equivalent, Built2Bid share" def="Fixed subscriptions and plans (annual ÷ 12), multiplied by each service's Built2Bid allocation. Excludes usage-based charges and advertising."
+          action="Itemized provider expenses" drawer={{ id: "monthly", title: "Known monthly cost by provider", description: "Active recurring services, monthly equivalent, Built2Bid share.", body: <>
+            <MetricFormula><p>Sum of each active service&apos;s plan price (annual ÷ 12) × its Built2Bid allocation = <b>{usd(totals.totalMonthlyKnownCents)}</b>. Usage-based charges are in Variable.</p></MetricFormula>
+            <MetricRecords title="Providers" rows={recurring.map((v) => ({ key: v.key, label: v.name, detail: `${v.plan ?? v.interval}${v.allocation !== 100 ? ` · ${v.allocation}% allocated` : ""}`, value: usd(v.monthlyAllocatedCents ?? 0), href: `/admin/costs?edit=${v.key}#edit` }))} empty="No recurring costs entered yet." more={{ href: "/admin/costs#services", label: "Service directory" }} />
+          </> }} />
+        <Kpi label="Variable, this month" value={usd(totals.variableMonthToDateCents)} sub="Dated usage charges recorded so far" def="Charges you entered or imported for usage-based services this calendar month (allocated)."
+          action="Usage charges this month" drawer={{ id: "variable", title: "Variable charges this month", body: <MetricRecords title="Usage-based services" rows={variable.map((v) => ({ key: v.key, label: v.name, detail: v.plan ?? "Usage-based", value: usd(v.monthToDateCents) }))} empty="No usage charges recorded this month." more={{ href: "/admin/costs#ledger", label: "Expense ledger" }} /> }} />
+        <Kpi label="Cash recorded, this month" value={usd(totals.cashThisMonthCents)} sub="Every dated charge, including yearly renewals paid now" def="Actual charges dated this month, allocated. A yearly renewal appears here in full in the month it is paid."
+          action="Charges dated this month" drawer={{ id: "cash", title: "Charges dated this month", description: "Before allocation; the card shows the Built2Bid share.", body: <MetricRecords title="Expense ledger" rows={monthCharges.map((e) => ({ key: String(e.id), label: nameOf.get(e.service_key) ?? e.service_key, detail: `${e.incurred_on} · ${e.source}${e.note ? ` · ${e.note}` : ""}`, value: usd(e.amount_cents) }))} empty="No charges dated this month." more={{ href: "/admin/costs#ledger", label: "Record a charge" }} /> }} />
+        <Kpi label="Active services, cost unknown" value={totals.missing.length} tone={totals.missing.length ? "amber" : "green"} sub={totals.missing.length ? totals.missing.slice(0, 3).map((m) => m.name).join(", ") + (totals.missing.length > 3 ? "…" : "") : "Every active service has a cost"}
+          action="Enter missing prices" drawer={{ id: "unknown", title: "Active services with an unknown cost", description: "Unknown costs are never counted as $0. Open one to enter its plan price.", body: <MetricRecords rows={totals.missing.map((v) => ({ key: v.key, label: v.name, detail: v.purpose, value: "Enter price", href: `/admin/costs?edit=${v.key}#edit` }))} empty="Every active service has a cost." /> }} />
+        <Kpi label="Renewals next 30 days" value={soon.length} tone={soon.length ? "amber" : "green"} sub={soon.length ? `Next: ${soon[0].name} on ${soon[0].renewal}` : "Nothing renews in the next 30 days"}
+          action="View renewals" drawer={{ id: "renewals", title: "Renewals in the next 30 days", body: <MetricRecords rows={soon.map((v) => ({ key: v.key, label: v.name, detail: `Renews ${v.renewal}`, value: v.amountCents == null ? "Unknown" : usd(v.amountCents), href: `/admin/costs?edit=${v.key}#edit` }))} empty="Nothing renews in the next 30 days." more={upcoming.length > soon.length ? { href: "/admin/costs#services", label: `${upcoming.length} renewals in the next 90 days` } : undefined} /> }} />
+        <Kpi label="Budget warnings" value={over.length} tone={over.length ? "amber" : "green"} sub={over.length ? `${over.map((v) => v.name).slice(0, 2).join(", ")} projected over budget` : "No service projected over budget"} testId="kpi-budget"
+          action="Services near their limits" drawer={{ id: "budget", title: "Services approaching their limits", description: "Services whose projected month exceeds the budget you set. Plan allowances are on the usage monitors.", body: <>
+            <MetricRecords rows={over.map((v) => ({ key: v.key, label: v.name, detail: `Budget ${v.budgetCents == null ? "–" : usd(v.budgetCents)}`, value: v.projectedCents == null ? "–" : `${usd(v.projectedCents)} projected`, href: `/admin/costs?edit=${v.key}#edit` }))} empty="No service is projected over its budget." more={{ href: "/admin/costs#usage", label: "Usage against plan allowances" }} />
+            <MetricEmpty action={{ href: "/admin/costs#monitors", label: "Provider API monitors" }}>Live API usage for Netlify, Supabase and Anthropic is on the provider monitors.</MetricEmpty>
+          </> }} />
       </div>
 
       <SectionTitle id="usage" kicker="Usage monitors" title="Resource use against plan allowances" />

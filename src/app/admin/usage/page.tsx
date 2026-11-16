@@ -4,7 +4,9 @@ import { tip } from "@/lib/admin/definitions";
 import { activationTiming, ratio, signupCohorts, usageModel, windowOf } from "@/lib/admin/model";
 import { loadReport } from "@/lib/admin/load";
 import { adoption, EMPTY_PRODUCT, revenueSplit } from "@/lib/admin/product";
-import { href } from "@/lib/admin/view";
+import { carry, href } from "@/lib/admin/view";
+import { byAccount, firstPer } from "@/lib/admin/drill";
+import { MetricFormula, MetricRecords, type MetricDrawerSpec } from "@/components/ui/metric-card";
 import { tradeName } from "@/lib/trades/catalog";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +26,19 @@ export default async function Usage({ searchParams }: { searchParams: Promise<Re
   const product = sc.d.product ?? EMPTY_PRODUCT;
   const ad = adoption(product, facts, range, now);
   const split = revenueSplit(facts, range, now);
-
+  // Drilldowns behind each KPI: the accounts (in scope) that produced the number, for this window.
+  const d = sc.d; const t = view.includeTest;
+  const cust = (patch: Record<string, string>) => carry("/admin/customers", view, patch, "accounts");
+  const sheet = (id: string, title: string, def: string, list: ReturnType<typeof byAccount>, empty: string, more?: { href: string; label: string }): MetricDrawerSpec => ({
+    id, title, description: `Last ${range.label}`,
+    body: <><MetricFormula><p>{def}</p><p className="mt-1 text-xs text-muted">{fmt(list.total)} across {fmt(list.accounts)} account{list.accounts === 1 ? "" : "s"}.</p></MetricFormula><MetricRecords title="By account" rows={list.rows} empty={empty} more={more} /></>,
+  });
+  const finalizedEv = firstPer(d.versions, (v) => v.estimate_id, (v) => v.created_at, (v) => v.user_id);
+  const signedEv = firstPer(d.signatures, (x) => x.estimate_id, (x) => x.signed_at, (x) => x.user_id);
+  const reqEv = d.signingRequests.map((x) => ({ user_id: x.user_id, at: x.created_at }));
+  const nowMs = now.getTime();
+  const resolvedEv = d.signingRequests.filter((x) => x.status === "signed" || x.status === "revoked" || Date.parse(x.expires_at) <= nowMs).map((x) => ({ user_id: x.user_id, at: x.created_at }));
+  
   return (
     <div className="space-y-6">
       <PageHead kicker={`Product usage · ${range.label}`} title="Is Built2Bid delivering value?"
@@ -33,12 +47,12 @@ export default async function Usage({ searchParams }: { searchParams: Promise<Re
       <ScopeNote sc={sc} />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-        <Kpi label="First bids started" value={u.firstEstimates.current} delta={<Change {...u.firstEstimates} />} def={tip("first_bid")} sub="Accounts starting their first bid" />
-        <Kpi label="Repeat businesses" value={u.repeatBusinesses} tone="blue" def="Businesses (company or account) that have started more than one bid, all time." sub="More than one bid, all time" />
-        <Kpi label="Bids finalized" value={u.finalized.current} delta={<Change {...u.finalized} />} def={tip("finalized")} />
-        <Kpi label="Sent for signature" value={u.requests.current} tone="blue" delta={<Change {...u.requests} />} def="Signing requests created in the window." />
-        <Kpi label="Signed proposals" value={u.signed.current} tone="violet" delta={<Change {...u.signed} />} def={tip("signed")} sub="Not a payment" />
-        <Kpi label="Acceptance rate" value={u.acceptance.pct === null ? "–" : `${u.acceptance.pct}%`} tone="amber" def={tip("acceptance")} sub={`${u.acceptance.n} of ${u.acceptance.d} resolved · ${u.pendingRequests} pending`} />
+        <Kpi label="First bids started" value={u.firstEstimates.current} href={cust({ cohort: "first_bid" })} action="View these accounts" delta={<Change {...u.firstEstimates} />} def={tip("first_bid")} sub="Accounts starting their first bid" />
+        <Kpi label="Repeat businesses" value={u.repeatBusinesses} href={cust({ cohort: "repeat", sort: "bids" })} action="View repeat accounts" tone="blue" def="Businesses (company or account) that have started more than one bid, all time." sub="More than one bid, all time" />
+        <Kpi label="Bids finalized" value={u.finalized.current} action="Who finalized" drawer={sheet("finalized", "Bids finalized", "Estimates finalized for the first time in this period (one per bid; re-finalizing doesn't count again).", byAccount(finalizedEv, facts, w, { unit: "bids", includeTest: t }), "No bids were finalized in this period.", { href: cust({ cohort: "activated" }), label: "Accounts with their first finalized bid" })} delta={<Change {...u.finalized} />} def={tip("finalized")} />
+        <Kpi label="Sent for signature" value={u.requests.current} action="Who sent" drawer={sheet("requests", "Sent for signature", "E-signature requests created in this period.", byAccount(reqEv, facts, w, { unit: "sent", includeTest: t }), "No proposals were sent for signature in this period.")} tone="blue" delta={<Change {...u.requests} />} def="Signing requests created in the window." />
+        <Kpi label="Signed proposals" value={u.signed.current} action="Who got signatures" drawer={sheet("signed", "Signed proposals", "Proposals e-signed by the customer in this period (first signature per bid). A signature is not a payment.", byAccount(signedEv, facts, w, { unit: "signed", includeTest: t }), "No proposals were signed in this period.")} tone="violet" delta={<Change {...u.signed} />} def={tip("signed")} sub="Not a payment" />
+        <Kpi label="Acceptance rate" value={u.acceptance.pct === null ? "–" : `${u.acceptance.pct}%`} action="Show the calculation" drawer={sheet("acceptance", "Acceptance rate", `Signed ÷ resolved signing requests created in this period (resolved = signed, revoked or expired). ${u.acceptance.n} signed of ${u.acceptance.d} resolved; ${u.pendingRequests} still pending are excluded.`, byAccount(resolvedEv, facts, w, { unit: "resolved", includeTest: t }), "No signing request was resolved in this period.")} tone="amber" def={tip("acceptance")} sub={`${u.acceptance.n} of ${u.acceptance.d} resolved · ${u.pendingRequests} pending`} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -125,12 +139,12 @@ export default async function Usage({ searchParams }: { searchParams: Promise<Re
 
       <SectionTitle id="v4" kicker="Premium features" title="Pipeline, internal reports and project scheduling" />
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6" data-testid="product-adoption">
-        <Kpi label="Accounts using the pipeline" value={ad.pipelineAccounts} def="Accounts with at least one bid moved past Draft on the Bids pipeline, all time." sub={`${ad.pipelineMovers.current} moved a bid this ${range.label}`} delta={<Change {...ad.pipelineMovers} />} />
-        <Kpi label="Internal reports generated" value={ad.reports.current} tone="blue" delta={<Change {...ad.reports} />} def="Internal Estimate Report previews, downloads and email attachments in the window. Only who and when is logged, never the figures in it." sub={`${ad.reportAccounts} account${ad.reportAccounts === 1 ? "" : "s"} this ${range.label}`} />
-        <Kpi label="Premium report adoption" value={ad.reportAdoption.pct === null ? "–" : `${ad.reportAdoption.pct}%`} def="Accounts that have ever generated an Internal Estimate Report ÷ accounts with paid or complimentary premium access now." sub={`${ad.reportAdoption.n} of ${ad.reportAdoption.d} premium accounts`} />
-        <Kpi label="Scheduled projects" value={ad.schedules} tone="violet" delta={<Change {...ad.schedulesNew} />} def="Project schedules that aren't archived (all time); change = schedules created in the window." sub={`${ad.schedulesNew.current} new · ${ad.scheduleAccounts} account${ad.scheduleAccounts === 1 ? "" : "s"}`} />
-        <Kpi label="Customer updates published" value={ad.publications.current} delta={<Change {...ad.publications} />} def="Customer schedule updates published in the window (a publish, not a delivery)." sub={`${ad.publicationsAll} all time`} />
-        <Kpi label="Scheduling subscriptions" value={split.pmAddonSubs} tone="amber" def="Standard subscriptions with the project scheduling add-on, and Enterprise editor seats assigned." sub={`${ad.editorSeats} Enterprise editor${ad.editorSeats === 1 ? "" : "s"} assigned · ${split.pmAddonEnded} add-on${split.pmAddonEnded === 1 ? "" : "s"} ended`} />
+        <Kpi label="Accounts using the pipeline" value={ad.pipelineAccounts} action="Who uses it" drawer={sheet("pipeline", "Accounts using the pipeline", "Accounts with at least one bid moved past Draft, all time. Count = bids past Draft.", byAccount(product.stages.filter((x) => x.pipeline_stage && x.pipeline_stage !== "draft").map((x) => ({ user_id: x.user_id, at: "2000-01-01" })), facts, null, { unit: "bids", includeTest: t }), "No account has moved a bid past Draft yet.")} def="Accounts with at least one bid moved past Draft on the Bids pipeline, all time." sub={`${ad.pipelineMovers.current} moved a bid this ${range.label}`} delta={<Change {...ad.pipelineMovers} />} />
+        <Kpi label="Internal reports generated" value={ad.reports.current} action="Who generated" drawer={sheet("reports", "Internal reports generated", "Internal Estimate Report previews, downloads and email attachments. Only who and when is logged, never the figures.", byAccount(product.reports.map((x) => ({ user_id: x.user_id, at: x.created_at })), facts, w, { unit: "reports", includeTest: t }), "No internal reports in this period.")} tone="blue" delta={<Change {...ad.reports} />} def="Internal Estimate Report previews, downloads and email attachments in the window. Only who and when is logged, never the figures in it." sub={`${ad.reportAccounts} account${ad.reportAccounts === 1 ? "" : "s"} this ${range.label}`} />
+        <Kpi label="Premium report adoption" value={ad.reportAdoption.pct === null ? "–" : `${ad.reportAdoption.pct}%`} action="Show the calculation" drawer={sheet("report-adoption", "Premium report adoption", `Accounts that ever generated an Internal Estimate Report ÷ accounts with paid or complimentary premium access now (${ad.reportAdoption.n} of ${ad.reportAdoption.d}).`, byAccount(product.reports.map((x) => ({ user_id: x.user_id, at: x.created_at })), facts, null, { unit: "reports", includeTest: t }), "No account has generated an internal report yet.")} def="Accounts that have ever generated an Internal Estimate Report ÷ accounts with paid or complimentary premium access now." sub={`${ad.reportAdoption.n} of ${ad.reportAdoption.d} premium accounts`} />
+        <Kpi label="Scheduled projects" value={ad.schedules} action="Who schedules" drawer={sheet("schedules", "Scheduled projects", "Project schedules that aren't archived, all time, by owner.", byAccount(product.schedules.filter((x) => x.status !== "archived").map((x) => ({ user_id: x.user_id, at: x.created_at })), facts, null, { unit: "projects", includeTest: t }), "No scheduled projects yet.")} tone="violet" delta={<Change {...ad.schedulesNew} />} def="Project schedules that aren't archived (all time); change = schedules created in the window." sub={`${ad.schedulesNew.current} new · ${ad.scheduleAccounts} account${ad.scheduleAccounts === 1 ? "" : "s"}`} />
+        <Kpi label="Customer updates published" value={ad.publications.current} action="Who published" drawer={sheet("publications", "Customer updates published", "Customer schedule updates published in this period (a publish, not a delivery).", byAccount(product.publications.map((x) => ({ user_id: x.published_by, at: x.published_at })), facts, w, { unit: "updates", includeTest: t }), "No customer updates were published in this period.")} delta={<Change {...ad.publications} />} def="Customer schedule updates published in the window (a publish, not a delivery)." sub={`${ad.publicationsAll} all time`} />
+        <Kpi label="Scheduling subscriptions" value={split.pmAddonSubs} href={carry("/admin/revenue", view, {}, "by-product")} action="Add-on revenue breakdown" tone="amber" def="Standard subscriptions with the project scheduling add-on, and Enterprise editor seats assigned." sub={`${ad.editorSeats} Enterprise editor${ad.editorSeats === 1 ? "" : "s"} assigned · ${split.pmAddonEnded} add-on${split.pmAddonEnded === 1 ? "" : "s"} ended`} />
       </div>
       <Panel kicker="Bids pipeline" title="Bids by stage, now">
         {ad.bidsByStage.length === 0 ? <p className="text-sm text-ink-soft">No bids yet.</p> : (

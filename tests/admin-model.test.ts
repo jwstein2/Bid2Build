@@ -201,3 +201,41 @@ describe("usage, customers and exports", () => {
     expect(href("/admin", parseView({}), { range: "30d" })).toBe("/admin");
   });
 });
+
+describe("clickable KPI drilldowns", () => {
+  const sc = scope(snap(), false);
+  const facts = accountFacts(sc, NOW);
+  const w = { start: NOW.getTime() - 30 * 86_400_000, end: NOW.getTime() };
+  const ids = (sp: Record<string, string>) => filterCustomers(facts, parseCustomerFilters(sp), w).map((f) => f.id).sort();
+
+  it("each cohort lists exactly the accounts its card counts", () => {
+    const rev = revenueModel(facts, R30, NOW);
+    const k = kpis(facts, R30, NOW);
+    expect(ids({ cohort: "new_paid" })).toHaveLength(rev.newPaid.current);
+    expect(ids({ cohort: "ended" })).toHaveLength(rev.ended.current);
+    expect(ids({ cohort: "past_due" })).toHaveLength(rev.pastDue);
+    expect(ids({ cohort: "canceling" })).toHaveLength(rev.scheduledCancel);
+    expect(ids({ cohort: "activated" })).toHaveLength(k.activated.current);
+    expect(ids({ plan: "paying" })).toHaveLength(rev.paying);
+    expect(ids({ cohort: "past_due" })).toEqual(["u4"]);
+  });
+  it("marketing funnel cards match the signup cohort and its steps", () => {
+    const fun = cohortFunnel(facts, w.start, w.end);
+    expect(ids({ cohort: "signups" })).toHaveLength(fun.cohort);
+    expect(ids({ cohort: "signups", step: "first_bid" })).toHaveLength(fun.firstBid);
+    expect(ids({ cohort: "signups", step: "finalized" })).toHaveLength(fun.finalized);
+    expect(ids({ cohort: "signups", step: "paid" })).toHaveLength(fun.paid);
+  });
+  it("zero-count cohorts return an empty list, not everything", () => {
+    const quiet = { start: 0, end: 1 };
+    expect(filterCustomers(facts, parseCustomerFilters({ cohort: "new_paid" }), quiet)).toEqual([]);
+  });
+  it("ignores unknown drilldown values (no filter bypass, no crash)", () => {
+    expect(parseCustomerFilters({ cohort: "everyone'; drop table", step: "__proto__", sub: "free-for-all" })).toMatchObject({ cohort: "", step: "", sub: "" });
+    expect(parseCustomerFilters({ cohort: "constructor" }).cohort).toBe("");
+  });
+  it("drilldowns never surface test or internal accounts the report excluded", () => {
+    expect(ids({ cohort: "signups" })).not.toContain("t1");
+    expect(ids({ cohort: "signups" })).not.toContain("owner");
+  });
+});

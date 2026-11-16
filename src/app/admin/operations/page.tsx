@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { LIFECYCLE_STEPS, stepOfKind, type LifecycleStep } from "@/lib/email/lifecycle";
-import { Chip, PageHead, Panel, Row, Table, ago, fmt, type Tone } from "@/components/admin/cc";
+import { Chip, Kpi, PageHead, Panel, Row, Table, ago, fmt, type Tone } from "@/components/admin/cc";
+import { MetricRecords } from "@/components/ui/metric-card";
 import { ReportUnavailable, ScopeNote, SectionTitle } from "@/components/admin/report";
 import { TOOLS } from "@/components/admin/nav";
 import { integrationStatus, type IntegrationState } from "@/lib/admin/integrations";
 import { locationQuality } from "@/lib/admin/metrics";
 import { loadReport } from "@/lib/admin/load";
-import { href } from "@/lib/admin/view";
+import { carry, href } from "@/lib/admin/view";
 import { previewLifecycle, sendLifecycleSamplesAction } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -40,12 +41,22 @@ export default async function Operations({ searchParams }: { searchParams: Promi
   const noLead = snap.leadsInstalled ? facts.filter((f) => !d.leads.some((l) => l.user_id === f.id)).length : null;
   const sharing = d.consents.filter((c) => c.share_prices).length;
   const ref = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").match(/^https:\/\/([a-z0-9]+)\.supabase\.co/)?.[1];
+  const appFailures = snap.pdfErrors7d + snap.importFailures7d + sigPdfFailed;
   const authLogs = ref ? `https://supabase.com/dashboard/project/${ref}/logs/auth-logs` : "https://supabase.com/dashboard";
 
   return (
     <div className="space-y-6">
       <PageHead kicker="Operations" title="Exceptions, reliability and diagnostics" intro="Technical health and data-quality checks. Only real failures are flagged; low volume is not an error." />
       <ScopeNote sc={sc} />
+
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4" data-testid="ops-kpis">
+        <Kpi label="App failures (7 days)" value={appFailures} tone={appFailures ? "amber" : "green"} sub={`${fmt(snap.pdfErrors7d)} PDF · ${fmt(snap.importFailures7d)} import · ${fmt(sigPdfFailed)} signed PDF`} href="/admin/logs" action="Import & PDF error log" />
+        <Kpi label="Stripe webhook problems" value={hookErrors.length + unprocessed.length} tone={hookErrors.length ? "red" : unprocessed.length ? "amber" : "green"} sub={`${fmt(hookErrors.length)} errors · ${fmt(unprocessed.length)} unprocessed`}
+          action="View failed events" drawer={{ id: "webhooks", title: "Stripe webhook problems (7 days)", body: <MetricRecords rows={[...hookErrors, ...unprocessed].slice(0, 20).map((e) => ({ key: String(e.id), label: e.type, detail: e.error ?? "Not processed after 1 hour", value: ago(e.received_at, nowMs) }))} empty="No webhook errors or stuck events in the last 7 days." more={{ href: "#health", label: "System health" }} /> }} />
+        <Kpi label="Emails failed" value={outboxFailed.length} tone={outboxFailed.length ? "red" : "green"} sub={`${fmt(outboxPending)} waiting to send`}
+          action="View failed emails" drawer={{ id: "outbox", title: "Background emails that gave up", body: <MetricRecords rows={outboxFailed.slice(0, 20).map((o, i) => ({ key: `${o.user_id}-${i}`, label: o.kind, detail: o.last_error ?? "No error recorded", value: `${o.attempts}×`, href: `/admin/customers/${o.user_id}${view.includeTest ? "?data=all" : ""}` }))} empty="No failed background emails." more={{ href: "#health", label: "Background email panel" }} /> }} />
+        <Kpi label="Never verified email" value={unverified.length} tone={unverified.length ? "amber" : "green"} sub="Accounts older than a day" href={carry("/admin/customers", view, { cohort: "unverified" }, "accounts")} action="View these accounts" />
+      </div>
 
       <SectionTitle id="health" kicker="System health" title="Failures in the last 7 days" />
       <div className="grid gap-6 lg:grid-cols-3">

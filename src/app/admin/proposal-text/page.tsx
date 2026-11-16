@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/misc";
+import { MetricCard } from "@/components/ui/metric-card";
 import { requireAdmin } from "@/lib/admin/server";
 import { aiSettings, isAiConfigured } from "@/lib/ai/provider";
 import { EXCLUSION_CATEGORIES } from "@/lib/proposal/generate-rules";
@@ -56,18 +57,18 @@ export default async function ProposalTextAdmin() {
     <div className="space-y-8">
       {header}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat k="Estimates with a scope" v={m.scopes.with_scope} sub={`of ${m.estimates} edited`} />
-        <Stat k="Scopes written by hand" v={m.scopes.manual} />
-        <Stat k="Drafted scopes" v={m.scopes.generated + m.scopes.edited} sub={`${m.scopes.edited} edited after drafting`} />
-        <Stat k="Estimates using exclusions" v={m.exclusions.estimates_using} sub={`${m.exclusions.approved_items} approved items`} />
-        <Stat k="Proposals with a scope" v={pct(m.proposals.with_scope, m.proposals.exported)} sub={`${m.proposals.with_scope} of ${m.proposals.exported} exported`} />
-        <Stat k="Proposals with exclusions" v={pct(m.proposals.with_exclusions, m.proposals.exported)} sub={`${m.proposals.with_exclusions} of ${m.proposals.exported} exported`} />
-        <Stat k="Approved exclusions that were drafted" v={pct(m.exclusions.approved_generated, m.exclusions.approved_items)} sub={`${m.exclusions.approved_manual} written by hand · ${m.exclusions.suggestions_rejected} rejected`} />
-        <Stat k="AI cost" v={usd(g.cost_usd)} sub={`${g.ai} AI · ${g.rules} rule-based drafts`} />
+        <Stat href="#by-trade" action="Usage by trade" k="Estimates with a scope" v={m.scopes.with_scope} sub={`of ${m.estimates} edited`} />
+        <Stat href="#generation" action="Drafted vs written" k="Scopes written by hand" v={m.scopes.manual} />
+        <Stat href="#generation" action="Generation details" k="Drafted scopes" v={m.scopes.generated + m.scopes.edited} sub={`${m.scopes.edited} edited after drafting`} />
+        <Stat href="#exclusions" action="Exclusion categories" k="Estimates using exclusions" v={m.exclusions.estimates_using} sub={`${m.exclusions.approved_items} approved items`} />
+        <Stat href="#by-trade" action="Usage by trade" k="Proposals with a scope" v={pct(m.proposals.with_scope, m.proposals.exported)} sub={`${m.proposals.with_scope} of ${m.proposals.exported} exported`} />
+        <Stat href="#exclusions" action="Exclusion categories" k="Proposals with exclusions" v={pct(m.proposals.with_exclusions, m.proposals.exported)} sub={`${m.proposals.with_exclusions} of ${m.proposals.exported} exported`} />
+        <Stat href="#exclusions" action="Exclusion categories" k="Approved exclusions that were drafted" v={pct(m.exclusions.approved_generated, m.exclusions.approved_items)} sub={`${m.exclusions.approved_manual} written by hand · ${m.exclusions.suggestions_rejected} rejected`} />
+        <Stat href="/admin/costs#usage" action="AI usage and cost" k="AI cost" v={usd(g.cost_usd)} sub={`${g.ai} AI · ${g.rules} rule-based drafts`} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="p-5">
+        <Card className="scroll-mt-24 p-5" id="generation">
           <h2 className="font-display text-lg font-bold">Generation</h2>
           <table className="mt-3 w-full text-sm"><tbody>
             <Tr k="Requests" v={g.total} />
@@ -77,7 +78,7 @@ export default async function ProposalTextAdmin() {
             <Tr k="Average generations per estimate" v={g.per_estimate} />
           </tbody></table>
         </Card>
-        <Card className="p-5">
+        <Card className="scroll-mt-24 p-5" id="by-trade">
           <h2 className="font-display text-lg font-bold">Usage by trade</h2>
           {g.by_trade.length === 0 ? <p className="mt-3 text-sm text-muted">No generations yet.</p> : (
             <table className="mt-3 w-full text-sm">
@@ -86,7 +87,7 @@ export default async function ProposalTextAdmin() {
             </table>
           )}
         </Card>
-        <Card className="p-5 lg:col-span-2">
+        <Card className="scroll-mt-24 p-5 lg:col-span-2" id="exclusions">
           <h2 className="font-display text-lg font-bold">Most common approved exclusion categories</h2>
           {byTrade.size === 0 ? <p className="mt-3 text-sm text-muted">No approved exclusions yet.</p> : (
             <ul className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -101,8 +102,8 @@ export default async function ProposalTextAdmin() {
   );
 }
 
-function Stat({ k, v, sub }: { k: string; v: number | string; sub?: string }) {
-  return <Card className="p-4"><p className="text-sm text-ink-soft">{k}</p><p className="tabular mt-1 text-3xl font-extrabold">{typeof v === "number" ? v.toLocaleString("en-US") : v}</p>{sub && <p className="mt-0.5 text-xs text-muted">{sub}</p>}</Card>;
+function Stat({ k, v, sub, href, action }: { k: string; v: number | string; sub?: string; href: string; action: string }) {
+  return <MetricCard title={k} value={v} sub={sub} href={href} action={action} />;
 }
 function Tr({ k, v }: { k: string; v: number | string }) {
   return <tr className="border-t border-line"><td className="py-1.5 text-ink-soft">{k}</td><td className="tabular py-1.5 text-right font-semibold">{v}</td></tr>;
