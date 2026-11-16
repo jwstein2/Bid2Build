@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { safeNext } from "@/lib/http/redirect";
+import { eventIds, recordEvent } from "@/lib/growth/events";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -13,7 +14,8 @@ export async function GET(request: Request) {
       if (url.searchParams.get("marketing") === "1") {
         await supabase.from("profiles").update({ marketing_opt_in: true, marketing_opt_in_at: new Date().toISOString() }).eq("id", data.user.id);
       }
-      try { await createAdminClient().from("analytics_events").insert({ user_id: data.user.id, event: "account_created" }); } catch { /* best effort */ }
+      // Same stable id as the signed-in sync in leads.ts, so a signup is counted once.
+      try { await recordEvent(createAdminClient(), { userId: data.user.id, event: "account_created", eventId: eventIds.accountCreated(data.user.id) }); } catch { /* best effort */ }
       return NextResponse.redirect(new URL(next, url.origin));
     }
   }

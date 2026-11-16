@@ -14,6 +14,7 @@ import { classifyAccount, type AccountClass, type Classification } from "./class
 import { campaignOf, classifyChannel, CHANNELS, isChannel, type Channel, type LeadAttribution } from "./channels";
 import { businessKey, series, tradeOf, type EstimateRow, type Point } from "./metrics";
 import type { Range } from "./view";
+import { activatedAt, inActivationWindow } from "@/lib/growth/activation";
 
 export const DAY = 86_400_000;
 export const ACTIVE_WINDOW_DAYS = 30;
@@ -42,6 +43,8 @@ export interface EventRow { event: string; user_id: string | null; created_at: s
 export interface LeadRow extends LeadAttribution { user_id: string | null; landing_path: string | null; first_touch_at: string | null; device_type?: string | null; created_at: string }
 export interface CostRow { id: number; period_start: string; channel: string; campaign_id: string | null; amount_usd: number | string; note: string | null; created_at: string }
 export interface OutboxRow { kind: string; user_id: string; status: string; last_error: string | null; attempts: number; created_at: string; updated_at: string | null }
+/** An estimate that reached 3+ meaningful line items (ids and a time only: see growth_meaningful_estimates). */
+export interface MeaningfulRow { estimate_id: string; user_id: string; reached_at: string; from_event: boolean }
 export interface StripeEventRow { id: string; type: string; received_at: string; processed_at: string | null; error: string | null }
 
 export interface Snapshot {
@@ -58,6 +61,8 @@ export interface Snapshot {
   pdfErrors7d: number; importFailures7d: number;
   /** V4 pipeline / scheduling adoption rows (Phase 10); empty before those migrations. */
   product?: ProductData;
+  /** Growth PR 1: estimates with 3+ meaningful items (null before migration 20261117001000). */
+  meaningful?: MeaningfulRow[] | null;
   loadedAt: string;
 }
 
@@ -101,6 +106,7 @@ export function scope(snap: Snapshot, includeTest: boolean): Scoped {
       leads: snap.leads.filter((l) => keep(l.user_id)),
       outbox: snap.outbox.filter((o) => keep(o.user_id)),
       product: snap.product ? scopeProduct(snap.product, keep) : undefined,
+      meaningful: snap.meaningful ? snap.meaningful.filter((m) => keep(m.user_id)) : snap.meaningful,
     },
   };
 }
@@ -168,6 +174,8 @@ export interface AccountFact {
   business: string | null; companyId: string | null; companyRole: string | null;
   estimates: number; finalized: number; signed: number; signingRequests: number;
   firstEstimateAt: string | null; firstFinalizedAt: string | null; lastActivityAt: string | null;
+  /** First estimate with 3+ meaningful items, first signing link sent, and when the 7-day activation rule was met (null = not met). */
+  firstMeaningfulAt: string | null; firstSentAt: string | null; activated7dAt: string | null;
   sub: SubscriptionRow | null; paying: boolean; pastDue: boolean; everPaid: boolean; paidStartedAt: string | null; paidEndedAt: string | null;
   comp: GrantRow | null; segment: Segment; channel: Channel; campaign: string | null; landing: string | null; device: string | null;
 }
@@ -177,6 +185,8 @@ export function accountFacts(sc: Scoped, now: Date): AccountFact[] {
   const byUser = <T extends { user_id: string | null }>(rows: T[]) => { const m = new Map<string, T[]>(); for (const r of rows) if (r.user_id) { const a = m.get(r.user_id); if (a) a.push(r); else m.set(r.user_id, [r]); } return m; };
   const est = byUser(d.estimates), ver = byUser(d.versions), sig = byUser(d.signatures), req = byUser(d.signingRequests), subs = byUser(d.subscriptions), grants = byUser(d.grants);
   const leads = new Map(d.leads.filter((l) => l.user_id).map((l) => [l.user_id!, l]));
+  const meaningfulAt = new Map<string, string>();
+  for (const m of d.meaningful ?? []) meaningfulAt.set(m.user_id, minIso(meaningfulAt.get(m.user_id) ?? null, m.reached_at)!);
   const subscribedAt = new Map<string, string>();
   for (const e of d.events) if (e.event === "subscribed" && e.user_id) subscribedAt.set(e.user_id, minIso(subscribedAt.get(e.user_id) ?? null, e.created_at)!);
   const bizName = new Map(d.businesses.map((b) => [b.user_id, b.company_name?.trim() || null]));
@@ -190,7 +200,9 @@ export function accountFacts(sc: Scoped, now: Date): AccountFact[] {
     let firstEstimateAt: string | null = null, firstFinalizedAt: string | null = null, last: string | null = null;
     for (const e of es) { firstEstimateAt = minIso(firstEstimateAt, e.created_at); last = maxIso(last, e.created_at); }
     for (const v of vs) { firstFinalizedAt = minIso(firstFinalizedAt, v.created_at); last = maxIso(last, v.created_at); }
-    for (const r of rs) last = maxIso(last, r.created_at);
+    let firstSentAt: string | null = null;
+    for (const r of rs) { last = maxIso(last, r.created_at); firstSentAt = minIso(firstSentAt, r.created_at); }
+    const firstMeaningfulAt = meaningfulAt.get(u.id) ?? null;
     for (const s of ss) last = maxIso(last, s.signed_at);
     const userSubs = (subs.get(u.id) ?? []).filter((s) => !NEVER_PAID.has(s.status));
     const current = userSubs.filter((s) => PAYING.has(s.status)).sort((a, b) => t(b.updated_at) - t(a.updated_at))[0] ?? null;
@@ -211,6 +223,7 @@ export function accountFacts(sc: Scoped, now: Date): AccountFact[] {
       business: company?.name?.trim() || bizName.get(u.id) || null, companyId: company?.id ?? null, companyRole: member?.role ?? null,
       estimates: es.length, finalized: new Set(vs.map((v) => v.estimate_id)).size, signed: new Set(ss.map((s) => s.estimate_id)).size, signingRequests: rs.length,
       firstEstimateAt, firstFinalizedAt, lastActivityAt: last,
+      firstMeaningfulAt, firstSentAt, activated7dAt: activatedAt(u.created_at, { meaningful: firstMeaningfulAt, exported: firstFinalizedAt, sent: firstSentAt }),
       sub: latest, paying: Boolean(current), pastDue: current?.status === "past_due", everPaid: userSubs.length > 0,
       paidStartedAt: userSubs.length ? subscribedAt.get(u.id) ?? null : null, paidEndedAt: current ? null : latest ? subEnd(latest) : null,
       comp, segment, channel: classifyChannel(lead), campaign: campaignOf(lead), landing: lead?.landing_path ?? null, device: lead?.device_type ?? null,
@@ -289,7 +302,10 @@ export function revenueModel(facts: AccountFact[], range: Range, now: Date, nowC
 // ---------------------------------------------------------------------------------------------
 // Funnel (account-based cohort) and activation
 // ---------------------------------------------------------------------------------------------
-export interface Funnel { cohort: number; firstBid: number; finalized: number; paid: number; steps: { key: string; label: string; n: number; ofPrev: Ratio; ofCohort: Ratio }[] }
+export interface Funnel { cohort: number; firstBid: number; finalized: number; paid: number;
+  /** New 7-day activation (reported beside, never instead of, "finalized"). matured = accounts whose 7-day window has closed. */
+  activated7d: number; matured: number; activated7dMatured: number;
+  steps: { key: string; label: string; n: number; ofPrev: Ratio; ofCohort: Ratio }[] }
 
 /** Accounts that signed up in the window, and how many of them reached each step by now. */
 export function cohortFunnel(facts: AccountFact[], start: number, end: number): Funnel {
@@ -298,6 +314,9 @@ export function cohortFunnel(facts: AccountFact[], start: number, end: number): 
   const raw = [["signup", "Signed up", c.length], ["first_bid", "Started a first bid", firstBid], ["finalized", "Finalized a bid", finalized], ["paid", "Became a paying customer", paid]] as const;
   return {
     cohort: c.length, firstBid, finalized, paid,
+    activated7d: c.filter((f) => f.activated7dAt).length,
+    matured: c.filter((f) => !inActivationWindow(f.createdAt, end)).length,
+    activated7dMatured: c.filter((f) => f.activated7dAt && !inActivationWindow(f.createdAt, end)).length,
     steps: raw.map(([key, label, n], i) => ({ key, label, n, ofPrev: ratio(n, i ? raw[i - 1][2] : n), ofCohort: ratio(n, c.length) })),
   };
 }

@@ -394,6 +394,7 @@ async function compRpc(name, args, res) {
 }
 
 let onboardingMode = "ok";
+let activationSeed = null;
 http.createServer((req, res) => {
   const u = new URL(req.url, "http://x");
   let raw = ""; const bufs = []; req.on("data", (c) => bufs.push(c));
@@ -454,6 +455,15 @@ http.createServer((req, res) => {
     }
     // Feature discovery state (auth user_metadata.b2b_features): reset, or set created_at for "new account" checks.
     if (u.pathname === "/__features") { USER.user_metadata = {}; if (u.searchParams.get("created")) USER.created_at = u.searchParams.get("created"); return send(res, 200, { ok: true }); }
+    // Growth activation walk: "new" = account with no bids or company; "partial" = one priced draft, nothing exported yet.
+    if (u.pathname === "/__activation") {
+      const st = u.searchParams.get("state");
+      activationSeed ??= JSON.stringify({ estimates: tables.estimates, estimate_versions: tables.estimate_versions, business_profiles: tables.business_profiles });
+      Object.assign(tables, JSON.parse(activationSeed));
+      if (st === "new") { tables.estimates = []; tables.estimate_versions = []; tables.business_profiles = []; }
+      if (st === "partial") { tables.estimates = tables.estimates.slice(0, 1); tables.estimate_versions = []; }
+      return send(res, 200, { ok: true, estimates: tables.estimates.length });
+    }
     if (u.pathname === "/__reset_library") { Object.assign(tables, JSON.parse(LIBRARY_SEED)); return send(res, 200, { ok: true }); }
     if (u.pathname === "/auth/v1/user" && req.method === "GET") return void setTimeout(() => send(res, 200, USER), authDelayMs);
     if (u.pathname === "/__otp-log") {
