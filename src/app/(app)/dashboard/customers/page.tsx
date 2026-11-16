@@ -3,6 +3,8 @@ import { revalidatePath } from "next/cache";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/misc";
 import { ConfirmDelete } from "../confirm-delete";
+import { Breadcrumbs } from "@/components/layout/breadcrumbs";
+import { CustomerPhotos } from "@/components/operations/customer-photos";
 
 export const metadata: Metadata = { title: "Saved customers", robots: { index: false } };
 
@@ -20,6 +22,7 @@ export default async function CustomersPage() {
   const { data } = await (await createClient()).from("customers").select("id, name, email, phone, project_address").eq("user_id", user.id).order("name");
   return (
     <div className="mx-auto max-w-4xl space-y-6">
+      <Breadcrumbs items={[{ label: "Saved customers" }]} />
       <div>
         <h1 className="text-3xl font-extrabold">Saved customers</h1>
         <p className="text-ink-soft">Save a customer from the Customer & project step of any bid, then reuse them on future bids.</p>
@@ -34,6 +37,7 @@ export default async function CustomersPage() {
                   <p className="text-sm text-muted">{[c.email, c.phone, c.project_address].filter(Boolean).join(" · ")}</p>
                 </div>
                 <ConfirmDelete action={remove} fields={{ id: c.id }} name={c.name} />
+                <CustomerPhotos customerId={c.id} name={c.name} />
               </li>
             ))}
           </ul>

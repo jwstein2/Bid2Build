@@ -1,4 +1,5 @@
 import { Document, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
+import type { Style } from "@react-pdf/types";
 import type { InternalReport } from "../reports/internal-estimate";
 import { pdfSafe } from "./proposal-pdf";
 
@@ -104,6 +105,7 @@ export function InternalReportPdf({ r, company, logo }: { r: InternalReport; com
             ))}
           </View>
         </View>
+        {r.subQuotes && <SubQuoteSection q={r.subQuotes} s={s} />}
         {(r.notes.length > 0 || r.issues.length > 0) && (
           <View style={{ marginTop: 8 }} wrap={false}>
             {r.notes.map((n, i) => <Text key={i} style={s.muted}>- {T(n)}</Text>)}
@@ -120,5 +122,36 @@ export function InternalReportPdf({ r, company, logo }: { r: InternalReport; com
         </View>
       </Page>
     </Document>
+  );
+}
+
+/** Original estimate financials vs subcontractor bid financials (side by side, then line by line). */
+function SubQuoteSection({ q, s }: { q: NonNullable<InternalReport["subQuotes"]>; s: Record<string, Style> }) {
+  const t = q.totals;
+  const W = ["20%", "13%", "9%", "9%", "9%", "9%", "9%", "8%", "7%", "7%"];
+  const R = { textAlign: "right" as const };
+  const row = (vals: string[], bold = false) => vals.map((v, i) => <Text key={i} style={{ width: W[i], ...(i >= 2 ? R : {}), ...(bold ? { fontFamily: "Helvetica-Bold" } : {}) }}>{T(v)}</Text>);
+  const col = (title: string, rows: [string, string][]) => (
+    <View style={{ flex: 1 }}>
+      <Text style={[s.h2, { marginTop: 0 }]}>{title}</Text>
+      {rows.map(([l, v]) => <View key={l} style={s.tr}><Text style={{ width: "60%" }}>{T(l)}</Text><Text style={{ width: "40%", ...R }}>{v}</Text></View>)}
+    </View>
+  );
+  return (
+    <View break wrap>
+      <Text style={s.h2}>Original estimate vs subcontractor bids</Text>
+      <View style={{ flexDirection: "row", gap: 16 }} wrap={false}>
+        {col("Original estimate financials", [["Direct cost", $(t.originalCost)], ["Selling price (before tax)", $(t.sellingPrice)], ["Gross profit", $(t.originalProfit)], ["Gross margin", P(t.originalMargin)]])}
+        {col("Subcontractor bid financials (forecast)", [["Direct cost with latest quotes", $(t.forecastCost)], ["Selling price (unchanged)", $(t.sellingPrice)], ["Forecast gross profit", $(t.forecastProfit)], ["Forecast gross margin", P(t.forecastMargin)]])}
+      </View>
+      <Text style={[s.muted, { marginTop: 4 }]}>Difference in direct cost: {$(t.difference)}. {t.unapprovedLines ? `${t.unapprovedLines} line${t.unapprovedLines === 1 ? " has a quote" : "s have quotes"} not yet approved into the internal cost. ` : ""}Quotes never change the estimate or the customer price; price changes go through change orders.</Text>
+      <View style={[s.th, { marginTop: 6 }]}>{row(["Line item", "Subcontractor", "Original cost", "Original quote", "Revised quote", "Difference", "Selling price", "Fcst profit", "Fcst margin", "Status"])}</View>
+      {q.lines.map((l) => (
+        <View key={l.itemId} style={s.tr} wrap={false}>
+          {row([l.itemName, l.vendorName, $(l.originalCost), l.originalQuote ? $(l.originalQuote) : "-", l.revisedQuote ? $(l.revisedQuote) : "-", l.difference ? $(l.difference) : "-",
+            $(l.sellingPrice), l.forecastProfit ? $(l.forecastProfit) : "-", P(l.forecastMargin), l.unapproved ? "Unapproved" : "Applied"])}
+        </View>
+      ))}
+    </View>
   );
 }

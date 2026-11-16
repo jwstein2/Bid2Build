@@ -1,12 +1,5 @@
-import * as Sentry from "@sentry/nextjs";
-import { sentryOptions } from "@/lib/monitoring/sentry-options";
+import { startSentry } from "@/lib/monitoring/sentry-client";
 
-if (sentryOptions.enabled) {
-  Sentry.init({
-    ...sentryOptions,
-    // Browser noise that is not our bug.
-    ignoreErrors: ["ResizeObserver loop limit exceeded", "ResizeObserver loop completed with undelivered notifications"],
-  });
-}
-
-export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
+// Error reporting loads on demand (see sentry-client.ts) so the SDK stays out of first-load JS.
+// Tracing is off (tracesSampleRate 0), so no router-transition hook is needed.
+startSentry();

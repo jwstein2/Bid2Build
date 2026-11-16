@@ -10,8 +10,8 @@
  *  - cool gray #6B7A89 is for icons/rules; small text uses --color-muted (#56677A).
  */
 @theme {
-  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: "Montserrat Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter Variable", "Inter Fallback", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Montserrat Variable", "Montserrat Fallback", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
 
   /* Brand primitives */
   --color-navy: #0b2d4d;
@@ -63,6 +63,37 @@
   --radius-card: 0.75rem;
   --shadow-card: 0 1px 2px rgb(11 45 77 / 0.05), 0 1px 1px rgb(11 45 77 / 0.03);
   --shadow-raised: 0 8px 24px -8px rgb(11 45 77 / 0.18);
+
+  /* Motion curves: decelerate in, quick ease-in out. Utilities: ease-brand-out / ease-brand-in. */
+  --ease-brand-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-brand-in: cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* Motion durations (feedback / reveal / panel). Use these, not one-off values. */
+:root { --motion-fast: 120ms; --motion-base: 180ms; --motion-slow: 220ms; }
+
+/*
+ * Metric-matched fallbacks: while the web fonts download, text renders in Arial (or its metric twins)
+ * scaled to the same width and line height, so headlines don't reflow when Inter/Montserrat arrive
+ * (Lighthouse measured a 0.06 layout shift on the home hero). Values use the same formula as
+ * next/font, from its capsize metrics (Montserrat at heading weight vs Arial Bold), then checked
+ * in Chromium: rendered width within ~1% of the web fonts.
+ */
+@font-face {
+  font-family: "Inter Fallback";
+  src: local("Arial"), local("ArialMT"), local("Liberation Sans"), local("Arimo");
+  size-adjust: 107.12%;
+  ascent-override: 90.44%;
+  descent-override: 22.52%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Montserrat Fallback";
+  src: local("Arial Bold"), local("Arial-BoldMT"), local("Liberation Sans Bold"), local("LiberationSans-Bold"), local("Arimo Bold"), local("Arimo-Bold");
+  size-adjust: 111%;
+  ascent-override: 87.21%;
+  descent-override: 22.61%;
+  line-gap-override: 0%;
 }
 
 html { background: var(--color-paper); color-scheme: light; }
@@ -124,6 +155,20 @@ h1, h2, h3, .font-display { font-family: var(--font-display); letter-spacing: -0
 @media print {
   .no-print { display: none !important; }
 }
+
+/* Shared CSS motion. Rules: motion only explains a change (opened, added, saved); short (120 /
+   180 / 220ms); opacity and transform only; nothing loops. Reduced motion: the rule below.
+   A panel dropping in from its trigger.
+   fill-mode backwards (not both): once finished the animation no longer applies a transform, so it
+   can't become the containing block for fixed children such as the calculator sheet or BulkBar. */
+@keyframes b2b-drop-in { from { opacity: 0; transform: translateY(-6px); } }
+@utility motion-drop-in { animation: b2b-drop-in var(--motion-slow) var(--ease-brand-out) backwards; }
+/* Status text swapping (Saving… → Saved): a quick fade-in. */
+@keyframes b2b-fade { from { opacity: 0; } }
+@utility motion-fade { animation: b2b-fade var(--motion-fast) var(--ease-brand-out) backwards; }
+/* Content revealed in place (an expanded estimate section). */
+@keyframes b2b-reveal { from { opacity: 0; transform: translateY(4px); } }
+@utility motion-reveal { animation: b2b-reveal var(--motion-base) var(--ease-brand-out) backwards; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }

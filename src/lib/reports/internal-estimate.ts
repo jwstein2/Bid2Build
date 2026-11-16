@@ -16,6 +16,7 @@
 import { computeEstimate, itemsForGroup, sortedGroups } from "@/lib/estimate/engine";
 import { D, ZERO, type Dec } from "@/lib/estimate/money";
 import type { CostType, Estimate } from "@/lib/estimate/types";
+import type { QuoteComparison } from "@/lib/operations/sub-quotes";
 
 export const COST_TYPE_LABELS: Record<CostType, string> = {
   material: "Materials", labor: "Labor", labor_material: "Labor & materials", equipment: "Equipment", subcontractor: "Subcontractors",
@@ -44,6 +45,11 @@ export interface InternalReport {
   };
   /** Components that exist on this estimate only (allowances/contingency/pass-through are never invented). */
   notes: string[];
+  /**
+   * V4.3: original estimate financials vs subcontractor bid financials (only when quotes exist and the
+   * reader may see subcontractor costs). The estimate's own numbers above are never changed by quotes.
+   */
+  subQuotes?: QuoteComparison | null;
   issues: string[];
 }
 
@@ -52,7 +58,7 @@ const pct = (d: Dec | null) => (d === null ? null : d.toDecimalPlaces(1, D.ROUND
 const ratio = (num: Dec, den: Dec) => (den.isZero() ? null : num.div(den).times(100));
 const ruleLabel = (r: { mode: string; percent: string } | null) => (r ? `${r.percent}% ${r.mode}` : "Billed at cost");
 
-export function buildInternalReport(e: Estimate, opts: { version?: { number: number; createdAt: string } | null; now?: Date } = {}): InternalReport {
+export function buildInternalReport(e: Estimate, opts: { version?: { number: number; createdAt: string } | null; now?: Date; subQuotes?: QuoteComparison | null } = {}): InternalReport {
   const t = computeEstimate(e);
   const breakdown = new Map<CostType, Dec>();
   const sections: ReportSection[] = [];
@@ -99,6 +105,7 @@ export function buildInternalReport(e: Estimate, opts: { version?: { number: num
     },
     notes,
     issues: t.issues.map((i) => i.message),
+    subQuotes: opts.subQuotes?.lines.length ? opts.subQuotes : null,
   };
 }
 

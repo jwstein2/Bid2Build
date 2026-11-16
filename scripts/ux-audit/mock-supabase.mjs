@@ -2,6 +2,7 @@
 // Answers /auth/v1/user and simple PostgREST reads/RPCs with canned test data. Never point production at it.
 import http from "node:http";
 import { handleRadarRest, pgRestPath, radarRestEnabled } from "../radar/pg-rest.mjs";
+import { ops, opsRpc, opsStorage, opsTables, seedOps } from "./mock-ops.mjs";
 
 const PORT = Number(process.env.MOCK_PORT ?? 54321);
 const NOW = Date.now();
@@ -228,7 +229,9 @@ Object.assign(scheduleRpc, {
 });
 // Team & Subcontractors V4.2 (scripts/projects/team-walk.mjs). Real SQL: tests/db/team-assignments.test.ts.
 const team = { canManage: true, list: [] };
-Object.defineProperty(tables, "pm_resources", { get: () => team.list.map((r) => ({ id: r.id, name: r.name, phone: r.phone, email: r.email, status: r.status })), configurable: true });
+Object.defineProperty(tables, "pm_resources", { get: () => team.list.map((r) => ({ id: r.id, name: r.name, kind: r.kind, trades: r.trades, phone: r.phone, email: r.email, status: r.status })), configurable: true });
+// V4.3/V4.4 tables (scripts/project-operations/walk.mjs).
+for (const k of Object.keys(opsTables)) Object.defineProperty(tables, k, Object.getOwnPropertyDescriptor(opsTables, k));
 Object.defineProperty(tables, "schedule_tasks", { get: () => [...sched.list.values()].flatMap((x) => x.tasks.map((t) => ({ ...t, schedule_id: x.row.id }))), configurable: true });
 Object.assign(scheduleRpc, {
   pm_team: () => [200, { companyId: "c0000000-0000-4000-8000-000000000001", canManage: team.canManage && schedPerms().edit, resources: team.list }],
@@ -360,7 +363,7 @@ if (process.env.MOCK_COMMAND_CENTER) {
 // GET /__scenario?name=<key>&authDelayMs=<n>. MOCK_UNLIMITED keeps its old meaning for the UX audit scripts.
 const sub = (o) => [{ stripe_subscription_id: "sub_test", id: "sub_test", user_id: USER.id, status: "active", plan: "monthly", price_id: "price_test", current_period_end: iso(-20), cancel_at_period_end: false, canceled_at: null, ended_at: null, updated_at: iso(1), ...o }];
 const COMPANY = "55555555-5555-4555-8555-000000000001";
-const ALL_PERMS = ["view_own_bids", "view_team_bids", "view_company_bids", "create_estimates", "edit_team_estimates", "view_costs", "view_margin", "approve_bids", "manage_company_pricing", "view_analytics", "manage_teams", "manage_users", "manage_billing",
+const ALL_PERMS = ["view_proposal_style", "customize_proposal_style", "manage_proposal_templates", "change_proposal_policy", "view_own_bids", "view_team_bids", "view_company_bids", "create_estimates", "edit_team_estimates", "view_costs", "view_margin", "approve_bids", "manage_company_pricing", "view_analytics", "manage_teams", "manage_users", "manage_billing",
   "view_schedules", "create_schedules", "edit_assigned_schedules", "edit_all_schedules", "manage_dependencies", "update_progress", "publish_customer_updates", "download_schedule_pdf",
   "view_internal_reports", "download_internal_reports", "send_internal_reports", "manage_pm_seats", "manage_pm_addons"];
 const company = (role, o) => ({ id: COMPANY, name: "Summit Exteriors LLC", role, isOwner: role === "owner", permissions: role === "owner" ? ALL_PERMS : ["view_own_bids", "create_estimates", "view_costs"], entitlement: { active: true, source: "stripe", seatLimit: 5, expiresAt: null }, seatsUsed: 3, ...o });
@@ -685,6 +688,7 @@ http.createServer((req, res) => {
         res.writeHead(200, { "content-type": "application/pdf" }); return void res.end(b);
       }
     }
+    if (u.pathname.startsWith("/storage/v1/") && opsStorage(u, raw, send, res)) return;
     if (u.pathname.startsWith("/storage/v1/")) return send(res, 400, { error: "not available in mock" });
     // Opportunity Radar walk (scripts/radar/walk.mjs) and bid check walk (scripts/bid-check/walk.mjs): tables and
     // RPCs with the PG_REST_PREFIXES prefixes (default radar_) run real SQL when RADAR_PG_URL is set.
@@ -692,6 +696,12 @@ http.createServer((req, res) => {
     const rpc = u.pathname.match(/^\/rest\/v1\/rpc\/(\w+)/);
     if (u.pathname === "/__pipeline_calls") return send(res, 200, pipelineRpc.calls ?? []);
     if (rpc && typeof pipelineRpc[rpc[1]] === "function") { let args = {}; try { args = JSON.parse(raw || "{}"); } catch { /* ignore */ } const [st, body] = pipelineRpc[rpc[1]](args); return send(res, st, body); }
+    if (u.pathname === "/__ops") {
+      if (u.searchParams.get("seed")) seedOps(team.list);
+      for (const k of ["styleManaged", "allow", "canOverride"]) if (u.searchParams.has(k)) ops[k] = u.searchParams.get(k) === "1";
+      return send(res, 200, { ok: true });
+    }
+    if (rpc && opsRpc[rpc[1]]) { let args = {}; try { args = JSON.parse(raw || "{}"); } catch { /* ignore */ } const [st, body] = opsRpc[rpc[1]](args); return send(res, st, body); }
     if (u.pathname === "/__ws") { if (u.searchParams.get("seed")) seedWorkspace(); return send(res, 200, { ok: true, count: sched.list.size }); }
     if (u.pathname === "/__team") {
       if (u.searchParams.get("reset")) team.list = [];

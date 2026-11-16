@@ -8,6 +8,8 @@ import { ButtonLink } from "@/components/ui/button";
 import { BidList, type BidRow } from "./bid-list";
 import { LocalDraftsBanner } from "./local-drafts";
 import { ProfileReminder } from "./profile-reminder";
+import { PROFILE_REMINDER_COOKIE } from "./profile-reminder-cookie";
+import { cookies } from "next/headers";
 import { CreditBalances, UpgradeLink } from "@/components/billing/credits";
 import { loadCreditStatus } from "@/lib/credits/server";
 import { PremiumTiles } from "./library-tile";
@@ -17,6 +19,10 @@ import { ROLE_LABELS } from "@/lib/enterprise/permissions";
 import { isEsignEnabled, RECENT_SIGNED_DAYS } from "@/lib/esign/config";
 import { recentSignatures, signingByEstimate, type RequestRow, type SignatureRow } from "@/lib/esign/status";
 import { RecentlySigned, type SignedBid } from "./recently-signed";
+import { ReviewQueue } from "@/components/operations/review-queue";
+import { loadReviewQueue } from "@/lib/operations/queue-server";
+import { loadPmAccess } from "@/lib/pm/server";
+import { isPmEnabled } from "@/lib/env";
 import { RefreshOnFocus } from "@/components/esign/refresh-on-focus";
 import { ReferCard } from "./refer-card";
 import { TrialBanner } from "@/components/billing/trial-banner";
@@ -92,6 +98,11 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     // Referral code + counts. Missing function (migration not run yet) just hides the card.
     supabase.rpc("my_referral"),
   ]);
+  // Creator Partner Program: gifted members get a welcome line with their mentor and end date.
+  // Missing function (migration not applied) or no gift: nothing is shown.
+  const { data: gifts } = await supabase.rpc("my_mentorship");
+  const gift = ((gifts ?? []) as { state: string; program_state: string; channel_name: string | null; workspace_name: string; expires_at: string | null }[])
+    .find((g) => g.state === "active" && g.program_state === "active") ?? null;
   // Facebook BID trial (exact expiry + optional upgrade). Missing function = no banner.
   const { data: trialRows } = await supabase.rpc("my_campaign_trial");
   const trial = (Array.isArray(trialRows) ? trialRows[0] : null) as { state: string; expires_at: string; has_paid_subscription: boolean } | null;
@@ -143,10 +154,16 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   const missing = [!biz?.company_name && "company name", !biz?.logo_path && "logo", !(biz?.phone || biz?.email) && "phone or email", !biz?.address && "business address"]
     .filter((x): x is string => Boolean(x));
 
+  const rawDismissed = (await cookies()).get(PROFILE_REMINDER_COOKIE)?.value;
+  const reminderDismissed = rawDismissed ? decodeURIComponent(rawDismissed) : null;
+
+  // V4.3 "Newly approved — needs review" (same queue as Projects; null before the SQL runs).
+  const [reviewQueue, pmAccess] = isPmEnabled() ? await Promise.all([loadReviewQueue(supabase), loadPmAccess(supabase)]) : [null, null];
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
+          {gift && <p className="text-sm font-semibold text-accent-ink">{biz?.company_name ? `Welcome back, ${biz.company_name}` : "Let's build your next professional bid"}</p>}
           <h1 className="text-3xl font-extrabold text-navy">Your bids</h1>
           <p className="text-ink-soft">{biz?.company_name ? biz.company_name : <Link href="/settings/company" className="text-accent-ink underline">Set up your company profile</Link>}</p>
         </div>
@@ -155,14 +172,21 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
           <ButtonLink href="/bids" variant="accent" className="hidden md:inline-flex">Create New Bid</ButtonLink>
         </div>
       </div>
+      {gift && (
+        <Card className="flex flex-wrap items-center justify-between gap-3 p-4" data-testid="gift-banner">
+          <p className="text-sm">Complimentary Unlimited from <span className="font-semibold">{gift.channel_name ?? gift.workspace_name}</span>{gift.expires_at ? ` through ${new Date(gift.expires_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "America/Chicago" })}` : ""}. No payment needed.</p>
+          <div className="flex gap-3 text-sm font-semibold"><Link href="/welcome" className="underline">Branding setup</Link><Link href="/mentorship" className="underline">Mentorship</Link></div>
+        </Card>
+      )}
       {trial && !trial.has_paid_subscription && (trial.state === "active" || trial.state === "expired") && <TrialBanner state={trial.state} expiresAt={trial.expires_at} />}
       <WhatsNewNotice />
       <LocalDraftsBanner />
       {esign && <RefreshOnFocus />}
       {esign && recentSigned.length > 0 && <RecentlySigned bids={recentSigned} days={RECENT_SIGNED_DAYS} />}
+      {reviewQueue && reviewQueue.length > 0 && <ReviewQueue items={reviewQueue} canSchedule={Boolean(pmAccess?.canEdit)} compact max={5} />}
       {ests.length === 0 && <FirstBidStart companyName={biz?.company_name?.trim() || null} />}
       {checklist && <ActivationChecklist steps={checklist} />}
-      {!checklist && ests.length > 0 && <ProfileReminder missing={missing} />}
+      {!checklist && ests.length > 0 && <ProfileReminder missing={missing} dismissedSignature={reminderDismissed} />}
       <BidsWorkspace bids={board} history={history} esign={esign} pay={pay} paySaved={Boolean(payRow)} migrated={migrated} initialView={initialView} initialFocus={isFocus(sp.focus) ? sp.focus : null} initialRange={isRange(sp.range) ? sp.range : undefined} table={<BidList rows={rows} />} />
       <div className="grid gap-4 lg:grid-cols-3">
         {credits && <CreditBalances credits={credits} className="lg:col-span-2" showUpgrade={false} enterprise={enterprise} />}

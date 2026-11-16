@@ -87,7 +87,8 @@ describe("unlocked features modal", () => {
   });
   it("an existing paying account is told only about premium features from the latest release", () => {
     const s = initialState(PAID, "2026-06-01T00:00:00Z");
-    expect(newlyUnlocked(s, PAID).map((f) => f.id)).toEqual(["internal_report"]);
+    const latestPremium = FEATURES.filter((f) => f.entitlement === "unlimited" && f.status === "released" && f.release === LATEST_RELEASE.version).map((f) => f.id);
+    expect(newlyUnlocked(s, PAID).map((f) => f.id)).toEqual(latestPremium);
   });
   it("never lists features the account doesn't have", () => {
     expect(newlyUnlocked(st(), FREE)).toEqual([]);

@@ -20,6 +20,7 @@ import { QuantityCalculator } from "./calculators/quantity-calculator";
 import { orderedSections, sectionTrade, tradeBlocks, tradeTotals, type TradeBlock, type TradeTotals } from "@/lib/estimate/trades";
 import { TradeIcon } from "../trade-icon";
 import { AddTradeSelect, useTradeRemoval } from "./trade-controls";
+import { SubQuoteBadge, SubQuotePanel } from "./sub-quote-panel";
 
 type Lib = SavedItemsUi;
 
@@ -268,19 +269,21 @@ function GroupCard(props: {
   const projectTotalMode = estimate.displayMode === "project_total";
   const panelId = `gp-${g.id}`;
   const sectionName = g.name || "untitled section";
+  // Fade the rows in only when the contractor opens the section, not on page load.
+  const [userToggled, setUserToggled] = useState(false);
 
   return (
     <section className="rounded-xl border border-line bg-surface shadow-card" aria-label={`Section ${g.name || "untitled"}`}>
       <header className={cn("flex flex-wrap items-center gap-x-2 gap-y-1 px-2 py-2 sm:px-3", open && "border-b border-line")}>
         <button
           type="button"
-          onClick={props.onToggle}
+          onClick={() => { setUserToggled(true); props.onToggle(); }}
           aria-expanded={open}
           aria-controls={panelId}
           aria-label={`${open ? "Collapse" : "Expand"} ${sectionName}`}
           className="grid h-11 w-11 shrink-0 place-items-center rounded-md text-ink-soft hover:bg-black/5 md:h-9 md:w-9"
         >
-          {open ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
+          <ChevronRight className={cn("h-5 w-5 transition-transform duration-(--motion-base) ease-brand-out", open && "rotate-90")} aria-hidden />
         </button>
         <label className="sr-only" htmlFor={`g-${g.id}`}>Section name</label>
         <input
@@ -303,7 +306,7 @@ function GroupCard(props: {
       </header>
 
       {open && (
-        <div id={panelId}>
+        <div id={panelId} className={userToggled ? "motion-reveal" : undefined}>
           <div className="flex flex-wrap items-center gap-2 border-b border-line bg-paper/60 px-3 py-2 text-xs sm:px-4">
             <label htmlFor={`gv-${g.id}`} className="font-semibold text-ink-soft">Customer sees:</label>
             <select
@@ -393,18 +396,19 @@ function TradeSection({ block: b, index, count, sums, open, onToggle, hasIssues,
 }) {
   const panelId = `trade-${b.trade}`;
   const icon = getTrade(b.trade)?.icon ?? "Hammer";
+  const [userToggled, setUserToggled] = useState(false);
   return (
     <section className="rounded-2xl border border-line-strong bg-paper/60" aria-label={`${b.name} trade`}>
       <header className={cn("flex flex-wrap items-center gap-x-2 gap-y-1 px-2 py-2 sm:px-3", open && "border-b border-line")}>
         <button
           type="button"
-          onClick={onToggle}
+          onClick={() => { setUserToggled(true); onToggle(); }}
           aria-expanded={open}
           aria-controls={panelId}
           aria-label={`${open ? "Collapse" : "Expand"} ${b.name} trade`}
           className="grid h-11 w-11 shrink-0 place-items-center rounded-md text-ink-soft hover:bg-black/5 md:h-9 md:w-9"
         >
-          {open ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
+          <ChevronRight className={cn("h-5 w-5 transition-transform duration-(--motion-base) ease-brand-out", open && "rotate-90")} aria-hidden />
         </button>
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-tint text-brand" aria-hidden><TradeIcon name={icon} className="h-5 w-5" /></span>
         <div className="min-w-0 flex-1 basis-40">
@@ -438,7 +442,7 @@ function TradeSection({ block: b, index, count, sums, open, onToggle, hasIssues,
         </Dropdown.Root>
       </header>
       {open && (
-        <div id={panelId} className="space-y-3 p-2 sm:p-3">
+        <div id={panelId} className={cn("space-y-3 p-2 sm:p-3", userToggled && "motion-reveal")}>
           {children}
           {b.groups.length === 0 && <p className="px-1 text-sm text-muted">No sections yet for {b.name}.</p>}
           <Button size="sm" variant="secondary" onClick={() => dispatch({ type: "addGroup", trade: b.trade })}><Plus className="h-4 w-4" /> Add section to {b.name}</Button>
@@ -648,6 +652,7 @@ function ItemRow({ item: it, isLast, totals, estimate, dispatch, selected, toggl
             {it.treatment === "pass_through" && <span className="rounded bg-brand-tint px-1 text-[10px] font-semibold text-brand">at cost</span>}
             {!it.showOnProposal && <span className="rounded bg-black/5 px-1 text-[10px] font-semibold text-muted">hidden from customer</span>}
             {!it.taxable && <span className="rounded bg-black/5 px-1 text-[10px] font-semibold text-muted">non-taxable</span>}
+            <SubQuoteBadge itemId={it.id} />
           </div>
         </td>
         <td className="px-1 max-md:col-span-4 max-md:p-0">
@@ -744,6 +749,7 @@ function ItemRow({ item: it, isLast, totals, estimate, dispatch, selected, toggl
                 {t.appliedRule ? `Priced at ${t.appliedRule.percent}% ${t.appliedRule.mode}${it.pricingOverride ? " (item override)" : ""}.` : "Billed at cost."} Gross profit on this line: <span className="tabular font-semibold">{formatCurrency(t.grossProfit)}</span>
               </p>
             )}
+            <SubQuotePanel itemId={it.id} itemName={it.name} lineCost={t ? t.extendedCost.toFixed(2) : "0"} />
           </td>
         </tr>
       )}

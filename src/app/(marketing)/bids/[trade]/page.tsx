@@ -117,7 +117,7 @@ export default async function TradePage({ params }: PageProps<"/bids/[trade]">) 
               <div>
                 <h2 className="text-2xl font-extrabold">See Built2Bid in action</h2>
                 <p className="mt-2 text-ink-soft">A short walkthrough of building an estimate and sending the proposal. Captions are on.</p>
-                <video className="mt-5 aspect-video w-full rounded-lg border border-line bg-black" controls preload="none" playsInline poster="/media/meet-built2bid-poster.jpg" data-testid="demo-video">
+                <video className="mt-5 aspect-video w-full rounded-lg border border-line bg-black" controls preload="none" playsInline poster="/media/meet-built2bid-poster.webp" data-testid="demo-video">
                   <source src="/media/meet-built2bid-v1.mp4" type="video/mp4" />
                 </video>
 

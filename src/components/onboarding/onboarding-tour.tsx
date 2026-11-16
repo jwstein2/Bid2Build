@@ -182,7 +182,7 @@ function WelcomeVideo({ videoRef }: { videoRef: React.RefObject<HTMLVideoElement
         >
           <span className="flex items-center gap-2.5 rounded-full bg-accent py-2.5 pl-3 pr-4 font-display font-bold text-navy shadow-lg ring-4 ring-white/30 transition group-hover:scale-105">
             <span className="grid h-8 w-8 place-items-center rounded-full bg-navy text-accent"><Play className="ml-0.5 h-4 w-4" fill="currentColor" aria-hidden /></span>
-            Play video <span className="font-semibold text-navy/70">{WELCOME_VIDEO.duration}</span>
+            Play video <span className="font-semibold text-navy">{WELCOME_VIDEO.duration}</span>
           </span>
         </button>
       )}

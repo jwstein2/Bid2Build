@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type Dispatch, type ReactNode } from "reac
 import type { Estimate, EstimateGroup, LineItem } from "@/lib/estimate/types";
 import { UNIT_ABBR, getTrade, parseTemplateItem, type TemplateItem } from "@/lib/trades/catalog";
 import { sectionTrade } from "@/lib/estimate/trades";
-import { lineContext, lineFromSaved, matchesQuery, type SavedItem } from "@/lib/library/saved-items";
+import { frequentItems, lineContext, lineFromSaved, matchesQuery, type SavedItem } from "@/lib/library/saved-items";
 import { cn } from "@/lib/cn";
 import { Button } from "../ui/button";
 import { Modal } from "./dialogs";
@@ -105,7 +105,7 @@ export type SavedItemsUi = ReturnType<typeof useSavedItemsUi>;
 function rankFor(items: SavedItem[], trade: string, section: string): SavedItem[] {
   const sec = section.trim().toLowerCase();
   const score = (i: SavedItem) => (i.trade === trade ? 0 : i.trade ? 2 : 1) * 2 + ((i.category ?? "").trim().toLowerCase() === sec ? 0 : 1);
-  return [...items].sort((a, b) => score(a) - score(b) || a.name.localeCompare(b.name));
+  return [...items].sort((a, b) => score(a) - score(b) || (b.uses ?? 0) - (a.uses ?? 0) || a.name.localeCompare(b.name));
 }
 
 /** "Suggested & Saved Items" picker under each section: Saved Stacks, Saved Items (premium) and Suggested Items. */
@@ -127,7 +127,8 @@ export function SavedItemsPicker({ group, estimate, suggestions, lib, dispatch }
   const has = (name: string) => inSection.has(name.trim().toLowerCase());
   const trade = sectionTrade(estimate, group);
   const sug = suggestions.filter((x) => !s || x.name.toLowerCase().includes(s)).slice(0, 20);
-  const saved = rankFor(lib.items.filter((x) => matchesQuery(x, q)), trade, group.name).slice(0, s ? 30 : 12);
+  const frequent = s ? [] : frequentItems(lib.items.filter((x) => !x.trade || x.trade === trade), 5);
+  const saved = rankFor(lib.items.filter((x) => matchesQuery(x, q) && !frequent.includes(x)), trade, group.name).slice(0, s ? 30 : 12);
   const stacks = lib.stacks.filter((x) => !s || x.name.toLowerCase().includes(s)).slice(0, 8);
   const custom = s && ![...sug, ...saved].some((x) => x.name.toLowerCase() === s) ? parseTemplateItem(q.trim()) : null;
   const heading = "px-2 pt-2 text-[11px] font-bold uppercase tracking-wider text-muted";
@@ -152,8 +153,10 @@ export function SavedItemsPicker({ group, estimate, suggestions, lib, dispatch }
                     <span className="shrink-0 text-xs text-muted">{a.items.length} items</span>
                   </button>
                 ))}
+                {frequent.length > 0 && <p className={heading}>Frequently used</p>}
+                {frequent.map((f) => <PickRow key={`fq-${f.id}`} name={f.name} added={has(f.name)} meta={`${rateLabel(f)} · used ${f.uses}×`} onPick={() => dispatch({ type: "addItem", groupId: group.id, from: lineFromSaved(f) })} />)}
                 <p className={heading}>Saved Items</p>
-                {!saved.length && <p className="px-2 py-1.5 text-xs text-muted">{lib.items.length ? "No saved items match." : "None yet. Use ⋯ → Save Item on any row."}</p>}
+                {!saved.length && !frequent.length && <p className="px-2 py-1.5 text-xs text-muted">{lib.items.length ? "No saved items match." : "None yet. Use ⋯ → Save Item on any row."}</p>}
                 {saved.map((f) => (
                   <div key={f.id} className="group/saved flex items-center gap-1">
                     <div className="min-w-0 flex-1">

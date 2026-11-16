@@ -95,6 +95,8 @@ export function scheduleDbError(e: { message?: string; code?: string; details?: 
   if (m.includes("schedule_exists")) return { status: 409, code: "schedule_exists", message: "This bid already has a schedule.", existingId: e?.details };
   if (m.includes("not_accepted")) return { status: 409, code: "not_accepted", message: "This bid hasn't been accepted yet. Schedule it as provisional, or mark it Won first." };
   if (m.includes("stale_revision")) return { status: 409, code: "stale_revision", message: "Someone else changed this schedule. Reload to see the latest version.", revision: Number(e?.details) || undefined };
+  if (m.includes("forbidden_live_edit")) return { status: 403, code: "forbidden_live_edit", message: "Your company role can't change dates on a live schedule." };
+  if (m.includes("forbidden_confirm")) return { status: 403, code: "forbidden_confirm", message: "Your company role can't confirm task completion." };
   if (m.includes("forbidden_progress")) return { status: 403, code: "forbidden_progress", message: "Your company role can't update progress on this schedule." };
   if (m.includes("forbidden_dependencies")) return { status: 403, code: "forbidden_dependencies", message: "Your company role can't change task dependencies." };
   if (m.includes("forbidden_edit")) return { status: 403, code: "forbidden_edit", message: "Your company role can update progress here but can't change dates or tasks." };

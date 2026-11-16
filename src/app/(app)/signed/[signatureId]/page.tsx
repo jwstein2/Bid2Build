@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CalendarRange, CheckCircle2, FileJson } from "lucide-react";
+import { CalendarRange, CheckCircle2, FileJson } from "lucide-react";
 import { isPmEnabled } from "@/lib/env";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { isEsignEnabled } from "@/lib/esign/config";
@@ -40,7 +41,7 @@ export default async function SignedProposalPage({ params }: PageProps<"/signed/
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
-      <Link href="/dashboard" className="inline-flex min-h-10 items-center gap-1 text-sm font-semibold text-ink-soft hover:text-navy"><ArrowLeft className="h-4 w-4" aria-hidden /> Back to your bids</Link>
+      <Breadcrumbs items={[{ label: "Signed proposal" }]} />
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
           <Badge tone="ok" className="gap-1"><CheckCircle2 className="h-3.5 w-3.5" aria-hidden /> Signed</Badge>

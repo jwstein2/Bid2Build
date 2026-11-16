@@ -1,7 +1,7 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { AlertTriangle, ArrowLeft, CalendarRange, History, List, MoveHorizontal, RefreshCw, Send, Undo2, GanttChart } from "lucide-react";
+import { AlertTriangle, CalendarRange, History, List, MoveHorizontal, RefreshCw, Send, Undo2, GanttChart } from "lucide-react";
 import { Modal } from "@/components/builder/dialogs";
 import { Button } from "@/components/ui/button";
 import { Badge, Notice } from "@/components/ui/misc";
@@ -17,6 +17,7 @@ import { Gantt, type GanttRow, type Zoom } from "./gantt";
 import { TaskDialog } from "./task-dialog";
 import { PublicationHistory } from "./published-update";
 import type { Publication } from "@/lib/schedule/publications";
+import { liveDateChanges, type LiveChange } from "@/lib/operations/live-schedule";
 
 type UndoEntry = { tasks: Task[]; deps: Dep[]; summary: string };
 type SaveMeta = Partial<Pick<ScheduleMeta, "status" | "progressMethod" | "targetEndDate">>;
@@ -35,6 +36,15 @@ export function ScheduleEditor({ initial, tradeLabels, editHint, created, public
   const [shiftFor, setShiftFor] = useState<string | null>(null);
   const [panel, setPanel] = useState<"progress" | "history" | "updates" | null>(null);
   const [highlight, setHighlight] = useState<string | null>(null);
+  // V4.3: a date change on a LIVE (active) schedule waits here for one explicit confirmation.
+  const [pendingLive, setPendingLive] = useState<{ tasks: Task[]; deps: Dep[]; summary: string; meta?: SaveMeta; changes: LiveChange[] } | null>(null);
+  const [confirmPublish, setConfirmPublish] = useState(false);
+  // Deep link from a task review notice: /projects/<id>?task=<taskId> opens that task.
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("task");
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time ?task= deep link read from the URL after mount
+    if (id && initial.tasks.some((t) => t.id === id)) { setOpen(id); setHighlight(id); }
+  }, [initial.tasks]);
 
   const { schedule: meta, tasks, deps, snapshot, permissions: perms } = data;
   // Phase 9: each control follows its own permission; the server enforces the same split.
@@ -61,14 +71,18 @@ export function ScheduleEditor({ initial, tradeLabels, editHint, created, public
     return out;
   }, [tasks, collapsed, snapshot, multiTrade, tradeLabels, meta.progressMethod]);
 
-  async function commit(nextTasks: Task[], nextDeps: Dep[], summary: string, scheduleMeta?: SaveMeta, isUndo = false) {
+  async function commit(nextTasks: Task[], nextDeps: Dep[], summary: string, scheduleMeta?: SaveMeta, isUndo = false, confirmed = false) {
     if (!canEdit) return;
+    if (!confirmed && meta.status === "active") {
+      const changes = liveDateChanges(tasks, nextTasks, deps);
+      if (changes.length) { setPendingLive({ tasks: nextTasks, deps: nextDeps, summary, meta: scheduleMeta, changes }); return; }
+    }
     const prev = data;
     setData({ ...data, tasks: nextTasks, deps: nextDeps, schedule: { ...meta, ...scheduleMeta } });
     setSaving(true); setError(null);
     const r = await api<{ revision: number; schedule?: ScheduleData; unchanged?: boolean }>(`/api/schedules/${meta.id}`, {
       method: "PATCH",
-      body: JSON.stringify({ baseRevision: meta.revision, summary, tasks: nextTasks, deps: nextDeps, ...(scheduleMeta ? { schedule: scheduleMeta } : {}) }),
+      body: JSON.stringify({ baseRevision: meta.revision, summary, tasks: nextTasks, deps: nextDeps, ...(scheduleMeta ? { schedule: scheduleMeta } : {}), ...(confirmed ? { confirmLive: true } : {}) }),
     });
     setSaving(false);
     if (!r.ok) { setData(prev); setError({ message: r.message, stale: r.code === "stale_revision" }); return; }
@@ -104,8 +118,7 @@ export function ScheduleEditor({ initial, tradeLabels, editHint, created, public
   return (
     <div className="space-y-4" data-testid="schedule-editor">
       <div>
-        <Link href="/projects" className="inline-flex items-center gap-1 text-sm font-semibold text-accent-ink hover:underline"><ArrowLeft className="h-4 w-4" aria-hidden /> Projects</Link>
-        <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
+        <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <h1 className="flex flex-wrap items-center gap-2 text-2xl font-extrabold text-navy sm:text-3xl"><CalendarRange className="h-7 w-7 text-accent-ink" aria-hidden />{meta.name}</h1>
             <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-ink-soft">
@@ -119,7 +132,7 @@ export function ScheduleEditor({ initial, tradeLabels, editHint, created, public
           {(perms.publish || perms.progress) && (
             <div className="flex flex-wrap gap-2">
               {perms.publish && <Link href={`/projects/${meta.id}/update`} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-navy px-3 text-sm font-semibold text-white hover:bg-navy/90" data-testid="customer-update"><Send className="h-4 w-4" aria-hidden /> Preview customer update</Link>}
-              {perms.progress && meta.status === "draft" && <Button size="sm" variant="secondary" onClick={() => commit(tasks, deps, "Marked the schedule active", { status: "active" })}>Mark active</Button>}
+              {perms.progress && meta.status === "draft" && <Button size="sm" variant="accent" onClick={() => setConfirmPublish(true)} data-testid="publish-schedule">Publish as active schedule</Button>}
               {perms.progress && meta.status === "active" && <Button size="sm" variant="secondary" onClick={() => commit(tasks, deps, "Marked the project completed", { status: "completed" })}>Mark project completed</Button>}
               {perms.progress && meta.status === "completed" && <Button size="sm" variant="secondary" onClick={() => commit(tasks, deps, "Reopened the project", { status: "active" })}>Reopen</Button>}
             </div>
@@ -248,6 +261,44 @@ export function ScheduleEditor({ initial, tradeLabels, editHint, created, public
         {perms.edit && <>Drag a bar to move it, or drag its ends to change dates. Keyboard: Tab to a bar, arrow keys move it a day, Shift + arrow keys change its finish, Enter edits.{" "}</>}
         Work week: {cal.workdays.map((d) => ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d]).join(", ")}{cal.holidays.length ? ` · ${cal.holidays.length} non-working date${cal.holidays.length === 1 ? "" : "s"}` : ""} · {cal.timezone.replace("_", " ")}
       </p>
+
+      <Modal open={confirmPublish} onOpenChange={setConfirmPublish} title="Publish this schedule?" description="It becomes the project's active schedule.">
+        <ul className="list-disc space-y-1 pl-5 text-sm text-ink-soft">
+          <li>The project moves to <strong>Scheduled</strong> everywhere (Bids, Projects and the pipeline). In Progress and Completed projects stay where they are.</li>
+          <li>From now on, date changes ask for confirmation and are recorded in the activity log.</li>
+          <li>Your customer is <strong>not</strong> notified. Customer updates still go through Preview customer update.</li>
+        </ul>
+        <div className="mt-5 flex justify-end gap-2">
+          <Button variant="secondary" onClick={() => setConfirmPublish(false)}>Cancel</Button>
+          <Button variant="accent" onClick={() => { setConfirmPublish(false); void commit(tasks, deps, "Published as the active schedule", { status: "active" }); }} data-testid="confirm-publish">Publish schedule</Button>
+        </div>
+      </Modal>
+
+      <Modal open={pendingLive !== null} onOpenChange={(o) => { if (!o) setPendingLive(null); }} title="Confirm schedule change" description={`${meta.name} is a live schedule.`}>
+        {pendingLive && (
+          <div className="space-y-3 text-sm" data-testid="live-confirm">
+            <p className="text-ink-soft">{pendingLive.summary}</p>
+            <table className="w-full">
+              <thead><tr className="text-left text-xs uppercase tracking-wider text-muted"><th className="py-1">Task</th><th>Previous</th><th>Proposed</th></tr></thead>
+              <tbody>
+                {pendingLive.changes.map((c) => (
+                  <tr key={c.taskId} className="border-t border-line align-top">
+                    <td className="py-1.5 pr-2 font-semibold">{c.name}{c.downstream && <span className="block text-[11px] font-normal text-muted">Downstream task</span>}</td>
+                    <td className="py-1.5 pr-2 text-ink-soft">{formatRange(c.from.start, c.from.end)}</td>
+                    <td className="py-1.5 font-semibold">{formatRange(c.to.start, c.to.end)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {pendingLive.changes.some((c) => c.downstream) ? <p className="text-xs text-muted">Tasks marked downstream move because they depend on the changed task.</p> : null}
+            <p className="text-xs text-muted">The change is recorded in the project activity. Your customer isn&apos;t emailed.</p>
+            <div className="flex justify-end gap-2">
+              <Button variant="secondary" onClick={() => setPendingLive(null)}>Cancel</Button>
+              <Button onClick={() => { const p = pendingLive; setPendingLive(null); void commit(p.tasks, p.deps, p.summary, p.meta, false, true); }} data-testid="confirm-live-change">Confirm Schedule Change</Button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       {openTask && (
         <TaskDialog key={openTask.id} task={openTask} tasks={tasks} deps={deps} cal={cal} today={today} perms={perms} onClose={() => setOpen(null)}

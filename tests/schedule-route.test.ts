@@ -35,8 +35,9 @@ const chain = (data: unknown) => {
   c.then = (r: (v: unknown) => void) => r({ data, error: null });
   return c;
 };
+let review: null | { status: string } = null;
 const supabase = {
-  from: (t: string) => chain(t === "estimates" ? { id: EID, title: "Kitchen", pipeline_stage: "won" } : t === "estimate_groups" ? [{ id: G1, name: "Framing", sort_order: 0 }, { id: G2, name: "Flooring", sort_order: 1 }] : null),
+  from: (t: string) => chain(t === "project_reviews" ? review : t === "estimates" ? { id: EID, title: "Kitchen", pipeline_stage: "won" } : t === "estimate_groups" ? [{ id: G1, name: "Framing", sort_order: 0 }, { id: G2, name: "Flooring", sort_order: 1 }] : null),
   rpc: async (name: string, args: Record<string, unknown>) => {
     S.calls.push({ name, args });
     if (name === "schedule_get") return { data: schedule(), error: null };
@@ -135,7 +136,27 @@ describe("schedule create API", () => {
     const p = S.calls.find((c) => c.name === "schedule_create")!.args.p as { startDate: string; tasks: { plannedStart: string; plannedEnd: string }[] };
     expect(p.startDate).toBe("2026-11-16");
     expect(p.tasks.map((t) => [t.plannedStart, t.plannedEnd])).toEqual([["2026-11-16", "2026-11-19"], ["2026-11-19", "2026-11-23"]]);
-    expect(S.calls.some((c) => c.name === "set_estimate_stage" && c.args.p_stage === "scheduled")).toBe(true);
+    // V4.3: a draft never moves the bid to Scheduled; only publishing the active schedule does.
+    expect(S.calls.some((c) => c.name === "set_estimate_stage")).toBe(false);
+    expect(S.calls.some((c) => c.name === "schedule_save")).toBe(false);
+  });
+  it("V4.3: 'Save & publish' publishes the new schedule as active (the database trigger moves the stage)", async () => {
+    const r = await create({ publish: true });
+    expect(r.status).toBe(201);
+    expect((await r.json()).published).toBe(true);
+    const save = S.calls.find((c) => c.name === "schedule_save")!;
+    expect((save.args.p as { schedule: { status: string } }).schedule.status).toBe("active");
+  });
+  it("V4.3: a newly approved job must be marked reviewed before it is scheduled", async () => {
+    review = { status: "needs_review" };
+    let r = await create({});
+    expect(r.status).toBe(409);
+    expect((await r.json()).error.code).toBe("needs_review");
+    expect(S.calls.some((c) => c.name === "schedule_create")).toBe(false);
+    r = await create({ markReviewed: true });
+    expect(r.status).toBe(201);
+    expect(S.calls.some((c) => c.name === "project_mark_reviewed")).toBe(true);
+    review = null;
   });
   it("refuses sections that aren't on the bid and dependency loops", async () => {
     expect((await create({ sections: [{ sourceGroupId: "66666666-6666-4666-8666-666666666666", durationDays: 1, sortOrder: 0 }], deps: [] })).status).toBe(400);

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { REVEAL_FEATURE_EVENT } from "@/lib/features/state";
-import { Sparkles, CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, Plug, LayoutTemplate, LogOut, X, UserCog, Receipt, Gauge, SquareKanban, CalendarRange } from "lucide-react";
+import { Sparkles, CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, Plug, LayoutTemplate, LogOut, X, UserCog, Receipt, Gauge, SquareKanban, CalendarRange, GraduationCap, Palette } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ButtonLink } from "@/components/ui/button";
 import { Logo } from "./logo";
@@ -34,15 +34,18 @@ const item = "flex min-h-11 items-center gap-2.5 whitespace-nowrap rounded-md px
  * (logo, New bid, Menu) whose menu opens the same list, so content starts near the top of the screen.
  */
 /** Enterprise company links, chosen on the server from the member's permissions. */
-export type CompanyHref = "/company" | "/company/pipeline" | "/company/users" | "/company/billing";
+export type CompanyHref = "/company" | "/company/pipeline" | "/company/users" | "/company/billing" | "/company/proposal-style";
 export type CompanyNav = { name: string; links: { href: CompanyHref; label: string }[] };
-const COMPANY_ICONS = { "/company": Gauge, "/company/pipeline": SquareKanban, "/company/users": UserCog, "/company/billing": Receipt } as const;
+const COMPANY_ICONS = { "/company": Gauge, "/company/pipeline": SquareKanban, "/company/users": UserCog, "/company/billing": Receipt, "/company/proposal-style": Palette } as const;
 const companyExact = (href: CompanyHref) => href === "/company";
+
+/** Invitation-only Creator Partner Program links (only rendered for creators / gifted participants). */
+export type LearningNav = { creator: boolean; participant: boolean };
 
 /** Projects (schedules) sit right below Bids when project scheduling is switched on. */
 const PROJECTS: NavItem = { href: "/projects", label: "Projects", icon: CalendarRange };
 
-export function AppSidebar({ isAdmin, email, company, projects = false, theme = null }: { isAdmin: boolean; email: string | null; company?: CompanyNav | null; projects?: boolean; theme?: ThemePref | null }) {
+export function AppSidebar({ isAdmin, email, company, projects = false, theme = null, learning }: { isAdmin: boolean; email: string | null; company?: CompanyNav | null; projects?: boolean; theme?: ThemePref | null; learning?: LearningNav | null }) {
   const nav: NavItem[] = projects ? [NAV[0], PROJECTS, ...NAV.slice(1)] : NAV;
   const path = usePathname();
   const [open, setOpen] = useState(false);
@@ -66,6 +69,16 @@ export function AppSidebar({ isAdmin, email, company, projects = false, theme = 
     window.addEventListener(REVEAL_FEATURE_EVENT, on);
     return () => window.removeEventListener(REVEAL_FEATURE_EVENT, on);
   }, []);
+  // Escape closes the phone menu and puts focus back on the Menu button.
+  const menuButton = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && window.matchMedia("(max-width: 767px)").matches) { setOpen(false); menuButton.current?.focus(); }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
   const active = (href: string, exact?: boolean) => (exact ? path === href : path === href || path.startsWith(`${href}/`));
   const current = nav.find((n) => active(n.href, n.exact)) ?? company?.links.find((l) => active(l.href, companyExact(l.href)));
   return (
@@ -76,6 +89,7 @@ export function AppSidebar({ isAdmin, email, company, projects = false, theme = 
           <ButtonLink href="/bids" variant="accent" size="sm" className="min-h-11 max-[380px]:px-2.5"><FileText className="h-4 w-4 max-[380px]:hidden" aria-hidden /> New bid</ButtonLink>
           <ThemeToggle signedIn account={theme} tone="dark" />
           <button
+            ref={menuButton}
             type="button"
             onClick={() => setOpen(!open)}
             aria-expanded={open}
@@ -89,7 +103,7 @@ export function AppSidebar({ isAdmin, email, company, projects = false, theme = 
       </div>
       <div className="hidden px-3 md:block"><ButtonLink href="/bids" variant="accent" className="w-full"><FileText className="h-4 w-4" aria-hidden /> Create New Bid</ButtonLink></div>
       {!open && current && <p className="flex items-center gap-1.5 px-4 pb-2 text-xs text-[#B8C6D4] md:hidden">{current.label}{"premium" in current && current.premium && <PremiumDiamond tone="dark" />}</p>}
-      <nav id="account-nav" aria-label="Account" className={cn("flex-col gap-1 px-2 pb-3 md:mt-4 md:flex", open ? "flex" : "hidden")}>
+      <nav id="account-nav" aria-label="Account" className={cn("flex-col gap-1 px-2 pb-3 md:mt-4 md:flex", open ? "flex max-md:motion-drop-in" : "hidden")}>
         {nav.map((n) => {
           const on = active(n.href, n.exact);
           return (
@@ -111,6 +125,20 @@ export function AppSidebar({ isAdmin, email, company, projects = false, theme = 
                 </Link>
               );
             })}
+          </>
+        )}
+        {learning && (learning.creator || learning.participant) && (
+          <>
+            {learning.creator && (
+              <Link href="/learning" aria-current={active("/learning") ? "page" : undefined} className={cn(item, active("/learning") ? "bg-white/10 text-white shadow-[inset_3px_0_0_var(--color-cyan)]" : "text-[#C9D6E3] hover:bg-white/5 hover:text-white")}>
+                <GraduationCap className={cn("h-4 w-4", active("/learning") ? "text-cyan" : "")} aria-hidden /> Learning Enterprise
+              </Link>
+            )}
+            {learning.participant && (
+              <Link href="/mentorship" aria-current={active("/mentorship") ? "page" : undefined} className={cn(item, active("/mentorship") ? "bg-white/10 text-white shadow-[inset_3px_0_0_var(--color-cyan)]" : "text-[#C9D6E3] hover:bg-white/5 hover:text-white")}>
+                <GraduationCap className={cn("h-4 w-4", active("/mentorship") ? "text-cyan" : "")} aria-hidden /> Mentorship
+              </Link>
+            )}
           </>
         )}
         <p className="mt-3 px-3 pb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#B8C6D4]">Help</p>

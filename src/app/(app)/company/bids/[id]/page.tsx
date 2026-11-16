@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { loadMyCompany } from "@/lib/enterprise/server";
@@ -37,7 +37,7 @@ export default async function BidReviewPage({ params }: PageProps<"/company/bids
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <Link href="/company/pipeline" className="text-sm font-semibold text-accent-ink underline">← Bids & Pipeline</Link>
+      <Breadcrumbs items={[{ label: "Bids & Pipeline", href: "/company/pipeline" }, { label: "Bid details" }]} />
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h1 className="break-words text-3xl font-extrabold">{r.title || "Untitled bid"}</h1>
