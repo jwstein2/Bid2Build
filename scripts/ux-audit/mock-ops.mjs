@@ -38,7 +38,7 @@ export function seedOps(team = []) {
 export const opsRpc = {
   project_review_queue: () => [200, [
     { estimateId: EST, status: "needs_review", approvalSource: "signature", approvedAt: iso(0.2), reviewedAt: null, reviewedBy: null, reviewNote: null, companyId: null, ownerId: U, title: "Siding replacement – Johnson residence", customerName: "Pat Johnson", number: "B-1004", trades: ["siding"], stage: "won", scheduleId: null, scheduleStatus: null, canReview: true },
-    { estimateId: "11111111-1111-4111-8111-111111111112", status: "reviewed", approvalSource: "manual", approvedAt: iso(3), reviewedAt: iso(2), reviewedBy: U, reviewNote: "Materials ordered", companyId: null, ownerId: U, title: "Deck rebuild – Lee", customerName: "Morgan Lee", number: "B-1003", trades: ["decks"], stage: "won", scheduleId: null, scheduleStatus: null, canReview: true },
+    { estimateId: "11111111-1111-4111-8111-111111111112", status: "reviewed", approvalSource: "manual", approvedAt: iso(3), reviewedAt: iso(2), reviewedBy: U, reviewNote: "Materials ordered", companyId: null, ownerId: U, title: "Deck rebuild – Lee", customerName: "Morgan Lee", number: "B-1003", trades: ["decks"], stage: "scheduled", scheduleId: null, scheduleStatus: null, canReview: true },
   ]],
   project_review_detail: () => [200, null],
   project_mark_reviewed: () => [200, null],
