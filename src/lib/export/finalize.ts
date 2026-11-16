@@ -1,6 +1,7 @@
 import "server-only";
 import { createHash } from "node:crypto";
 import { buildProposal } from "@/lib/proposal/build";
+import { maybeActivate, recordEvent } from "@/lib/growth/events";
 import { computeEstimate } from "@/lib/estimate/engine";
 import { contentHash, versionSnapshot } from "@/lib/export/snapshot";
 import { renderProposalPdf, pdfFilename } from "@/lib/pdf/render";
@@ -42,7 +43,7 @@ export const sha256 = (b: Buffer | string) => createHash("sha256").update(b).dig
  *  4. store the PDF privately
  * Returns a Response on refusal so routes can return it as-is.
  */
-export async function finalizeProposal(userId: string, id: string): Promise<FinalizeResult | Response> {
+export async function finalizeProposal(userId: string, id: string, userCreatedAt?: string | null): Promise<FinalizeResult | Response> {
   const supabase = await createClient();
   const data = await loadEstimate(supabase, id);
   if (!data) return fail(404, "not_found", "Save your estimate before exporting.");
@@ -110,7 +111,11 @@ export async function finalizeProposal(userId: string, id: string): Promise<Fina
   // Bids saved before address parsing existed may only have a typed address: derive the location for it.
   const located = { ...estimate, location: fillLocationFromAddress(estimate.location, estimate.customer.projectAddress) };
   await captureObservation(admin, userId, r.version_id, located, totals);
-  if (r.new_version) await admin.from("analytics_events").insert({ user_id: userId, event: "export_succeeded", trade: estimate.trades[0] ?? null });
+  if (r.new_version) {
+    // One event per finalized version (a re-download of the same version is not a new export).
+    await recordEvent(admin, { userId, event: "export_succeeded", eventId: `export_succeeded:${r.version_id}`, trade: estimate.trades[0] ?? null, estimateId: id });
+    await maybeActivate(admin, { id: userId, createdAt: userCreatedAt }, estimate.trades[0] ?? null);
+  }
 
   return { r, pdf, pdfHash: sha256(pdf), hash, doc, estimate, filename: pdfFilename(doc, r.version_number), storagePath, stored: !up.error };
 }

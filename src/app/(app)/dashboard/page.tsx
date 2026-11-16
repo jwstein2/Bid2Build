@@ -2,7 +2,7 @@ import { WhatsNewNotice } from "@/components/features/whats-new-notice";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { FileCheck2 } from "lucide-react";
-import { createClient, getUser } from "@/lib/supabase/server";
+import { createAdminClient, createClient, getUser } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/misc";
 import { ButtonLink } from "@/components/ui/button";
 import { BidList, type BidRow } from "./bid-list";
@@ -25,6 +25,9 @@ import { BidsWorkspace, type BidsView } from "@/components/pipeline/bids-workspa
 import { isStage, type BoardBid, type HistoryRow } from "@/lib/pipeline/board";
 import { DEFAULT_PAY, sanitizePay } from "@/lib/pipeline/sales-pay";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { CHECKLIST_DISMISSED_KEY, checklistSteps, isMeaningfulItem, MEANINGFUL_ITEMS, showChecklist, type ChecklistStep } from "@/lib/growth/activation";
+import { ActivationChecklist } from "@/components/growth/activation-checklist";
+import { FirstBidStart } from "@/components/growth/first-bid-start";
 
 const EST_COLS = "id, title, customer_name, trades, status, updated_at, estimate_number, created_at";
 
@@ -44,6 +47,30 @@ async function loadHistory(supabase: SupabaseClient, userId: string): Promise<Hi
   if (!a.error) return (a.data ?? []) as unknown as HistoryRow[];
   const b = await sel("estimate_id, from_stage, to_stage, created_at, note");
   return (b.data ?? []) as unknown as HistoryRow[];
+}
+
+/**
+ * First-bid checklist facts for this account, from what it actually did. Skips every extra query when
+ * the checklist was hidden or the account has already delivered a bid with a company name set.
+ */
+async function loadChecklist(supabase: SupabaseClient, userId: string, f: { companyName: boolean; estimateIds: string[]; latestEstimateId: string | null; delivered: boolean }): Promise<ChecklistStep[] | null> {
+  if (f.delivered && f.companyName) return null;
+  const { data: auth } = await supabase.auth.getUser();
+  if ((auth.user?.user_metadata as Record<string, unknown> | undefined)?.[CHECKLIST_DISMISSED_KEY]) return null;
+  let meaningfulEstimates = 0, previewed = false;
+  if (f.estimateIds.length && !f.delivered) {
+    const [{ data: items }, prev] = await Promise.all([
+      supabase.from("estimate_items").select("estimate_id, name, quantity, unit_cost").in("estimate_id", f.estimateIds.slice(0, 200)).limit(5000),
+      // analytics_events is service-role only; read just this account's own preview flag.
+      createAdminClient().from("analytics_events").select("id").eq("user_id", userId).eq("event", "preview_opened").limit(1).then((r) => r, () => ({ data: null })),
+    ]);
+    const per = new Map<string, number>();
+    for (const i of items ?? []) if (isMeaningfulItem({ name: i.name ?? "", quantity: String(i.quantity), unitCost: String(i.unit_cost) })) per.set(i.estimate_id, (per.get(i.estimate_id) ?? 0) + 1);
+    meaningfulEstimates = [...per.values()].filter((n) => n >= MEANINGFUL_ITEMS).length;
+    previewed = Boolean(prev.data?.length);
+  }
+  const steps = checklistSteps({ companyName: f.companyName, estimates: f.estimateIds.length, meaningfulEstimates, previewed, delivered: f.delivered, latestEstimateId: f.latestEstimateId });
+  return showChecklist(steps, false) ? steps : null;
 }
 
 export const metadata: Metadata = { title: "Dashboard", robots: { index: false } };
@@ -108,6 +135,10 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     signing: esign ? signing.get(e.id) ?? { state: "none", signed: null, latest: null } : null,
   }));
 
+  const ownIds = new Set(ests.map((e) => e.id));
+  const delivered = ests.some((e) => latest.has(e.id)) || (reqRows ?? []).some((r: { estimate_id: string }) => ownIds.has(r.estimate_id));
+  const checklist = ests.length === 0 ? null : await loadChecklist(supabase, user.id, { companyName: Boolean(biz?.company_name?.trim()), estimateIds: ests.map((e) => e.id), latestEstimateId: ests[0]?.id ?? null, delivered });
+
   // Details that make proposals look complete. None are required to create or export a bid.
   const missing = [!biz?.company_name && "company name", !biz?.logo_path && "logo", !(biz?.phone || biz?.email) && "phone or email", !biz?.address && "business address"]
     .filter((x): x is string => Boolean(x));
@@ -129,7 +160,9 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
       <LocalDraftsBanner />
       {esign && <RefreshOnFocus />}
       {esign && recentSigned.length > 0 && <RecentlySigned bids={recentSigned} days={RECENT_SIGNED_DAYS} />}
-      <ProfileReminder missing={missing} />
+      {ests.length === 0 && <FirstBidStart companyName={biz?.company_name?.trim() || null} />}
+      {checklist && <ActivationChecklist steps={checklist} />}
+      {!checklist && ests.length > 0 && <ProfileReminder missing={missing} />}
       <BidsWorkspace bids={board} history={history} esign={esign} pay={pay} paySaved={Boolean(payRow)} migrated={migrated} initialView={initialView} table={<BidList rows={rows} />} />
       <div className="grid gap-4 lg:grid-cols-3">
         {credits && <CreditBalances credits={credits} className="lg:col-span-2" showUpgrade={false} enterprise={enterprise} />}

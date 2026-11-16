@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { type Attribution, normalizeEmail } from "./attribution";
 import { blockEmail } from "./instantly";
 import { logError } from "../http/api";
+import { eventIds, recordEvent } from "./events";
 
 /**
  * Lead identity + lifecycle on top of public.leads / public.lead_events
@@ -82,7 +83,7 @@ export async function syncSignedInUser(db: Db, user: { id: string; email: string
     await setStage(db, lead, "signed_up");
     await db.from("lead_events").insert({ lead_id: lead.id, event: "signed_up", source: "app", dedupe_key: dedupeKey("signup", user.id) });
     // The implicit (fragment) sign-in flow never hits /auth/callback, so record the funnel event here.
-    await db.from("analytics_events").insert({ user_id: user.id, event: "account_created" });
+    await recordEvent(db, { userId: user.id, event: "account_created", eventId: eventIds.accountCreated(user.id) });
   } catch (e) {
     logError("growth.sync_user", e, { user: user.id });
   }

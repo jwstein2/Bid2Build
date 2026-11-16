@@ -53,6 +53,16 @@ An account that has finalized at least one bid.
 - **Refresh:** Live
 - **Limits:** Enterprise members are counted per login on account views and per company on usage views.
 
+## 7-day activation (added Nov 2026)
+
+An account that, within 7 days of signing up, saved an estimate with at least 3 meaningful line items, finalized (exported) a bid, or sent one for signature.
+
+- **Source:** estimate_items (counts only, via growth_meaningful_estimates), estimate_versions, signing_requests, analytics_events ‘bid_created’
+- **Rules:** Meaningful line item = named, quantity > 0 and unit cost > 0; example rows never count. Reported beside “Activated business”, which is unchanged.
+- **Window:** Signup cohort; first 7 days after signup
+- **Refresh:** Live
+- **Limits:** Bids saved before the bid_created event existed use their last update time (can only under-count). Compare the matured-cohort rate.
+
 ## Active business
 
 A business that started or finalized a bid, or sent a proposal for signature, in the window.
