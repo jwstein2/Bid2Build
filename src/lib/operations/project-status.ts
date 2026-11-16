@@ -14,9 +14,12 @@ export function jobStatus(input: { stage: string | null; reviewStatus?: "needs_r
   const { stage, reviewStatus, scheduleStatus } = input;
   if (stage === "completed" || scheduleStatus === "completed") return "completed";
   if (stage === "in_progress") return "in_progress";
-  if (scheduleStatus === "active" || stage === "scheduled") return "scheduled";
+  // "Scheduled" means an active schedule exists. When the caller knows the schedule (null = none, as
+  // in the review queue), a pipeline stage set to Scheduled by hand doesn't count: the job still
+  // needs a schedule. Only fall back to the stage when the schedule is unknown (undefined).
+  if (scheduleStatus === "active" || (stage === "scheduled" && scheduleStatus === undefined)) return "scheduled";
   if (reviewStatus === "needs_review") return "needs_review";
   if (scheduleStatus === "draft") return "draft_schedule";
-  if (stage === "won" || reviewStatus === "reviewed") return "ready_to_schedule";
+  if (stage === "won" || stage === "scheduled" || reviewStatus === "reviewed") return "ready_to_schedule";
   return null;
 }

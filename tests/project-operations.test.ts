@@ -139,6 +139,11 @@ describe("photo labels and job status", () => {
     expect(jobStatus({ stage: "in_progress", scheduleStatus: "active" })).toBe("in_progress");
     expect(jobStatus({ stage: "completed" })).toBe("completed");
     expect(jobStatus({ stage: "sent" })).toBeNull();
+    // Stage set to Scheduled by hand, but no schedule exists (review queue knows: null) → still needs one.
+    expect(jobStatus({ stage: "scheduled", reviewStatus: "reviewed", scheduleStatus: null })).toBe("ready_to_schedule");
+    expect(jobStatus({ stage: "scheduled", reviewStatus: "needs_review", scheduleStatus: null })).toBe("needs_review");
+    expect(jobStatus({ stage: "scheduled", reviewStatus: "reviewed", scheduleStatus: "draft" })).toBe("draft_schedule");
+    expect(jobStatus({ stage: "scheduled" })).toBe("scheduled");
   });
 });
 

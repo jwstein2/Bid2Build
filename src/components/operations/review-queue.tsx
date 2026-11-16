@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { formatCurrency } from "@/lib/estimate/money";
-import { JOB_STATUS_LABELS } from "@/lib/operations/project-status";
+import type { JobStatus } from "@/lib/operations/project-status";
 import type { QueueItem } from "@/lib/operations/queue-server";
 import { cn } from "@/lib/cn";
 import { Button, ButtonLink } from "../ui/button";
@@ -27,33 +27,41 @@ const day = (iso: string | null) => (iso ? new Intl.DateTimeFormat("en-US", { da
  * Scheduled. The same list on Bids, Projects and the PM dashboard; opening an item shows the review
  * screen in a drawer (no new page), with "Mark Reviewed & Schedule".
  */
+const ROW_LABEL: Partial<Record<JobStatus, string>> = { needs_review: "Needs review", ready_to_schedule: "Reviewed · ready to schedule", draft_schedule: "Reviewed · draft schedule" };
+
 export function ReviewQueue({ items, canSchedule, compact, max }: { items: QueueItem[]; canSchedule: boolean; compact?: boolean; max?: number }) {
   const [open, setOpen] = useState<QueueItem | null>(null);
-  const pending = items.filter((i) => i.status === "needs_review");
-  const shown = (compact ? pending : items).slice(0, max ?? 50);
-  if (!shown.length) return compact ? null : <p className="text-sm text-muted">Nothing waiting. Newly approved and signed jobs appear here for review before scheduling.</p>;
+  const pending = items.filter((i) => i.status === "needs_review").slice(0, max ?? 50);
+  // Reviewed jobs leave "needs review" and wait under "Ready to schedule" until an active schedule is saved.
+  const ready = compact ? [] : items.filter((i) => i.status !== "needs_review").slice(0, max ?? 50);
+  if (!pending.length && !ready.length) return compact ? null : <p className="text-sm text-muted">Nothing waiting. Newly approved and signed jobs appear here for review before scheduling.</p>;
+  const row = (i: QueueItem) => (
+    <li key={i.estimateId} className="flex flex-wrap items-center gap-3 px-4 py-3" data-testid="review-item">
+      <div className="min-w-0 flex-1">
+        <p className="font-semibold text-navy">{i.title || "Untitled bid"}</p>
+        <p className="text-sm text-ink-soft">{i.customerName || "—"}{i.number ? ` · #${i.number}` : ""} · {i.approvalSource === "signature" ? "Signed" : "Approved"} {day(i.approvedAt)}{i.reviewedAt ? ` · Reviewed ${day(i.reviewedAt)}` : ""}</p>
+      </div>
+      <span className={cn("rounded px-2 py-0.5 text-xs font-semibold", i.status === "needs_review" ? "bg-warn-tint text-warn" : "bg-ok-tint text-ok")} data-testid="review-status">{(i.jobStatus && ROW_LABEL[i.jobStatus]) ?? (i.status === "needs_review" ? "Needs review" : "Reviewed")}</span>
+      {i.status === "needs_review" ? <Button size="sm" onClick={() => setOpen(i)}>Review</Button>
+        : i.scheduleId ? <ButtonLink size="sm" variant="secondary" href={`/projects/${i.scheduleId}`}>Open draft</ButtonLink>
+        : canSchedule ? <ButtonLink size="sm" variant="accent" href={`/projects/new?estimate=${i.estimateId}`}>Schedule Now</ButtonLink>
+        : <Button size="sm" variant="ghost" onClick={() => setOpen(i)}>Details</Button>}
+    </li>
+  );
   return (
     <section aria-labelledby="review-q-h" className={cn("rounded-xl border bg-surface", pending.length ? "border-accent" : "border-line")} data-testid="review-queue">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3">
-        <h2 id="review-q-h" className="flex items-center gap-2 font-display text-lg font-extrabold text-navy"><ClipboardCheck className="h-5 w-5 text-accent-ink" aria-hidden /> Newly approved — needs review
+        <h2 id="review-q-h" className="flex items-center gap-2 font-display text-lg font-extrabold text-navy"><ClipboardCheck className="h-5 w-5 text-accent-ink" aria-hidden /> {pending.length || compact ? "Newly approved — needs review" : "Approved jobs — ready to schedule"}
           {pending.length > 0 && <span className="rounded-full bg-accent px-2 text-sm text-navy">{pending.length}</span>}</h2>
         {compact && <Link href="/projects#review" className="text-sm font-semibold text-brand underline">Open review queue</Link>}
       </div>
-      <ul className="divide-y divide-line">
-        {shown.map((i) => (
-          <li key={i.estimateId} className="flex flex-wrap items-center gap-3 px-4 py-3" data-testid="review-item">
-            <div className="min-w-0 flex-1">
-              <p className="font-semibold text-navy">{i.title || "Untitled bid"}</p>
-              <p className="text-sm text-ink-soft">{i.customerName || "—"}{i.number ? ` · #${i.number}` : ""} · {i.approvalSource === "signature" ? "Signed" : "Approved"} {day(i.approvedAt)}</p>
-            </div>
-            <span className={cn("rounded px-2 py-0.5 text-xs font-semibold", i.status === "needs_review" ? "bg-warn-tint text-warn" : "bg-ok-tint text-ok")}>{i.jobStatus ? JOB_STATUS_LABELS[i.jobStatus] : i.status}</span>
-            {i.status === "needs_review" ? <Button size="sm" onClick={() => setOpen(i)}>Review</Button>
-              : i.scheduleId ? <ButtonLink size="sm" variant="secondary" href={`/projects/${i.scheduleId}`}>Open draft</ButtonLink>
-              : canSchedule ? <ButtonLink size="sm" variant="accent" href={`/projects/new?estimate=${i.estimateId}`}>Schedule Now</ButtonLink>
-              : <Button size="sm" variant="ghost" onClick={() => setOpen(i)}>Details</Button>}
-          </li>
-        ))}
-      </ul>
+      {pending.length > 0 && <ul className="divide-y divide-line" aria-label="Needs review">{pending.map(row)}</ul>}
+      {ready.length > 0 && (
+        <>
+          {pending.length > 0 && <h3 className="border-y border-line bg-paper px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted">Reviewed — ready to schedule ({ready.length})</h3>}
+          <ul className="divide-y divide-line" aria-label="Ready to schedule" data-testid="ready-list">{ready.map(row)}</ul>
+        </>
+      )}
       {open && <ReviewDrawer item={open} canSchedule={canSchedule} onClose={() => setOpen(null)} />}
     </section>
   );
@@ -118,7 +126,7 @@ function ReviewDrawer({ item, canSchedule, onClose }: { item: QueueItem; canSche
                   <Button variant="secondary" onClick={() => void markReviewed(false)} disabled={busy}>Mark reviewed</Button>
                   {canSchedule && <Button variant="accent" onClick={() => void markReviewed(true)} disabled={busy} data-testid="mark-reviewed-schedule">{busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <CheckCircle2 className="h-4 w-4" aria-hidden />} Mark Reviewed &amp; Schedule</Button>}
                 </div>
-                <p className="mt-2 text-xs text-muted">Records you as the reviewer with the time. The customer isn&apos;t notified.</p>
+                <p className="mt-2 text-xs text-muted">Mark reviewed records you as the reviewer and moves the job to Ready to schedule. It shows as Scheduled only after you publish an active schedule. The customer isn&apos;t notified.</p>
               </section>
             ) : <p className="border-t border-line pt-3 text-xs text-muted">Your company role can view this job but can&apos;t mark it reviewed.</p>}
           </div>
