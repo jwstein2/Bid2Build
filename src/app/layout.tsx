@@ -7,6 +7,7 @@ import { OnboardingHost } from "@/components/onboarding/onboarding-host";
 import { GoogleAnalytics } from "@/components/analytics/google-analytics";
 import { gaMeasurementId } from "@/lib/seo/analytics";
 import { OG_IMAGE } from "@/lib/seo/open-graph";
+import { THEME_BOOT_SCRIPT } from "@/lib/theme";
 
 // Public ids, inlined at build time. Analytics runs only on the indexable production deploy.
 const gaId = deploy.allowIndexing ? gaMeasurementId(process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID) : null;
@@ -29,7 +30,12 @@ export const viewport: Viewport = { themeColor: "#0b2d4d", width: "device-width"
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className="h-full antialiased">
+    // suppressHydrationWarning: the boot script may set data-theme on <html> before React hydrates.
+    <html lang="en" className="h-full antialiased" suppressHydrationWarning>
+      <head>
+        {/* Applies a saved Dark Mode choice before the first paint (no bright flash). */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
+      </head>
       <body className="flex min-h-full flex-col">
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-surface focus:px-3 focus:py-2">Skip to content</a>
         {children}

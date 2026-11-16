@@ -10,6 +10,8 @@ import { PremiumDiamond } from "../billing/premium";
 import { ReplayTourButton } from "../onboarding/replay-tour-button";
 import { FeatureTourButton } from "../features/tour-buttons";
 import type { FeatureId } from "@/lib/features/registry";
+import type { ThemePref } from "@/lib/theme";
+import { ThemeToggle } from "../theme/theme-toggle";
 
 type NavItem = { href: string; label: string; icon: typeof Library; exact?: boolean; premium?: boolean; feature?: FeatureId };
 const NAV: NavItem[] = [
@@ -39,7 +41,7 @@ const companyExact = (href: CompanyHref) => href === "/company";
 /** Projects (schedules) sit right below Bids when project scheduling is switched on. */
 const PROJECTS: NavItem = { href: "/projects", label: "Projects", icon: CalendarRange };
 
-export function AppSidebar({ isAdmin, email, company, projects = false }: { isAdmin: boolean; email: string | null; company?: CompanyNav | null; projects?: boolean }) {
+export function AppSidebar({ isAdmin, email, company, projects = false, theme = null }: { isAdmin: boolean; email: string | null; company?: CompanyNav | null; projects?: boolean; theme?: ThemePref | null }) {
   const nav: NavItem[] = projects ? [NAV[0], PROJECTS, ...NAV.slice(1)] : NAV;
   const path = usePathname();
   const [open, setOpen] = useState(false);
@@ -53,6 +55,7 @@ export function AppSidebar({ isAdmin, email, company, projects = false }: { isAd
         <Logo tone="dark" href="/dashboard" />
         <div className="flex items-center gap-1 md:hidden">
           <ButtonLink href="/bids" variant="accent" size="sm" className="min-h-11 max-[380px]:px-2.5"><FileText className="h-4 w-4 max-[380px]:hidden" aria-hidden /> New bid</ButtonLink>
+          <ThemeToggle signedIn account={theme} tone="dark" />
           <button
             type="button"
             onClick={() => setOpen(!open)}
