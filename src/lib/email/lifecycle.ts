@@ -204,6 +204,7 @@ export function renderLifecycle(c: CopyContext): Rendered {
   const footer = [
     c.step === "d" ? "You're getting this because you opted in to Built2Bid product news." : "You're getting this because you have a Built2Bid account.",
     `Built2Bid · ${c.postalAddress}`,
+    "Questions? support@built2bid.org",
   ];
   const subject = SUBJECTS[c.step](name);
   return {

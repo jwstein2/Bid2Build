@@ -13,7 +13,7 @@ it("renders lifecycle email previews", () => {
       appUrl: "https://built2bid.org", step, trade: "decks",
       estimateId: step === "b" || step === "c" ? "00000000-0000-4000-8000-000000000000" : null,
       unsubscribeUrl: "https://built2bid.org/email/unsubscribe?u=example&s=example",
-      postalAddress: "[your mailing address]",
+      postalAddress: "[postal address (PO Box or mailbox), set in Netlify]",
     });
     const banner = `<div style="font:13px sans-serif;background:#f4f4f4;padding:8px 24px;color:#333">Email ${step.toUpperCase()} · Subject: <b>${r.subject.replace(/</g, "&lt;")}</b></div>`;
     fs.writeFileSync(path.join(out, `email-${step}.html`), r.html.replace(/<body([^>]*)>/, `<body$1>${banner}`));
