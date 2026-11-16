@@ -32,13 +32,11 @@ export async function POST(req: Request, ctx: { params: Promise<{ sectionId: str
   const { data: s } = await supabase.from("project_scope_sections").select("*").eq("id", sectionId).maybeSingle();
   if (!s) return fail(404, "not_found", "Section not found.");
   const sec = s as ScopeSection;
-  const [{ data: e }, { data: biz }, { data: sched }, res] = await Promise.all([
+  const [{ data: e }, { data: sched }, res] = await Promise.all([
     supabase.from("estimates").select("title, project_address, user_id").eq("id", sec.estimate_id).maybeSingle(),
-    supabase.rpc("estimate_permission", { p_estimate_id: sec.estimate_id, p_permission: "share_subcontractor_scopes" }),
     supabase.from("project_schedules").select("id").eq("estimate_id", sec.estimate_id).neq("status", "archived").maybeSingle(),
     p.data.resourceId ? supabase.from("pm_resources").select("name").eq("id", p.data.resourceId).maybeSingle() : Promise.resolve({ data: null }),
   ]);
-  void biz;
   let dates: { start: string; end: string } | null = null;
   if (sched?.id && p.data.fields.includes("schedule")) {
     const { data: t } = await supabase.from("schedule_tasks").select("planned_start, planned_end").eq("schedule_id", sched.id).eq("source_group_id", sec.source_group_id).eq("kind", "section").is("split_from", null).maybeSingle();

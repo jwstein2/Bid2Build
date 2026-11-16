@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { REVEAL_FEATURE_EVENT } from "@/lib/features/state";
-import { Sparkles, CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, Plug, LayoutTemplate, LogOut, X, UserCog, Receipt, Gauge, SquareKanban, CalendarRange, GraduationCap } from "lucide-react";
+import { Sparkles, CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, Plug, LayoutTemplate, LogOut, X, UserCog, Receipt, Gauge, SquareKanban, CalendarRange, GraduationCap, Palette } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ButtonLink } from "@/components/ui/button";
 import { Logo } from "./logo";
@@ -34,9 +34,9 @@ const item = "flex min-h-11 items-center gap-2.5 whitespace-nowrap rounded-md px
  * (logo, New bid, Menu) whose menu opens the same list, so content starts near the top of the screen.
  */
 /** Enterprise company links, chosen on the server from the member's permissions. */
-export type CompanyHref = "/company" | "/company/pipeline" | "/company/users" | "/company/billing";
+export type CompanyHref = "/company" | "/company/pipeline" | "/company/users" | "/company/billing" | "/company/proposal-style";
 export type CompanyNav = { name: string; links: { href: CompanyHref; label: string }[] };
-const COMPANY_ICONS = { "/company": Gauge, "/company/pipeline": SquareKanban, "/company/users": UserCog, "/company/billing": Receipt } as const;
+const COMPANY_ICONS = { "/company": Gauge, "/company/pipeline": SquareKanban, "/company/users": UserCog, "/company/billing": Receipt, "/company/proposal-style": Palette } as const;
 const companyExact = (href: CompanyHref) => href === "/company";
 
 /** Invitation-only Creator Partner Program links (only rendered for creators / gifted participants). */

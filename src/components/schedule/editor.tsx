@@ -17,7 +17,6 @@ import { Gantt, type GanttRow, type Zoom } from "./gantt";
 import { TaskDialog } from "./task-dialog";
 import { PublicationHistory } from "./published-update";
 import type { Publication } from "@/lib/schedule/publications";
-import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { liveDateChanges, type LiveChange } from "@/lib/operations/live-schedule";
 
 type UndoEntry = { tasks: Task[]; deps: Dep[]; summary: string };
@@ -118,8 +117,7 @@ export function ScheduleEditor({ initial, tradeLabels, editHint, created, public
   return (
     <div className="space-y-4" data-testid="schedule-editor">
       <div>
-        <Breadcrumbs items={[{ label: "Projects", href: "/projects" }, { label: meta.name }]} />
-        <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
+        <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <h1 className="flex flex-wrap items-center gap-2 text-2xl font-extrabold text-navy sm:text-3xl"><CalendarRange className="h-7 w-7 text-accent-ink" aria-hidden />{meta.name}</h1>
             <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-ink-soft">
