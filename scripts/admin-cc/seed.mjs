@@ -15,14 +15,14 @@ const TRADES = ["roofing", "siding", "decks", "concrete", "painting", "pressure-
 const NAMES = ["Summit Exteriors", "Lone Star Roofing", "Gulf Coast Decks", "Buckeye Concrete", "Tarheel Painting", "Peach State Siding", "Front Range Fence", "Desert Pro Wash", "Steel City Kitchens", "Motor City Baths", "Evergreen Gutters", "Music City HVAC"];
 // First-touch patterns: [source, medium, campaign, referrer, clickId, device]
 const TOUCH = [
-  ["google", "cpc", "roofers-tx-search", "google.com", "gclid", "mobile"],
+  ["google", "cpc", "roofers-tx-search", "google.com", "gclid", "mobile", "a-overtime-v1"],
   ["google", "cpc", "contractor-estimating", "google.com", "gclid", "desktop"],
   [null, null, null, "google.com", null, "desktop"],
   [null, null, null, "bing.com", null, "desktop"],
-  ["facebook", "paid_social", "fb-contractors-q4", "facebook.com", "fbclid", "mobile"],
+  ["facebook", "paid_social", "fb-contractors-q4", "facebook.com", "fbclid", "mobile", "b-homeowner-v2"],
   ["youtube", "video", "how-to-bid-a-roof", "youtube.com", null, "mobile"],
   ["instantly", "email", "outreach-nov-roofers", null, null, "desktop"],
-  [null, null, null, "contractortalk.com", null, "desktop"],
+  ["youtube", "creator", "deckguy", "youtube.com", null, "desktop"],
   [null, null, null, "(none)", null, "mobile"],
   [null, null, null, null, null, null],
 ];
@@ -80,7 +80,7 @@ export function commandCenterSeed(adminId) {
   const allAuth = [...users, ...testUsers];
   const leads = users.map((u, i) => {
     const t = TOUCH[i % TOUCH.length];
-    return { id: uuid("ffffffff-ffff", i + 1), email_norm: u.email, user_id: u.id, stage: "signed_up", source: t[0] ?? (t[3] && t[3] !== "(none)" ? t[3] : "direct"), utm_source: t[0], utm_medium: t[1], utm_campaign: t[2], first_campaign_id: t[0] === "instantly" ? "outreach-nov-roofers" : null, first_campaign_name: null, landing_path: pick(["/", "/bids/roofing", "/bids/decks", "/pricing", "/learn/how-to-estimate-a-roof"]), first_touch_at: iso(u.created), referrer_host: t[3], click_id_type: t[4], device_type: t[5], created_at: iso(u.created) };
+    return { id: uuid("ffffffff-ffff", i + 1), email_norm: u.email, user_id: u.id, stage: "signed_up", source: t[0] ?? (t[3] && t[3] !== "(none)" ? t[3] : "direct"), utm_source: t[0], utm_medium: t[1], utm_campaign: t[2], utm_content: t[6] ?? null, first_campaign_id: t[0] === "instantly" ? "outreach-nov-roofers" : null, first_campaign_name: null, landing_path: pick(["/", "/bids/roofing", "/bids/decks", "/pricing", "/learn/how-to-estimate-a-roof"]), first_touch_at: iso(u.created), referrer_host: t[3], click_id_type: t[4], device_type: t[5], created_at: iso(u.created) };
   });
   // V4 pipeline / scheduling adoption (Phase 10): stages by position (no extra rnd() calls, so the rest of the
   // seed stays identical), a few moves, schedules, published updates, editor seats and report generations.

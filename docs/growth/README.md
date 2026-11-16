@@ -51,3 +51,22 @@ Browser walk: `scripts/growth/landing-walk.mjs` (11 trades × desktop/390px, CTA
 
 Five onboarding emails on the existing `email_outbox` + Resend, **off** until `LIFECYCLE_EMAIL_MODE` is
 set. Rules, copy, env vars and the owner checklist: [LIFECYCLE_EMAILS.md](LIFECYCLE_EMAILS.md).
+
+## PR 5: owner growth dashboard
+
+`/admin/marketing` additions, all from first-touch records (no SQL):
+- Channel table: 7-day activation beside finalized, and **CAC payback** (CAC ÷ average current list-price MRR
+  per paying account; complimentary access is never revenue). Payback also shows under the spend KPI.
+- **Creative performance** by `utm_content`: signups, started bid, 7-day activated, finalized, paying, MRR.
+- **Creator Partners**: new `creator` channel (`utm_medium=creator|partner|influencer` or `utm_source=creator`,
+  `utm_campaign` = creator). Paid means a real Stripe subscription; complimentary accounts are a separate column.
+- **Trade-level conversion** table, and funnel filters for creative, trade and current plan (free, paid, complimentary) beside channel, campaign, landing page and device. Creator-referred vs other = the Creator Partners channel filter.
+
+Browser walk: `scripts/growth/dashboard-walk.mjs` (mock command-center seed). Tests: `tests/growth-reports.test.ts`.
+
+## PR 6: ad briefs and test plan
+
+[ADS.md](ADS.md): concepts A–E with hooks and required real screen recordings, the asset list, a reusable
+video QC checklist, the UTM/creative naming standard the dashboard reads (tested in
+`tests/growth-reports.test.ts`), the $600/month test plan with labeled economics and stop/scale rules, and
+the owner approval gate. Planning only: nothing is launched or funded.
