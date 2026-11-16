@@ -55,6 +55,8 @@ export interface BuilderProps {
   /** A step the URL asks for (e.g. ?step=proposal). Otherwise the workflow decides; see resolveStartStep. */
   initialStep?: Step;
   autoExport?: boolean;
+  /** Credit balances loaded with the page, so the header (Upgrade, credit line) is right on first paint. */
+  initialCredits?: CreditStatus | null;
 }
 
 const STEPS: { id: Step; label: string; next: string }[] = [
@@ -77,7 +79,7 @@ function downloadBase64(b64: string, filename: string) {
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 
-export function Builder({ initialEstimate, initialConfig, initialBusiness, mode, user, initialStep, autoExport }: BuilderProps) {
+export function Builder({ initialEstimate, initialConfig, initialBusiness, mode, user, initialStep, autoExport, initialCredits = null }: BuilderProps) {
   const router = useRouter();
   const [state, dispatch] = useReducer(reducer, { estimate: initialEstimate, trash: [], dirty: 0 });
   const [config, setConfig] = useState<ProposalConfig>(initialConfig);
@@ -97,7 +99,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
   // eslint-disable-next-line react-hooks/set-state-in-effect -- records the step being shown
   useEffect(() => { setVisited((v) => (v.has(step) ? v : new Set([...v, step]))); }, [step]);
   const [save, setSave] = useState<SaveState>(mode === "cloud" ? "saved" : "local");
-  const [credits, setCredits] = useState<CreditStatus | null>(null);
+  const [credits, setCredits] = useState<CreditStatus | null>(initialCredits);
   const [finalizedHere, setFinalizedHere] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportMsg, setExportMsg] = useState<{ tone: "ok" | "danger" | "warn"; text: string } | null>(null);
@@ -437,6 +439,9 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
                 {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} <span><span className="max-[360px]:hidden">Download </span>PDF</span>
               </Button>
               {credits && <span className="mt-0.5"><CreditSummary credits={credits} /></span>}
+              {/* Holds the credit line's space while balances load, so the header doesn't grow and push
+                  the steps and estimate down a moment after the page appears (layout shift). */}
+              {user && !credits && <span className="invisible mt-0.5 text-[11px] tabular" aria-hidden>Monthly 0 · Starter 0</span>}
               {credits && !credits.unlimited && <span className="text-[11px] text-muted">{alreadyFinalized ? "Updates are free" : "Uses 1 credit"}</span>}
             </div>
             <ThemeToggle signedIn={Boolean(user)} account={user?.theme ?? null} className="min-h-9 min-w-9 md:min-h-9 md:min-w-9" />

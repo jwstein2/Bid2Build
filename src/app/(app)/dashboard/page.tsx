@@ -8,6 +8,8 @@ import { ButtonLink } from "@/components/ui/button";
 import { BidList, type BidRow } from "./bid-list";
 import { LocalDraftsBanner } from "./local-drafts";
 import { ProfileReminder } from "./profile-reminder";
+import { PROFILE_REMINDER_COOKIE } from "./profile-reminder-cookie";
+import { cookies } from "next/headers";
 import { CreditBalances, UpgradeLink } from "@/components/billing/credits";
 import { loadCreditStatus } from "@/lib/credits/server";
 import { PremiumTiles } from "./library-tile";
@@ -143,6 +145,9 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   const missing = [!biz?.company_name && "company name", !biz?.logo_path && "logo", !(biz?.phone || biz?.email) && "phone or email", !biz?.address && "business address"]
     .filter((x): x is string => Boolean(x));
 
+  const rawDismissed = (await cookies()).get(PROFILE_REMINDER_COOKIE)?.value;
+  const reminderDismissed = rawDismissed ? decodeURIComponent(rawDismissed) : null;
+
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -162,7 +167,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
       {esign && recentSigned.length > 0 && <RecentlySigned bids={recentSigned} days={RECENT_SIGNED_DAYS} />}
       {ests.length === 0 && <FirstBidStart companyName={biz?.company_name?.trim() || null} />}
       {checklist && <ActivationChecklist steps={checklist} />}
-      {!checklist && ests.length > 0 && <ProfileReminder missing={missing} />}
+      {!checklist && ests.length > 0 && <ProfileReminder missing={missing} dismissedSignature={reminderDismissed} />}
       <BidsWorkspace bids={board} history={history} esign={esign} pay={pay} paySaved={Boolean(payRow)} migrated={migrated} initialView={initialView} initialFocus={isFocus(sp.focus) ? sp.focus : null} initialRange={isRange(sp.range) ? sp.range : undefined} table={<BidList rows={rows} />} />
       <div className="grid gap-4 lg:grid-cols-3">
         {credits && <CreditBalances credits={credits} className="lg:col-span-2" showUpgrade={false} enterprise={enterprise} />}
