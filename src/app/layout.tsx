@@ -6,11 +6,15 @@ import { deploy, site } from "@/lib/site";
 import { OnboardingHost } from "@/components/onboarding/onboarding-host";
 import { GoogleAnalytics } from "@/components/analytics/google-analytics";
 import { gaMeasurementId } from "@/lib/seo/analytics";
+import { MetaPixel } from "@/components/analytics/meta-pixel";
+import { pixelId } from "@/lib/growth/consent";
 import { OG_IMAGE } from "@/lib/seo/open-graph";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme";
 
 // Public ids, inlined at build time. Analytics runs only on the indexable production deploy.
 const gaId = deploy.allowIndexing ? gaMeasurementId(process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID) : null;
+// Meta Pixel: only with a configured id on indexable production, and only after the visitor allows it.
+const metaPixelId = deploy.allowIndexing ? pixelId(process.env.NEXT_PUBLIC_META_PIXEL_ID) : null;
 const googleVerification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION?.trim() || undefined;
 
 export const metadata: Metadata = {
@@ -41,6 +45,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {children}
         <OnboardingHost />
         {gaId && <GoogleAnalytics measurementId={gaId} />}
+        {metaPixelId && <MetaPixel pixelId={metaPixelId} />}
       </body>
     </html>
   );

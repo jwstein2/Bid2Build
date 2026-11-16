@@ -37,7 +37,9 @@ export function integrationStatus(snap: Snapshot): Integration[] {
     { key: "netlify_api", name: "Netlify usage monitor", state: has("NETLIFY_API_TOKEN") ? "ok" : "not_connected", detail: has("NETLIFY_API_TOKEN") ? "Token set · plan and build minutes on Tech Stack & Costs" : "Needs NETLIFY_API_TOKEN (read-only use)" },
     { key: "supabase_mgmt", name: "Supabase Management API monitor", state: has("SUPABASE_MANAGEMENT_TOKEN") ? "ok" : "not_connected", detail: has("SUPABASE_MANAGEMENT_TOKEN") ? "Token set · request counts on Tech Stack & Costs" : "Needs SUPABASE_MANAGEMENT_TOKEN (read-only use)" },
     { key: "anthropic_admin", name: "Anthropic account cost monitor", state: has("ANTHROPIC_ADMIN_KEY") ? "ok" : "not_connected", detail: has("ANTHROPIC_ADMIN_KEY") ? "Admin key set · monthly API cost on Tech Stack & Costs" : "Needs ANTHROPIC_ADMIN_KEY (cost report only)" },
-    { key: "ads", name: "Google Ads / Meta Ads / YouTube", state: "not_connected", detail: "No ad-platform API. Enter monthly spend on the Marketing page for CAC." },
+    { key: "meta_pixel", name: "Meta Pixel (browser, consent-gated)", state: has("NEXT_PUBLIC_META_PIXEL_ID") ? "warn" : "not_connected", detail: has("NEXT_PUBLIC_META_PIXEL_ID") ? "Pixel id set: loads only after a visitor clicks Allow. Verify in Events Manager → Test events." : "Not configured (no NEXT_PUBLIC_META_PIXEL_ID). Nothing ad-related loads." },
+    { key: "meta_capi", name: "Meta Conversions API (server)", state: env("META_CAPI_ENABLED") === "true" && has("META_PIXEL_ID") && has("META_CAPI_TOKEN") ? "warn" : "not_connected", detail: env("META_CAPI_ENABLED") === "true" ? `Enabled${has("META_TEST_EVENT_CODE") ? " in TEST mode" : ""}: queue in ad_conversions, sent every 10 min. Not verified until a test event shows in Events Manager.` : "Off (META_CAPI_ENABLED is not true). No events leave Built2Bid." },
+    { key: "ads", name: "Google Ads / YouTube", state: "not_connected", detail: "No ad-platform API. Link GA4 key events in Google Ads; enter monthly spend on the Marketing page for CAC." },
   ];
 }
 
