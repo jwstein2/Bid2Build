@@ -103,14 +103,13 @@ await scenario("unlimited");
   await page.waitForTimeout(400);
   check("explore: walkthrough of the unlocked features starts on the dashboard", (await step(page)) === "Step 1 of 3");
   const t1 = await title(page);
-  // Internal report lives in the builder: card explains and offers Open Feature.
-  let sawOpen = false, sawSidebar = false;
+  // Every step points at something on screen: internal report = first bid's Open link (Table view).
+  let lit = 0;
   for (let k = 0; k < 3; k++) {
-    if ((await page.getByRole("button", { name: "Open Feature" }).count()) === 1) sawOpen = true;
-    if ((await page.getByTestId("tour-spotlight").count()) === 1 && /Reuse your prices|Proposals your way/.test(await title(page))) sawSidebar = true;
-    if (k < 2) { await page.getByRole("button", { name: "Next" }).click(); await page.waitForTimeout(400); }
+    if ((await page.getByTestId("tour-spotlight").count()) === 1 && (await page.getByText("This isn't on the current screen.").count()) === 0) lit++;
+    if (k < 2) { await page.getByRole("button", { name: "Next" }).click(); await page.waitForTimeout(500); }
   }
-  check(`explore: sidebar features are highlighted, off-screen ones offer Open Feature (first: ${t1})`, sawOpen && sawSidebar);
+  check(`explore: all 3 unlocked-feature steps highlight a visible control (${lit}/3, first: ${t1})`, lit === 3);
   await page.screenshot({ path: `${dir}/tour-unlocked-desktop.png` });
   await page.keyboard.press("Escape");
   await page.waitForTimeout(800);
@@ -171,6 +170,38 @@ for (const [label, vp] of [["m390", { width: 390, height: 844 }], ["m320", { wid
   check(`${label}: What's New has no horizontal scroll (${sw2})`, sw2 <= vp.width);
   await page.screenshot({ path: `${dir}/whats-new-${label}.png`, fullPage: true });
   await ctx.close();
+}
+
+// 8. Full walkthrough for a paid account started from the Pipeline view (the reported bug: "Estimate your
+// sales pay" said "This isn't on the current screen" because the calculator lives in Analytics). Every step
+// must highlight a visible control, in Light and Dark, on desktop and phone.
+await scenario("unlimited");
+for (const theme of ["light", "dark"]) {
+  for (const [label, vp, mobile] of [["desktop", { width: 1440, height: 900 }, false], ["m390", { width: 390, height: 844 }, true]]) {
+    await fetch(`${M}/__features`);
+    const { ctx, page } = await ctxPage(vp, mobile);
+    await ctx.addInitScript((m) => { try { localStorage.setItem("b2b-theme", JSON.stringify({ mode: m, at: Date.now() })); } catch {} }, theme);
+    await page.goto(`${A}/dashboard?view=pipeline`, { waitUntil: "load" }); await page.waitForTimeout(1500);
+    const modal = page.getByTestId("unlocked-modal");
+    if (await modal.waitFor({ timeout: 5000 }).then(() => true, () => false)) await page.getByRole("button", { name: "Maybe Later" }).click();
+    await page.evaluate(() => window.dispatchEvent(new CustomEvent("b2b:features:tour", { detail: null })));
+    await page.getByTestId("feature-tour").waitFor();
+    const total = Number((await step(page)).match(/of (\d+)/)[1]);
+    const missing = [];
+    for (let k = 0; k < total; k++) {
+      await page.waitForTimeout(800);
+      const t = await title(page);
+      const ok = (await page.getByTestId("tour-spotlight").count()) === 1 && (await page.getByText("This isn't on the current screen.").count()) === 0;
+      if (!ok) missing.push(t);
+      await page.screenshot({ path: `${dir}/full-tour-${theme}-${label}-step${k + 1}.png` });
+      if (t === "Estimate your sales pay") check(`${theme} ${label}: sales pay step opens Analytics`, (await page.getByTestId("view-analytics").getAttribute("aria-selected")) === "true");
+      await page.getByRole("button", { name: k === total - 1 ? "Finish" : "Next" }).click();
+    }
+    check(`${theme} ${label}: all ${total} walkthrough steps highlight a visible control${missing.length ? ` (missing: ${missing.join(", ")})` : ""}`, total === 6 && missing.length === 0);
+    if (mobile) { await page.waitForTimeout(400); check(`${theme} ${label}: menu closes again after the walkthrough`, (await page.locator("#account-nav").isVisible()) === false); }
+    check(`${theme} ${label}: theme applied`, (await page.getAttribute("html", "data-theme")) === (theme === "light" ? null : theme));
+    await ctx.close();
+  }
 }
 
 check("no page errors", errors.length === 0);
