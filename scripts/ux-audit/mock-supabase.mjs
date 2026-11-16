@@ -1,7 +1,7 @@
 // Local stand-in for Supabase used ONLY to render signed-in pages for UX screenshots.
 // Answers /auth/v1/user and simple PostgREST reads/RPCs with canned test data. Never point production at it.
 import http from "node:http";
-import { handleRadarRest, radarRestEnabled } from "../radar/pg-rest.mjs";
+import { handleRadarRest, pgRestPath, radarRestEnabled } from "../radar/pg-rest.mjs";
 
 const PORT = Number(process.env.MOCK_PORT ?? 54321);
 const NOW = Date.now();
@@ -678,8 +678,9 @@ http.createServer((req, res) => {
       }
     }
     if (u.pathname.startsWith("/storage/v1/")) return send(res, 400, { error: "not available in mock" });
-    // Opportunity Radar walk (scripts/radar/walk.mjs): radar_* tables and RPCs run real SQL when RADAR_PG_URL is set.
-    if (radarRestEnabled() && /^\/rest\/v1\/(rpc\/)?radar_/.test(u.pathname)) return void handleRadarRest(req, res, u, raw, send);
+    // Opportunity Radar walk (scripts/radar/walk.mjs) and bid check walk (scripts/bid-check/walk.mjs): tables and
+    // RPCs with the PG_REST_PREFIXES prefixes (default radar_) run real SQL when RADAR_PG_URL is set.
+    if (radarRestEnabled() && pgRestPath.test(u.pathname)) return void handleRadarRest(req, res, u, raw, send);
     const rpc = u.pathname.match(/^\/rest\/v1\/rpc\/(\w+)/);
     if (u.pathname === "/__pipeline_calls") return send(res, 200, pipelineRpc.calls ?? []);
     if (rpc && typeof pipelineRpc[rpc[1]] === "function") { let args = {}; try { args = JSON.parse(raw || "{}"); } catch { /* ignore */ } const [st, body] = pipelineRpc[rpc[1]](args); return send(res, st, body); }

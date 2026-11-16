@@ -13,6 +13,13 @@ type Funnel = {
   by_source: Record<string, number>; by_post: { post_id: string; comments: number; replied: number; last_at: string }[];
   reply_formats: Record<string, number>; last_errors: { kind: string; error: string; at: string }[];
 };
+type BidCheckFunnel = {
+  started: number; completed: number; result_shown: number; deep_completed: number; sample_opened: number; free_bid_clicked: number;
+  invite_requested: number; pass_activated: number; first_bid_finalized: number; paid_upgrade: number;
+  by_goal: Record<string, number>; by_trade: Record<string, number>;
+  by_campaign: { campaign: string; started: number; completed: number; invites: number }[];
+  recent_feedback: { at: string; trade: string | null; goal: string | null; text: string }[];
+};
 
 /**
  * Owner view of the Facebook "comment BID" funnel: live Meta readiness checks and counts. Organic
@@ -22,8 +29,12 @@ type Funnel = {
 export default async function FacebookTrialAdmin() {
   const { user, db } = await requireAdmin();
   const cfg = trialConfig();
-  const [{ data, error }, ready] = await Promise.all([db.rpc("trial_campaign_funnel", { p_caller: user.id }), metaReadiness(cfg)]);
+  const [{ data, error }, ready, bc] = await Promise.all([
+    db.rpc("trial_campaign_funnel", { p_caller: user.id }), metaReadiness(cfg), db.rpc("bid_check_funnel", { p_caller: user.id }),
+  ]);
   const f = (error ? null : data) as Funnel | null;
+  const q = (bc.error ? null : bc.data) as BidCheckFunnel | null;
+  const pairs = (r: Record<string, number>) => Object.entries(r).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${v}`).join(" · ") || "none yet";
   const step = (label: string, n: number | undefined) => ({ label, n: n ?? null });
   const byPost = new Map((f?.by_post ?? []).map((p) => [p.post_id, p]));
 
@@ -52,6 +63,35 @@ export default async function FacebookTrialAdmin() {
           </div>
         </>
       )}
+
+      <Panel title="Bid check questionnaire (/bid-check, last 90 days)">
+        {!q ? <Empty>Questionnaire numbers unavailable: run the migration 20261118003000_bid_check_questionnaire.sql.</Empty> : (
+          <div className="space-y-4">
+            <FunnelSteps steps={[
+              step("Started", q.started), step("Completed", q.completed), step("Result shown", q.result_shown),
+              step("Pass requested", q.invite_requested), step("Pass activated", q.pass_activated),
+              step("First bid finalized", q.first_bid_finalized), step("Paid upgrade", q.paid_upgrade),
+            ]} />
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+              <Kpi label="Bonus questions done" value={q.deep_completed} tone="blue" />
+              <Kpi label="Example opened in builder" value={q.sample_opened} tone="blue" />
+              <Kpi label="Free bid clicked" value={q.free_bid_clicked} />
+              <Kpi label="Goals" value={Object.values(q.by_goal).reduce((a, b) => a + b, 0)} sub={pairs(q.by_goal)} />
+            </div>
+            <p className="text-xs text-muted">Trades: {pairs(q.by_trade)}</p>
+            {q.by_campaign.length > 0 && (
+              <Table head={["Campaign", "Started", "Completed", "Pass requested"]} minWidth={480}>
+                {q.by_campaign.map((c) => <tr key={c.campaign}><td>{c.campaign}</td><td>{fmt(c.started)}</td><td>{fmt(c.completed)}</td><td>{fmt(c.invites)}</td></tr>)}
+              </Table>
+            )}
+            {q.recent_feedback.length > 0 && (
+              <Table head={["When", "Trade", "Goal", "What they'd change"]} minWidth={560}>
+                {q.recent_feedback.map((r, i) => <tr key={i}><td>{r.at.slice(0, 10)}</td><td>{r.trade ?? "–"}</td><td>{r.goal ?? "–"}</td><td className="text-ink-soft">{r.text}</td></tr>)}
+              </Table>
+            )}
+          </div>
+        )}
+      </Panel>
 
       <Panel title="Meta readiness (live check)">
         <Table head={["Check", "Status", "Detail"]} minWidth={560}>

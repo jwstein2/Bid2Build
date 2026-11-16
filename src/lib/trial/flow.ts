@@ -116,7 +116,7 @@ export async function processMetaPayload(payload: MetaPayload, deps: FlowDeps): 
       const occurredAt = v.created_time ? new Date(v.created_time * 1000) : (deps.now?.() ?? new Date());
       const ev = await deps.store.claimEvent({ dedupeKey: `comment:${v.comment_id}`, kind: "comment", pageId: cfg.pageId, postId: v.post_id, commentId: v.comment_id, occurredAt });
       if (!ev) { out.duplicates++; continue; }
-      if (await replyToComment(ev.id, v.comment_id, deps)) out.replied++;
+      if (await replyToComment(ev.id, v.comment_id, deps, v.post_id)) out.replied++;
     }
     for (const m of entry.messaging ?? []) {
       const psid = m?.sender?.id;
@@ -140,14 +140,34 @@ export async function processMetaPayload(payload: MetaPayload, deps: FlowDeps): 
   return out;
 }
 
+/**
+ * Link to the bid check questionnaire for a post (campaign = the post, trade hint from META_POST_TRADES).
+ * No personal data in the URL.
+ */
+export function bidCheckUrl(cfg: TrialConfig, postId: string | null | undefined, origin = "https://built2bid.org"): string {
+  const u = new URL("/bid-check", origin);
+  const trade = postId ? cfg.postTrades[postId] : undefined;
+  if (trade) u.searchParams.set("trade", trade);
+  u.searchParams.set("utm_source", "facebook");
+  u.searchParams.set("utm_medium", "messenger");
+  u.searchParams.set("utm_campaign", trade ? `fb_bid_${trade.replace(/-/g, "_")}` : "fb_bid");
+  if (postId) u.searchParams.set("utm_content", `post_${postId}`);
+  return u.toString();
+}
+
+function withLink(msg: OutMessage, cfg: TrialConfig, postId?: string | null): OutMessage {
+  if (!cfg.bidCheckLink) return msg;
+  return { ...msg, text: `${msg.text}\n\nWant a quick tip for your next estimate first? Answer 6 questions: ${bidCheckUrl(cfg, postId)}` };
+}
+
 /** Send the one private reply for a claimed comment event. Also used by the retry job. */
-export async function replyToComment(eventId: number, commentId: string, deps: FlowDeps): Promise<boolean> {
-  let res = await deps.privateReply(commentId, COPY.privateReply);
+export async function replyToComment(eventId: number, commentId: string, deps: FlowDeps, postId?: string | null): Promise<boolean> {
+  let res = await deps.privateReply(commentId, withLink(COPY.privateReply, deps.cfg, postId));
   let format: "quick_reply" | "text_only" = "quick_reply";
   // Invalid-parameter rejection: fall back to plain text with a typed keyword.
   if (!res.ok && !res.retry && res.code === 100) {
     format = "text_only";
-    res = await deps.privateReply(commentId, COPY.privateReplyTextOnly);
+    res = await deps.privateReply(commentId, withLink(COPY.privateReplyTextOnly, deps.cfg, postId));
   }
   if (res.ok) {
     await deps.store.finishEvent(eventId, { status: "replied", replyFormat: format, lastError: null });
