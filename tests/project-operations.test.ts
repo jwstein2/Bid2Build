@@ -141,3 +141,50 @@ describe("photo labels and job status", () => {
     expect(jobStatus({ stage: "sent" })).toBeNull();
   });
 });
+
+describe("V4.3 amendment helpers", async () => {
+  const { inheritedProfilePatch } = await import("@/lib/enterprise/inherit-profile");
+  const { frequentItems, usageCounts, usesFor, organizeLibrary } = await import("@/lib/library/saved-items");
+  const { shareContent } = await import("@/lib/operations/scope");
+  const { liveDateChanges } = await import("@/lib/operations/live-schedule");
+
+  it("an invited member inherits blank company details but keeps their own email and choices", () => {
+    const ownerRow = { company_name: "Owner Builders", phone: "555", email: "owner@co.test", primary_color: "#0a5c36", logo_layout: "left", website: "https://co.test" };
+    const mine = { company_name: "", phone: null, email: null, website: "https://me.test", primary_color: "#1f3a5f" };
+    const p = inheritedProfilePatch(mine, ownerRow, "member@me.test");
+    expect(p).toMatchObject({ company_name: "Owner Builders", phone: "555", primary_color: "#0a5c36", email: "member@me.test" });
+    expect(p.website).toBeUndefined();        // already set by the member
+    expect(p.email).not.toBe("owner@co.test"); // never the owner's email
+    expect(p.logo_layout).toBeUndefined();     // owner is on the platform default
+    expect(inheritedProfilePatch(mine, null, "m@x.test")).toEqual({});
+  });
+
+  it("saved items: frequently used first, editing never touches estimates (values are copied)", () => {
+    const counts = usageCounts(["Framing", "framing ", "Drywall", "Framing", null]);
+    expect(usesFor(counts, "FRAMING")).toBe(3);
+    const items = [
+      { id: "1", name: "Drywall", costType: "material", treatment: "marked_up", unit: "sheet", unitCost: "12", taxable: true, uses: 1 },
+      { id: "2", name: "Framing", costType: "labor", treatment: "pass_through", unit: "hour", unitCost: "60", taxable: false, uses: 3 },
+      { id: "3", name: "Anchors", costType: "material", treatment: "marked_up", unit: "each", unitCost: "1", taxable: true, uses: 2 },
+    ] as const;
+    expect(frequentItems([...items]).map((i) => i.name)).toEqual(["Framing", "Anchors"]);
+    const lib = organizeLibrary([...items].map((i) => ({ ...i, category: "General" })));
+    expect(lib[0].categories[0].items.map((i) => i.name)).toEqual(["Framing", "Anchors", "Drywall"]);
+  });
+
+  it("scope sharing only includes the chosen fields and never internal notes or costs", () => {
+    const sec = { id: "s", estimate_id: "e", source_group_id: "g", trade: "electrical", title: "Rough-in", sort_order: 0, approved_scope: "Panel", work_description: "Run wire",
+      technical_instructions: "14 AWG", installation_notes: null, internal_notes: "Margin is thin", customer_info: "Kids at home", resource_id: null, revision: 2, updated_at: "", updated_by: null };
+    const c = shareContent(sec, ["workDescription", "technicalInstructions"], { projectTitle: "Smith", company: "Co" });
+    expect(c.fields).toEqual({ workDescription: "Run wire", technicalInstructions: "14 AWG" });
+    expect(JSON.stringify(c)).not.toMatch(/Margin is thin|Kids at home/);
+  });
+
+  it("live schedule changes list previous and proposed dates and flag downstream tasks", () => {
+    const t = (id: string, s: string, e: string) => ({ id, name: id, plannedStart: s, plannedEnd: e }) as never;
+    const ch = liveDateChanges([t("a", "2026-11-16", "2026-11-18"), t("b", "2026-11-19", "2026-11-20")], [t("a", "2026-11-17", "2026-11-19"), t("b", "2026-11-20", "2026-11-23")], [{ from: "a", to: "b" }] as never);
+    expect(ch).toHaveLength(2);
+    expect(ch.find((c) => c.taskId === "b")?.downstream).toBe(true);
+    expect(ch.find((c) => c.taskId === "a")).toMatchObject({ from: { start: "2026-11-16" }, to: { start: "2026-11-17" }, downstream: false });
+  });
+});

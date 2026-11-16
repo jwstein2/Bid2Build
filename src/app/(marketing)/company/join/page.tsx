@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { createClient, getUser } from "@/lib/supabase/server";
+import { createAdminClient, createClient, getUser } from "@/lib/supabase/server";
+import { inheritCompanyProfile } from "@/lib/enterprise/inherit-profile";
+import { logError } from "@/lib/http/api";
 import { Card, Container, Notice } from "@/components/ui/misc";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { companyRpcError } from "@/lib/enterprise/errors";
@@ -13,8 +15,14 @@ type Peek = { company_name: string; role: CompanyRole; email_hint: string; expir
 async function accept(formData: FormData) {
   "use server";
   const token = String(formData.get("token") ?? "");
-  const { error } = await (await createClient()).rpc("accept_company_invitation", { p_token: token });
+  const { data: companyId, error } = await (await createClient()).rpc("accept_company_invitation", { p_token: token });
   if (error) redirect(`/company/join?token=${encodeURIComponent(token)}&error=${encodeURIComponent(companyRpcError(error).code)}`);
+  // V4.3: start from the company's business profile (blank fields only; the member keeps their own email).
+  const user = await getUser();
+  if (user && typeof companyId === "string") {
+    try { await inheritCompanyProfile(createAdminClient(), { companyId, userId: user.id, email: user.email ?? null }); }
+    catch (e) { logError("company.join.inherit", e); }
+  }
   redirect("/dashboard?joined=1");
 }
 
@@ -59,7 +67,7 @@ export default async function JoinCompanyPage({ searchParams }: PageProps<"/comp
                 You&apos;re signed in with a different or unverified email. Add and verify the invited address in <a className="underline" href="/settings/account">Account settings</a>, or sign out and sign in with it.
               </Notice>
             )}
-            <p className="mt-4 text-xs text-ink-soft">Bids and customers you create as a team member belong to the company. Bids you created before joining stay yours.</p>
+            <p className="mt-4 text-xs text-ink-soft">Your business profile starts with the company&apos;s details and logo (anything you already filled in is kept, and you keep your own email). Bids and customers you create as a team member belong to the company. Bids you created before joining stay yours.</p>
           </>
         )}
       </Card>

@@ -46,8 +46,9 @@ const admin = {
   from: () => ({ insert: async () => ({ error: null }), upsert: async () => ({ error: null }) }),
 };
 
-// Minimal RLS-client fake: the ownership check in the signing route.
+// Minimal RLS-client fake: the ownership check in the signing route, and no company style policy (V4.4).
 const userClient = {
+  rpc: async () => ({ data: null, error: null }),
   from: () => {
     const q = { select: () => q, eq: () => q, maybeSingle: async () => ({ data: state.owned ? { id: "e1", status: state.estimate.status, expiration_date: state.estimate.expirationDate } : null }) };
     return q;

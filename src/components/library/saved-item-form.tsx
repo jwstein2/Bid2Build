@@ -57,6 +57,10 @@ export function SavedItemForm({ initial, items, onSave, onCancel, submitLabel = 
         <input id={f("name")} className="field" value={v.name} maxLength={300} onChange={(e) => set({ name: e.target.value })} aria-invalid={Boolean(errors.name)} placeholder="e.g. Complete Framing" autoComplete="off" />
         {errors.name && <p className="mt-1 text-xs text-danger">{errors.name}</p>}
       </div>
+      <div className="sm:col-span-2">
+        <label className="label" htmlFor={f("desc")}>Description <span className="font-normal text-muted">(can appear on proposals)</span></label>
+        <textarea id={f("desc")} className="field text-sm" rows={2} maxLength={4000} value={v.description ?? ""} onChange={(e) => set({ description: e.target.value })} />
+      </div>
       <div>
         <label className="label" htmlFor={f("trade")}>Trade</label>
         <select id={f("trade")} className="field" value={v.trade ?? ""} onChange={(e) => set({ trade: e.target.value || null })}>
@@ -76,6 +80,11 @@ export function SavedItemForm({ initial, items, onSave, onCancel, submitLabel = 
         </select>
       </div>
       <div>
+        <label className="label" htmlFor={f("qty")}>Quantity <span className="font-normal text-muted">(default, optional)</span></label>
+        <input id={f("qty")} className="field tabular" inputMode="decimal" value={v.quantity ?? ""} onChange={(e) => set({ quantity: e.target.value })} aria-invalid={Boolean(errors.quantity)} placeholder="1" />
+        {errors.quantity && <p className="mt-1 text-xs text-danger">{errors.quantity}</p>}
+      </div>
+      <div>
         <label className="label" htmlFor={f("unit")}>Unit</label>
         {customUnit ? (
           <input id={f("unit")} className="field" value={v.unit} maxLength={40} onChange={(e) => set({ unit: e.target.value })} onBlur={(e) => !e.target.value.trim() && set({ unit: "each" })} />
@@ -87,26 +96,22 @@ export function SavedItemForm({ initial, items, onSave, onCancel, submitLabel = 
         )}
       </div>
       <div>
-        <label className="label" htmlFor={f("rate")}>Default rate <span className="font-normal text-muted">(your cost per unit)</span></label>
+        <label className="label" htmlFor={f("rate")}>Unit cost <span className="font-normal text-muted">(your cost per unit)</span></label>
         <div className="relative">
           <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">$</span>
           <input id={f("rate")} className="field tabular pl-7" inputMode="decimal" value={v.unitCost} onChange={(e) => set({ unitCost: e.target.value })} aria-invalid={Boolean(errors.unitCost)} placeholder="0.00" />
         </div>
         {errors.unitCost && <p className="mt-1 text-xs text-danger">{errors.unitCost}</p>}
       </div>
-      <div>
-        <label className="label" htmlFor={f("qty")}>Default quantity <span className="font-normal text-muted">(optional)</span></label>
-        <input id={f("qty")} className="field tabular" inputMode="decimal" value={v.quantity ?? ""} onChange={(e) => set({ quantity: e.target.value })} aria-invalid={Boolean(errors.quantity)} placeholder="1" />
-        {errors.quantity && <p className="mt-1 text-xs text-danger">{errors.quantity}</p>}
-      </div>
-      <div className="sm:col-span-2">
-        <label className="label" htmlFor={f("desc")}>Description <span className="font-normal text-muted">(can appear on proposals)</span></label>
-        <textarea id={f("desc")} className="field text-sm" rows={2} maxLength={4000} value={v.description ?? ""} onChange={(e) => set({ description: e.target.value })} />
-      </div>
-      <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm sm:col-span-2">
+      <div className="text-sm">
+        <p className="label">Tax</p>
         <label className="flex min-h-9 items-center gap-2"><input type="checkbox" checked={v.taxable} onChange={(e) => set({ taxable: e.target.checked })} className="h-4 w-4 accent-[var(--color-brand)]" /> Taxable</label>
-        <label className="flex min-h-9 items-center gap-2"><input type="checkbox" checked={v.treatment === "pass_through"} onChange={(e) => set({ treatment: e.target.checked ? "pass_through" : "marked_up" })} className="h-4 w-4 accent-[var(--color-brand)]" /> Bill at cost (no markup)</label>
       </div>
+      <fieldset className="text-sm">
+        <legend className="label">Pricing</legend>
+        <label className="flex min-h-9 items-center gap-2"><input type="radio" name={f("treat")} checked={v.treatment !== "pass_through"} onChange={() => set({ treatment: "marked_up" })} className="h-4 w-4 accent-[var(--color-brand)]" /> Apply the bid&apos;s markup</label>
+        <label className="flex min-h-9 items-center gap-2"><input type="radio" name={f("treat")} checked={v.treatment === "pass_through"} onChange={() => set({ treatment: "pass_through" })} className="h-4 w-4 accent-[var(--color-brand)]" /> Bill at cost (no markup)</label>
+      </fieldset>
       <p className="text-xs text-muted sm:col-span-2">Changing a saved rate only affects items you add from now on. Existing estimates and sent proposals keep their prices.</p>
       {err && <p role="alert" className="text-sm text-danger sm:col-span-2">{err}</p>}
       <div className="flex flex-wrap justify-end gap-2 sm:col-span-2">

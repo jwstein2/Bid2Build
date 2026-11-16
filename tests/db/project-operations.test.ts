@@ -256,6 +256,13 @@ d("Project operations V4.3 + proposal style V4.4 (database)", () => {
     // Send freezes v1 (no internal notes); edits are refused once sent.
     const sent = await as<{ r: Row }>(solo, "select public.change_order_send($1, $2) as r", [co1, h("co1")]);
     expect((sent.r.content as Row).internalNotes).toBeUndefined();
+    // The hash is computed by the database from the frozen content (a caller-supplied hash is ignored).
+    const v1 = (await pool.query("select content::text c, content_hash from public.change_order_versions where change_order_id = $1", [co1])).rows[0];
+    expect(v1.content_hash).toBe(h(v1.c));
+    expect(v1.content_hash).not.toBe(h("co1"));
+    // Internal notes are never readable straight from the table, even by the bid's author.
+    expect(await fails(asUser(pool, solo, (q) => q("select internal_notes from public.change_orders where id = $1", [co1])))).toMatch(/permission denied/);
+    expect((await asUser(pool, solo, (q) => q("select id, title from public.change_orders where id = $1", [co1]))).rows).toHaveLength(1);
     expect(await fails(as(solo, "select public.change_order_save($1, $2)", [b.id, { id: co1, title: "x", lines: [{ kind: "add", description: "y", amount: 1 }] }]))).toMatch(/not_draft/);
     expect(await fails(as(solo, "select public.change_order_decide($1, 'approve')", [co1]))).toMatch(/note_required/);
     await as(solo, "select public.change_order_decide($1, 'approve', 'Approved by phone 11/16')", [co1]);
@@ -282,7 +289,7 @@ d("Project operations V4.3 + proposal style V4.4 (database)", () => {
     await as(solo, "select public.change_order_decide($1, 'revise')", [co3]);
     expect((await pool.query("select status, version from public.change_orders where id = $1", [co3])).rows[0]).toMatchObject({ status: "draft", version: 1 });
     // A viewer in another company can't read them.
-    expect((await asUser(pool, other, (q) => q("select * from public.change_orders where estimate_id = $1", [b.id]))).rows).toHaveLength(0);
+    expect((await asUser(pool, other, (q) => q("select id, title from public.change_orders where estimate_id = $1", [b.id]))).rows).toHaveLength(0);
   });
 
   it("scope workspace: created from the approved scope, revisioned, shared with chosen fields only", async () => {

@@ -2,7 +2,7 @@ import type { z } from "zod";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { fail, json, sameOrigin } from "@/lib/http/api";
 import { hasPremiumAccess } from "@/lib/billing/entitlement";
-import { libraryOpSchema, savedItemSchema, type LibraryData, type SavedItem } from "@/lib/library/saved-items";
+import { libraryOpSchema, savedItemSchema, usageCounts, usesFor, type LibraryData, type SavedItem } from "@/lib/library/saved-items";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const num = (v: unknown) => (v === null || v === undefined ? "" : String(Number(v)));
@@ -33,15 +33,18 @@ export async function GET() {
     ]);
     return json({ access: false, lockedCount: (a ?? 0) + (b ?? 0), items: [], stacks: [] } satisfies LibraryData);
   }
-  const [{ data: items }, { data: asm }, { data: asmItems }] = await Promise.all([
+  const [{ data: items }, { data: asm }, { data: asmItems }, { data: recent }] = await Promise.all([
     supabase.from("saved_items").select("*").order("name").limit(2000),
     supabase.from("assemblies").select("*").order("created_at", { ascending: false }).limit(500),
     supabase.from("assembly_items").select("*").order("sort_order").limit(10000),
+    // "Frequently used first": names on up to 5,000 of the contractor's own estimate rows (read only).
+    supabase.from("estimate_items").select("name").eq("user_id", user.id).order("id").limit(5000),
   ]);
+  const counts = usageCounts((recent ?? []).map((r: any) => r.name));
   return json({
     access: true,
     lockedCount: 0,
-    items: (items ?? []).map(mapItem),
+    items: (items ?? []).map((r: any) => ({ ...mapItem(r), uses: usesFor(counts, r.name) })),
     stacks: (asm ?? []).map((a: any) => ({
       id: a.id, name: a.name, trade: a.trade ?? null,
       items: (asmItems ?? []).filter((i: any) => i.assembly_id === a.id).map((i: any) => ({ ...mapItem(i), quantity: num(i.quantity) })),

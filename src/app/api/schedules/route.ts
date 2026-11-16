@@ -34,9 +34,8 @@ export async function POST(req: Request) {
   const { data: review, error: reviewErr } = await supabase.from("project_reviews").select("status").eq("estimate_id", b.estimateId).maybeSingle();
   if (!reviewErr && review?.status === "needs_review") {
     if (!b.markReviewed) return fail(409, "needs_review", "Review this newly approved job before scheduling it.");
-    const { error: markErr } = await supabase.rpc("project_mark_reviewed", { p_estimate_id: b.estimateId, p_note: null });
-    if (markErr) return fail(403, "forbidden_review", "Your company role can't review approved jobs. Ask a project manager to review it first.");
   }
+  const needsMark = !reviewErr && review?.status === "needs_review";
   const { data: groups } = await supabase.from("estimate_groups").select("id, name, sort_order").eq("estimate_id", b.estimateId);
   const byId = new Map(((groups ?? []) as { id: string; name: string; sort_order: number }[]).map((g) => [g.id, g]));
   if (b.sections.some((x) => !byId.has(x.sourceGroupId))) return fail(400, "invalid", "A section isn't on this bid anymore. Go back to step 2.");
@@ -48,6 +47,11 @@ export async function POST(req: Request) {
   if (!plan) return fail(400, "cycle", "These dependencies loop back on themselves. Remove one so the sections have an order.");
   if (b.targetEndDate && b.targetEndDate < b.startDate) return fail(400, "invalid", "The target completion date is before the start date.");
 
+  // Recorded only once the request is otherwise valid, so a rejected schedule never marks the job reviewed.
+  if (needsMark) {
+    const { error: markErr } = await supabase.rpc("project_mark_reviewed", { p_estimate_id: b.estimateId, p_note: null });
+    if (markErr) return fail(403, "forbidden_review", "Your company role can't review approved jobs. Ask a project manager to review it first.");
+  }
   const { data, error } = await supabase.rpc("schedule_create", {
     p_estimate_id: b.estimateId,
     p_provisional: b.provisional,

@@ -31,6 +31,8 @@ export interface SavedItem {
   /** Default rate (internal unit cost). "" = no saved price. */
   unitCost: string;
   taxable: boolean;
+  /** How many of the contractor's recent estimate rows use this item's name (read-only, for ordering). */
+  uses?: number;
 }
 
 export interface SavedStack {
@@ -180,10 +182,24 @@ export function organizeLibrary(items: SavedItem[], preferTrades: string[] = [])
       };
       const categories = [...byCat.values()]
         .sort((a, b) => catOrder(a).localeCompare(catOrder(b)))
-        .map((c) => ({ ...c, items: [...c.items].sort((a, b) => a.name.localeCompare(b.name)) }));
+        .map((c) => ({ ...c, items: [...c.items].sort(byUse) }));
       return { trade: t || null, name: t ? tradeName(t) : "General", categories, count: list.length };
     });
 }
+
+/** Most-used first, then by name: "Frequently used" items lead the library and the builder picker. */
+export const byUse = (a: Pick<SavedItem, "uses" | "name">, b: Pick<SavedItem, "uses" | "name">) => (b.uses ?? 0) - (a.uses ?? 0) || a.name.localeCompare(b.name);
+
+/** Items used at least twice recently, most-used first (the "Frequently used" shortcut). */
+export const frequentItems = (items: SavedItem[], max = 6) => items.filter((i) => (i.uses ?? 0) >= 2).sort(byUse).slice(0, max);
+
+/** Count recent estimate rows per saved-item name (case-insensitive). */
+export function usageCounts(rowNames: (string | null | undefined)[]): Map<string, number> {
+  const m = new Map<string, number>();
+  for (const n of rowNames) { const k = key(n); if (k) m.set(k, (m.get(k) ?? 0) + 1); }
+  return m;
+}
+export const usesFor = (counts: Map<string, number>, name: string) => counts.get(key(name)) ?? 0;
 
 /** Matches a search box against name, category, trade and description. */
 export function matchesQuery(i: Pick<SavedItem, "name" | "category" | "trade" | "description">, q: string): boolean {
