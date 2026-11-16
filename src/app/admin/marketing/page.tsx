@@ -6,7 +6,8 @@ import { tip } from "@/lib/admin/definitions";
 import { ga4Report, searchConsoleReport, stripeCheckouts } from "@/lib/admin/integrations";
 import { activationTiming, campaignReport, channelReport, cohortFunnel, insights, inWindow, landingReport, prorateCosts, ratio, windowOf } from "@/lib/admin/model";
 import { loadReport } from "@/lib/admin/load";
-import { href, str } from "@/lib/admin/view";
+import { carry, href, str } from "@/lib/admin/view";
+import { MetricFormula, MetricRecords } from "@/components/ui/metric-card";
 import { addCost, deleteCost } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -47,6 +48,17 @@ export default async function Marketing({ searchParams }: { searchParams: Promis
   const outreach = channels.find((c) => c.key === "email_outreach");
   const known = facts.filter((f) => inWindow(f.createdAt, w.start, w.end) && f.channel !== "unknown").length;
   const thisMonth = now.toISOString().slice(0, 7);
+  // KPI drilldowns: the signup cohort for this window, optionally narrowed to a funnel step.
+  const cohortHref = (step?: string) => carry("/admin/customers", view, { cohort: "signups", ...(step ? { step } : {}) }, "accounts");
+  const acquired = cohort.filter((f) => f.everPaid);
+  const spendDrawer = {
+    id: "spend", title: `Marketing spend and CAC · last ${range.label}`, description: "Manual spend entries overlapping this period (monthly entries are prorated by day), and the paying customers acquired from this signup cohort.",
+    body: <>
+      <MetricFormula><p>CAC = spend {usdWhole(spend)} ÷ {fmt(all.paid)} new paying customer{all.paid === 1 ? "" : "s"} = <b>{spend && all.paid ? usdWhole(spend / all.paid) : "–"}</b></p><p className="mt-1 text-xs text-muted">Paying customers = accounts created in this period that have ever paid. Complimentary access is excluded.</p></MetricFormula>
+      <MetricRecords title="Spend in this period" rows={costs.map((c) => ({ key: String(c.id), label: isChannel(c.channel) ? CHANNEL_LABEL[c.channel] : c.channel, detail: `${c.period_start.slice(0, 7)}${c.campaign_id ? ` · ${c.campaign_id}` : ""}`, value: usdWhole(Number(c.amount_usd) || 0) }))} empty="No spend entered for this period." more={{ href: href("/admin/marketing", view) + "#spend", label: "Add or edit spend" }} />
+      <MetricRecords title={`Acquired customers (${acquired.length})`} rows={acquired.slice(0, 12).map((f) => ({ key: f.id, label: f.business ?? f.email ?? "Account", detail: CHANNEL_LABEL[f.channel], href: `/admin/customers/${f.id}${view.includeTest ? "?data=all" : ""}` }))} empty="No paying customers from this signup cohort yet." />
+    </>,
+  };
   const recentCosts = [...snap.costs].sort((a, b) => b.period_start.localeCompare(a.period_start) || b.id - a.id).slice(0, 12);
 
   return (
@@ -57,14 +69,14 @@ export default async function Marketing({ searchParams }: { searchParams: Promis
       <ScopeNote sc={sc} />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-7">
-        <Kpi label="Website sessions" value={ga ? fmt(ga.sessions) : "Not connected"} na={!ga} tone="blue" def={tip("visitor_signup")} sub={ga ? `${fmt(ga.users)} users (GA4)` : "Connect GA4 reporting (see Operations)"} />
-        <Kpi label="New signups" value={all.cohort} def={tip("registered")} sub={ga ? <>Visitor → signup <Pct r={ratio(all.cohort, ga.sessions)} /></> : "Genuine accounts created"} />
-        <Kpi label="Started a bid" value={all.firstBid} tone="blue" def={tip("first_bid")} sub={<Pct r={all.steps[1].ofPrev} />} />
-        <Kpi label="Activated (finalized a bid)" value={all.finalized} def={tip("signup_activation")} sub={<Pct r={all.steps[2].ofCohort} />} />
-        <Kpi label="7-day activation (new)" value={snap.meaningful === null ? "Needs SQL" : all.activated7d} na={snap.meaningful === null} tone="blue" def={tip("activation_7d")}
+        <Kpi label="Website sessions" value={ga ? fmt(ga.sessions) : "Not connected"} na={!ga} href={ga ? href("/admin/marketing", view) + "#traffic" : "/admin/operations#integrations"} action={ga ? "Sessions by channel" : "Connect GA4"} tone="blue" def={tip("visitor_signup")} sub={ga ? `${fmt(ga.users)} users (GA4)` : "Connect GA4 reporting (see Operations)"} />
+        <Kpi label="New signups" value={all.cohort} href={cohortHref()} action="View this signup cohort" def={tip("registered")} sub={ga ? <>Visitor → signup <Pct r={ratio(all.cohort, ga.sessions)} /></> : "Genuine accounts created"} />
+        <Kpi label="Started a bid" value={all.firstBid} href={cohortHref("first_bid")} action="View who started a bid" tone="blue" def={tip("first_bid")} sub={<Pct r={all.steps[1].ofPrev} />} />
+        <Kpi label="Activated (finalized a bid)" value={all.finalized} href={cohortHref("finalized")} action="View activated accounts" def={tip("signup_activation")} sub={<Pct r={all.steps[2].ofCohort} />} />
+        <Kpi label="7-day activation (new)" value={snap.meaningful === null ? "Needs SQL" : all.activated7d} href={cohortHref("activated7d")} action="View 7-day activations" na={snap.meaningful === null} tone="blue" def={tip("activation_7d")}
           sub={snap.meaningful === null ? "Apply migration 20261117001000" : all.matured ? <>Matured cohort <Pct r={ratio(all.activated7dMatured, all.matured)} /></> : "No account is 7+ days old yet"} />
-        <Kpi label="New paying" value={all.paid} tone="violet" def={tip("signup_paid")} sub={<Pct r={all.steps[3].ofCohort} />} />
-        <Kpi label="Spend entered (manual)" value={spend ? usdWhole(spend) : "None entered"} na={!spend} tone="amber" def={tip("cac")} sub={spend && all.paid ? `CAC ${usdWhole(spend / all.paid)}` : spend ? "No paying customers yet in this cohort" : "Add spend below to see CAC"} />
+        <Kpi label="New paying" value={all.paid} href={cohortHref("paid")} action="View paid conversions" tone="violet" def={tip("signup_paid")} sub={<Pct r={all.steps[3].ofCohort} />} />
+        <Kpi label="Spend entered (manual)" value={spend ? usdWhole(spend) : "None entered"} drawer={spendDrawer} action="Spend ledger and CAC" na={!spend} tone="amber" def={tip("cac")} sub={spend && all.paid ? `CAC ${usdWhole(spend / all.paid)}` : spend ? "No paying customers yet in this cohort" : "Add spend below to see CAC"} />
       </div>
 
       <SectionTitle id="channels" kicker="Attribution · first touch" title="Channel performance" right={<span className="cc-mono text-[11px] text-muted">{fmt(known)} of {fmt(all.cohort)} signups have a recorded source</span>} />
@@ -204,7 +216,7 @@ export default async function Marketing({ searchParams }: { searchParams: Promis
           )}
         </Panel>
 
-        <Panel kicker="Traffic" title="GA4 sessions by channel">
+        <Panel id="traffic" kicker="Traffic" title="GA4 sessions by channel">
           {ga ? (
             <>
               <Table head={["GA4 channel group", "Sessions"]} align={["l", "r"]} minWidth={300}>{ga.byChannel.map((c) => <tr key={c.channel}><td className="font-sans">{c.channel}</td><td className="text-right">{fmt(c.sessions)}</td></tr>)}</Table>

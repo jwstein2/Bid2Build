@@ -22,7 +22,7 @@ import { ReferCard } from "./refer-card";
 import { TrialBanner } from "@/components/billing/trial-banner";
 import { referralLink, type MyReferral } from "@/lib/growth/referral";
 import { BidsWorkspace, type BidsView } from "@/components/pipeline/bids-workspace";
-import { isStage, type BoardBid, type HistoryRow } from "@/lib/pipeline/board";
+import { isFocus, isRange, isStage, type BoardBid, type HistoryRow } from "@/lib/pipeline/board";
 import { DEFAULT_PAY, sanitizePay } from "@/lib/pipeline/sales-pay";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { CHECKLIST_DISMISSED_KEY, checklistSteps, isMeaningfulItem, MEANINGFUL_ITEMS, showChecklist, type ChecklistStep } from "@/lib/growth/activation";
@@ -163,7 +163,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
       {ests.length === 0 && <FirstBidStart companyName={biz?.company_name?.trim() || null} />}
       {checklist && <ActivationChecklist steps={checklist} />}
       {!checklist && ests.length > 0 && <ProfileReminder missing={missing} />}
-      <BidsWorkspace bids={board} history={history} esign={esign} pay={pay} paySaved={Boolean(payRow)} migrated={migrated} initialView={initialView} table={<BidList rows={rows} />} />
+      <BidsWorkspace bids={board} history={history} esign={esign} pay={pay} paySaved={Boolean(payRow)} migrated={migrated} initialView={initialView} initialFocus={isFocus(sp.focus) ? sp.focus : null} initialRange={isRange(sp.range) ? sp.range : undefined} table={<BidList rows={rows} />} />
       <div className="grid gap-4 lg:grid-cols-3">
         {credits && <CreditBalances credits={credits} className="lg:col-span-2" showUpgrade={false} enterprise={enterprise} />}
         <div className="grid gap-4">

@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { can, loadMyCompany } from "@/lib/enterprise/server";
 import { RANGES, STAGES, STAGE_LABELS, isRange, money, rangeStart, type RangeKey, type Stage } from "@/lib/enterprise/pipeline";
 import { Card, Notice } from "@/components/ui/misc";
+import { MetricCard, MetricFormula, MetricRecords } from "@/components/ui/metric-card";
 import { ButtonLink } from "@/components/ui/button";
 import { ApprovalToggle } from "@/components/company/approval-toggle";
 
@@ -58,6 +59,9 @@ export default async function CompanyOverviewPage({ searchParams }: PageProps<"/
     return q ? `?${q}` : "/company";
   };
   const pipeHref = (stage?: Stage) => `/company/pipeline?${new URLSearchParams({ range, ...(team ? { team } : {}), ...(stage ? { stage } : {}) })}`;
+  const WON: Stage[] = ["won", "scheduled", "in_progress", "completed"];
+  const stageRows = (keys: Stage[]) => keys.map((k) => ({ key: k, label: STAGE_LABELS[k], detail: money(s?.stages?.[k]?.value ?? 0), value: String(s?.stages?.[k]?.count ?? 0), href: pipeHref(k) }));
+  const rangeText = RANGES[range];
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -79,10 +83,22 @@ export default async function CompanyOverviewPage({ searchParams }: PageProps<"/
       {error || !s ? <Notice tone="danger">The overview couldn&apos;t be loaded. Please refresh.</Notice> : (
         <>
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4" data-testid="kpis">
-            <Kpi label="Bids created" value={String(s.bids)} sub={`${s.sent} sent to customers`} />
-            <Kpi label="Win rate" value={s.winRate === null ? "—" : `${s.winRate}%`} sub={`${s.won} won · ${s.lost} lost`} />
-            <Kpi label="Won value" value={money(s.wonValue)} sub={`${money(s.openValue)} open (sent + pending)`} />
-            <Kpi label={showMargin ? "Avg margin" : "Avg bid"} value={showMargin ? (s.avgMargin === null ? "—" : `${s.avgMargin}%`) : money(s.avgBid)} sub={showMargin ? `Avg bid ${money(s.avgBid)}` : "latest finalized version"} />
+            <MetricCard title="Bids created" value={String(s.bids)} sub={`${s.sent} sent to customers`} href={pipeHref()} action="View these bids" testId="kpi-bids" />
+            <MetricCard title="Win rate" value={s.winRate === null ? "—" : `${s.winRate}%`} sub={`${s.won} won · ${s.lost} lost`} testId="kpi-winrate" action="Won and lost bids"
+              drawer={{ id: "company-winrate", title: "Win rate", description: rangeText, body: <>
+                <MetricFormula><p>Won ÷ (won + lost) = {s.won} ÷ {s.won + s.lost}{s.winRate === null ? "" : ` = ${s.winRate}%`}. Won includes Scheduled, In progress and Completed jobs.</p></MetricFormula>
+                <MetricRecords title="Open each stage" rows={stageRows([...WON, "lost"])} empty="No bids have been won or lost in this period." />
+              </> }} />
+            <MetricCard title="Won value" value={money(s.wonValue)} sub={`${money(s.openValue)} open (sent + pending)`} testId="kpi-wonvalue" action="Won bids by stage"
+              drawer={{ id: "company-won", title: "Won value", description: rangeText, body: <>
+                <MetricRecords title="Won bids by stage" rows={stageRows(WON)} empty="No won bids in this period." />
+                <MetricRecords title="Open value" rows={stageRows(["sent", "pending"])} empty="Nothing open." />
+              </> }} />
+            <MetricCard title={showMargin ? "Avg margin" : "Avg bid"} value={showMargin ? (s.avgMargin === null ? "—" : `${s.avgMargin}%`) : money(s.avgBid)} sub={showMargin ? `Avg bid ${money(s.avgBid)}` : "latest finalized version"} testId="kpi-avg" action="Show the calculation"
+              drawer={{ id: "company-avg", title: showMargin ? "Average margin" : "Average bid", description: rangeText, body: <>
+                <MetricFormula><p>{showMargin ? "Average of (subtotal − cost) ÷ subtotal across bids whose latest finalized version has a subtotal." : "Average total of each bid's latest finalized version."} Drafts without a finalized version add no value.</p></MetricFormula>
+                <MetricRecords title="By estimator" rows={s.members.map((m) => ({ key: m.userId, label: m.name, detail: `${m.bids} bid${m.bids === 1 ? "" : "s"}`, value: showMargin ? (m.avgMargin === null ? "—" : `${m.avgMargin}%`) : money(m.avgBid), href: `/company/pipeline?${new URLSearchParams({ range, user: m.userId })}` }))} empty="No bids in this period yet." />
+              </> }} />
           </div>
 
           {s.awaitingReview > 0 && (
@@ -136,15 +152,5 @@ export default async function CompanyOverviewPage({ searchParams }: PageProps<"/
         </>
       )}
     </div>
-  );
-}
-
-function Kpi({ label, value, sub }: { label: string; value: string; sub: string }) {
-  return (
-    <Card className="min-w-0 p-4">
-      <p className="text-sm text-muted">{label}</p>
-      <p className="truncate text-2xl font-extrabold tabular-nums">{value}</p>
-      <p className="mt-0.5 text-xs text-ink-soft">{sub}</p>
-    </Card>
   );
 }

@@ -43,12 +43,12 @@ export default async function FacebookTrialAdmin() {
             ]} />
           </Panel>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-            <Kpi label="Private replies sent" value={f.private_replies_sent} sub={`${fmt(f.private_replies_failed)} failed or skipped`} />
-            <Kpi label="Reminders sent" value={f.reminders_sent} tone="blue" />
-            <Kpi label="Opt-outs" value={f.opt_outs} tone="amber" />
-            <Kpi label="Invite requests" value={f.invites_requested} sub={Object.entries(f.by_source).map(([k, v]) => `${k}: ${v}`).join(" · ") || "none yet"} tone="blue" />
-            <Kpi label="Invite emails failed" value={f.invite_emails_failed} tone="red" />
-            <Kpi label="Trials active now" value={f.trials_active_now} />
+            <Kpi label="Private replies sent" value={f.private_replies_sent} href="#posts" action="Replies by post" sub={`${fmt(f.private_replies_failed)} failed or skipped`} />
+            <Kpi label="Reminders sent" value={f.reminders_sent} tone="blue" href="#posts" action="Activity by post" />
+            <Kpi label="Opt-outs" value={f.opt_outs} tone="amber" action="What counts" drawer={{ id: "fb-optouts", title: "Opt-outs", body: <p>Messenger contacts who opted out (for example by replying STOP) in the last 90 days. They get no more reminders unless they reply START. Individual Messenger contacts are not listed here.</p> }} />
+            <Kpi label="Invite requests" value={f.invites_requested} href="/admin/complimentary?plan=unlimited#grants" action="View trial grants" sub={Object.entries(f.by_source).map(([k, v]) => `${k}: ${v}`).join(" · ") || "none yet"} tone="blue" />
+            <Kpi label="Invite emails failed" value={f.invite_emails_failed} tone="red" href={f.last_errors.length ? "#errors" : "/admin/operations#health"} action="View errors" />
+            <Kpi label="Trials active now" value={f.trials_active_now} href="/admin/complimentary?state=active&plan=unlimited#grants" action="View active trials" />
           </div>
         </>
       )}
@@ -62,7 +62,7 @@ export default async function FacebookTrialAdmin() {
         <p className="mt-3 text-xs text-muted">App mode (Development vs Live), App Review and Business Verification aren&apos;t readable through the API: check them in the Meta App Dashboard. In Development mode only people with a role on the app trigger the webhook.</p>
       </Panel>
 
-      <Panel title="Posts: organic test vs paid ad (verified separately)">
+      <Panel id="posts" title="Posts: organic test vs paid ad (verified separately)">
         {ready.posts.length === 0 ? <Empty>No post ids configured (META_TEST_POST_IDS / META_AD_POST_IDS).</Empty> : (
           <Table head={["Post", "Type", "Readable by our Page token", "BID comments received", "Private replies sent", "Verified end to end"]} minWidth={760}>
             {ready.posts.map((p) => {
@@ -85,7 +85,7 @@ export default async function FacebookTrialAdmin() {
       </Panel>
 
       {f && f.last_errors.length > 0 && (
-        <Panel title="Recent Meta errors">
+        <Panel id="errors" title="Recent Meta errors">
           <Table head={["When", "Event", "Error"]} minWidth={560}>
             {f.last_errors.map((e, i) => <tr key={i}><td>{e.at.slice(0, 16).replace("T", " ")}</td><td>{e.kind}</td><td className="text-ink-soft">{e.error}</td></tr>)}
           </Table>

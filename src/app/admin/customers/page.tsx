@@ -2,11 +2,11 @@ import Link from "next/link";
 import { Chip, Kpi, PageHead, Panel, Table, ago, day, fmt } from "@/components/admin/cc";
 import { ReportUnavailable, ScopeNote } from "@/components/admin/report";
 import { CLASS_LABEL, type AccountClass } from "@/lib/admin/classify";
-import { PAGE_SIZE, PLAN_LABEL, filterCustomers, parseCustomerFilters, planText } from "@/lib/admin/customers";
+import { COHORTS, PAGE_SIZE, PLAN_LABEL, STEPS, filterCustomers, parseCustomerFilters, planText } from "@/lib/admin/customers";
 import { tip } from "@/lib/admin/definitions";
-import { SEGMENTS, SEGMENT_LABEL, grantState } from "@/lib/admin/model";
+import { SEGMENTS, SEGMENT_LABEL, grantState, windowOf } from "@/lib/admin/model";
 import { loadReport } from "@/lib/admin/load";
-import { href } from "@/lib/admin/view";
+import { carry, href } from "@/lib/admin/view";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Customers" };
@@ -19,7 +19,7 @@ export default async function Customers({ searchParams }: { searchParams: Promis
   if (!r) return <ReportUnavailable error={error} />;
   const { facts, sc, now } = r;
   const f = parseCustomerFilters(sp);
-  const rows = filterCustomers(facts, f);
+  const rows = filterCustomers(facts, f, windowOf(view.range, now));
   const pages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const page = Math.min(f.page, pages);
   const shown = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -30,7 +30,8 @@ export default async function Customers({ searchParams }: { searchParams: Promis
   const expiring = grants.filter((g) => grantState(g, nowMs) === "active" && g.expires_at && Date.parse(g.expires_at) <= nowMs + 7 * 86_400_000).length;
   const pending = grants.filter((g) => g.status === "pending").length;
   const unverified = facts.filter((x) => !x.confirmed && Date.parse(x.createdAt) < nowMs - 86_400_000).length;
-  const filtered = Boolean(f.q || f.segment || f.plan || f.activated || (f.cls && f.cls !== "all"));
+  const filtered = Boolean(f.q || f.segment || f.plan || f.activated || f.cohort || f.step || f.sub || (f.cls && f.cls !== "all"));
+  const drill = [f.cohort && `${COHORTS[f.cohort]}${f.cohort === "signups" || f.cohort === "activated" || f.cohort === "first_bid" || f.cohort === "new_paid" || f.cohort === "ended" ? ` (last ${view.range.label})` : ""}`, f.step && `that ${STEPS[f.step]}`, f.sub && `${f.sub} plan`].filter(Boolean).join(" · ");
   const qs = (patch: Record<string, string | undefined>) => href("/admin/customers", view, { page: undefined, ...patch });
   const exportHref = href("/admin/export/customers", view, {});
 
@@ -47,10 +48,10 @@ export default async function Customers({ searchParams }: { searchParams: Promis
       <ScopeNote sc={sc} />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Kpi label="Accounts" value={facts.length} def={tip("registered")} sub={unverified ? `${unverified} never verified their email` : "All verified"} />
-        <Kpi label="Paying" value={facts.filter((x) => x.paying).length} tone="blue" def={tip("paying")} href={qs({ plan: "paying" })} sub={`${facts.filter((x) => x.pastDue).length} past due`} />
-        <Kpi label="Complimentary (active)" value={activeGrants} tone="violet" def={tip("complimentary")} href="/admin/complimentary" sub={`${expiring} expiring in 7 days · ${pending} pending invite${pending === 1 ? "" : "s"}`} />
-        <Kpi label="Never started a bid" value={seg.get("never_bid") ?? 0} tone="amber" href={qs({ segment: "never_bid" })} sub="Registered, no bid yet: an onboarding gap, not churn" />
+        <Kpi label="Accounts" value={facts.length} def={tip("registered")} href={carry("/admin/customers", view, {}, "accounts")} action="View all accounts" sub={unverified ? `${unverified} never verified their email` : "All verified"} />
+        <Kpi label="Paying" value={facts.filter((x) => x.paying).length} tone="blue" def={tip("paying")} href={carry("/admin/customers", view, { plan: "paying" }, "accounts")} action="View paying customers" sub={`${facts.filter((x) => x.pastDue).length} past due`} />
+        <Kpi label="Complimentary (active)" value={activeGrants} tone="violet" def={tip("complimentary")} href="/admin/complimentary?state=active#grants" action="View active grants" sub={`${expiring} expiring in 7 days · ${pending} pending invite${pending === 1 ? "" : "s"}`} />
+        <Kpi label="Never started a bid" value={seg.get("never_bid") ?? 0} tone="amber" href={carry("/admin/customers", view, { segment: "never_bid" }, "accounts")} action="View accounts with no bid" sub="Registered, no bid yet: an onboarding gap, not churn" />
       </div>
 
       <Panel kicker="Lifecycle" title="Where accounts are">
@@ -65,11 +66,21 @@ export default async function Customers({ searchParams }: { searchParams: Promis
         <p className="mt-2 text-xs text-muted">Hover a segment for its definition. Free accounts going quiet is not churn; churn only applies to paid subscriptions (see Revenue).</p>
       </Panel>
 
-      <Panel>
-        <form method="get" action="/admin/customers" className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-[1.6fr_repeat(4,minmax(0,1fr))_auto]">
+      <Panel className="scroll-mt-24">
+        <div id="accounts" className="scroll-mt-24" />
+        {drill && (
+          <p className="cc-mono mb-3 flex flex-wrap items-center gap-2 rounded-md border border-[var(--cc-line-strong)] bg-[rgb(61_255_168/0.06)] px-3 py-2 text-xs text-[var(--cc-green)]" data-testid="drill-filter">
+            Showing: {drill}
+            <Link href={href("/admin/customers", view, { cohort: undefined, step: undefined, sub: undefined, page: undefined })} className="text-ink-soft underline hover:text-white">Clear</Link>
+          </p>
+        )}
+        <form key={JSON.stringify(f)} method="get" action="/admin/customers" className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-[1.6fr_repeat(4,minmax(0,1fr))_auto]">
           {view.range.key !== "30d" && <input type="hidden" name="range" value={view.range.key} />}
           {view.includeTest && <input type="hidden" name="data" value="all" />}
           {f.segment && <input type="hidden" name="segment" value={f.segment} />}
+          {f.cohort && <input type="hidden" name="cohort" value={f.cohort} />}
+          {f.step && <input type="hidden" name="step" value={f.step} />}
+          {f.sub && <input type="hidden" name="sub" value={f.sub} />}
           <label className="text-xs"><span className="cc-kicker mb-1 block">Search</span><input name="q" defaultValue={f.q} placeholder="Email or business name" className="field field-sm" /></label>
           <label className="text-xs"><span className="cc-kicker mb-1 block">Plan</span><select name="plan" defaultValue={f.plan} className="field field-sm"><option value="">All</option>{Object.entries(PLAN_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
           <label className="text-xs"><span className="cc-kicker mb-1 block">First finalized bid</span><select name="activated" defaultValue={f.activated} className="field field-sm"><option value="">Any</option><option value="yes">Activated</option><option value="no">Not yet</option></select></label>
@@ -85,7 +96,7 @@ export default async function Customers({ searchParams }: { searchParams: Promis
           <span className="cc-mono">{fmt(rows.length)} account{rows.length === 1 ? "" : "s"}{f.segment ? ` · ${SEGMENT_LABEL[f.segment]}` : ""}</span>
           <a href={exportHref} className="cc-mono text-[var(--cc-blue)] underline">Export CSV (account summary, no bid contents)</a>
         </div>
-        {shown.length === 0 ? <p className="py-6 text-center text-sm text-ink-soft">No accounts match.</p> : (
+        {shown.length === 0 ? <p className="py-6 text-center text-sm text-ink-soft" data-testid="metric-empty">{drill ? `No accounts: ${drill.charAt(0).toLowerCase()}${drill.slice(1)}.` : "No accounts match."}</p> : (
           <Table head={["Business", "Owner email", "Plan", "Signed up", "Last activity", "Bids", "Final.", "Signed", "Activated", ...(view.includeTest ? ["Type"] : [])]} align={["l", "l", "l", "l", "l", "r", "r", "r", "l", "l"]} minWidth={980}>
             {shown.map((x) => (
               <tr key={x.id}>

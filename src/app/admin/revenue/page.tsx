@@ -6,7 +6,8 @@ import { stripeCheckouts, stripeReconcile } from "@/lib/admin/integrations";
 import { inWindow, monthlyCents, mrrParts, ratio, revenueModel, windowOf } from "@/lib/admin/model";
 import { revenueSplit } from "@/lib/admin/product";
 import { loadReport } from "@/lib/admin/load";
-import { href } from "@/lib/admin/view";
+import { carry, href } from "@/lib/admin/view";
+import { MetricFormula, MetricRecords } from "@/components/ui/metric-card";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Revenue" };
@@ -29,6 +30,9 @@ export default async function Revenue({ searchParams }: { searchParams: Promise<
   ];
   const split = revenueSplit(facts, range, now);
   const reconOk = stripe ? stripe.active + stripe.pastDue === rev.paying : null;
+  const cust = (patch: Record<string, string>) => carry("/admin/customers", view, patch, "accounts");
+  const newRows = facts.filter((f) => f.everPaid && inWindow(f.paidStartedAt, w.start, w.end));
+  const recRow = (f: (typeof facts)[number], sign: "+" | "−", at: string | null) => ({ key: `${sign}${f.id}`, label: f.business ?? f.email ?? "Account", detail: `${f.sub?.plan ?? "plan"} · ${day(at)}`, value: `${sign}${usd(monthlyCents(f.sub!))}`, href: `/admin/customers/${f.id}${view.includeTest ? "?data=all" : ""}` });
 
   return (
     <div className="space-y-6">
@@ -38,12 +42,17 @@ export default async function Revenue({ searchParams }: { searchParams: Promise<
       <ScopeNote sc={sc} />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-        <Kpi label="Paying subscribers" value={rev.paying} def={tip("paying")} sub={`${rev.monthly} monthly · ${rev.annual} annual · ${rev.enterprise} enterprise`} />
-        <Kpi label="MRR (list price)" value={usd(rev.mrrCents)} tone="blue" def={tip("mrr")} sub={`${usd(rev.arrCents)} annual run rate${split.pmAddonCents + split.pmEditorCents ? ` · incl. ${usd(split.pmAddonCents + split.pmEditorCents)} scheduling add-ons` : ""}`} />
-        <Kpi label="Net MRR change" value={`${rev.netMrrCents >= 0 ? "+" : "−"}${usd(Math.abs(rev.netMrrCents))}`} tone={rev.netMrrCents < 0 ? "amber" : "green"} def={tip("net_mrr")} sub={`+${usd(rev.newMrrCents)} new · −${usd(rev.lostMrrCents)} lost`} />
-        <Kpi label="New paid subscriptions" value={rev.newPaid.current} delta={<Change {...rev.newPaid} />} def={tip("paying")} sub={`${rev.newPaid.previous} the ${range.label} before`} />
-        <Kpi label="Cancellations (ended)" value={rev.ended.current} tone={rev.ended.current ? "amber" : "green"} delta={<Change {...rev.ended} good="down" />} def={tip("churn")} sub={`${rev.scheduledCancel} more scheduled at period end`} />
-        <Kpi label="Past due" value={rev.pastDue} tone={rev.pastDue ? "red" : "green"} def="Subscriptions Stripe could not charge and is retrying. Still counted as paying until Stripe cancels them." sub={rev.pastDue ? "Needs attention below" : "No failed payments"} />
+        <Kpi label="Paying subscribers" value={rev.paying} def={tip("paying")} href={cust({ plan: "paying" })} action="View paying customers" sub={`${rev.monthly} monthly · ${rev.annual} annual · ${rev.enterprise} enterprise`} />
+        <Kpi label="MRR (list price)" value={usd(rev.mrrCents)} tone="blue" def={tip("mrr")} href={href("/admin/revenue", view) + "#by-product"} action="Subscription revenue breakdown" sub={`${usd(rev.arrCents)} annual run rate${split.pmAddonCents + split.pmEditorCents ? ` · incl. ${usd(split.pmAddonCents + split.pmEditorCents)} scheduling add-ons` : ""}`} />
+        <Kpi label="Net MRR change" value={`${rev.netMrrCents >= 0 ? "+" : "−"}${usd(Math.abs(rev.netMrrCents))}`} tone={rev.netMrrCents < 0 ? "amber" : "green"} def={tip("net_mrr")} action="Show the calculation"
+          drawer={{ id: "net-mrr", title: `Net MRR change · last ${range.label}`, description: "New list-price MRR from subscriptions that started, minus MRR from subscriptions that ended, in this period.", body: <>
+            <MetricFormula><p>New MRR {usd(rev.newMrrCents)} − lost MRR {usd(rev.lostMrrCents)} = <b>{rev.netMrrCents >= 0 ? "+" : "−"}{usd(Math.abs(rev.netMrrCents))}</b></p><p className="mt-1 text-xs text-muted">List price per month; annual plans count as $149 ÷ 12. Not cash collected.</p></MetricFormula>
+            <MetricRecords title={`Started (${newRows.length})`} rows={newRows.slice(0, 12).map((f) => recRow(f, "+", f.paidStartedAt))} empty="No paid subscription started in this period." more={newRows.length ? { href: cust({ cohort: "new_paid" }), label: "All new paid customers" } : undefined} />
+            <MetricRecords title={`Ended (${rev.endedRows.length})`} rows={rev.endedRows.slice(0, 12).map((f) => recRow(f, "−", f.paidEndedAt))} empty="No paid subscription ended in this period." more={rev.endedRows.length ? { href: cust({ cohort: "ended" }), label: "All cancellations" } : undefined} />
+          </> }} sub={`+${usd(rev.newMrrCents)} new · −${usd(rev.lostMrrCents)} lost`} />
+        <Kpi label="New paid subscriptions" value={rev.newPaid.current} href={cust({ cohort: "new_paid" })} action="View new paying customers" delta={<Change {...rev.newPaid} />} def={tip("paying")} sub={`${rev.newPaid.previous} the ${range.label} before`} />
+        <Kpi label="Cancellations (ended)" value={rev.ended.current} href={cust({ cohort: "ended" })} action="View cancellation records" tone={rev.ended.current ? "amber" : "green"} delta={<Change {...rev.ended} good="down" />} def={tip("churn")} sub={`${rev.scheduledCancel} more scheduled at period end`} />
+        <Kpi label="Past due" value={rev.pastDue} href={cust({ cohort: "past_due" })} action="View payment issues" tone={rev.pastDue ? "red" : "green"} def="Subscriptions Stripe could not charge and is retrying. Still counted as paying until Stripe cancels them." sub={rev.pastDue ? "Needs attention below" : "No failed payments"} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
