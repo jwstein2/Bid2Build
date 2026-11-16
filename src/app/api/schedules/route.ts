@@ -35,7 +35,7 @@ export async function POST(req: Request) {
   if (b.sections.some((x) => !byId.has(x.sourceGroupId))) return fail(400, "invalid", "A section isn't on this bid anymore. Go back to step 2.");
 
   const plan = planSections(
-    b.sections.map((x) => ({ key: x.sourceGroupId, sourceGroupId: x.sourceGroupId, name: byId.get(x.sourceGroupId)!.name || "Section", durationDays: x.durationDays, sortOrder: x.sortOrder })),
+    b.sections.map((x) => ({ key: x.sourceGroupId, sourceGroupId: x.sourceGroupId, name: byId.get(x.sourceGroupId)!.name || "Section", durationDays: x.durationDays, sortOrder: x.sortOrder, offsetDays: x.offsetDays ?? 0 })),
     b.deps, b.startDate, cal,
   );
   if (!plan) return fail(400, "cycle", "These dependencies loop back on themselves. Remove one so the sections have an order.");

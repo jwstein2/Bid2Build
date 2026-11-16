@@ -57,7 +57,11 @@ export function wouldCycle(ids: string[], deps: Dep[], from: string, to: string)
 // Wizard: build section tasks from durations and dependencies
 // ---------------------------------------------------------------------------------------------------
 
-export interface PlanSection { key: string; sourceGroupId: string; name: string; durationDays: number; sortOrder: number }
+export interface PlanSection {
+  key: string; sourceGroupId: string; name: string; durationDays: number; sortOrder: number;
+  /** "Don't start before": working days after the project start (set by dragging a bar in the review step). */
+  offsetDays?: number;
+}
 export interface PlannedSection extends PlanSection { plannedStart: string; plannedEnd: string }
 
 /**
@@ -71,7 +75,7 @@ export function planSections(sections: PlanSection[], deps: Dep[], start: string
   const byKey = new Map<string, PlannedSection>();
   for (const key of order) {
     const sec = sections.find((s) => s.key === key)!;
-    let st = s0;
+    let st = sec.offsetDays && sec.offsetDays > 0 ? shiftWorkdays(s0, Math.round(sec.offsetDays), cal) : s0;
     for (const d of deps.filter((x) => x.to === key)) {
       const p = byKey.get(d.from);
       if (p) { const r = requiredStart(p, d, cal); if (r > st) st = r; }
@@ -79,6 +83,49 @@ export function planSections(sections: PlanSection[], deps: Dep[], start: string
     byKey.set(key, { ...sec, plannedStart: st, plannedEnd: endFromStart(st, sec.durationDays, cal) });
   }
   return sections.map((s) => byKey.get(s.key)!);
+}
+
+/** A change requested by dragging (or date-editing) a bar in the wizard's review step. */
+export interface ReviewEdit { key: string; start?: string; end?: string; durationDays?: number }
+
+/**
+ * Turns a review-step drag into wizard inputs, so the server can still rebuild every date from
+ * durations, dependencies and "don't start before" offsets:
+ *   - resizing the finish changes the duration;
+ *   - moving a section that waits on another changes the wait (negative = overlap, never earlier
+ *     than the predecessor's own start);
+ *   - moving an independent section sets how many working days after the project start it begins
+ *     (it can't move before the project start).
+ * Sections that wait on the moved one follow it on the next forward pass; nothing else moves.
+ */
+export function applyReviewEdit(sections: PlanSection[], deps: Dep[], start: string, cal: WorkCalendar, edit: ReviewEdit):
+  { durationDays: number; offsetDays: number; dep: Dep | null } | null {
+  const plan = planSections(sections, deps, start, cal);
+  const sec = sections.find((x) => x.key === edit.key);
+  const p = plan?.find((x) => x.key === edit.key);
+  if (!plan || !sec || !p) return null;
+  const s0 = snapForward(start, cal);
+  const incoming = deps.find((d) => d.to === edit.key) ?? null;
+  let offsetDays = sec.offsetDays ?? 0;
+  let dep = incoming;
+  let newStart = p.plannedStart;
+  if (edit.start && isIsoDate(edit.start)) {
+    const want = snapForward(edit.start, cal);
+    if (incoming) {
+      const pred = plan.find((x) => x.key === incoming.from)!;
+      const lag = Math.max(workdayDelta(shiftWorkdays(pred.plannedEnd, 1, cal), want, cal), -pred.durationDays);
+      dep = { ...incoming, lagDays: lag, maxOverlap: Math.max(incoming.maxOverlap, -lag) };
+      offsetDays = 0;
+      newStart = requiredStart(pred, dep, cal);
+    } else {
+      offsetDays = Math.max(0, workdayDelta(s0, want, cal));
+      newStart = shiftWorkdays(s0, offsetDays, cal);
+    }
+  }
+  let durationDays = sec.durationDays;
+  if (edit.durationDays) durationDays = edit.durationDays;
+  else if (edit.end && isIsoDate(edit.end)) durationDays = workdaysBetween(newStart, snapBack(edit.end, cal), cal);
+  return { durationDays: Math.max(1, Math.min(3650, durationDays)), offsetDays, dep };
 }
 
 export const finishOf = (list: { plannedEnd: string }[]) => list.reduce((m, t) => (t.plannedEnd > m ? t.plannedEnd : m), list[0]?.plannedEnd ?? "");

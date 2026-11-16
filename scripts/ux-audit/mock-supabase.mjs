@@ -156,6 +156,99 @@ Object.assign(scheduleRpc, {
   },
 });
 
+// Projects workspace V4.1 (scripts/projects/walk.mjs): pm_workspace and friends over the same in-memory
+// schedules. Real SQL: tests/db/projects-workspace.test.ts. /__ws?seed=1 adds several overlapping projects.
+const wsPeople = [{ id: USER.id, name: "Alex Rivera", role: "owner" }, { id: "00000000-0000-4000-8000-0000000000a2", name: "Jordan Sales", role: "estimator" }, { id: "00000000-0000-4000-8000-0000000000a3", name: "Pat Manager", role: "manager" }];
+const wsActivity = new Map();
+const logAct = (sid, kind, summary, audience = "internal") => wsActivity.set(sid, [{ kind, audience, summary, actor: USER.id, at: new Date().toISOString() }, ...(wsActivity.get(sid) ?? [])]);
+Object.assign(scheduleRpc, {
+  pm_people: () => [200, wsPeople],
+  pm_workspace: ({ p_from, p_to }) => {
+    const all = [...sched.list.values()];
+    const perms = schedPerms();
+    return [200, {
+      me: USER.id, people: wsPeople, from: p_from, to: p_to,
+      projects: all.filter((s) => s.row.status !== "archived").map((s) => {
+        const kids = new Set(s.tasks.map((t) => t.parent_id).filter(Boolean));
+        const leaves = s.tasks.filter((t) => !kids.has(t.id));
+        const w = leaves.reduce((a, t) => a + t.duration_days, 0);
+        const today = new Date().toISOString().slice(0, 10);
+        const pubs = (tables.schedule_publications ?? []).filter((x) => x.schedule_id === s.row.id);
+        return { ...s.row, owner_id: s.row.user_id, sales_rep_id: s.row.sales_rep_id ?? s.row.user_id, project_manager_id: s.row.project_manager_id ?? null,
+          customer_name: s.snapshot.estimate.customerName, trades: s.snapshot.trades, finish_date: s.tasks.reduce((m, t) => (t.planned_end > m ? t.planned_end : m), s.row.start_date),
+          tasks_total: leaves.length, tasks_done: leaves.filter((t) => t.status === "complete").length, tasks_delayed: leaves.filter((t) => t.status === "delayed").length,
+          tasks_overdue: leaves.filter((t) => t.status !== "complete" && t.planned_end < today).length,
+          progress: w ? Math.round(leaves.reduce((a, t) => a + t.duration_days * t.percent_complete, 0) / w) : 0,
+          last_update_at: pubs[0]?.published_at ?? null, last_change_at: s.row.updated_at, permissions: perms };
+      }),
+      tasks: all.filter((s) => s.row.status !== "archived").flatMap((s) => s.tasks.filter((t) => t.planned_end >= p_from && t.planned_start <= p_to).map((t) => ({ ...t, schedule_id: s.row.id,
+        section_trade: s.snapshot.sections.find((g) => g.id === t.source_group_id)?.trade ?? null }))),
+      deps: all.flatMap((s) => s.deps.map((d) => ({ from: d.predecessor_id, to: d.successor_id, lagDays: d.lag_days }))),
+    }];
+  },
+  project_activity_feed: ({ p_schedule_id }) => {
+    const s = sched.list.get(p_schedule_id);
+    if (!s) return [200, []];
+    const fromRev = s.revisions.map((r) => ({ kind: r.revision === 1 ? "schedule_created" : "schedule_changed", audience: "internal", summary: r.summary, actor: r.actor_id, at: r.created_at }));
+    return [200, [...(wsActivity.get(p_schedule_id) ?? []), ...fromRev.reverse()]];
+  },
+  schedule_set_people: ({ p_schedule_id, p_sales_rep, p_project_manager }) => {
+    const s = sched.list.get(p_schedule_id);
+    if (!s || !schedPerms().edit) return [403, { code: "42501", message: "forbidden" }];
+    s.row.sales_rep_id = p_sales_rep; s.row.project_manager_id = p_project_manager;
+    logAct(p_schedule_id, "people_changed", p_project_manager ? "Project manager assigned" : "Project manager removed");
+    return [200, null];
+  },
+  schedule_closeout: ({ p_schedule_id, p_base_revision, p_actual_finish, p_override_reason }) => {
+    const s = sched.list.get(p_schedule_id);
+    if (!s || !schedPerms().edit) return [403, { code: "42501", message: "forbidden" }];
+    if (s.row.revision !== p_base_revision) return [409, { code: "40001", message: "stale_revision", details: String(s.row.revision) }];
+    const kids = new Set(s.tasks.map((t) => t.parent_id).filter(Boolean));
+    const open = s.tasks.filter((t) => !kids.has(t.id) && t.status !== "complete").length;
+    if (open && !p_override_reason) return [400, { code: "22023", message: "incomplete_tasks", details: String(open) }];
+    Object.assign(s.row, { status: "completed", actual_finish: p_actual_finish, closeout_note: p_override_reason ?? null, revision: s.row.revision + 1 });
+    logAct(p_schedule_id, "project_completed", "Project completed");
+    return [200, s.row.revision];
+  },
+  schedule_reopen: ({ p_schedule_id, p_base_revision }) => {
+    const s = sched.list.get(p_schedule_id);
+    if (!s || !schedPerms().edit) return [403, { code: "42501", message: "forbidden" }];
+    if (s.row.revision !== p_base_revision) return [409, { code: "40001", message: "stale_revision", details: String(s.row.revision) }];
+    Object.assign(s.row, { status: "active", revision: s.row.revision + 1 });
+    logAct(p_schedule_id, "project_reopened", "Project reopened");
+    return [200, s.row.revision];
+  },
+});
+function seedWorkspace() {
+  const day = (n) => { const d = new Date(); d.setUTCDate(d.getUTCDate() + n); while ([0, 6].includes(d.getUTCDay())) d.setUTCDate(d.getUTCDate() + 1); return d.toISOString().slice(0, 10); };
+  const jobs = [
+    { name: "Full Siding Replacement", customer: "John Dont", trade: "siding", rep: USER.id, pm: wsPeople[2].id, start: -3, secs: [["Removal", 3, "Crew A", "in_progress"], ["Siding Materials", 3, "ABC Supply", "in_progress"], ["Labor", 8, "Crew A", "not_started"]] },
+    { name: "Kitchen Remodel – Ortiz", customer: "Sam Ortiz", trade: "kitchen-remodeling", rep: wsPeople[1].id, pm: wsPeople[2].id, start: 1, secs: [["Demolition", 2, "Crew A", "not_started"], ["Cabinets", 4, "Alex Rivera", "not_started"], ["Countertops", 2, "Stone Works", "not_started"]] },
+    { name: "Deck Rebuild – Lee", customer: "Morgan Lee", trade: "decks", rep: wsPeople[1].id, pm: null, start: -10, secs: [["Tear-off", 2, "Crew B", "complete"], ["Framing", 4, "Crew B", "delayed"], ["Decking & rails", 4, null, "not_started"]] },
+    { name: "Roof Replacement – Patel", customer: "Riya Patel", trade: "roofing", rep: USER.id, pm: USER.id, start: 12, secs: [["Tear-off", 2, "Crew B", "not_started"], ["Install", 4, "Crew B", "not_started"]] },
+  ];
+  for (const j of jobs) {
+    const id = crypto.randomUUID();
+    let cursor = j.start; const tasks = []; const deps = [];
+    j.secs.forEach(([n, d, who, st], i) => {
+      const s0 = day(cursor); let e = s0; let c = 1; const dt = new Date(`${s0}T00:00:00Z`);
+      while (c < d) { dt.setUTCDate(dt.getUTCDate() + 1); if (![0, 6].includes(dt.getUTCDay())) c++; }
+      e = dt.toISOString().slice(0, 10);
+      const tid = crypto.randomUUID();
+      tasks.push(taskRow({ id: tid, kind: "section", sourceGroupId: crypto.randomUUID(), name: n, sortOrder: i, plannedStart: s0, plannedEnd: e, durationDays: d, assignee: who,
+        status: st, percentComplete: st === "complete" ? 100 : st === "in_progress" ? 40 : st === "delayed" ? 30 : 0, actualStart: st !== "not_started" ? s0 : null, actualFinish: st === "complete" ? e : null }));
+      if (i) deps.push({ predecessor_id: tasks[i - 1].id, successor_id: tid, lag_days: 0, max_overlap: 0 });
+      cursor += Math.round(d * 1.4);
+    });
+    sched.list.set(id, { row: { id, estimate_id: crypto.randomUUID(), user_id: USER.id, company_id: "c0000000-0000-4000-8000-000000000001", name: j.name, status: j.start < 0 ? "active" : "draft", provisional: false,
+      calendar: { workdays: [1, 2, 3, 4, 5], holidays: [], timezone: "America/Chicago" }, start_date: tasks[0].planned_start, target_end_date: null, progress_method: "duration", revision: 1, updated_at: iso(0),
+      sales_rep_id: j.rep, project_manager_id: j.pm },
+      snapshot: { estimate: { id, title: j.name, number: "B-2001", customerName: j.customer, projectAddress: null }, trades: [j.trade], version: null, sections: tasks.map((t) => ({ id: t.source_group_id, name: t.name, trade: j.trade, sortOrder: t.sort_order, items: [] })) },
+      tasks, deps, revisions: [{ revision: 1, summary: "Schedule created as a draft", created_at: iso(2), actor_id: USER.id, changes: [] }] });
+  }
+  tables.project_schedules = [...sched.list.values()].map((x) => x.row);
+}
+
 const taskRow = (t) => ({
   id: t.id, parent_id: t.kind === "item" ? t.parentId ?? null : null, kind: t.kind, source_group_id: t.sourceGroupId, source_item_id: t.sourceItemId ?? null, split_from: t.splitFrom ?? null,
   name: t.name, sort_order: t.sortOrder ?? 0, planned_start: t.plannedStart, planned_end: t.plannedEnd, duration_days: t.durationDays, actual_start: t.actualStart ?? null,
@@ -520,6 +613,7 @@ http.createServer((req, res) => {
     const rpc = u.pathname.match(/^\/rest\/v1\/rpc\/(\w+)/);
     if (u.pathname === "/__pipeline_calls") return send(res, 200, pipelineRpc.calls ?? []);
     if (rpc && typeof pipelineRpc[rpc[1]] === "function") { let args = {}; try { args = JSON.parse(raw || "{}"); } catch { /* ignore */ } const [st, body] = pipelineRpc[rpc[1]](args); return send(res, st, body); }
+    if (u.pathname === "/__ws") { if (u.searchParams.get("seed")) seedWorkspace(); return send(res, 200, { ok: true, count: sched.list.size }); }
     if (u.pathname === "/__sched") {
       if (u.searchParams.get("reset")) { sched.list.clear(); tables.project_schedules = []; tables.schedule_publications = []; }
       const st = u.searchParams.get("stage"); if (st) tables.estimates[0].pipeline_stage = st;

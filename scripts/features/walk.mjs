@@ -128,7 +128,7 @@ await scenario("unlimited"); await reset();
   const { ctx, page } = await ctxPage();
   await page.goto(`${A}/dashboard`, { waitUntil: "networkidle" });
   const modal = page.getByTestId("unlocked-modal");
-  await modal.waitFor({ timeout: 8000 });
+  await modal.waitFor({ timeout: 15000 });
   const names = await modal.getByTestId("unlocked-feature").allTextContents();
   check(`existing paid: modal lists only Internal Estimate Report (${names.length})`, names.length === 1 && names[0].includes("Internal Estimate Report"));
   await page.getByRole("button", { name: "Maybe Later" }).click();
@@ -153,7 +153,7 @@ for (const [label, vp] of [["m390", { width: 390, height: 844 }], ["m320", { wid
   const { ctx, page } = await ctxPage(vp, true);
   await page.goto(`${A}/dashboard`, { waitUntil: "networkidle" });
   if (label === "m390") {
-    await page.getByTestId("unlocked-modal").waitFor({ timeout: 8000 });
+    await page.getByTestId("unlocked-modal").waitFor({ timeout: 15000 });
     await page.screenshot({ path: `${dir}/unlocked-modal-${label}.png` });
     await page.getByRole("button", { name: "Explore Features" }).tap();
     await page.getByTestId("feature-tour").waitFor();

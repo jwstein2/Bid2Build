@@ -12,6 +12,7 @@ import { AccountCtas } from "@/components/account/account-ctas";
 import { getAccountStatus } from "@/lib/account/server";
 import { creditBadge, CTA_LABELS, type AccountStatus } from "@/lib/account/status";
 import { landingFor, PRICE_DISPLAYS } from "@/lib/trades/landing";
+import { TrackLandingView } from "@/components/analytics/track-view";
 
 export const dynamicParams = false;
 export function generateStaticParams() {
@@ -70,6 +71,7 @@ export default async function TradePage({ params }: PageProps<"/bids/[trade]">) 
 
   return (
     <>
+      <TrackLandingView trade={t.slug} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <section className="border-b border-line bg-surface">
         <Container className="grid gap-10 py-14 lg:grid-cols-[1.3fr_1fr]">

@@ -1,4 +1,5 @@
 "use client";
+import { isNewAccount, track } from "@/lib/analytics/track";
 import { Loader2, Mail, MessageSquareText } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
@@ -184,6 +185,7 @@ export function AuthDialog({ open, onOpenChange, next, onVerified, title, copy, 
     if (error && linkPhone && isNoAccountError(error)) { setErr("We couldn't find an account with that email. Check the spelling, or go back and create a new account with your phone."); return; }
     if (error) { setErr(emailError(error, "send")); return; }
     go("email-code"); setCooldown(60);
+    if (!resend) track("signup_started", { method: "email" });
     if (resend) setInfo(`We sent a new code to ${email.trim()}. Use the newest one.`);
     onEmailSent?.(email.trim());
   }
@@ -193,10 +195,13 @@ export function AuthDialog({ open, onOpenChange, next, onVerified, title, copy, 
     const checked = readCode(code, emailLen);
     if (!checked.ok) { setErr(codeProblem(checked.reason, emailLen)); return; }
     setBusy(true); setErr(null); setInfo(null);
-    const { error } = await supabase.auth
+    const { data: verified, error } = await supabase.auth
       .verifyOtp({ email: email.trim(), token: checked.code, type: "email" })
-      .catch((e: unknown) => ({ error: e as { message?: string } }));
+      .catch((e: unknown) => ({ data: null, error: e as { message?: string } }));
     if (error) { setBusy(false); setErr(emailError(error, "verify")); return; }
+    // A brand-new account (created in the last 15 minutes): mirror the server's account_created event.
+    const u = verified?.user;
+    if (u?.created_at && isNewAccount(u.created_at)) track("sign_up", { method: "email" }, `account_created:${u.id}`);
     if (linkPhone && sms) {
       // Signed in to the existing account. Now prove the phone too: Supabase texts a code to it and
       // only attaches it to this account once that code is entered.

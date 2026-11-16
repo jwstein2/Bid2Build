@@ -160,6 +160,13 @@ function MemberRow({ m, me, myPermissions, isOwner, teams, manageUsers, manageTe
       {open && (
         <div className="mt-3 space-y-4 rounded-lg bg-paper p-3">
           {editable && m.status === "active" && <AccessEditor m={m} myPermissions={myPermissions} isOwner={isOwner} busy={busy} onSave={(b) => act({ action: "update", userId: m.user_id, ...b }, "Access updated.")} />}
+          {!editable && m.role === "owner" && (
+            <p className="text-sm text-ink-soft" data-testid="owner-note">{m.user_id === me ? "You're" : `${name(m)} is`} the company owner. Owners always have every permission, so there&apos;s no access to change here.</p>
+          )}
+          {!editable && m.role !== "owner" && m.user_id === me && <p className="text-sm text-ink-soft">You can&apos;t change your own role or permissions. Ask the company owner.</p>}
+          {manageTeams && m.status === "active" && teams.length === 0 && (
+            <p className="text-sm text-ink-soft" data-testid="no-teams-note">No teams yet. <a href="#teams" className="font-semibold text-accent-ink underline" onClick={() => setOpen(false)}>Create a team</a> below, then use Manage to add {m.user_id === me ? "yourself" : name(m)} to it.</p>
+          )}
           {manageTeams && m.status === "active" && teams.length > 0 && <TeamEditor m={m} teams={teams} busy={busy} onChange={(teamId, isManager, remove) => act({ action: "team_member", teamId, userId: m.user_id, isManager, remove }, "Teams updated.")} />}
           {editable && (
             <div className="flex flex-wrap gap-2 border-t border-line pt-3">
@@ -256,7 +263,7 @@ function TeamsCard({ teams }: { teams: Team[] }) {
     if (!r.ok) setErr(r.message); else { setName(""); router.refresh(); }
   }
   return (
-    <Card className="p-4">
+    <Card className="scroll-mt-20 p-4" id="teams">
       <h2 className="font-display text-lg font-bold">Teams</h2>
       <p className="text-sm text-ink-soft">Managers and reviewers see bids from the teams they belong to. Example: a Roofing team with a Roofing manager and roofing estimators.</p>
       {teams.length > 0 && <ul className="mt-2 divide-y divide-line">{teams.map((t) => <li key={t.id} className="flex justify-between py-2 text-sm"><span className="font-semibold">{t.name}</span><span className="text-ink-soft">{t.member_count} member{t.member_count === 1 ? "" : "s"} · {t.manager_count} manager{t.manager_count === 1 ? "" : "s"}</span></li>)}</ul>}
