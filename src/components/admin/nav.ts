@@ -2,7 +2,7 @@
 /** Primary owner navigation, ordered by the business lifecycle. */
 export const PRIMARY = [
   { href: "/admin", label: "Overview" },
-  { href: "/admin/marketing", label: "Marketing" },
+  { href: "/admin/marketing", label: "Marketing", also: ["/admin/creators"] },
   { href: "/admin/customers", label: "Customers", also: ["/admin/complimentary"] },
   { href: "/admin/revenue", label: "Revenue" },
   { href: "/admin/usage", label: "Product usage" },
@@ -14,6 +14,7 @@ export const TOOLS = [
   { href: "/admin/costs/forecast", label: "Scaling forecast" },
   { href: "/admin/revenue/scorecard", label: "Business Scorecard" },
   { href: "/admin/complimentary", label: "Complimentary access" },
+  { href: "/admin/creators", label: "Creator Partnerships" },
   { href: "/admin/states", label: "Bids by state" },
   { href: "/admin/definitions", label: "Metric definitions" },
   { href: "/admin/marketing/radar", label: "Opportunity Radar" },

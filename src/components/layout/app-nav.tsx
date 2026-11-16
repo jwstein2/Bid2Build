@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { REVEAL_FEATURE_EVENT } from "@/lib/features/state";
-import { Sparkles, CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, Plug, LayoutTemplate, LogOut, X, UserCog, Receipt, Gauge, SquareKanban, CalendarRange } from "lucide-react";
+import { Sparkles, CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, Plug, LayoutTemplate, LogOut, X, UserCog, Receipt, Gauge, SquareKanban, CalendarRange, GraduationCap } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ButtonLink } from "@/components/ui/button";
 import { Logo } from "./logo";
@@ -39,10 +39,13 @@ export type CompanyNav = { name: string; links: { href: CompanyHref; label: stri
 const COMPANY_ICONS = { "/company": Gauge, "/company/pipeline": SquareKanban, "/company/users": UserCog, "/company/billing": Receipt } as const;
 const companyExact = (href: CompanyHref) => href === "/company";
 
+/** Invitation-only Creator Partner Program links (only rendered for creators / gifted participants). */
+export type LearningNav = { creator: boolean; participant: boolean };
+
 /** Projects (schedules) sit right below Bids when project scheduling is switched on. */
 const PROJECTS: NavItem = { href: "/projects", label: "Projects", icon: CalendarRange };
 
-export function AppSidebar({ isAdmin, email, company, projects = false, theme = null }: { isAdmin: boolean; email: string | null; company?: CompanyNav | null; projects?: boolean; theme?: ThemePref | null }) {
+export function AppSidebar({ isAdmin, email, company, projects = false, theme = null, learning }: { isAdmin: boolean; email: string | null; company?: CompanyNav | null; projects?: boolean; theme?: ThemePref | null; learning?: LearningNav | null }) {
   const nav: NavItem[] = projects ? [NAV[0], PROJECTS, ...NAV.slice(1)] : NAV;
   const path = usePathname();
   const [open, setOpen] = useState(false);
@@ -122,6 +125,20 @@ export function AppSidebar({ isAdmin, email, company, projects = false, theme = 
                 </Link>
               );
             })}
+          </>
+        )}
+        {learning && (learning.creator || learning.participant) && (
+          <>
+            {learning.creator && (
+              <Link href="/learning" aria-current={active("/learning") ? "page" : undefined} className={cn(item, active("/learning") ? "bg-white/10 text-white shadow-[inset_3px_0_0_var(--color-cyan)]" : "text-[#C9D6E3] hover:bg-white/5 hover:text-white")}>
+                <GraduationCap className={cn("h-4 w-4", active("/learning") ? "text-cyan" : "")} aria-hidden /> Learning Enterprise
+              </Link>
+            )}
+            {learning.participant && (
+              <Link href="/mentorship" aria-current={active("/mentorship") ? "page" : undefined} className={cn(item, active("/mentorship") ? "bg-white/10 text-white shadow-[inset_3px_0_0_var(--color-cyan)]" : "text-[#C9D6E3] hover:bg-white/5 hover:text-white")}>
+                <GraduationCap className={cn("h-4 w-4", active("/mentorship") ? "text-cyan" : "")} aria-hidden /> Mentorship
+              </Link>
+            )}
           </>
         )}
         <p className="mt-3 px-3 pb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#B8C6D4]">Help</p>
