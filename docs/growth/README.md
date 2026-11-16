@@ -46,3 +46,8 @@ Sample proposals are rendered by the real proposal engine with example data
 (`npx vitest run -c scripts/growth/vitest.samples.mts` → `public/media/proposals/<trade>-v1.webp`).
 Copy guardrails are tested (`tests/trade-landing.test.ts`: no speed/profit/% claims or testimonials).
 Browser walk: `scripts/growth/landing-walk.mjs` (11 trades × desktop/390px, CTA opens a builder draft).
+
+## PR 4: lifecycle emails
+
+Five onboarding emails on the existing `email_outbox` + Resend, **off** until `LIFECYCLE_EMAIL_MODE` is
+set. Rules, copy, env vars and the owner checklist: [LIFECYCLE_EMAILS.md](LIFECYCLE_EMAILS.md).
