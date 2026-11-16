@@ -1,9 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
-import { AlertTriangle, ArrowLeft, ArrowRight, CalendarRange, Check, Plus, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, CalendarDays, CalendarRange, Check, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge, Notice } from "@/components/ui/misc";
 import { cn } from "@/lib/cn";
@@ -14,6 +14,7 @@ import { api, COMMON_TIMEZONES } from "./client";
 import { MiniTimeline, type MiniEdit } from "./mini-timeline";
 import { AssignStep, type SectionAssignment } from "./assign-step";
 import type { Team } from "@/lib/projects/team";
+import { CompanyCalendar } from "./company-calendar";
 
 export interface WizardSection { id: string; name: string; trade: string | null; items: { id: string; name: string }[] }
 export interface WizardProps {
@@ -56,6 +57,21 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
   // Who's doing the work, per section (saved right after the schedule is created).
   const [assign, setAssign] = useState<Record<string, SectionAssignment>>({});
   const [reviewed, setReviewed] = useState(false);
+  // V4.5A Company Calendar: always beside the wizard on wide screens; a panel below it on tablets and a
+  // full-screen view on phones. Opening, expanding or closing it never resets the wizard (same component).
+  const [calOpen, setCalOpen] = useState(false);
+  const [calExpanded, setCalExpanded] = useState(false);
+  const phone = useIsPhone();
+  const stepNav = useRef<HTMLOListElement>(null);
+  useEffect(() => {
+    stepNav.current?.querySelector<HTMLElement>("[aria-current=step]")?.scrollIntoView({ block: "nearest", inline: "center" });
+  }, [step]);
+  useEffect(() => {
+    if (!calExpanded && !(phone && calOpen)) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { setCalExpanded(false); if (phone) setCalOpen(false); } };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [calExpanded, calOpen, phone]);
 
   const chosen = sections.filter((s) => included.includes(s.id));
   const planInput: PlanSection[] = chosen.map((s, i) => ({ key: s.id, sourceGroupId: s.id, name: s.name, durationDays: durations[s.id] || 1, sortOrder: i, offsetDays: offsets[s.id] ?? 0 }));
@@ -67,6 +83,8 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
   const plan = isIsoDate(start) ? planSections(planInput, deps, start, cal) : null;
   const feas = plan && isIsoDate(target) ? checkTarget(planInput, deps, start, target, cal) : null;
   const multiTrade = new Set(sections.map((s) => s.trade)).size > 1;
+  // The draft appears on the Company Calendar from the Start date step on (before that: existing work only).
+  const draftPlan = step >= 2 && plan ? plan.map((p) => ({ key: p.key, name: p.name, trade: sections.find((x) => x.id === p.key)?.trade ?? null, plannedStart: p.plannedStart, plannedEnd: p.plannedEnd, durationDays: p.durationDays })) : [];
 
   const canNext = [
     accepted || provisional,
@@ -123,14 +141,22 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-5" data-testid="schedule-wizard">
-      <div>
-        <Breadcrumbs items={[{ label: "Projects", href: "/projects" }, { label: "Schedule Now" }]} />
-        <h1 className="mt-2 flex items-center gap-2 text-2xl font-extrabold text-navy sm:text-3xl"><CalendarRange className="h-7 w-7 text-accent-ink" aria-hidden /> Schedule Now</h1>
-        <p className="mt-1 text-ink-soft">Build a draft job schedule from <strong>{estimate.title || "this bid"}</strong>. Your customer isn&apos;t notified.</p>
+    <div className="mx-auto max-w-[1520px] space-y-5" data-testid="schedule-wizard">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="min-w-0">
+          <Breadcrumbs items={[{ label: "Projects", href: "/projects" }, { label: "Schedule Now" }]} />
+          <h1 className="mt-2 flex items-center gap-2 text-2xl font-extrabold text-navy sm:text-3xl"><CalendarRange className="h-7 w-7 text-accent-ink" aria-hidden /> Schedule Now</h1>
+          <p className="mt-1 text-ink-soft">Build a draft job schedule from <strong>{estimate.title || "this bid"}</strong>. Your customer isn&apos;t notified.</p>
+        </div>
+        <Button type="button" variant="secondary" className="xl:hidden" aria-expanded={calOpen} aria-controls="company-cal-panel" data-testid="view-company-calendar"
+          onClick={() => { const next = !calOpen; setCalOpen(next); if (next && !phone) setTimeout(() => document.getElementById("company-cal-panel")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50); }}>
+          <CalendarDays className="h-4 w-4" aria-hidden /> {calOpen && !phone ? "Hide Company Calendar" : "View Company Calendar"}
+        </Button>
       </div>
 
-      <ol className="flex gap-1 overflow-x-auto pb-1 text-xs" aria-label="Steps">
+      <div className="xl:grid xl:grid-cols-[minmax(0,58fr)_minmax(380px,42fr)] xl:items-start xl:gap-6" data-testid="schedule-split">
+      <div className="min-w-0 space-y-5" data-testid="wizard-column">
+      <ol ref={stepNav} className="flex gap-1 overflow-x-auto pb-1 text-xs [scrollbar-width:thin]" aria-label="Steps">
         {STEPS.map((s, i) => (
           <li key={s} className="shrink-0">
             <button type="button" disabled={i > step} onClick={() => setStep(i)} aria-current={i === step ? "step" : undefined}
@@ -327,8 +353,41 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
         {step < LAST && <Button type="button" onClick={() => setStep((s) => s + 1)} disabled={!canNext} data-testid="wizard-next">Next <ArrowRight className="h-4 w-4" aria-hidden /></Button>}
       </div>
       {step === 4 && !plan && <Notice tone="danger"><AlertTriangle className="mr-1 inline h-4 w-4" aria-hidden />These dependencies loop back on themselves.</Notice>}
+      </div>
+
+      {calExpanded && !phone && <div className="fixed inset-0 z-40 bg-ink/40" aria-hidden onClick={() => setCalExpanded(false)} />}
+      <aside id="company-cal-panel" aria-label="Company Calendar" data-testid="company-cal-panel"
+        className={cn(
+          calOpen ? "block" : "hidden", "xl:block",
+          // Phones: full screen over the wizard (the wizard stays mounted underneath, so nothing is lost).
+          "max-md:fixed max-md:inset-0 max-md:z-50 max-md:bg-paper max-md:p-2",
+          // Tablets: a panel under the wizard. Desktop: sticky beside it, scrolling inside when tall.
+          "md:mt-5 xl:sticky xl:top-4 xl:mt-0 xl:h-[calc(100vh-2rem)] xl:max-h-[56rem]",
+          calExpanded && "md:fixed md:inset-4 md:z-50 md:mt-0 md:block md:h-auto md:max-h-none xl:fixed xl:inset-6 xl:h-auto xl:max-h-none",
+        )}>
+        <CompanyCalendar
+          plan={draftPlan} assign={assign} calendar={cal} team={team} today={todayIn(cal.timezone)} projectName={estimate.title}
+          onPickStart={step < LAST ? (d) => setStart(d) : undefined}
+          expanded={calExpanded && !phone} onToggleExpanded={() => setCalExpanded((v) => !v)}
+          onClose={phone ? () => setCalOpen(false) : undefined} stepLabel={`step ${step + 1}`}
+        />
+      </aside>
+      </div>
     </div>
   );
+}
+
+/** Phone layout (under the md breakpoint): the calendar opens full screen instead of inline. */
+function useIsPhone() {
+  const [phone, setPhone] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const on = () => setPhone(mq.matches);
+    on();
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
+  return phone;
 }
 
 function ChoiceButton({ title, detail, onClick, testid }: { title: string; detail: string; onClick: () => void; testid?: string }) {
