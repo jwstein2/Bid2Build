@@ -3,7 +3,9 @@
  * code can ship while the Meta campaign stays paused. Secrets are read from the environment only and
  * never logged.
  *
- *   FB_TRIAL_ENABLED=true            master switch (webhook replies, claim page, ManyChat endpoint)
+ *   FB_TRIAL_ENABLED=true            master switch (Messenger webhook replies, ManyChat endpoint, emails)
+ *   TRIAL_CLAIM_PAGE_ENABLED=true    also open the public /trial claim page (off by default, needs the
+ *                                    master switch too). While off, /trial is a 404.
  *   META_APP_ID                      the Meta app's id (not secret)
  *   META_APP_SECRET                  secret: verifies webhook signatures, appsecret_proof
  *   META_PAGE_ID                     the Built2Bid Facebook Page id (not secret)
@@ -40,6 +42,8 @@ const ids = (v: string | undefined) => (v ?? "").split(",").map((s) => s.trim())
 
 export interface TrialConfig {
   enabled: boolean;
+  /** Public /trial claim page: separate switch so the Messenger route can run without it. */
+  claimPage: boolean;
   appId: string;
   appSecret: string;
   pageId: string;
@@ -55,6 +59,7 @@ export function trialConfig(env: Env = process.env): TrialConfig {
   const v = (env.META_GRAPH_VERSION ?? "").trim();
   return {
     enabled: env.FB_TRIAL_ENABLED === "true",
+    claimPage: env.FB_TRIAL_ENABLED === "true" && env.TRIAL_CLAIM_PAGE_ENABLED === "true",
     appId: (env.META_APP_ID ?? "").trim(),
     appSecret: env.META_APP_SECRET ?? "",
     pageId: (env.META_PAGE_ID ?? "").trim(),
