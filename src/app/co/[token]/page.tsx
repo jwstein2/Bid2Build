@@ -50,7 +50,7 @@ export default async function ChangeOrderSignPage({ params }: { params: Promise<
       </section>
       <section className="mt-6 rounded-2xl border border-line bg-surface p-4 shadow-sm sm:p-6" aria-labelledby="sign-h">
         <h2 id="sign-h" className="font-display text-xl font-extrabold text-navy">{signed ? "Signature recorded" : "Approve & sign"}</h2>
-        {signed ? <p className="mt-2 text-ink-soft">Signed by {r.signature?.signerName} on {new Intl.DateTimeFormat("en-US", { dateStyle: "long" }).format(new Date(r.signature?.signedAt ?? Date.now()))}. Keep this link for your records.</p>
+        {signed ? <p className="mt-2 text-ink-soft">Signed by {r.signature?.signerName}{r.signature?.signedAt ? ` on ${new Intl.DateTimeFormat("en-US", { dateStyle: "long" }).format(new Date(r.signature.signedAt))}` : ""}. Keep this link for your records.</p>
           : <CoSignForm token={token} customerName={c.project.customerName ?? ""} consentVersion={CONSENT_VERSION} consent={changeOrderConsentText(r.companyName)}
               acceptance={changeOrderAcceptanceText({ companyName: r.companyName, number: c.number, projectTitle: c.project.title, amount: c.amount, version: c.version })} />}
       </section>

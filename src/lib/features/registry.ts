@@ -29,6 +29,7 @@ export interface Release {
 export const RELEASES = [
   { version: "3.0.0", date: "2026-11-14", title: "Saved items and proposal templates" },
   { version: "4.0.0", date: "2026-11-15", title: "Sales pipeline and internal cost reports" },
+  { version: "4.3.0", date: "2026-11-19", title: "Project operations, change orders and company bid style" },
 ] as const satisfies readonly Release[];
 
 export type ReleaseVersion = (typeof RELEASES)[number]["version"];
@@ -134,6 +135,47 @@ const DEFS = {
     walkthrough: { title: "Schedule the job", body: "Choose Schedule Now on a won bid to build a timeline from its sections, then drag tasks to adjust dates." },
     release: "4.0.0",
     // Billing and entitlements ship first (Phase 5); the scheduler itself ships in Phases 6-7.
+    status: "unreleased",
+  },
+  // V4.3 Project Operations and V4.4 Enterprise Bid Style. Released together with their SQL
+  // (20261119001000-004000); before it runs each screen says it turns on after the update.
+  sub_quotes: {
+    name: "Subcontractor quotes",
+    entitlement: "free",
+    route: "/dashboard?view=table",
+    description: "Record subcontractor quotes on any estimate line, compare original vs revised bids, and see the effect on your margin. Never shown to customers.",
+    walkthrough: { title: "Track sub quotes", body: "Open a line item and use the quote panel to record a subcontractor's bid and any revisions. Prices only change when you choose to." },
+    release: "4.3.0",
+    status: "released",
+  },
+  change_orders: {
+    name: "Change orders",
+    entitlement: "free",
+    route: "/projects",
+    description: "Separate, signable change orders on approved bids, with a running contract total and a full document history.",
+    walkthrough: { title: "Change orders", body: "On an approved bid, choose Create Change Order. Send it for e-signature or record an approval; the contract summary updates only when it's approved." },
+    release: "4.3.0",
+    status: "released",
+  },
+  project_operations: {
+    name: "Project review, scope and photos",
+    entitlement: "pm",
+    route: "/projects",
+    description: "Review newly approved jobs, build trade scopes from the approved proposal, share them with subcontractors, and keep job photos in one place.",
+    pitch: "Review approved jobs, build trade scopes, share them with subs and keep job photos together. Part of the Project Command Center add-on.",
+    walkthrough: { title: "Run the job", body: "New approvals land in Needs Review. Mark them reviewed, schedule them, then use the Trade scope, Documents, Photos and Internal costs tabs on the project." },
+    release: "4.3.0",
+    status: "released",
+  },
+  proposal_style: {
+    name: "Company proposal style",
+    entitlement: "free",
+    route: "/company/proposal-style",
+    description: "One proposal look for the whole company, with locks and an owner-controlled switch for team customization.",
+    walkthrough: { title: "One look for every bid", body: "In Company → Proposal & Bid Style, choose the template, colors and details every bid uses, and decide what your team may change." },
+    release: "4.3.0",
+    // Enterprise only. The registry has no Enterprise entitlement, so it isn't announced to every
+    // account; company owners and managers find it in the Company menu.
     status: "unreleased",
   },
 } as const satisfies Record<string, FeatureInput>;

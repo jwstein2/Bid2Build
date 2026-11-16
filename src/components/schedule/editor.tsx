@@ -42,6 +42,7 @@ export function ScheduleEditor({ initial, tradeLabels, editHint, created, public
   // Deep link from a task review notice: /projects/<id>?task=<taskId> opens that task.
   useEffect(() => {
     const id = new URLSearchParams(window.location.search).get("task");
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time ?task= deep link read from the URL after mount
     if (id && initial.tasks.some((t) => t.id === id)) { setOpen(id); setHighlight(id); }
   }, [initial.tasks]);
 

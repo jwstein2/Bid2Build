@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";

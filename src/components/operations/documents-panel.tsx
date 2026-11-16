@@ -39,6 +39,7 @@ export function useDocuments(estimateId: string) {
     if (!r.ok) { setError(d?.error?.message ?? "We couldn't load the document history."); return; }
     setData(d); setError(null);
   }, [estimateId]);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- load on mount; state is set after the fetch resolves
   useEffect(() => { void load(); }, [load]);
   return { data, error, reload: load };
 }

@@ -48,15 +48,15 @@ export function ProposalStyleEditor({ initial, ownerBusiness, people }: { initia
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ tone: "ok" | "danger"; text: string } | null>(null);
   const canStyle = initial.canManageTemplate, canPolicy = initial.canChangePolicy;
-  const estimate = useMemo(sampleEstimate, []);
-  const biz = ownerBusiness ?? ({ companyName: "Your company" } as BusinessProfile);
+  const estimate = useMemo(() => sampleEstimate(), []);
+  const biz = useMemo(() => ownerBusiness ?? ({ companyName: "Your company" } as BusinessProfile), [ownerBusiness]);
   const doc = useMemo(() => {
     const r = resolveProposalStyle({ policy: { managed: true, style, locked, allowCustomization: allow }, estimate, business: biz, config: defaultProposalConfig(), ownerBusiness: biz });
     return buildProposal(r.estimate, r.business, r.config);
   }, [style, locked, allow, estimate, biz]);
   const set = (p: Partial<CompanyStyle>) => setStyle((s) => ({ ...s, ...p }));
   const isLocked = (k: StyleKey) => locked.includes(k);
-  const LockBtn = ({ k }: { k: StyleKey }) => canPolicy ? (
+  const lockBtn = (k: StyleKey) => canPolicy ? (
     <button type="button" onClick={() => setLocked((l) => (l.includes(k) ? l.filter((x) => x !== k) : [...l, k]))} aria-pressed={isLocked(k)} aria-label={`${isLocked(k) ? "Unlock" : "Lock"} ${STYLE_KEY_LABELS[k]}`}
       className={cn("rounded p-1", isLocked(k) ? "text-navy" : "text-muted hover:text-ink")}>{isLocked(k) ? <Lock className="h-3.5 w-3.5" /> : <LockOpen className="h-3.5 w-3.5" />}</button>
   ) : isLocked(k) ? <Lock className="h-3.5 w-3.5 text-muted" aria-label="Locked" /> : null;
@@ -89,7 +89,7 @@ export function ProposalStyleEditor({ initial, ownerBusiness, people }: { initia
 
         <fieldset disabled={!canStyle} className="space-y-5">
           <section className="rounded-xl border border-line bg-surface p-4">
-            <div className="flex items-center justify-between"><h2 className="font-bold">Template</h2><LockBtn k="template" /></div>
+            <div className="flex items-center justify-between"><h2 className="font-bold">Template</h2>{lockBtn("template")}</div>
             <div className="mt-2 grid gap-2" role="radiogroup" aria-label="Company template">
               {TEMPLATES.map((t) => (
                 <button key={t.id} type="button" role="radio" aria-checked={(style.template ?? "classic") === t.id} onClick={() => set({ template: t.id })}
@@ -102,13 +102,13 @@ export function ProposalStyleEditor({ initial, ownerBusiness, people }: { initia
 
           <section className="rounded-xl border border-line bg-surface p-4 space-y-3">
             <h2 className="font-bold">Branding</h2>
-            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={style.companyBranding !== false} onChange={(e) => set({ companyBranding: e.target.checked })} />Use the company profile (name, logo, contact) on every bid<LockBtn k="companyBranding" /></label>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={style.companyBranding !== false} onChange={(e) => set({ companyBranding: e.target.checked })} />Use the company profile (name, logo, contact) on every bid{lockBtn("companyBranding")}</label>
             <div className="grid grid-cols-2 gap-3">
-              <label className="text-sm"><span className="flex items-center gap-1">Primary color<LockBtn k="primaryColor" /></span><input type="color" className="mt-1 h-9 w-full rounded border border-line" value={style.primaryColor ?? biz.primaryColor ?? "#1d4ed8"} onChange={(e) => set({ primaryColor: e.target.value })} /></label>
-              <label className="text-sm"><span className="flex items-center gap-1">Accent color<LockBtn k="secondaryColor" /></span><input type="color" className="mt-1 h-9 w-full rounded border border-line" value={style.secondaryColor ?? biz.secondaryColor ?? "#0ea5e9"} onChange={(e) => set({ secondaryColor: e.target.value })} /></label>
-              <label className="text-sm"><span className="flex items-center gap-1">Logo layout<LockBtn k="logoLayout" /></span>
+              <label className="text-sm"><span className="flex items-center gap-1">Primary color{lockBtn("primaryColor")}</span><input type="color" className="mt-1 h-9 w-full rounded border border-line" value={style.primaryColor ?? biz.primaryColor ?? "#1d4ed8"} onChange={(e) => set({ primaryColor: e.target.value })} /></label>
+              <label className="text-sm"><span className="flex items-center gap-1">Accent color{lockBtn("secondaryColor")}</span><input type="color" className="mt-1 h-9 w-full rounded border border-line" value={style.secondaryColor ?? biz.secondaryColor ?? "#0ea5e9"} onChange={(e) => set({ secondaryColor: e.target.value })} /></label>
+              <label className="text-sm"><span className="flex items-center gap-1">Logo layout{lockBtn("logoLayout")}</span>
                 <select className="field field-sm mt-1" value={style.logoLayout ?? biz.logoLayout ?? "left"} onChange={(e) => set({ logoLayout: e.target.value as CompanyStyle["logoLayout"] })}><option value="left">Left</option><option value="center">Centered</option><option value="stacked">Stacked</option></select></label>
-              <label className="text-sm"><span className="flex items-center gap-1">Header style<LockBtn k="headerStyle" /></span>
+              <label className="text-sm"><span className="flex items-center gap-1">Header style{lockBtn("headerStyle")}</span>
                 <select className="field field-sm mt-1" value={style.headerStyle ?? biz.headerStyle ?? "solid"} onChange={(e) => set({ headerStyle: e.target.value as CompanyStyle["headerStyle"] })}><option value="solid">Solid</option><option value="line">Line</option><option value="minimal">Minimal</option></select></label>
             </div>
           </section>
@@ -118,7 +118,7 @@ export function ProposalStyleEditor({ initial, ownerBusiness, people }: { initia
             <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
               {SHOW_KEYS.map((k) => (
                 <label key={k} className="flex items-center gap-2">
-                  <input type="checkbox" checked={style.show?.[k] ?? defaultProposalConfig().show[k]} onChange={(e) => set({ show: { ...style.show, [k]: e.target.checked } })} />{SHOW_LABEL[k]}<LockBtn k={`show.${k}`} />
+                  <input type="checkbox" checked={style.show?.[k] ?? defaultProposalConfig().show[k]} onChange={(e) => set({ show: { ...style.show, [k]: e.target.checked } })} />{SHOW_LABEL[k]}{lockBtn(`show.${k}`)}
                 </label>
               ))}
             </div>
@@ -126,10 +126,10 @@ export function ProposalStyleEditor({ initial, ownerBusiness, people }: { initia
 
           <section className="rounded-xl border border-line bg-surface p-4 space-y-3">
             <h2 className="font-bold">Grouping</h2>
-            <label className="block text-sm"><span className="flex items-center gap-1">Price display<LockBtn k="displayMode" /></span>
+            <label className="block text-sm"><span className="flex items-center gap-1">Price display{lockBtn("displayMode")}</span>
               <select className="field field-sm mt-1" value={style.displayMode ?? ""} onChange={(e) => set({ displayMode: (e.target.value || undefined) as CompanyStyle["displayMode"] })}>
                 <option value="">Each bid decides</option><option value="by_group">By section</option><option value="project_total">Project total only</option></select></label>
-            <label className="block text-sm"><span className="flex items-center gap-1">Section detail<LockBtn k="defaultGroupVisibility" /></span>
+            <label className="block text-sm"><span className="flex items-center gap-1">Section detail{lockBtn("defaultGroupVisibility")}</span>
               <select className="field field-sm mt-1" value={style.defaultGroupVisibility ?? ""} onChange={(e) => set({ defaultGroupVisibility: (e.target.value || undefined) as CompanyStyle["defaultGroupVisibility"] })}>
                 <option value="">Each bid decides</option><option value="itemized">Itemized</option><option value="group_total">Section totals</option><option value="names_only">Names only</option></select></label>
           </section>

@@ -32,6 +32,7 @@ export function ScopePanel({ estimateId }: { estimateId: string }) {
     if (!r.ok) { setError(d?.error?.message ?? "We couldn't load the scope."); return; }
     setData(d); setError(null);
   }, [estimateId]);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- load on mount; state is set after the fetch resolves
   useEffect(() => { void load(); }, [load]);
 
   const init = async () => {
@@ -69,6 +70,7 @@ function SectionCard({ s, data, resName, onSaved, onShare }: { s: ScopeSection; 
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [revs, setRevs] = useState<{ revision: number; summary: string | null; created_at: string }[] | null>(null);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- reset the form when a newer revision of the section arrives
   useEffect(() => { setF({ workDescription: s.work_description ?? "", technicalInstructions: s.technical_instructions ?? "", installationNotes: s.installation_notes ?? "", customerInfo: s.customer_info ?? "", internalNotes: s.internal_notes ?? "", resourceId: s.resource_id ?? "" }); }, [s]);
   const quotes = data.quotesByGroup[s.source_group_id] ?? [];
   const shares = data.shares.filter((x) => x.sectionId === s.id && !x.revokedAt);

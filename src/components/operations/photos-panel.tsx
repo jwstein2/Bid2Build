@@ -37,6 +37,7 @@ export function PhotosPanel({ estimateId, customerId, sections }: { estimateId?:
     if (!r.ok) { setError(d?.error?.message ?? "We couldn't load photos."); return; }
     setData(d); setError(null);
   }, [q]);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- load on mount; state is set after the fetch resolves
   useEffect(() => { void load(); }, [load]);
   useEffect(() => {
     if (sections || !estimateId) return;
