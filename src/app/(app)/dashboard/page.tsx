@@ -187,7 +187,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
       {ests.length === 0 && <FirstBidStart companyName={biz?.company_name?.trim() || null} />}
       {checklist && <ActivationChecklist steps={checklist} />}
       {!checklist && ests.length > 0 && <ProfileReminder missing={missing} dismissedSignature={reminderDismissed} />}
-      <BidsWorkspace bids={board} history={history} esign={esign} pay={pay} paySaved={Boolean(payRow)} migrated={migrated} initialView={initialView} initialFocus={isFocus(sp.focus) ? sp.focus : null} initialRange={isRange(sp.range) ? sp.range : undefined} table={<BidList rows={rows} />} />
+      <BidsWorkspace bids={board} history={history} esign={esign} pay={pay} paySaved={Boolean(payRow)} migrated={migrated} initialView={initialView} initialFocus={isFocus(sp.focus) ? sp.focus : null} initialRange={isRange(sp.range) ? sp.range : undefined} initialQuery={typeof sp.q === "string" ? sp.q.slice(0, 100) : ""} initialDateField={sp.date === "created" ? "created" : "activity"} table={<BidList rows={rows} />} />
       <div className="grid gap-4 lg:grid-cols-3">
         {credits && <CreditBalances credits={credits} className="lg:col-span-2" showUpgrade={false} enterprise={enterprise} />}
         <div className="grid gap-4">

@@ -188,12 +188,17 @@ function BidCard({ b, esign, onMove, onDragStart, onDragEnd }: { b: BoardBid; es
     <article
       draggable onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", b.id); onDragStart(b.id); }} onDragEnd={onDragEnd}
       data-testid="bid-card" data-bid={b.id}
-      className="group rounded-lg border border-line bg-surface p-3 shadow-sm hover:border-brand/40 md:cursor-grab md:active:cursor-grabbing"
+      // The whole card opens the bid: the title link stretches over the card (after:inset-0), and the menu and
+      // next-action button sit above it (relative z-10), so they keep their own clicks. Drag still moves the card.
+      className="card-link-host group relative cursor-pointer rounded-lg border border-line bg-surface p-3 shadow-sm transition-[border-color,box-shadow] hover:border-brand/50 hover:shadow-md active:cursor-grabbing"
     >
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
           <p className="truncate text-xs font-semibold text-muted">{b.customer || "No customer yet"}</p>
-          <Link href={`/estimates/${b.id}`} className="line-clamp-2 text-sm font-bold leading-snug text-ink hover:text-brand">{b.title}</Link>
+          <Link
+            href={`/estimates/${b.id}`} draggable={false} data-card-link data-testid="card-link"
+            className="line-clamp-2 text-sm font-bold leading-snug text-ink group-hover:text-brand after:absolute after:inset-0 after:rounded-lg after:content-['']"
+          >{b.title}</Link>
         </div>
         <MoveMenu b={b} col={col} onMove={onMove} />
       </div>
@@ -210,9 +215,9 @@ function BidCard({ b, esign, onMove, onDragStart, onDragEnd }: { b: BoardBid; es
       <p className="mt-1 text-[11px] text-muted">#{b.number} · {relDay(lastActivity(b))}</p>
       <div className="mt-2 flex justify-end">
         {action && (action.href ? (
-          <Link href={action.href} className="inline-flex min-h-8 items-center gap-1 rounded-md bg-brand-tint px-2 text-xs font-bold text-navy hover:bg-accent-tint" data-testid="next-action">{action.label}<ArrowRight className="h-3 w-3" aria-hidden /></Link>
+          <Link href={action.href} draggable={false} className="relative z-10 inline-flex min-h-8 items-center gap-1 rounded-md bg-brand-tint px-2 text-xs font-bold text-navy hover:bg-accent-tint" data-testid="next-action">{action.label}<ArrowRight className="h-3 w-3" aria-hidden /></Link>
         ) : (
-          <button type="button" onClick={() => onMove(b, action.move!)} className="inline-flex min-h-8 items-center gap-1 rounded-md bg-accent px-2 text-xs font-bold text-navy hover:bg-accent-hover" data-testid="next-action">{action.label}<ArrowRight className="h-3 w-3" aria-hidden /></button>
+          <button type="button" onClick={() => onMove(b, action.move!)} className="relative z-10 inline-flex min-h-8 items-center gap-1 rounded-md bg-accent px-2 text-xs font-bold text-navy hover:bg-accent-hover" data-testid="next-action">{action.label}<ArrowRight className="h-3 w-3" aria-hidden /></button>
         ))}
       </div>
     </article>
@@ -230,7 +235,7 @@ function SignBadge({ b }: { b: BoardBid }) {
 function MoveMenu({ b, col, onMove }: { b: BoardBid; col: Column; onMove: (b: BoardBid, to: Column) => void }) {
   return (
     <Menu.Root>
-      <Menu.Trigger aria-label={`Move ${b.title}`} className="-mr-1 -mt-1 grid h-9 w-9 shrink-0 place-items-center rounded-md text-muted hover:bg-black/5 hover:text-navy" data-testid="move-menu">
+      <Menu.Trigger aria-label={`Move ${b.title}`} className="relative z-10 -mr-1 -mt-1 grid h-9 w-9 shrink-0 place-items-center rounded-md text-muted hover:bg-black/5 hover:text-navy" data-testid="move-menu">
         <MoreVertical className="h-4 w-4" />
       </Menu.Trigger>
       <Menu.Portal>

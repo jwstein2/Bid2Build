@@ -103,6 +103,9 @@ h1, h2, h3, .font-display { font-family: var(--font-display); letter-spacing: -0
 :focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
 /* On navy surfaces the focus ring flips to cyan (6.5:1 against navy). */
 .on-dark :focus-visible { outline-color: var(--color-cyan); }
+/* Whole-card links (Bids pipeline): the title link stretches over the card, so the focus ring goes on the card. */
+a[data-card-link]:focus-visible { outline: none; }
+.card-link-host:has(a[data-card-link]:focus-visible) { outline: 2px solid var(--color-focus); outline-offset: 2px; }
 
 /* Blueprint motif: faint drafting grid. Decorative only; never behind form labels. */
 .blueprint-grid {
