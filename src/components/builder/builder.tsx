@@ -422,7 +422,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
       <header ref={headerRef} className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur no-print">
         <div className="mx-auto flex max-w-[1400px] flex-wrap items-center gap-x-4 gap-y-2 px-3 py-2 sm:px-5">
           <div className="flex shrink-0 items-center gap-2">
-            <Link href={user ? "/dashboard" : "/"} className="inline-flex h-9 items-center gap-1.5 rounded-md px-2 text-sm font-semibold text-accent-ink hover:bg-black/5" aria-label={user ? "Dashboard" : "Home"} data-testid="builder-home"><Home className="h-4 w-4" aria-hidden /><span className="hidden sm:inline">{user ? "Dashboard" : "Home"}</span></Link>
+            <Link href={user ? "/dashboard" : "/"} className="inline-flex h-9 items-center gap-1.5 rounded-md px-2 text-sm font-semibold text-accent-ink hover:bg-black/5" aria-label={user ? "Dashboard" : "Home"} data-testid="builder-home"><Home className="h-4 w-4" aria-hidden /><span className="hidden 2xl:inline">{user ? "Dashboard" : "Home"}</span></Link>
             <span className="hidden lg:block"><Logo className="text-base" /></span>
           </div>
           <div className="min-w-0 flex-1">

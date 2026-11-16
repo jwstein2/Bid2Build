@@ -68,7 +68,8 @@ export function DocumentsPanel({ estimateId, startNew, onChanged }: { estimateId
   if (error) return <p className="text-sm text-danger" role="alert">{error}</p>;
   if (!data) return <p className="flex items-center gap-2 text-sm text-muted"><Loader2 className="h-4 w-4 animate-spin" aria-hidden /> Loading documents…</p>;
   if (!data.available) return <p className="text-sm text-muted">Document history turns on after the project operations update is installed.</p>;
-  const signedCount = data.versions.reduce((n, v) => n + v.signatures.length, 0);
+  // The first signature on the bid is "Signed"; every later one (same or newer version) is a re-signature.
+  const firstSignedAt = data.versions.flatMap((v) => v.signatures.map((x) => x.signedAt)).sort()[0] ?? null;
   const timeline: ({ k: "v"; at: string; v: Version } | { k: "c"; at: string; c: ChangeOrder })[] = [
     ...data.versions.map((v) => ({ k: "v" as const, at: v.createdAt, v })),
     ...data.changeOrders.map((c) => ({ k: "c" as const, at: c.createdAt, c })),
@@ -89,13 +90,13 @@ export function DocumentsPanel({ estimateId, startNew, onChanged }: { estimateId
       {editing && <ChangeOrderEditor estimateId={estimateId} co={editing} onDone={() => { setEditing(null); changed(); }} onCancel={() => setEditing(null)} />}
       {timeline.length === 0 && <p className="text-sm text-muted">No proposal has been sent yet. Each version you download, email or send for signature is kept here.</p>}
       <ol className="space-y-2">
-        {timeline.map((t) => t.k === "v" ? <VersionRow key={t.v.id} v={t.v} reSigned={signedCount > 1} /> : <ChangeOrderRow key={t.c.id} c={t.c} perms={data.permissions} onEdit={() => setEditing(t.c)} onChanged={changed} />)}
+        {timeline.map((t) => t.k === "v" ? <VersionRow key={t.v.id} v={t.v} firstSignedAt={firstSignedAt} /> : <ChangeOrderRow key={t.c.id} c={t.c} perms={data.permissions} onEdit={() => setEditing(t.c)} onChanged={changed} />)}
       </ol>
     </div>
   );
 }
 
-function VersionRow({ v, reSigned }: { v: Version; reSigned: boolean }) {
+function VersionRow({ v, firstSignedAt }: { v: Version; firstSignedAt: string | null }) {
   const status = v.signatures.length ? "Signed" : v.openLink ? "Sent for signature" : v.sentAt ? "Sent" : "Generated";
   return (
     <li className={cn("rounded-lg border p-3 text-sm", v.approved ? "border-ok bg-ok-tint/40" : "border-line")} data-testid={`version-${v.number}`}>
@@ -105,9 +106,9 @@ function VersionRow({ v, reSigned }: { v: Version; reSigned: boolean }) {
         <span className="tabular font-semibold">{money(v.total)}</span>
       </div>
       <p className="mt-0.5 text-xs text-muted">Created {fmt(v.createdAt)}{v.sentAt ? ` · first sent ${fmt(v.sentAt)}` : ""} · fingerprint {v.contentHash.slice(0, 10)}</p>
-      {v.signatures.map((s, i) => (
+      {v.signatures.map((s) => (
         <p key={s.id} className="mt-1 flex flex-wrap items-center gap-x-2 text-xs"><FileSignature className="h-3.5 w-3.5 text-ok" aria-hidden />
-          {reSigned && i > 0 ? "Re-signed" : "Signed"} by <strong>{s.signerName}</strong> {fmt(s.signedAt)}
+          {firstSignedAt && s.signedAt > firstSignedAt ? "Re-signed" : "Signed"} by <strong>{s.signerName}</strong> {fmt(s.signedAt)}
           <Link className="text-brand underline" href={`/signed/${s.id}`}>View signed record</Link></p>
       ))}
     </li>
