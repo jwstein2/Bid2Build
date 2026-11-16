@@ -21,3 +21,13 @@
   for = "/media/*.mp4"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
+
+# The default netlify.app address serves the same site as built2bid.org. Send it to the real domain
+# with a permanent redirect so search engines and shared links consolidate on one host. Deploy
+# previews (deploy-preview-N--built2bid.netlify.app) and branch deploys use other host names and are
+# not affected. force = true makes this run before the Next.js runtime.
+[[redirects]]
+  from = "https://built2bid.netlify.app/*"
+  to = "https://built2bid.org/:splat"
+  status = 301
+  force = true

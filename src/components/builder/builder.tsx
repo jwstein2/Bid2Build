@@ -29,13 +29,18 @@ import { ScopeStep } from "./scope-step";
 import { reducer } from "./state";
 import { Workspace } from "./workspace";
 import { WashingJobPanel, isWashingEstimate } from "./calculators/washing-job-panel";
-import { SendEmailDialog, type SendPhase } from "./send-email";
-import { SigningLinkDialog, SigningPanel, type CreatedLink } from "../esign/signing-panel";
+import { InternalReportButton } from "./internal-report";
+import { ScheduleNowButton } from "@/components/schedule/schedule-now-button";
+import { SendEmailDialog, type SendMode, type SendPhase } from "./send-email";
+import { SigningPanel, type CreatedLink } from "../esign/signing-panel";
 import { isEsignEnabled } from "@/lib/esign/config";
 import { exportReadiness, type ReadinessIssue } from "@/lib/estimate/readiness";
 import { stepStatuses } from "@/lib/estimate/step-status";
-import { buildShareEmail } from "@/lib/proposal/share-email";
+import type { ShareEmailInput } from "@/lib/proposal/share-email";
 import { displayPhone } from "@/lib/proposal/customer-text";
+import { ThemeToggle } from "../theme/theme-toggle";
+import type { ThemePref } from "@/lib/theme";
+import { track } from "@/lib/analytics/track";
 
 type Biz = BusinessProfile & { logoPath?: string | null };
 type Step = BuilderStep;
@@ -46,7 +51,7 @@ export interface BuilderProps {
   initialConfig: ProposalConfig;
   initialBusiness: Biz | null;
   mode: "local" | "cloud";
-  user: { id: string; email: string | null; emailVerified: boolean; verified?: boolean } | null;
+  user: { id: string; email: string | null; emailVerified: boolean; verified?: boolean; theme?: ThemePref } | null;
   /** A step the URL asks for (e.g. ?step=proposal). Otherwise the workflow decides; see resolveStartStep. */
   initialStep?: Step;
   autoExport?: boolean;
@@ -102,8 +107,12 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
   const [missing, setMissing] = useState<ReadinessIssue[]>([]);
   const [sendOpen, setSendOpen] = useState(false);
   const [sendPhase, setSendPhase] = useState<SendPhase>({ k: "preparing" });
+  const [sendMode, setSendMode] = useState<SendMode>("pdf");
+  const [creatingLink, setCreatingLink] = useState(false);
   const [sendKey, setSendKey] = useState(0);
-  const [signingLink, setSigningLink] = useState<CreatedLink | null>(null);
+  // The signing link made in this session, with the edit counters it was made at. It is reused while
+  // the bid is unchanged (no new request, no extra credit), and dropped after an edit, a revoke or expiry.
+  const [signingLinkState, setSigningLinkState] = useState<{ link: CreatedLink; stamp: string } | null>(null);
   const [signingRefresh, setSigningRefresh] = useState(0);
   const esign = isEsignEnabled() && Boolean(user);
   // One export at a time, across Download PDF and Send via My Email (double taps included).
@@ -111,6 +120,9 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
   const [cloudMode, setCloudMode] = useState(mode === "cloud");
   const lib = useLibrary(Boolean(user));
   const estimate = state.estimate;
+  const primaryTrade = estimate.trades[0];
+  const editStamp = `${state.dirty}|${configDirty}|${bizDirty}`;
+  const signingLink = signingLinkState && signingLinkState.stamp === editStamp ? signingLinkState.link : null;
   const totals = useMemo(() => computeEstimate(estimate), [estimate]);
   const doc = useMemo(() => buildProposal(estimate, business, config), [estimate, business, config]);
 
@@ -149,6 +161,16 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
       return false;
     }
   }, [user, estimate, config]);
+
+  // Activation analytics: the customer-facing preview was opened for a saved bid (once per bid per
+  // browser session; the server also stores it at most once per bid per day). Fire-and-forget.
+  const previewSent = useRef<string | null>(null);
+  useEffect(() => {
+    if (!previewOpen || !user || !cloudMode || previewSent.current === estimate.id) return;
+    previewSent.current = estimate.id;
+    track("proposal_previewed", { trade: primaryTrade });
+    void fetch("/api/events", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ event: "preview_opened", estimateId: estimate.id }), keepalive: true }).catch(() => {});
+  }, [previewOpen, user, cloudMode, estimate.id, primaryTrade]);
 
   // Debounced cloud autosave.
   const first = useRef(true);
@@ -253,6 +275,8 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
       if (!r.ok) return { error: data?.error?.message ?? "Export failed. Please try again." };
       const message = exportMessage(data.creditSource as CreditSource, data.versionNumber, data.credits);
       setFinalizedHere(true);
+      // A PDF was actually generated on the server (response ok): mirror it for GA4 / the Pixel.
+      track("pdf_exported", { trade: primaryTrade });
       await refreshCredits();
       if (deliver === "signing") {
         const file = data.pdfBase64 ? base64File(data.pdfBase64, data.filename) : undefined;
@@ -270,7 +294,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
       exportLock.current = false;
       setExporting(false);
     }
-  }, [user, readiness, fixIssue, estimate.id, saveCloud, refreshCredits]);
+  }, [user, readiness, fixIssue, estimate.id, saveCloud, refreshCredits, primaryTrade]);
 
   const doExport = useCallback(async () => {
     const res = await runExport("download");
@@ -287,25 +311,51 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
     setSendPhase({ k: "ready", file: res.file!, note: res.message });
   }, [runExport]);
 
-  const createSigning = useCallback(async () => {
-    const res = await runExport("signing");
-    if (!res) return;
-    if ("error" in res) { setExportMsg({ tone: "danger", text: res.error }); return; }
-    setSigningLink(res.link ?? null);
+  /**
+   * Create Signing Link, from the Proposal step or from the Email Proposal dialog. Either way the new
+   * link lands in the Email Proposal dialog, in "Signing link" mode, ready to send.
+   */
+  const createSigning = useCallback(async (fromDialog = false) => {
+    const stamp = editStamp;
+    // The bid hasn't changed since this session's link was made: show that link, no new request.
+    if (!fromDialog && signingLink && Date.parse(signingLink.expiresAt) > Date.now()) {
+      setSendKey((k) => k + 1); setSendPhase({ k: "idle" }); setSendMode("link"); setSendOpen(true);
+      return;
+    }
+    if (fromDialog) setCreatingLink(true);
+    const res = await runExport("signing").finally(() => setCreatingLink(false));
+    if (!res) { if (fromDialog) setSendOpen(false); return; }
+    if ("error" in res) {
+      if (fromDialog) setSendOpen(false);
+      setExportMsg({ tone: "danger", text: res.error }); return;
+    }
+    setSigningLinkState(res.link ? { link: res.link, stamp } : null);
     setSigningRefresh((n) => n + 1);
     setStep("proposal");
-  }, [runExport]);
+    if (!fromDialog) {
+      setSendKey((k) => k + 1);
+      setSendPhase({ k: "idle" });
+      setSendMode("link");
+      setSendOpen(true);
+    }
+  }, [runExport, editStamp, signingLink]);
+
+  const changeSendMode = useCallback((m: SendMode) => {
+    setSendMode(m);
+    if (m === "pdf" && sendPhase.k === "idle") void prepareSend();
+  }, [sendPhase.k, prepareSend]);
 
   const startSend = useCallback(() => {
     // Checks that need another screen (sign-in, missing details) run before the dialog opens.
     if (!user || !(user.verified ?? user.emailVerified) || readiness.length) { void runExport("bytes"); return; }
     if (exportLock.current) return;
     setSendKey((k) => k + 1);
+    setSendMode("pdf");
     setSendOpen(true);
     void prepareSend();
   }, [user, readiness.length, runExport, prepareSend]);
 
-  const shareEmail = useMemo(() => buildShareEmail({
+  const shareEmail = useMemo<ShareEmailInput>(() => ({
     customerName: estimate.customer.name, customerEmail: estimate.customer.email, projectTitle: estimate.title,
     companyName: business.companyName, contactName: business.contactName, phone: displayPhone(business.phone),
   }), [estimate.customer.name, estimate.customer.email, estimate.title, business.companyName, business.contactName, business.phone]);
@@ -346,7 +396,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
   const lastTrash = state.trash[state.trash.length - 1];
 
   return (
-    <div ref={rootRef} className="flex min-h-screen flex-col">
+    <div ref={rootRef} className="app-theme flex min-h-screen flex-col">
       {/* Project header */}
       <header ref={headerRef} className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur no-print">
         <div className="mx-auto flex max-w-[1400px] flex-wrap items-center gap-x-4 gap-y-2 px-3 py-2 sm:px-5">
@@ -376,6 +426,8 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
                 {customerView ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />} Customer view
               </Button>
             )}
+            {cloudMode && user && save === "saved" && <ScheduleNowButton estimateId={estimate.id} />}
+            {cloudMode && user && <InternalReportButton estimateId={estimate.id} locked={credits ? !credits.unlimited : false} saved={save === "saved"} signedIn={Boolean(user)} businessEmail={business.email} title={estimate.title} />}
             <Button size="sm" variant="secondary" onClick={() => setPreviewOpen(true)}><Eye className="h-4 w-4" /> <span className="hidden sm:inline">Preview My Bid</span><span className="sm:hidden">Preview</span></Button>
             <Button size="sm" variant="secondary" onClick={startSend} disabled={exporting} aria-label="Send via My Email" data-testid="send-email-header">
               <Mail className="h-4 w-4" aria-hidden /> <span className="max-[419px]:hidden"><span className="sm:hidden">Email</span><span className="hidden sm:inline xl:hidden">Send by email</span><span className="hidden xl:inline">Send via My Email</span></span>
@@ -387,6 +439,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
               {credits && <span className="mt-0.5"><CreditSummary credits={credits} /></span>}
               {credits && !credits.unlimited && <span className="text-[11px] text-muted">{alreadyFinalized ? "Updates are free" : "Uses 1 credit"}</span>}
             </div>
+            <ThemeToggle signedIn={Boolean(user)} account={user?.theme ?? null} className="min-h-9 min-w-9 md:min-h-9 md:min-w-9" />
           </div>
         </div>
         <nav aria-label="Builder steps" className="mx-auto max-w-[1400px] px-3 sm:px-5">
@@ -445,7 +498,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
         {step === "company" && <CompanyStep business={business} onChange={setBusiness} signedIn={Boolean(user)} missing={missingCodes} />}
         {step === "project" && <ProjectStep estimate={estimate} dispatch={dispatch} signedIn={Boolean(user)} missing={missingCodes} />}
         {step === "estimate" && (customerView ? (
-          <div className="rounded-xl bg-[#e4eaf1] p-3 sm:p-6">
+          <div className="rounded-xl bg-stage p-3 sm:p-6">
             <p className="mb-3 text-center text-xs font-semibold uppercase tracking-wider text-muted">Customer view: this is all your customer sees</p>
             <ProposalView doc={doc} />
           </div>
@@ -453,7 +506,8 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
           <>{isWashingEstimate(estimate) && <WashingJobPanel estimate={estimate} dispatch={dispatch} />}<Workspace estimate={estimate} dispatch={dispatch} lib={lib} /></>
         ))}
         {step === "scope" && <ScopeStep estimate={estimate} config={config} onConfig={onConfig} signedIn={Boolean(user)} estimateId={cloudMode ? estimate.id : null} />}
-        {step === "proposal" && esign && cloudMode && <SigningPanel estimateId={estimate.id} onCreate={() => void createSigning()} creating={exporting} refreshKey={signingRefresh} />}
+        {step === "proposal" && esign && cloudMode && <SigningPanel estimateId={estimate.id} onCreate={() => void createSigning()} creating={exporting} refreshKey={signingRefresh}
+          onRevoked={(id) => setSigningLinkState((s) => (s?.link.requestId === id ? null : s))} />}
         {step === "proposal" && <ProposalStep estimate={estimate} business={business} config={config} onConfig={onConfig} />}
 
         {/* Step footer: Back / Next on every step */}
@@ -489,7 +543,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
       </div>
 
       <Modal open={previewOpen} onOpenChange={setPreviewOpen} title="Preview your proposal" description="This is exactly what your customer will see. Previews are always free." wide>
-        <div className="-mx-6 bg-[#e4eaf1] p-3 sm:p-5"><ProposalView doc={doc} /></div>
+        <div className="-mx-6 bg-stage p-3 sm:p-5"><ProposalView doc={doc} /></div>
         <div className="mt-4 flex flex-wrap justify-end gap-2">
           <Button variant="secondary" onClick={() => { setPreviewOpen(false); setStep("proposal"); }}>Customize proposal</Button>
           {esign && cloudMode && <Button variant="secondary" onClick={() => { setPreviewOpen(false); void createSigning(); }}><Link2 className="h-4 w-4" aria-hidden /> Create Signing Link</Button>}
@@ -497,9 +551,10 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
           <Button variant="accent" onClick={() => { setPreviewOpen(false); void doExport(); }}><Download className="h-4 w-4" /> Download PDF</Button>
         </div>
       </Modal>
-      <SigningLinkDialog open={Boolean(signingLink)} onOpenChange={(o) => { if (!o) setSigningLink(null); }} link={signingLink}
-        email={{ customerName: estimate.customer.name, customerEmail: estimate.customer.email, projectTitle: estimate.title, companyName: business.companyName, contactName: business.contactName, phone: displayPhone(business.phone) }} />
-      <SendEmailDialog key={sendKey} open={sendOpen} onOpenChange={(o) => { if (!o && sendPhase.k === "preparing") return; setSendOpen(o); }} phase={sendPhase} email={shareEmail} onRetry={() => void prepareSend()} />
+      <SendEmailDialog key={sendKey} open={sendOpen} onOpenChange={(o) => { if (!o && (sendPhase.k === "preparing" || creatingLink)) return; setSendOpen(o); }}
+        phase={sendPhase} emailInput={shareEmail} onRetry={() => void prepareSend()}
+        mode={sendMode} onModeChange={changeSendMode} allowLink={esign && cloudMode}
+        link={signingLink} onCreateLink={() => void createSigning(true)} creatingLink={creatingLink} />
       <AuthDialog open={authOpen} onOpenChange={setAuthOpen} next={`/builder?draft=${estimate.id}&export=1`} onVerified={() => { window.location.assign(`/builder?draft=${estimate.id}&export=1`); }} />
       <UpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} nextCycleAt={credits?.nextCycleAt} />
     </div>

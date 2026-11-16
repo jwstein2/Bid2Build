@@ -2,10 +2,25 @@
  * Learning center content. Plain, factual guidance only: no statistics, prices, or claims we
  * cannot support. Tax and legal topics point readers to qualified professionals.
  */
-export interface ArticleBlock { h?: string; p?: string[]; list?: string[]; formula?: string[] }
-export interface Article { slug: string; title: string; description: string; updated: string; blocks: ArticleBlock[] }
+import generated from "./generated-articles.json";
 
-export const articles: Article[] = [
+export interface ArticleBlock { h?: string; p?: string[]; list?: string[]; formula?: string[] }
+export interface Article {
+  slug: string;
+  title: string;
+  description: string;
+  /** YYYY-MM-DD, shown as "Updated" and used as the sitemap lastmod. */
+  updated: string;
+  /** First published (YYYY-MM-DD). Generated pricing guides set it; hand-written guides use `updated`. */
+  published?: string;
+  /** Trade slug for trade pricing guides: links the guide and its trade page both ways. */
+  trade?: string;
+  blocks: ArticleBlock[];
+  /** "Further reading" links found by the writer's research step (generated guides only). */
+  sources?: { title: string; url: string }[];
+}
+
+const coreArticles: Article[] = [
   {
     slug: "markup-vs-margin",
     title: "Markup vs. Margin: What Contractors Need to Know",
@@ -66,4 +81,18 @@ export const articles: Article[] = [
   },
 ];
 
+/**
+ * Weekly pricing guides, appended by the scheduled writer (scripts/content/write-article.ts, run by
+ * .github/workflows/pricing-articles.yml). Every entry passed the writer's automated checks before
+ * it was committed; tests/learn-articles.test.ts re-checks the whole file on every build.
+ */
+const generatedArticles = generated as Article[];
+
+/** Newest pricing guides first, then the core guides. */
+export const articles: Article[] = [
+  ...[...generatedArticles].sort((a, b) => (b.published ?? b.updated).localeCompare(a.published ?? a.updated)),
+  ...coreArticles,
+];
+
 export const getArticle = (slug: string) => articles.find((a) => a.slug === slug);
+export const articlesForTrade = (trade: string) => articles.filter((a) => a.trade === trade);

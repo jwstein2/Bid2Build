@@ -20,6 +20,57 @@ export interface Attribution {
   ref?: string;
   path?: string;
   at?: string;
+  /** Host name of an outside referring site (never the full URL). */
+  referrer?: string;
+  /** Which ad click id was on the landing URL (never its value). */
+  clickId?: ClickIdType;
+  device?: DeviceType;
+}
+
+export const CLICK_IDS = ["gclid", "gbraid", "wbraid", "fbclid", "msclkid", "ttclid", "li_fat_id"] as const;
+export type ClickIdType = (typeof CLICK_IDS)[number];
+export type DeviceType = "mobile" | "tablet" | "desktop";
+
+/** Our own hosts and sign-in/payment hops: never an acquisition source. */
+const INTERNAL_REFERRERS = /(^|\.)(built2bid\.org|built2bid\.netlify\.app|netlify\.app|localhost|supabase\.co|stripe\.com|accounts\.google\.com)$/;
+/** Landing paths that are never a first visit from marketing (sign-in links, customer signing links, the /r/<code> referral hop, which redirects to a tagged URL). */
+const SKIP_PATHS = /^\/(auth|api|sign|complimentary|company\/join|r)(\/|$)/;
+
+export function referrerHost(referer: string | null | undefined): string | undefined {
+  if (!referer) return undefined;
+  try {
+    const h = new URL(referer).hostname.toLowerCase().replace(/^www\./, "");
+    if (!h || h.length > 253 || INTERNAL_REFERRERS.test(h)) return undefined;
+    return /^[a-z0-9.-]+$/.test(h) ? h : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function deviceType(ua: string | null | undefined): DeviceType | undefined {
+  if (!ua) return undefined;
+  if (/iPad|Tablet|PlayBook|Silk|(Android(?!.*Mobile))/i.test(ua)) return "tablet";
+  if (/Mobi|iPhone|iPod|Android|BlackBerry|IEMobile|Opera Mini/i.test(ua)) return "mobile";
+  return "desktop";
+}
+
+/**
+ * First-touch attribution for a landing request: campaign parameters, an ad click id type, or an
+ * outside referrer host. Returns null for a plain direct visit (that is recorded as "direct" at signup).
+ */
+export function captureAttribution(url: URL, referer: string | null, userAgent: string | null, now = new Date()): Attribution | null {
+  if (SKIP_PATHS.test(url.pathname)) return null;
+  const a = parseAttribution(url, now) ?? {};
+  const clickId = CLICK_IDS.find((k) => url.searchParams.has(k));
+  if (clickId) a.clickId = clickId;
+  const ref = referrerHost(referer);
+  if (ref) a.referrer = ref;
+  if (!Object.values(a).some(Boolean)) return null;
+  a.path ??= url.pathname.slice(0, 500);
+  a.at ??= now.toISOString();
+  const d = deviceType(userAgent);
+  if (d) a.device = d;
+  return a;
 }
 
 const clean = (v: string | null, max = 200) => {
@@ -60,6 +111,9 @@ export function decodeAttribution(raw: string | undefined | null): Attribution |
       const x = v[k];
       if (typeof x === "string") out[k] = x.slice(0, k === "path" ? 500 : 200);
     }
+    if (typeof v.referrer === "string" && /^[a-z0-9.-]{1,253}$/.test(v.referrer)) out.referrer = v.referrer;
+    if (typeof v.clickId === "string" && (CLICK_IDS as readonly string[]).includes(v.clickId)) out.clickId = v.clickId as ClickIdType;
+    if (v.device === "mobile" || v.device === "tablet" || v.device === "desktop") out.device = v.device;
     return out;
   } catch {
     return null;

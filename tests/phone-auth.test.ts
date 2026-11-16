@@ -59,9 +59,11 @@ describe("display helpers", () => {
 describe("feature flag", () => {
   it("is off unless explicitly turned on", () => {
     expect(isSmsSignInEnabled({})).toBe(false);
-    expect(isSmsSignInEnabled({ NEXT_PUBLIC_SMS_SIGNIN: "off" })).toBe(false);
-    expect(isSmsSignInEnabled({ NEXT_PUBLIC_SMS_SIGNIN: "on" })).toBe(true);
-    expect(isSmsSignInEnabled({ NEXT_PUBLIC_SMS_SIGNIN: " TRUE " })).toBe(true);
+    expect(isSmsSignInEnabled({ NEXT_PUBLIC_SMS_AUTH_ENABLED: "false" })).toBe(false);
+    expect(isSmsSignInEnabled({ NEXT_PUBLIC_SMS_AUTH_ENABLED: "true" })).toBe(true);
+    expect(isSmsSignInEnabled({ NEXT_PUBLIC_SMS_AUTH_ENABLED: " TRUE " })).toBe(true);
+    // The retired flag can no longer turn SMS on.
+    expect(isSmsSignInEnabled({ NEXT_PUBLIC_SMS_SIGNIN: "on" })).toBe(false);
   });
 });
 

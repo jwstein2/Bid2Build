@@ -1,14 +1,18 @@
+import { openGraphFor } from "@/lib/seo/open-graph";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Check } from "lucide-react";
+import { Calculator, Check, EyeOff, Percent } from "lucide-react";
 import { Container } from "@/components/ui/misc";
 import { familyTint, TradeIcon } from "@/components/trade-icon";
 import { getTrade, trades, UNIT_ABBR } from "@/lib/trades/catalog";
+import { articlesForTrade } from "@/lib/learn/articles";
 import { plans, site } from "@/lib/site";
 import { AccountCtas } from "@/components/account/account-ctas";
 import { getAccountStatus } from "@/lib/account/server";
 import { creditBadge, CTA_LABELS, type AccountStatus } from "@/lib/account/status";
+import { landingFor, PRICE_DISPLAYS } from "@/lib/trades/landing";
+import { TrackLandingView } from "@/components/analytics/track-view";
 
 export const dynamicParams = false;
 export function generateStaticParams() {
@@ -23,7 +27,7 @@ export async function generateMetadata({ params }: PageProps<"/bids/[trade]">): 
     title: t.seoTitle,
     description: `${t.intro} ${plans.starterCredits} free bids to start, plus ${plans.monthlyCredits} free every month.`,
     alternates: { canonical: `/bids/${t.slug}` },
-    openGraph: { title: `${t.seoTitle} | ${site.name}`, description: t.intro },
+    openGraph: openGraphFor({ title: `${t.seoTitle} | ${site.name}`, description: t.intro, path: `/bids/${t.slug}`, ownImage: true }),
   };
 }
 
@@ -43,6 +47,10 @@ export default async function TradePage({ params }: PageProps<"/bids/[trade]">) 
   const secondary = status.kind === "no_credits"
     ? { action: "draft" as const, label: CTA_LABELS.draft, href: start }
     : { action: "draft" as const, label: "Start from blank", href: `${start}?blank=1` };
+  const guides = articlesForTrade(t.slug);
+  // Priority trades get conversion copy, a real sample proposal and the calculator explainer.
+  const L = landingFor(t.slug);
+  const lower = t.name.toLowerCase();
   const related = trades.filter((x) => x.family === t.family && x.slug !== t.slug).slice(0, 4);
   const jsonLd = {
     "@context": "https://schema.org",
@@ -63,6 +71,7 @@ export default async function TradePage({ params }: PageProps<"/bids/[trade]">) 
 
   return (
     <>
+      <TrackLandingView trade={t.slug} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <section className="border-b border-line bg-surface">
         <Container className="grid gap-10 py-14 lg:grid-cols-[1.3fr_1fr]">
@@ -72,9 +81,10 @@ export default async function TradePage({ params }: PageProps<"/bids/[trade]">) 
               <span className={`grid h-12 w-12 place-items-center rounded-xl ${familyTint[t.family]}`}><TradeIcon name={t.icon} className="h-7 w-7" /></span>
               <p className="font-semibold text-accent-dark">{t.seoTitle}</p>
             </div>
-            <h1 className="mt-4 text-4xl font-extrabold leading-tight sm:text-5xl">{t.headline}</h1>
-            <p className="mt-4 text-lg text-ink-soft">{t.intro}</p>
-            <AccountCtas status={status} createHref={start} secondary={secondary} arrow className="mt-7" />
+            <h1 className="mt-4 text-4xl font-extrabold leading-tight sm:text-5xl">{L?.headline ?? t.headline}</h1>
+            <p className="mt-4 text-lg text-ink-soft">{L?.sub ?? t.intro}</p>
+            {L && <p className="mt-3 text-ink-soft">{t.intro}</p>}
+            <AccountCtas status={status} createHref={start} createFreeLabel={L?.cta} secondary={secondary} arrow className="mt-7" />
             <p className="mt-3 text-sm text-muted" data-testid="trade-cta-note">{tradeNote(status)}</p>
           </div>
           <div className="rounded-2xl border border-line bg-paper p-5">
@@ -87,6 +97,56 @@ export default async function TradePage({ params }: PageProps<"/bids/[trade]">) 
           </div>
         </Container>
       </section>
+
+      {L && (
+        <section className="border-b border-line" data-testid="trade-landing">
+          <Container className="py-14">
+            <h2 className="text-2xl font-extrabold">Sound familiar?</h2>
+            <ul className="mt-6 grid gap-4 md:grid-cols-3">
+              {L.pains.map((p) => <li key={p} className="rounded-xl border border-line bg-surface p-4 text-ink-soft">{p}</li>)}
+            </ul>
+
+            <div className="mt-14 grid items-start gap-8 lg:grid-cols-2">
+              <figure>
+                <h2 className="text-2xl font-extrabold">What your customer receives</h2>
+                <p className="mt-2 text-ink-soft">A branded PDF with your logo and details, your scope and terms, and only the prices you choose to show.</p>
+                {/* eslint-disable-next-line @next/next/no-img-element -- static, pre-sized image; keeps the page light */}
+                <img src={`/media/proposals/${t.slug}-v1.webp`} width={900} height={1165} loading="lazy" decoding="async" alt={`Page 1 of a sample ${lower} proposal made in Built2Bid, showing sections with prices and a total`} className="mt-5 w-full max-w-md rounded-lg border border-line shadow-sm" data-testid="sample-proposal" />
+                <figcaption className="mt-2 text-xs text-muted">Real Built2Bid output. Company, customer and prices are example data.</figcaption>
+              </figure>
+              <div>
+                <h2 className="text-2xl font-extrabold">See Built2Bid in action</h2>
+                <p className="mt-2 text-ink-soft">A short walkthrough of building an estimate and sending the proposal. Captions are on.</p>
+                <video className="mt-5 aspect-video w-full rounded-lg border border-line bg-black" controls preload="none" playsInline poster="/media/meet-built2bid-poster.jpg" data-testid="demo-video">
+                  <source src="/media/meet-built2bid-v1.mp4" type="video/mp4" />
+                </video>
+
+                <h2 className="mt-10 flex items-center gap-2 text-2xl font-extrabold"><Calculator className="h-6 w-6 text-accent-dark" aria-hidden />How the {lower} calculators work</h2>
+                <p className="mt-2 text-ink-soft">{L.calculator}</p>
+                <ul className="mt-3 space-y-1.5">{L.calculatorBullets.map((b) => <li key={b} className="flex gap-2 text-ink-soft"><Check className="mt-0.5 h-4 w-4 shrink-0 text-ok" aria-hidden />{b}</li>)}</ul>
+                <p className="mt-2 text-sm text-muted">You can always type quantities yourself. Calculator inputs stay with your estimate, never on the proposal.</p>
+              </div>
+            </div>
+
+            <h2 className="mt-14 text-2xl font-extrabold">Price it your way, present it professionally</h2>
+            <div className="mt-6 grid gap-4 md:grid-cols-3">
+              <div className="rounded-xl border border-line bg-surface p-4">
+                <h3 className="flex items-center gap-2 font-bold"><Percent className="h-4 w-4 text-accent-dark" aria-hidden />Markup or target margin</h3>
+                <p className="mt-1 text-sm text-ink-soft">Choose either one and watch cost, price, profit and margin update as you go, so 25% markup is never mistaken for 25% margin.</p>
+              </div>
+              <div className="rounded-xl border border-line bg-surface p-4">
+                <h3 className="flex items-center gap-2 font-bold"><EyeOff className="h-4 w-4 text-accent-dark" aria-hidden />Your costs stay private</h3>
+                <p className="mt-1 text-sm text-ink-soft">Internal costs, markup, margin and notes never appear on the proposal.</p>
+              </div>
+              <div className="rounded-xl border border-line bg-surface p-4">
+                <h3 className="font-bold">Four ways to show the price</h3>
+                <ul className="mt-1 space-y-1 text-sm text-ink-soft">{PRICE_DISPLAYS.map((d) => <li key={d.title}><span className="font-semibold text-ink">{d.title}:</span> {d.body}</li>)}</ul>
+              </div>
+            </div>
+            <AccountCtas status={status} createHref={start} createFreeLabel={L.cta} secondary={false} arrow className="mt-8" />
+          </Container>
+        </section>
+      )}
 
       <Container className="py-14">
         <h2 className="text-2xl font-extrabold">How a {t.name.toLowerCase()} bid comes together</h2>
@@ -130,6 +190,20 @@ export default async function TradePage({ params }: PageProps<"/bids/[trade]">) 
           ))}
         </div>
 
+        {guides.length > 0 && (
+          <>
+            <h2 className="mt-14 text-xl font-extrabold">{t.name} pricing guides</h2>
+            <ul className="mt-4 grid gap-3 md:grid-cols-2">
+              {guides.map((g) => (
+                <li key={g.slug} className="rounded-xl border border-line bg-surface p-4 hover:border-line-strong">
+                  <Link href={`/learn/${g.slug}`} className="font-bold hover:underline">{g.title}</Link>
+                  <p className="mt-1 text-sm text-ink-soft">{g.description}</p>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+
         {related.length > 0 && (
           <>
             <h2 className="mt-14 text-xl font-extrabold">Related trades</h2>
@@ -145,7 +219,7 @@ export default async function TradePage({ params }: PageProps<"/bids/[trade]">) 
         <div className="on-dark blueprint-grid-dark mt-14 rounded-2xl bg-brand p-8 text-white">
           <h2 className="text-2xl font-extrabold">Ready to build your {t.name.toLowerCase()} bid?</h2>
           <p className="mt-2 text-white/80">{status.signedIn ? "Your company details and branding carry over to every bid." : "Start now. Create an account only when you are ready to download."}</p>
-          <AccountCtas status={status} createHref={start} tone="dark" secondary={status.kind === "no_credits" ? { ...secondary, label: CTA_LABELS.draft } : false} className="mt-5" />
+          <AccountCtas status={status} createHref={start} createFreeLabel={L?.cta} tone="dark" secondary={status.kind === "no_credits" ? { ...secondary, label: CTA_LABELS.draft } : false} className="mt-5" />
         </div>
       </Container>
     </>

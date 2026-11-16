@@ -1,13 +1,11 @@
-/** Copy for the two Unlimited-only features, shared by the sidebar, dashboard cards and upgrade screens. */
-export const PREMIUM_FEATURES = {
-  library: {
-    title: "Saved Items & Pricing",
-    pitch: "Save your labor rates, material costs, and frequently used estimating items. Included with Unlimited.",
-  },
-  templates: {
-    title: "Proposal Templates",
-    pitch: "Customize and reuse professional proposal layouts. Included with Unlimited.",
-  },
-} as const;
+/**
+ * Copy for the Unlimited-only features, shared by the sidebar, dashboard cards and upgrade screens.
+ * Derived from the feature registry (src/lib/features/registry.ts): edit copy there.
+ */
+import { FEATURES, type PremiumFeatureId } from "@/lib/features/registry";
 
-export type PremiumFeature = keyof typeof PREMIUM_FEATURES;
+export type PremiumFeature = PremiumFeatureId;
+
+export const PREMIUM_FEATURES = Object.fromEntries(
+  FEATURES.filter((f) => f.entitlement === "unlimited").map((f) => [f.id, { title: f.name, pitch: f.pitch ?? f.description }]),
+) as Record<PremiumFeature, { title: string; pitch: string }>;

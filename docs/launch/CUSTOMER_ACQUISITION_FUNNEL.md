@@ -55,7 +55,7 @@ Provider options: Resend (simple API, generous free tier), Postmark (transaction
 
 ## Referral (proposal, not built)
 
-Give each paying customer a link `https://built2bid.org/?ref=<code>`; the attribution cookie already captures `ref`. Reward via a Stripe coupon (e.g. one free month for the referrer when the referred account pays). Requires a `referral_codes` table and a coupon in Stripe.
+Built (migration `20261115003000_referrals.sql`): every member gets `https://built2bid.org/r/<code>` on their dashboard. When a referred new account pays its first non-zero invoice, the referrer gets one free month: a Stripe customer balance credit worth one month of their plan if they have a renewing subscription, otherwise 30 days of complimentary Unlimited. No Stripe prices or coupons are involved. Guards: no self-referral, new accounts only, internal/test/demo excluded, one reward per referred account, 12 per referrer per year. Owner view: `/admin/referrals`. UTM links for outside marketing: `docs/marketing/UTM_LINKS.md`.
 
 ## Internal sales dashboard
 

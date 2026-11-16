@@ -30,7 +30,9 @@ Template: `.env.example`.
 | `NEXT_PUBLIC_SITE_NAME` | public | All | No (default `Built2Bid`) | Product name in titles, emails, PDFs. |
 | `NEXT_PUBLIC_SITE_DOMAIN` | public | All | No | Display domain. Defaults to the host of the site URL. |
 | `NEXT_PUBLIC_SUPPORT_EMAIL` | public | All | **Yes before launch** | Shown in footer, homepage FAQ, Privacy, Terms. Default is the placeholder `support@example.com`. Set to a Google Workspace address (e.g. support@built2bid.org). |
-| `NEXT_PUBLIC_SMS_SIGNIN` | public | All (try Deploy Preview first) | No (default off) | `on` makes texted codes the primary sign-in. Set only after Twilio Verify is configured in Supabase. See docs/auth/SMS_SIGN_IN.md. |
+| `NEXT_PUBLIC_SMS_AUTH_ENABLED` | public | none for now | No (default off) | `true` shows the phone sign-in UI. Display only. Leave unset until Twilio is approved. Replaces the retired `NEXT_PUBLIC_SMS_SIGNIN` (ignored; delete it). See docs/auth/EMAIL_SIGN_IN.md. |
+| `SMS_AUTH_ENABLED` | server | none for now | No (default off) | Also required (with the public flag) before server routes do any phone-auth work. |
+| `NEXT_PUBLIC_EMAIL_OTP_LENGTH` | public | none | No (default 6) | Emergency override only (6–10). Must equal Supabase "Email OTP Length". Leave unset. |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | public | All | Recommended with SMS | Cloudflare Turnstile site key for the bot check on code requests. The secret goes in Supabase Attack Protection, not Netlify. |
 | `NEXT_PUBLIC_ALLOW_INDEXING` | public | Production only | Launch decision | `true` lets search engines index production. Has no effect on previews (always noindex). |
 
@@ -60,7 +62,7 @@ with these keys talks to production data. See PRODUCTION_LAUNCH_CHECKLIST.md ite
 | Name | Scope | Contexts | Required | Purpose |
 |---|---|---|---|---|
 | `ANTHROPIC_API_KEY` | **secret** | Production | No | Enables AI drafting; without it, built-in rules draft. **Rotate: it was pasted in chat on 2026-11-12.** |
-| `AI_MODEL` | server | All | No | Default `claude-opus-5-5`. |
+| `AI_MODEL` | server | All | No | Default `claude-haiku-5-5`. |
 | `AI_DAILY_LIMIT_PER_USER` | server | All | No | Default 40. |
 | `AI_MONTHLY_BUDGET_USD` | server | All | No | Default 25; above it drafting falls back to rules. |
 | `AI_TEXT_GENERATION` | server | All | No | `off` pauses AI without removing the key. |

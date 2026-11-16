@@ -2,6 +2,7 @@ import type Stripe from "stripe";
 import { z } from "zod";
 import { assertModeAllowed, getStripe } from "@/lib/billing/stripe";
 import { applySubscription } from "@/lib/billing/apply";
+import { checkoutTaxParams } from "@/lib/billing/tax";
 import { PLAN_IDS, priceMismatch, type PlanId } from "@/lib/billing/plans";
 import { BLOCKING_SUBSCRIPTION_STATUSES, converge, reusableSession, staleSessions } from "@/lib/billing/checkout-sessions";
 import { createAdminClient, getUser } from "@/lib/supabase/server";
@@ -91,6 +92,7 @@ export async function POST(req: Request) {
       subscription_data: { metadata: { user_id: user.id, plan } },
       metadata: { user_id: user.id, plan },
       allow_promotion_codes: true,
+      ...checkoutTaxParams(),
       expires_at: now + 60 * 60,
       success_url: `${site.url}/settings/billing?checkout=success&plan=${plan}`,
       cancel_url: `${site.url}/pricing?checkout=cancelled&plan=${plan}`,

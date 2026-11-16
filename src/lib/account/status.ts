@@ -56,6 +56,8 @@ export interface CtaOptions {
   createHref?: string;
   /** Where "See How It Works" goes. Default /#how-it-works. */
   howHref?: string;
+  /** Signed-out primary label override (trade landing pages: "Create Your First Free Deck Bid"). */
+  createFreeLabel?: string;
 }
 
 /** Primary and secondary call to action for this visitor. */
@@ -64,7 +66,7 @@ export function accountCtas(s: AccountStatus, opts: CtaOptions = {}): { primary:
   const bids: Cta = { action: "bids", label: CTA_LABELS.bids, href: "/dashboard" };
   switch (s.kind) {
     case "signed_out":
-      return { primary: { action: "create", label: CTA_LABELS.createFree, href: create }, secondary: { action: "how", label: CTA_LABELS.how, href: opts.howHref ?? "/#how-it-works" } };
+      return { primary: { action: "create", label: opts.createFreeLabel ?? CTA_LABELS.createFree, href: create }, secondary: { action: "how", label: CTA_LABELS.how, href: opts.howHref ?? "/#how-it-works" } };
     case "free":
     case "unlimited":
       return { primary: { action: "create", label: CTA_LABELS.createNew, href: create }, secondary: bids };

@@ -6,7 +6,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ABANDONED_SIGNUP_WINDOW_MS, isAbandonedPhoneSignup, isSendFailure } from "@/lib/auth/phone";
 
-process.env.NEXT_PUBLIC_SMS_SIGNIN = "on";
+process.env.NEXT_PUBLIC_SMS_AUTH_ENABLED = "true";
+process.env.SMS_AUTH_ENABLED = "true";
 const NOW = Date.parse("2026-11-15T03:30:00Z");
 const fresh = { id: "orphan", phone: "12187900140", email: "", phone_confirmed_at: null, last_sign_in_at: null, created_at: "2026-11-15T03:26:53Z", identities: [{ provider: "phone" }] };
 
@@ -79,11 +80,16 @@ describe("POST /api/auth/phone-abandon", () => {
     expect(await call({ phone: "+15550001111" })).toEqual({ status: 200, body: { ok: true } });
     expect(state.deleted).toEqual([]);
   });
-  it("refuses bad input and is off when SMS sign-in is off", async () => {
+  it("refuses bad input and is off unless both SMS switches are on", async () => {
     expect((await call({ phone: "12" })).status).toBe(400);
     expect((await call({})).status).toBe(400);
-    process.env.NEXT_PUBLIC_SMS_SIGNIN = "off";
-    try { expect((await call({ phone: "+12187900140" })).status).toBe(404); } finally { process.env.NEXT_PUBLIC_SMS_SIGNIN = "on"; }
+    for (const [pub, srv] of [["false", "true"], ["true", "false"], ["true", undefined], [undefined, "true"]] as const) {
+      process.env.NEXT_PUBLIC_SMS_AUTH_ENABLED = pub ?? ""; process.env.SMS_AUTH_ENABLED = srv ?? "";
+      try { expect((await call({ phone: "+12187900140" })).status).toBe(404); } finally { process.env.NEXT_PUBLIC_SMS_AUTH_ENABLED = "true"; process.env.SMS_AUTH_ENABLED = "true"; }
+    }
+    // The retired public flag alone does nothing.
+    process.env.NEXT_PUBLIC_SMS_AUTH_ENABLED = ""; process.env.NEXT_PUBLIC_SMS_SIGNIN = "on";
+    try { expect((await call({ phone: "+12187900140" })).status).toBe(404); } finally { process.env.NEXT_PUBLIC_SMS_AUTH_ENABLED = "true"; delete process.env.NEXT_PUBLIC_SMS_SIGNIN; }
     expect(state.deleted).toEqual([]);
   });
 });

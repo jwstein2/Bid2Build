@@ -10,7 +10,10 @@ export interface ShareEmailInput {
   companyName?: string | null;
   contactName?: string | null;
   phone?: string | null;
-  /** When set, the message links to the online signing page instead of mentioning an attachment. */
+  /**
+   * When set, this is a signing request: its own subject and message, with the online signing link
+   * and no mention of an attachment.
+   */
   signingUrl?: string | null;
 }
 
@@ -49,27 +52,43 @@ export function buildShareEmail(i: ShareEmailInput): ShareEmail {
   const greetName = firstName(i.customerName);
   const signingUrl = /^https?:\/\/\S+$/.test(oneLine(i.signingUrl)) ? oneLine(i.signingUrl) : "";
 
+  const signature = [contact, company && company !== contact ? company : "", phone].filter(Boolean);
+  const greeting = greetName ? `Hi ${greetName},` : "Hi,";
+
+  if (signingUrl) {
+    return {
+      to: validEmail(i.customerEmail),
+      subject: project ? `Please Review & Sign Your Proposal — ${project}` : "Please Review & Sign Your Proposal",
+      body: [
+        greeting,
+        "",
+        "Thank you for the opportunity to provide an estimate for your project.",
+        "",
+        "Please review your proposal and electronically sign it using the secure link below:",
+        "",
+        signingUrl,
+        "",
+        "If you have any questions or would like to discuss anything before signing, please let me know.",
+        "",
+        "Thank you,",
+        ...signature,
+      ].join("\n"),
+    };
+  }
+
   const subject = company && project ? `Your Estimate from ${company} — ${project}`
     : company ? `Your Estimate from ${company}`
     : project ? `Your Estimate — ${project}`
     : "Your Estimate";
 
-  const signature = [contact, company && company !== contact ? company : "", phone].filter(Boolean);
   const body = [
-    greetName ? `Hi ${greetName},` : "Hi,",
+    greeting,
     "",
     project
       ? `Thank you for the opportunity to provide an estimate for ${project}.`
       : "Thank you for the opportunity to provide an estimate for your project.",
     "",
-    ...(signingUrl
-      ? [
-        "You can review the full proposal and sign it online here:",
-        signingUrl,
-        "",
-        "It works on your phone or computer, and you don't need to create an account. You can also download a copy from that page. Please let me know if you have any questions or would like to discuss anything further.",
-      ]
-      : ["I've attached our proposal for your review. Please let me know if you have any questions or would like to discuss anything further."]),
+    "I've attached our proposal for your review. Please let me know if you have any questions or would like to discuss anything further.",
     "",
     "Thank you,",
     ...signature,
@@ -96,4 +115,52 @@ export function canShareFile(file: File, nav: Partial<Pick<Navigator, "share" | 
   } catch {
     return false;
   }
+}
+
+/**
+ * Web compose links for Gmail and Outlook. They open a new message in the contractor's own,
+ * already signed-in mailbox with the recipient, subject and message filled in. Like mailto:, they
+ * can't carry an attachment: Built2Bid downloads the PDF first and the contractor drags it in.
+ * (Attaching automatically would need the contractor to connect their mailbox through OAuth.)
+ */
+export type WebMail = "gmail" | "outlook" | "outlook-personal";
+
+const WEBMAIL_BASE: Record<WebMail, string> = {
+  gmail: "https://mail.google.com/mail/",
+  // Work or school accounts (Microsoft 365) and most personal accounts, which are redirected.
+  outlook: "https://outlook.office.com/mail/deeplink/compose",
+  // Outlook.com / Hotmail / Live accounts, when the work URL doesn't keep the draft.
+  "outlook-personal": "https://outlook.live.com/mail/0/deeplink/compose",
+};
+
+/** Keep compose URLs well under the ~8 KB most servers accept; long messages are cut, not dropped. */
+const MAX_BODY = 3000;
+
+/** Whether the whole message fits a web draft link (longer ones are cut, so offer Copy message). */
+export function webComposeFits(body: string): boolean {
+  return multiLine(body).length <= MAX_BODY;
+}
+
+export function webComposeHref(app: WebMail, e: { to?: string; subject: string; body: string }): string {
+  const to = validEmail(e.to);
+  const subject = oneLine(e.subject);
+  let body = multiLine(e.body);
+  if (body.length > MAX_BODY) body = `${body.slice(0, MAX_BODY).trimEnd()}…`;
+  const q = new URLSearchParams();
+  if (app === "gmail") {
+    q.set("view", "cm"); q.set("fs", "1");
+    if (to) q.set("to", to);
+    q.set("su", subject); q.set("body", body);
+  } else {
+    if (to) q.set("to", to);
+    q.set("subject", subject); q.set("body", body);
+  }
+  // URLSearchParams writes spaces as "+", which Outlook shows literally: use %20 instead.
+  return `${WEBMAIL_BASE[app]}?${q.toString().replace(/\+/g, "%20")}`;
+}
+
+/** Plain-text copy of the whole email, for pasting into any email app. */
+export function plainEmail(e: { to?: string; subject: string; body: string }): string {
+  const to = validEmail(e.to);
+  return [to ? `To: ${to}` : "", `Subject: ${oneLine(e.subject)}`, "", multiLine(e.body)].filter((l, i) => i > 0 || l).join("\n");
 }

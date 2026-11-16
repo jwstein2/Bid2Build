@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
-import { isEnterpriseConfigured } from "@/lib/env";
+import { isEnterpriseConfigured, isPmBillingConfigured, isPmEnabled } from "@/lib/env";
+import { loadSeatCard } from "@/lib/pm/server";
+import { PmEditorsCard } from "@/components/company/pm-editors";
 import { getStripe } from "@/lib/billing/stripe";
 import { reconcileUser } from "@/lib/billing/apply";
 import { can, companySubscription, loadMyCompany } from "@/lib/enterprise/server";
@@ -65,6 +67,15 @@ export default async function CompanyBillingPage({ searchParams }: PageProps<"/c
   }
   const end = row?.current_period_end ? new Date(row.current_period_end).toLocaleDateString(undefined, { dateStyle: "long" }) : null;
   const comp = company.entitlement.source === "complimentary";
+  // Project scheduling editor seats (shown only once scheduling is switched on). Phase 9: managing who holds
+  // a seat needs manage_pm_seats; buying seats needs manage_pm_addons (both owner-level by default).
+  let pmCard: Awaited<ReturnType<typeof loadSeatCard>> & { extra: number } | null = null;
+  if (isPmEnabled() && company.entitlement.active && (can(company, "manage_pm_seats") || can(company, "manage_pm_addons"))) {
+    const { data: subRow } = row ? await admin.from("subscriptions").select("pm_extra_editors").eq("stripe_subscription_id", row.stripe_subscription_id).maybeSingle() : { data: null };
+    const extra = (subRow as { pm_extra_editors?: number } | null)?.pm_extra_editors ?? 0;
+    const card = await loadSeatCard(supabase, extra);
+    if (card) pmCard = { ...card, extra };
+  }
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -107,6 +118,7 @@ export default async function CompanyBillingPage({ searchParams }: PageProps<"/c
           <SeatChanger current={licensed} seatsInUse={company.seatsUsed} />
         </Card>
       )}
+      {pmCard && <PmEditorsCard {...pmCard} comp={comp} canManage={can(company, "manage_pm_seats")} canBuy={Boolean(can(company, "manage_pm_addons") && row && !comp && isPmBillingConfigured("editor") && (row.status === "active" || row.status === "trialing"))} />}
       {comp && <Notice tone="neutral" title="Need more users?">Complimentary accounts include 3 users. Contact Built2Bid to arrange more.</Notice>}
 
       {row && (

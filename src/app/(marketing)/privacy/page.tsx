@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Container, Notice } from "@/components/ui/misc";
+import { Container } from "@/components/ui/misc";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Privacy Policy", alternates: { canonical: "/privacy" } };
@@ -9,7 +9,6 @@ export default function Privacy() {
     <Container className="py-12">
       <div className="mx-auto max-w-2xl space-y-4 leading-relaxed text-ink-soft">
         <h1 className="text-4xl font-extrabold text-ink">Privacy Policy</h1>
-        <Notice tone="warn" title="Draft for legal review">This is a working draft describing how the product currently handles data. It must be reviewed by counsel before public launch.</Notice>
         <h2 className="pt-2 text-xl font-bold text-ink">What we collect</h2>
         <ul className="list-disc space-y-1 pl-5">
           <li>Account: your email address and sign-in records.</li>
@@ -17,6 +16,7 @@ export default function Privacy() {
           <li>Bids: estimates, customers, and proposals you create. Drafts made before signing in stay in your browser until you create an account.</li>
           <li>Billing: handled by Stripe. We store your subscription status, not your card number.</li>
           <li>Product analytics: page and feature events (for example, “trade selected”). We do not put bid contents, prices, or customer details in analytics.</li>
+          <li>Website analytics: we use Google Analytics to understand how visitors find and use our website (pages viewed, approximate location, device and browser, and how you arrived). Google Analytics sets cookies to do this. It is not loaded on proposal signing links or sign-in links. You can opt out with Google’s <a className="underline" href="https://tools.google.com/dlpage/gaoptout" rel="noopener noreferrer" target="_blank">browser add-on</a> or by blocking cookies.</li>
         </ul>
         <h2 className="pt-2 text-xl font-bold text-ink">How we use it</h2>
         <p>To run the service, generate your proposals, enforce plan limits, provide support, and keep the service secure. We do not sell your data. Your internal costs and margins are never shown on customer-facing proposals.</p>
@@ -27,7 +27,7 @@ export default function Privacy() {
         <h2 className="pt-2 text-xl font-bold text-ink">Your choices</h2>
         <p>You can export your data or delete your account from Account settings. Deleting your account removes your bids, customers, logos, and generated documents. To prevent repeat free-credit signups, we keep a one-way hash of your email address (not the address itself).</p>
         <h2 className="pt-2 text-xl font-bold text-ink">Service providers</h2>
-        <p>Supabase (database, authentication, file storage), Stripe (payments), and our hosting provider process data on our behalf.</p>
+        <p>Supabase (database, authentication, file storage), Stripe (payments), Google Analytics (website analytics), and our hosting provider process data on our behalf.</p>
         <h2 className="pt-2 text-xl font-bold text-ink">Contact</h2>
         <p>Questions: <a className="underline" href={`mailto:${site.supportEmail}`}>{site.supportEmail}</a></p>
       </div>

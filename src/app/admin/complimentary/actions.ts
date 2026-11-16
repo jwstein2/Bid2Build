@@ -2,7 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/server";
-import { ExtendInput, GrantInput, SeatsInput, compErrorMessage, INVITE_DAYS, type CompHistoryEntry, type CompRow } from "@/lib/comp/grants";
+import { ExtendInput, GrantInput, PmEditorsInput, SeatsInput, compErrorMessage, INVITE_DAYS, type CompHistoryEntry, type CompRow } from "@/lib/comp/grants";
 import { INVITE_FAILURE_TEXT, inviteUrl, newInviteToken, sendCompInvitation } from "@/lib/comp/server";
 
 /**
@@ -102,6 +102,17 @@ export async function setExtraSeats(input: unknown): Promise<ActionResult> {
   revalidatePath(PATH);
   const row = data as CompRow;
   return { ok: true, row, message: `Seats updated: ${row.included_seats + row.extra_seats} licensed users in total.` };
+}
+
+export async function setPmEditors(input: unknown): Promise<ActionResult> {
+  const { user, db } = await requireAdmin();
+  const p = PmEditorsInput.safeParse(input);
+  if (!p.success) return { ok: false, error: "Enter 0 to 50 editors (or use the plan default) and confirm you are authorizing them." };
+  const { data, error } = await db.rpc("admin_comp_set_pm_editors", { p_caller: user.id, p_id: p.data.id, p_editors: p.data.editors });
+  if (error || !data) return dbError(error);
+  revalidatePath(PATH);
+  const row = data as CompRow;
+  return { ok: true, row, message: row.pm_editors == null ? "Scheduling editors reset to the plan default." : `Scheduling editors set to ${row.pm_editors}.` };
 }
 
 export async function resendInvitation(id: string): Promise<ActionResult> {

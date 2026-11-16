@@ -1,9 +1,10 @@
 # SMS sign-in (phone verification codes)
 
-**Status (2026-11-14):** merged (PR #19) and the SQL is applied. Production is back on email sign-in (`NEXT_PUBLIC_SMS_SIGNIN=off`) while Twilio reviews the Trust Hub primary customer profile (error 20003 blocked sends). Deploy previews were switched off too on 2026-11-15 (a failed send showed a confusing phone-confirm box); turn previews back on first once Twilio approves.
-
-Code shipped behind a flag. Sign-in stays email-only until every step in "Turning it on" is done
-and `NEXT_PUBLIC_SMS_SIGNIN=on` is set in Netlify. Nothing here changes existing accounts.
+**Status (2026-11-15): paused.** Built2Bid is email-only (6-digit code) until Twilio approves the Trust Hub
+primary profile (error 20003). See docs/auth/EMAIL_SIGN_IN.md. All SMS code is kept. The flag is now
+`NEXT_PUBLIC_SMS_AUTH_ENABLED=true` (UI) plus server-only `SMS_AUTH_ENABLED=true`; the old
+`NEXT_PUBLIC_SMS_SIGNIN` is ignored. The Supabase phone provider must be re-enabled too. Wherever this
+page says `NEXT_PUBLIC_SMS_SIGNIN=on`, read "both new flags = true".
 
 ## What contractors see (flag on)
 

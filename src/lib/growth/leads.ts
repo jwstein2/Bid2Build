@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { type Attribution, normalizeEmail } from "./attribution";
 import { blockEmail } from "./instantly";
 import { logError } from "../http/api";
+import { eventIds, recordEvent } from "./events";
 
 /**
  * Lead identity + lifecycle on top of public.leads / public.lead_events
@@ -62,7 +63,7 @@ export async function syncSignedInUser(db: Db, user: { id: string; email: string
     const patch: Record<string, unknown> = { user_id: user.id };
     if (!lead.first_touch_at) {
       patch.first_touch_at = attribution?.at ?? new Date().toISOString();
-      patch.source = attribution?.source ?? (attribution?.ref ? "referral" : "direct");
+      patch.source = attribution?.source ?? (attribution?.ref ? "referral" : attribution?.referrer?.slice(0, 64) ?? "direct");
       if (attribution) {
         Object.assign(patch, {
           utm_source: attribution.source ?? null, utm_medium: attribution.medium ?? null, utm_campaign: attribution.campaign ?? null,
@@ -71,12 +72,18 @@ export async function syncSignedInUser(db: Db, user: { id: string; email: string
         });
       }
     }
-    const { error } = await db.from("leads").update(patch).eq("id", lead.id).is("user_id", null);
+    // Extra first-touch fields (migration 20261115002000). "(none)" marks a tracked visit with no outside
+    // referrer, so reports can tell a real direct visit from an account created before this was tracked.
+    const extra = lead.first_touch_at ? {} : { referrer_host: attribution?.referrer ?? "(none)", click_id_type: attribution?.clickId ?? null, device_type: attribution?.device ?? null };
+    let { error } = await db.from("leads").update({ ...patch, ...extra }).eq("id", lead.id).is("user_id", null);
+    if (error && Object.keys(extra).length && /column|schema cache|PGRST204|42703/i.test(`${error.code} ${error.message}`)) {
+      ({ error } = await db.from("leads").update(patch).eq("id", lead.id).is("user_id", null));
+    }
     if (error) return;
     await setStage(db, lead, "signed_up");
     await db.from("lead_events").insert({ lead_id: lead.id, event: "signed_up", source: "app", dedupe_key: dedupeKey("signup", user.id) });
     // The implicit (fragment) sign-in flow never hits /auth/callback, so record the funnel event here.
-    await db.from("analytics_events").insert({ user_id: user.id, event: "account_created" });
+    await recordEvent(db, { userId: user.id, event: "account_created", eventId: eventIds.accountCreated(user.id) });
   } catch (e) {
     logError("growth.sync_user", e, { user: user.id });
   }

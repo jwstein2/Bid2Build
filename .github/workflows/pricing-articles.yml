@@ -1,0 +1,70 @@
+# Publishes one pricing guide every Monday and Thursday (7:00 AM US Central, 13:00 UTC).
+# Needs one repository secret: ANTHROPIC_API_KEY (Settings → Secrets and variables → Actions).
+# Each run drafts with Claude Haiku 5.5, runs the automated quality checks plus an editor pass,
+# commits the guide to main, and Netlify deploys it. If a draft fails the checks after three rewrites, nothing is
+# published and the run fails (GitHub emails the repo owner). Pause it any time from the Actions
+# tab ("Disable workflow"). See docs/seo/PRICING_ARTICLES.md.
+name: Pricing articles
+
+on:
+  schedule:
+    - cron: "0 13 * * 1,4"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Draft and check only, do not publish"
+        type: boolean
+        default: true
+      topic:
+        description: "Optional topic slug from the plan (default: next unpublished topic)"
+        type: string
+        required: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pricing-articles
+  cancel-in-progress: false
+
+jobs:
+  write:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Write and check the next guide
+        id: write
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+          TOPIC: ${{ inputs.topic }}
+        run: |
+          set -euo pipefail
+          FLAGS=()
+          if [ "$DRY_RUN" = "true" ]; then FLAGS+=(--dry-run); fi
+          if [ -n "${TOPIC:-}" ]; then FLAGS+=(--topic "$TOPIC"); fi
+          npx tsx scripts/content/write-article.ts "${FLAGS[@]}"
+      - name: Re-run the published-guide tests
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
+        run: npx vitest run tests/learn-articles.test.ts
+      - name: Commit to main
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
+        env:
+          TITLE: ${{ steps.write.outputs.title }}
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- src/lib/learn/generated-articles.json; then echo "Nothing new to publish."; exit 0; fi
+          git config user.name "built2bid-content-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/lib/learn/generated-articles.json
+          git commit -m "Publish pricing guide: ${TITLE}"
+          for i in 1 2 3; do git pull --rebase origin main && git push origin HEAD:main && exit 0; sleep $((i * 10)); done
+          exit 1

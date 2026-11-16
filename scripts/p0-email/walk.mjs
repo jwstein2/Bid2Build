@@ -10,7 +10,6 @@ const { chromium } = createRequire(import.meta.url)("playwright");
 const BASE = process.env.BASE ?? "http://localhost:3000";
 const OUT = process.argv[2] ?? "p0-shots";
 fs.mkdirSync(OUT, { recursive: true });
-const EST = "11111111-1111-4111-8111-111111111111";
 
 const user = { id: "00000000-0000-4000-8000-000000000001", aud: "authenticated", role: "authenticated", email: "ux-test@built2bid.test", email_confirmed_at: new Date().toISOString() };
 const b64u = (s) => Buffer.from(s).toString("base64url");
@@ -156,93 +155,8 @@ async function ctxFor({ signedIn = false, viewport = { width: 1280, height: 900 
   await ctx.close();
 }
 
-// ---------- 3. Send via My Email (signed in, complete estimate) ----------
-const shareShim = (mode) => `(() => {
-  window.__shared = [];
-  Object.defineProperty(navigator, "canShare", { configurable: true, value: (d) => Boolean(d && d.files && d.files.length) });
-  Object.defineProperty(navigator, "share", { configurable: true, value: async (d) => {
-    window.__shared.push({ files: (d.files || []).map((f) => ({ name: f.name, type: f.type, size: f.size })), title: d.title, text: d.text, active: navigator.userActivation ? navigator.userActivation.isActive : null });
-    if (${JSON.stringify(mode)} === "cancel") { const e = new Error("cancel"); e.name = "AbortError"; throw e; }
-  } });
-})()`;
-const noShareShim = `(() => { try { delete Navigator.prototype.share; delete Navigator.prototype.canShare; } catch {} Object.defineProperty(navigator, "share", { configurable: true, value: undefined }); Object.defineProperty(navigator, "canShare", { configurable: true, value: undefined }); })()`;
-
-async function openSend(p) {
-  await p.goto(`${BASE}/estimates/${EST}`, { waitUntil: "networkidle" });
-  await p.waitForSelector('header button[aria-label="Send via My Email"]');
-  await p.waitForTimeout(500);
-}
-
-for (const vp of [{ name: "desktop", viewport: { width: 1280, height: 900 } }, { name: "m390", viewport: { width: 390, height: 844 } }]) {
-  // 3a. File sharing supported
-  {
-    const { ctx, calls } = await ctxFor({ signedIn: true, viewport: vp.viewport, share: shareShim("ok") });
-    const p = await ctx.newPage();
-    await openSend(p);
-    const btn = p.locator('header button[aria-label="Send via My Email"]');
-    await btn.click(); await btn.click({ force: true }).catch(() => {}); // double tap
-    await p.getByText("Share PDF to email app").waitFor({ timeout: 8000 });
-    check(`[${vp.name}] double tap prepares the PDF once (one export request)`, calls.length === 1, `${calls.length} request(s)`);
-    check(`[${vp.name}] Send uses the normal export, asking for the PDF bytes`, calls[0]?.deliver === "bytes");
-    const to = await p.inputValue("#se-to"); const subj = await p.inputValue("#se-subject"); const body = await p.inputValue("#se-body");
-    check(`[${vp.name}] recipient, subject and greeting come from the estimate`, to === "pat@example.test" && subj === "Your Estimate from Summit Exteriors LLC — Siding replacement – Johnson residence" && body.startsWith("Hi Pat,"), `${to} | ${subj}`);
-    check(`[${vp.name}] signature uses only entered details`, body.trimEnd().endsWith("Alex Rivera\nSummit Exteriors LLC\n(555) 010-2030"), JSON.stringify(body.split("\n").slice(-3)));
-    await p.screenshot({ path: path.join(OUT, `send-share-ready-${vp.name}.png`), fullPage: false });
-    await p.getByRole("button", { name: "Share PDF to email app" }).click();
-    await p.waitForTimeout(300);
-    const shared = await p.evaluate(() => window.__shared);
-    check(`[${vp.name}] share sheet gets the PDF file from a fresh tap`, shared.length === 1 && shared[0].files[0]?.name === "Summit-Exteriors-Proposal.pdf" && shared[0].files[0]?.type === "application/pdf" && shared[0].active !== false, JSON.stringify(shared[0]?.files));
-    const msg = await p.locator('[role="dialog"]').innerText();
-    check(`[${vp.name}] after sharing it never claims the email was sent`, /Built2Bid didn't send anything/.test(msg) && !/email sent|sent successfully/i.test(msg));
-    await p.screenshot({ path: path.join(OUT, `send-share-done-${vp.name}.png`) });
-    // Close and send again: same unchanged version, a second export call that the server treats as free
-    await p.keyboard.press("Escape");
-    await p.locator('header button[aria-label="Download PDF"]').click();
-    await p.waitForTimeout(800);
-    check(`[${vp.name}] switching to Download PDF reuses the export path`, calls.length === 2 && calls[1].deliver === "download");
-    await ctx.close();
-  }
-  // 3b. Share canceled
-  {
-    const { ctx } = await ctxFor({ signedIn: true, viewport: vp.viewport, share: shareShim("cancel") });
-    const p = await ctx.newPage();
-    await openSend(p);
-    await p.locator('header button[aria-label="Send via My Email"]').click();
-    await p.getByRole("button", { name: "Share PDF to email app" }).click();
-    await p.getByText("Sharing was canceled. Nothing was sent.").waitFor({ timeout: 4000 }).then(() => check(`[${vp.name}] canceling the share sheet says nothing was sent`, true)).catch(() => check(`[${vp.name}] canceling the share sheet says nothing was sent`, false));
-    await ctx.close();
-  }
-  // 3c. No file sharing: download + mailto fallback
-  {
-    const { ctx } = await ctxFor({ signedIn: true, viewport: vp.viewport, share: noShareShim });
-    const p = await ctx.newPage();
-    await openSend(p);
-    await p.locator('header button[aria-label="Send via My Email"]').click();
-    await p.getByText("Two quick steps").waitFor({ timeout: 8000 });
-    check(`[${vp.name}] without file sharing, no "attach automatically" option is offered`, (await p.getByText("Share PDF to email app").count()) === 0);
-    const [dl] = await Promise.all([p.waitForEvent("download"), p.getByRole("button", { name: "Download PDF" }).last().click()]);
-    check(`[${vp.name}] fallback downloads the PDF`, dl.suggestedFilename() === "Summit-Exteriors-Proposal.pdf");
-    const href = await p.getByRole("link", { name: "Open email draft" }).getAttribute("href");
-    const u = new URL(href);
-    check(`[${vp.name}] email draft link has the recipient, subject and message`, u.protocol === "mailto:" && u.pathname === "pat@example.test" && u.searchParams.get("subject")?.startsWith("Your Estimate from Summit Exteriors LLC") && u.searchParams.get("body")?.startsWith("Hi Pat,\r\n"), href.slice(0, 90));
-    await p.screenshot({ path: path.join(OUT, `send-fallback-${vp.name}.png`) });
-    check(`[${vp.name}] fallback explains the PDF must be attached manually`, (await p.locator('[role="dialog"]').innerText()).includes("Email links can't attach files"));
-    await ctx.close();
-  }
-}
-// 3d. Export failure: clear error, retry, no false success
-{
-  const { ctx, calls } = await ctxFor({ signedIn: true, exportFail: true, share: shareShim("ok") });
-  const p = await ctx.newPage();
-  await openSend(p);
-  await p.locator('header button[aria-label="Send via My Email"]').click();
-  await p.getByText("No bid credit was used").waitFor({ timeout: 6000 });
-  check("a failed PDF shows the error with Try again, and no share option", (await p.getByText("Share PDF to email app").count()) === 0 && (await p.getByRole("button", { name: "Try again" }).count()) === 1);
-  await p.getByRole("button", { name: "Try again" }).click();
-  await p.waitForTimeout(800);
-  check("Try again makes one more request", calls.length === 2);
-  await ctx.close();
-}
+// ---------- 3. Send via My Email ----------
+// The signed-in dialog checks moved to scripts/email-proposal/walk.mjs (compact Email Proposal dialog).
 // 3e. Anonymous Send: readiness/sign-in first, no export request
 {
   const { ctx, calls } = await ctxFor();

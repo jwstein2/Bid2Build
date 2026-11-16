@@ -1,0 +1,105 @@
+// Minimal PostgREST stand-in for the Opportunity Radar browser walk: translates supabase-js requests on
+// radar_* tables (and the radar_* RPCs) into SQL against a throwaway test database, so the real
+// migration, triggers and two-reply cap run end to end. Test tooling only. Never point production at it.
+import pg from "pg";
+
+const ID = /^[a-z_][a-z0-9_]*$/;
+let pool = null;
+let types = null;
+
+export function radarRestEnabled() { return Boolean(process.env.RADAR_PG_URL); }
+
+async function columnTypes() {
+  if (types) return types;
+  pool ??= new pg.Pool({ connectionString: process.env.RADAR_PG_URL, max: 5 });
+  const r = await pool.query("select table_name, column_name, data_type from information_schema.columns where table_schema = 'public' and table_name like 'radar_%'");
+  types = {};
+  for (const x of r.rows) (types[x.table_name] ??= {})[x.column_name] = x.data_type;
+  return types;
+}
+
+const fail = (send, res, e) => send(res, 400, { code: e.code ?? "P0001", message: e.message, details: null, hint: null });
+
+function filters(u, params, tableTypes) {
+  const where = [];
+  for (const [k, v] of u.searchParams) {
+    if (["select", "order", "limit", "offset", "on_conflict", "columns"].includes(k)) continue;
+    if (!ID.test(k) || !(k in tableTypes)) throw Object.assign(new Error(`unknown column ${k}`), { code: "42703" });
+    const m = v.match(/^(eq|neq|gte|lte|gt|lt|is|in)\.(.*)$/s);
+    if (!m) continue;
+    const [, op, val] = m;
+    if (op === "is") { where.push(`${k} is ${val === "null" ? "null" : val === "true" ? "true" : "false"}`); continue; }
+    if (op === "in") {
+      const items = val.replace(/^\(|\)$/g, "").split(",").map((s) => s.replace(/^"|"$/g, ""));
+      params.push(items); where.push(`${k}::text = any($${params.length})`); continue;
+    }
+    const sqlOp = { eq: "=", neq: "<>", gte: ">=", lte: "<=", gt: ">", lt: "<" }[op];
+    params.push(val); where.push(`${k}::text ${sqlOp} $${params.length}::text`);
+    if (op !== "eq" && op !== "neq") { where.pop(); where.push(`${k} ${sqlOp} $${params.length}`); }
+  }
+  return where.length ? ` where ${where.join(" and ")}` : "";
+}
+
+function selectList(u) {
+  const s = u.searchParams.get("select") ?? "*";
+  if (s === "*") return "*";
+  const cols = s.split(",").map((c) => c.trim());
+  if (!cols.every((c) => ID.test(c))) throw new Error("bad select");
+  return cols.join(", ");
+}
+
+const val = (type, v) => (v !== null && typeof v === "object" && (type === "jsonb" || type === "json") ? JSON.stringify(v) : v);
+
+export async function handleRadarRest(req, res, u, raw, send) {
+  const t = await columnTypes();
+  const rpc = u.pathname.match(/^\/rest\/v1\/rpc\/(radar_\w+)$/);
+  try {
+    if (rpc) {
+      const args = JSON.parse(raw || "{}");
+      const keys = Object.keys(args).filter((k) => ID.test(k));
+      const r = await pool.query(`select public.${rpc[1]}(${keys.map((k, i) => `${k} => $${i + 1}`).join(", ")}) as v`, keys.map((k) => args[k]));
+      return send(res, 200, r.rows[0].v);
+    }
+    const table = u.pathname.match(/^\/rest\/v1\/(radar_\w+)$/)?.[1];
+    if (!table || !t[table]) return send(res, 404, { message: "unknown radar table" });
+    const tt = t[table];
+    const one = (req.headers.accept ?? "").includes("vnd.pgrst.object");
+    const params = [];
+    const reply = (rows) => (one ? (rows.length ? send(res, 200, rows[0]) : send(res, 406, { code: "PGRST116", message: "JSON object requested, multiple (or no) rows returned" })) : send(res, req.method === "POST" ? 201 : 200, rows, { "content-range": `0-${Math.max(rows.length - 1, 0)}/${rows.length}` }));
+
+    if (req.method === "GET" || req.method === "HEAD") {
+      let sql = `select ${selectList(u)} from public.${table}${filters(u, params, tt)}`;
+      const order = u.searchParams.get("order");
+      if (order) sql += ` order by ${order.split(",").map((o) => { const [c, dir] = o.split("."); if (!ID.test(c)) throw new Error("bad order"); return `${c} ${dir === "desc" ? "desc" : "asc"}`; }).join(", ")}`;
+      const limit = Number(u.searchParams.get("limit") ?? 0);
+      if (limit) sql += ` limit ${Math.min(limit, 10000)}`;
+      return reply((await pool.query(sql, params)).rows);
+    }
+    const body = JSON.parse(raw || "null");
+    const ret = u.searchParams.get("select") ? ` returning ${selectList(u)}` : " returning *";
+    if (req.method === "POST") {
+      const rows = (Array.isArray(body) ? body : [body]).filter(Boolean);
+      const out = [];
+      const upsert = (req.headers.prefer ?? "").includes("merge-duplicates");
+      const conflict = u.searchParams.get("on_conflict");
+      for (const r of rows) {
+        const cols = Object.keys(r).filter((c) => ID.test(c) && c in tt);
+        const p = cols.map((c) => val(tt[c], r[c]));
+        let sql = `insert into public.${table} (${cols.join(", ")}) values (${cols.map((_, i) => `$${i + 1}`).join(", ")})`;
+        if (upsert && conflict && ID.test(conflict)) sql += ` on conflict (${conflict}) do update set ${cols.filter((c) => c !== conflict).map((c) => `${c} = excluded.${c}`).join(", ")}`;
+        out.push(...(await pool.query(sql + ret, p)).rows);
+      }
+      return reply(out);
+    }
+    if (req.method === "PATCH") {
+      const cols = Object.keys(body ?? {}).filter((c) => ID.test(c) && c in tt);
+      for (const c of cols) params.push(val(tt[c], body[c]));
+      const set = cols.map((c, i) => `${c} = $${i + 1}`).join(", ");
+      return reply((await pool.query(`update public.${table} set ${set}${filters(u, params, tt)}${ret}`, params)).rows);
+    }
+    if (req.method === "DELETE") return reply((await pool.query(`delete from public.${table}${filters(u, params, tt)}${ret}`, params)).rows);
+    return send(res, 405, { message: "method not supported" });
+  } catch (e) {
+    return fail(send, res, e);
+  }
+}

@@ -37,8 +37,7 @@ export default async function HomePage() {
   const visitor = !status.signedIn;
   const badge = creditBadge(status);
   const shownFaqs = faqs.filter((f) => (!f.visitorOnly || visitor) && (!f.freePlanOnly || status.kind !== "unlimited"));
-  const jsonLd = {
-    "@context": "https://schema.org",
+  const softwareApp = {
     "@type": "SoftwareApplication",
     name: site.name,
     applicationCategory: "BusinessApplication",
@@ -48,6 +47,24 @@ export default async function HomePage() {
       { "@type": "Offer", price: "0", priceCurrency: "USD", name: "Free" },
       { "@type": "Offer", price: "19.99", priceCurrency: "USD", name: "Unlimited Monthly" },
       { "@type": "Offer", price: "149", priceCurrency: "USD", name: "Unlimited Annual" },
+    ],
+  };
+  // One graph: the business, the website and the product, linked by @id so search engines can
+  // tie the brand name, logo and support contact to the app listing.
+  const orgId = `${site.url}/#organization`;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": orgId,
+        name: site.name,
+        url: site.url,
+        logo: `${site.url}/icon.png`,
+        contactPoint: { "@type": "ContactPoint", contactType: "customer support", email: site.supportEmail, availableLanguage: "English" },
+      },
+      { "@type": "WebSite", "@id": `${site.url}/#website`, name: site.name, url: site.url, publisher: { "@id": orgId } },
+      { ...softwareApp, url: site.url, publisher: { "@id": orgId } },
     ],
   };
   return (

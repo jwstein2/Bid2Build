@@ -1,4 +1,5 @@
 "use client";
+import { isNewAccount, track } from "@/lib/analytics/track";
 import { Loader2, Mail, MessageSquareText } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
@@ -12,6 +13,7 @@ import { Button } from "../ui/button";
 import { Notice } from "../ui/misc";
 import { Modal } from "../builder/dialogs";
 import { Captcha, captchaEnabled } from "./captcha";
+import { SMS_OTP_LENGTH, codeProblem, emailOtpLength, readCode } from "@/lib/auth/config";
 
 export type AuthDialogCopy = {
   title: string;
@@ -60,10 +62,11 @@ function useWebOtp(active: boolean, onCode: (code: string) => void) {
 
 /**
  * Sign in or sign up with a one-time code.
- *  - SMS on (NEXT_PUBLIC_SMS_SIGNIN=on): mobile number → texted code, with email as the fallback.
+ *  - Default (email only): email → 6-digit emailed code → verified in this browser → onVerified.
+ *    No phone number is asked for and nothing is texted.
+ *  - SMS on (NEXT_PUBLIC_SMS_AUTH_ENABLED=true, Twilio approved): mobile number → texted code, with email as the fallback.
  *    A number with no account asks whether the person already has an email account; if so they sign
  *    in by email first and then confirm the phone, which attaches it to that same account (no duplicate).
- *  - SMS off: the existing email code / link flow, unchanged.
  * The code is entered in this browser, so a code read on a phone works on a desktop.
  */
 export function AuthDialog({ open, onOpenChange, next, onVerified, title, copy, summary, footer, initialEmail, initialPhone, onEmailSent, onPhoneSent }: {
@@ -103,6 +106,8 @@ export function AuthDialog({ open, onOpenChange, next, onVerified, title, copy, 
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaReset, setCaptchaReset] = useState(0);
   const needCaptcha = captchaEnabled();
+  const emailLen = emailOtpLength();
+  const codeLen = stage === "email-code" ? emailLen : SMS_OTP_LENGTH;
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -121,6 +126,7 @@ export function AuthDialog({ open, onOpenChange, next, onVerified, title, copy, 
 
   // ---- Phone ------------------------------------------------------------------------------
   async function sendPhone({ create, resend }: { create: boolean; resend?: boolean }) {
+    if (!sms) return; // SMS auth disabled: never ask Supabase to text anyone.
     if (!supabase) { setErr("Accounts aren't configured on this server yet."); return; }
     const e164 = resend || create ? phone : normalizePhone(phoneInput, country);
     if (!e164) { setErr(country.dial === "1" ? "Enter a 10-digit mobile number, like (555) 123-4567." : "Enter a valid mobile number, including the area code."); return; }
@@ -153,7 +159,7 @@ export function AuthDialog({ open, onOpenChange, next, onVerified, title, copy, 
   }
 
   async function verifyPhone() {
-    if (!supabase || !phone) return;
+    if (!sms || !supabase || !phone) return;
     setBusy(true); setErr(null); setInfo(null);
     const { error } = await supabase.auth
       .verifyOtp({ phone, token: code.trim(), type: "sms" })
@@ -181,18 +187,24 @@ export function AuthDialog({ open, onOpenChange, next, onVerified, title, copy, 
     if (error && linkPhone && isNoAccountError(error)) { setErr("We couldn't find an account with that email. Check the spelling, or go back and create a new account with your phone."); return; }
     if (error) { setErr(emailError(error, "send")); return; }
     go("email-code"); setCooldown(60);
+    if (!resend) track("signup_started", { method: "email" });
     if (resend) setInfo(`We sent a new code to ${email.trim()}. Use the newest one.`);
     onEmailSent?.(email.trim());
   }
 
   async function verifyEmail() {
     if (!supabase) return;
+    const checked = readCode(code, emailLen);
+    if (!checked.ok) { setErr(codeProblem(checked.reason, emailLen)); return; }
     setBusy(true); setErr(null); setInfo(null);
-    const { error } = await supabase.auth
-      .verifyOtp({ email: email.trim(), token: code.trim(), type: "email" })
-      .catch((e: unknown) => ({ error: e as { message?: string } }));
+    const { data: verified, error } = await supabase.auth
+      .verifyOtp({ email: email.trim(), token: checked.code, type: "email" })
+      .catch((e: unknown) => ({ data: null, error: e as { message?: string } }));
     if (error) { setBusy(false); setErr(emailError(error, "verify")); return; }
-    if (linkPhone) {
+    // A brand-new account (created in the last 15 minutes): mirror the server's account_created event.
+    const u = verified?.user;
+    if (u?.created_at && isNewAccount(u.created_at)) track("sign_up", { method: "email" }, `account_created:${u.id}`);
+    if (linkPhone && sms) {
       // Signed in to the existing account. Now prove the phone too: Supabase texts a code to it and
       // only attaches it to this account once that code is entered.
       const { error: e2 } = await supabase.auth.updateUser({ phone: linkPhone }).catch((e: unknown) => ({ error: e as { message?: string } }));
@@ -206,7 +218,7 @@ export function AuthDialog({ open, onOpenChange, next, onVerified, title, copy, 
   }
 
   async function resendLink() {
-    if (!supabase || !linkPhone) return;
+    if (!sms || !supabase || !linkPhone) return;
     setBusy(true); setErr(null); setInfo(null);
     const { error } = await supabase.auth.updateUser({ phone: linkPhone }).catch((e: unknown) => ({ error: e as { message?: string } }));
     setBusy(false);
@@ -250,7 +262,7 @@ export function AuthDialog({ open, onOpenChange, next, onVerified, title, copy, 
       case "phone-code": return copy?.phoneSentDescription ? copy.phoneSentDescription(shown) : `We texted a 6-digit code to ${shown}.`;
       case "phone-new": return `We don't have a Built2Bid account for ${shown} yet.`;
       case "email": return linkPhone ? `Sign in to your existing account with the email you used before. Then we'll add ${shown} to it, so next time you can sign in by text.` : copy ? copy.emailDescription : defaultLead;
-      case "email-code": return copy && !linkPhone ? copy.sentDescription(email.trim()) : `We sent a sign-in link and code to ${email}.`;
+      case "email-code": return copy && !linkPhone ? copy.sentDescription(email.trim()) : `We sent a ${emailLen}-digit code to ${email.trim()}.`;
       case "link-code": return linkFailed
         ? `You're signed in. We couldn't send a text to ${shown} right now, so it wasn't added. Your account works as normal, and you can add your phone later in Account settings.`
         : `You're signed in. We texted a code to ${shown}. Enter it to add this number to your account.`;
@@ -269,11 +281,22 @@ export function AuthDialog({ open, onOpenChange, next, onVerified, title, copy, 
       <span>Also email me occasional product tips and offers (optional, unsubscribe anytime).</span>
     </label>
   );
+  // One box, exactly codeLen digits. Typing, pasting the whole code ("012 345" too) and iOS/Android
+  // one-time-code autofill all land here. A pasted code that's too long is reported, never trimmed.
+  const takeCode = (raw: string) => {
+    const digits = raw.replace(/\D/g, "");
+    if (digits.length > codeLen) { setErr(codeProblem("too_long", codeLen)); return; }
+    setErr(null); setCode(digits);
+  };
   const codeField = (id: string) => (
     <>
-      <label htmlFor={id} className="label">Verification code</label>
-      <input id={id} autoFocus inputMode="numeric" pattern="[0-9]*" autoComplete="one-time-code" enterKeyHint="go" maxLength={8} className="field tabular text-center text-lg tracking-[0.4em]"
-        value={code} onChange={(ev) => setCode(ev.target.value.replace(/\D/g, ""))} aria-describedby={err ? `${id}-error` : undefined} aria-invalid={Boolean(err) || undefined} />
+      <label htmlFor={id} className="label">{codeLen}-digit verification code</label>
+      <input id={id} name="one-time-code" autoFocus type="text" inputMode="numeric" pattern={`[0-9]{${codeLen}}`} autoComplete="one-time-code" enterKeyHint="go" maxLength={codeLen}
+        className="field tabular text-center text-lg tracking-[0.4em]" placeholder={"•".repeat(codeLen)}
+        value={code}
+        onPaste={(ev) => { ev.preventDefault(); takeCode(ev.clipboardData.getData("text")); }}
+        onChange={(ev) => takeCode(ev.target.value)}
+        aria-describedby={err ? `${id}-error` : undefined} aria-invalid={Boolean(err) || undefined} />
       {err && <Err id={`${id}-error`}>{err}</Err>}
       {info && !err && <Notice tone="ok">{info}</Notice>}
     </>
@@ -318,7 +341,7 @@ export function AuthDialog({ open, onOpenChange, next, onVerified, title, copy, 
         <form onSubmit={(ev) => { ev.preventDefault(); void verifyPhone(); }} className="space-y-3">
           <p className="text-sm text-ink-soft">Keep this {copy ? "window" : "tab"} open. Codes expire after 10 minutes.</p>
           {codeField("auth-code")}
-          <Button type="submit" className="w-full" size="lg" disabled={busy || code.length < 6}>{busy && <Loader2 className="h-4 w-4 animate-spin" />} {copy?.submitLabel ?? "Verify and continue"}</Button>
+          <Button type="submit" className="w-full" size="lg" disabled={busy || code.length !== codeLen}>{busy && <Loader2 className="h-4 w-4 animate-spin" />} {copy?.submitLabel ?? "Verify and continue"}</Button>
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm">
             {resendButton(() => void sendPhone({ create: false, resend: true }))}
             <button type="button" className="min-h-11 text-brand underline" onClick={() => go("phone")}>Use a different number</button>
@@ -347,12 +370,12 @@ export function AuthDialog({ open, onOpenChange, next, onVerified, title, copy, 
         <form onSubmit={(ev) => { ev.preventDefault(); void sendEmail(); }} className="space-y-3">
           <label htmlFor="auth-email" className="label">{linkPhone ? "Email on your account" : "Business email"}</label>
           <input id="auth-email" type="email" required autoFocus autoComplete="email" inputMode="email" autoCapitalize="none" spellCheck={false} className="field" value={email} onChange={(ev) => setEmail(ev.target.value)} />
-          {!linkPhone && <p className="text-xs text-muted">We use your email to verify your account and send sign-in links and receipts.</p>}
+          {!linkPhone && <p className="text-xs text-muted">We&apos;ll email you a {emailLen}-digit code. Enter it here to sign in or create your account. We also use your email for receipts.</p>}
           {!linkPhone && marketingBox}
           <Captcha onToken={setCaptchaToken} resetKey={captchaReset} />
           {err && <Err>{err}</Err>}
           <Button type="submit" className="w-full" size="lg" disabled={busy || !email.includes("@") || captchaMissing}>
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />} {copy || linkPhone || sms ? "Email me a verification code" : "Email me a sign-in link"}
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />} Email me a verification code
           </Button>
           {sms && <button type="button" className="min-h-11 w-full text-center text-sm text-brand underline" onClick={() => { setLinkPhone(null); go("phone"); }}>{linkPhone ? "Back" : "Use my phone instead"}</button>}
           {emailTerms}
@@ -361,10 +384,10 @@ export function AuthDialog({ open, onOpenChange, next, onVerified, title, copy, 
 
       {stage === "email-code" && (
         <form onSubmit={(ev) => { ev.preventDefault(); void verifyEmail(); }} className="space-y-3">
-          <p className="text-sm text-ink-soft">{linkPhone ? "Enter the 6-digit code from the email. Keep this tab open." : copy ? "Enter the 6-digit code from the email, or tap the link in it. Keep this tab open." : "Click the link in the email, or enter the 6-digit code here. Keep this tab open; your bid is saved on this device."}</p>
+          <p className="text-sm text-ink-soft">{`Keep this ${copy ? "window" : "tab"} open${copy || linkPhone ? "" : "; your bid is saved on this device"}. Not in your inbox? Check spam or junk.`}</p>
           {codeField("auth-code")}
           <Captcha onToken={setCaptchaToken} resetKey={captchaReset} />
-          <Button type="submit" className="w-full" size="lg" disabled={busy || code.length < 6}>{busy && <Loader2 className="h-4 w-4 animate-spin" />} {copy?.submitLabel ?? "Verify and continue"}</Button>
+          <Button type="submit" className="w-full" size="lg" disabled={busy || code.length !== codeLen}>{busy && <Loader2 className="h-4 w-4 animate-spin" />} {copy?.submitLabel ?? "Verify and continue"}</Button>
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm">
             {resendButton(() => void sendEmail(true))}
             <button type="button" className="min-h-11 text-brand underline" onClick={() => go("email")}>Use a different email</button>
@@ -382,7 +405,7 @@ export function AuthDialog({ open, onOpenChange, next, onVerified, title, copy, 
       {stage === "link-code" && !linkFailed && (
         <form onSubmit={(ev) => { ev.preventDefault(); void verifyLink(); }} className="space-y-3">
           {codeField("auth-link-code")}
-          <Button type="submit" className="w-full" size="lg" disabled={busy || code.length < 6}>{busy && <Loader2 className="h-4 w-4 animate-spin" />} Add phone and continue</Button>
+          <Button type="submit" className="w-full" size="lg" disabled={busy || code.length !== codeLen}>{busy && <Loader2 className="h-4 w-4 animate-spin" />} Add phone and continue</Button>
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm">
             {resendButton(() => void resendLink())}
             <button type="button" className="min-h-11 text-brand underline" disabled={busy} onClick={() => { setBusy(true); void finish(); }}>Skip for now</button>

@@ -23,7 +23,7 @@ export async function POST(req: Request, ctx: RouteContext<"/api/estimates/[id]/
   const body = (await req.json().catch(() => null)) as { deliver?: unknown } | null;
   const deliverBytes = body?.deliver === "bytes";
 
-  const out = await finalizeProposal(user.id, id);
+  const out = await finalizeProposal(user.id, id, user.createdAt);
   if (out instanceof Response) return out;
   const { r, pdf, filename, storagePath, stored } = out;
 

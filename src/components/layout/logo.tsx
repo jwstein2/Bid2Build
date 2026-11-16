@@ -25,7 +25,8 @@ export function LogoMark({ className = "h-8 w-8", tone = "light", detail = true 
         {detail && <path d={TICKS} stroke="#000" strokeWidth="0.95" />}
         {detail && <path d={CONSTRUCTION} fill="none" stroke="#000" strokeWidth="0.9" />}
       </mask>
-      <g fill={tone === "dark" ? "#FFFFFF" : "#0B2D4D"} mask={`url(#${id})`}>
+      {/* Light tone follows --color-navy (#0B2D4D), so the mark stays visible in customer Dark Mode. */}
+      <g fill={tone === "dark" ? "#FFFFFF" : "#0B2D4D"} style={tone === "dark" ? undefined : { fill: "var(--color-navy, #0B2D4D)" }} mask={`url(#${id})`}>
         <path d={RULER} />
         <path d={BOWLS} />
       </g>

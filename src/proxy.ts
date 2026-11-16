@@ -1,11 +1,19 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { ATTRIBUTION_COOKIE, ATTRIBUTION_MAX_AGE, encodeAttribution, parseAttribution } from "@/lib/growth/attribution";
+import { ATTRIBUTION_COOKIE, ATTRIBUTION_MAX_AGE, captureAttribution, encodeAttribution } from "@/lib/growth/attribution";
+import { normalizeReferralCode, REFERRAL_COOKIE, REFERRAL_MAX_AGE } from "@/lib/growth/referral";
 
-/** First-touch campaign attribution: set once from UTM/ic/ref parameters, never overwritten. */
+/** First-touch attribution: set once from UTM/ic/ref parameters, an ad click id or an outside referrer host; never overwritten. */
 function withAttribution(request: NextRequest, response: NextResponse): NextResponse {
-  if (request.cookies.has(ATTRIBUTION_COOKIE) || request.method !== "GET") return response;
-  const a = parseAttribution(request.nextUrl);
+  if (request.method !== "GET") return response;
+  // Referral code: kept in its own cookie so a referral still counts when the visitor already has
+  // first-touch attribution from an earlier visit. The first referral link wins.
+  const ref = normalizeReferralCode(request.nextUrl.searchParams.get("ref"));
+  if (ref && !request.cookies.has(REFERRAL_COOKIE)) {
+    response.cookies.set(REFERRAL_COOKIE, ref, { maxAge: REFERRAL_MAX_AGE, httpOnly: true, sameSite: "lax", secure: request.nextUrl.protocol === "https:", path: "/" });
+  }
+  if (request.cookies.has(ATTRIBUTION_COOKIE)) return response;
+  const a = captureAttribution(request.nextUrl, request.headers.get("referer"), request.headers.get("user-agent"));
   if (a) response.cookies.set(ATTRIBUTION_COOKIE, encodeAttribution(a), { maxAge: ATTRIBUTION_MAX_AGE, httpOnly: true, sameSite: "lax", secure: request.nextUrl.protocol === "https:", path: "/" });
   return response;
 }

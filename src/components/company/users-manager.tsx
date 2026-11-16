@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { Button, ButtonLink } from "../ui/button";
 import { Badge, Card, Notice } from "../ui/misc";
-import { OWNER_ONLY_PERMISSIONS, PERMISSION_KEYS, PERMISSION_LABELS, ROLE_LABELS, ROLE_PERMISSIONS, effectivePermissions, type CompanyRole, type Permission } from "@/lib/enterprise/permissions";
+import { OWNER_ONLY_PERMISSIONS, PERMISSION_GROUPS, PERMISSION_KEYS, PERMISSION_LABELS, ROLE_LABELS, ROLE_PERMISSIONS, effectivePermissions, type CompanyRole, type Permission } from "@/lib/enterprise/permissions";
 
 export type Member = { user_id: string; display_name: string | null; email: string | null; role: CompanyRole; status: "active" | "deactivated"; team_ids: string[]; managed_team_ids: string[]; joined_at: string; last_active_at: string | null; permissions_granted?: string[]; permissions_revoked?: string[] };
 export type Team = { id: string; name: string; trade: string | null; member_count: number; manager_count: number };
@@ -160,6 +160,13 @@ function MemberRow({ m, me, myPermissions, isOwner, teams, manageUsers, manageTe
       {open && (
         <div className="mt-3 space-y-4 rounded-lg bg-paper p-3">
           {editable && m.status === "active" && <AccessEditor m={m} myPermissions={myPermissions} isOwner={isOwner} busy={busy} onSave={(b) => act({ action: "update", userId: m.user_id, ...b }, "Access updated.")} />}
+          {!editable && m.role === "owner" && (
+            <p className="text-sm text-ink-soft" data-testid="owner-note">{m.user_id === me ? "You're" : `${name(m)} is`} the company owner. Owners always have every permission, so there&apos;s no access to change here.</p>
+          )}
+          {!editable && m.role !== "owner" && m.user_id === me && <p className="text-sm text-ink-soft">You can&apos;t change your own role or permissions. Ask the company owner.</p>}
+          {manageTeams && m.status === "active" && teams.length === 0 && (
+            <p className="text-sm text-ink-soft" data-testid="no-teams-note">No teams yet. <a href="#teams" className="font-semibold text-accent-ink underline" onClick={() => setOpen(false)}>Create a team</a> below, then use Manage to add {m.user_id === me ? "yourself" : name(m)} to it.</p>
+          )}
           {manageTeams && m.status === "active" && teams.length > 0 && <TeamEditor m={m} teams={teams} busy={busy} onChange={(teamId, isManager, remove) => act({ action: "team_member", teamId, userId: m.user_id, isManager, remove }, "Teams updated.")} />}
           {editable && (
             <div className="flex flex-wrap gap-2 border-t border-line pt-3">
@@ -204,15 +211,21 @@ function AccessEditor({ m, myPermissions, isOwner, busy, onSave }: { m: Member; 
     <div>
       <label htmlFor={`${id}-role`} className="text-sm font-semibold">Role</label>
       <select id={`${id}-role`} value={role} onChange={(e) => changeRole(e.target.value as typeof role)} className="mt-1 block h-11 w-full max-w-xs rounded-lg border border-line bg-surface px-2 text-base">{ROLES.map((r) => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}</select>
-      <fieldset className="mt-3">
+      <fieldset className="mt-3" data-testid="permission-groups">
         <legend className="text-sm font-semibold">Permissions</legend>
-        <div className="mt-1 grid gap-1 sm:grid-cols-2">{PERMISSION_KEYS.map((k) => (
-          <label key={k} className={`flex min-h-9 items-center gap-2 text-sm ${canGrant(k) ? "" : "opacity-60"}`}>
-            <input type="checkbox" className="h-4 w-4" checked={perms.has(k)} disabled={!canGrant(k) && !perms.has(k)}
-              onChange={(e) => { const n = new Set(perms); if (e.target.checked) n.add(k); else n.delete(k); setPerms(n); }} />
-            {PERMISSION_LABELS[k]}{OWNER_ONLY_PERMISSIONS.includes(k) && <span className="text-xs text-ink-soft">(owner grants only)</span>}
-          </label>
-        ))}</div>
+        {PERMISSION_GROUPS.map((g) => (
+          <div key={g.title} className="mt-2">
+            <p className="text-xs font-bold uppercase tracking-wider text-muted">{g.title}</p>
+            {g.note && <p className="text-xs text-ink-soft">{g.note}</p>}
+            <div className="mt-1 grid gap-1 sm:grid-cols-2">{g.keys.map((k) => (
+              <label key={k} className={`flex min-h-9 items-center gap-2 text-sm ${canGrant(k) ? "" : "opacity-60"}`}>
+                <input type="checkbox" className="h-4 w-4" checked={perms.has(k)} disabled={!canGrant(k) && !perms.has(k)} data-testid={`perm-${k}`}
+                  onChange={(e) => { const n = new Set(perms); if (e.target.checked) n.add(k); else n.delete(k); setPerms(n); }} />
+                {PERMISSION_LABELS[k]}{OWNER_ONLY_PERMISSIONS.includes(k) && <span className="text-xs text-ink-soft">(owner grants only)</span>}
+              </label>
+            ))}</div>
+          </div>
+        ))}
       </fieldset>
       <Button size="sm" className="mt-3" onClick={save} disabled={busy}>Save access</Button>
     </div>
@@ -250,7 +263,7 @@ function TeamsCard({ teams }: { teams: Team[] }) {
     if (!r.ok) setErr(r.message); else { setName(""); router.refresh(); }
   }
   return (
-    <Card className="p-4">
+    <Card className="scroll-mt-20 p-4" id="teams">
       <h2 className="font-display text-lg font-bold">Teams</h2>
       <p className="text-sm text-ink-soft">Managers and reviewers see bids from the teams they belong to. Example: a Roofing team with a Roofing manager and roofing estimators.</p>
       {teams.length > 0 && <ul className="mt-2 divide-y divide-line">{teams.map((t) => <li key={t.id} className="flex justify-between py-2 text-sm"><span className="font-semibold">{t.name}</span><span className="text-ink-soft">{t.member_count} member{t.member_count === 1 ? "" : "s"} · {t.manager_count} manager{t.manager_count === 1 ? "" : "s"}</span></li>)}</ul>}

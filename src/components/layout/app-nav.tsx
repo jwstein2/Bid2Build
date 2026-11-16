@@ -2,20 +2,25 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, Plug, LayoutTemplate, LogOut, X, UserCog, Receipt, Gauge, SquareKanban } from "lucide-react";
+import { Sparkles, CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, Plug, LayoutTemplate, LogOut, X, UserCog, Receipt, Gauge, SquareKanban, CalendarRange } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ButtonLink } from "@/components/ui/button";
 import { Logo } from "./logo";
 import { PremiumDiamond } from "../billing/premium";
 import { ReplayTourButton } from "../onboarding/replay-tour-button";
+import { FeatureTourButton } from "../features/tour-buttons";
+import type { FeatureId } from "@/lib/features/registry";
+import type { ThemePref } from "@/lib/theme";
+import { ThemeToggle } from "../theme/theme-toggle";
 
-const nav: { href: string; label: string; icon: typeof Library; exact?: boolean; premium?: boolean }[] = [
+type NavItem = { href: string; label: string; icon: typeof Library; exact?: boolean; premium?: boolean; feature?: FeatureId };
+const NAV: NavItem[] = [
   { href: "/dashboard", label: "Bids", icon: LayoutDashboard, exact: true },
   // Directly below Bids: contractors set this up first and their proposals depend on it.
   { href: "/settings/company", label: "Company profile", icon: Building2 },
   { href: "/dashboard/customers", label: "Saved customers", icon: Users },
-  { href: "/dashboard/items", label: "Saved Items & Pricing", icon: Library, premium: true },
-  { href: "/dashboard/templates", label: "Proposal Templates", icon: LayoutTemplate, premium: true },
+  { href: "/dashboard/items", label: "Saved Items & Pricing", icon: Library, premium: true, feature: "library" },
+  { href: "/dashboard/templates", label: "Proposal Templates", icon: LayoutTemplate, premium: true, feature: "templates" },
   { href: "/settings/billing", label: "Subscription", icon: CreditCard },
   { href: "/settings/pricing", label: "Pricing data", icon: Plug },
   { href: "/settings/account", label: "Account settings", icon: Settings },
@@ -33,7 +38,11 @@ export type CompanyNav = { name: string; links: { href: CompanyHref; label: stri
 const COMPANY_ICONS = { "/company": Gauge, "/company/pipeline": SquareKanban, "/company/users": UserCog, "/company/billing": Receipt } as const;
 const companyExact = (href: CompanyHref) => href === "/company";
 
-export function AppSidebar({ isAdmin, email, company }: { isAdmin: boolean; email: string | null; company?: CompanyNav | null }) {
+/** Projects (schedules) sit right below Bids when project scheduling is switched on. */
+const PROJECTS: NavItem = { href: "/projects", label: "Projects", icon: CalendarRange };
+
+export function AppSidebar({ isAdmin, email, company, projects = false, theme = null }: { isAdmin: boolean; email: string | null; company?: CompanyNav | null; projects?: boolean; theme?: ThemePref | null }) {
+  const nav: NavItem[] = projects ? [NAV[0], PROJECTS, ...NAV.slice(1)] : NAV;
   const path = usePathname();
   const [open, setOpen] = useState(false);
   // eslint-disable-next-line react-hooks/set-state-in-effect -- close the mobile menu after navigating
@@ -44,8 +53,9 @@ export function AppSidebar({ isAdmin, email, company }: { isAdmin: boolean; emai
     <>
       <div className="flex items-center justify-between gap-2 px-3 py-3 sm:px-4 md:py-4">
         <Logo tone="dark" href="/dashboard" />
-        <div className="flex items-center gap-1 md:hidden">
+        <div className="flex items-center gap-1 max-[380px]:gap-0 md:hidden">
           <ButtonLink href="/bids" variant="accent" size="sm" className="min-h-11 max-[380px]:px-2.5"><FileText className="h-4 w-4 max-[380px]:hidden" aria-hidden /> New bid</ButtonLink>
+          <ThemeToggle signedIn account={theme} tone="dark" />
           <button
             type="button"
             onClick={() => setOpen(!open)}
@@ -64,7 +74,7 @@ export function AppSidebar({ isAdmin, email, company }: { isAdmin: boolean; emai
         {nav.map((n) => {
           const on = active(n.href, n.exact);
           return (
-            <Link key={n.href} href={n.href} aria-current={on ? "page" : undefined} className={cn(item, on ? "bg-white/10 text-white shadow-[inset_3px_0_0_var(--color-cyan)]" : "text-[#C9D6E3] hover:bg-white/5 hover:text-white")}>
+            <Link key={n.href} href={n.href} data-feature={n.feature} aria-current={on ? "page" : undefined} className={cn(item, on ? "bg-white/10 text-white shadow-[inset_3px_0_0_var(--color-cyan)]" : "text-[#C9D6E3] hover:bg-white/5 hover:text-white")}>
               <n.icon className={cn("h-4 w-4", on ? "text-cyan" : "")} aria-hidden /> {n.label}
               {n.premium && <PremiumDiamond tone="dark" className="ml-auto pl-2" />}
             </Link>
@@ -86,6 +96,8 @@ export function AppSidebar({ isAdmin, email, company }: { isAdmin: boolean; emai
         )}
         <p className="mt-3 px-3 pb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#B8C6D4]">Help</p>
         <ReplayTourButton className={cn(item, "w-full text-left text-[#C9D6E3] hover:bg-white/5 hover:text-white")} />
+        <FeatureTourButton className={cn(item, "w-full text-left text-[#C9D6E3] hover:bg-white/5 hover:text-white")} />
+        <Link href="/whats-new" aria-current={active("/whats-new") ? "page" : undefined} className={cn(item, active("/whats-new") ? "bg-white/10 text-white" : "text-[#C9D6E3] hover:bg-white/5 hover:text-white")} data-testid="nav-whats-new"><Sparkles className="h-4 w-4" aria-hidden /> What&apos;s New</Link>
         {isAdmin && (
           <Link href="/admin" className={cn(item, "text-[#C9D6E3] hover:bg-white/5 hover:text-white")}><Shield className="h-4 w-4" aria-hidden /> Admin</Link>
         )}
