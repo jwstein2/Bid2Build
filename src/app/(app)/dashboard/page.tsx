@@ -19,6 +19,7 @@ import { recentSignatures, signingByEstimate, type RequestRow, type SignatureRow
 import { RecentlySigned, type SignedBid } from "./recently-signed";
 import { RefreshOnFocus } from "@/components/esign/refresh-on-focus";
 import { ReferCard } from "./refer-card";
+import { TrialBanner } from "@/components/billing/trial-banner";
 import { referralLink, type MyReferral } from "@/lib/growth/referral";
 import { BidsWorkspace, type BidsView } from "@/components/pipeline/bids-workspace";
 import { isStage, type BoardBid, type HistoryRow } from "@/lib/pipeline/board";
@@ -64,6 +65,9 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     // Referral code + counts. Missing function (migration not run yet) just hides the card.
     supabase.rpc("my_referral"),
   ]);
+  // Facebook BID trial (exact expiry + optional upgrade). Missing function = no banner.
+  const { data: trialRows } = await supabase.rpc("my_campaign_trial");
+  const trial = (Array.isArray(trialRows) ? trialRows[0] : null) as { state: string; expires_at: string; has_paid_subscription: boolean } | null;
   const [history, { data: payRow }] = await Promise.all([
     loadHistory(supabase, user.id),
     supabase.from("sales_pay_settings").select("method, rate, flat_fee, base_salary, base_exclusions").eq("user_id", user.id).maybeSingle(),
@@ -120,6 +124,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
           <ButtonLink href="/bids" variant="accent" className="hidden md:inline-flex">Create New Bid</ButtonLink>
         </div>
       </div>
+      {trial && !trial.has_paid_subscription && (trial.state === "active" || trial.state === "expired") && <TrialBanner state={trial.state} expiresAt={trial.expires_at} />}
       <WhatsNewNotice />
       <LocalDraftsBanner />
       {esign && <RefreshOnFocus />}
