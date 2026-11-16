@@ -54,7 +54,7 @@ export async function POST(req: Request) {
   if (error) {
     const m = scheduleDbError(error);
     if (m.status === 500) logError("schedule.create", error);
-    if (m.code === "forbidden") return fail(403, "forbidden", "Scheduling needs the project scheduling add-on (or an editor seat for company bids).");
+    if (m.code === "forbidden") return fail(403, "forbidden", "Scheduling needs Project Command Center (or an editor seat for company bids).");
     return fail(m.status, m.code, m.message, m.existingId ? { scheduleId: m.existingId } : {});
   }
   // Move a Won bid to Scheduled on the pipeline (best effort; the pipeline's own rules apply).

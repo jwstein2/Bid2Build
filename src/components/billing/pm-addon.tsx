@@ -43,7 +43,7 @@ export function PmAddonCard({ state, periodEnd, annual, yearly = false, purchasa
     if (!r?.ok) { setErr(d?.error?.message ?? "Something went wrong. Nothing was changed."); return; }
     if (action === "preview") { setPreview(d as Preview); return; }
     setPreview(null); setConfirmRemove(false);
-    setDone(action === "add" ? "Project scheduling is on. You're the schedule editor for your account." : `Removed. You can keep editing schedules until ${day(d.editUntil)}; after that they stay saved and view-only.`);
+    setDone(action === "add" ? "Project Command Center is on. You're the schedule editor for your account." : `Removed. You can keep editing schedules until ${day(d.editUntil)}; after that they stay saved and view-only.`);
     router.refresh();
   }
 
@@ -56,8 +56,8 @@ export function PmAddonCard({ state, periodEnd, annual, yearly = false, purchasa
         <div className="flex gap-3">
           <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-accent/15 text-accent-ink"><CalendarRange className="h-5 w-5" aria-hidden /></span>
           <div>
-            <h2 className="font-display text-lg font-bold">Project scheduling add-on</h2>
-            <p className="text-sm text-ink-soft">Turn won bids into job schedules with a timeline, tasks and progress tracking. {price}, includes one schedule editor (you).</p>
+            <h2 className="font-display text-lg font-bold">Project Command Center</h2>
+            <p className="text-sm text-ink-soft">Turn won bids into job schedules with a visual timeline, tasks from your estimate, progress tracking and customer schedule updates. {price}, includes one schedule editor (you).</p>
           </div>
         </div>
         {active ? <Badge tone="ok">active</Badge> : ending ? <Badge tone="neutral">ending</Badge> : comp ? <Badge tone="ok">complimentary</Badge> : null}
@@ -73,7 +73,7 @@ export function PmAddonCard({ state, periodEnd, annual, yearly = false, purchasa
         )}
         {active && confirmRemove && (
           <div role="dialog" aria-labelledby={`${id}-rm`} className="rounded-xl border border-line bg-paper p-4" data-testid="pm-remove">
-            <h3 id={`${id}-rm`} className="font-display font-bold">Remove project scheduling?</h3>
+            <h3 id={`${id}-rm`} className="font-display font-bold">Remove Project Command Center?</h3>
             <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-ink-soft">
               <li>No more add-on charges. There&apos;s no refund for the current period.</li>
               <li>You can keep editing schedules until {day(periodEnd)}.</li>
@@ -89,15 +89,15 @@ export function PmAddonCard({ state, periodEnd, annual, yearly = false, purchasa
           <div className="flex flex-wrap items-center gap-3">
             {ending && <p className="text-sm text-ink-soft">Removed. Editing stays on until {day(state!.addonUntil)}.</p>}
             {!purchasable
-              ? <p className="text-sm text-ink-soft" data-testid="pm-addon-soon">Coming soon. You&apos;ll be able to add project scheduling here shortly.</p>
+              ? <p className="text-sm text-ink-soft" data-testid="pm-addon-soon">Coming soon. You&apos;ll be able to add Project Command Center here shortly.</p>
               : annual
               ? <p className="text-sm text-ink-soft">Available on monthly plans now; annual plans are coming soon.</p>
-              : <Button onClick={() => call("preview")} disabled={busy !== null}>{busy === "preview" && <Loader2 className="h-4 w-4 animate-spin" />}{ending ? "Turn it back on" : "Add project scheduling"}</Button>}
+              : <Button onClick={() => call("preview")} disabled={busy !== null}>{busy === "preview" && <Loader2 className="h-4 w-4 animate-spin" />}{ending ? "Turn it back on" : "Unlock Project Command Center"}</Button>}
           </div>
         )}
         {preview && (
           <div role="dialog" aria-labelledby={`${id}-pv`} className="rounded-xl border border-line bg-paper p-4" data-testid="pm-preview">
-            <h3 id={`${id}-pv`} className="font-display font-bold">Add project scheduling?</h3>
+            <h3 id={`${id}-pv`} className="font-display font-bold">Unlock Project Command Center?</h3>
             <dl className="mt-2 space-y-1 text-sm">
               <div className="flex justify-between gap-3"><dt className="text-ink-soft">New charge</dt><dd className="font-semibold">{formatCents(preview.monthlyCents)}/{preview.interval === "year" ? "year" : "month"}</dd></div>
               <div className="flex justify-between gap-3"><dt className="text-ink-soft">Billing</dt><dd>With your plan, every {preview.interval === "year" ? "year" : "month"}</dd></div>

@@ -40,7 +40,7 @@ export default async function NewSchedulePage({ searchParams }: { searchParams: 
       <div className="mx-auto max-w-2xl space-y-4">
         <h1 className="text-2xl font-extrabold text-navy">Schedule Now</h1>
         <Notice tone="warn" title="You can't create schedules yet">
-          {pm?.scope === "company" ? "Ask your company admin to assign you a scheduling editor seat." : !isPmBillingConfigured("addon") ? "Project scheduling for Unlimited is coming soon as a $4.99/month add-on." : <>Project scheduling is a $4.99/month add-on for Unlimited. <Link className="font-semibold underline" href="/settings/billing">Add it on the Billing page</Link>.</>}
+          {pm?.scope === "company" ? "Ask your company admin to assign you a scheduling editor seat." : !isPmBillingConfigured("addon") ? "Project Command Center for Unlimited is coming soon as a $4.99/month add-on." : <>Project Command Center is a $4.99/month add-on for Unlimited. <Link className="font-semibold underline" href="/settings/billing">Unlock Project Command Center</Link>.</>}
         </Notice>
         <Link href="/projects" className="font-semibold text-accent-ink underline">Back to Projects</Link>
       </div>

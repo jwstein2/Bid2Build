@@ -14,7 +14,7 @@ const CODES: Record<string, [number, string, string]> = {
 /** Assign or remove an Enterprise schedule editor. Enforced in the database (company_pm_assign). */
 export async function POST(req: Request) {
   if (!(await sameOrigin())) return fail(403, "bad_origin", "Cross-site request refused.");
-  if (!isPmEnabled()) return fail(503, "pm_unavailable", "Project scheduling isn't available yet.");
+  if (!isPmEnabled()) return fail(503, "pm_unavailable", "Project Command Center isn't available yet.");
   const user = await getUser();
   if (!user) return fail(401, "not_authenticated", "Sign in required.");
   const p = Body.safeParse(await req.json().catch(() => null));

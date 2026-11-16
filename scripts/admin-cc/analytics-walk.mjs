@@ -35,7 +35,7 @@ async function open(path, vp = { width: 1440, height: 1000 }) {
   const panel = page.locator("#by-product");
   await panel.scrollIntoViewIfNeeded();
   const text = await panel.innerText();
-  check("split shows core, add-on, editor and total rows", /Core subscriptions/.test(text) && /Project scheduling add-on/.test(text) && /Enterprise scheduling editors/.test(text) && /Total recurring revenue/.test(text));
+  check("split shows core, add-on, editor and total rows", /Core subscriptions/.test(text) && /Project Command Center add-on/.test(text) && /Enterprise scheduling editors/.test(text) && /Total recurring revenue/.test(text));
   const total = dollars(await page.getByTestId("total-mrr").innerText())[0];
   const kpi = await page.locator(".cc-panel", { hasText: "MRR (list price)" }).first().innerText();
   check("total recurring revenue equals the headline MRR", dollars(kpi)[0] === total);

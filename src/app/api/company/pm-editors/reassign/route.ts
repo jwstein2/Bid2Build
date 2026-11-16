@@ -20,7 +20,7 @@ const CODES: Record<string, [number, string, string]> = {
  */
 export async function POST(req: Request) {
   if (!(await sameOrigin())) return fail(403, "bad_origin", "Cross-site request refused.");
-  if (!isPmEnabled()) return fail(503, "pm_unavailable", "Project scheduling isn't available yet.");
+  if (!isPmEnabled()) return fail(503, "pm_unavailable", "Project Command Center isn't available yet.");
   if (!(await rateLimit("pm-reassign", 30, 10 * 60_000))) return fail(429, "rate_limited", "Please wait a moment and try again.");
   const user = await getUser();
   if (!user) return fail(401, "not_authenticated", "Sign in required.");

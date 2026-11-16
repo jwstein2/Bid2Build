@@ -62,7 +62,7 @@ export const GrantInput = z.object({
 export type GrantInput = z.infer<typeof GrantInput>;
 
 export const ExtendInput = z.object({ id: z.string().uuid(), days: z.coerce.number().int().min(1).max(MAX_GRANT_DAYS) });
-/** Project scheduling editors on a grant; null = plan default (Unlimited 0, Enterprise 1). */
+/** Project Command Center editors on a grant; null = plan default (Unlimited 0, Enterprise 1). */
 export const PmEditorsInput = z.object({ id: z.string().uuid(), editors: z.union([z.null(), z.coerce.number().int().min(0).max(50)]), approve: z.literal(true) });
 export const SeatsInput = z.object({ id: z.string().uuid(), extraSeats: z.coerce.number().int().min(0).max(MAX_EXTRA_SEATS), approve: z.literal(true) });
 

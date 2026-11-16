@@ -26,10 +26,10 @@ export default async function ProjectsPage() {
         <h1 className="flex items-center gap-2 text-3xl font-extrabold text-navy"><CalendarRange className="h-7 w-7 text-accent-ink" aria-hidden /> Projects</h1>
         <p className="mt-1 text-ink-soft">Turn won bids into job schedules built from the estimate, then track progress.</p>
       </div>
-      {list === null && <Notice tone="warn" title="Project scheduling is being set up">The database update for schedules hasn&apos;t been applied yet.</Notice>}
+      {list === null && <Notice tone="warn" title="Project Command Center is being set up">The database update for schedules hasn&apos;t been applied yet.</Notice>}
       {pm && !pm.canEdit && (
         <Notice title="View only">
-          {pm.scope === "company" ? "Ask your company admin for a scheduling editor seat to create or edit schedules." : <>Creating and editing schedules needs the project scheduling add-on. <Link href="/settings/billing" className="font-semibold underline">Billing</Link></>}
+          {pm.scope === "company" ? "Ask your company admin for a scheduling editor seat to create or edit schedules." : <>Creating and editing schedules needs Project Command Center. <Link href="/settings/billing" className="font-semibold underline">Unlock Project Command Center</Link></>}
         </Notice>
       )}
 

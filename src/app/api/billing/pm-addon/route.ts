@@ -19,8 +19,8 @@ const Body = z.object({
 });
 
 const ERRORS: Record<string, [number, string]> = {
-  annual_unavailable: [409, "The scheduling add-on isn't available on annual plans yet. It's coming soon."],
-  not_configured: [503, "The scheduling add-on isn't available yet."],
+  annual_unavailable: [409, "Project Command Center isn't available on annual plans yet. It's coming soon."],
+  not_configured: [503, "Project Command Center isn't available yet."],
   unknown_interval: [409, "We couldn't match the add-on to your plan. Please contact support."],
 };
 
@@ -32,7 +32,7 @@ const ERRORS: Record<string, [number, string]> = {
  */
 export async function POST(req: Request) {
   if (!(await sameOrigin())) return fail(403, "bad_origin", "Cross-site request refused.");
-  if (!isPmBillingConfigured("addon")) return fail(503, "pm_unavailable", "The scheduling add-on isn't available yet.");
+  if (!isPmBillingConfigured("addon")) return fail(503, "pm_unavailable", "Project Command Center isn't available yet.");
   if (!(await rateLimit("pm-addon", 20, 10 * 60_000))) return fail(429, "rate_limited", "Please wait a moment and try again.");
   const user = await getUser();
   if (!user) return fail(401, "not_authenticated", "Sign in required.");
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
       const pm = await loadPmAccess(supabase);
       return fail(409, "no_subscription", pm?.source === "complimentary"
         ? "Scheduling is included in your complimentary access."
-        : "The scheduling add-on is for Unlimited subscribers. Complimentary plans don't include it; contact Built2Bid if you'd like it added.");
+        : "Project Command Center is for Unlimited subscribers. Complimentary plans don't include it; contact Built2Bid if you'd like it added.");
     }
     if (row.status !== "active" && row.status !== "trialing") return fail(409, "subscription_not_active", "Update your payment method before changing add-ons.");
     if (row.cancel_at_period_end && p.data.action !== "remove") return fail(409, "subscription_ending", "Your subscription is set to end. Resume it before adding scheduling.");
@@ -61,8 +61,8 @@ export async function POST(req: Request) {
     const has = pmFromItems(items, prices).addon;
     const interval = planInterval(items, prices);
     const on = p.data.action !== "remove";
-    if (on && has) return fail(409, "already_active", "The scheduling add-on is already on your plan.");
-    if (!on && !has) return fail(409, "not_active", "The scheduling add-on isn't on your plan.");
+    if (on && has) return fail(409, "already_active", "Project Command Center is already on your plan.");
+    if (!on && !has) return fail(409, "not_active", "Project Command Center isn't on your plan.");
     const updates = addonItemUpdates(items, prices, on);
     if ("error" in updates) { const [s, m] = ERRORS[updates.error] ?? [409, "Not available."]; return fail(s, updates.error, m); }
     const periodEnd = row.current_period_end;

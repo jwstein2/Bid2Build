@@ -114,10 +114,10 @@ const DEFS = {
     status: "released",
   },
   project_scheduling: {
-    name: "Project scheduling",
+    name: "Project Command Center",
     entitlement: "pm",
     route: "/projects",
-    description: "Turn a won bid into a job schedule with a timeline, tasks from your estimate, and progress tracking.",
+    description: "Turn won bids into job schedules with a visual timeline, tasks from your estimate, progress tracking and customer schedule updates.",
     pitch: "Schedule won jobs on a visual timeline built from your estimate. $4.99/month add-on for Unlimited; one editor included with Enterprise.",
     walkthrough: { title: "Schedule the job", body: "Choose Schedule Now on a won bid to build a timeline from its sections, then drag tasks to adjust dates." },
     release: "4.0.0",
