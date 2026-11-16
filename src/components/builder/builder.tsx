@@ -160,6 +160,15 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
     }
   }, [user, estimate, config]);
 
+  // Activation analytics: the customer-facing preview was opened for a saved bid (once per bid per
+  // browser session; the server also stores it at most once per bid per day). Fire-and-forget.
+  const previewSent = useRef<string | null>(null);
+  useEffect(() => {
+    if (!previewOpen || !user || !cloudMode || previewSent.current === estimate.id) return;
+    previewSent.current = estimate.id;
+    void fetch("/api/events", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ event: "preview_opened", estimateId: estimate.id }), keepalive: true }).catch(() => {});
+  }, [previewOpen, user, cloudMode, estimate.id]);
+
   // Debounced cloud autosave.
   const first = useRef(true);
   useEffect(() => {

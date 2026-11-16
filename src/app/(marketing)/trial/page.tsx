@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Container, Notice } from "@/components/ui/misc";
+import { notFound } from "next/navigation";
+import { Container } from "@/components/ui/misc";
 import { trialConfig, TRIAL_DAYS } from "@/lib/trial/config";
 import { ClaimForm } from "./claim-form";
 
@@ -11,12 +12,13 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 /**
- * Branded claim page for the Facebook "comment BID" campaign. Messenger (or ManyChat, without its
+ * Branded claim page (hidden unless TRIAL_CLAIM_PAGE_ENABLED=true) for the Facebook "comment BID" campaign. Messenger (or ManyChat, without its
  * paid webhook feature) links here; the person enters an email and gets the same invite email as the
  * direct Messenger route.
  */
 export default function TrialClaimPage() {
-  const enabled = trialConfig().enabled;
+  // Hidden (404) unless TRIAL_CLAIM_PAGE_ENABLED=true; the Messenger route works without it.
+  if (!trialConfig().claimPage) notFound();
   return (
     <Container className="max-w-md py-16">
       <h1 className="text-3xl font-extrabold">Get {TRIAL_DAYS} free days of Built2Bid Unlimited</h1>
@@ -28,7 +30,7 @@ export default function TrialClaimPage() {
         <li>No card needed, and nothing is charged automatically</li>
         <li>When the week ends your bids and customers stay right where they are</li>
       </ul>
-      {enabled ? <ClaimForm /> : <Notice tone="warn" className="mt-6">Invites are paused right now. Please check back soon.</Notice>}
+      <ClaimForm />
     </Container>
   );
 }

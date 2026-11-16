@@ -3,7 +3,7 @@ import type { createAdminClient } from "@/lib/supabase/server";
 import type { EstimateRow } from "./metrics";
 import type { ProductData } from "./product";
 import type {
-  BusinessRow, CompanyRow, ConsentRow, CostRow, EventRow, GrantRow, LabelRow, LeadRow, MemberRow, OutboxRow, SignatureRow,
+  BusinessRow, CompanyRow, ConsentRow, CostRow, EventRow, GrantRow, LabelRow, LeadRow, MeaningfulRow, MemberRow, OutboxRow, SignatureRow,
   SigningRequestRow, Snapshot, StripeEventRow, SubscriptionRow, UserRow, VersionRow,
 } from "./model";
 
@@ -78,7 +78,10 @@ export async function loadSnapshot(db: Db, callerId: string): Promise<Snapshot> 
     optional<OutboxRow>(db, "email_outbox", "kind,user_id,status,last_error,attempts,created_at,updated_at"),
     db.from("stripe_events").select("id,type,received_at,processed_at,error").gte("received_at", since7).order("received_at", { ascending: false }).limit(2000),
   ]);
-  const product = await loadProduct(db);
+  const [product, meaningful] = await Promise.all([
+    loadProduct(db),
+    db.rpc("growth_meaningful_estimates").then((r) => (r.error ? null : ((r.data ?? []) as MeaningfulRow[])), () => null),
+  ]);
   const pm = new Map((product.pmSubs ?? []).map((x) => [x.stripe_subscription_id, x]));
   const m = (metrics.data ?? {}) as { import_failures_7d?: number; pdf_errors_7d?: number };
   const extra = new Map((leadsV2 ?? []).filter((l) => l.user_id).map((l) => [l.user_id!, l]));
@@ -95,6 +98,7 @@ export async function loadSnapshot(db: Db, callerId: string): Promise<Snapshot> 
     costs: costs ?? [], outbox: outbox ?? [], stripeEvents: (stripeEvents.data ?? []) as StripeEventRow[],
     pdfErrors7d: m.pdf_errors_7d ?? 0, importFailures7d: m.import_failures_7d ?? 0,
     product: product.data,
+    meaningful,
     loadedAt: new Date().toISOString(),
   };
 }

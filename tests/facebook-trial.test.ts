@@ -94,6 +94,11 @@ describe("settings", () => {
     expect(c.testPostIds).toEqual(["1_2", "3_4"]);
     expect(c.graphVersion).toBe("v26.0");
   });
+  it("keeps the public claim page hidden unless its own switch is on", () => {
+    expect(trialConfig({ FB_TRIAL_ENABLED: "true" }).claimPage).toBe(false);
+    expect(trialConfig({ TRIAL_CLAIM_PAGE_ENABLED: "true" }).claimPage).toBe(false);
+    expect(trialConfig({ FB_TRIAL_ENABLED: "true", TRIAL_CLAIM_PAGE_ENABLED: "true" }).claimPage).toBe(true);
+  });
   it("keeps invite and unsubscribe pages out of analytics", () => {
     expect(analyticsAllowedOn("/trial/activate")).toBe(false);
     expect(analyticsAllowedOn("/trial/unsubscribe")).toBe(false);

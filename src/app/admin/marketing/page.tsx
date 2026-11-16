@@ -56,11 +56,13 @@ export default async function Marketing({ searchParams }: { searchParams: Promis
         right={<div className="flex flex-wrap items-center gap-2"><Link href="/admin/marketing/facebook-trial" className="cc-mono rounded-md border border-[var(--cc-line)] px-2.5 py-1.5 text-xs text-[var(--cc-blue)] hover:border-[var(--cc-blue)]">Facebook BID trial →</Link><Link href="/admin/marketing/radar" data-testid="radar-link" className="cc-mono rounded-md border border-[var(--cc-green)] px-2.5 py-1.5 text-xs text-[var(--cc-green)] hover:bg-[rgb(61_255_168/0.08)]">Opportunity Radar →</Link><RangeControl view={view} path="/admin/marketing" /></div>} />
       <ScopeNote sc={sc} />
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-7">
         <Kpi label="Website sessions" value={ga ? fmt(ga.sessions) : "Not connected"} na={!ga} tone="blue" def={tip("visitor_signup")} sub={ga ? `${fmt(ga.users)} users (GA4)` : "Connect GA4 reporting (see Operations)"} />
         <Kpi label="New signups" value={all.cohort} def={tip("registered")} sub={ga ? <>Visitor → signup <Pct r={ratio(all.cohort, ga.sessions)} /></> : "Genuine accounts created"} />
         <Kpi label="Started a bid" value={all.firstBid} tone="blue" def={tip("first_bid")} sub={<Pct r={all.steps[1].ofPrev} />} />
-        <Kpi label="Activated" value={all.finalized} def={tip("signup_activation")} sub={<Pct r={all.steps[2].ofCohort} />} />
+        <Kpi label="Activated (finalized a bid)" value={all.finalized} def={tip("signup_activation")} sub={<Pct r={all.steps[2].ofCohort} />} />
+        <Kpi label="7-day activation (new)" value={snap.meaningful === null ? "Needs SQL" : all.activated7d} na={snap.meaningful === null} tone="blue" def={tip("activation_7d")}
+          sub={snap.meaningful === null ? "Apply migration 20261117001000" : all.matured ? <>Matured cohort <Pct r={ratio(all.activated7dMatured, all.matured)} /></> : "No account is 7+ days old yet"} />
         <Kpi label="New paying" value={all.paid} tone="violet" def={tip("signup_paid")} sub={<Pct r={all.steps[3].ofCohort} />} />
         <Kpi label="Spend entered (manual)" value={spend ? usdWhole(spend) : "None entered"} na={!spend} tone="amber" def={tip("cac")} sub={spend && all.paid ? `CAC ${usdWhole(spend / all.paid)}` : spend ? "No paying customers yet in this cohort" : "Add spend below to see CAC"} />
       </div>
