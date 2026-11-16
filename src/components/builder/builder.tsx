@@ -38,6 +38,8 @@ import { exportReadiness, type ReadinessIssue } from "@/lib/estimate/readiness";
 import { stepStatuses } from "@/lib/estimate/step-status";
 import type { ShareEmailInput } from "@/lib/proposal/share-email";
 import { displayPhone } from "@/lib/proposal/customer-text";
+import { ThemeToggle } from "../theme/theme-toggle";
+import type { ThemePref } from "@/lib/theme";
 
 type Biz = BusinessProfile & { logoPath?: string | null };
 type Step = BuilderStep;
@@ -48,7 +50,7 @@ export interface BuilderProps {
   initialConfig: ProposalConfig;
   initialBusiness: Biz | null;
   mode: "local" | "cloud";
-  user: { id: string; email: string | null; emailVerified: boolean; verified?: boolean } | null;
+  user: { id: string; email: string | null; emailVerified: boolean; verified?: boolean; theme?: ThemePref } | null;
   /** A step the URL asks for (e.g. ?step=proposal). Otherwise the workflow decides; see resolveStartStep. */
   initialStep?: Step;
   autoExport?: boolean;
@@ -389,7 +391,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
   const lastTrash = state.trash[state.trash.length - 1];
 
   return (
-    <div ref={rootRef} className="flex min-h-screen flex-col">
+    <div ref={rootRef} className="app-theme flex min-h-screen flex-col">
       {/* Project header */}
       <header ref={headerRef} className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur no-print">
         <div className="mx-auto flex max-w-[1400px] flex-wrap items-center gap-x-4 gap-y-2 px-3 py-2 sm:px-5">
@@ -432,6 +434,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
               {credits && <span className="mt-0.5"><CreditSummary credits={credits} /></span>}
               {credits && !credits.unlimited && <span className="text-[11px] text-muted">{alreadyFinalized ? "Updates are free" : "Uses 1 credit"}</span>}
             </div>
+            <ThemeToggle signedIn={Boolean(user)} account={user?.theme ?? null} className="min-h-9 min-w-9 md:min-h-9 md:min-w-9" />
           </div>
         </div>
         <nav aria-label="Builder steps" className="mx-auto max-w-[1400px] px-3 sm:px-5">
@@ -490,7 +493,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
         {step === "company" && <CompanyStep business={business} onChange={setBusiness} signedIn={Boolean(user)} missing={missingCodes} />}
         {step === "project" && <ProjectStep estimate={estimate} dispatch={dispatch} signedIn={Boolean(user)} missing={missingCodes} />}
         {step === "estimate" && (customerView ? (
-          <div className="rounded-xl bg-[#e4eaf1] p-3 sm:p-6">
+          <div className="rounded-xl bg-stage p-3 sm:p-6">
             <p className="mb-3 text-center text-xs font-semibold uppercase tracking-wider text-muted">Customer view: this is all your customer sees</p>
             <ProposalView doc={doc} />
           </div>
@@ -535,7 +538,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
       </div>
 
       <Modal open={previewOpen} onOpenChange={setPreviewOpen} title="Preview your proposal" description="This is exactly what your customer will see. Previews are always free." wide>
-        <div className="-mx-6 bg-[#e4eaf1] p-3 sm:p-5"><ProposalView doc={doc} /></div>
+        <div className="-mx-6 bg-stage p-3 sm:p-5"><ProposalView doc={doc} /></div>
         <div className="mt-4 flex flex-wrap justify-end gap-2">
           <Button variant="secondary" onClick={() => { setPreviewOpen(false); setStep("proposal"); }}>Customize proposal</Button>
           {esign && cloudMode && <Button variant="secondary" onClick={() => { setPreviewOpen(false); void createSigning(); }}><Link2 className="h-4 w-4" aria-hidden /> Create Signing Link</Button>}

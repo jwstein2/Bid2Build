@@ -22,7 +22,7 @@ export function ProposalView({ doc }: { doc: ProposalDocument }) {
     ) : null;
 
   return (
-    <article className="mx-auto w-full max-w-[816px] bg-white text-[#16202e] shadow-sm ring-1 ring-black/10" style={text} aria-label="Proposal preview">
+    <article className="theme-light mx-auto w-full max-w-[816px] bg-white text-[#16202e] shadow-sm ring-1 ring-black/10" style={text} aria-label="Proposal preview">
       {/* Header */}
       <header
         className={`px-[6%] ${st.compact ? "py-5" : "py-7"} ${doc.brand.logoLayout === "center" ? "text-center" : ""}`}

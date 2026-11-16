@@ -25,7 +25,7 @@ export function ReportView({ r, logoUrl, version }: { r: CustomerReport; logoUrl
   const contact = [r.company.phone, r.company.email, r.company.website].filter(Boolean).join(" · ");
 
   return (
-    <article className="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm" data-testid="report-view">
+    <article className="theme-light overflow-hidden rounded-2xl border border-line bg-surface shadow-sm" data-testid="report-view">
       <header className="border-b-4 p-4 sm:p-6" style={{ borderColor: accent }}>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3">

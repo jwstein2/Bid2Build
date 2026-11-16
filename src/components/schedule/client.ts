@@ -15,11 +15,11 @@ export async function api<T>(url: string, init: RequestInit & { body?: string } 
 
 /** Status colors: fill for the planned bar, plus a text label (never color alone). */
 export const STATUS_STYLE: Record<TaskStatus, { bar: string; fill: string; chip: string }> = {
-  not_started: { bar: "bg-[#E6ECF2] border-[#9FB0C1]", fill: "bg-[#6B7A89]", chip: "bg-black/5 text-ink-soft" },
+  not_started: { bar: "bg-idle-tint border-idle-line", fill: "bg-idle", chip: "bg-black/5 text-ink-soft" },
   in_progress: { bar: "bg-accent-tint border-accent-ink/60", fill: "bg-accent-ink", chip: "bg-accent-tint text-accent-dark" },
   complete: { bar: "bg-ok-tint border-ok/60", fill: "bg-ok", chip: "bg-ok-tint text-ok" },
   delayed: { bar: "bg-warn-tint border-warn/70", fill: "bg-warn", chip: "bg-warn-tint text-warn" },
-  on_hold: { bar: "bg-[#EFE9F8] border-[#7C5CB8]/60", fill: "bg-[#6A4BA8]", chip: "bg-[#EFE9F8] text-[#5B3E99]" },
+  on_hold: { bar: "bg-hold-tint border-hold-line/60", fill: "bg-hold", chip: "bg-hold-tint text-hold-ink" },
 };
 
 export const COMMON_TIMEZONES = [
