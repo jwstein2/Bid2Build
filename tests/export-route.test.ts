@@ -34,7 +34,7 @@ const admin = {
 
 vi.mock("@/lib/supabase/server", () => ({
   getUser: async () => ({ id: "u1", email: "c@x.test", emailVerified: true, verified: true }),
-  createClient: async () => ({}),
+  createClient: async () => ({ rpc: async () => ({ data: null, error: null }) }), // no company style policy (V4.4)
   createAdminClient: () => admin,
 }));
 vi.mock("@/lib/data/server", () => ({

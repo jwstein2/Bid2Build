@@ -43,7 +43,7 @@ describe("features route", () => {
     S.premium = true;
     const j = await (await GET()).json();
     expect(j).toMatchObject({ signedIn: true, known: true, access: { unlimited: true } });
-    expect(j.state.acked.sort()).toEqual(["library", "templates"]);
+    expect(j.state.acked.sort()).toEqual(["internal_report", "library", "templates"]); // premium features from releases before the latest
     expect(S.updates).toHaveLength(1);
     expect(S.user!.user_metadata.full_name).toBe("Pat");
     await GET();

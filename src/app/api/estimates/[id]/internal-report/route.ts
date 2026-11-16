@@ -7,6 +7,7 @@ import { fail, json, logError, rateLimit } from "@/lib/http/api";
 import { internalReportAccess } from "@/lib/reports/access";
 import { buildInternalReport, internalReportFilename } from "@/lib/reports/internal-estimate";
 import { InternalReportPdf } from "@/lib/pdf/internal-report-pdf";
+import { compareQuotes, type SubQuoteBundle } from "@/lib/operations/sub-quotes";
 
 export const runtime = "nodejs";
 
@@ -37,7 +38,12 @@ export async function GET(req: Request, ctx: RouteContext<"/api/estimates/[id]/i
   const data = await loadEstimate(supabase, id);
   if (!data) return fail(404, "not_found", "Estimate not found.");
   const { data: v } = await supabase.from("estimate_versions").select("version_number, created_at").eq("estimate_id", id).order("version_number", { ascending: false }).limit(1).maybeSingle();
-  const report = buildInternalReport(data.estimate, { version: v ? { number: v.version_number, createdAt: v.created_at } : null });
+  // Subcontractor bids vs the original estimate, only for people allowed to see subcontractor costs
+  // (the RPC answers canView=false otherwise; before the V4.3 SQL it errors and the section is left out).
+  const { data: sq } = await supabase.rpc("sub_quotes_for_estimate", { p_estimate_id: id });
+  const bundle = sq as SubQuoteBundle | null;
+  const subQuotes = bundle?.canView && bundle.quotes.length ? compareQuotes(data.estimate, bundle) : null;
+  const report = buildInternalReport(data.estimate, { version: v ? { number: v.version_number, createdAt: v.created_at } : null, subQuotes });
 
   // Branding of the bid's owner (a teammate's company bid carries the owner's company profile).
   const admin = createAdminClient();

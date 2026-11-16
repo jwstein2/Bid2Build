@@ -16,6 +16,7 @@ import { hasPremiumAccess } from "@/lib/billing/entitlement";
 import { PremiumAccessProvider } from "@/components/billing/premium";
 import { AccountThemeScript } from "@/components/theme/account-theme-script";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { NotificationBell } from "@/components/operations/notification-bell";
 
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -49,7 +50,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </aside>
       <main id="main" className="min-w-0 flex-1 px-4 py-6 sm:px-8 md:pt-2">
         {/* Desktop header row: Light/Dark switch, top right. On phones it sits in the top bar. */}
-        <div className="mb-1 hidden justify-end md:flex no-print"><ThemeToggle signedIn account={user.theme ?? null} /></div>
+        {/* Task review notices (V4.3) sit beside it, on phones too. */}
+        <div className="mb-1 flex items-center justify-end gap-1 no-print">
+          {isPmEnabled() && <NotificationBell />}
+          <span className="hidden md:inline-flex"><ThemeToggle signedIn account={user.theme ?? null} /></span>
+        </div>
         {children}
       </main>
       <FeatureHost />

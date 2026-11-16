@@ -40,6 +40,11 @@ export interface ProposalConfig {
   terms: string;
   paymentSchedule: PaymentMilestone[];
   showSignature: boolean;
+  /**
+   * V4.4: presentation keys (e.g. "template", "show.itemPrices") this bid deliberately changed while
+   * its company manages proposal style. Keys not listed follow the company style. Reset clears it.
+   */
+  styleOverrides?: string[];
   show: {
     phone: boolean;
     email: boolean;

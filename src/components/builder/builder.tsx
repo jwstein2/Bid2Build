@@ -1,5 +1,5 @@
 "use client";
-import { AlertCircle, ArrowLeft, ArrowRight, Check, CloudOff, Download, Eye, EyeOff, Loader2, Link2, Mail, RotateCcw, Undo2 } from "lucide-react";
+import { AlertCircle, ArrowLeft, ArrowRight, Home, Check, CloudOff, Download, Eye, EyeOff, Loader2, Link2, Mail, RotateCcw, Undo2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
@@ -25,6 +25,9 @@ import { AuthDialog } from "../auth/auth-dialog";
 import { useLibrary } from "./library";
 import { ProjectStep } from "./project-step";
 import { ProposalStep } from "./proposal-step";
+import { BuilderOpsProvider, useOpsLoader, type OwnerBrand } from "./ops-context";
+import { ContractPanel } from "./contract-panel";
+import { resolveProposalStyle } from "@/lib/operations/proposal-style";
 import { ScopeStep } from "./scope-step";
 import { reducer } from "./state";
 import { Workspace } from "./workspace";
@@ -126,7 +129,22 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
   const editStamp = `${state.dirty}|${configDirty}|${bizDirty}`;
   const signingLink = signingLinkState && signingLinkState.stamp === editStamp ? signingLinkState.link : null;
   const totals = useMemo(() => computeEstimate(estimate), [estimate]);
-  const doc = useMemo(() => buildProposal(estimate, business, config), [estimate, business, config]);
+  // V4.3/V4.4 project operations for saved bids: sub quotes, contract value, company proposal style.
+  const { ops, refresh: refreshOps } = useOpsLoader(cloudMode && user ? estimate.id : null);
+  const ownerBusiness = useMemo(() => brandToBusiness(ops?.ownerBrand ?? null), [ops?.ownerBrand]);
+  const styled = useMemo(() => resolveProposalStyle({ policy: ops?.stylePolicy, estimate, business, config, ownerBusiness }), [ops?.stylePolicy, estimate, business, config, ownerBusiness]);
+  const doc = useMemo(() => buildProposal(styled.estimate, styled.business, styled.config), [styled]);
+  const [resettingStyle, setResettingStyle] = useState(false);
+  const resetStyle = useCallback(async () => {
+    setResettingStyle(true);
+    try {
+      const r = await fetch(`/api/estimates/${estimate.id}/proposal-style/reset`, { method: "POST" });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) { setExportMsg({ tone: "danger", text: d?.error?.message ?? "We couldn't reset the style. Please try again." }); return; }
+      onConfig({ ...config, styleOverrides: [] });
+      setExportMsg({ tone: "ok", text: "This bid now follows your company's proposal style." });
+    } finally { setResettingStyle(false); }
+  }, [estimate.id, config]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Server-rendered (cloud) bids: reopen the step this device last showed for this bid.
   useEffect(() => {
@@ -398,12 +416,13 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
   const lastTrash = state.trash[state.trash.length - 1];
 
   return (
+    <BuilderOpsProvider estimateId={cloudMode && user ? estimate.id : null} saved={save === "saved"} ops={ops} refresh={refreshOps}>
     <div ref={rootRef} className="app-theme flex min-h-screen flex-col">
       {/* Project header */}
       <header ref={headerRef} className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur no-print">
         <div className="mx-auto flex max-w-[1400px] flex-wrap items-center gap-x-4 gap-y-2 px-3 py-2 sm:px-5">
           <div className="flex shrink-0 items-center gap-2">
-            <Link href={user ? "/dashboard" : "/"} className="grid h-9 w-9 place-items-center rounded-md text-muted hover:bg-black/5" aria-label={user ? "Back to dashboard" : "Back to home"}><ArrowLeft className="h-4 w-4" /></Link>
+            <Link href={user ? "/dashboard" : "/"} className="inline-flex h-9 items-center gap-1.5 rounded-md px-2 text-sm font-semibold text-accent-ink hover:bg-black/5" aria-label={user ? "Dashboard" : "Home"} data-testid="builder-home"><Home className="h-4 w-4" aria-hidden /><span className="hidden 2xl:inline">{user ? "Dashboard" : "Home"}</span></Link>
             <span className="hidden lg:block"><Logo className="text-base" /></span>
           </div>
           <div className="min-w-0 flex-1">
@@ -513,7 +532,10 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
         {step === "scope" && <ScopeStep estimate={estimate} config={config} onConfig={onConfig} signedIn={Boolean(user)} estimateId={cloudMode ? estimate.id : null} />}
         {step === "proposal" && esign && cloudMode && <SigningPanel estimateId={estimate.id} onCreate={() => void createSigning()} creating={exporting} refreshKey={signingRefresh}
           onRevoked={(id) => setSigningLinkState((s) => (s?.link.requestId === id ? null : s))} />}
-        {step === "proposal" && <ProposalStep estimate={estimate} business={business} config={config} onConfig={onConfig} />}
+        {step === "proposal" && cloudMode && user && <ContractPanel estimateId={estimate.id} />}
+        {step === "proposal" && <ProposalStep estimate={estimate} business={business} config={config} onConfig={onConfig}
+          stylePolicy={ops?.stylePolicy ?? null} ownerBusiness={ownerBusiness} resetting={resettingStyle}
+          onResetStyle={ops?.stylePolicy?.managed && (config.styleOverrides?.length || ops.stylePolicy.canOverride) ? () => void resetStyle() : undefined} />}
 
         {/* Step footer: Back / Next on every step */}
         <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-5 no-print">
@@ -563,7 +585,18 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
       <AuthDialog open={authOpen} onOpenChange={setAuthOpen} next={`/builder?draft=${estimate.id}&export=1`} onVerified={() => { window.location.assign(`/builder?draft=${estimate.id}&export=1`); }} />
       <UpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} nextCycleAt={credits?.nextCycleAt} />
     </div>
+    </BuilderOpsProvider>
   );
+}
+
+function brandToBusiness(b: OwnerBrand | null): BusinessProfile | null {
+  if (!b) return null;
+  return {
+    companyName: b.companyName, logoUrl: b.logoUrl, primaryColor: b.primaryColor, secondaryColor: b.secondaryColor,
+    logoLayout: (["left", "center", "stacked"].includes(b.logoLayout) ? b.logoLayout : "left") as BusinessProfile["logoLayout"],
+    headerStyle: (["solid", "line", "minimal"].includes(b.headerStyle) ? b.headerStyle : "solid") as BusinessProfile["headerStyle"],
+    phone: b.phone, email: b.email, address: b.address, website: b.website, licenseNumber: b.licenseNumber, tagline: b.tagline,
+  };
 }
 
 function SaveBadge({ state, signedIn }: { state: SaveState; signedIn: boolean }) {
