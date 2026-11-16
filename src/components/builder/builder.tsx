@@ -562,8 +562,17 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
 }
 
 function SaveBadge({ state, signedIn }: { state: SaveState; signedIn: boolean }) {
-  if (state === "saving") return <span className="inline-flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Saving…</span>;
-  if (state === "saved") return <span className="inline-flex items-center gap-1 text-ok"><Check className="h-3 w-3" /> Saved</span>;
-  if (state === "error") return <span className="inline-flex items-center gap-1 text-warn"><CloudOff className="h-3 w-3" /> Not synced, saved on this device</span>;
-  return <span className="inline-flex items-center gap-1"><RotateCcw className="h-3 w-3" /> {signedIn ? "Saved on this device" : "Draft saved on this device"}</span>;
+  const label =
+    state === "saving" ? <span className="inline-flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" aria-hidden /> Saving…</span>
+    : state === "saved" ? <span className="inline-flex items-center gap-1 text-ok"><Check className="h-3 w-3" aria-hidden /> Saved</span>
+    : state === "error" ? <span className="inline-flex items-center gap-1 text-warn"><CloudOff className="h-3 w-3" aria-hidden /> Not synced, saved on this device</span>
+    : <span className="inline-flex items-center gap-1"><RotateCcw className="h-3 w-3" aria-hidden /> {signedIn ? "Saved on this device" : "Draft saved on this device"}</span>;
+  return (
+    <>
+      {/* Remounts on each state change, so the new status fades in (motion-fade) and is noticed. */}
+      <span key={state} className="inline-flex motion-fade" data-testid="save-badge" data-state={state}>{label}</span>
+      {/* Screen readers hear only a failed sync, not every autosave. */}
+      <span className="sr-only" role="status">{state === "error" ? "Changes not synced to your account. Your work is saved on this device." : ""}</span>
+    </>
+  );
 }

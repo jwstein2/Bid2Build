@@ -5,8 +5,10 @@ import { cn } from "@/lib/cn";
 type Variant = "primary" | "accent" | "secondary" | "ghost" | "danger" | "link";
 type Size = "sm" | "md" | "lg";
 
+// active:scale: a 2% press-in so a tap on a phone visibly registers (a contractor in gloves or bright sun
+// otherwise can't tell the button took the tap). Transform only, so nothing around it moves.
 const base =
-  "inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:pointer-events-none whitespace-nowrap";
+  "inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-[color,background-color,border-color,box-shadow,scale] duration-(--motion-fast) ease-brand-out active:scale-[0.98] motion-reduce:active:scale-100 disabled:opacity-50 disabled:pointer-events-none whitespace-nowrap";
 const variants: Record<Variant, string> = {
   primary: "bg-brand text-white hover:bg-brand-dark shadow-sm",
   // Cyan surface always carries navy text (6.5:1). Never white on cyan.

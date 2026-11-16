@@ -47,7 +47,7 @@ export function SampleProposal({ className = "", dark = false }: { className?: s
   const doc = buildProposal(estimate, business, config);
   return (
     <figure className={className}>
-      <div className="relative max-h-[600px] overflow-hidden rounded-xl bg-[#e4eaf1] p-3 shadow-raised ring-1 ring-line sm:p-4" aria-label="Sample proposal built with example data">
+      <div className="relative max-h-[600px] overflow-hidden rounded-xl bg-[#e4eaf1] p-3 shadow-raised ring-1 ring-line sm:p-4" role="figure" aria-label="Sample proposal built with example data">
         <div className="pointer-events-none select-none [zoom:0.62] sm:[zoom:0.72]" inert>
           <ProposalView doc={doc} />
         </div>

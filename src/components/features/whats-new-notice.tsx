@@ -25,7 +25,7 @@ export function WhatsNewNotice() {
       </p>
       <span className="flex flex-wrap gap-2">
         <Button size="sm" variant="secondary" onClick={() => { dismiss(); startFeatureTour(list.map((f) => f.id)); }}>Show me</Button>
-        <Link href="/whats-new" onClick={dismiss} className="inline-flex min-h-9 items-center px-2 text-sm font-semibold text-accent-ink underline">What&apos;s New</Link>
+        <Link href="/whats-new" onClick={dismiss} className="inline-flex min-h-9 items-center px-2 text-sm font-semibold text-accent-dark underline">What&apos;s New</Link>
       </span>
       <button type="button" onClick={dismiss} className="absolute right-2 top-2 rounded p-1.5 text-muted hover:bg-black/5" aria-label="Dismiss what's new"><X className="h-4 w-4" aria-hidden /></button>
     </aside>

@@ -81,7 +81,7 @@ export default async function PricingPage() {
       </CheckoutFlowProvider>
       <Suspense><EnterprisePlan signedIn={Boolean(user)} mode={entMode} supportEmail={site.supportEmail} /></Suspense>
 
-      <div className="mx-auto mt-14 max-w-4xl overflow-x-auto rounded-xl border border-line bg-surface">
+      <div className="mx-auto mt-14 max-w-4xl overflow-x-auto rounded-xl border border-line bg-surface" role="region" aria-label="Plan comparison" tabIndex={0}>
         <table className="w-full text-sm">
           <caption className="sr-only">Plan comparison</caption>
           <thead><tr className="border-b border-line text-left"><th className="p-3">Feature</th><th className="p-3">Free</th><th className="p-3">Unlimited (monthly or annual)</th><th className="p-3">Enterprise</th></tr></thead>

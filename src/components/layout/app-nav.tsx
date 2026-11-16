@@ -66,6 +66,16 @@ export function AppSidebar({ isAdmin, email, company, projects = false, theme = 
     window.addEventListener(REVEAL_FEATURE_EVENT, on);
     return () => window.removeEventListener(REVEAL_FEATURE_EVENT, on);
   }, []);
+  // Escape closes the phone menu and puts focus back on the Menu button.
+  const menuButton = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && window.matchMedia("(max-width: 767px)").matches) { setOpen(false); menuButton.current?.focus(); }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
   const active = (href: string, exact?: boolean) => (exact ? path === href : path === href || path.startsWith(`${href}/`));
   const current = nav.find((n) => active(n.href, n.exact)) ?? company?.links.find((l) => active(l.href, companyExact(l.href)));
   return (
@@ -76,6 +86,7 @@ export function AppSidebar({ isAdmin, email, company, projects = false, theme = 
           <ButtonLink href="/bids" variant="accent" size="sm" className="min-h-11 max-[380px]:px-2.5"><FileText className="h-4 w-4 max-[380px]:hidden" aria-hidden /> New bid</ButtonLink>
           <ThemeToggle signedIn account={theme} tone="dark" />
           <button
+            ref={menuButton}
             type="button"
             onClick={() => setOpen(!open)}
             aria-expanded={open}
@@ -89,7 +100,7 @@ export function AppSidebar({ isAdmin, email, company, projects = false, theme = 
       </div>
       <div className="hidden px-3 md:block"><ButtonLink href="/bids" variant="accent" className="w-full"><FileText className="h-4 w-4" aria-hidden /> Create New Bid</ButtonLink></div>
       {!open && current && <p className="flex items-center gap-1.5 px-4 pb-2 text-xs text-[#B8C6D4] md:hidden">{current.label}{"premium" in current && current.premium && <PremiumDiamond tone="dark" />}</p>}
-      <nav id="account-nav" aria-label="Account" className={cn("flex-col gap-1 px-2 pb-3 md:mt-4 md:flex", open ? "flex" : "hidden")}>
+      <nav id="account-nav" aria-label="Account" className={cn("flex-col gap-1 px-2 pb-3 md:mt-4 md:flex", open ? "flex max-md:motion-drop-in" : "hidden")}>
         {nav.map((n) => {
           const on = active(n.href, n.exact);
           return (
