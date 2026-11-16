@@ -10,8 +10,8 @@
  *  - cool gray #6B7A89 is for icons/rules; small text uses --color-muted (#56677A).
  */
 @theme {
-  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: "Montserrat Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter Variable", "Inter Fallback", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Montserrat Variable", "Montserrat Fallback", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
 
   /* Brand primitives */
   --color-navy: #0b2d4d;
@@ -71,6 +71,30 @@
 
 /* Motion durations (feedback / reveal / panel). Use these, not one-off values. */
 :root { --motion-fast: 120ms; --motion-base: 180ms; --motion-slow: 220ms; }
+
+/*
+ * Metric-matched fallbacks: while the web fonts download, text renders in Arial (or its metric twins)
+ * scaled to the same width and line height, so headlines don't reflow when Inter/Montserrat arrive
+ * (Lighthouse measured a 0.06 layout shift on the home hero). Values use the same formula as
+ * next/font, from its capsize metrics (Montserrat at heading weight vs Arial Bold), then checked
+ * in Chromium: rendered width within ~1% of the web fonts.
+ */
+@font-face {
+  font-family: "Inter Fallback";
+  src: local("Arial"), local("ArialMT"), local("Liberation Sans"), local("Arimo");
+  size-adjust: 107.12%;
+  ascent-override: 90.44%;
+  descent-override: 22.52%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Montserrat Fallback";
+  src: local("Arial Bold"), local("Arial-BoldMT"), local("Liberation Sans Bold"), local("LiberationSans-Bold"), local("Arimo Bold"), local("Arimo-Bold");
+  size-adjust: 111%;
+  ascent-override: 87.21%;
+  descent-override: 22.61%;
+  line-gap-override: 0%;
+}
 
 html { background: var(--color-paper); color-scheme: light; }
 body { background: var(--color-paper); color: var(--color-ink); font-family: var(--font-sans); }
