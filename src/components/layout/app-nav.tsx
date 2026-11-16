@@ -53,7 +53,7 @@ export function AppSidebar({ isAdmin, email, company, projects = false, theme = 
     <>
       <div className="flex items-center justify-between gap-2 px-3 py-3 sm:px-4 md:py-4">
         <Logo tone="dark" href="/dashboard" />
-        <div className="flex items-center gap-1 md:hidden">
+        <div className="flex items-center gap-1 max-[380px]:gap-0 md:hidden">
           <ButtonLink href="/bids" variant="accent" size="sm" className="min-h-11 max-[380px]:px-2.5"><FileText className="h-4 w-4 max-[380px]:hidden" aria-hidden /> New bid</ButtonLink>
           <ThemeToggle signedIn account={theme} tone="dark" />
           <button

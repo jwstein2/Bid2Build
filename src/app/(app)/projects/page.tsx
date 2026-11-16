@@ -5,7 +5,11 @@ import { CalendarRange, ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { isPmEnabled } from "@/lib/env";
 import { formatDay, formatRange } from "@/lib/schedule/calendar";
+import { Suspense } from "react";
 import { listSchedules, readyToSchedule } from "@/lib/schedule/server";
+import { defaultWindow, loadWorkspace } from "@/lib/projects/server";
+import { todayIn } from "@/lib/schedule/calendar";
+import { ProjectsWorkspace } from "@/components/projects/workspace";
 import { loadPmAccess } from "@/lib/pm/server";
 import { ButtonLink } from "@/components/ui/button";
 import { Badge, Notice } from "@/components/ui/misc";
@@ -14,17 +18,23 @@ export const metadata: Metadata = { title: "Projects", robots: { index: false } 
 
 const STATUS: Record<string, string> = { draft: "Draft", active: "Active", completed: "Completed" };
 
-/** Projects: every schedule the account can see, plus accepted bids that are ready to schedule. */
+/**
+ * Projects workspace (V4.1): Overview, Calendar, Timeline, Workload and My Work over every schedule the
+ * account can see, plus accepted bids that are ready to schedule. Before the V4.1 SQL runs it falls
+ * back to the simple schedule list.
+ */
 export default async function ProjectsPage() {
   if (!isPmEnabled()) notFound();
   const supabase = await createClient();
-  const [list, pm] = await Promise.all([listSchedules(supabase), loadPmAccess(supabase)]);
+  const win = defaultWindow();
+  const [list, pm, ws] = await Promise.all([listSchedules(supabase), loadPmAccess(supabase), loadWorkspace(supabase, win.from, win.to)]);
   const ready = list ? await readyToSchedule(supabase, new Set(list.map((s) => s.estimate_id))) : [];
+  const tz = ws?.projects[0]?.calendar.timezone ?? "America/Chicago";
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
+    <div className={`mx-auto space-y-6 ${ws ? "max-w-7xl" : "max-w-5xl"}`}>
       <div>
         <h1 className="flex items-center gap-2 text-3xl font-extrabold text-navy"><CalendarRange className="h-7 w-7 text-accent-ink" aria-hidden /> Projects</h1>
-        <p className="mt-1 text-ink-soft">Turn won bids into job schedules built from the estimate, then track progress.</p>
+        <p className="mt-1 text-ink-soft">{ws ? "Every job in one place: who sold it, who runs it, what's happening this week and what the customer should hear." : "Turn won bids into job schedules built from the estimate, then track progress."}</p>
       </div>
       {list === null && <Notice tone="warn" title="Project Command Center is being set up">The database update for schedules hasn&apos;t been applied yet.</Notice>}
       {pm && !pm.canEdit && (
@@ -33,7 +43,13 @@ export default async function ProjectsPage() {
         </Notice>
       )}
 
-      <section aria-labelledby="sched-h">
+      {ws && (
+        <Suspense>
+          <ProjectsWorkspace initial={ws} today={todayIn(tz)} myName={ws.people.find((p) => p.id === ws.me)?.name ?? ""} />
+        </Suspense>
+      )}
+
+      {!ws && <section aria-labelledby="sched-h">
         <h2 id="sched-h" className="font-display text-lg font-extrabold text-navy">Schedules</h2>
         {list && list.length === 0 && <p className="mt-2 text-sm text-muted">No schedules yet. Choose Schedule Now on a won bid below.</p>}
         <ul className="mt-2 space-y-2">
@@ -56,7 +72,7 @@ export default async function ProjectsPage() {
             </li>
           ))}
         </ul>
-      </section>
+      </section>}
 
       {ready.length > 0 && (
         <section aria-labelledby="ready-h">
