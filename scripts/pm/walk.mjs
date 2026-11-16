@@ -43,9 +43,9 @@ await fetch(`${M}/__scenario?name=starter`); await pmState({});
 await fetch(`${M}/__scenario?name=unlimited`); await pmState({});
 { const { ctx, page } = await open("/settings/billing");
   const card = page.getByTestId("pm-addon");
-  check("unlimited: add-on card offers $4.99/month with one editor", (await card.textContent()).includes("$4.99/month") && await card.getByRole("button", { name: "Add project scheduling" }).isVisible());
+  check("unlimited: add-on card offers $4.99/month with one editor", (await card.textContent()).includes("$4.99/month") && await card.getByRole("button", { name: "Unlock Project Command Center" }).isVisible());
   await page.screenshot({ path: `${dir}/addon-offer-desktop.png`, fullPage: true });
-  await card.getByRole("button", { name: "Add project scheduling" }).click();
+  await card.getByRole("button", { name: "Unlock Project Command Center" }).click();
   await card.getByRole("alert").waitFor({ timeout: 10000 });
   check("unlimited: if Stripe can't be reached, nothing is charged and it says so", (await card.getByRole("alert").textContent()).includes("Nothing was charged"));
   await ctx.close(); }

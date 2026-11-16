@@ -130,7 +130,7 @@ export function ScheduleEditor({ initial, tradeLabels, editHint, created, public
       {created && <Notice tone="ok" title="Draft schedule saved">Your customer hasn&apos;t been notified. Drag tasks to adjust dates, or use the list icon on a section to schedule individual line items.</Notice>}
       {!canEdit && (
         <Notice title="View only">
-          {editHint === "addon" ? <>Editing schedules needs the project scheduling add-on. Your schedules and data stay here. <Link className="font-semibold underline" href="/settings/billing">Billing</Link></>
+          {editHint === "addon" ? <>Editing schedules needs Project Command Center. Your schedules and data stay here. <Link className="font-semibold underline" href="/settings/billing">Unlock Project Command Center</Link></>
             : editHint === "seat" ? "Ask your company admin to assign you a scheduling editor seat to make changes."
               : "You can view this schedule but can't edit it."}
         </Notice>

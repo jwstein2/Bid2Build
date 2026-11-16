@@ -86,7 +86,7 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   download_internal_reports: "Download internal estimate PDFs",
   send_internal_reports: "Send internal financial documents",
   manage_pm_seats: "Manage scheduling editor seats",
-  manage_pm_addons: "Manage paid scheduling add-ons",
+  manage_pm_addons: "Manage paid Project Command Center add-ons",
 };
 
 /** How the Users & Permissions screen groups permissions. */
@@ -94,7 +94,7 @@ export const PERMISSION_GROUPS: { title: string; keys: readonly Permission[]; no
   { title: "Bids", keys: ["view_own_bids", "view_team_bids", "view_company_bids", "create_estimates", "edit_team_estimates", "approve_bids", "manage_company_pricing"] },
   { title: "Costs and internal reports", keys: ["view_costs", "view_margin", "view_internal_reports", "download_internal_reports", "send_internal_reports", "view_analytics"] },
   {
-    title: "Project scheduling",
+    title: "Project Command Center",
     keys: ["view_schedules", "create_schedules", "edit_assigned_schedules", "edit_all_schedules", "manage_dependencies", "update_progress", "publish_customer_updates", "download_schedule_pdf"],
     note: "Changing a schedule also needs a scheduling editor seat.",
   },

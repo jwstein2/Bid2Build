@@ -71,7 +71,7 @@ export function PmEditorsCard({ seats, members, extra, canManage, canBuy, comp, 
       <div className="flex gap-3">
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-accent/15 text-accent-ink"><CalendarRange className="h-5 w-5" aria-hidden /></span>
         <div>
-          <h2 className="font-display text-lg font-bold">Project scheduling editors</h2>
+          <h2 className="font-display text-lg font-bold">Project Command Center editors</h2>
           <p className="text-sm text-ink-soft">
             {PM_INCLUDED_ENTERPRISE_EDITORS} schedule editor is included with Enterprise. Extra editors are {formatCents(PM_EDITOR_CENTS)}/month each and don&apos;t change your licensed users.
             Everyone else in your company can view schedules.

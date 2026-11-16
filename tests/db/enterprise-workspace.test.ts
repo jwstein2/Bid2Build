@@ -58,7 +58,7 @@ d("Enterprise workspace, roles and entitlement (database)", () => {
 
   it("role defaults in SQL match the TypeScript mirror", async () => {
     // This database stops before later migrations; the V4 Phase 9 keys are mirrored in tests/db/pm-permissions.test.ts.
-    const phase9 = new Set<string>(PERMISSION_GROUPS.find((g) => g.title.startsWith("Project scheduling"))!.keys);
+    const phase9 = new Set<string>(PERMISSION_GROUPS.find((g) => g.title.startsWith("Project Command Center"))!.keys);
     for (const k of ["view_internal_reports", "download_internal_reports", "send_internal_reports", "manage_pm_seats", "manage_pm_addons"]) phase9.add(k);
     const pre = (list: readonly string[]) => list.filter((k) => !phase9.has(k));
     const keys = (await pool.query("select public.company_permission_keys() as k")).rows[0].k;

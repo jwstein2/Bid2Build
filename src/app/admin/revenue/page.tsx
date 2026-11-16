@@ -86,7 +86,7 @@ export default async function Revenue({ searchParams }: { searchParams: Promise<
           <div className="lg:col-span-2">
             <Table head={["Revenue stream", "Subscriptions", "MRR"]} align={["l", "r", "r"]} minWidth={320}>
               <tr><td className="font-sans">Core subscriptions (Unlimited + Enterprise licenses)</td><td className="text-right text-white">{fmt(rev.paying)}</td><td className="text-right">{usd(split.coreCents)}</td></tr>
-              <tr><td className="font-sans">Project scheduling add-on ($4.99/mo or $49.99/yr)</td><td className="text-right text-white">{fmt(split.pmAddonSubs)}</td><td className="text-right">{usd(split.pmAddonCents)}</td></tr>
+              <tr><td className="font-sans">Project Command Center add-on ($4.99/mo or $49.99/yr)</td><td className="text-right text-white">{fmt(split.pmAddonSubs)}</td><td className="text-right">{usd(split.pmAddonCents)}</td></tr>
               <tr><td className="font-sans">Enterprise scheduling editors ($1.99/mo each beyond the included one)</td><td className="text-right text-white">{fmt(split.pmEditorSeats)} seats · {fmt(split.pmEditorCompanies)} co.</td><td className="text-right">{usd(split.pmEditorCents)}</td></tr>
               <tr><td className="font-sans font-bold text-white">Total recurring revenue</td><td /><td className="text-right font-bold text-white" data-testid="total-mrr">{usd(split.totalCents)}</td></tr>
             </Table>
