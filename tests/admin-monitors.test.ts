@@ -56,3 +56,16 @@ describe("provider monitors", () => {
     expect(meta.missing).toContain("META_ADS_ACCESS_TOKEN");
   });
 });
+
+describe("Anthropic legacy cost report", () => {
+  it("sums daily buckets by model and treats non-model rows as Other", async () => {
+    const { sumLegacyCost } = await import("@/lib/admin/monitors");
+    const m = sumLegacyCost({ data: [
+      { results: [{ amount: "12.5", model: "claude-haiku-5-5" }, { amount: "3", model: null, description: "Web search" }] },
+      { results: [{ amount: "7.5", model: "claude-haiku-5-5" }] },
+    ] });
+    expect(m.get("claude-haiku-5-5")).toBe(20);
+    expect(m.get("Other (not model-specific)")).toBe(3);
+    expect(sumLegacyCost(null).size).toBe(0);
+  });
+});

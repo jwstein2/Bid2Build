@@ -143,8 +143,45 @@ export async function anthropicCost(now: Date): Promise<Monitor<AnthropicCost>> 
     return { state: "ok", env: ANTHROPIC_ADMIN_ENV, fetchedAt: new Date().toISOString(), data: { totalCents: list.reduce((n, r) => n + r.cents, 0), byModel: list, since, refreshedAt } };
   } catch (e) {
     const status = e instanceof Anthropic.APIError ? e.status : undefined;
-    return { state: "error", env: ANTHROPIC_ADMIN_ENV, message: status === 401 || status === 403 ? `Key rejected (HTTP ${status}): it must be an Admin API key` : status ? `Anthropic returned HTTP ${status}` : "Anthropic did not respond" };
+    // 404: the newer analytics endpoint is not enabled for this organization. Try the older cost report.
+    if (status === 404) return legacyCost(key, since);
+    return { state: "error", env: ANTHROPIC_ADMIN_ENV, message: status === 401 || status === 403 ? `Key rejected (HTTP ${status}): use an organization-scoped or Admin key` : status ? `Anthropic returned HTTP ${status}` : "Anthropic did not respond" };
   }
+}
+
+/** Sums one cost report page (daily buckets, each with results grouped by description). */
+export function sumLegacyCost(body: unknown): Map<string, number> {
+  const byModel = new Map<string, number>();
+  const buckets = Array.isArray(obj(body).data) ? (obj(body).data as unknown[]) : [];
+  for (const b of buckets) for (const r of Array.isArray(obj(b).results) ? (obj(b).results as unknown[]) : []) {
+    const row = obj(r);
+    const cents = num(row.amount);
+    if (cents == null) continue;
+    const m = typeof row.model === "string" && row.model ? row.model : "Other (not model-specific)";
+    byModel.set(m, (byModel.get(m) ?? 0) + cents);
+  }
+  return byModel;
+}
+
+async function legacyCost(key: string, since: string): Promise<Monitor<AnthropicCost>> {
+  const byModel = new Map<string, number>();
+  let page: string | null = null;
+  for (let i = 0; i < 5; i++) {
+    const q = new URLSearchParams({ starting_at: since, limit: "31" });
+    q.append("group_by[]", "description");
+    if (page) q.set("page", page);
+    const r = await getJson(`https://api.anthropic.com/v1/organizations/cost_report?${q}`, { "x-api-key": key, "anthropic-version": "2026-10-21" });
+    if (!r.ok) {
+      const notAvailable = /HTTP 404/.test(r.message);
+      return { state: "error", env: ANTHROPIC_ADMIN_ENV, message: notAvailable ? "Cost reporting is not enabled for this Console account (HTTP 404): it needs a Console organization" : r.message };
+    }
+    for (const [m, c] of sumLegacyCost(r.body)) byModel.set(m, (byModel.get(m) ?? 0) + c);
+    const b = obj(r.body);
+    page = b.has_more === true && typeof b.next_page === "string" ? b.next_page : null;
+    if (!page) break;
+  }
+  const list = [...byModel].map(([model, cents]) => ({ model, cents: Math.round(cents) })).sort((a, b) => b.cents - a.cents);
+  return { state: "ok", env: ANTHROPIC_ADMIN_ENV, fetchedAt: new Date().toISOString(), data: { totalCents: list.reduce((n, r) => n + r.cents, 0), byModel: list, since, refreshedAt: null } };
 }
 
 /* --------------------------- Advertising (setup only) --------------------------- */
