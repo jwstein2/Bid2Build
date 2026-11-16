@@ -1,8 +1,9 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { Sparkles, CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, Plug, LayoutTemplate, LogOut, X, UserCog, Receipt, Gauge, SquareKanban, GraduationCap } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { REVEAL_FEATURE_EVENT } from "@/lib/features/state";
+import { Sparkles, CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, Plug, LayoutTemplate, LogOut, X, UserCog, Receipt, Gauge, SquareKanban, CalendarRange, GraduationCap } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ButtonLink } from "@/components/ui/button";
 import { Logo } from "./logo";
@@ -10,8 +11,11 @@ import { PremiumDiamond } from "../billing/premium";
 import { ReplayTourButton } from "../onboarding/replay-tour-button";
 import { FeatureTourButton } from "../features/tour-buttons";
 import type { FeatureId } from "@/lib/features/registry";
+import type { ThemePref } from "@/lib/theme";
+import { ThemeToggle } from "../theme/theme-toggle";
 
-const nav: { href: string; label: string; icon: typeof Library; exact?: boolean; premium?: boolean; feature?: FeatureId }[] = [
+type NavItem = { href: string; label: string; icon: typeof Library; exact?: boolean; premium?: boolean; feature?: FeatureId };
+const NAV: NavItem[] = [
   { href: "/dashboard", label: "Bids", icon: LayoutDashboard, exact: true },
   // Directly below Bids: contractors set this up first and their proposals depend on it.
   { href: "/settings/company", label: "Company profile", icon: Building2 },
@@ -38,20 +42,54 @@ const companyExact = (href: CompanyHref) => href === "/company";
 /** Invitation-only Creator Partner Program links (only rendered for creators / gifted participants). */
 export type LearningNav = { creator: boolean; participant: boolean };
 
-export function AppSidebar({ isAdmin, email, company, learning }: { isAdmin: boolean; email: string | null; company?: CompanyNav | null; learning?: LearningNav | null }) {
+/** Projects (schedules) sit right below Bids when project scheduling is switched on. */
+const PROJECTS: NavItem = { href: "/projects", label: "Projects", icon: CalendarRange };
+
+export function AppSidebar({ isAdmin, email, company, projects = false, theme = null, learning }: { isAdmin: boolean; email: string | null; company?: CompanyNav | null; projects?: boolean; theme?: ThemePref | null; learning?: LearningNav | null }) {
+  const nav: NavItem[] = projects ? [NAV[0], PROJECTS, ...NAV.slice(1)] : NAV;
   const path = usePathname();
   const [open, setOpen] = useState(false);
   // eslint-disable-next-line react-hooks/set-state-in-effect -- close the mobile menu after navigating
   useEffect(() => { setOpen(false); }, [path]);
+  // On phones the links are inside the Menu: the feature walkthrough opens it for a step that points
+  // at a sidebar link (Saved Items, Templates) and closes it again when the walkthrough ends.
+  const openedForTour = useRef(false);
+  const isOpen = useRef(open);
+  useEffect(() => { isOpen.current = open; }, [open]);
+  useEffect(() => {
+    const on = (e: Event) => {
+      const id = (e as CustomEvent).detail as string | null;
+      if (id && NAV.some((n) => n.feature === id)) {
+        if (!isOpen.current) { openedForTour.current = true; setOpen(true); }
+      } else if (openedForTour.current) {
+        openedForTour.current = false;
+        setOpen(false);
+      }
+    };
+    window.addEventListener(REVEAL_FEATURE_EVENT, on);
+    return () => window.removeEventListener(REVEAL_FEATURE_EVENT, on);
+  }, []);
+  // Escape closes the phone menu and puts focus back on the Menu button.
+  const menuButton = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && window.matchMedia("(max-width: 767px)").matches) { setOpen(false); menuButton.current?.focus(); }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
   const active = (href: string, exact?: boolean) => (exact ? path === href : path === href || path.startsWith(`${href}/`));
   const current = nav.find((n) => active(n.href, n.exact)) ?? company?.links.find((l) => active(l.href, companyExact(l.href)));
   return (
     <>
-      <div className="flex items-center justify-between gap-2 px-3 py-3 sm:px-4 md:py-4">
+      <div className="flex items-center justify-between gap-1 px-3 py-3 sm:gap-2 sm:px-4 md:py-4">
         <Logo tone="dark" href="/dashboard" />
-        <div className="flex items-center gap-1 md:hidden">
+        <div className="flex items-center gap-1 max-[380px]:gap-0 md:hidden">
           <ButtonLink href="/bids" variant="accent" size="sm" className="min-h-11 max-[380px]:px-2.5"><FileText className="h-4 w-4 max-[380px]:hidden" aria-hidden /> New bid</ButtonLink>
+          <ThemeToggle signedIn account={theme} tone="dark" />
           <button
+            ref={menuButton}
             type="button"
             onClick={() => setOpen(!open)}
             aria-expanded={open}
@@ -65,7 +103,7 @@ export function AppSidebar({ isAdmin, email, company, learning }: { isAdmin: boo
       </div>
       <div className="hidden px-3 md:block"><ButtonLink href="/bids" variant="accent" className="w-full"><FileText className="h-4 w-4" aria-hidden /> Create New Bid</ButtonLink></div>
       {!open && current && <p className="flex items-center gap-1.5 px-4 pb-2 text-xs text-[#B8C6D4] md:hidden">{current.label}{"premium" in current && current.premium && <PremiumDiamond tone="dark" />}</p>}
-      <nav id="account-nav" aria-label="Account" className={cn("flex-col gap-1 px-2 pb-3 md:mt-4 md:flex", open ? "flex" : "hidden")}>
+      <nav id="account-nav" aria-label="Account" className={cn("flex-col gap-1 px-2 pb-3 md:mt-4 md:flex", open ? "flex max-md:motion-drop-in" : "hidden")}>
         {nav.map((n) => {
           const on = active(n.href, n.exact);
           return (

@@ -9,13 +9,14 @@ import {
   nextAction, stageForColumn, valueOf, type BoardBid, type Column, type Stage,
 } from "@/lib/pipeline/board";
 import { cn } from "@/lib/cn";
+import { isPmEnabled } from "@/lib/env";
 import { MoveDialog, type MoveExtras } from "./move-dialog";
 import { money, relDay } from "./format";
 
 type Toast = { text: string; tone: "ok" | "danger"; undo?: () => void } | null;
 
 /** Kanban board. Native drag-and-drop on desktop; every move is also in each card's "Move to" menu (keyboard + touch). */
-export function PipelineBoard({ bids, esign }: { bids: BoardBid[]; esign: boolean }) {
+export function PipelineBoard({ bids, esign, focus }: { bids: BoardBid[]; esign: boolean; focus?: Column[] }) {
   const router = useRouter();
   const [overrides, setOverrides] = useState<Record<string, { stage: Stage; wonAt?: string | null }>>({});
   const [pending, setPending] = useState<{ bid: BoardBid; to: Column; confirm: "won" | "lost" | "reopen" | "job" } | null>(null);
@@ -96,17 +97,28 @@ export function PipelineBoard({ bids, esign }: { bids: BoardBid[]; esign: boolea
     <div data-testid="pipeline-board">
       {/* Row 1: selling stages. Row 2: jobs and the separate Lost / Declined outcome. Wide screens fit all columns;
           narrower ones scroll sideways; phones stack collapsible sections. */}
-      <div className="overflow-x-auto md:pb-1">
-        <div className="flex flex-col gap-3 md:grid md:grid-cols-[repeat(5,minmax(200px,1fr))] md:items-start">
-          {SALES_COLUMNS.map((c) => <BoardColumn key={c} {...colProps(c)} />)}
+      {focus ? (
+        // A KPI card narrowed the board: only the stages behind that number, in one row.
+        <div className="overflow-x-auto md:pb-1" data-testid="pipeline-focus">
+          <div className="flex flex-col gap-3 md:grid md:items-start" style={{ gridTemplateColumns: `repeat(${focus.length}, minmax(200px, 1fr))` }}>
+            {focus.map((c) => <BoardColumn key={c} {...colProps(c)} forceOpen />)}
+          </div>
         </div>
-      </div>
-      <h3 className="mb-2 mt-5 text-xs font-bold uppercase tracking-wider text-muted">Jobs &amp; outcomes</h3>
-      <div className="overflow-x-auto md:pb-1">
-        <div className="flex flex-col gap-3 md:grid md:grid-cols-[repeat(4,minmax(200px,1fr))] md:items-start">
-          {[...JOB_COLUMNS, "lost" as const].map((c) => <BoardColumn key={c} {...colProps(c)} />)}
-        </div>
-      </div>
+      ) : (
+        <>
+          <div className="overflow-x-auto md:pb-1">
+            <div className="flex flex-col gap-3 md:grid md:grid-cols-[repeat(5,minmax(200px,1fr))] md:items-start">
+              {SALES_COLUMNS.map((c) => <BoardColumn key={c} {...colProps(c)} />)}
+            </div>
+          </div>
+          <h3 className="mb-2 mt-5 text-xs font-bold uppercase tracking-wider text-muted">Jobs &amp; outcomes</h3>
+          <div className="overflow-x-auto md:pb-1">
+            <div className="flex flex-col gap-3 md:grid md:grid-cols-[repeat(4,minmax(200px,1fr))] md:items-start">
+              {[...JOB_COLUMNS, "lost" as const].map((c) => <BoardColumn key={c} {...colProps(c)} />)}
+            </div>
+          </div>
+        </>
+      )}
       {pending && (
         <MoveDialog
           bid={pending.bid} to={pending.to} kind={pending.confirm}
@@ -127,13 +139,13 @@ export function PipelineBoard({ bids, esign }: { bids: BoardBid[]; esign: boolea
   );
 }
 
-function BoardColumn({ col, bids, total, esign, onMove, dropState, onDragOver, onDrop, onDragStart, onDragEnd }: {
-  col: Column; bids: BoardBid[]; total: { count: number; value: number; unpriced: number }; esign: boolean;
+function BoardColumn({ col, bids, total, esign, onMove, dropState, onDragOver, onDrop, onDragStart, onDragEnd, forceOpen }: {
+  col: Column; bids: BoardBid[]; total: { count: number; value: number; unpriced: number }; esign: boolean; forceOpen?: boolean;
   onMove: (b: BoardBid, to: Column) => void; dropState: "over" | "can" | "no" | null;
   onDragOver: (e: React.DragEvent) => void; onDrop: (e: React.DragEvent) => void; onDragStart: (id: string) => void; onDragEnd: () => void;
 }) {
   // Mobile: columns stack and collapse. Empty columns and Lost start collapsed.
-  const [open, setOpen] = useState(col !== "lost" && col !== "completed" && bids.length > 0);
+  const [open, setOpen] = useState(Boolean(forceOpen) || (col !== "lost" && col !== "completed" && bids.length > 0));
   const headId = `col-${col}`;
   return (
     <section
@@ -171,7 +183,7 @@ function BidCard({ b, esign, onMove, onDragStart, onDragEnd }: { b: BoardBid; es
   const col = columnOf(b);
   const value = valueOf(b);
   const approval = approvalOf(b);
-  const action = nextAction(b, esign);
+  const action = nextAction(b, esign, isPmEnabled());
   return (
     <article
       draggable onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", b.id); onDragStart(b.id); }} onDragEnd={onDragEnd}

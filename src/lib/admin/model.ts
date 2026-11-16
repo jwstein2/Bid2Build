@@ -8,10 +8,13 @@
  * address is only used to derive a state.
  */
 import { enterpriseMonthlyCents, ENTERPRISE_INCLUDED_USERS } from "@/lib/enterprise/pricing";
+import { editorMonthlyCents, PM_ADDON_ANNUAL_CENTS, PM_ADDON_CENTS } from "@/lib/pm/billing";
+import { scopeProduct, type ProductData } from "./product";
 import { classifyAccount, type AccountClass, type Classification } from "./classify";
-import { campaignOf, classifyChannel, CHANNELS, isChannel, type Channel, type LeadAttribution } from "./channels";
+import { campaignOf, classifyChannel, creativeOf, creatorOf, CHANNELS, isChannel, type Channel, type LeadAttribution } from "./channels";
 import { businessKey, series, tradeOf, type EstimateRow, type Point } from "./metrics";
 import type { Range } from "./view";
+import { activatedAt, inActivationWindow } from "@/lib/growth/activation";
 
 export const DAY = 86_400_000;
 export const ACTIVE_WINDOW_DAYS = 30;
@@ -28,7 +31,9 @@ export interface LabelRow { user_id: string; label: string; note: string | null;
 export interface VersionRow { estimate_id: string; user_id: string; created_at: string; version_number: number }
 export interface SignatureRow { estimate_id: string; user_id: string; signed_at: string; pdf_status?: string | null }
 export interface SigningRequestRow { id: string; estimate_id: string; user_id: string; company_id?: string | null; status: string; created_at: string; signed_at: string | null; expires_at: string }
-export interface SubscriptionRow { stripe_subscription_id: string; user_id: string; status: string; plan: string | null; cancel_at_period_end: boolean | null; canceled_at: string | null; ended_at: string | null; updated_at: string | null; seat_quantity: number | null; current_period_end: string | null; company_id?: string | null; stripe_customer_id?: string | null }
+export interface SubscriptionRow { stripe_subscription_id: string; user_id: string; status: string; plan: string | null; cancel_at_period_end: boolean | null; canceled_at: string | null; ended_at: string | null; updated_at: string | null; seat_quantity: number | null; current_period_end: string | null; company_id?: string | null; stripe_customer_id?: string | null;
+  /** V4 PM add-ons (Phase 5 columns; absent before that migration). */
+  pm_addon?: boolean | null; pm_addon_until?: string | null; pm_extra_editors?: number | null }
 export interface BusinessRow { user_id: string; created_at: string; company_name: string | null }
 export interface CompanyRow { id: string; created_at: string; name: string | null; owner_user_id: string | null }
 export interface MemberRow { company_id: string; user_id: string; role: string; status: string }
@@ -38,6 +43,8 @@ export interface EventRow { event: string; user_id: string | null; created_at: s
 export interface LeadRow extends LeadAttribution { user_id: string | null; landing_path: string | null; first_touch_at: string | null; device_type?: string | null; created_at: string }
 export interface CostRow { id: number; period_start: string; channel: string; campaign_id: string | null; amount_usd: number | string; note: string | null; created_at: string }
 export interface OutboxRow { kind: string; user_id: string; status: string; last_error: string | null; attempts: number; created_at: string; updated_at: string | null }
+/** An estimate that reached 3+ meaningful line items (ids and a time only: see growth_meaningful_estimates). */
+export interface MeaningfulRow { estimate_id: string; user_id: string; reached_at: string; from_event: boolean }
 export interface StripeEventRow { id: string; type: string; received_at: string; processed_at: string | null; error: string | null }
 
 export interface Snapshot {
@@ -52,6 +59,10 @@ export interface Snapshot {
   leads: LeadRow[]; leadsInstalled: boolean; attributionV2: boolean;
   costs: CostRow[]; outbox: OutboxRow[]; stripeEvents: StripeEventRow[];
   pdfErrors7d: number; importFailures7d: number;
+  /** V4 pipeline / scheduling adoption rows (Phase 10); empty before those migrations. */
+  product?: ProductData;
+  /** Growth PR 1: estimates with 3+ meaningful items (null before migration 20261117001000). */
+  meaningful?: MeaningfulRow[] | null;
   loadedAt: string;
 }
 
@@ -94,6 +105,8 @@ export function scope(snap: Snapshot, includeTest: boolean): Scoped {
       events: snap.events.filter((e) => keep(e.user_id)),
       leads: snap.leads.filter((l) => keep(l.user_id)),
       outbox: snap.outbox.filter((o) => keep(o.user_id)),
+      product: snap.product ? scopeProduct(snap.product, keep) : undefined,
+      meaningful: snap.meaningful ? snap.meaningful.filter((m) => keep(m.user_id)) : snap.meaningful,
     },
   };
 }
@@ -101,12 +114,25 @@ export function scope(snap: Snapshot, includeTest: boolean): Scoped {
 // ---------------------------------------------------------------------------------------------
 // Subscriptions and complimentary access
 // ---------------------------------------------------------------------------------------------
-/** List-price monthly equivalent of one subscription, in cents. Annual = $149 / 12 (never counted twice). */
-export function monthlyCents(s: Pick<SubscriptionRow, "plan" | "seat_quantity">): number {
-  if (s.plan === "monthly") return 1999;
-  if (s.plan === "annual") return Math.round(14900 / 12);
-  if (s.plan === "enterprise") return enterpriseMonthlyCents(Math.max(ENTERPRISE_INCLUDED_USERS, s.seat_quantity ?? ENTERPRISE_INCLUDED_USERS));
-  return 0;
+/** List-price monthly equivalent of one subscription, by product, in cents (V4 Phase 10).
+ *   core:      the plan itself. Annual = $149 / 12 (never counted twice); Enterprise from its licensed seats.
+ *   pmAddon:   Standard project-scheduling add-on, $4.99/month, while it's on the subscription. A removed
+ *              add-on (editing kept until period end, pm_addon_until) is no longer billed, so it's 0.
+ *   pmEditors: Enterprise scheduling editors beyond the included one, $1.99/month each.
+ * Each Stripe subscription is one row, and its items are counted once here, so nothing is double counted.
+ */
+export function mrrParts(s: Pick<SubscriptionRow, "plan" | "seat_quantity" | "pm_addon" | "pm_extra_editors">): { core: number; pmAddon: number; pmEditors: number; total: number } {
+  const core = s.plan === "monthly" ? 1999
+    : s.plan === "annual" ? Math.round(14900 / 12)
+      : s.plan === "enterprise" ? enterpriseMonthlyCents(Math.max(ENTERPRISE_INCLUDED_USERS, s.seat_quantity ?? ENTERPRISE_INCLUDED_USERS)) : 0;
+  const pmAddon = s.plan !== "enterprise" && core > 0 && s.pm_addon ? (s.plan === "annual" ? Math.round(PM_ADDON_ANNUAL_CENTS / 12) : PM_ADDON_CENTS) : 0;
+  const pmEditors = s.plan === "enterprise" ? editorMonthlyCents(s.pm_extra_editors ?? 0) : 0;
+  return { core, pmAddon, pmEditors, total: core + pmAddon + pmEditors };
+}
+
+/** Total list-price monthly recurring revenue of one subscription (plan + PM add-ons), in cents. */
+export function monthlyCents(s: Pick<SubscriptionRow, "plan" | "seat_quantity" | "pm_addon" | "pm_extra_editors">): number {
+  return mrrParts(s).total;
 }
 
 /** When a subscription stopped being paid for (null = still on). */
@@ -148,8 +174,14 @@ export interface AccountFact {
   business: string | null; companyId: string | null; companyRole: string | null;
   estimates: number; finalized: number; signed: number; signingRequests: number;
   firstEstimateAt: string | null; firstFinalizedAt: string | null; lastActivityAt: string | null;
+  /** First estimate with 3+ meaningful items, first signing link sent, and when the 7-day activation rule was met (null = not met). */
+  firstMeaningfulAt: string | null; firstSentAt: string | null; activated7dAt: string | null;
   sub: SubscriptionRow | null; paying: boolean; pastDue: boolean; everPaid: boolean; paidStartedAt: string | null; paidEndedAt: string | null;
   comp: GrantRow | null; segment: Segment; channel: Channel; campaign: string | null; landing: string | null; device: string | null;
+  /** Ad creative (utm_content) and Creator Partner (utm_campaign of a creator link), from first touch. */
+  creative: string | null; creator: string | null;
+  /** Trade of the first bid, else of the first landing page (/bids/<trade>, /start/<trade>). */
+  trade: string | null;
 }
 
 export function accountFacts(sc: Scoped, now: Date): AccountFact[] {
@@ -157,6 +189,8 @@ export function accountFacts(sc: Scoped, now: Date): AccountFact[] {
   const byUser = <T extends { user_id: string | null }>(rows: T[]) => { const m = new Map<string, T[]>(); for (const r of rows) if (r.user_id) { const a = m.get(r.user_id); if (a) a.push(r); else m.set(r.user_id, [r]); } return m; };
   const est = byUser(d.estimates), ver = byUser(d.versions), sig = byUser(d.signatures), req = byUser(d.signingRequests), subs = byUser(d.subscriptions), grants = byUser(d.grants);
   const leads = new Map(d.leads.filter((l) => l.user_id).map((l) => [l.user_id!, l]));
+  const meaningfulAt = new Map<string, string>();
+  for (const m of d.meaningful ?? []) meaningfulAt.set(m.user_id, minIso(meaningfulAt.get(m.user_id) ?? null, m.reached_at)!);
   const subscribedAt = new Map<string, string>();
   for (const e of d.events) if (e.event === "subscribed" && e.user_id) subscribedAt.set(e.user_id, minIso(subscribedAt.get(e.user_id) ?? null, e.created_at)!);
   const bizName = new Map(d.businesses.map((b) => [b.user_id, b.company_name?.trim() || null]));
@@ -168,9 +202,12 @@ export function accountFacts(sc: Scoped, now: Date): AccountFact[] {
   return d.users.map((u): AccountFact => {
     const es = est.get(u.id) ?? [], vs = ver.get(u.id) ?? [], ss = sig.get(u.id) ?? [], rs = req.get(u.id) ?? [];
     let firstEstimateAt: string | null = null, firstFinalizedAt: string | null = null, last: string | null = null;
-    for (const e of es) { firstEstimateAt = minIso(firstEstimateAt, e.created_at); last = maxIso(last, e.created_at); }
+    let firstTrade: string | null = null;
+    for (const e of es) { if (!firstEstimateAt || t(e.created_at) < t(firstEstimateAt)) firstTrade = e.template_trade ?? e.trades?.[0] ?? null; firstEstimateAt = minIso(firstEstimateAt, e.created_at); last = maxIso(last, e.created_at); }
     for (const v of vs) { firstFinalizedAt = minIso(firstFinalizedAt, v.created_at); last = maxIso(last, v.created_at); }
-    for (const r of rs) last = maxIso(last, r.created_at);
+    let firstSentAt: string | null = null;
+    for (const r of rs) { last = maxIso(last, r.created_at); firstSentAt = minIso(firstSentAt, r.created_at); }
+    const firstMeaningfulAt = meaningfulAt.get(u.id) ?? null;
     for (const s of ss) last = maxIso(last, s.signed_at);
     const userSubs = (subs.get(u.id) ?? []).filter((s) => !NEVER_PAID.has(s.status));
     const current = userSubs.filter((s) => PAYING.has(s.status)).sort((a, b) => t(b.updated_at) - t(a.updated_at))[0] ?? null;
@@ -191,9 +228,11 @@ export function accountFacts(sc: Scoped, now: Date): AccountFact[] {
       business: company?.name?.trim() || bizName.get(u.id) || null, companyId: company?.id ?? null, companyRole: member?.role ?? null,
       estimates: es.length, finalized: new Set(vs.map((v) => v.estimate_id)).size, signed: new Set(ss.map((s) => s.estimate_id)).size, signingRequests: rs.length,
       firstEstimateAt, firstFinalizedAt, lastActivityAt: last,
+      firstMeaningfulAt, firstSentAt, activated7dAt: activatedAt(u.created_at, { meaningful: firstMeaningfulAt, exported: firstFinalizedAt, sent: firstSentAt }),
       sub: latest, paying: Boolean(current), pastDue: current?.status === "past_due", everPaid: userSubs.length > 0,
       paidStartedAt: userSubs.length ? subscribedAt.get(u.id) ?? null : null, paidEndedAt: current ? null : latest ? subEnd(latest) : null,
       comp, segment, channel: classifyChannel(lead), campaign: campaignOf(lead), landing: lead?.landing_path ?? null, device: lead?.device_type ?? null,
+      creative: creativeOf(lead), creator: creatorOf(lead), trade: firstTrade ?? tradeOfPath(lead?.landing_path),
     };
   });
 }
@@ -269,7 +308,10 @@ export function revenueModel(facts: AccountFact[], range: Range, now: Date, nowC
 // ---------------------------------------------------------------------------------------------
 // Funnel (account-based cohort) and activation
 // ---------------------------------------------------------------------------------------------
-export interface Funnel { cohort: number; firstBid: number; finalized: number; paid: number; steps: { key: string; label: string; n: number; ofPrev: Ratio; ofCohort: Ratio }[] }
+export interface Funnel { cohort: number; firstBid: number; finalized: number; paid: number;
+  /** New 7-day activation (reported beside, never instead of, "finalized"). matured = accounts whose 7-day window has closed. */
+  activated7d: number; matured: number; activated7dMatured: number;
+  steps: { key: string; label: string; n: number; ofPrev: Ratio; ofCohort: Ratio }[] }
 
 /** Accounts that signed up in the window, and how many of them reached each step by now. */
 export function cohortFunnel(facts: AccountFact[], start: number, end: number): Funnel {
@@ -278,6 +320,9 @@ export function cohortFunnel(facts: AccountFact[], start: number, end: number): 
   const raw = [["signup", "Signed up", c.length], ["first_bid", "Started a first bid", firstBid], ["finalized", "Finalized a bid", finalized], ["paid", "Became a paying customer", paid]] as const;
   return {
     cohort: c.length, firstBid, finalized, paid,
+    activated7d: c.filter((f) => f.activated7dAt).length,
+    matured: c.filter((f) => !inActivationWindow(f.createdAt, end)).length,
+    activated7dMatured: c.filter((f) => f.activated7dAt && !inActivationWindow(f.createdAt, end)).length,
     steps: raw.map(([key, label, n], i) => ({ key, label, n, ofPrev: ratio(n, i ? raw[i - 1][2] : n), ofCohort: ratio(n, c.length) })),
   };
 }
@@ -373,7 +418,7 @@ export function activityFeed(sc: Scoped, facts: AccountFact[], now: Date, limit 
 // ---------------------------------------------------------------------------------------------
 // Marketing
 // ---------------------------------------------------------------------------------------------
-export interface ChannelRow { key: Channel; label: string; signups: number; firstBid: number; activated: number; paid: number; mrrCents: number; spendUsd: number | null; cacUsd: number | null; costPerActivationUsd: number | null }
+export interface ChannelRow { key: Channel; label: string; signups: number; firstBid: number; activated: number; activated7d: number; paid: number; mrrCents: number; spendUsd: number | null; cacUsd: number | null; costPerActivationUsd: number | null; paybackMonths: number | null }
 export interface CampaignRow { name: string; channel: Channel; signups: number; activated: number; paid: number; spendUsd: number | null; cacUsd: number | null; signal: string }
 
 const usdOf = (c: CostRow) => Number(c.amount_usd) || 0;
@@ -392,10 +437,11 @@ export function channelReport(facts: AccountFact[], costs: CostRow[], start: num
     const c = cohort.filter((f) => f.channel === key);
     const paid = c.filter((f) => f.everPaid).length, activated = c.filter((f) => f.firstFinalizedAt).length;
     const s = spend.get(key) ?? null;
+    const mrrCents = c.filter((f) => f.paying).reduce((n, f) => n + monthlyCents(f.sub!), 0);
     return {
-      key, label, signups: c.length, firstBid: c.filter((f) => f.firstEstimateAt).length, activated, paid,
-      mrrCents: c.filter((f) => f.paying).reduce((n, f) => n + monthlyCents(f.sub!), 0),
-      spendUsd: s, cacUsd: s != null && paid ? s / paid : null, costPerActivationUsd: s != null && activated ? s / activated : null,
+      key, label, signups: c.length, firstBid: c.filter((f) => f.firstEstimateAt).length, activated, activated7d: c.filter((f) => f.activated7dAt).length, paid,
+      mrrCents, spendUsd: s, cacUsd: s != null && paid ? s / paid : null, costPerActivationUsd: s != null && activated ? s / activated : null,
+      paybackMonths: paybackMonths(s, paid, mrrCents, c.filter((f) => f.paying).length),
     };
   }).filter((r) => r.signups > 0 || (r.spendUsd ?? 0) > 0);
 }
@@ -600,4 +646,76 @@ export function prorateCosts(costs: CostRow[], start: number, end: number): Cost
     const overlap = Math.max(0, Math.min(me, end + 1) - Math.max(ms, start));
     return { ...c, amount_usd: (Number(c.amount_usd) || 0) * (overlap / (me - ms)) };
   });
+}
+
+// ---------------------------------------------------------------------------------------------
+// Growth PR 5: CAC payback, ad creatives (utm_content) and Creator Partners
+// ---------------------------------------------------------------------------------------------
+/**
+ * Months of list-price subscription revenue needed to earn back the acquisition cost:
+ * CAC / average current MRR per paying account. Null without spend, a paying account or MRR.
+ * Complimentary access is never counted as revenue.
+ */
+export function paybackMonths(spendUsd: number | null, paid: number, mrrCents: number, payingNow: number): number | null {
+  if (spendUsd == null || !paid || !payingNow || mrrCents <= 0) return null;
+  const cac = spendUsd / paid;
+  const avgMrrUsd = mrrCents / 100 / payingNow;
+  return cac / avgMrrUsd;
+}
+
+export interface CreativeRow { creative: string; channel: Channel; campaign: string | null; signups: number; firstBid: number; activated7d: number; finalized: number; paid: number; mrrCents: number; activation: Ratio }
+
+/** Signups by ad creative (first-touch utm_content), for the window's signup cohort. */
+export function creativeReport(facts: AccountFact[], start: number, end: number): CreativeRow[] {
+  const m = new Map<string, AccountFact[]>();
+  for (const f of facts) if (f.creative && inWindow(f.createdAt, start, end)) { const a = m.get(f.creative); if (a) a.push(f); else m.set(f.creative, [f]); }
+  return [...m.entries()].map(([creative, fs]) => {
+    const top = <K extends "channel" | "campaign">(k: K) => { const c = new Map<AccountFact[K], number>(); for (const f of fs) c.set(f[k], (c.get(f[k]) ?? 0) + 1); return [...c.entries()].sort((a, b) => b[1] - a[1])[0][0]; };
+    const activated7d = fs.filter((f) => f.activated7dAt).length;
+    return {
+      creative, channel: top("channel"), campaign: top("campaign"), signups: fs.length, firstBid: fs.filter((f) => f.firstEstimateAt).length,
+      activated7d, finalized: fs.filter((f) => f.firstFinalizedAt).length, paid: fs.filter((f) => f.everPaid).length,
+      mrrCents: fs.filter((f) => f.paying).reduce((n, f) => n + monthlyCents(f.sub!), 0), activation: ratio(activated7d, fs.length),
+    };
+  }).sort((a, b) => b.paid - a.paid || b.activated7d - a.activated7d || b.signups - a.signups);
+}
+
+export interface CreatorRow { creator: string; signups: number; firstBid: number; activated7d: number; paid: number; payingNow: number; mrrCents: number; complimentary: number }
+
+/**
+ * Creator Partner results (all time, by default): accounts whose first touch was a creator link.
+ * Paid = a real Stripe subscription. Accounts on complimentary access are listed separately and never
+ * counted as paid or as revenue. Counts only: no contractor names, bids or prices.
+ */
+export function creatorReport(facts: AccountFact[], start = -Infinity, end = Infinity): CreatorRow[] {
+  const m = new Map<string, AccountFact[]>();
+  for (const f of facts) if (f.creator && (start === -Infinity || inWindow(f.createdAt, start, end))) { const a = m.get(f.creator); if (a) a.push(f); else m.set(f.creator, [f]); }
+  return [...m.entries()].map(([creator, fs]) => ({
+    creator, signups: fs.length, firstBid: fs.filter((f) => f.firstEstimateAt).length, activated7d: fs.filter((f) => f.activated7dAt).length,
+    paid: fs.filter((f) => f.everPaid).length, payingNow: fs.filter((f) => f.paying).length,
+    mrrCents: fs.filter((f) => f.paying).reduce((n, f) => n + monthlyCents(f.sub!), 0),
+    complimentary: fs.filter((f) => f.comp && !f.paying).length,
+  })).sort((a, b) => b.paid - a.paid || b.activated7d - a.activated7d || b.signups - a.signups);
+}
+
+const TRADE_PATH = /^\/(?:bids|start)\/([a-z0-9-]{2,60})(?:[/?#]|$)/;
+/** Trade slug from a landing path like /bids/decks or /start/painting. */
+export function tradeOfPath(path: string | null | undefined): string | null {
+  return TRADE_PATH.exec(path ?? "")?.[1] ?? null;
+}
+
+export type PlanFilter = "free" | "paid" | "complimentary";
+/** Current plan bucket: paying (Stripe), complimentary (active grant, not paying), else free. */
+export const planOf = (f: Pick<AccountFact, "paying" | "comp">): PlanFilter => (f.paying ? "paid" : f.comp ? "complimentary" : "free");
+
+export interface TradeRow { trade: string; signups: number; firstBid: number; activated7d: number; paid: number; activation: Ratio }
+
+/** Signup cohort by trade (first bid's trade, else the landing page's). */
+export function tradeReport(facts: AccountFact[], start: number, end: number): TradeRow[] {
+  const m = new Map<string, AccountFact[]>();
+  for (const f of facts) if (inWindow(f.createdAt, start, end)) { const k = f.trade ?? "(no trade yet)"; const a = m.get(k); if (a) a.push(f); else m.set(k, [f]); }
+  return [...m.entries()].map(([trade, fs]) => {
+    const activated7d = fs.filter((f) => f.activated7dAt).length;
+    return { trade, signups: fs.length, firstBid: fs.filter((f) => f.firstEstimateAt).length, activated7d, paid: fs.filter((f) => f.everPaid).length, activation: ratio(activated7d, fs.length) };
+  }).sort((a, b) => b.paid - a.paid || b.activated7d - a.activated7d || b.signups - a.signups);
 }

@@ -15,14 +15,14 @@ const TRADES = ["roofing", "siding", "decks", "concrete", "painting", "pressure-
 const NAMES = ["Summit Exteriors", "Lone Star Roofing", "Gulf Coast Decks", "Buckeye Concrete", "Tarheel Painting", "Peach State Siding", "Front Range Fence", "Desert Pro Wash", "Steel City Kitchens", "Motor City Baths", "Evergreen Gutters", "Music City HVAC"];
 // First-touch patterns: [source, medium, campaign, referrer, clickId, device]
 const TOUCH = [
-  ["google", "cpc", "roofers-tx-search", "google.com", "gclid", "mobile"],
+  ["google", "cpc", "roofers-tx-search", "google.com", "gclid", "mobile", "a-overtime-v1"],
   ["google", "cpc", "contractor-estimating", "google.com", "gclid", "desktop"],
   [null, null, null, "google.com", null, "desktop"],
   [null, null, null, "bing.com", null, "desktop"],
-  ["facebook", "paid_social", "fb-contractors-q4", "facebook.com", "fbclid", "mobile"],
+  ["facebook", "paid_social", "fb-contractors-q4", "facebook.com", "fbclid", "mobile", "b-homeowner-v2"],
   ["youtube", "video", "how-to-bid-a-roof", "youtube.com", null, "mobile"],
   ["instantly", "email", "outreach-nov-roofers", null, null, "desktop"],
-  [null, null, null, "contractortalk.com", null, "desktop"],
+  ["youtube", "creator", "deckguy", "youtube.com", null, "desktop"],
   [null, null, null, "(none)", null, "mobile"],
   [null, null, null, null, null, null],
 ];
@@ -66,10 +66,10 @@ export function commandCenterSeed(adminId) {
   const named = users.filter((u) => u.name);
   const sub = (u, i, o) => ({ stripe_subscription_id: `sub_demo_${i}`, user_id: u.id, stripe_customer_id: `cus_demo_${i}`, status: "active", plan: "monthly", cancel_at_period_end: false, canceled_at: null, ended_at: null, updated_at: iso(i * 6 + 1), seat_quantity: null, current_period_end: iso(-20), company_id: null, ...o });
   const subscriptions = [
-    sub(named[0], 0, { plan: "monthly" }), sub(named[1], 1, { plan: "monthly" }), sub(named[2], 2, { plan: "monthly" }),
+    sub(named[0], 0, { plan: "monthly", pm_addon: true }), sub(named[1], 1, { plan: "monthly", pm_addon: false, pm_addon_until: iso(-10) }), sub(named[2], 2, { plan: "monthly" }),
     sub(named[3], 3, { plan: "monthly", cancel_at_period_end: true, canceled_at: iso(4) }),
-    sub(named[4], 4, { plan: "annual" }), sub(named[5], 5, { plan: "annual", status: "past_due" }),
-    sub(named[6], 6, { plan: "enterprise", seat_quantity: 6, company_id: uuid("cccccccc-cccc", 1) }),
+    sub(named[4], 4, { plan: "annual", pm_addon: true }), sub(named[5], 5, { plan: "annual", status: "past_due" }),
+    sub(named[6], 6, { plan: "enterprise", seat_quantity: 6, company_id: uuid("cccccccc-cccc", 1), pm_extra_editors: 2 }),
     sub(named[7], 7, { status: "canceled", canceled_at: iso(12), ended_at: iso(12), updated_at: iso(12), current_period_end: iso(12) }),
     sub(testUsers[0], 8, { plan: "monthly" }),
   ];
@@ -80,13 +80,24 @@ export function commandCenterSeed(adminId) {
   const allAuth = [...users, ...testUsers];
   const leads = users.map((u, i) => {
     const t = TOUCH[i % TOUCH.length];
-    return { id: uuid("ffffffff-ffff", i + 1), email_norm: u.email, user_id: u.id, stage: "signed_up", source: t[0] ?? (t[3] && t[3] !== "(none)" ? t[3] : "direct"), utm_source: t[0], utm_medium: t[1], utm_campaign: t[2], first_campaign_id: t[0] === "instantly" ? "outreach-nov-roofers" : null, first_campaign_name: null, landing_path: pick(["/", "/bids/roofing", "/bids/decks", "/pricing", "/learn/how-to-estimate-a-roof"]), first_touch_at: iso(u.created), referrer_host: t[3], click_id_type: t[4], device_type: t[5], created_at: iso(u.created) };
+    return { id: uuid("ffffffff-ffff", i + 1), email_norm: u.email, user_id: u.id, stage: "signed_up", source: t[0] ?? (t[3] && t[3] !== "(none)" ? t[3] : "direct"), utm_source: t[0], utm_medium: t[1], utm_campaign: t[2], utm_content: t[6] ?? null, first_campaign_id: t[0] === "instantly" ? "outreach-nov-roofers" : null, first_campaign_name: null, landing_path: pick(["/", "/bids/roofing", "/bids/decks", "/pricing", "/learn/how-to-estimate-a-roof"]), first_touch_at: iso(u.created), referrer_host: t[3], click_id_type: t[4], device_type: t[5], created_at: iso(u.created) };
   });
+  // V4 pipeline / scheduling adoption (Phase 10): stages by position (no extra rnd() calls, so the rest of the
+  // seed stays identical), a few moves, schedules, published updates, editor seats and report generations.
+  const STAGES = ["draft", "draft", "sent", "pending", "won", "draft", "scheduled", "lost", "in_progress", "completed"];
+  estimates.forEach((e, i) => { e.pipeline_stage = STAGES[i % STAGES.length]; });
+  const moved = estimates.filter((e) => e.pipeline_stage !== "draft");
+  const estimate_stage_history = moved.slice(0, 24).map((e, i) => ({ estimate_id: e.id, changed_by: e.user_id, from_stage: "draft", to_stage: e.pipeline_stage, created_at: iso((i * 3) % 50) }));
+  const project_schedules = moved.filter((e) => ["scheduled", "in_progress", "completed"].includes(e.pipeline_stage)).slice(0, 9).map((e, i) => ({ id: uuid("12121212-1212", i + 1), estimate_id: e.id, user_id: e.user_id, company_id: null, status: i === 8 ? "archived" : i % 3 === 0 ? "completed" : "active", created_at: iso((i * 5) % 45) }));
+  const schedule_publications = project_schedules.slice(0, 6).flatMap((x, i) => [{ schedule_id: x.id, published_by: x.user_id, published_at: iso(i * 4) }, ...(i % 2 ? [{ schedule_id: x.id, published_by: x.user_id, published_at: iso(i * 4 + 20) }] : [])]);
+  const pm_editors = [{ company_id: uuid("cccccccc-cccc", 1), user_id: named[6].id, assigned_at: iso(20) }];
+  const report_generations = [named[0], named[0], named[2], named[4], named[6], named[0]].map((u, i) => ({ user_id: u.id, company_id: null, kind: "internal_estimate", action: ["preview", "download", "send"][i % 3], created_at: iso(i * 6) }));
   const month = new Date(NOW).toISOString().slice(0, 7);
   const prev = new Date(NOW - 31 * 864e5).toISOString().slice(0, 7);
   return {
     tables: {
       estimates, estimate_versions: versions, signatures, signing_requests: signing, subscriptions,
+      estimate_stage_history, project_schedules, schedule_publications, pm_editors, report_generations,
       profiles: allAuth.map((u) => ({ id: u.id, created_at: iso(u.created) })),
       business_profiles: named.map((u) => ({ user_id: u.id, company_name: u.name, created_at: iso(u.created) })),
       companies: [{ id: uuid("cccccccc-cccc", 1), name: "Front Range Fence Group (demo)", created_at: iso(30), owner_user_id: named[6].id }],

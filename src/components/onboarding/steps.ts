@@ -5,7 +5,7 @@
  */
 export const WELCOME_VIDEO = {
   src: "/media/meet-built2bid-v1.mp4",
-  poster: "/media/meet-built2bid-poster.jpg",
+  poster: "/media/meet-built2bid-poster.webp",
   width: 1280,
   height: 720,
   /** Shown on the play button. */

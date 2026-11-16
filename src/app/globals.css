@@ -10,8 +10,8 @@
  *  - cool gray #6B7A89 is for icons/rules; small text uses --color-muted (#56677A).
  */
 @theme {
-  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: "Montserrat Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter Variable", "Inter Fallback", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Montserrat Variable", "Montserrat Fallback", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
 
   /* Brand primitives */
   --color-navy: #0b2d4d;
@@ -47,10 +47,53 @@
   --color-danger: #b91c1c;
   --color-danger-tint: #fdecec;
 
+  /* Schedule status (Gantt): not started = cool gray, on hold = violet. */
+  --color-idle: #6b7a89;
+  --color-idle-tint: #e6ecf2;
+  --color-idle-line: #9fb0c1;
+  --color-hold: #6a4ba8;
+  --color-hold-ink: #5b3e99;
+  --color-hold-tint: #efe9f8;
+  --color-hold-line: #7c5cb8;
+
+  /* Backdrop behind live proposal previews ("the desk the paper sits on"). */
+  --color-stage: #e4eaf1;
+
   /* Shape & depth */
   --radius-card: 0.75rem;
   --shadow-card: 0 1px 2px rgb(11 45 77 / 0.05), 0 1px 1px rgb(11 45 77 / 0.03);
   --shadow-raised: 0 8px 24px -8px rgb(11 45 77 / 0.18);
+
+  /* Motion curves: decelerate in, quick ease-in out. Utilities: ease-brand-out / ease-brand-in. */
+  --ease-brand-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-brand-in: cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* Motion durations (feedback / reveal / panel). Use these, not one-off values. */
+:root { --motion-fast: 120ms; --motion-base: 180ms; --motion-slow: 220ms; }
+
+/*
+ * Metric-matched fallbacks: while the web fonts download, text renders in Arial (or its metric twins)
+ * scaled to the same width and line height, so headlines don't reflow when Inter/Montserrat arrive
+ * (Lighthouse measured a 0.06 layout shift on the home hero). Values use the same formula as
+ * next/font, from its capsize metrics (Montserrat at heading weight vs Arial Bold), then checked
+ * in Chromium: rendered width within ~1% of the web fonts.
+ */
+@font-face {
+  font-family: "Inter Fallback";
+  src: local("Arial"), local("ArialMT"), local("Liberation Sans"), local("Arimo");
+  size-adjust: 107.12%;
+  ascent-override: 90.44%;
+  descent-override: 22.52%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Montserrat Fallback";
+  src: local("Arial Bold"), local("Arial-BoldMT"), local("Liberation Sans Bold"), local("LiberationSans-Bold"), local("Arimo Bold"), local("Arimo-Bold");
+  size-adjust: 111%;
+  ascent-override: 87.21%;
+  descent-override: 22.61%;
+  line-gap-override: 0%;
 }
 
 html { background: var(--color-paper); color-scheme: light; }
@@ -112,6 +155,20 @@ h1, h2, h3, .font-display { font-family: var(--font-display); letter-spacing: -0
 @media print {
   .no-print { display: none !important; }
 }
+
+/* Shared CSS motion. Rules: motion only explains a change (opened, added, saved); short (120 /
+   180 / 220ms); opacity and transform only; nothing loops. Reduced motion: the rule below.
+   A panel dropping in from its trigger.
+   fill-mode backwards (not both): once finished the animation no longer applies a transform, so it
+   can't become the containing block for fixed children such as the calculator sheet or BulkBar. */
+@keyframes b2b-drop-in { from { opacity: 0; transform: translateY(-6px); } }
+@utility motion-drop-in { animation: b2b-drop-in var(--motion-slow) var(--ease-brand-out) backwards; }
+/* Status text swapping (Saving… → Saved): a quick fade-in. */
+@keyframes b2b-fade { from { opacity: 0; } }
+@utility motion-fade { animation: b2b-fade var(--motion-fast) var(--ease-brand-out) backwards; }
+/* Content revealed in place (an expanded estimate section). */
+@keyframes b2b-reveal { from { opacity: 0; transform: translateY(4px); } }
+@utility motion-reveal { animation: b2b-reveal var(--motion-base) var(--ease-brand-out) backwards; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
@@ -196,4 +253,178 @@ h1, h2, h3, .font-display { font-family: var(--font-display); letter-spacing: -0
 @keyframes cc-rise { from { opacity: 0; } to { opacity: 1; } }
 .cc-bar, .cc-col { animation: none; }
 @media (prefers-reduced-motion: reduce) { .cc-rise { animation: none; } }
+/*
+ * Clickable metric cards (components/ui/metric-card.tsx). One interaction for every dashboard number:
+ * pointer, subtle lift on hover, pressed state, visible focus ring, and an arrow that nudges forward.
+ * Uses theme tokens, so it works on the owner theme (.cc) and the customer Light / Dark / Black themes.
+ */
+.metric-action { cursor: pointer; position: relative; transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease, background-color 150ms ease; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.metric-action:hover { border-color: var(--color-accent-ink); box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-accent-ink) 35%, transparent), var(--shadow-card, 0 1px 2px rgb(0 0 0 / 0.06)); transform: translateY(-1px); }
+.metric-action:active { transform: translateY(0) scale(0.985); }
+.metric-action:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.metric-action .metric-cta { color: var(--color-accent-ink); }
+.metric-action .metric-arrow { transition: transform 150ms ease; }
+.metric-action:hover .metric-arrow, .metric-action:focus-visible .metric-arrow { transform: translateX(2px); }
+.cc .metric-action:hover { border-color: var(--cc-line-strong); box-shadow: 0 0 0 1px rgb(61 255 168 / 0.25), 0 18px 40px -24px rgb(0 0 0 / 0.9); }
+.cc .metric-action .metric-cta { color: var(--cc-blue); font-family: var(--font-mono, ui-monospace, monospace); text-transform: uppercase; letter-spacing: 0.08em; font-size: 10px; }
+.cc .metric-action:focus-visible { outline-color: var(--cc-green); }
+@media (prefers-reduced-motion: reduce) { .metric-action, .metric-action .metric-arrow { transition: none; } .metric-action:hover, .metric-action:active { transform: none; } .metric-action:hover .metric-arrow { transform: none; } }
+.metric-action.metric-pressed { border-color: var(--color-accent-ink); box-shadow: inset 0 0 0 1px var(--color-accent-ink); }
+.cc .metric-value.text-navy { color: var(--color-ink); }
+.cc .metric-drawer { background: var(--cc-panel); border-color: var(--cc-line); }
 .cc table tr:hover td { background: rgb(56 182 255 / 0.04); }
+
+/*
+ * Customer app Dark and Black modes (opt-in per user; Light stays the default). See src/lib/theme.ts.
+ * html[data-theme] is "dark" (navy) or "black"; these shared rules apply to both.
+ * Applies only while a customer app screen (.app-theme) is mounted, and is defined on <html> so
+ * portaled dialogs, menus and tooltips pick it up too. Marketing pages, the owner command center
+ * (.cc) and proposal/schedule documents (.theme-light) keep their own look.
+ * Built from the brand: deep navy surfaces, electric blue (brand) and cyan/teal accents.
+ * Contrast (WCAG AA) for every text pair below is checked in tests/theme.test.ts.
+ */
+html[data-theme]:has(.app-theme) {
+  --color-paper: #071a2e;
+  --color-surface: #0e2440;
+  --color-ink: #e8f0f8;
+  --color-ink-soft: #c2d1e0;
+  --color-muted: #9db1c6;
+  --color-line: #213f60;
+  --color-line-strong: #34577c;
+  --color-cool-gray: #8ea2b6;
+
+  /* "navy" is heading/emphasis text in the app, so it flips light. Navy and bright surfaces reset it below. */
+  --color-navy: #f2f7fc;
+  --color-brand: #6cb8ff;
+  --color-brand-dark: #1559a8;
+  --color-brand-tint: #15365a;
+  --color-accent-ink: #4fd8ef;
+  --color-accent-dark: #7ee4f4;
+  --color-accent-tint: #0c3a4f;
+  --color-focus: #4fd8ef;
+  /* Feature walkthrough dimming around the highlighted control: navy at 55% barely shows on navy. */
+  --tour-scrim: rgba(0, 0, 0, 0.62);
+
+  --color-ok: #3fd5c0;
+  --color-ok-tint: #0d3a3a;
+  --color-warn: #f6bd60;
+  --color-warn-tint: #3d2c12;
+  --color-danger: #ff9494;
+  --color-danger-tint: #431c24;
+
+  --color-idle: #8ea2b6;
+  --color-idle-tint: #1b3452;
+  --color-idle-line: #4d6c8c;
+  --color-hold: #9c82e0;
+  --color-hold-ink: #c7b6f5;
+  --color-hold-tint: #2c2453;
+  --color-hold-line: #9c82e0;
+  --color-stage: #05121f;
+
+  /* Hover/selected washes written as black/5, black/10 become light washes on dark surfaces. */
+  --color-black: #ffffff;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.35), 0 0 0 1px rgb(255 255 255 / 0.02);
+  --shadow-raised: 0 10px 28px -8px rgb(0 0 0 / 0.6);
+
+  color-scheme: dark;
+  background: var(--color-paper);
+}
+html[data-theme]:has(.app-theme) body { background: var(--color-paper); color: var(--color-ink); }
+
+/* Navy and bright brand surfaces keep their light-mode pairing (navy text on cyan, white on navy). */
+html[data-theme]:has(.app-theme) :is(.bg-navy, .bg-accent, .bg-accent-hover, .bg-cyan, .bg-teal) { --color-navy: #0b2d4d; }
+/* Navy buttons/selected tabs inside content lift to a brighter navy so they stand out on the dark page
+   (white text 8.9:1); the navy sidebar itself (aside) keeps the brand navy. */
+html[data-theme]:has(.app-theme) .bg-navy:not(aside) { --color-navy: #1b4a7a; }
+html[data-theme]:has(.app-theme) .bg-brand { --color-brand: #1d6fd1; }
+html[data-theme]:has(.app-theme) .bg-ok { --color-ok: #0f766e; }
+html[data-theme]:has(.app-theme) .bg-warn { --color-warn: #b45309; }
+html[data-theme]:has(.app-theme) .bg-danger { --color-danger: #c62828; }
+/* Dark toasts (bg-ink + white text) and modal scrims stay dark. */
+html[data-theme]:has(.app-theme) .bg-ink { --color-ink: #23415f; }
+html[data-theme]:has(.app-theme) :is([class*="bg-ink/"], [class*="bg-black/3"], [class*="bg-black/4"], [class*="bg-black/5"]):is(.fixed, .absolute) { --color-ink: #01070d; --color-black: #000; }
+html[data-theme]:has(.app-theme) .field::placeholder, html[data-theme]:has(.app-theme) .cell::placeholder { color: #7f95ab; }
+html[data-theme]:has(.app-theme) :focus-visible { outline-color: var(--color-focus); }
+html[data-theme]:has(.app-theme) .on-dark :focus-visible { outline-color: var(--color-cyan); }
+html[data-theme]:has(.app-theme) .blueprint-grid {
+  background-image:
+    linear-gradient(to right, rgb(255 255 255 / 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.05) 1px, transparent 1px);
+}
+
+/*
+ * "Black" variant: true-black (OLED) surfaces with neutral grays; same brand accents and the same
+ * text/status colors as Dark, so every rule above still applies. Contrast checked in tests/theme.test.ts.
+ */
+html[data-theme="black"]:has(.app-theme) {
+  --color-paper: #000000;
+  --color-surface: #0e1013;
+  --color-ink: #f2f4f7;
+  --color-ink-soft: #c8ced6;
+  --color-muted: #9ba4af;
+  --color-line: #252a31;
+  --color-line-strong: #3a414b;
+  --color-brand-tint: #0f2238;
+  --color-accent-tint: #062b36;
+  --color-ok-tint: #072a27;
+  --color-warn-tint: #2f220b;
+  --color-danger-tint: #35141a;
+  --color-idle-tint: #1b2027;
+  --color-idle-line: #4b5563;
+  --color-hold-tint: #231d40;
+  --color-stage: #050506;
+  --shadow-card: 0 0 0 1px rgb(255 255 255 / 0.03);
+}
+/* The sidebar / phone top bar goes black too, with a hairline edge. */
+html[data-theme="black"]:has(.app-theme) aside.bg-navy { --color-navy: #000000; border-color: var(--color-line); }
+@media (min-width: 768px) { html[data-theme="black"]:has(.app-theme) aside.bg-navy { border-right: 1px solid var(--color-line); } }
+@media (max-width: 767px) { html[data-theme="black"]:has(.app-theme) aside.bg-navy { border-bottom: 1px solid var(--color-line); } }
+
+/*
+ * Documents always render as the customer will see them: light, whatever the app theme
+ * (proposal previews, schedule update previews). Same values as the @theme block above.
+ */
+.theme-light {
+  --color-paper: #f5f8fb;
+  --color-surface: #ffffff;
+  --color-ink: #0e2238;
+  --color-ink-soft: #33465a;
+  --color-muted: #56677a;
+  --color-line: #dde5ee;
+  --color-line-strong: #c3cfdb;
+  --color-cool-gray: #6b7a89;
+  --color-navy: #0b2d4d;
+  --color-brand: #0b2d4d;
+  --color-brand-dark: #071f36;
+  --color-brand-tint: #e7eef6;
+  --color-accent-ink: #007c91;
+  --color-accent-dark: #006a7c;
+  --color-accent-tint: #e0f7fb;
+  --color-focus: #007c91;
+  --color-ok: #0f766e;
+  --color-ok-tint: #e3f6f3;
+  --color-warn: #b45309;
+  --color-warn-tint: #fdf3e2;
+  --color-danger: #b91c1c;
+  --color-danger-tint: #fdecec;
+  --color-idle: #6b7a89;
+  --color-idle-tint: #e6ecf2;
+  --color-idle-line: #9fb0c1;
+  --color-hold: #6a4ba8;
+  --color-hold-ink: #5b3e99;
+  --color-hold-tint: #efe9f8;
+  --color-hold-line: #7c5cb8;
+  --color-stage: #e4eaf1;
+  --color-black: #000000;
+  --shadow-card: 0 1px 2px rgb(11 45 77 / 0.05), 0 1px 1px rgb(11 45 77 / 0.03);
+  --shadow-raised: 0 8px 24px -8px rgb(11 45 77 / 0.18);
+  color-scheme: light;
+}
+
+/* Theme switch: the icon shows what a click switches TO (Light -> Dark -> Black -> Light). */
+.theme-icon-star, .theme-icon-sun { display: none; }
+html[data-theme="dark"] .theme-icon-moon, html[data-theme="black"] .theme-icon-moon { display: none; }
+html[data-theme="dark"] .theme-icon-star { display: block; }
+html[data-theme="black"] .theme-icon-sun { display: block; }
+/* Switching themes changes everything in one frame instead of fading element by element. */
+.theme-switching, .theme-switching *, .theme-switching *::before, .theme-switching *::after { transition: none !important; }

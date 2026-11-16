@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Feature } from "@/lib/features/registry";
+import { REVEAL_FEATURE_EVENT } from "@/lib/features/state";
 import { FEATURE_ICONS } from "./icons";
 
 export type TourEnd = "completed" | "dismissed" | "left";
@@ -43,14 +44,23 @@ export function FeatureTour({ steps, onEnd }: { steps: Feature[]; onEnd: (how: T
     setRect({ top: r.top - PAD, left: r.left - PAD, width: r.width + PAD * 2, height: r.height + PAD * 2 });
   }, [step]);
 
-  // Bring the control into view, then measure (and again after layout settles, e.g. a view switch).
+  // Ask the page to reveal the step's control first (switch the bids view, open the mobile menu),
+  // then bring it into view and measure, retrying while the revealed view renders.
   useLayoutEffect(() => {
-    const el = findTarget(step?.target);
-    el?.scrollIntoView({ block: "center", inline: "nearest" });
-    const raf = requestAnimationFrame(measure);
-    const t = setTimeout(measure, 250);
-    return () => { cancelAnimationFrame(raf); clearTimeout(t); };
+    if (step) window.dispatchEvent(new CustomEvent(REVEAL_FEATURE_EVENT, { detail: step.id }));
+    let scrolled = false;
+    const settle = () => {
+      const el = findTarget(step?.target);
+      if (el && !scrolled) { scrolled = true; el.scrollIntoView({ block: "center", inline: "nearest" }); }
+      measure();
+    };
+    const raf = requestAnimationFrame(settle);
+    const timers = [120, 300, 700].map((ms) => setTimeout(settle, ms));
+    return () => { cancelAnimationFrame(raf); timers.forEach(clearTimeout); };
   }, [step, measure, tick]);
+
+  // Let the page put things back (e.g. close the mobile menu it opened) when the walkthrough ends.
+  useEffect(() => () => { window.dispatchEvent(new CustomEvent(REVEAL_FEATURE_EVENT, { detail: null })); }, []);
 
   useEffect(() => {
     const on = () => measure();
@@ -84,8 +94,10 @@ export function FeatureTour({ steps, onEnd }: { steps: Feature[]; onEnd: (how: T
   return (
     <div className="fixed inset-0 z-[60]" data-testid="feature-tour">
       {rect ? (
-        <div aria-hidden className="pointer-events-none fixed rounded-lg ring-2 ring-accent transition-all duration-200"
-          style={{ top: rect.top, left: rect.left, width: rect.width, height: rect.height, boxShadow: "0 0 0 9999px rgba(11,45,77,0.55)" }} data-testid="tour-spotlight" />
+        // The scrim is a box-shadow, so the highlight edge is an outline (a Tailwind ring is also a box-shadow
+        // and was being overridden). --tour-scrim is darker in the Dark and Black themes (globals.css).
+        <div aria-hidden className="pointer-events-none fixed rounded-lg outline-2 outline-accent transition-all duration-200"
+          style={{ top: rect.top, left: rect.left, width: rect.width, height: rect.height, boxShadow: "0 0 0 9999px var(--tour-scrim, rgba(11,45,77,0.55))" }} data-testid="tour-spotlight" />
       ) : (
         <div aria-hidden className="fixed inset-0 bg-ink/40" />
       )}

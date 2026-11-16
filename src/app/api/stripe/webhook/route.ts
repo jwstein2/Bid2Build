@@ -8,6 +8,13 @@ import { markChurned, markCustomer } from "@/lib/growth/leads";
 import { isFirstPaidSubscriptionInvoice } from "@/lib/email/founder-welcome";
 import { deliverFounderEmails, enqueueFounderWelcome } from "@/lib/email/outbox";
 import { rewardReferrer } from "@/lib/growth/referral-server";
+import { recordEvent } from "@/lib/growth/events";
+
+/** List value of a new subscription's first period, in USD, from its price (for ad conversion value only). */
+function listValueUsd(sub: Stripe.Subscription): number | null {
+  const cents = sub.items?.data?.reduce((n, i) => n + (i.price?.unit_amount ?? 0) * (i.quantity ?? 1), 0) ?? 0;
+  return cents > 0 ? cents / 100 : null;
+}
 
 export const runtime = "nodejs";
 
@@ -74,16 +81,24 @@ export async function POST(req: Request) {
       const res = await applySubscription(admin, sub, event.created);
       if (!res.userId) throw new Error(`No user for subscription ${subscriptionId}`);
       if (event.type === "checkout.session.completed") {
-        await admin.from("analytics_events").insert({ user_id: res.userId, event: "subscribed" });
+        // Once per subscription (webhook retries and duplicate events can't double count).
+        await recordEvent(admin, { userId: res.userId, event: "subscribed", eventId: `subscribed:${subscriptionId}`, value: listValueUsd(sub) });
         // Paying customers leave prospecting: mark the lead and add them to the Instantly block list.
         const email = (obj as { customer_details?: { email?: string | null } }).customer_details?.email ?? null;
         await markCustomer(admin, res.userId, email);
       }
-      if (event.type === "customer.subscription.deleted") await markChurned(admin, res.userId);
+      if (event.type === "customer.subscription.deleted") {
+        await markChurned(admin, res.userId);
+        await recordEvent(admin, { userId: res.userId, event: "subscription_canceled", eventId: `subscription_canceled:${subscriptionId}` });
+      }
       // Founder welcome email: only for the first paid invoice of a subscription. Recording the job is
       // idempotent (one per user, ever) and never throws, so it can't affect billing or retries.
       if (event.type === "invoice.paid") {
         const inv = obj as { id?: string; billing_reason?: string | null; amount_paid?: number | null; status?: string | null; customer_email?: string | null };
+        // Renewal = a paid recurring-cycle invoice (not the first one, not a proration).
+        if (inv.billing_reason === "subscription_cycle" && (inv.amount_paid ?? 0) > 0 && inv.id) {
+          await recordEvent(admin, { userId: res.userId, event: "subscription_renewed", eventId: `subscription_renewed:${inv.id}` });
+        }
         if (isFirstPaidSubscriptionInvoice(inv)) {
           welcomeQueued = (await enqueueFounderWelcome(admin, { userId: res.userId, email: inv.customer_email ?? null, sourceRef: inv.id ?? event.id })) === "queued";
         }

@@ -56,11 +56,11 @@ export default async function BidsByState({ searchParams }: { searchParams: Prom
       </form>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-        <Kpi label="States represented" value={r.states} tone="blue" />
-        <Kpi label="Top state" value={r.top ? r.top.state : "–"} sub={r.top ? `${US_STATES[r.top.state] ?? r.top.state} · ${fmt(r.top.bids)} bids` : "No located bids yet"} />
-        <Kpi label="Bids with a state" value={r.withState} sub={`${located}% of ${fmt(r.totalBids)} bids`} />
-        <Kpi label="Bids missing state" value={r.missingState} tone={r.missingState ? "amber" : "green"} sub="No ZIP, state, or readable address" />
-        <Kpi label="Businesses" value={r.businesses} tone="violet" sub="In the bids shown" />
+        <Kpi label="States represented" value={r.states} tone="blue" href={qs({ sort: "name" }) + "#report"} action="View all states" />
+        <Kpi label="Top state" value={r.top ? r.top.state : "–"} href={qs({ sort: "bids" }) + "#report"} action="View the ranking" sub={r.top ? `${US_STATES[r.top.state] ?? r.top.state} · ${fmt(r.top.bids)} bids` : "No located bids yet"} />
+        <Kpi label="Bids with a state" value={r.withState} href={qs({}) + "#report"} action="View the state report" sub={`${located}% of ${fmt(r.totalBids)} bids`} />
+        <Kpi label="Bids missing state" value={r.missingState} href="/admin/operations#data" action="Location data quality" tone={r.missingState ? "amber" : "green"} sub="No ZIP, state, or readable address" />
+        <Kpi label="Businesses" value={r.businesses} href={qs({ sort: "businesses" }) + "#report"} action="Ranked by businesses" tone="violet" sub="In the bids shown" />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-5">
@@ -72,7 +72,7 @@ export default async function BidsByState({ searchParams }: { searchParams: Prom
         </Panel>
       </div>
 
-      <Panel kicker="All states" title="State report" action={<div className="flex flex-wrap items-center gap-3"><a href={`/admin/export/states${qs({}).replace("/admin/states", "")}`} className="cc-mono text-[11px] text-[var(--cc-blue)] underline">CSV</a>
+      <Panel id="report" kicker="All states" title="State report" action={<div className="flex flex-wrap items-center gap-3"><a href={`/admin/export/states${qs({}).replace("/admin/states", "")}`} className="cc-mono text-[11px] text-[var(--cc-blue)] underline">CSV</a>
         <div className="cc-mono flex flex-wrap gap-1 text-[11px]">
           {SORTS.map(([k, label]) => <Link key={k} href={qs({ sort: k })} aria-current={f.sort === k ? "true" : undefined} className={f.sort === k ? "rounded border border-[var(--cc-line-strong)] px-2 py-1 text-[var(--cc-green)]" : "rounded border border-transparent px-2 py-1 text-ink-soft hover:text-white"}>{label}</Link>)}
         </div></div>}>

@@ -26,7 +26,7 @@ describe("feature registry metadata (update it in the same PR as the feature)", 
     expect(f.walkthrough.title.trim().length).toBeGreaterThan(2);
     expect(f.walkthrough.body.trim().length).toBeGreaterThan(20);
     expect(f.route).toMatch(/^\//);
-    expect(["free", "unlimited"]).toContain(f.entitlement);
+    expect(["free", "unlimited", "pm"]).toContain(f.entitlement);
     expect(RELEASES.map((r) => r.version)).toContain(f.release);
     expect(FEATURE_ICONS[f.id]).toBeTruthy();
     if (f.entitlement !== "free") expect(f.pitch?.trim().length ?? 0).toBeGreaterThan(20);
@@ -145,5 +145,16 @@ describe("walkthrough steps", () => {
   it("newest release first by default", () => {
     const s = tourSteps(PAID);
     for (let i = 1; i < s.length; i++) expect(compareVersions(s[i - 1].release, s[i].release)).toBeGreaterThanOrEqual(0);
+  });
+});
+
+describe("project scheduling stays hidden until it ships", () => {
+  it("is registered but unreleased, so no modal, notice, tour or What's New entry shows it", () => {
+    const f = FEATURES.find((x) => x.id === "project_scheduling")!;
+    expect(f.status).toBe("unreleased");
+    const all = { unlimited: true, pm: true };
+    expect(available(all).some((x) => x.id === "project_scheduling")).toBe(false);
+    expect(tourSteps(all, ["project_scheduling"])).toEqual([]);
+    expect(newlyUnlocked(st(), all).some((x) => x.id === "project_scheduling")).toBe(false);
   });
 });

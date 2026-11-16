@@ -1,4 +1,5 @@
 import { createAdminClient, createClient, getUser } from "@/lib/supabase/server";
+import { eventIds, maybeActivate, recordEvent } from "@/lib/growth/events";
 import { fail, json, logError, rateLimit, sameOrigin } from "@/lib/http/api";
 import { finalizeProposal } from "@/lib/export/finalize";
 import { isEsignEnabled, linkExpiry } from "@/lib/esign/config";
@@ -32,7 +33,7 @@ export async function POST(_req: Request, ctx: RouteContext<"/api/estimates/[id]
   const expires = linkExpiry(new Date(), own.expiration_date);
   if (expires === "proposal_expired") return fail(422, "proposal_expired", "This proposal's expiration date has passed. Update it on the Customer & project step, then create the link.", { missing: [{ code: "expiration_date", step: "project", fieldId: "p-exp", message: "Set a future expiration date." }] });
 
-  const out = await finalizeProposal(user.id, id);
+  const out = await finalizeProposal(user.id, id, user.createdAt);
   if (out instanceof Response) return out;
   const { r, pdf, pdfHash, filename, doc } = out;
 
@@ -52,6 +53,8 @@ export async function POST(_req: Request, ctx: RouteContext<"/api/estimates/[id]
   // The exact bytes the customer reviews, under a path that is written once.
   const up = await admin.storage.from("documents").upload(requestPdfPath(user.id, id, request.id), pdf, { contentType: "application/pdf", upsert: false });
   if (up.error) logError("esign.request_pdf", up.error, { user: user.id });
+  await recordEvent(admin, { userId: user.id, event: "proposal_sent", eventId: eventIds.proposalSent(request.id), estimateId: id });
+  await maybeActivate(admin, { id: user.id, createdAt: user.createdAt });
 
   return json({
     url: `${site.url}/sign/${token}`,

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CheckCircle2, FileJson } from "lucide-react";
+import { ArrowLeft, CalendarRange, CheckCircle2, FileJson } from "lucide-react";
+import { isPmEnabled } from "@/lib/env";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { isEsignEnabled } from "@/lib/esign/config";
 import { auditRecord } from "@/lib/esign/audit";
@@ -49,6 +50,7 @@ export default async function SignedProposalPage({ params }: PageProps<"/signed/
         <div className="flex flex-wrap gap-2">
           <SignedPdfButton signatureId={signatureId} variant="accent" />
           <a href={`/api/signatures/${signatureId}/audit`} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-line bg-surface px-3 text-sm font-semibold text-navy hover:bg-black/5"><FileJson className="h-4 w-4" aria-hidden /> Audit record</a>
+          {isPmEnabled() && <Link href={`/projects/new?estimate=${audit.estimateId}`} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-line bg-surface px-3 text-sm font-semibold text-navy hover:bg-black/5" data-testid="schedule-now"><CalendarRange className="h-4 w-4" aria-hidden /> Schedule Now</Link>}
           <Link href={`/estimates/${audit.estimateId}`} className="inline-flex min-h-10 items-center rounded-lg px-3 text-sm font-semibold text-ink-soft hover:bg-black/5">Open bid</Link>
         </div>
       </div>

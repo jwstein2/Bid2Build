@@ -83,9 +83,16 @@ const toast = async (page) => { const t = page.getByTestId("pipeline-toast"); aw
   check("desktop: dropping an unwon bid on Scheduled is refused", (await calls()).length === before && await inCol(page, "sent", "Primary bath remodel"));
 
   // Next action on a Won card: Schedule Now -> Scheduled
-  await card(page, "Roof replacement").getByTestId("next-action").click();
-  await toast(page); await page.waitForTimeout(800);
-  check("desktop: Schedule Now moves a won bid to Scheduled", await inCol(page, "scheduled", "Roof replacement"));
+  // With project scheduling on (NEXT_PUBLIC_PROJECT_SCHEDULING=on) Schedule Now opens the wizard instead.
+  const next = card(page, "Roof replacement").getByTestId("next-action");
+  const href = await next.getAttribute("href");
+  if (href) {
+    check("desktop: Schedule Now opens the scheduling wizard for a won bid", /^\/projects\/new\?estimate=/.test(href) && (await next.textContent()).includes("Schedule Now"));
+  } else {
+    await next.click();
+    await toast(page); await page.waitForTimeout(800);
+    check("desktop: Schedule Now moves a won bid to Scheduled", await inCol(page, "scheduled", "Roof replacement"));
+  }
 
   // Keyboard: open the menu with the keyboard and move
   await card(page, "Primary bath remodel").getByTestId("move-menu").focus();

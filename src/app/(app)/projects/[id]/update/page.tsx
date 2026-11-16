@@ -1,0 +1,37 @@
+import type { Metadata } from "next";
+import { notFound, redirect } from "next/navigation";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
+import { isPmEnabled } from "@/lib/env";
+import { loadSchedule } from "@/lib/schedule/server";
+import { listPublications, ownerBranding } from "@/lib/schedule/publications";
+import type { ReportAssignees } from "@/lib/projects/team";
+import { UpdateComposer } from "@/components/schedule/update-composer";
+
+export const metadata: Metadata = { title: "Customer update", robots: { index: false } };
+
+/** Preview Customer Update. Editors only (viewers see published updates on the schedule page). */
+export default async function UpdatePage({ params }: { params: Promise<{ id: string }> }) {
+  if (!isPmEnabled()) notFound();
+  const { id } = await params;
+  if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
+  const supabase = await createClient();
+  const data = await loadSchedule(supabase, id);
+  if (!data) notFound();
+  if (!data.permissions.publish) redirect(`/projects/${id}`);
+  const admin = createAdminClient();
+  const [pubs, brand, { data: est }, asg] = await Promise.all([
+    listPublications(supabase, id),
+    ownerBranding(supabase, admin, id),
+    supabase.from("estimates").select("customer_email").eq("id", data.schedule.estimateId).maybeSingle(),
+    // V4.2 setting; null before that SQL runs (the option is then hidden).
+    supabase.from("project_schedules").select("report_assignees").eq("id", id).maybeSingle(),
+  ]);
+  const assigneeMode = asg.error ? null : (((asg.data as { report_assignees?: string } | null)?.report_assignees ?? "names") as ReportAssignees);
+  const { data: signed } = brand.logoPath ? await admin.storage.from("logos").createSignedUrl(brand.logoPath, 3600) : { data: null };
+  return (
+    <div className="mx-auto max-w-7xl">
+      <UpdateComposer data={data} lastVersion={pubs[0]?.version ?? null} customerEmail={(est as { customer_email?: string | null } | null)?.customer_email ?? null}
+        contactName={brand.contactName} logoUrl={signed?.signedUrl ?? null} assigneeMode={assigneeMode} />
+    </div>
+  );
+}

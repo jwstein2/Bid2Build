@@ -15,10 +15,10 @@ export function BuilderLoader({ draftId, user, business, autoExport }: { draftId
     setDraft(id ? loadLocalDraft(id) : null);
   }, [draftId]);
 
-  if (draft === undefined) return <main className="grid min-h-screen place-items-center text-ink-soft" aria-busy="true">Loading your bid…</main>;
+  if (draft === undefined) return <main className="app-theme grid min-h-screen place-items-center text-ink-soft" aria-busy="true">Loading your bid…</main>;
   if (draft === null) {
     return (
-      <main className="grid min-h-screen place-items-center px-4 text-center">
+      <main className="app-theme grid min-h-screen place-items-center px-4 text-center">
         <div>
           <h1 className="text-2xl font-extrabold">We couldn&apos;t find that draft on this device</h1>
           <p className="mt-2 text-ink-soft">{user ? "Saved bids are in your dashboard." : "Drafts are stored in the browser where you started them."}</p>

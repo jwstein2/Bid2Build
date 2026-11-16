@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { estimateSchema, proposalConfigSchema } from "@/lib/estimate/schema";
-import { createClient, getUser } from "@/lib/supabase/server";
+import { createAdminClient, createClient, getUser } from "@/lib/supabase/server";
+import { isMeaningfulEstimate } from "@/lib/growth/activation";
+import { eventIds, maybeActivate, recordEvent } from "@/lib/growth/events";
 import { fail, json, logError, sameOrigin } from "@/lib/http/api";
 import { saveProjectProfile } from "@/lib/market/server";
 import { estimateOptionsToStore, worksheetToStore } from "@/lib/data/mappers";
@@ -29,6 +31,24 @@ export async function POST(req: Request) {
     if (error.code === "P0002" || /row-level security/.test(error.message)) return fail(404, "not_found", "Estimate not found.");
     return fail(500, "save_failed", "We could not save your estimate. Your changes are still on this device.");
   }
-  await saveProjectProfile(supabase, user.id, estimate);
+  await Promise.all([saveProjectProfile(supabase, user.id, estimate), recordSaveMilestones(user, estimate)]);
   return json({ ok: true, savedAt: new Date().toISOString() });
+}
+
+/**
+ * Activation milestones from a successful save. Each is recorded once (stable event ids), so the
+ * autosave that runs every few seconds adds at most one cheap no-op upsert after the first time.
+ */
+async function recordSaveMilestones(user: { id: string; createdAt?: string | null }, estimate: { id: string; trades: string[]; items: Parameters<typeof isMeaningfulEstimate>[0]["items"] }) {
+  try {
+    const admin = createAdminClient();
+    const trade = estimate.trades[0] ?? null;
+    await recordEvent(admin, { userId: user.id, event: "first_bid_started", eventId: eventIds.firstBidStarted(user.id), trade, estimateId: estimate.id });
+    if (!isMeaningfulEstimate(estimate)) return;
+    if (await recordEvent(admin, { userId: user.id, event: "bid_created", eventId: eventIds.bidCreated(estimate.id), trade, estimateId: estimate.id })) {
+      await maybeActivate(admin, user, trade);
+    }
+  } catch (e) {
+    logError("growth.save_milestones", e, { user: user.id });
+  }
 }

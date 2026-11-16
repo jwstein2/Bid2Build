@@ -16,8 +16,9 @@ const PRIVATE = { "cache-control": "private, no-store, max-age=0", "x-robots-tag
  * Internal Estimate Report (contractor-only). Separate from every customer-facing endpoint: it is
  * generated on request from the saved estimate, never stored, never cached, and never attached to a
  * proposal, share link or signing page.
- *   ?check=1     -> { allowed, code?, message? } (drives the builder button; no financial data)
- *   ?download=1  -> PDF as an attachment; otherwise inline (Preview)
+ *   ?check=1         -> { allowed, canDownload, canSend, code?, message? } (drives the builder; no financial data)
+ *   ?download=1      -> PDF as an attachment (needs download_internal_reports on company bids); otherwise inline (Preview)
+ *   &purpose=send    -> the file is fetched to attach to an email (needs send_internal_reports on company bids)
  */
 export async function GET(req: Request, ctx: RouteContext<"/api/estimates/[id]/internal-report">) {
   const { id } = await ctx.params;
@@ -26,8 +27,11 @@ export async function GET(req: Request, ctx: RouteContext<"/api/estimates/[id]/i
   const user = await getUser();
   const supabase = await createClient();
   const access = await internalReportAccess(supabase, user?.id ?? null, id);
-  if (url.searchParams.get("check") === "1") return json(access.ok ? { allowed: true } : { allowed: false, code: access.code, message: access.message });
+  if (url.searchParams.get("check") === "1") return json(access.ok ? { allowed: true, canDownload: access.canDownload, canSend: access.canSend } : { allowed: false, code: access.code, message: access.message });
   if (!access.ok) return fail(access.status, access.code, access.message);
+  const download = url.searchParams.get("download") === "1";
+  if (url.searchParams.get("purpose") === "send" ? !access.canSend : download && !access.canDownload)
+    return fail(403, "forbidden", url.searchParams.get("purpose") === "send" ? "Your company role can't send internal financial documents." : "Your company role can't download internal reports. You can still preview them.");
   if (!(await rateLimit("internal-report", 30, 10 * 60_000))) return fail(429, "rate_limited", "Please wait a moment and try again.");
 
   const data = await loadEstimate(supabase, id);
@@ -51,11 +55,14 @@ export async function GET(req: Request, ctx: RouteContext<"/api/estimates/[id]/i
     logError("internal-report.render", e);
     return fail(500, "pdf_failed", "We couldn't create the report. Please try again.");
   }
+  // Owner analytics (Phase 10): who generated a report and how, never what was in it. Best effort.
+  const action = url.searchParams.get("purpose") === "send" ? "send" : download ? "download" : "preview";
+  try { await admin.from("report_generations").insert({ user_id: user!.id, company_id: access.companyId, kind: "internal_estimate", action }); } catch { /* the report still downloads */ }
   const name = internalReportFilename(report);
   return new Response(new Uint8Array(pdf), {
     headers: {
       ...PRIVATE, "content-type": "application/pdf",
-      "content-disposition": `${url.searchParams.get("download") === "1" ? "attachment" : "inline"}; filename="${name}"`,
+      "content-disposition": `${download ? "attachment" : "inline"}; filename="${name}"`,
     },
   });
 }

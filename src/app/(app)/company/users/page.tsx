@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { can, loadMyCompany } from "@/lib/enterprise/server";
+import { isPmEnabled } from "@/lib/env";
+import { loadSeatCard } from "@/lib/pm/server";
+import { PmEditorsCard } from "@/components/company/pm-editors";
 import { Notice } from "@/components/ui/misc";
 import { UsersManager, type Invite, type Member, type Team } from "@/components/company/users-manager";
 
@@ -28,6 +31,9 @@ export default async function CompanyUsersPage() {
   const accessById = new Map(((access ?? []) as Access[]).map((a) => [a.user_id, a]));
   const members = ((roster ?? []) as Member[]).map((m) => ({ ...m, ...accessById.get(m.user_id) }));
   const { data: { user } } = await supabase.auth.getUser();
+  // Scheduling editor seats (V4 Phase 9): anyone with "Manage scheduling editor seats" can assign and reassign
+  // here; buying more seats stays on Billing (owner).
+  const seatCard = isPmEnabled() && company.entitlement.active && can(company, "manage_pm_seats") ? await loadSeatCard(supabase, 0) : null;
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <div>
@@ -44,6 +50,8 @@ export default async function CompanyUsersPage() {
         teams={(teams ?? []) as Team[]}
         invites={(invites ?? []) as Invite[]}
       />
+      {seatCard && <PmEditorsCard seats={seatCard.seats} members={seatCard.members} extra={seatCard.seats.extraPaid} canManage canBuy={false}
+        comp={company.entitlement.source === "complimentary"} billingHref={can(company, "manage_pm_addons") ? "/company/billing" : undefined} />}
     </div>
   );
 }

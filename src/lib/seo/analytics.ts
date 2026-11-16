@@ -14,7 +14,7 @@ export function gaMeasurementId(raw: string | undefined | null): string | null {
 }
 
 /** Paths whose URLs carry signing tokens, auth codes or claim tokens: never sent to analytics. */
-const EXCLUDED_PREFIXES = ["/sign/", "/api/", "/auth/", "/complimentary", "/admin"];
+const EXCLUDED_PREFIXES = ["/sign/", "/api/", "/auth/", "/complimentary", "/admin", "/trial/activate", "/trial/unsubscribe", "/email/unsubscribe"];
 
 export function analyticsAllowedOn(pathname: string | null | undefined): boolean {
   if (!pathname) return false;

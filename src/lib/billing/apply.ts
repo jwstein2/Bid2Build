@@ -3,10 +3,15 @@ import type Stripe from "stripe";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { serverEnv } from "../env";
 import { enterpriseSeats, subscriptionToUpdate, type PriceIds, type SubscriptionLike } from "./sync";
+import { pmFromItems, type PmItem } from "../pm/billing";
+import { logError } from "../http/api";
 
 export const prices = (): PriceIds => {
   const e = serverEnv();
-  return { monthly: e.stripePriceMonthly, annual: e.stripePriceAnnual, enterpriseBase: e.stripePriceEnterpriseBase || undefined, enterpriseSeat: e.stripePriceEnterpriseSeat || undefined };
+  return {
+    monthly: e.stripePriceMonthly, annual: e.stripePriceAnnual, enterpriseBase: e.stripePriceEnterpriseBase || undefined, enterpriseSeat: e.stripePriceEnterpriseSeat || undefined,
+    pmAddonMonthly: e.stripePricePmAddon || undefined, pmAddonAnnual: e.stripePricePmAddonAnnual || undefined, pmEditor: e.stripePricePmEditor || undefined,
+  };
 };
 
 /** Find our user for a Stripe subscription: metadata first, then the stored customer mapping. */
@@ -37,6 +42,13 @@ export async function applySubscription(admin: SupabaseClient, sub: Stripe.Subsc
   if (update.p_plan !== "enterprise") { delete args.p_company_id; delete args.p_seat_quantity; }
   const { data, error } = await admin.rpc("apply_subscription_update", args);
   if (error) throw error;
+  // PM add-on / extra editors. Skipped when no PM prices are configured; a missing function (PM
+  // migration not applied yet) is logged, never fails the webhook.
+  if (data && (p.pmAddonMonthly || p.pmAddonAnnual || p.pmEditor)) {
+    const pm = pmFromItems(s.items.data as unknown as PmItem[], { addonMonthly: p.pmAddonMonthly, addonAnnual: p.pmAddonAnnual, editor: p.pmEditor });
+    const { error: pe } = await admin.rpc("apply_pm_update", { p_stripe_subscription_id: s.id, p_pm_addon: pm.addon, p_pm_extra_editors: pm.extraEditors, p_event_created: update.p_event_created });
+    if (pe) logError("billing.pm_sync", pe, { subscription: s.id });
+  }
   return { applied: Boolean(data), userId };
 }
 
