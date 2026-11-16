@@ -26,7 +26,7 @@ export function ProfileReminder({ missing }: { missing: string[] }) {
       <Building2 className="mt-0.5 h-5 w-5 shrink-0 text-brand" aria-hidden />
       <div className="min-w-0 flex-1">
         <p className="font-semibold text-ink">Finish your company profile</p>
-        <p className="text-ink-soft">Add your {listText(missing)} so every proposal carries your branding. <Link href="/settings/company" className="font-semibold text-accent-ink underline">Open company profile</Link></p>
+        <p className="text-ink-soft">Add your {listText(missing)} so every proposal carries your branding. <Link href="/settings/company" className="font-semibold text-accent-dark underline">Open company profile</Link></p>
       </div>
       <button type="button" onClick={dismiss} className="-m-2 grid h-11 w-11 shrink-0 place-items-center rounded-md text-muted hover:bg-black/5" aria-label="Dismiss company profile reminder"><X className="h-4 w-4" /></button>
     </div>

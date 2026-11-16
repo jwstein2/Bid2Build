@@ -63,7 +63,14 @@
   --radius-card: 0.75rem;
   --shadow-card: 0 1px 2px rgb(11 45 77 / 0.05), 0 1px 1px rgb(11 45 77 / 0.03);
   --shadow-raised: 0 8px 24px -8px rgb(11 45 77 / 0.18);
+
+  /* Motion curves: decelerate in, quick ease-in out. Utilities: ease-brand-out / ease-brand-in. */
+  --ease-brand-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-brand-in: cubic-bezier(0.4, 0, 1, 1);
 }
+
+/* Motion durations (feedback / reveal / panel). Use these, not one-off values. */
+:root { --motion-fast: 120ms; --motion-base: 180ms; --motion-slow: 220ms; }
 
 html { background: var(--color-paper); color-scheme: light; }
 body { background: var(--color-paper); color: var(--color-ink); font-family: var(--font-sans); }
@@ -124,6 +131,20 @@ h1, h2, h3, .font-display { font-family: var(--font-display); letter-spacing: -0
 @media print {
   .no-print { display: none !important; }
 }
+
+/* Shared CSS motion. Rules: motion only explains a change (opened, added, saved); short (120 /
+   180 / 220ms); opacity and transform only; nothing loops. Reduced motion: the rule below.
+   A panel dropping in from its trigger.
+   fill-mode backwards (not both): once finished the animation no longer applies a transform, so it
+   can't become the containing block for fixed children such as the calculator sheet or BulkBar. */
+@keyframes b2b-drop-in { from { opacity: 0; transform: translateY(-6px); } }
+@utility motion-drop-in { animation: b2b-drop-in var(--motion-slow) var(--ease-brand-out) backwards; }
+/* Status text swapping (Saving… → Saved): a quick fade-in. */
+@keyframes b2b-fade { from { opacity: 0; } }
+@utility motion-fade { animation: b2b-fade var(--motion-fast) var(--ease-brand-out) backwards; }
+/* Content revealed in place (an expanded estimate section). */
+@keyframes b2b-reveal { from { opacity: 0; transform: translateY(4px); } }
+@utility motion-reveal { animation: b2b-reveal var(--motion-base) var(--ease-brand-out) backwards; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
