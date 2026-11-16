@@ -20,7 +20,7 @@ const Body = z.object({
 
 export async function POST(req: Request) {
   if (!(await sameOrigin())) return fail(403, "forbidden", "Not allowed.");
-  if (!trialConfig().enabled || !isSupabaseConfigured()) return fail(503, "paused", "Invites are paused right now. Please check back soon.");
+  if (!trialConfig().claimPage || !isSupabaseConfigured()) return fail(503, "paused", "Invites are paused right now. Please check back soon.");
   if (!(await rateLimit("trial-request", 5, 15 * 60_000))) return fail(429, "rate_limited", "Too many tries. Please wait a few minutes.");
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return fail(400, "invalid_email", "Enter a valid email address.");

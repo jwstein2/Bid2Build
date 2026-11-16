@@ -16,7 +16,7 @@ approves launch. The Meta ad campaign stays paused; nothing here creates, publis
 | Meta webhook | `POST/GET /api/webhooks/meta` (`src/app/api/webhooks/meta/route.ts`) |
 | Messenger conversation logic | `src/lib/trial/flow.ts` |
 | ManyChat External Request | `POST /api/webhooks/manychat-trial` |
-| Branded claim page (no paid webhook needed) | `/trial` |
+| Branded claim page (no paid webhook needed; hidden unless `TRIAL_CLAIM_PAGE_ENABLED=true`) | `/trial` |
 | Activation page (scanner-safe) | `/trial/activate#t=…` → `POST /api/trial/activate` |
 | Emails (invite, day 2, day 6) via Resend | `src/lib/trial/emails.ts`, `src/lib/trial/delivery.ts` |
 | Check-in opt-out | `/trial/unsubscribe` (+ one-click `List-Unsubscribe`) |
@@ -54,6 +54,7 @@ Link: https://app.netlify.com/projects/built2bid/configuration/env
 | Name | Secret? | Value |
 | --- | --- | --- |
 | `FB_TRIAL_ENABLED` | no | `true` to switch the funnel on. Leave unset until launch is approved. |
+| `TRIAL_CLAIM_PAGE_ENABLED` | no | `true` to also open the public `/trial` claim page (404 while off). Off by default. |
 | `META_APP_ID` | no | Meta app id |
 | `META_APP_SECRET` | **yes** | App Dashboard → App settings → Basic → App secret |
 | `META_PAGE_ID` | no | Built2Bid Page id |
