@@ -49,6 +49,20 @@ describe("creator and creative attribution", () => {
   });
 });
 
+describe("docs/growth/ADS.md naming standard", () => {
+  it("classifies the documented tags into the right channel, creative and creator", () => {
+    const q = (u: string) => Object.fromEntries(new URL(u).searchParams);
+    const meta = q("https://built2bid.org/bids/decks?utm_source=facebook&utm_medium=paid_social&utm_campaign=b2b-meta-signup-202612&utm_content=b-h1-15s-916-v1");
+    expect(classifyChannel(meta)).toBe("meta_ads");
+    expect(creativeOf(meta)).toBe("b-h1-15s-916-v1");
+    expect(classifyChannel({ utm_source: "instagram", utm_medium: "paid_social" })).toBe("meta_ads");
+    expect(classifyChannel({ utm_source: "youtube", utm_medium: "video", utm_campaign: "b2b-yt-signup-202612" })).toBe("youtube");
+    const creator = q("https://built2bid.org/bids/decks?utm_source=youtube&utm_medium=creator&utm_campaign=deckguy");
+    expect(classifyChannel(creator)).toBe("creator");
+    expect(creatorOf(creator)).toBe("deckguy");
+  });
+});
+
 describe("growth reports", () => {
   const facts = accountFacts(scope(snap(), false), NOW);
   const start = NOW.getTime() - 30 * 86_400_000, end = NOW.getTime();

@@ -63,3 +63,10 @@ set. Rules, copy, env vars and the owner checklist: [LIFECYCLE_EMAILS.md](LIFECY
 - **Trade-level conversion** table, and funnel filters for creative, trade and current plan (free, paid, complimentary) beside channel, campaign, landing page and device. Creator-referred vs other = the Creator Partners channel filter.
 
 Browser walk: `scripts/growth/dashboard-walk.mjs` (mock command-center seed). Tests: `tests/growth-reports.test.ts`.
+
+## PR 6: ad briefs and test plan
+
+[ADS.md](ADS.md): concepts A–E with hooks and required real screen recordings, the asset list, a reusable
+video QC checklist, the UTM/creative naming standard the dashboard reads (tested in
+`tests/growth-reports.test.ts`), the $600/month test plan with labeled economics and stop/scale rules, and
+the owner approval gate. Planning only: nothing is launched or funded.
