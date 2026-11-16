@@ -664,8 +664,9 @@ function ItemRow({ item: it, isLast, totals, estimate, dispatch, selected, toggl
         <td className="px-1 max-md:col-span-4 max-md:p-0">
           <span aria-hidden="true" className="mb-0.5 block text-[11px] font-semibold text-muted md:hidden">Qty</span>
           <div className="flex items-center gap-0.5">
-            <input data-col="qty" value={it.quantity} onChange={(e) => up({ quantity: e.target.value })} onKeyDown={onKey} inputMode="decimal" className="cell tabular min-w-0 text-right max-md:min-h-11 max-md:border-line max-md:text-base" aria-label="Quantity" aria-invalid={invalid("quantity")} />
+            {/* Calculator sits left of the number so the quantity's right edge lines up with the right-aligned Qty header. */}
             <QuantityCalculator item={it} estimate={estimate} dispatch={dispatch} />
+            <input data-col="qty" value={it.quantity} onChange={(e) => up({ quantity: e.target.value })} onKeyDown={onKey} inputMode="decimal" className="cell tabular min-w-0 text-right max-md:min-h-11 max-md:border-line max-md:text-base" aria-label="Quantity" aria-invalid={invalid("quantity")} />
           </div>
         </td>
         <td className="px-1 max-md:col-span-4 max-md:p-0">

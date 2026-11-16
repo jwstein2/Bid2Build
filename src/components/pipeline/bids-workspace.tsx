@@ -25,17 +25,31 @@ const VIEWS: { id: BidsView; label: string; icon: typeof List; feature?: Feature
 ];
 
 /** Bids dashboard: Pipeline (default), Table (the existing list with every bid action) and Analytics. */
-export function BidsWorkspace({ bids, history, esign, table, pay, paySaved, migrated, initialView, initialFocus, initialRange }: {
+export function BidsWorkspace({ bids, history, esign, table, pay, paySaved, migrated, initialView, initialFocus, initialRange, initialQuery, initialDateField }: {
   bids: BoardBid[]; history: HistoryRow[]; esign: boolean; table: ReactNode; pay: PaySettings; paySaved: boolean; migrated: boolean; initialView?: BidsView;
   /** From ?focus= and ?range= (validated): a KPI card's filter survives refresh, Back and shared links. */
   initialFocus?: FocusKey | null; initialRange?: RangeKey;
+  /** From ?q= and ?date=, so Back from an opened bid card keeps the search and date field. */
+  initialQuery?: string; initialDateField?: BoardDateField;
 }) {
-  const [view, setView] = useState<BidsView>(initialView ?? "pipeline");
-  const [range, setRangeState] = useState<RangeKey>(initialRange && initialRange !== "custom" ? initialRange : "all");
-  const [focus, setFocusState] = useState<FocusKey | null>(initialFocus ?? null);
+  // Browser Back can restore this page from the router cache with props from an earlier visit, so in the
+  // browser the address bar is the source of truth. On the server the props come from the same URL.
+  const fromUrl = typeof window !== "undefined" ? new URL(window.location.href).searchParams : null;
+  const [view, setView] = useState<BidsView>(() => {
+    const v = fromUrl ? fromUrl.get("view") : initialView;
+    return v === "table" || v === "analytics" ? v : "pipeline";
+  });
+  const [range, setRangeState] = useState<RangeKey>(() => {
+    const r = fromUrl ? fromUrl.get("range") : initialRange;
+    return isRange(r) && r !== "custom" ? r : "all";
+  });
+  const [focus, setFocusState] = useState<FocusKey | null>(() => {
+    const f = fromUrl ? fromUrl.get("focus") : initialFocus;
+    return isFocus(f) ? f : null;
+  });
   const [custom, setCustom] = useState<{ from?: string; to?: string }>({});
-  const [field, setField] = useState<BoardDateField>("activity");
-  const [q, setQ] = useState("");
+  const [field, setField] = useState<BoardDateField>(() => ((fromUrl ? fromUrl.get("date") : initialDateField) === "created" ? "created" : "activity"));
+  const [q, setQ] = useState(() => (fromUrl ? fromUrl.get("q")?.slice(0, 100) : initialQuery) ?? "");
 
   const pick = useCallback((v: BidsView) => {
     setView(v);
@@ -55,6 +69,16 @@ export function BidsWorkspace({ bids, history, esign, table, pay, paySaved, migr
     if (r === "all" || r === "custom") u.searchParams.delete("range"); else u.searchParams.set("range", r);
     window.history.replaceState(null, "", u);
   };
+  // Search text and the date field live in the URL too, so opening a bid card and pressing Back
+  // returns to the same filtered board.
+  useEffect(() => {
+    const u = new URL(window.location.href);
+    const before = u.search;
+    const s = q.trim();
+    if (s) u.searchParams.set("q", s); else u.searchParams.delete("q");
+    if (field === "created") u.searchParams.set("date", "created"); else u.searchParams.delete("date");
+    if (u.search !== before) window.history.replaceState(null, "", u);
+  }, [q, field]);
   useEffect(() => {
     const onPop = () => {
       const u = new URL(window.location.href);
