@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { REVEAL_FEATURE_EVENT } from "@/lib/features/state";
 import { Sparkles, CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, Plug, LayoutTemplate, LogOut, X, UserCog, Receipt, Gauge, SquareKanban, CalendarRange } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ButtonLink } from "@/components/ui/button";
@@ -47,11 +48,29 @@ export function AppSidebar({ isAdmin, email, company, projects = false, theme = 
   const [open, setOpen] = useState(false);
   // eslint-disable-next-line react-hooks/set-state-in-effect -- close the mobile menu after navigating
   useEffect(() => { setOpen(false); }, [path]);
+  // On phones the links are inside the Menu: the feature walkthrough opens it for a step that points
+  // at a sidebar link (Saved Items, Templates) and closes it again when the walkthrough ends.
+  const openedForTour = useRef(false);
+  const isOpen = useRef(open);
+  useEffect(() => { isOpen.current = open; }, [open]);
+  useEffect(() => {
+    const on = (e: Event) => {
+      const id = (e as CustomEvent).detail as string | null;
+      if (id && NAV.some((n) => n.feature === id)) {
+        if (!isOpen.current) { openedForTour.current = true; setOpen(true); }
+      } else if (openedForTour.current) {
+        openedForTour.current = false;
+        setOpen(false);
+      }
+    };
+    window.addEventListener(REVEAL_FEATURE_EVENT, on);
+    return () => window.removeEventListener(REVEAL_FEATURE_EVENT, on);
+  }, []);
   const active = (href: string, exact?: boolean) => (exact ? path === href : path === href || path.startsWith(`${href}/`));
   const current = nav.find((n) => active(n.href, n.exact)) ?? company?.links.find((l) => active(l.href, companyExact(l.href)));
   return (
     <>
-      <div className="flex items-center justify-between gap-2 px-3 py-3 sm:px-4 md:py-4">
+      <div className="flex items-center justify-between gap-1 px-3 py-3 sm:gap-2 sm:px-4 md:py-4">
         <Logo tone="dark" href="/dashboard" />
         <div className="flex items-center gap-1 max-[380px]:gap-0 md:hidden">
           <ButtonLink href="/bids" variant="accent" size="sm" className="min-h-11 max-[380px]:px-2.5"><FileText className="h-4 w-4 max-[380px]:hidden" aria-hidden /> New bid</ButtonLink>

@@ -40,6 +40,12 @@ interface FeatureInput {
   route: string;
   /** `data-feature` value on the control the walkthrough highlights, when there is one. */
   target?: string;
+  /**
+   * Bids dashboard view (Pipeline, Table or Analytics) the walkthrough switches to before it looks
+   * for `target`, when the control only exists in that view. Without it the step would point at a
+   * control that isn't rendered and say "This isn't on the current screen".
+   */
+  view?: "pipeline" | "table" | "analytics";
   /** One sentence, plain language. */
   description: string;
   /** Upgrade copy for locked accounts (premium features). */
@@ -77,6 +83,7 @@ const DEFS = {
     entitlement: "free",
     route: "/dashboard?view=pipeline",
     target: "pipeline",
+    view: "pipeline",
     description: "See every bid as a card from Draft to Won, drag it to a new stage, and see what's next for each one.",
     walkthrough: { title: "Your bids as a pipeline", body: "Each column is a sales stage. Drag a card or use its menu to move it. A signed bid moves to Won by itself.", cta: "Show pipeline" },
     release: "4.0.0",
@@ -87,6 +94,7 @@ const DEFS = {
     entitlement: "free",
     route: "/dashboard?view=analytics",
     target: "analytics",
+    view: "analytics",
     description: "Bids sent, won and lost, win rate and average job size for any date range.",
     walkthrough: { title: "How sales are going", body: "Pick a date range to see bids sent, approved and declined, your win rate and average bid.", cta: "Show analytics" },
     release: "4.0.0",
@@ -97,6 +105,7 @@ const DEFS = {
     entitlement: "free",
     route: "/dashboard?view=analytics",
     target: "sales_pay",
+    view: "analytics",
     description: "A private planning calculator for commission on won bids. Your settings are visible only to you.",
     walkthrough: { title: "Estimate your sales pay", body: "Choose percent of sale, percent of profit or a flat amount per job to estimate pay on won bids. It never changes bid prices." },
     release: "4.0.0",
@@ -107,6 +116,9 @@ const DEFS = {
     entitlement: "unlimited",
     route: "/dashboard?view=table",
     target: "internal_report",
+    // On the dashboard this highlights the first bid's Open link in the Table view; inside a bid it
+    // highlights the Internal report button itself.
+    view: "table",
     description: "A private PDF of costs, markup, margin and profit by section and line item. Never shown to customers.",
     pitch: "A private PDF of your costs, markup, margin and profit by section and line item, for you and your team. Never shown to customers. Included with Unlimited and Enterprise.",
     walkthrough: { title: "Know your numbers", body: "Open any saved bid and choose Internal report in the header to preview, download or email your private cost and profit report.", cta: "Open a bid" },
