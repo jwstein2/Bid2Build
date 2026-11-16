@@ -47,6 +47,18 @@
   --color-danger: #b91c1c;
   --color-danger-tint: #fdecec;
 
+  /* Schedule status (Gantt): not started = cool gray, on hold = violet. */
+  --color-idle: #6b7a89;
+  --color-idle-tint: #e6ecf2;
+  --color-idle-line: #9fb0c1;
+  --color-hold: #6a4ba8;
+  --color-hold-ink: #5b3e99;
+  --color-hold-tint: #efe9f8;
+  --color-hold-line: #7c5cb8;
+
+  /* Backdrop behind live proposal previews ("the desk the paper sits on"). */
+  --color-stage: #e4eaf1;
+
   /* Shape & depth */
   --radius-card: 0.75rem;
   --shadow-card: 0 1px 2px rgb(11 45 77 / 0.05), 0 1px 1px rgb(11 45 77 / 0.03);
@@ -197,3 +209,126 @@ h1, h2, h3, .font-display { font-family: var(--font-display); letter-spacing: -0
 .cc-bar, .cc-col { animation: none; }
 @media (prefers-reduced-motion: reduce) { .cc-rise { animation: none; } }
 .cc table tr:hover td { background: rgb(56 182 255 / 0.04); }
+
+/*
+ * Customer app Dark Mode (opt-in per user; Light stays the default). See src/lib/theme.ts.
+ * Applies only while a customer app screen (.app-theme) is mounted, and is defined on <html> so
+ * portaled dialogs, menus and tooltips pick it up too. Marketing pages, the owner command center
+ * (.cc) and proposal/schedule documents (.theme-light) keep their own look.
+ * Built from the brand: deep navy surfaces, electric blue (brand) and cyan/teal accents.
+ * Contrast (WCAG AA) for every text pair below is checked in tests/theme.test.ts.
+ */
+html[data-theme="dark"]:has(.app-theme) {
+  --color-paper: #071a2e;
+  --color-surface: #0e2440;
+  --color-ink: #e8f0f8;
+  --color-ink-soft: #c2d1e0;
+  --color-muted: #9db1c6;
+  --color-line: #213f60;
+  --color-line-strong: #34577c;
+  --color-cool-gray: #8ea2b6;
+
+  /* "navy" is heading/emphasis text in the app, so it flips light. Navy and bright surfaces reset it below. */
+  --color-navy: #f2f7fc;
+  --color-brand: #6cb8ff;
+  --color-brand-dark: #1559a8;
+  --color-brand-tint: #15365a;
+  --color-accent-ink: #4fd8ef;
+  --color-accent-dark: #7ee4f4;
+  --color-accent-tint: #0c3a4f;
+  --color-focus: #4fd8ef;
+
+  --color-ok: #3fd5c0;
+  --color-ok-tint: #0d3a3a;
+  --color-warn: #f6bd60;
+  --color-warn-tint: #3d2c12;
+  --color-danger: #ff9494;
+  --color-danger-tint: #431c24;
+
+  --color-idle: #8ea2b6;
+  --color-idle-tint: #1b3452;
+  --color-idle-line: #4d6c8c;
+  --color-hold: #9c82e0;
+  --color-hold-ink: #c7b6f5;
+  --color-hold-tint: #2c2453;
+  --color-hold-line: #9c82e0;
+  --color-stage: #05121f;
+
+  /* Hover/selected washes written as black/5, black/10 become light washes on dark surfaces. */
+  --color-black: #ffffff;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.35), 0 0 0 1px rgb(255 255 255 / 0.02);
+  --shadow-raised: 0 10px 28px -8px rgb(0 0 0 / 0.6);
+
+  color-scheme: dark;
+  background: var(--color-paper);
+}
+html[data-theme="dark"]:has(.app-theme) body { background: var(--color-paper); color: var(--color-ink); }
+
+/* Navy and bright brand surfaces keep their light-mode pairing (navy text on cyan, white on navy). */
+html[data-theme="dark"]:has(.app-theme) :is(.bg-navy, .bg-accent, .bg-accent-hover, .bg-cyan, .bg-teal) { --color-navy: #0b2d4d; }
+/* Navy buttons/selected tabs inside content lift to a brighter navy so they stand out on the dark page
+   (white text 8.9:1); the navy sidebar itself (aside) keeps the brand navy. */
+html[data-theme="dark"]:has(.app-theme) .bg-navy:not(aside) { --color-navy: #1b4a7a; }
+html[data-theme="dark"]:has(.app-theme) .bg-brand { --color-brand: #1d6fd1; }
+html[data-theme="dark"]:has(.app-theme) .bg-ok { --color-ok: #0f766e; }
+html[data-theme="dark"]:has(.app-theme) .bg-warn { --color-warn: #b45309; }
+html[data-theme="dark"]:has(.app-theme) .bg-danger { --color-danger: #c62828; }
+/* Dark toasts (bg-ink + white text) and modal scrims stay dark. */
+html[data-theme="dark"]:has(.app-theme) .bg-ink { --color-ink: #23415f; }
+html[data-theme="dark"]:has(.app-theme) :is([class*="bg-ink/"], [class*="bg-black/3"], [class*="bg-black/4"], [class*="bg-black/5"]):is(.fixed, .absolute) { --color-ink: #01070d; --color-black: #000; }
+html[data-theme="dark"]:has(.app-theme) .field::placeholder, html[data-theme="dark"]:has(.app-theme) .cell::placeholder { color: #7f95ab; }
+html[data-theme="dark"]:has(.app-theme) :focus-visible { outline-color: var(--color-focus); }
+html[data-theme="dark"]:has(.app-theme) .on-dark :focus-visible { outline-color: var(--color-cyan); }
+html[data-theme="dark"]:has(.app-theme) .blueprint-grid {
+  background-image:
+    linear-gradient(to right, rgb(255 255 255 / 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.05) 1px, transparent 1px);
+}
+
+/*
+ * Documents always render as the customer will see them: light, whatever the app theme
+ * (proposal previews, schedule update previews). Same values as the @theme block above.
+ */
+.theme-light {
+  --color-paper: #f5f8fb;
+  --color-surface: #ffffff;
+  --color-ink: #0e2238;
+  --color-ink-soft: #33465a;
+  --color-muted: #56677a;
+  --color-line: #dde5ee;
+  --color-line-strong: #c3cfdb;
+  --color-cool-gray: #6b7a89;
+  --color-navy: #0b2d4d;
+  --color-brand: #0b2d4d;
+  --color-brand-dark: #071f36;
+  --color-brand-tint: #e7eef6;
+  --color-accent-ink: #007c91;
+  --color-accent-dark: #006a7c;
+  --color-accent-tint: #e0f7fb;
+  --color-focus: #007c91;
+  --color-ok: #0f766e;
+  --color-ok-tint: #e3f6f3;
+  --color-warn: #b45309;
+  --color-warn-tint: #fdf3e2;
+  --color-danger: #b91c1c;
+  --color-danger-tint: #fdecec;
+  --color-idle: #6b7a89;
+  --color-idle-tint: #e6ecf2;
+  --color-idle-line: #9fb0c1;
+  --color-hold: #6a4ba8;
+  --color-hold-ink: #5b3e99;
+  --color-hold-tint: #efe9f8;
+  --color-hold-line: #7c5cb8;
+  --color-stage: #e4eaf1;
+  --color-black: #000000;
+  --shadow-card: 0 1px 2px rgb(11 45 77 / 0.05), 0 1px 1px rgb(11 45 77 / 0.03);
+  --shadow-raised: 0 8px 24px -8px rgb(11 45 77 / 0.18);
+  color-scheme: light;
+}
+
+/* Theme switch: the icon shows what a click switches TO (moon in light, sun in dark). */
+.theme-icon-sun { display: none; }
+html[data-theme="dark"] .theme-icon-sun { display: block; }
+html[data-theme="dark"] .theme-icon-moon { display: none; }
+/* Switching themes changes everything in one frame instead of fading element by element. */
+.theme-switching, .theme-switching *, .theme-switching *::before, .theme-switching *::after { transition: none !important; }

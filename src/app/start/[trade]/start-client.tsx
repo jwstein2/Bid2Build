@@ -17,7 +17,7 @@ export function StartClient({ trade, blank, template, defaults }: { trade: strin
     router.replace(`/builder?draft=${estimate.id}`);
   }, [trade, blank, template, defaults, router]);
   return (
-    <main className="grid min-h-screen place-items-center" aria-busy="true">
+    <main className="app-theme grid min-h-screen place-items-center" aria-busy="true">
       <p className="text-ink-soft">Setting up your bid…</p>
     </main>
   );

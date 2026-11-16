@@ -119,14 +119,14 @@ export function Gantt({ rows, deps, cal, zoom, today, target, canEdit, collapsed
 
           {/* Dependency arrows */}
           <svg className="pointer-events-none absolute top-0 z-10" style={{ left: LABEL_W, width, height: rows.length * ROW }} aria-hidden>
-            <defs><marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#56677A" /></marker></defs>
+            <defs><marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="var(--color-muted)" /></marker></defs>
             {deps.map((d) => {
               const a = rowIndex.get(d.from), b = rowIndex.get(d.to);
               if (a === undefined || b === undefined) return null;
               const pa = all[a], pb = all[b];
               const x1 = x(pa.plannedEnd) + px, y1 = a * ROW + ROW / 2, x2 = x(pb.plannedStart), y2 = b * ROW + ROW / 2;
               const mid = Math.max(x1 + 6, Math.min(x2 - 6, x1 + 10));
-              return <path key={`${d.from}-${d.to}`} d={`M${x1},${y1} H${mid} V${y2} H${x2 - 1}`} fill="none" stroke="#56677A" strokeWidth="1.25" markerEnd="url(#arrow)" />;
+              return <path key={`${d.from}-${d.to}`} d={`M${x1},${y1} H${mid} V${y2} H${x2 - 1}`} fill="none" stroke="var(--color-muted)" strokeWidth="1.25" markerEnd="url(#arrow)" />;
             })}
           </svg>
 

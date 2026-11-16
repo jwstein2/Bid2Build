@@ -4,6 +4,7 @@ import { Builder } from "@/components/builder/builder";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { loadBusiness, loadEstimate } from "@/lib/data/server";
 import { isBuilderStep } from "@/lib/estimate/workflow";
+import { AccountThemeScript } from "@/components/theme/account-theme-script";
 
 export const metadata: Metadata = { title: "Edit Bid", robots: { index: false } };
 
@@ -18,6 +19,8 @@ export default async function EstimatePage({ params, searchParams }: PageProps<"
   if (!data) notFound();
   const { business, exists } = await loadBusiness(supabase, user.id);
   return (
+    <>
+    <AccountThemeScript pref={user.theme} />
     <Builder
       initialEstimate={data.estimate}
       initialConfig={data.proposalConfig}
@@ -27,5 +30,6 @@ export default async function EstimatePage({ params, searchParams }: PageProps<"
       initialStep={isBuilderStep(sp.step) ? sp.step : undefined}
       autoExport={sp.export === "1"}
     />
+    </>
   );
 }
