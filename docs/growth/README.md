@@ -32,3 +32,17 @@ owner's own logins), 6 started a bid, 3 finalized, 4 estimates with 3+ priced it
 data, 0 marketing opt-ins.
 
 See [ACTIVATION.md](ACTIVATION.md) and [EVENTS.md](EVENTS.md).
+
+## PR 2: trade landing pages
+
+Priority trades (decks, general contracting, painting, roofing, concrete, kitchens, bathrooms, flooring,
+electrical, siding, drywall) get conversion copy layered on the existing `/bids/[trade]` pages
+(`src/lib/trades/landing.ts`): trade headline and CTA, pain points, a real sample proposal image, the
+existing walkthrough video (`preload="none"`), a calculator explainer that matches
+`src/lib/calculators/mapping.ts`, and markup/margin + the four price displays. Routes, titles, canonical
+URLs, FAQ JSON-LD, guides and related-trade links are unchanged; other trades render as before.
+
+Sample proposals are rendered by the real proposal engine with example data
+(`npx vitest run -c scripts/growth/vitest.samples.mts` → `public/media/proposals/<trade>-v1.webp`).
+Copy guardrails are tested (`tests/trade-landing.test.ts`: no speed/profit/% claims or testimonials).
+Browser walk: `scripts/growth/landing-walk.mjs` (11 trades × desktop/390px, CTA opens a builder draft).
