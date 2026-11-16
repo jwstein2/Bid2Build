@@ -22,7 +22,9 @@ for (const [label, vp] of [["desktop", { width: 1440, height: 900 }], ["m390", {
   await page.goto(`http://localhost:3000/estimates/${EST}?step=estimate`, { waitUntil: "networkidle" });
   const btn = page.getByTestId("internal-report-open");
   check(`${mode} ${label}: Internal report action on the estimate page`, await btn.isVisible());
-  check(`${mode} ${label}: diamond ${mode === "free" ? "shown" : "hidden"}`, ((await btn.getAttribute("aria-label")).includes("Unlimited feature")) === (mode === "free"));
+  check(`${mode} ${label}: diamond ${mode === "free" ? "shown" : "hidden"}`, ((await btn.getAttribute("aria-label")).includes("Unlimited feature")) === (mode === "free")
+    && (await btn.locator('[title="Unlimited feature"]').count()) === (mode === "free" ? 1 : 0));
+  await btn.screenshot({ path: `${dir}/internal-report-button-${label}.png` });
   await btn.click();
   const dlg = page.getByTestId("internal-report-dialog");
   await dlg.waitFor();
