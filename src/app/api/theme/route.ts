@@ -6,7 +6,7 @@ import { THEME_META_KEY, parseThemePref } from "@/lib/theme";
 
 export const dynamic = "force-dynamic";
 
-const Body = z.object({ mode: z.enum(["light", "dark"]), at: z.number().int().nonnegative().max(8.64e15) });
+const Body = z.object({ mode: z.enum(["light", "dark", "black"]), at: z.number().int().nonnegative().max(8.64e15) });
 
 /**
  * Saves the signed-in account's Light/Dark choice to auth user_metadata.b2b_theme (each user can

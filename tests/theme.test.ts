@@ -6,7 +6,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { runInNewContext } from "node:vm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { THEME_BOOT_SCRIPT, THEME_META_KEY, THEME_STORAGE_KEY, accountThemeScript, parseThemePref, resolveThemePref } from "@/lib/theme";
+import { THEME_BOOT_SCRIPT, THEME_META_KEY, THEME_STORAGE_KEY, accountThemeScript, nextThemeMode, parseThemePref, resolveThemePref } from "@/lib/theme";
 
 const css = readFileSync(join(__dirname, "../src/app/globals.css"), "utf8");
 const block = (selector: string) => {
@@ -16,7 +16,8 @@ const block = (selector: string) => {
 };
 const tokensIn = (src: string) => Object.fromEntries([...src.matchAll(/--color-([a-z-]+):\s*(#[0-9a-fA-F]{6})/g)].map((m) => [m[1], m[2].toLowerCase()]));
 const LIGHT = tokensIn(css.slice(css.indexOf("@theme"), css.indexOf("}", css.indexOf("@theme"))));
-const DARK = { ...LIGHT, ...tokensIn(block('html[data-theme="dark"]:has(.app-theme)')) };
+const DARK = { ...LIGHT, ...tokensIn(block("html[data-theme]:has(.app-theme)")) };
+const BLACK = { ...DARK, ...tokensIn(block('html[data-theme="black"]:has(.app-theme)')) };
 const lum = (hex: string) => {
   const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((x) => (x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4));
   return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
@@ -35,12 +36,20 @@ describe("dark theme tokens", () => {
     ["ok", "surface"], ["ok", "ok-tint"], ["warn", "surface"], ["warn", "warn-tint"],
     ["danger", "surface"], ["danger", "danger-tint"], ["hold-ink", "hold-tint"], ["ink-soft", "idle-tint"],
   ];
-  it.each(text)("%s on %s meets 4.5:1", (fg, bg) => {
+  it.each(text)("Dark: %s on %s meets 4.5:1", (fg, bg) => {
     expect(ratio(DARK[fg], DARK[bg])).toBeGreaterThanOrEqual(4.5);
+  });
+  it.each(text)("Black: %s on %s meets 4.5:1", (fg, bg) => {
+    expect(ratio(BLACK[fg], BLACK[bg])).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("Black is true black", () => {
+    expect(BLACK.paper).toBe("#000000");
+    expect(css).toMatch(/html\[data-theme="black"\]:has\(\.app-theme\) aside\.bg-navy \{ --color-navy: #000000;/);
   });
 
   it("focus ring and field borders are visible (3:1 non-text)", () => {
-    for (const bg of ["paper", "surface"]) expect(ratio(DARK.focus, DARK[bg])).toBeGreaterThanOrEqual(3);
+    for (const T of [DARK, BLACK]) for (const bg of ["paper", "surface"]) expect(ratio(T.focus, T[bg])).toBeGreaterThanOrEqual(3);
     expect(ratio(DARK.cyan, LIGHT.navy)).toBeGreaterThanOrEqual(3); // sidebar ring
   });
 
@@ -66,14 +75,14 @@ describe("dark theme tokens", () => {
   it("documents (.theme-light) restate exactly the light values", () => {
     const docs = tokensIn(block(".theme-light"));
     for (const [k, v] of Object.entries(docs)) if (k !== "black") expect([k, v]).toEqual([k, LIGHT[k]]);
-    for (const k of Object.keys(DARK)) if (DARK[k] !== LIGHT[k] && k !== "black") expect(docs[k], k).toBe(LIGHT[k]);
+    for (const T of [DARK, BLACK]) for (const k of Object.keys(T)) if (T[k] !== LIGHT[k] && k !== "black") expect(docs[k], k).toBe(LIGHT[k]);
   });
 
   it("dark tokens are scoped to customer app screens only", () => {
     // Every dark rule is gated on a mounted .app-theme screen; nothing applies to bare html[data-theme].
-    const darkRules = [...css.matchAll(/^html\[data-theme="dark"\][^{]*\{/gm)].map((m) => m[0]);
+    const darkRules = [...css.matchAll(/^(?:@media[^{]*\{ )?html\[data-theme[^\]]*\][^{]*\{/gm)].map((m) => m[0]);
     expect(darkRules.length).toBeGreaterThan(5);
-    for (const r of darkRules) expect(r.includes(":has(.app-theme)") || /theme-icon-(sun|moon)/.test(r), r).toBe(true);
+    for (const r of darkRules) expect(r.includes(":has(.app-theme)") || /theme-icon-(sun|moon|star)/.test(r), r).toBe(true);
   });
 
   it("app shells opt in; documents opt out", () => {
@@ -87,9 +96,15 @@ describe("dark theme tokens", () => {
 });
 
 describe("theme preference", () => {
+  it("one click cycles Light -> Dark -> Black -> Light", () => {
+    expect(nextThemeMode("light")).toBe("dark");
+    expect(nextThemeMode("dark")).toBe("black");
+    expect(nextThemeMode("black")).toBe("light");
+  });
   it("parses only valid values", () => {
     expect(parseThemePref({ mode: "dark", at: 5 })).toEqual({ mode: "dark", at: 5 });
     expect(parseThemePref({ mode: "dark" })).toEqual({ mode: "dark", at: 0 });
+    expect(parseThemePref({ mode: "black", at: 3 })).toEqual({ mode: "black", at: 3 });
     expect(parseThemePref({ mode: "sepia", at: 1 })).toBeNull();
     expect(parseThemePref("dark")).toBeNull();
     expect(parseThemePref(null)).toBeNull();
@@ -121,7 +136,9 @@ function run(script: string, stored: string | null, attr: string | null = null, 
 describe("no-flash boot scripts", () => {
   it("head script applies this device's dark choice; anything else stays light", () => {
     expect(run(THEME_BOOT_SCRIPT, JSON.stringify({ mode: "dark", at: 1 })).theme).toBe("dark");
+    expect(run(THEME_BOOT_SCRIPT, JSON.stringify({ mode: "black", at: 1 })).theme).toBe("black");
     expect(run(THEME_BOOT_SCRIPT, JSON.stringify({ mode: "light", at: 1 })).theme).toBe("light");
+    expect(run(THEME_BOOT_SCRIPT, JSON.stringify({ mode: "evil\"", at: 1 })).theme).toBe("light");
     expect(run(THEME_BOOT_SCRIPT, null).theme).toBe("light");
     expect(run(THEME_BOOT_SCRIPT, "{not json").theme).toBe("light");
     expect(run(THEME_BOOT_SCRIPT, null, null, true).theme).toBe("light");
@@ -130,6 +147,7 @@ describe("no-flash boot scripts", () => {
     const r = run(accountThemeScript({ mode: "dark", at: 10 }), JSON.stringify({ mode: "light", at: 5 }));
     expect(r).toEqual({ theme: "dark", stored: { mode: "dark", at: 10 } });
     expect(run(accountThemeScript({ mode: "dark", at: 10 }), null).theme).toBe("dark");
+    expect(run(accountThemeScript({ mode: "black", at: 10 }), JSON.stringify({ mode: "dark", at: 5 }), "dark").theme).toBe("black");
     expect(run(accountThemeScript({ mode: "light", at: 10 }), JSON.stringify({ mode: "dark", at: 5 }), "dark").theme).toBe("light");
     expect(run(accountThemeScript({ mode: "dark", at: 10 }), null, null, true).theme).toBe("dark"); // storage blocked
   });
@@ -176,6 +194,10 @@ describe("/api/theme", () => {
     const j = await (await post({ mode: "light", at: 100 })).json();
     expect(j).toMatchObject({ stale: true, theme: { mode: "dark", at: 200 } });
     expect(S.updates).toHaveLength(0);
+  });
+  it("accepts Black", async () => {
+    expect((await post({ mode: "black", at: 5 })).status).toBe(200);
+    expect(S.user!.user_metadata[THEME_META_KEY]).toEqual({ mode: "black", at: 5 });
   });
   it("rejects anything else", async () => {
     for (const b of [{ mode: "sepia", at: 1 }, { mode: "dark" }, { mode: "dark", at: -1 }, "dark"]) expect((await post(b)).status).toBe(400);

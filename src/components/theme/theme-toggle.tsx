@@ -1,14 +1,17 @@
 "use client";
-import { Moon, Sun } from "lucide-react";
+import { Moon, MoonStar, Sun } from "lucide-react";
 import { useEffect, useSyncExternalStore } from "react";
 import { cn } from "@/lib/cn";
-import { THEME_EVENT, THEME_STORAGE_KEY, parseThemePref, type ThemeMode, type ThemePref } from "@/lib/theme";
+import { THEME_EVENT, THEME_LABEL, THEME_STORAGE_KEY, nextThemeMode, parseThemePref, type ThemeMode, type ThemePref } from "@/lib/theme";
 
 function readLocal(): ThemePref | null {
   try { return parseThemePref(JSON.parse(localStorage.getItem(THEME_STORAGE_KEY) ?? "null")); } catch { return null; }
 }
 
-const current = (): ThemeMode => (document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light");
+const current = (): ThemeMode => {
+  const a = document.documentElement.getAttribute("data-theme");
+  return a === "dark" || a === "black" ? a : "light";
+};
 
 function subscribe(cb: () => void) {
   window.addEventListener(THEME_EVENT, cb);
@@ -22,7 +25,7 @@ function subscribe(cb: () => void) {
 function applyMode(mode: ThemeMode) {
   const root = document.documentElement;
   root.classList.add("theme-switching");
-  if (mode === "dark") root.setAttribute("data-theme", "dark"); else root.removeAttribute("data-theme");
+  if (mode === "light") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", mode);
   requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove("theme-switching")));
   window.dispatchEvent(new Event(THEME_EVENT));
 }
@@ -34,13 +37,14 @@ function saveToAccount(pref: ThemePref) {
 }
 
 /**
- * One-click sun/moon switch for the customer app header. Light is the default; the choice is saved
+ * One-click theme switch for the customer app header: each click moves Light -> Dark (navy) ->
+ * Black -> Light. Light is the default; the choice is saved
  * on this device and, when signed in, to the account so it follows the user to other devices.
  * The icon is chosen by CSS from <html data-theme>, so it is right on the very first paint.
  */
 export function ThemeToggle({ signedIn = false, account = null, tone = "light", className }: { signedIn?: boolean; account?: ThemePref | null; tone?: "light" | "dark"; className?: string }) {
   const mode = useSyncExternalStore(subscribe, current, () => "light" as ThemeMode);
-  const dark = mode === "dark";
+  const next = nextThemeMode(mode);
 
   // A choice made on this device before signing in (or a save that didn't reach the server) is
   // newer than the account copy: store it on the account.
@@ -52,7 +56,7 @@ export function ThemeToggle({ signedIn = false, account = null, tone = "light", 
   }, [signedIn, account?.at]);
 
   const toggle = () => {
-    const pref: ThemePref = { mode: dark ? "light" : "dark", at: Date.now() };
+    const pref: ThemePref = { mode: next, at: Date.now() };
     try { localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(pref)); } catch { /* private mode: still switches for this visit */ }
     applyMode(pref.mode);
     if (signedIn) saveToAccount(pref);
@@ -62,9 +66,9 @@ export function ThemeToggle({ signedIn = false, account = null, tone = "light", 
     <button
       type="button"
       onClick={toggle}
-      aria-pressed={dark}
-      aria-label="Dark mode"
-      title={dark ? "Switch to light mode" : "Switch to dark mode"}
+      aria-label={`Theme: ${THEME_LABEL[mode]}. Switch to ${THEME_LABEL[next]}`}
+      title={`Switch to ${THEME_LABEL[next]} mode`}
+      data-theme-mode={mode}
       data-testid="theme-toggle"
       className={cn(
         "theme-toggle inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-md transition-colors md:min-h-10 md:min-w-10",
@@ -73,6 +77,7 @@ export function ThemeToggle({ signedIn = false, account = null, tone = "light", 
       )}
     >
       <Moon className="theme-icon-moon h-5 w-5" aria-hidden />
+      <MoonStar className="theme-icon-star h-5 w-5" aria-hidden />
       <Sun className="theme-icon-sun h-5 w-5" aria-hidden />
     </button>
   );

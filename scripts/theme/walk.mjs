@@ -67,25 +67,34 @@ const shot = (page, name, fullPage = true) => page.screenshot({ path: `${dir}/${
   await shot(page, "dashboard-light-desktop", false);
   const toggle = page.getByTestId("theme-toggle").filter({ visible: true });
   check("desktop: one sun/moon toggle visible top right", (await toggle.count()) === 1 && (await toggle.boundingBox()).x > DESK.width - 120 && (await toggle.boundingBox()).y < 80);
-  check("toggle is labelled and reports its state", (await toggle.getAttribute("aria-label")) === "Dark mode" && (await toggle.getAttribute("aria-pressed")) === "false");
+  check("toggle is labelled with its state and next step", (await toggle.getAttribute("aria-label")) === "Theme: Light. Switch to Dark");
   await page.evaluate(() => { window.__noReload = true; });
   await dismiss(page);
   await toggle.click();
   await page.waitForTimeout(150);
-  check("one click switches to Dark immediately", isDark(await bg(page)) && (await toggle.getAttribute("aria-pressed")) === "true");
+  check("one click switches to Dark immediately", isDark(await bg(page)) && (await page.getAttribute("html", "data-theme")) === "dark" && (await toggle.getAttribute("data-theme-mode")) === "dark");
   check("no page reload", await page.evaluate(() => window.__noReload === true));
   check("saved on this device", (await page.evaluate(() => JSON.parse(localStorage.getItem("b2b-theme")).mode)) === "dark");
   await page.waitForTimeout(800);
   check("saved to the account profile", (await accountTheme())?.mode === "dark");
   await shot(page, "dashboard-dark-desktop", false);
-  // Keyboard: focus ring visible and Enter toggles back.
+  // Keyboard: Enter -> Black, Space -> Light, Enter -> Dark again.
   await toggle.focus();
   await page.keyboard.press("Enter");
   await page.waitForTimeout(150);
-  check("keyboard Enter switches back to Light", !isDark(await bg(page)));
+  check("keyboard Enter: next click is true Black", (await page.getAttribute("html", "data-theme")) === "black" && (await bg(page)) === "rgb(0, 0, 0)");
+  check("Black: sidebar is black too", (await bg(page, "aside")) === "rgb(0, 0, 0)");
+  await page.waitForTimeout(800);
+  check("Black saved to the account profile", (await accountTheme())?.mode === "black");
+  await page.mouse.move(0, 0);
+  await shot(page, "dashboard-black-desktop", false);
   await page.keyboard.press("Space");
   await page.waitForTimeout(150);
-  check("keyboard Space switches to Dark", isDark(await bg(page)));
+  check("keyboard Space: back to Light", !isDark(await bg(page)));
+  await page.keyboard.press("Enter");
+  await page.waitForTimeout(150);
+  check("keyboard Enter: Dark again", (await page.getAttribute("html", "data-theme")) === "dark");
+  await page.waitForTimeout(800);
   const ring = await toggle.evaluate((el) => getComputedStyle(el).outlineStyle);
   check("visible focus indicator on the toggle", ring !== "none");
   await page.reload({ waitUntil: "load" });
@@ -107,7 +116,8 @@ const ROUTES = [
   ["pricing-data", "/settings/pricing"],
   ["whats-new", "/whats-new"],
 ];
-const setDark = (c) => c.addInitScript(() => { try { if (!localStorage.getItem("b2b-theme")) localStorage.setItem("b2b-theme", JSON.stringify({ mode: "dark", at: Date.now() })); } catch {} });
+const setMode = (c, mode) => c.addInitScript((m) => { try { if (!localStorage.getItem("b2b-theme")) localStorage.setItem("b2b-theme", JSON.stringify({ mode: m, at: Date.now() })); } catch {} }, mode);
+const setDark = (c) => setMode(c, "dark");
 for (const [vpName, vp, isMobile] of [["desktop", DESK, false], ["m390", PHONE, true]]) {
   const c = await ctx(vp, { isMobile });
   await setDark(c);
@@ -117,6 +127,21 @@ for (const [vpName, vp, isMobile] of [["desktop", DESK, false], ["m390", PHONE, 
     check(`${vpName} ${id}: toggle reachable`, (await page.getByTestId("theme-toggle").filter({ visible: true }).count()) >= 1);
     check(`${vpName} ${id}: no horizontal scroll`, await noHScroll(page));
     await shot(page, `${id}-dark-${vpName}`);
+    await page.close();
+  }
+  await c.close();
+}
+
+// 2b. True Black on the main screens (desktop + phone).
+const BLACK_ROUTES = ROUTES.filter(([id]) => ["dashboard-pipeline", "customers", "projects", "estimate-builder", "billing", "account-settings"].includes(id));
+for (const [vpName, vp, isMobile] of [["desktop", DESK, false], ["m390", PHONE, true]]) {
+  const c = await ctx(vp, { isMobile });
+  await setMode(c, "black");
+  for (const [id, path] of BLACK_ROUTES) {
+    const page = await open(c, path);
+    check(`${vpName} ${id}: Black from the first frame`, (await page.evaluate(() => window.__firstBg)) === "rgb(0, 0, 0)" && (await bg(page)) === "rgb(0, 0, 0)");
+    check(`${vpName} ${id}: no horizontal scroll (Black)`, await noHScroll(page));
+    await shot(page, `${id}-black-${vpName}`);
     await page.close();
   }
   await c.close();
@@ -198,14 +223,18 @@ for (const [vpName, vp, isMobile] of [["desktop", DESK, false], ["m390", PHONE, 
   const box = await t.boundingBox();
   check("phone: 44px touch target", box.width >= 44 && box.height >= 44);
   await dismiss(page);
+  await shot(page, "dashboard-dark-m390", false);
+  await t.tap();
+  await page.waitForTimeout(150);
+  check("phone: tap switches to Black", (await bg(page)) === "rgb(0, 0, 0)");
+  await shot(page, "dashboard-black-m390", false);
   await t.tap();
   await page.waitForTimeout(150);
   check("phone: tap switches to Light", !isDark(await bg(page)));
   await shot(page, "dashboard-light-m390", false);
   await t.tap();
   await page.waitForTimeout(150);
-  check("phone: tap again switches to Dark", isDark(await bg(page)));
-  await shot(page, "dashboard-dark-m390", false);
+  check("phone: tap again switches to Dark", (await page.getAttribute("html", "data-theme")) === "dark");
   await page.getByRole("button", { name: "Menu" }).click();
   await shot(page, "menu-open-dark-m390", false);
   await c.close();
