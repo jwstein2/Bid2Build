@@ -40,6 +40,9 @@ export function MobileNav({ items, signedIn, primary, badge }: { items: { href: 
   }, [open]);
 
   const close = () => setOpen(false);
+  // The closed panel is still in the DOM (for the exit transition), so turn off viewport prefetch
+  // while it's closed; otherwise every phone visit would prefetch all menu pages up front.
+  const prefetch = open ? undefined : false;
   // Opening: visible at once (so focus can move in), then fade/slide in. Closing: fade/slide out, and
   // only become invisible when the transition ends (visibility is in the closing transition list).
   const shown = open ? "visible opacity-100 translate-y-0 transition-[opacity,translate]" : "invisible opacity-0 -translate-y-2 pointer-events-none transition-[opacity,translate,visibility]";
@@ -77,13 +80,13 @@ export function MobileNav({ items, signedIn, primary, badge }: { items: { href: 
         )}
       >
         {items.map((n) => (
-          <Link key={n.href} href={n.href} onClick={close} className="flex min-h-12 items-center border-b border-line font-medium active:bg-brand-tint">{n.label}</Link>
+          <Link key={n.href} href={n.href} prefetch={prefetch} onClick={close} className="flex min-h-12 items-center border-b border-line font-medium active:bg-brand-tint">{n.label}</Link>
         ))}
-        <Link href={signedIn ? "/dashboard" : "/login"} onClick={close} className="flex min-h-12 items-center border-b border-line font-medium active:bg-brand-tint">
+        <Link href={signedIn ? "/dashboard" : "/login"} prefetch={prefetch} onClick={close} className="flex min-h-12 items-center border-b border-line font-medium active:bg-brand-tint">
           {signedIn ? "My Bids" : "Log in"}
         </Link>
         {badge && <p className="pt-3 text-center text-sm text-ink-soft" data-testid="credit-badge-mobile">{badge}</p>}
-        <Link href={primary.href} onClick={close} data-cta={primary.action} className="mt-3 flex min-h-12 items-center justify-center rounded-lg bg-accent text-center font-semibold text-navy transition-transform duration-(--motion-fast) active:scale-[0.98]">{primary.label}</Link>
+        <Link href={primary.href} prefetch={prefetch} onClick={close} data-cta={primary.action} className="mt-3 flex min-h-12 items-center justify-center rounded-lg bg-accent text-center font-semibold text-navy transition-transform duration-(--motion-fast) active:scale-[0.98]">{primary.label}</Link>
       </nav>
     </div>
   );

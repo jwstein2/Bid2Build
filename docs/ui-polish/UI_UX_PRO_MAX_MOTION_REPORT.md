@@ -47,7 +47,7 @@ verification gaps (see `docs/ux-audit/REMAINING_ISSUES.md` R-01, R-02, R-07).
 | 7 | P2 | Motion system | Durations scattered (120ms inline) | Inconsistent feel as features grow | Tokens `--motion-fast/base/slow`, `ease-brand-out/in`, utilities `motion-drop-in/fade/reveal`, guard-rail tests | Consistency, cheap to maintain | XS | Very low | `tests/motion-tokens.test.ts` | **Done** |
 | 8 | P1 | Dashboard (`/dashboard`) | CLS 0.12 at 768px and 0.08 at 1440px (measured, before and after this pass) | "Your bids" jumps down when blocks that render after hydration appear above it (the company-profile reminder, `role=status`, and the card row), measured with layout-shift sources | Reserve space for those blocks, or decide them on the server | Professional feel; Core Web Vitals | M | Low | CLS < 0.05 at 768/1440 | Recommended (dashboard is being edited in the KPI-cards thread, so left alone) |
 | 9 | P1 | Home hero (mobile) | Lighthouse CLS 0.06 on the hero paragraph (web-font swap reflows the h1) | Visible text jump on first load | Font fallback metrics (`size-adjust` / `next/font`) for Montserrat | LCP/CLS, first impression on ads traffic | M | Low | Lighthouse CLS < 0.02 | Recommended |
-| 10 | P2 | Visitor welcome popup | Opens ~1.2s after load even if the visitor already opened the menu or is mid-scroll | Interrupts the first visit; covered the open phone menu in testing | Don't open while a menu/dialog is open or after the visitor has interacted; or open on second page view | Fewer early bounces | S | Low | Bounce rate, welcome popup dismiss rate (GA4) | Recommended |
+| 10 | P1 | Visitor welcome popup | Opens ~1.2s after load even if the visitor already opened the menu or is mid-scroll; its video is the mobile LCP element (Lighthouse) | Interrupts the first visit; covered the open phone menu in testing; sets a 4.3 s lab LCP | Don't open while a menu/dialog is open or after the visitor has interacted; or open on second page view | Fewer early bounces from ad traffic; better LCP | S | Low (onboarding logic, needs your call) | Bounce rate, popup dismiss rate (GA4), mobile LCP | Recommended |
 | 11 | P2 | Builder header on phones | ~300px of header (title, actions, plan line, theme toggle, steps) before the first line item | Less room for the estimate | Collapse plan line + theme toggle into a menu below md (R-03) | Faster estimate entry on phones | M | Medium (busy component) | Time to first line item | Recommended |
 | 12 | P3 | Small targets | `N items` toggle 16px tall in builder section header (duplicate of the 44px chevron, `aria-hidden`); 13px checkboxes on login/account (inside full-width labels) | Precision tapping | Bump to 24px min / 18px checkboxes | Polish | XS | Very low | Small-target probe | Recommended |
 | 13 | P3 | Breadcrumb `Trades` link on trade pages | 46×17px | Precision tapping | Add vertical padding | Polish | XS | Very low | probe | Recommended |
@@ -81,9 +81,23 @@ First-load JS referenced by each page, gzipped from `.next/static`:
 CLS (Playwright PerformanceObserver) unchanged on all pages at 390/768/1440 (dashboard 0.12/0.08
 before and after). No horizontal overflow at any width. No console errors.
 
-Lighthouse (mobile, simulated throttling): see PR description for the runs; lab scores vary ±5
-run to run, so treat them as "no regression" checks, not results. SEO is low locally only because
-non-production builds are `noindex` by design.
+Lighthouse 13, mobile, simulated throttling, 3 runs each (lab numbers on a shared container; treat as
+"no regression" checks, not field data):
+
+| Page | Perf before | Perf after | A11y before → after | LCP (sim) before | LCP (sim) after | TBT before | TBT after | CLS |
+|---|---|---|---|---|---|---|---|---|
+| `/` | 80 / 80 / 80 | 80 / 80 / 80 | 96 → **100** | 4.3 s | 4.3–4.4 s | 250–260 ms | 210–240 ms | 0–0.06 both |
+| `/pricing` | 79 / 77 / 81 | 75 / 81 / 77 | 96 → **100** | 4.3–4.8 s | 4.5–4.9 s | 220–280 ms | 190–300 ms | 0.002 both |
+
+Best practices 100 before and after. SEO shows 66 locally only because non-production builds are
+`noindex` by design. Observed (unthrottled) LCP was 1.9–2.4 s in every run, before and after.
+
+Two findings from these runs:
+- An earlier draft kept the closed phone menu mounted for its exit transition, and Next.js then
+  prefetched every menu page on load (33 → 39 requests, simulated LCP +300 ms). Fixed by turning off
+  prefetch while the menu is closed; requests back to 33 and LCP back to baseline.
+- On phones the **LCP element is the visitor welcome popup's video**, which opens on a 1.2 s timer.
+  That popup, not the hero, sets mobile LCP (see matrix row 10).
 
 ## 6. Conversion hypotheses (not results)
 
