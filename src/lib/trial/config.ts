@@ -20,6 +20,8 @@
  *   TRIAL_EMAIL_FROM                 default "Built2Bid <hello@built2bid.org>"
  *   RESEND_API_KEY                   already set for the founder email
  *   EMAIL_OUTBOX_SECRET              bearer for the scheduled job (shared with the founder email)
+ *   META_BID_CHECK_LINK=true         add a link to the /bid-check questionnaire to the private reply
+ *   META_POST_TRADES                 optional trade hint per post: "<page>_<post>:painting,<page>_<post>:decks"
  */
 export const TRIAL_DAYS = 7;
 export const TRIAL_PLAN_NAME = "Built2Bid Unlimited";
@@ -53,6 +55,10 @@ export interface TrialConfig {
   adPostIds: string[];
   graphVersion: string;
   manychatSecret: string;
+  /** Private reply also links the bid check questionnaire (off unless META_BID_CHECK_LINK=true). */
+  bidCheckLink: boolean;
+  /** Post id -> trade hint for that link. */
+  postTrades: Record<string, string>;
 }
 
 export function trialConfig(env: Env = process.env): TrialConfig {
@@ -69,6 +75,8 @@ export function trialConfig(env: Env = process.env): TrialConfig {
     adPostIds: ids(env.META_AD_POST_IDS),
     graphVersion: /^v\d{2}\.\d$/.test(v) ? v : DEFAULT_GRAPH_VERSION,
     manychatSecret: env.MANYCHAT_TRIAL_SECRET ?? "",
+    bidCheckLink: env.META_BID_CHECK_LINK === "true",
+    postTrades: Object.fromEntries((env.META_POST_TRADES ?? "").split(",").map((p) => p.trim().split(":")).filter(([id, t]) => /^[0-9]+(_[0-9]+)?$/.test(id ?? "") && /^[a-z-]{2,40}$/.test(t ?? ""))),
   };
 }
 

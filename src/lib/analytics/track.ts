@@ -8,9 +8,13 @@ type Params = Record<string, string | number | undefined>;
 type W = Window & { gtag?: (...a: unknown[]) => void; fbq?: (...a: unknown[]) => void };
 
 const META_STANDARD: Record<string, string> = { sign_up: "CompleteRegistration", landing_view: "ViewContent", signup_started: "Lead" };
-const META_CUSTOM: Record<string, string> = { bid_activated: "ActivatedContractor", pdf_exported: "ProposalExported" };
+const META_CUSTOM: Record<string, string> = { bid_activated: "ActivatedContractor", pdf_exported: "ProposalExported", bid_check_complete: "BidCheckComplete", bid_check_invite: "PassRequested" };
 
-export function track(event: "landing_view" | "signup_started" | "sign_up" | "proposal_previewed" | "pdf_exported" | "begin_checkout" | "bid_activated", params: Params = {}, eventId?: string) {
+export type TrackEvent = "landing_view" | "signup_started" | "sign_up" | "proposal_previewed" | "pdf_exported" | "begin_checkout" | "bid_activated"
+  // Bid check questionnaire (answer keys only: trade, goal, campaign; never an email or name).
+  | "bid_check_start" | "bid_check_complete" | "bid_check_result" | "bid_check_invite";
+
+export function track(event: TrackEvent, params: Params = {}, eventId?: string) {
   if (typeof window === "undefined") return;
   const w = window as W;
   const clean: Params = {};
