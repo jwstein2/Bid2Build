@@ -9,4 +9,11 @@ drop table if exists public.project_photos;
 drop function if exists public.can_upload_photos(uuid, uuid);
 drop function if exists public.photo_readable(uuid, uuid);
 drop function if exists public.customer_readable(uuid);
+do $$ begin
+  if to_regclass('public.ai_generations') is not null then
+    delete from public.ai_generations where kind = 'photo_labels';
+    alter table public.ai_generations drop constraint if exists ai_generations_kind_check;
+    alter table public.ai_generations add constraint ai_generations_kind_check check (kind in ('scope', 'exclusions'));
+  end if;
+end $$;
 commit;

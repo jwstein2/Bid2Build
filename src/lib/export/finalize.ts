@@ -14,6 +14,7 @@ import { exportReadiness } from "@/lib/estimate/readiness";
 import { fillLocationFromAddress } from "@/lib/geo/address";
 import type { ProposalDocument } from "@/lib/proposal/types";
 import type { Estimate } from "@/lib/estimate/types";
+import { applyCompanyStyle } from "@/lib/operations/style-server";
 
 export interface FinalizeResult {
   r: {
@@ -47,8 +48,12 @@ export async function finalizeProposal(userId: string, id: string, userCreatedAt
   const supabase = await createClient();
   const data = await loadEstimate(supabase, id);
   if (!data) return fail(404, "not_found", "Save your estimate before exporting.");
-  const { business } = await loadBusiness(supabase, userId, { signedLogo: false });
-  const { estimate, proposalConfig } = data;
+  const { business: ownBusiness } = await loadBusiness(supabase, userId, { signedLogo: false });
+  const admin = createAdminClient();
+  // V4.4: the company's proposal style (locks, template, branding) is applied here, on the server, for
+  // every generated version. Presentation only: totals below come from the unchanged estimate.
+  const styled = await applyCompanyStyle({ supabase, admin, estimateId: id, estimate: data.estimate, business: ownBusiness, config: data.proposalConfig });
+  const { estimate, config: proposalConfig, business } = styled;
 
   const totals = computeEstimate(estimate);
   if (totals.issues.length) return fail(422, "invalid_estimate", "Fix the highlighted entries before exporting.", { issues: totals.issues.slice(0, 5) });
@@ -58,7 +63,6 @@ export async function finalizeProposal(userId: string, id: string, userCreatedAt
   const missing = exportReadiness(estimate, business, totals);
   if (missing.length) return fail(422, "not_ready", missing[0].message, { missing: missing.map(({ code, step, fieldId, message }) => ({ code, step, fieldId, message })) });
 
-  const admin = createAdminClient();
   let logo: { data: Buffer; format: "png" } | null = null;
   if (business.logoPath) {
     const { data: file } = await admin.storage.from("logos").download(business.logoPath);

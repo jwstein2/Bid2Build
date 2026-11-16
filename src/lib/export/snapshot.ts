@@ -24,8 +24,9 @@ export function versionSnapshot(estimate: Estimate, business: BusinessProfile & 
   void _l;
   // Revision history is editing state, not part of what was approved: keep it out of the frozen
   // version (and its hash) so the snapshot holds exactly the scope/exclusions that were exported.
-  const { worksheet: _cw, ...cfg } = config as ProposalConfig & { worksheet?: unknown };
-  void _cw;
+  // Reset markers are workflow state (who reset the bid to the company style and when), not content.
+  const { worksheet: _cw, styleResetAt: _ra, styleResetBy: _rb, styleOverrides: _so, ...cfg } = config as ProposalConfig & { worksheet?: unknown; styleResetAt?: unknown; styleResetBy?: unknown };
+  void _cw; void _ra; void _rb; void _so;
   const proposalConfig = {
     ...cfg,
     scope: cfg.scope ? { ...cfg.scope, history: [] } : cfg.scope,

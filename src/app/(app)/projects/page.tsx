@@ -15,6 +15,8 @@ import { ProjectsWorkspace } from "@/components/projects/workspace";
 import { loadPmAccess } from "@/lib/pm/server";
 import { ButtonLink } from "@/components/ui/button";
 import { Badge, Notice } from "@/components/ui/misc";
+import { ReviewQueue } from "@/components/operations/review-queue";
+import { loadReviewQueue } from "@/lib/operations/queue-server";
 
 export const metadata: Metadata = { title: "Projects", robots: { index: false } };
 
@@ -29,12 +31,13 @@ export default async function ProjectsPage() {
   if (!isPmEnabled()) notFound();
   const supabase = await createClient();
   const win = defaultWindow();
-  const [list, pm, ws, team] = await Promise.all([listSchedules(supabase), loadPmAccess(supabase), loadWorkspace(supabase, win.from, win.to), loadTeam(supabase)]);
+  const [list, pm, ws, team, queue] = await Promise.all([listSchedules(supabase), loadPmAccess(supabase), loadWorkspace(supabase, win.from, win.to), loadTeam(supabase), loadReviewQueue(supabase)]);
   // V4.2 directory: workload capacity/crews, contact info in the drawer, "my" tasks for linked staff.
   const resourceInfo: Record<string, ResourceInfo> = {};
   for (const r of team?.resources ?? []) resourceInfo[`r:${r.id}`] = { id: r.id, label: r.name, kind: r.kind === "subcontractor" ? "Subcontractor" : r.kind === "crew" ? "Crew" : "Staff", email: r.email, phone: r.phone, trade: r.trades.join(", ") || null };
   const extras = team ? { resources: toResourceRefs(team), resourceInfo, myResourceKeys: myResourceKeys(team, ws?.me ?? null), teamHref: "/projects/team", team } : {};
-  const ready = list ? await readyToSchedule(supabase, new Set(list.map((s) => s.estimate_id))) : [];
+  // V4.3: the review queue replaces "Ready to schedule" once its SQL runs (it covers the same bids).
+  const ready = list && queue === null ? await readyToSchedule(supabase, new Set(list.map((s) => s.estimate_id))) : [];
   const tz = ws?.projects[0]?.calendar.timezone ?? "America/Chicago";
   return (
     <div className={`mx-auto space-y-6 ${ws ? "max-w-7xl" : "max-w-5xl"}`}>
@@ -51,6 +54,8 @@ export default async function ProjectsPage() {
           {pm.scope === "company" ? "Ask your company admin for a scheduling editor seat to create or edit schedules." : <>Creating and editing schedules needs Project Command Center. <Link href="/settings/billing" className="font-semibold underline">Unlock Project Command Center</Link></>}
         </Notice>
       )}
+
+      {queue !== null && queue.length > 0 && <div id="review" className="scroll-mt-4"><ReviewQueue items={queue} canSchedule={Boolean(pm?.canEdit)} /></div>}
 
       {ws && (
         <Suspense>

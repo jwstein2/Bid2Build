@@ -64,7 +64,11 @@ function getClient(apiKey: string) {
 }
 
 /** One structured-output request. Throws AiUnavailableError on any failure so callers can fall back. */
-export async function generateStructured<S extends z.ZodType>(opts: { system: string; user: string; schema: S; maxTokens?: number; model?: string }): Promise<StructuredResult<z.infer<S>>> {
+export async function generateStructured<S extends z.ZodType>(opts: {
+  system: string; user: string; schema: S; maxTokens?: number; model?: string;
+  /** Optional images sent before the text (e.g. a downscaled photo preview for label suggestions). */
+  images?: { data: string; mediaType: "image/jpeg" | "image/png" | "image/webp" }[];
+}): Promise<StructuredResult<z.infer<S>>> {
   const s = aiSettings();
   if (!s.enabled || !s.apiKey) throw new AiUnavailableError("AI is not configured", "not_configured");
   let response;
@@ -75,7 +79,12 @@ export async function generateStructured<S extends z.ZodType>(opts: { system: st
       // Short, well-specified writing task: low effort keeps cost and latency down.
       output_config: { effort: "low", format: zodOutputFormat(opts.schema) },
       system: opts.system,
-      messages: [{ role: "user", content: opts.user }],
+      messages: [{
+        role: "user",
+        content: opts.images?.length
+          ? [...opts.images.map((i) => ({ type: "image" as const, source: { type: "base64" as const, media_type: i.mediaType, data: i.data } })), { type: "text" as const, text: opts.user }]
+          : opts.user,
+      }],
     });
   } catch (e) {
     if (e instanceof Anthropic.APIError) throw new AiUnavailableError(`AI request failed (${e.status ?? "network"})`, "api_error");

@@ -26,7 +26,7 @@ export default async function NewSchedulePage({ searchParams }: { searchParams: 
   const { data: existing } = await supabase.from("project_schedules").select("id").eq("estimate_id", id).neq("status", "archived").maybeSingle();
   if (existing?.id) redirect(`/projects/${existing.id}`);
 
-  const [pm, can, groupsRes, itemsRes, versionRes, profileRes, acc, team, peopleRes] = await Promise.all([
+  const [pm, can, groupsRes, itemsRes, versionRes, profileRes, acc, team, peopleRes, reviewRes] = await Promise.all([
     loadPmAccess(supabase),
     supabase.rpc("can_schedule_estimate", { p_estimate_id: id }),
     supabase.from("estimate_groups").select("id, name, sort_order").eq("estimate_id", id).order("sort_order"),
@@ -36,6 +36,7 @@ export default async function NewSchedulePage({ searchParams }: { searchParams: 
     estimateAccepted(supabase, id, est.pipeline_stage as string | null),
     loadTeam(supabase),
     supabase.rpc("pm_people"),
+    supabase.from("project_reviews").select("status").eq("estimate_id", id).maybeSingle(),
   ]);
 
   if (!pm?.canEdit || can.data !== true) {
@@ -68,6 +69,7 @@ export default async function NewSchedulePage({ searchParams }: { searchParams: 
       timezone={tz && validTimeZone(tz) ? tz : "America/Chicago"}
       tradeLabels={Object.fromEntries(trades.map((t) => [t, tradeName(t)]))}
       team={team} people={peopleRes.error ? [] : ((peopleRes.data as { id: string; name: string }[]) ?? [])} me={user.id}
+      needsReview={!reviewRes.error && (reviewRes.data as { status?: string } | null)?.status === "needs_review"}
     />
   );
 }

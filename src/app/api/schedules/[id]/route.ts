@@ -7,6 +7,7 @@ import { NEW_ID, saveSchema } from "@/lib/schedule/payload";
 import { loadSchedule, scheduleDbError } from "@/lib/schedule/server";
 import { changeKinds } from "@/lib/schedule/permissions";
 import type { Task } from "@/lib/schedule/types";
+import { liveDateChanges } from "@/lib/operations/live-schedule";
 
 export const runtime = "nodejs";
 
@@ -78,6 +79,12 @@ export async function PATCH(req: Request, ctx: Ctx) {
   if (need.edit && !perm.edit) return fail(403, "forbidden_edit", perm.progress ? "Your company role can update progress here but can't change dates or tasks." : "You can view this schedule but can't edit it.");
   if (need.progress && !perm.progress) return fail(403, "forbidden_progress", "Your company role can't update progress on this schedule.");
   if (need.dependencies && !perm.dependencies) return fail(403, "forbidden_dependencies", "Your company role can't change task dependencies.");
+
+  // V4.3: changing dates on the live (active) schedule needs an explicit confirmation from the editor
+  // (and the database separately requires "Edit live schedules" on company projects).
+  const live = cur.schedule.status === "active";
+  const moved = live ? liveDateChanges(cur.tasks, tasks, cur.deps) : [];
+  if (moved.length && !b.confirmLive) return fail(409, "confirm_required", "This is a live schedule. Confirm the date change to save it.", { changes: moved.slice(0, 50) });
 
   const patch: Record<string, unknown> = {
     summary: b.summary,

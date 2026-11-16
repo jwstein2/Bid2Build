@@ -75,9 +75,14 @@ begin
   if auth.uid() is null or not public.estimate_readable(p_estimate_id) then return null; end if;
   select * into e from public.estimates where id = p_estimate_id;
   if e.company_id is null then return jsonb_build_object('managed', false); end if;
-  select * into c from public.company_proposal_styles where company_id = e.company_id;
   select owner_user_id into v_owner from public.companies where id = e.company_id;
   if not found then return jsonb_build_object('managed', false); end if;
+  select * into c from public.company_proposal_styles where company_id = e.company_id;
+  -- Companies from before this migration have no row until the owner saves: nothing changes for them.
+  if not found then
+    return jsonb_build_object('managed', false, 'companyId', e.company_id, 'companyOwnerId', v_owner,
+      'canOverride', public.has_company_permission(e.company_id, 'manage_proposal_templates'));
+  end if;
   return jsonb_build_object('managed', true, 'companyId', e.company_id, 'companyOwnerId', v_owner, 'style', c.style, 'locked', to_jsonb(c.locked),
     'allowCustomization', c.allow_member_customization, 'revision', c.revision, 'updatedAt', c.updated_at,
     'canCustomize', c.allow_member_customization and public.has_company_permission(e.company_id, 'customize_proposal_style'),
@@ -151,7 +156,7 @@ begin
      or not (e.user_id = auth.uid() or public.has_company_permission(e.company_id, 'manage_proposal_templates')) then
     raise exception 'forbidden' using errcode = '42501';
   end if;
-  update public.estimates set proposal_config = (coalesce(proposal_config, '{}'::jsonb) - 'template' - 'show' - 'style')
+  update public.estimates set proposal_config = (coalesce(proposal_config, '{}'::jsonb) - 'template' - 'show' - 'style' - 'styleOverrides')
     || jsonb_build_object('styleResetAt', now(), 'styleResetBy', auth.uid())
   where id = e.id;
   perform public.company_audit(e.company_id, 'proposal_style.bid_reset', 'estimate', e.id::text, '{}'::jsonb);

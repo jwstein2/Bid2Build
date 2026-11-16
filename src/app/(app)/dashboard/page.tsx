@@ -19,6 +19,10 @@ import { ROLE_LABELS } from "@/lib/enterprise/permissions";
 import { isEsignEnabled, RECENT_SIGNED_DAYS } from "@/lib/esign/config";
 import { recentSignatures, signingByEstimate, type RequestRow, type SignatureRow } from "@/lib/esign/status";
 import { RecentlySigned, type SignedBid } from "./recently-signed";
+import { ReviewQueue } from "@/components/operations/review-queue";
+import { loadReviewQueue } from "@/lib/operations/queue-server";
+import { loadPmAccess } from "@/lib/pm/server";
+import { isPmEnabled } from "@/lib/env";
 import { RefreshOnFocus } from "@/components/esign/refresh-on-focus";
 import { ReferCard } from "./refer-card";
 import { TrialBanner } from "@/components/billing/trial-banner";
@@ -153,6 +157,8 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   const rawDismissed = (await cookies()).get(PROFILE_REMINDER_COOKIE)?.value;
   const reminderDismissed = rawDismissed ? decodeURIComponent(rawDismissed) : null;
 
+  // V4.3 "Newly approved — needs review" (same queue as Projects; null before the SQL runs).
+  const [reviewQueue, pmAccess] = isPmEnabled() ? await Promise.all([loadReviewQueue(supabase), loadPmAccess(supabase)]) : [null, null];
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -177,6 +183,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
       <LocalDraftsBanner />
       {esign && <RefreshOnFocus />}
       {esign && recentSigned.length > 0 && <RecentlySigned bids={recentSigned} days={RECENT_SIGNED_DAYS} />}
+      {reviewQueue && reviewQueue.length > 0 && <ReviewQueue items={reviewQueue} canSchedule={Boolean(pmAccess?.canEdit)} compact max={5} />}
       {ests.length === 0 && <FirstBidStart companyName={biz?.company_name?.trim() || null} />}
       {checklist && <ActivationChecklist steps={checklist} />}
       {!checklist && ests.length > 0 && <ProfileReminder missing={missing} dismissedSignature={reminderDismissed} />}

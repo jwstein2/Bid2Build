@@ -20,6 +20,7 @@ import { QuantityCalculator } from "./calculators/quantity-calculator";
 import { orderedSections, sectionTrade, tradeBlocks, tradeTotals, type TradeBlock, type TradeTotals } from "@/lib/estimate/trades";
 import { TradeIcon } from "../trade-icon";
 import { AddTradeSelect, useTradeRemoval } from "./trade-controls";
+import { SubQuoteBadge, SubQuotePanel } from "./sub-quote-panel";
 
 type Lib = SavedItemsUi;
 
@@ -651,6 +652,7 @@ function ItemRow({ item: it, isLast, totals, estimate, dispatch, selected, toggl
             {it.treatment === "pass_through" && <span className="rounded bg-brand-tint px-1 text-[10px] font-semibold text-brand">at cost</span>}
             {!it.showOnProposal && <span className="rounded bg-black/5 px-1 text-[10px] font-semibold text-muted">hidden from customer</span>}
             {!it.taxable && <span className="rounded bg-black/5 px-1 text-[10px] font-semibold text-muted">non-taxable</span>}
+            <SubQuoteBadge itemId={it.id} />
           </div>
         </td>
         <td className="px-1 max-md:col-span-4 max-md:p-0">
@@ -747,6 +749,7 @@ function ItemRow({ item: it, isLast, totals, estimate, dispatch, selected, toggl
                 {t.appliedRule ? `Priced at ${t.appliedRule.percent}% ${t.appliedRule.mode}${it.pricingOverride ? " (item override)" : ""}.` : "Billed at cost."} Gross profit on this line: <span className="tabular font-semibold">{formatCurrency(t.grossProfit)}</span>
               </p>
             )}
+            <SubQuotePanel itemId={it.id} itemName={it.name} lineCost={t ? t.extendedCost.toFixed(2) : "0"} />
           </td>
         </tr>
       )}

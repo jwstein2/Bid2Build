@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { AlertTriangle, ArrowLeft, ArrowRight, CalendarRange, Check, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge, Notice } from "@/components/ui/misc";
@@ -26,6 +27,8 @@ export interface WizardProps {
   team?: Team | null;
   people?: { id: string; name: string }[];
   me?: string | null;
+  /** V4.3: this newly approved job hasn't been reviewed yet (saving records the reviewer). */
+  needsReview?: boolean;
 }
 
 const STEPS = ["Source estimate", "Sections", "Start date", "Durations", "Dependencies", "Target date", "Review", "Assign", "Save"] as const;
@@ -33,7 +36,7 @@ const LAST = STEPS.length - 1;
 
 type Link_ = { after: string | null; lag: number; overlap: number };
 
-export function ScheduleWizard({ estimate, accepted, signed, sections, timezone, tradeLabels, team = null, people = [], me = null }: WizardProps) {
+export function ScheduleWizard({ estimate, accepted, signed, sections, timezone, tradeLabels, team = null, people = [], me = null, needsReview = false }: WizardProps) {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [provisional, setProvisional] = useState(false);
@@ -52,6 +55,7 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
   const [existing, setExisting] = useState<string | null>(null);
   // Who's doing the work, per section (saved right after the schedule is created).
   const [assign, setAssign] = useState<Record<string, SectionAssignment>>({});
+  const [reviewed, setReviewed] = useState(false);
 
   const chosen = sections.filter((s) => included.includes(s.id));
   const planInput: PlanSection[] = chosen.map((s, i) => ({ key: s.id, sourceGroupId: s.id, name: s.name, durationDays: durations[s.id] || 1, sortOrder: i, offsetDays: offsets[s.id] ?? 0 }));
@@ -87,13 +91,14 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
     if (r.dep) setLink(e.id, { lag: r.dep.lagDays, overlap: r.dep.maxOverlap });
   };
 
-  async function save() {
+  async function save(publish = false) {
     if (!plan) return;
     setSaving(true); setError(null);
     const r = await api<{ id: string }>("/api/schedules", {
       method: "POST",
       body: JSON.stringify({
         estimateId: estimate.id, provisional: !accepted && provisional, calendar: cal, startDate: start, targetEndDate: target || null,
+        ...(needsReview ? { markReviewed: reviewed } : {}), ...(publish && accepted ? { publish: true } : {}),
         sections: planInput.map((p) => ({ sourceGroupId: p.sourceGroupId, durationDays: p.durationDays, sortOrder: p.sortOrder, offsetDays: p.offsetDays ?? 0 })), deps,
       }),
     });
@@ -120,7 +125,7 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
   return (
     <div className="mx-auto max-w-4xl space-y-5" data-testid="schedule-wizard">
       <div>
-        <Link href="/projects" className="inline-flex items-center gap-1 text-sm font-semibold text-accent-ink hover:underline"><ArrowLeft className="h-4 w-4" aria-hidden /> Projects</Link>
+        <Breadcrumbs items={[{ label: "Projects", href: "/projects" }, { label: "Schedule Now" }]} />
         <h1 className="mt-2 flex items-center gap-2 text-2xl font-extrabold text-navy sm:text-3xl"><CalendarRange className="h-7 w-7 text-accent-ink" aria-hidden /> Schedule Now</h1>
         <p className="mt-1 text-ink-soft">Build a draft job schedule from <strong>{estimate.title || "this bid"}</strong>. Your customer isn&apos;t notified.</p>
       </div>
@@ -302,7 +307,17 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
             <p className="text-ink-soft">Save this as a <strong>draft schedule</strong>. You can drag tasks, schedule individual line items and track progress next. Nothing is sent to your customer.</p>
             {!accepted && <Badge tone="warn">Provisional: bid not yet accepted</Badge>}
             {error && <Notice tone="danger">{error} {existing && <Link className="font-semibold underline" href={`/projects/${existing}`}>Open the existing schedule</Link>}</Notice>}
-            <Button type="button" variant="accent" onClick={save} disabled={saving} data-testid="save-schedule">{saving ? "Saving…" : "Save draft schedule"}</Button>
+            {needsReview && (
+              <label className="flex items-start gap-2 rounded-lg border border-warn/40 bg-warn-tint p-3 text-sm">
+                <input type="checkbox" className="mt-0.5 h-4 w-4" checked={reviewed} onChange={(e) => setReviewed(e.target.checked)} data-testid="confirm-reviewed" />
+                <span><strong>Newly approved: needs PM review.</strong> I reviewed the approved proposal, scope, notes and attachments. Saving records me as the reviewer with the time.</span>
+              </label>
+            )}
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant={accepted ? "secondary" : "accent"} onClick={() => void save(false)} disabled={saving || (needsReview && !reviewed)} data-testid="save-schedule">{saving ? "Saving…" : needsReview ? "Mark reviewed & save draft" : "Save draft schedule"}</Button>
+              {accepted && <Button type="button" variant="accent" onClick={() => void save(true)} disabled={saving || (needsReview && !reviewed)} data-testid="save-publish-schedule">{needsReview ? "Mark reviewed & publish" : "Save & publish as active"}</Button>}
+            </div>
+            {accepted && <p className="text-xs text-muted">Publishing makes it the active schedule and moves the project to Scheduled. A draft stays a draft until you publish it.</p>}
           </div>
         )}
       </section>

@@ -134,7 +134,12 @@ drop policy if exists change_order_signatures_select on public.change_order_sign
 create policy change_order_signatures_select on public.change_order_signatures for select to authenticated
   using (exists (select 1 from public.change_orders c where c.id = change_order_id));
 revoke all on public.change_orders, public.change_order_versions, public.change_order_signing, public.change_order_signatures from anon, authenticated;
-grant select on public.change_orders, public.change_order_versions, public.change_order_signatures to authenticated;
+grant select on public.change_order_versions, public.change_order_signatures to authenticated;
+-- Internal notes are company-only: readers get every column except internal_notes (the history RPC
+-- returns them to people who can create change orders).
+grant select (id, estimate_id, user_id, company_id, number, title, description, lines, amount, schedule_days, customer_notes, status, version,
+  approval_method, approval_note, approved_version, source_quote_revision_id, created_by, sent_at, sent_by, decided_at, decided_by, created_at, updated_at)
+  on public.change_orders to authenticated;
 -- change_order_signing (token hashes) is server-only.
 
 -- Customer-facing content of a change order (what is frozen when it is sent).
@@ -202,11 +207,12 @@ begin
   end if;
   if c.status <> 'draft' then raise exception 'not_draft' using errcode = '22023'; end if;
   if jsonb_array_length(c.lines) = 0 then raise exception 'no_lines' using errcode = '22023'; end if;
-  if p_content_hash is null or p_content_hash !~ '^[0-9a-f]{64}$' then raise exception 'bad_hash' using errcode = '22023'; end if;
   v_ver := c.version + 1;
   v_content := public.change_order_content(p_id) || jsonb_build_object('version', v_ver);
+  -- The fingerprint is computed here from the exact frozen content (p_content_hash is accepted for
+  -- compatibility and ignored), so the hash always matches what the customer sees and signs.
   insert into public.change_order_versions (change_order_id, version, content, content_hash, created_by)
-  values (p_id, v_ver, v_content, p_content_hash, auth.uid()) returning id into v_vid;
+  values (p_id, v_ver, v_content, encode(sha256(convert_to(v_content::text, 'UTF8')), 'hex'), auth.uid()) returning id into v_vid;
   update public.change_orders set status = 'sent', version = v_ver, sent_at = now(), sent_by = auth.uid() where id = p_id;
   if c.company_id is not null then perform public.company_audit(c.company_id, 'change_order.sent', 'change_order', p_id::text, jsonb_build_object('version', v_ver)); end if;
   return jsonb_build_object('versionId', v_vid, 'version', v_ver, 'content', v_content);

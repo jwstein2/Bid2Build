@@ -171,14 +171,14 @@ d("Project operations V4.3 + proposal style V4.4 (database)", () => {
     expect(mine).toHaveLength(1);
     expect(mine[0].reason).toBe("both");
     expect((await task(sid)).status).toBe("in_progress");
-    expect((await pool.query("select count(*)::int n from public.user_notifications where task_id = $1", [t.id])).rows[0].n).toBe(1);
+    expect((await pool.query("select count(*)::int n from public.user_notifications where task_id = $1", [(t as Row).id])).rows[0].n).toBe(1);
     // Syncing again changes nothing.
     expect((await pool.query("select public.pm_sync_task_reviews(array[$1]::uuid[]) as n", [sid])).rows[0].n).toBe(0);
 
     // Moving the finish supersedes the old notice; the new finish (still past) gets its own.
     t = { ...(await task(sid)), __rev: await rev(sid) };
     await save(solo, sid, t, { plannedEnd: "2026-11-06", durationDays: 5 });
-    const all = (await pool.query("select status, resolution, dedupe_key from public.user_notifications where task_id = $1 order by created_at", [t.id])).rows;
+    const all = (await pool.query("select status, resolution, dedupe_key from public.user_notifications where task_id = $1 order by created_at", [(t as Row).id])).rows;
     expect(all).toHaveLength(2);
     expect(all[0]).toMatchObject({ status: "superseded", resolution: "moved" });
     expect(all[1].status).toBe("open");
