@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  analytics, bidEvents, boardSummary, checkMove, columnOf, columnTotals, filterBoard, nextAction, resolveRange, stageForColumn, valueOf,
-  type BoardBid, type HistoryRow,
+  FOCUS, analytics, bidEvents, boardSummary, checkMove, columnOf, columnTotals, filterBoard, isFocus, nextAction, resolveRange, stageForColumn, valueOf,
+  type BoardBid, type FocusKey, type HistoryRow,
 } from "@/lib/pipeline/board";
 import { salesPay, sanitizePay } from "@/lib/pipeline/sales-pay";
 import { STAGES as ENT_STAGES } from "@/lib/enterprise/pipeline";
@@ -200,5 +200,34 @@ describe("sales pay calculator", () => {
   });
   it("sanitizes bad input", () => {
     expect(sanitizePay({ method: "x" as never, rate: 500, flatFee: -3 })).toMatchObject({ method: "percent_sale", rate: 100, flatFee: 0 });
+  });
+});
+
+describe("bids dashboard KPI drilldowns", () => {
+  const bids = [
+    bid({ stage: "draft", status: "draft", latestVersion: null }), bid({ stage: "draft" }), bid({ stage: "sent" }), bid({ signing: awaiting() }),
+    bid({ stage: "won", wonAt: d(2) }), bid({ stage: "scheduled", wonAt: d(9) }), bid({ stage: "lost" }), bid({ signing: signed() }),
+  ];
+  const inFocus = (k: FocusKey) => bids.filter((b) => (FOCUS[k].columns as readonly string[]).includes(columnOf(b))).length;
+  it("each card's filter shows exactly the bids it counts", () => {
+    const s = boardSummary(bids);
+    const t = columnTotals(bids);
+    expect(inFocus("open")).toBe(s.openCount);
+    expect(inFocus("awaiting")).toBe(s.awaitingCount);
+    expect(inFocus("won")).toBe(s.wonCount);
+    expect(inFocus("decided")).toBe(s.decided);
+    expect(inFocus("draft")).toBe(t.draft.count);
+    expect(inFocus("sent")).toBe(t.sent.count);
+    const active = bids.filter((b) => (FOCUS.active.columns as readonly string[]).includes(columnOf(b))).reduce((n, b) => n + (valueOf(b) ?? 0), 0);
+    expect(active).toBe(s.activeValue);
+  });
+  it("validates ?focus= and exposes the bids behind each analytics tile", () => {
+    expect(isFocus("awaiting")).toBe(true);
+    expect(isFocus("hasOwnProperty")).toBe(false);
+    const a = analytics(bids, [], resolveRange("all", NOW));
+    expect(a.ids.created).toHaveLength(a.created);
+    expect(a.ids.won).toHaveLength(a.won);
+    expect(a.ids.lost).toHaveLength(a.lost);
+    expect(a.ids.awaiting).toHaveLength(a.awaitingNow);
   });
 });

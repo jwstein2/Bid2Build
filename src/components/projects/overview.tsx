@@ -7,8 +7,9 @@ import { formatDay } from "@/lib/schedule/calendar";
 import { Badge } from "@/components/ui/misc";
 import { ButtonLink } from "@/components/ui/button";
 import {
-  forecastFinish, nextAction, overviewMetrics, projectDot, projectWarning, sortProjects, type NextAction, type SortKey, type WsProject,
+  OVERVIEW_FOCUS, forecastFinish, matchesFocus, nextAction, overviewMetrics, projectDot, projectWarning, sortProjects, type NextAction, type OverviewFocus, type SortKey, type WsProject,
 } from "@/lib/projects/workspace";
+import { MetricCard } from "@/components/ui/metric-card";
 
 const STATUS: Record<string, { label: string; tone: "neutral" | "accent" | "ok" }> = {
   draft: { label: "Draft", tone: "neutral" }, active: { label: "Active", tone: "accent" }, completed: { label: "Completed", tone: "ok" }, archived: { label: "Archived", tone: "neutral" },
@@ -21,18 +22,21 @@ const ACTION: Record<NextAction, { label: string; href: (p: WsProject) => string
   view: { label: "View project", href: (p) => `/projects/${p.id}` },
 };
 
-export function Overview({ projects, allProjects, nameOf, today, periodStart, onCalendar }: {
+export function Overview({ projects: filteredProjects, allProjects, nameOf, today, periodStart, onCalendar, focus = null, onFocus }: {
   projects: WsProject[]; allProjects: WsProject[]; nameOf: (id: string | null) => string; today: string; periodStart: string; onCalendar: (projectId: string) => void;
+  /** KPI card filter (from ?focus=). Metrics ignore the Status filter, so the drilldown does too. */
+  focus?: OverviewFocus | null; onFocus?: (f: OverviewFocus | null) => void;
 }) {
+  const projects = focus ? allProjects.filter((p) => matchesFocus(p, focus, today, periodStart)) : filteredProjects;
   const [layout, setLayout] = useState<"cards" | "table">("cards");
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: "start", dir: 1 });
   const m = overviewMetrics(allProjects, today, periodStart);
-  const metrics = [
-    { label: "Active projects", value: m.active, hint: "Not yet completed" },
-    { label: "Starting in 2 weeks", value: m.startingSoon, hint: "Planned starts in the next 14 days" },
-    { label: "Delayed", value: m.delayed, hint: "Projects with a delayed task or a task past its planned finish", warn: m.delayed > 0 },
-    { label: "Customer update due", value: m.needsUpdate, hint: "The schedule changed since the customer last saw it", warn: m.needsUpdate > 0 },
-    { label: "Completed (30 days)", value: m.completed, hint: "Projects closed out in the last 30 days" },
+  const metrics: { key: OverviewFocus; label: string; value: number; hint: string; action: string; warn?: boolean }[] = [
+    { key: "active", label: "Active projects", value: m.active, hint: "Not yet completed", action: "View active projects" },
+    { key: "starting", label: "Starting in 2 weeks", value: m.startingSoon, hint: "Planned starts in the next 14 days", action: "View upcoming starts" },
+    { key: "delayed", label: "Delayed", value: m.delayed, hint: "Projects with a delayed task or a task past its planned finish", action: "View delayed work", warn: m.delayed > 0 },
+    { key: "update", label: "Customer update due", value: m.needsUpdate, hint: "The schedule changed since the customer last saw it", action: "View updates due", warn: m.needsUpdate > 0 },
+    { key: "completed", label: "Completed (30 days)", value: m.completed, hint: "Projects closed out in the last 30 days", action: "View completed jobs" },
   ];
   const list = sortProjects(projects, sort.key, sort.dir, nameOf);
   const th = (key: SortKey, label: string) => (
@@ -47,22 +51,30 @@ export function Overview({ projects, allProjects, nameOf, today, periodStart, on
     <div className="space-y-4" data-testid="view-overview">
       <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5" aria-label="Key numbers">
         {metrics.map((x) => (
-          <li key={x.label} className="rounded-xl border border-line bg-surface p-3" title={x.hint} data-testid="metric">
-            <p className="text-xs font-semibold text-ink-soft">{x.label}</p>
-            <p className={cn("mt-1 font-display text-2xl font-extrabold", x.warn ? "text-warn" : "text-navy")}>{x.value}</p>
+          <li key={x.label} data-testid="metric">
+            <MetricCard size="sm" title={x.label} value={x.value} hint={x.hint} tone={x.warn ? "warn" : "default"} empty={x.value === 0}
+              onSelect={onFocus ? () => onFocus(focus === x.key ? null : x.key) : undefined} pressed={focus === x.key} testId={`metric-${x.key}`}
+              action={focus === x.key ? "Showing · tap to clear" : x.action} />
           </li>
         ))}
       </ul>
 
       <div className="flex items-center justify-between gap-2">
-        <h2 className="font-display text-lg font-extrabold text-navy">{projects.length} project{projects.length === 1 ? "" : "s"}</h2>
+        <h2 className="font-display text-lg font-extrabold text-navy">{projects.length} project{projects.length === 1 ? "" : "s"}{focus && <span className="font-semibold text-ink-soft"> · {OVERVIEW_FOCUS[focus].label}</span>}
+          {focus && onFocus && <button type="button" onClick={() => onFocus(null)} className="ml-2 align-middle text-sm font-semibold text-accent-ink underline" data-testid="clear-focus">Show all</button>}
+        </h2>
         <div className="inline-flex rounded-lg border border-line p-0.5" role="group" aria-label="Layout">
           <button type="button" aria-pressed={layout === "cards"} onClick={() => setLayout("cards")} className={cn("inline-flex min-h-9 items-center gap-1 rounded-md px-2.5 text-sm font-semibold", layout === "cards" ? "bg-navy text-white" : "text-ink-soft")}><LayoutGrid className="h-4 w-4" aria-hidden /> Cards</button>
           <button type="button" aria-pressed={layout === "table"} onClick={() => setLayout("table")} className={cn("inline-flex min-h-9 items-center gap-1 rounded-md px-2.5 text-sm font-semibold", layout === "table" ? "bg-navy text-white" : "text-ink-soft")} data-testid="layout-table"><Table2 className="h-4 w-4" aria-hidden /> Table</button>
         </div>
       </div>
 
-      {projects.length === 0 && <p className="rounded-xl border border-dashed border-line p-6 text-center text-sm text-muted">No projects match these filters.</p>}
+      {projects.length === 0 && (
+        <div className="rounded-xl border border-dashed border-line p-6 text-center text-sm text-muted" data-testid="metric-empty">
+          <p>{focus ? OVERVIEW_FOCUS[focus].empty : "No projects match these filters."}</p>
+          {focus && focus !== "delayed" && focus !== "update" && <Link href="/dashboard?view=pipeline&focus=won" className="mt-2 inline-block font-semibold text-accent-ink underline">Schedule a won bid</Link>}
+        </div>
+      )}
 
       {layout === "cards" ? (
         <ul className="grid gap-3 lg:grid-cols-2">

@@ -146,6 +146,22 @@ export function nextAction(b: BoardBid, esign: boolean, scheduling = false): Nex
 // ---------------------------------------------------------------------------
 // Date ranges
 // ---------------------------------------------------------------------------
+/**
+ * Board filters opened from the Bids dashboard KPI cards (?focus=). Each lists exactly the columns its
+ * card counts, so the filtered board always matches the number on the card.
+ */
+export const FOCUS = {
+  active: { label: "Active pipeline", columns: ["ready", "sent", "awaiting"], empty: "No proposals are ready, sent or awaiting a decision." },
+  open: { label: "Open bids", columns: ["draft", "ready", "sent", "awaiting"], empty: "No open bids." },
+  draft: { label: "Drafts", columns: ["draft"], empty: "No draft bids." },
+  sent: { label: "Sent", columns: ["sent"], empty: "No sent proposals." },
+  awaiting: { label: "Awaiting signature", columns: ["awaiting"], empty: "No bids awaiting signature." },
+  won: { label: "Approved / Won", columns: ["won", "scheduled", "in_progress", "completed"], empty: "No won or approved bids yet." },
+  decided: { label: "Won and lost", columns: ["won", "scheduled", "in_progress", "completed", "lost"], empty: "No bids have been won or lost yet." },
+} as const satisfies Record<string, { label: string; columns: readonly Column[]; empty: string }>;
+export type FocusKey = keyof typeof FOCUS;
+export const isFocus = (s: unknown): s is FocusKey => typeof s === "string" && Object.hasOwn(FOCUS, s);
+
 export const RANGES = { "30d": "Last 30 days", month: "This month", "90d": "Last 90 days", year: "Last 12 months", all: "All time", custom: "Custom range" } as const;
 export type RangeKey = keyof typeof RANGES;
 export const isRange = (s: unknown): s is RangeKey => typeof s === "string" && s in RANGES;
@@ -264,19 +280,23 @@ export interface Analytics {
   created: number; sent: number; awaitingNow: number; won: number; lost: number; decided: number;
   winRate: number | null; wonValue: number; avgWonValue: number | null; wonUnpriced: number;
   avgDaysToWin: number | null; daysSample: number; wonViaEsign: number; wonManual: number;
+  /** The bids behind each count (ids), for the Analytics tiles' drilldown drawers. */
+  ids: { created: string[]; sent: string[]; awaiting: string[]; won: string[]; lost: string[] };
   wonBids: { id: string; title: string; customer: string; value: number | null; subtotal: number | null; cost: number | null; wonAt: string }[];
 }
 
 export function analytics(bids: BoardBid[], history: HistoryRow[], r: Range): Analytics {
   let created = 0, sent = 0, won = 0, lost = 0, wonValue = 0, priced = 0, wonUnpriced = 0, daysTotal = 0, daysSample = 0, esign = 0;
   const wonBids: Analytics["wonBids"] = [];
+  const ids: Analytics["ids"] = { created: [], sent: [], awaiting: [], won: [], lost: [] };
   for (const b of bids) {
-    if (inRange(b.createdAt, r)) created++;
+    if (inRange(b.createdAt, r)) { created++; ids.created.push(b.id); }
+    if (columnOf(b) === "awaiting") ids.awaiting.push(b.id);
     const ev = bidEvents(b, history);
-    if (inRange(ev.sentAt, r)) sent++;
+    if (inRange(ev.sentAt, r)) { sent++; ids.sent.push(b.id); }
     if (!ev.outcome || !inRange(ev.outcome.at, r)) continue;
-    if (ev.outcome.kind === "lost") { lost++; continue; }
-    won++;
+    if (ev.outcome.kind === "lost") { lost++; ids.lost.push(b.id); continue; }
+    won++; ids.won.push(b.id);
     if (ev.outcome.via === "esign") esign++;
     const v = valueOf(b);
     if (v === null) wonUnpriced++; else { wonValue = round2(wonValue + v); priced++; }
@@ -288,7 +308,7 @@ export function analytics(bids: BoardBid[], history: HistoryRow[], r: Range): An
   }
   const decided = won + lost;
   return {
-    created, sent, awaitingNow: bids.filter((b) => columnOf(b) === "awaiting").length, won, lost, decided,
+    created, sent, awaitingNow: ids.awaiting.length, won, lost, decided, ids,
     winRate: decided >= MIN_DECIDED ? Math.round((won / decided) * 1000) / 10 : null,
     wonValue, avgWonValue: priced ? round2(wonValue / priced) : null, wonUnpriced,
     avgDaysToWin: daysSample ? Math.round((daysTotal / daysSample) * 10) / 10 : null, daysSample,
