@@ -40,6 +40,7 @@ import type { ShareEmailInput } from "@/lib/proposal/share-email";
 import { displayPhone } from "@/lib/proposal/customer-text";
 import { ThemeToggle } from "../theme/theme-toggle";
 import type { ThemePref } from "@/lib/theme";
+import { track } from "@/lib/analytics/track";
 
 type Biz = BusinessProfile & { logoPath?: string | null };
 type Step = BuilderStep;
@@ -119,6 +120,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
   const [cloudMode, setCloudMode] = useState(mode === "cloud");
   const lib = useLibrary(Boolean(user));
   const estimate = state.estimate;
+  const primaryTrade = estimate.trades[0];
   const editStamp = `${state.dirty}|${configDirty}|${bizDirty}`;
   const signingLink = signingLinkState && signingLinkState.stamp === editStamp ? signingLinkState.link : null;
   const totals = useMemo(() => computeEstimate(estimate), [estimate]);
@@ -166,8 +168,9 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
   useEffect(() => {
     if (!previewOpen || !user || !cloudMode || previewSent.current === estimate.id) return;
     previewSent.current = estimate.id;
+    track("proposal_previewed", { trade: primaryTrade });
     void fetch("/api/events", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ event: "preview_opened", estimateId: estimate.id }), keepalive: true }).catch(() => {});
-  }, [previewOpen, user, cloudMode, estimate.id]);
+  }, [previewOpen, user, cloudMode, estimate.id, primaryTrade]);
 
   // Debounced cloud autosave.
   const first = useRef(true);
@@ -272,6 +275,8 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
       if (!r.ok) return { error: data?.error?.message ?? "Export failed. Please try again." };
       const message = exportMessage(data.creditSource as CreditSource, data.versionNumber, data.credits);
       setFinalizedHere(true);
+      // A PDF was actually generated on the server (response ok): mirror it for GA4 / the Pixel.
+      track("pdf_exported", { trade: primaryTrade });
       await refreshCredits();
       if (deliver === "signing") {
         const file = data.pdfBase64 ? base64File(data.pdfBase64, data.filename) : undefined;
@@ -289,7 +294,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
       exportLock.current = false;
       setExporting(false);
     }
-  }, [user, readiness, fixIssue, estimate.id, saveCloud, refreshCredits]);
+  }, [user, readiness, fixIssue, estimate.id, saveCloud, refreshCredits, primaryTrade]);
 
   const doExport = useCallback(async () => {
     const res = await runExport("download");
