@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useRef, useState, type ReactNode } from "react";
+import { Suspense, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { menuKeyDown, useDismiss } from "@/components/ui/use-dismiss";
 import { PRIMARY, TOOLS } from "./nav";
@@ -58,14 +58,31 @@ function ToolsMenu({ path }: { path: string }) {
   // eslint-disable-next-line react-hooks/set-state-in-effect -- close after navigating
   useEffect(() => { setOpen(false); }, [path]);
   useEffect(() => { if (open) panel.current?.querySelector<HTMLElement>("a")?.focus(); }, [open]);
+  // Keep the whole menu on screen: line it up under the button, then nudge it left if it would run off
+  // the right edge (at tablet widths Tools sits near the right side and the menu was cut off).
+  const wrap = useRef<HTMLDivElement>(null);
+  const [left, setLeft] = useState(0);
+  useLayoutEffect(() => {
+    if (!open) return;
+    const place = () => {
+      const w = wrap.current?.getBoundingClientRect(), pw = panel.current?.offsetWidth ?? 256;
+      if (!w) return;
+      const vw = document.documentElement.clientWidth;
+      setLeft(Math.round(Math.max(8, Math.min(w.left, vw - pw - 8)) - w.left));
+    };
+    place();
+    window.addEventListener("resize", place);
+    return () => window.removeEventListener("resize", place);
+  }, [open]);
   const active = TOOLS.some((n) => under(path, n.href));
   return (
-    <div className="relative">
+    <div ref={wrap} className="relative">
       <button ref={trigger} type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-controls="admin-tools-menu" data-testid="admin-tools"
         onKeyDown={(e) => { if (e.key === "ArrowDown" && !open) { e.preventDefault(); setOpen(true); } }}
         className={cn("rounded-md px-2.5 py-1.5 hover:bg-white/5 hover:text-white", active ? "text-[var(--cc-green)]" : "text-[#b9cbd6]")}>Tools ▾</button>
       {open && (
-        <div ref={panel} id="admin-tools-menu" onKeyDown={menuKeyDown} className="absolute right-0 z-40 mt-1 max-h-[70dvh] w-64 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-lg border border-[var(--cc-line)] bg-[#0a1117] p-1 shadow-2xl sm:left-0 sm:right-auto">
+        <div ref={panel} id="admin-tools-menu" onKeyDown={menuKeyDown} style={{ left }}
+          className="absolute z-40 mt-1 max-h-[70dvh] w-64 max-w-[calc(100vw-1rem)] overflow-y-auto rounded-lg border border-[var(--cc-line)] bg-[#0a1117] p-1 shadow-2xl">
           {TOOLS.map((n) => <Link key={n.href} href={n.href} onClick={() => setOpen(false)} aria-current={under(path, n.href) ? "page" : undefined}
             className={cn("block rounded-md px-3 py-2 font-sans text-sm focus-visible:bg-white/10", under(path, n.href) ? "text-[var(--cc-green)]" : "text-[#b9cbd6] hover:bg-white/5 hover:text-white")}>{n.label}</Link>)}
         </div>
