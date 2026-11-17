@@ -15,6 +15,7 @@ export const EXPORT_SECTIONS = {
   customers: ["customers", "comm_settings", "comm_contacts", "comm_messages", "comm_events", "comm_offers", "comm_suppressions", "project_comm_settings"],
   projects: ["project_schedules", "schedule_tasks", "schedule_dependencies", "schedule_revisions", "schedule_publications", "project_activity", "project_reviews", "project_photos", "project_scope_sections", "project_scope_revisions", "project_cost_adjustments", "scope_shares", "scope_share_versions", "subcontractor_quotes", "subcontractor_quote_revisions", "pm_editors", "pm_resources", "pm_crew_members"],
   change_orders: ["change_orders", "change_order_versions", "change_order_signing", "change_order_signatures"],
+  financials: ["fin_books", "fin_seats", "fin_business_config", "fin_jobs", "fin_contract_snapshots", "fin_contract_changes", "fin_payment_milestones", "fin_milestone_triggers", "fin_milestone_amendments", "fin_invoices", "fin_invoice_lines", "fin_payments", "fin_payment_allocations", "fin_credit_memos", "fin_credit_applications", "fin_refunds", "fin_cost_codes", "fin_budget_lines", "fin_vendors", "fin_commitments", "fin_commitment_revisions", "fin_vendor_bills", "fin_vendor_bill_lines", "fin_expenses", "fin_documents", "fin_invoice_disputes", "fin_audit_log"],
   company: ["companies", "company_members", "company_invitations", "company_teams", "company_team_members", "company_proposal_styles", "company_proposal_style_history", "company_audit_log", "sales_pay_settings"],
 } as const;
 
@@ -73,7 +74,7 @@ export async function buildExport(client: ExportClient, account: { id: string; e
   const out: Record<string, unknown> = {
     exported_at: now.toISOString(),
     account: { id: account.id, email: account.email ?? null },
-    about: "Everything in your Built2Bid account that you can see in the app: your bids, customers and messages, projects and schedules, change orders, signatures, and company data. Photos and PDFs are listed by their stored file path; download them from the app. Secret link tokens are left out.",
+    about: "Everything in your Built2Bid account that you can see in the app: your bids, customers and messages, projects and schedules, change orders, signatures, company data, and financial records. Photos and PDFs are listed by their stored file path; download them from the app. Secret link tokens are left out.",
     sections: EXPORT_SECTIONS,
     row_counts: Object.fromEntries(EXPORT_TABLES.map((t) => [t, results.get(t)!.rows.length])),
     truncated_tables: EXPORT_TABLES.filter((t) => results.get(t)!.truncated),

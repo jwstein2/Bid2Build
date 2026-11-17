@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { REVEAL_FEATURE_EVENT } from "@/lib/features/state";
-import { Sparkles, CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, Plug, LayoutTemplate, LogOut, X, UserCog, Receipt, Gauge, SquareKanban, CalendarRange, GraduationCap, Palette, Landmark, Shapes, Bot } from "lucide-react";
+import { Sparkles, CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, Plug, LayoutTemplate, LogOut, X, UserCog, Receipt, Gauge, SquareKanban, CalendarRange, GraduationCap, Palette, Landmark, Shapes, Bot, House } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ButtonLink } from "@/components/ui/button";
 import { Logo } from "./logo";
@@ -58,9 +58,10 @@ const FIN_SETTINGS: NavItem[] = [
 
 /** Projects (schedules) sit right below Bids when project scheduling is switched on. */
 const PROJECTS: NavItem = { href: "/projects", label: "Projects", icon: CalendarRange };
+const HOME: NavItem = { href: "/home", label: "Home", icon: House, exact: true };
 
-export function AppSidebar({ isAdmin, email, company, projects = false, financials = false, theme = null, learning }: { isAdmin: boolean; email: string | null; company?: CompanyNav | null; projects?: boolean; financials?: boolean; theme?: ThemePref | null; learning?: LearningNav | null }) {
-  const work: NavItem[] = projects ? [NAV[0], PROJECTS, ...NAV.slice(1)] : NAV;
+export function AppSidebar({ isAdmin, email, company, projects = false, financials = false, home = false, theme = null, learning }: { isAdmin: boolean; email: string | null; company?: CompanyNav | null; projects?: boolean; financials?: boolean; home?: boolean; theme?: ThemePref | null; learning?: LearningNav | null }) {
+  const work: NavItem[] = [...(home ? [HOME] : []), ...(projects ? [NAV[0], PROJECTS, ...NAV.slice(1)] : NAV)];
   const nav: NavItem[] = [...work, ...(financials ? [FINANCIALS, ...FIN_SETTINGS] : []), ...ACCOUNT_NAV];
   const path = usePathname();
   const [open, setOpen] = useState(false);
@@ -108,7 +109,7 @@ export function AppSidebar({ isAdmin, email, company, projects = false, financia
   return (
     <>
       <div className="flex items-center justify-between gap-1 px-3 py-3 sm:gap-2 sm:px-4 md:py-4">
-        <Logo tone="dark" href="/dashboard" />
+        <Logo tone="dark" href={home ? "/home" : "/dashboard"} />
         <div className="flex items-center gap-1 max-[380px]:gap-0 md:hidden">
           <ButtonLink href="/bids" variant="accent" size="sm" className="min-h-11 max-[380px]:px-2.5"><FileText className="h-4 w-4 max-[380px]:hidden" aria-hidden /> New bid</ButtonLink>
           <ThemeToggle signedIn account={theme} tone="dark" />

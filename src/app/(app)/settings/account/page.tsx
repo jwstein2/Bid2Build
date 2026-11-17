@@ -1,3 +1,4 @@
+import { isFinancialsEnabled } from "@/lib/env";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { createClient, getUser } from "@/lib/supabase/server";
@@ -22,7 +23,7 @@ export default async function AccountPage() {
       <h1 className="text-3xl font-extrabold">Account settings</h1>
       <SignInMethods email={user.email} emailVerified={user.emailVerified} phone={user.phone} phoneVerified={user.phoneVerified} smsEnabled={isSmsSignInEnabled()} />
       <MarketSharing initial={{ sharePrices: Boolean(consent?.share_prices), shareCosts: Boolean(consent?.share_costs), commercialUse: Boolean(consent?.commercial_use) }} />
-      <AccountActions marketing={Boolean(profile?.marketing_opt_in)} />
+      <AccountActions marketing={Boolean(profile?.marketing_opt_in)} financials={isFinancialsEnabled()} />
     </div>
   );
 }
