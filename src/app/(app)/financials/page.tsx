@@ -3,7 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LayoutGrid, Settings2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { isFinancialsEnabled } from "@/lib/env";
+import { isFinBillingConfigured, isFinancialsEnabled } from "@/lib/env";
+import { FinAddonCard } from "@/components/billing/fin-addon";
 import { site } from "@/lib/site";
 import { loadFinState, loadHome, type Figure } from "@/lib/financials/loaders";
 import { canUseAccountantMode } from "@/lib/financials/permissions";
@@ -40,6 +41,11 @@ export default async function FinancialsHome() {
   const home = await loadHome(db, ctx);
   const perms = access.permissions;
   const canWrite = access.active && !access.readOnly;
+  // Solo owners buy the add-on here (complimentary access needs no purchase).
+  const soloOwner = access.kind === "solo" && access.role === "owner" && access.source !== "complimentary";
+  const { data: mySub } = soloOwner
+    ? await db.from("subscriptions").select("plan, status, current_period_end, fin_addon").neq("plan", "enterprise").in("status", ["active", "trialing", "past_due"]).order("updated_at", { ascending: false }).limit(1).maybeSingle()
+    : { data: null };
   const essential = layout.cards.filter((c) => c.essential);
   const regular = layout.cards.filter((c) => !c.essential && c.visible);
   const { data: jobs } = await db.from("fin_jobs").select("id, estimate_id").eq("book_id", ctx.bookId);
@@ -68,7 +74,8 @@ export default async function FinancialsHome() {
         {perms.includes("manage_financial_config") && <ButtonLink href="/company/business-config" variant="ghost" size="sm" data-guide="fin.config"><Settings2 className="h-4 w-4" aria-hidden /> Trade setup</ButtonLink>}
       </header>
 
-      {access.readOnly && (home.jobs > 0
+      {soloOwner && <FinAddonCard active={Boolean(mySub?.fin_addon)} periodEnd={mySub?.current_period_end ?? null} annual={mySub?.plan === "annual"} hasPlan={Boolean(mySub)} purchasable={isFinBillingConfigured()} />}
+      {access.readOnly && !soloOwner && (home.jobs > 0
         ? <Notice tone="warn" title="Read-only">The Financials add-on lapsed. Everything stays readable and exportable; nothing was deleted.</Notice>
         : <Notice title="Financials isn't on your plan yet">You can look around and set up your trades. Recording invoices, payments and costs turns on with the Financials add-on. For early access, email <a href={`mailto:${site.supportEmail}`} className="font-semibold underline">{site.supportEmail}</a>.</Notice>)}
       {!ctx.configSaved && perms.includes("manage_financial_config") && (
