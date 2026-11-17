@@ -146,7 +146,13 @@ describe("photo labels and job status", () => {
     expect(jobStatus({ stage: "won", reviewStatus: "needs_review" })).toBe("needs_review");
     expect(jobStatus({ stage: "won", reviewStatus: "reviewed" })).toBe("ready_to_schedule");
     expect(jobStatus({ stage: "won", reviewStatus: "reviewed", scheduleStatus: "draft" })).toBe("draft_schedule");
-    expect(jobStatus({ stage: "scheduled", scheduleStatus: "active" })).toBe("scheduled");
+    // Owner rule: a published schedule (it always has a start date) means In Progress.
+    expect(jobStatus({ stage: "scheduled", scheduleStatus: "active" })).toBe("in_progress");
+    expect(jobStatus({ stage: "won", reviewStatus: "reviewed", scheduleStatus: "active" })).toBe("in_progress");
+    // Dragged to In Progress while the schedule is still a draft: scheduling isn't complete.
+    expect(jobStatus({ stage: "in_progress", reviewStatus: "reviewed", scheduleStatus: "draft" })).toBe("draft_schedule");
+    expect(jobStatus({ stage: "in_progress" })).toBe("in_progress");
+    expect(jobStatus({ stage: "scheduled" })).toBe("scheduled");
     expect(jobStatus({ stage: "in_progress", scheduleStatus: "active" })).toBe("in_progress");
     expect(jobStatus({ stage: "completed" })).toBe("completed");
     expect(jobStatus({ stage: "sent" })).toBeNull();

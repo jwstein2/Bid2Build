@@ -375,6 +375,7 @@ d("Financial Command Center: receivables, milestones and emails (database)", () 
   });
 
   it("rollbacks remove the financial objects (newest first) and the migrations re-apply", async () => {
+    await pool.query(readFileSync("docs/project-operations/rollback_20261129001000.sql", "utf8")); // newest first
     for (const f of ["20261128001000", "20261126001000", "20261125001000", "20261124005000", "20261124004000", "20261124003000", "20261124002000", "20261124001000"]) await pool.query(readFileSync(`docs/financials/rollback_${f}.sql`, "utf8"));
     expect((await pool.query("select count(*)::int as n from pg_class where relname like 'fin\\_%' and relnamespace = 'public'::regnamespace")).rows[0].n).toBe(0);
     expect((await pool.query("select count(*)::int as n from pg_proc where proname like 'fin\\_%' and pronamespace = 'public'::regnamespace")).rows[0].n).toBe(0);
