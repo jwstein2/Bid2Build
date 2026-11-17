@@ -6,6 +6,22 @@ import { fail, json, logError, sameOrigin } from "@/lib/http/api";
 
 export const runtime = "nodejs";
 
+/** A closed account can't sign in again (about 100 years; Supabase bans take a duration). */
+const CLOSED_ACCOUNT_BAN = "876000h";
+
+type Retention = { action: "delete" } | { action: "retain"; retainUntil: string };
+
+/** Before the Financials migration (20261125001000) is installed there is nothing to keep. */
+async function prepareFinancialRetention(admin: ReturnType<typeof createAdminClient>, userId: string): Promise<Retention> {
+  const { data, error } = await admin.rpc("fin_prepare_account_deletion", { p_user_id: userId });
+  if (error) {
+    const missing = error.code === "PGRST202" || error.code === "42883" || /could not find the function/i.test(error.message ?? "");
+    if (missing) return { action: "delete" };
+    throw error;
+  }
+  return (data as Retention | null) ?? { action: "delete" };
+}
+
 export async function POST(req: Request) {
   if (!(await sameOrigin())) return fail(403, "bad_origin", "Cross-site request refused.");
   const user = await getUser();
@@ -18,6 +34,9 @@ export async function POST(req: Request) {
       const { data: subs } = await admin.from("subscriptions").select("stripe_subscription_id, status").eq("user_id", user.id);
       for (const s of subs ?? []) if (!["canceled", "incomplete_expired"].includes(s.status)) await getStripe().subscriptions.cancel(s.stripe_subscription_id);
     }
+    // Financial records must be kept (7 years after the last activity) once invoices or payments exist.
+    // An empty Financials book is purged; a book with records gets a hold and the login is closed instead.
+    const retention = await prepareFinancialRetention(admin, user.id);
     for (const bucket of ["logos", "documents"]) {
       const { data: files } = await admin.storage.from(bucket).list(user.id, { limit: 1000 });
       const paths: string[] = [];
@@ -29,6 +48,13 @@ export async function POST(req: Request) {
         }
       }
       if (paths.length) await admin.storage.from(bucket).remove(paths);
+    }
+    if (retention.action === "retain") {
+      await admin.from("audit_logs").insert({ actor_id: null, action: "account.closed_retained", target_type: "user", target_id: user.id, details: { retain_until: retention.retainUntil } });
+      const { error: banErr } = await admin.auth.admin.updateUserById(user.id, { ban_duration: CLOSED_ACCOUNT_BAN });
+      if (banErr) throw banErr;
+      await (await createClient()).auth.signOut();
+      return json({ ok: true, retained: true, retainUntil: retention.retainUntil });
     }
     await admin.from("audit_logs").insert({ actor_id: null, action: "account.deleted", target_type: "user", target_id: user.id });
     const { error } = await admin.auth.admin.deleteUser(user.id); // cascades to all user-owned rows

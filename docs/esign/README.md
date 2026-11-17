@@ -53,3 +53,6 @@ Signing links use `finalize_bid` unchanged: one credit per bid, ever. Downloadin
 - `tests/esign.test.ts`: status derivation, validation, expiry, tokens, wording, signing email, real signed-PDF render.
 - `tests/esign-routes.test.ts`: one credit across export + links, readiness before credits, owner-only, flag off, accept validation, PDF failure keeps Signed.
 - `scripts/esign/walk.mjs`: browser walk (dashboard, filters, signing page desktop/phone with a drawn signature, signed copy download, replay refusal, signed page, audit, builder link dialog, 320–1280px).
+
+## Contractor signatures (V5.3)
+Contractor-side signatures, Proposal Signing policy, My Signature and the Fully Executed PDF: see [CONTRACTOR_SIGNATURES.md](CONTRACTOR_SIGNATURES.md). Behind `NEXT_PUBLIC_CONTRACTOR_SIGNING=on`; the customer flow above is unchanged.

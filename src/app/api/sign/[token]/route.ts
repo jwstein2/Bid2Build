@@ -4,6 +4,8 @@ import { acceptanceText, consentText, CONSENT_VERSION, isEsignEnabled } from "@/
 import { hashSigningToken, isSigningToken } from "@/lib/esign/token";
 import { acceptSchema } from "@/lib/esign/validate";
 import { ensureSignedPdf, loadRequestByToken, requestEvidence } from "@/lib/esign/server";
+import { isContractorSigningEnabled } from "@/lib/esign/contractor/config";
+import { ensureExecutedPdf } from "@/lib/esign/contractor/server";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -68,7 +70,17 @@ export async function POST(req: Request, ctx: RouteContext<"/api/sign/[token]">)
   }
   const row = (Array.isArray(data) ? data[0] : data) as { signature_id: string; created: boolean };
 
+  // V5.3: contractor side. Contractor-first opens the executed record; automatic application after the
+  // customer signs happens here when the policy allows it; otherwise the contract waits for a person to
+  // countersign. Nothing is emailed to anyone and nothing is charged. Never blocks the acceptance.
+  let execution: string | null = null;
+  if (isContractorSigningEnabled()) {
+    const { data: after, error: afterErr } = await admin.rpc("contractor_after_customer_signed", { p_signature_id: row.signature_id });
+    if (afterErr) logError("contractor.after_customer", afterErr, { signature: row.signature_id });
+    execution = (after as { state?: string } | null)?.state ?? null;
+  }
   // Acceptance is committed. The signed copy is best effort: a failure is retried on download.
   const pdf = await ensureSignedPdf(admin, row.signature_id);
-  return json({ signed: true, signatureId: row.signature_id, pdfReady: pdf.ok });
+  if (execution === "fully_executed") await ensureExecutedPdf(admin, row.signature_id);
+  return json({ signed: true, signatureId: row.signature_id, pdfReady: pdf.ok, execution });
 }

@@ -3,6 +3,8 @@ import { fail, rateLimit } from "@/lib/http/api";
 import { isEsignEnabled } from "@/lib/esign/config";
 import { ensureSignedPdf, loadRequestByToken, requestPdf, signedFilename } from "@/lib/esign/server";
 import { pdfFilename } from "@/lib/pdf/render";
+import { isContractorSigningEnabled } from "@/lib/esign/contractor/config";
+import { ensureExecutedPdf } from "@/lib/esign/contractor/server";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -22,7 +24,14 @@ export async function GET(_req: Request, ctx: RouteContext<"/api/sign/[token]/pd
   if (r.phase === "revoked" || r.phase === "expired") return fail(410, "link_inactive", "This signing link is no longer active.");
 
   let bytes: Buffer, filename: string;
-  if (r.phase === "signed" && r.signatureId) {
+  // V5.3: once fully executed (both signatures recorded) the customer's copy is the executed agreement.
+  const executed = r.phase === "signed" && r.signatureId && isContractorSigningEnabled() ? await ensureExecutedPdf(admin, r.signatureId) : null;
+  if (executed?.ok) {
+    const { data: file } = await admin.storage.from("documents").download(executed.path);
+    if (!file) return fail(503, "pdf_pending", "The executed agreement is still being prepared; please try again in a minute.");
+    bytes = Buffer.from(await file.arrayBuffer());
+    filename = executed.filename;
+  } else if (r.phase === "signed" && r.signatureId) {
     const out = await ensureSignedPdf(admin, r.signatureId);
     if (!out.ok) return fail(503, "pdf_pending", "Your signature is recorded. The signed PDF is still being prepared; please try again in a minute.");
     const { data: file } = await admin.storage.from("documents").download(out.path);

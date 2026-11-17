@@ -119,6 +119,8 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
   // the bid is unchanged (no new request, no extra credit), and dropped after an edit, a revoke or expiry.
   const [signingLinkState, setSigningLinkState] = useState<{ link: CreatedLink; stamp: string } | null>(null);
   const [signingRefresh, setSigningRefresh] = useState(0);
+  // V5.3: "Sign now before sending" on the Proposal step (only offered to an authorized signer).
+  const [signBeforeSend, setSignBeforeSend] = useState(false);
   const esign = isEsignEnabled() && Boolean(user);
   // One export at a time, across Download PDF and Send via My Email (double taps included).
   const exportLock = useRef(false);
@@ -159,10 +161,16 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
   const setBusiness = (b: Biz) => { setBusinessState(b); setBizDirty((n) => n + 1); };
   const onConfig = (c: ProposalConfig) => { setConfig(c); setConfigDirty((n) => n + 1); };
 
-  // Always keep a local copy (safety net against refreshes, expired sessions, and network loss).
+  // Keep a local copy (safety net against refreshes, expired sessions, and network loss). A bid that is
+  // already in the account gets one only once it has edits, marked unsynced until the server confirms
+  // them; just opening a saved bid writes nothing, so the dashboard never warns about safely saved bids.
+  const latest = useRef({ estimate, config });
+  useEffect(() => { latest.current = { estimate, config }; }, [estimate, config]);
+  const openedClean = useRef(cloudMode);
   useEffect(() => {
-    saveLocalDraft({ estimate, proposalConfig: config });
-  }, [estimate, config]);
+    if (openedClean.current) { openedClean.current = false; return; }
+    saveLocalDraft({ estimate, proposalConfig: config }, { origin: cloudMode ? "cloud" : "local" });
+  }, [estimate, config]); // eslint-disable-line react-hooks/exhaustive-deps -- origin follows the mode at write time
   useEffect(() => {
     if (!user) saveLocalBusiness(business);
   }, [business, user]);
@@ -175,6 +183,8 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
       if (r.status === 401) { setSave("error"); setExportMsg({ tone: "warn", text: "Your session expired. Sign in again; your work is saved on this device." }); return false; }
       if (!r.ok) { setSave("error"); return false; }
       setSave("saved");
+      // The server has exactly what this device has: drop the safety copy (kept if edits arrived meanwhile).
+      if (latest.current.estimate === estimate && latest.current.config === config) deleteLocalDraft(estimate.id);
       return true;
     } catch {
       setSave("error");
@@ -284,7 +294,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
       if (!(await saveCloud())) return { error: "We couldn't save your latest changes, so we didn't export. Check your connection and try again." };
       // Create Signing Link finalizes through the same server path (same credit rules), then freezes the version.
       const target = deliver === "signing" ? `/api/estimates/${estimate.id}/signing` : `/api/estimates/${estimate.id}/export`;
-      const r = await fetch(target, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ deliver }) }).catch(() => null);
+      const r = await fetch(target, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(deliver === "signing" && signBeforeSend ? { deliver, signBeforeSend: true, confirm: true } : { deliver }) }).catch(() => null);
       if (!r) return { error: "We couldn't reach Built2Bid. Check your connection and try again. No bid credit was used." };
       const data = await r.json().catch(() => ({}));
       if (r.status === 402) { await refreshCredits(); setUpgradeOpen(true); return null; }
@@ -314,7 +324,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
       exportLock.current = false;
       setExporting(false);
     }
-  }, [user, readiness, fixIssue, estimate.id, saveCloud, refreshCredits, primaryTrade]);
+  }, [user, readiness, fixIssue, estimate.id, saveCloud, refreshCredits, primaryTrade, signBeforeSend]);
 
   const doExport = useCallback(async () => {
     const res = await runExport("download");
@@ -350,6 +360,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
       setExportMsg({ tone: "danger", text: res.error }); return;
     }
     setSigningLinkState(res.link ? { link: res.link, stamp } : null);
+    setSignBeforeSend(false);
     setSigningRefresh((n) => n + 1);
     setStep("proposal");
     if (!fromDialog) {
@@ -530,7 +541,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
           <>{isWashingEstimate(estimate) && <WashingJobPanel estimate={estimate} dispatch={dispatch} />}<Workspace estimate={estimate} dispatch={dispatch} lib={lib} /></>
         ))}
         {step === "scope" && <ScopeStep estimate={estimate} config={config} onConfig={onConfig} signedIn={Boolean(user)} estimateId={cloudMode ? estimate.id : null} />}
-        {step === "proposal" && esign && cloudMode && <SigningPanel estimateId={estimate.id} onCreate={() => void createSigning()} creating={exporting} refreshKey={signingRefresh}
+        {step === "proposal" && esign && cloudMode && <SigningPanel estimateId={estimate.id} onCreate={() => void createSigning()} creating={exporting} refreshKey={signingRefresh} signBeforeSend={signBeforeSend} onSignBeforeSend={setSignBeforeSend}
           onRevoked={(id) => setSigningLinkState((s) => (s?.link.requestId === id ? null : s))} />}
         {step === "proposal" && cloudMode && user && <ContractPanel estimateId={estimate.id} />}
         {step === "proposal" && <ProposalStep estimate={estimate} business={business} config={config} onConfig={onConfig}

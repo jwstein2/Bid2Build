@@ -65,8 +65,10 @@ function selectList(u) {
   const s = u.searchParams.get("select") ?? "*";
   if (s === "*") return "*";
   const cols = s.split(",").map((c) => c.trim());
-  if (!cols.every((c) => ID.test(c))) throw new Error("bad select");
-  return cols.join(", ");
+  // JSON paths like snapshot->business->>logoPath come back under the last key, as in PostgREST.
+  const JSONPATH = /^[a-z_][a-z0-9_]*(->>?[A-Za-z_][A-Za-z0-9_]*)+$/;
+  if (!cols.every((c) => ID.test(c) || JSONPATH.test(c))) throw new Error("bad select");
+  return cols.map((c) => (ID.test(c) ? c : `${c.replace(/(->>?)([A-Za-z0-9_]+)/g, "$1'$2'")} as "${c.split(/->>?/).at(-1)}"`)).join(", ");
 }
 
 const val = (type, v) => (v !== null && typeof v === "object" && (type === "jsonb" || type === "json") ? JSON.stringify(v) : v);
@@ -78,7 +80,12 @@ export async function handleRadarRest(req, res, u, raw, send) {
     if (rpc) {
       const args = JSON.parse(raw || "{}");
       const keys = Object.keys(args).filter((k) => ID.test(k));
-      const r = await exec(`select public.${rpc[1]}(${keys.map((k, i) => `${k} => $${i + 1}`).join(", ")}) as v`, keys.map((k) => (args[k] !== null && typeof args[k] === "object" && !Array.isArray(args[k]) ? JSON.stringify(args[k]) : args[k])));
+      const call = `public.${rpc[1]}(${keys.map((k, i) => `${k} => $${i + 1}`).join(", ")})`;
+      const vals = keys.map((k) => (args[k] !== null && typeof args[k] === "object" && !Array.isArray(args[k]) ? JSON.stringify(args[k]) : args[k]));
+      // Functions returning a table/record come back as rows, like PostgREST; scalars and jsonb as the value.
+      const kind = (await pool.query("select bool_or(p.proretset or p.prorettype = 'record'::regtype or t.typtype = 'c') as rows from pg_proc p join pg_type t on t.oid = p.prorettype where p.pronamespace = 'public'::regnamespace and p.proname = $1", [rpc[1]])).rows[0]?.rows;
+      if (kind) return send(res, 200, (await exec(`select * from ${call}`, vals)).rows);
+      const r = await exec(`select ${call} as v`, vals);
       return send(res, 200, r.rows[0].v);
     }
     const table = u.pathname.match(/^\/rest\/v1\/(\w+)$/)?.[1];

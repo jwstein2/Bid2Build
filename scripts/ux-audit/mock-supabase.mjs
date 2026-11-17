@@ -10,6 +10,8 @@ const iso = (d = 0) => new Date(NOW - d * 864e5).toISOString();
 export const USER = {
   id: "00000000-0000-4000-8000-000000000001", aud: "authenticated", role: "authenticated",
   email: "ux-test@built2bid.test", email_confirmed_at: iso(30), created_at: iso(30), app_metadata: {}, user_metadata: {},
+  // Contractor signature walk: MOCK_RECENT_SIGNIN=1 means the person signed in just now (identity check passes).
+  ...(process.env.MOCK_RECENT_SIGNIN ? { last_sign_in_at: new Date().toISOString() } : {}),
 };
 const EST = "11111111-1111-4111-8111-111111111111";
 const G = (n) => `22222222-2222-4222-8222-00000000000${n}`;

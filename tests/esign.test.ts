@@ -143,7 +143,8 @@ describe("signed PDF", () => {
     for (let p = 1; p <= d.numPages; p++) text += (await (await d.getPage(p)).getTextContent()).items.map((i) => ("str" in i ? i.str : "")).join(" ") + "\n";
     expect(d.numPages).toBeGreaterThanOrEqual(2);
     expect(text).toContain("Electronic Signature Certificate");
-    expect(text).toContain("John Smith (electronic signature)");
+    expect(text).toContain("Customer: John Smith");
+    expect(text).toContain("Electronic signature");
     expect(text).toContain("2026-11-15 19:14:00 UTC");
     expect(text).toContain("a".repeat(64));
     expect(text).toMatch(/Identity was not independently verified/);
