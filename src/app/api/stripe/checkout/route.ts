@@ -4,6 +4,7 @@ import { assertModeAllowed, getStripe } from "@/lib/billing/stripe";
 import { applySubscription } from "@/lib/billing/apply";
 import { checkoutTaxParams } from "@/lib/billing/tax";
 import { PLAN_IDS, priceMismatch, type PlanId } from "@/lib/billing/plans";
+import { holdsCompanySeat } from "@/lib/billing/company-seat";
 import { BLOCKING_SUBSCRIPTION_STATUSES, converge, reusableSession, staleSessions } from "@/lib/billing/checkout-sessions";
 import { createAdminClient, getUser } from "@/lib/supabase/server";
 import { isStripeConfigured, serverEnv } from "@/lib/env";
@@ -54,6 +55,11 @@ export async function POST(req: Request) {
     const paid = await admin.rpc("has_paid_subscription", { p_user_id: user.id });
     const active = paid.error ? (await admin.rpc("has_unlimited", { p_user_id: user.id })).data : paid.data;
     if (active) return fail(409, "already_subscribed", "You already have Unlimited. Manage it from Subscription settings.");
+    // A licensed member of an Enterprise company already has everything Unlimited includes through the
+    // company seat. Selling them a personal plan would bill them twice for the same access.
+    if (await holdsCompanySeat(admin, user.id)) {
+      return fail(409, "company_seat", "Your company's Enterprise license already includes Unlimited, so there's nothing to buy. Ask your company owner about add-ons.");
+    }
 
     let { data: bc } = await admin.from("billing_customers").select("stripe_customer_id").eq("user_id", user.id).maybeSingle();
     if (!bc) {

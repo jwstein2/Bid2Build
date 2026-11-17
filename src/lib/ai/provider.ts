@@ -87,7 +87,11 @@ export async function generateStructured<S extends z.ZodType>(opts: {
       }],
     });
   } catch (e) {
-    if (e instanceof Anthropic.APIError) throw new AiUnavailableError(`AI request failed (${e.status ?? "network"})`, "api_error");
+    // Log the cause (status and type only, never the key or prompt) so a revoked key, wrong model id or
+    // rate limit is visible in the function logs instead of silently falling back to the rules drafts.
+    const status = e instanceof Anthropic.APIError ? (e.status ?? "network") : "unknown";
+    console.error(`[ai.provider] request failed: status=${status} model=${opts.model || s.model} type=${(e as { error?: { error?: { type?: string } } })?.error?.error?.type ?? (e as Error)?.name ?? "error"}`);
+    if (e instanceof Anthropic.APIError) throw new AiUnavailableError(`AI request failed (${status})`, "api_error");
     throw new AiUnavailableError("AI request failed", "api_error");
   }
   const usage = { inputTokens: response.usage.input_tokens ?? 0, outputTokens: response.usage.output_tokens ?? 0, model: response.model ?? opts.model ?? s.model };

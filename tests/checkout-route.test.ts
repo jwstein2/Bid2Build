@@ -183,3 +183,14 @@ describe("POST /api/stripe/checkout", () => {
     expect(state.created).toHaveLength(0);
   });
 });
+
+describe("V5.0: Enterprise seat holders are not sold a personal plan", () => {
+  it("refuses checkout for a licensed company member and creates no session", async () => {
+    admin.rpc.mockImplementationOnce(async () => ({ data: false, error: null })) // has_paid_subscription
+      .mockImplementationOnce(async () => ({ data: [{ tier: "enterprise", source: "company_seat", company_id: "c1", expires_at: null }], error: null }));
+    const r = await call({ plan: "monthly" });
+    expect(r.status).toBe(409);
+    expect(r.body.error?.code ?? r.body.code).toBe("company_seat");
+    expect(state.created).toHaveLength(0);
+  });
+});
