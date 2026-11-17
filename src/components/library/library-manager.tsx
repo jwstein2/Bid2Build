@@ -41,7 +41,7 @@ export function LibraryManager() {
   const [notice, setNotice] = useState<string | null>(null);
 
   if (!lib.loaded) return <Card className="p-6 text-center text-muted">Loading your Saved Items…</Card>;
-  if (!lib.access) return <LibraryLocked signedIn lockedCount={lib.lockedCount} />;
+  if (!lib.access) return <div data-guide="items.locked"><LibraryLocked signedIn lockedCount={lib.lockedCount} /></div>;
 
   const filtered = lib.items.filter((i) => matchesQuery(i, q));
   const organized = organizeLibrary(filtered);
@@ -51,11 +51,11 @@ export function LibraryManager() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-2">
-        <div className="relative min-w-0 flex-1">
+        <div className="relative min-w-0 flex-1" data-guide="items.search">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
           <input className="field pl-9" placeholder="Search saved items and stacks…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search saved items and stacks" />
         </div>
-        <Button onClick={() => setEditing("new")}><Plus className="h-4 w-4" aria-hidden /> New Saved Item</Button>
+        <Button onClick={() => setEditing("new")} data-guide="items.add"><Plus className="h-4 w-4" aria-hidden /> New Saved Item</Button>
       </div>
       <p aria-live="polite" className="sr-only">{notice}</p>
       {notice && <p className="rounded-lg border border-ok/30 bg-ok-tint px-3 py-2 text-sm text-ok">{notice}</p>}

@@ -1,5 +1,6 @@
 "use client";
-import { PENDING_TOUR_KEY, START_TOUR_EVENT, parseState, type Access, type FeatureAction, type FeatureState } from "@/lib/features/state";
+import { START_TOUR_EVENT, parseState, type Access, type FeatureAction, type FeatureState } from "@/lib/features/state";
+import { GUEST_CONTEXT, type GuideContext } from "@/lib/features/page-guides";
 
 export type FeatureView = { signedIn: false } | { signedIn: true; known: boolean; access: Access; state: FeatureState };
 
@@ -32,22 +33,38 @@ export async function saveFeatures(action: FeatureAction): Promise<boolean> {
   }
 }
 
-/** Starts the feature walkthrough (on the dashboard; other pages navigate there first). */
+/**
+ * Starts the walkthrough on the current page. Without ids it teaches the page and view on screen;
+ * with feature ids (What's New, the unlocked-features modal) it walks through those features. It never
+ * navigates.
+ */
 export function startFeatureTour(ids?: string[]) {
   window.dispatchEvent(new CustomEvent(START_TOUR_EVENT, { detail: ids ?? null }));
 }
 
-export function setPendingTour(ids: string[] | null) {
-  try { window.sessionStorage.setItem(PENDING_TOUR_KEY, JSON.stringify(ids ?? [])); } catch { /* private mode */ }
-}
-export function takePendingTour(): string[] | null | undefined {
+export type GuideView = GuideContext & { trades: string[]; guides: string[] };
+
+/** Who is looking (plan, role, add-ons) and the trades on their recent bids, read when a walkthrough starts. */
+export async function loadGuideContext(): Promise<GuideView> {
+  const guest: GuideView = { ...GUEST_CONTEXT, trades: [], guides: [] };
   try {
-    const raw = window.sessionStorage.getItem(PENDING_TOUR_KEY);
-    if (raw === null) return undefined;
-    window.sessionStorage.removeItem(PENDING_TOUR_KEY);
-    const v = JSON.parse(raw);
-    return Array.isArray(v) && v.length ? v.map(String) : null;
+    const r = await fetch("/api/features?guide=1", { cache: "no-store", credentials: "same-origin" });
+    if (!r.ok) return guest;
+    const j = await r.json();
+    if (!j?.signedIn) return guest;
+    const g = j.guide ?? {};
+    return {
+      signedIn: true,
+      unlimited: Boolean(j.access?.unlimited),
+      admin: g.admin === true,
+      pm: { view: Boolean(g.pm?.view), edit: Boolean(g.pm?.edit) },
+      company: g.company && typeof g.company.role === "string"
+        ? { role: g.company.role, owner: Boolean(g.company.owner), permissions: Array.isArray(g.company.permissions) ? g.company.permissions.map(String) : [] }
+        : null,
+      trades: Array.isArray(g.trades) ? g.trades.map(String) : [],
+      guides: parseState(j.state)?.guides ?? [],
+    };
   } catch {
-    return undefined;
+    return guest;
   }
 }

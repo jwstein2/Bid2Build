@@ -1,8 +1,8 @@
 "use client";
-import { getFeature, type FeatureId } from "@/lib/features/registry";
+import type { FeatureId } from "@/lib/features/registry";
 import { REVEAL_FEATURE_EVENT } from "@/lib/features/state";
 import { FeatureHelp } from "@/components/features/feature-help";
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { BarChart3, Columns3, List, Search } from "lucide-react";
 import {
   FOCUS, RANGES, analytics, boardSummary, columnTotals, filterBoard, isFocus, isRange, resolveRange, MIN_DECIDED,
@@ -23,6 +23,9 @@ const VIEWS: { id: BidsView; label: string; icon: typeof List; feature?: Feature
   { id: "table", label: "Table", icon: List },
   { id: "analytics", label: "Analytics", icon: BarChart3, feature: "analytics" },
 ];
+
+/** Page walkthrough for each view (src/lib/features/page-guides.ts): the active view decides what it teaches. */
+const GUIDE_PAGE = { pipeline: "dashboard.pipeline", table: "dashboard.table", analytics: "dashboard.analytics" } as const;
 
 /** Bids dashboard: Pipeline (default), Table (the existing list with every bid action) and Analytics. */
 export function BidsWorkspace({ bids, history, esign, table, pay, paySaved, migrated, initialView, initialFocus, initialRange, initialQuery, initialDateField }: {
@@ -51,10 +54,14 @@ export function BidsWorkspace({ bids, history, esign, table, pay, paySaved, migr
   const [field, setField] = useState<BoardDateField>(() => ((fromUrl ? fromUrl.get("date") : initialDateField) === "created" ? "created" : "activity"));
   const [q, setQ] = useState(() => (fromUrl ? fromUrl.get("q")?.slice(0, 100) : initialQuery) ?? "");
 
-  const pick = useCallback((v: BidsView) => {
+  const setViewUrl = useCallback((v: BidsView) => {
     setView(v);
     const u = new URL(window.location.href); u.searchParams.set("view", v); window.history.replaceState(null, "", u);
   }, []);
+  // A feature announcement (What's New) may show a control from another view for a moment; the view the
+  // person had is put back when it ends, unless they picked a view themselves meanwhile.
+  const tourPrev = useRef<BidsView | null>(null);
+  const pick = useCallback((v: BidsView) => { tourPrev.current = null; setViewUrl(v); }, [setViewUrl]);
   // KPI card filters are history entries (Back returns to the previous view); the range is kept in place.
   const setFocus = (k: FocusKey | null) => {
     const next = k === focus ? null : k;
@@ -91,15 +98,24 @@ export function BidsWorkspace({ bids, history, esign, table, pay, paySaved, migr
     return () => window.removeEventListener("popstate", onPop);
   }, []);
 
-  // The feature walkthrough opens the view a step's control lives in (e.g. Analytics for Sales pay).
+  const viewNow = useRef(view);
+  useEffect(() => { viewNow.current = view; }, [view]);
   useEffect(() => {
     const on = (e: Event) => {
-      const v = getFeature(String((e as CustomEvent).detail ?? ""))?.view;
-      if (v) pick(v);
+      const key = (e as CustomEvent).detail as string | null;
+      const m = typeof key === "string" ? /^bids\.view:(pipeline|table|analytics)$/.exec(key) : null;
+      if (m) {
+        if (tourPrev.current === null) tourPrev.current = viewNow.current;
+        setViewUrl(m[1] as BidsView);
+      } else if (key === null && tourPrev.current !== null) {
+        const back = tourPrev.current;
+        tourPrev.current = null;
+        setViewUrl(back);
+      }
     };
     window.addEventListener(REVEAL_FEATURE_EVENT, on);
     return () => window.removeEventListener(REVEAL_FEATURE_EVENT, on);
-  }, [pick]);
+  }, [setViewUrl]);
 
   const r = useMemo(() => resolveRange(range, new Date(), custom), [range, custom]);
   const searched = useMemo(() => {
@@ -115,10 +131,10 @@ export function BidsWorkspace({ bids, history, esign, table, pay, paySaved, migr
   const rangeLabel = range === "custom" ? `${custom.from ?? "start"} to ${custom.to ?? "today"}` : RANGES[range];
 
   return (
-    <section aria-label="Your bids" className="space-y-3">
+    <section aria-label="Your bids" className="space-y-3" data-guide-page={GUIDE_PAGE[view]}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-1">
-        <div role="tablist" aria-label="Bids view" className="inline-flex rounded-lg border border-line bg-surface p-1">
+        <div role="tablist" aria-label="Bids view" className="inline-flex rounded-lg border border-line bg-surface p-1" data-guide="bids.view-tabs">
           {VIEWS.map(({ id, label, icon: Icon, feature }) => (
             <button key={id} role="tab" type="button" aria-selected={view === id} onClick={() => pick(id)} data-testid={`view-${id}`} data-feature={feature}
               className={cn("inline-flex min-h-9 items-center gap-1.5 rounded-md px-3 text-sm font-semibold", view === id ? "bg-navy text-white" : "text-ink-soft hover:bg-black/5")}>
@@ -126,10 +142,10 @@ export function BidsWorkspace({ bids, history, esign, table, pay, paySaved, migr
             </button>
           ))}
         </div>
-        <FeatureHelp id={view === "analytics" ? "analytics" : "pipeline"} className="max-[379px]:hidden" />
+        <FeatureHelp id={view === "analytics" ? "analytics" : "pipeline"} className="max-[379px]:hidden" guide data-guide="bids.help" />
         </div>
         {view !== "table" && (
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2" data-guide="bids.search">
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
               <input aria-label="Search bids" className="field field-sm w-48 pl-9" placeholder="Search bids" value={q} onChange={(e) => setQ(e.target.value)} />
@@ -161,7 +177,7 @@ export function BidsWorkspace({ bids, history, esign, table, pay, paySaved, migr
 
       {view === "pipeline" && (
         <>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-7" data-testid="pipeline-summary">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-7" data-testid="pipeline-summary" data-guide="bids.kpis">
             <Metric k="active" focus={focus} onFocus={setFocus} label="Active pipeline" value={money(summary.activeValue)} hint="Ready, Sent and Awaiting proposals" />
             <Metric k="open" focus={focus} onFocus={setFocus} label="Open bids" value={String(summary.openCount)} hint="Draft through Awaiting" />
             <Metric k="draft" focus={focus} onFocus={setFocus} label="Drafts" value={String(counts.draft.count)} hint="Estimates you're still building" />

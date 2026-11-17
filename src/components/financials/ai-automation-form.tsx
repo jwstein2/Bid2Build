@@ -48,7 +48,7 @@ export function AiAutomationForm({ initial, canEdit }: { initial: Record<Key, bo
     router.refresh();
   };
   return (
-    <div className="space-y-4" data-testid="fin-ai-form">
+    <div className="space-y-4" data-testid="fin-ai-form" data-guide="fin.ai-toggles">
       <Notice title="Everything works with AI off">Balances, payments, invoices and reports never depend on AI. Each feature below only runs when someone asks for it.</Notice>
       {msg && <Notice tone={msg.tone}>{msg.text}</Notice>}
       <ul className="space-y-3">

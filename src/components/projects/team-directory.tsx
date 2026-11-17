@@ -47,7 +47,7 @@ export function TeamDirectory({ team, people, me, usage }: {
   }
 
   return (
-    <div className="space-y-4" data-testid="team-directory">
+    <div className="space-y-4" data-testid="team-directory" data-guide="team.directory">
       <div className="grid grid-cols-3 gap-2 sm:max-w-md">
         {(Object.keys(counts) as ResourceKind[]).map((k) => {
           const Icon = ICON[k];
@@ -64,7 +64,7 @@ export function TeamDirectory({ team, people, me, usage }: {
             <option value="all">Everyone</option><option value="staff">Staff</option><option value="subcontractor">Subcontractors</option><option value="crew">Crews</option>
           </select></label>
         <Button size="sm" variant="secondary" className="min-h-10" onClick={() => setShowArchived(!showArchived)} aria-pressed={showArchived}>{showArchived ? "Show active" : "Show archived"}</Button>
-        {team.canManage && <Button size="sm" variant="accent" className="min-h-10" onClick={() => setEditing("new")} data-testid="team-add"><Plus className="h-4 w-4" aria-hidden /> Add</Button>}
+        {team.canManage && <Button size="sm" variant="accent" className="min-h-10" onClick={() => setEditing("new")} data-testid="team-add" data-guide="team.add"><Plus className="h-4 w-4" aria-hidden /> Add</Button>}
       </div>
       {!team.canManage && <Notice>You can view this list. Ask your company admin if you need to add or change someone.</Notice>}
       {msg && <Notice tone={msg.ok ? "ok" : "danger"}>{msg.text}</Notice>}

@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { REVEAL_FEATURE_EVENT } from "@/lib/features/state";
+import { REVEAL_FEATURE_EVENT, START_TOUR_EVENT } from "@/lib/features/state";
 import { Sparkles, CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, Plug, LayoutTemplate, LogOut, X, UserCog, Receipt, Gauge, SquareKanban, CalendarRange, GraduationCap, Palette, Landmark, Shapes, Bot, House } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ButtonLink } from "@/components/ui/button";
@@ -69,23 +69,26 @@ export function AppSidebar({ isAdmin, email, company, projects = false, financia
   const [open, setOpen] = useState(false);
   // eslint-disable-next-line react-hooks/set-state-in-effect -- close the mobile menu after navigating
   useEffect(() => { setOpen(false); }, [path]);
-  // On phones the links are inside the Menu: the feature walkthrough opens it for a step that points
-  // at a sidebar link (Saved Items, Templates) and closes it again when the walkthrough ends.
+  // On phones the links are inside the Menu. Starting a walkthrough from it closes it so the page it
+  // teaches is visible. A feature announcement step that points at a sidebar link (Saved Items,
+  // Templates) opens it for that step only and closes it again afterwards.
   const openedForTour = useRef(false);
   const isOpen = useRef(open);
   useEffect(() => { isOpen.current = open; }, [open]);
   useEffect(() => {
+    const onStart = () => { openedForTour.current = false; setOpen(false); };
     const on = (e: Event) => {
-      const id = (e as CustomEvent).detail as string | null;
-      if (id && NAV.some((n) => n.feature === id)) {
+      const key = (e as CustomEvent).detail as string | null;
+      if (key && NAV.some((n) => n.feature && key === `feature:${n.feature}`)) {
         if (!isOpen.current) { openedForTour.current = true; setOpen(true); }
       } else if (openedForTour.current) {
         openedForTour.current = false;
         setOpen(false);
       }
     };
+    window.addEventListener(START_TOUR_EVENT, onStart);
     window.addEventListener(REVEAL_FEATURE_EVENT, on);
-    return () => window.removeEventListener(REVEAL_FEATURE_EVENT, on);
+    return () => { window.removeEventListener(START_TOUR_EVENT, onStart); window.removeEventListener(REVEAL_FEATURE_EVENT, on); };
   }, []);
   // Escape closes the phone menu and puts focus back on the Menu button.
   const menuButton = useRef<HTMLButtonElement>(null);
@@ -113,7 +116,7 @@ export function AppSidebar({ isAdmin, email, company, projects = false, financia
       <div className="flex items-center justify-between gap-1 px-3 py-3 sm:gap-2 sm:px-4 md:py-4">
         <Logo tone="dark" href={home ? "/home" : "/dashboard"} />
         <div className="flex items-center gap-1 max-[380px]:gap-0 md:hidden">
-          <ButtonLink href="/bids" variant="accent" size="sm" className="min-h-11 max-[380px]:px-2.5"><FileText className="h-4 w-4 max-[380px]:hidden" aria-hidden /> New bid</ButtonLink>
+          <ButtonLink href="/bids" variant="accent" size="sm" className="min-h-11 max-[380px]:px-2.5" data-guide="bids.new-bid"><FileText className="h-4 w-4 max-[380px]:hidden" aria-hidden /> New bid</ButtonLink>
           <ThemeToggle signedIn account={theme} tone="dark" />
           <button
             ref={menuButton}

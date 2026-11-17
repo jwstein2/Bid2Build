@@ -182,7 +182,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         </div>
         <div className="flex items-center gap-2">
           {credits && !credits.unlimited && <UpgradeLink compact />}
-          <ButtonLink href="/bids" variant="accent" className="hidden md:inline-flex">Create New Bid</ButtonLink>
+          <ButtonLink href="/bids" variant="accent" className="hidden md:inline-flex" data-guide="bids.new-bid">Create New Bid</ButtonLink>
         </div>
       </div>
       {gift && (
@@ -195,9 +195,14 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
       <WhatsNewNotice />
       <LocalDraftsBanner accountIds={ests.map((e) => e.id)} />
       {esign && <RefreshOnFocus />}
-      {awaiting.length > 0 && <AwaitingCountersign rows={awaiting} />}
-      {esign && recentSigned.length > 0 && <RecentlySigned bids={recentSigned} days={RECENT_SIGNED_DAYS} />}
-      {reviewQueue && reviewQueue.length > 0 && <ReviewQueue items={reviewQueue} canSchedule={Boolean(pmAccess?.canEdit)} compact max={5} />}
+      {(awaiting.length > 0 || (esign && recentSigned.length > 0) || (reviewQueue && reviewQueue.length > 0)) && (
+        // Company alerts the page walkthrough points at (only rendered when there is something to show).
+        <div className="space-y-6" data-guide="bids.alerts">
+          {awaiting.length > 0 && <AwaitingCountersign rows={awaiting} />}
+          {esign && recentSigned.length > 0 && <RecentlySigned bids={recentSigned} days={RECENT_SIGNED_DAYS} />}
+          {reviewQueue && reviewQueue.length > 0 && <ReviewQueue items={reviewQueue} canSchedule={Boolean(pmAccess?.canEdit)} compact max={5} />}
+        </div>
+      )}
       {ests.length === 0 && <FirstBidStart companyName={biz?.company_name?.trim() || null} />}
       {checklist && <ActivationChecklist steps={checklist} />}
       {!checklist && ests.length > 0 && <ProfileReminder missing={missing} dismissedSignature={reminderDismissed} />}

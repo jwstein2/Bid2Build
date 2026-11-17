@@ -14,7 +14,7 @@ export default async function AiAutomationPage() {
   if (!isFinancialsEnabled()) notFound();
   const state = await loadFinState(await createClient());
   return (
-    <div className="mx-auto max-w-4xl space-y-4">
+    <div className="mx-auto max-w-4xl space-y-4" data-guide-page="company.ai-automation">
       <Breadcrumbs className="mb-3" items={[{ label: "Company", href: "/settings/company" }, { label: "AI & Automation" }]} />
       <h1 className="text-3xl font-extrabold">AI &amp; Automation</h1>
       {state.kind !== "ready" ? <FinStateNotice state={state} />

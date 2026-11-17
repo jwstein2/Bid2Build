@@ -149,7 +149,7 @@ function BoardColumn({ col, bids, total, esign, onMove, dropState, onDragOver, o
   const headId = `col-${col}`;
   return (
     <section
-      aria-labelledby={headId} data-testid={`column-${col}`} onDragOver={onDragOver} onDrop={onDrop}
+      aria-labelledby={headId} data-testid={`column-${col}`} data-guide="bids.stage" onDragOver={onDragOver} onDrop={onDrop}
       className={cn(
         "rounded-xl border bg-surface transition-colors",
         dropState === "over" ? "border-accent ring-2 ring-accent/40" : dropState === "can" ? "border-dashed border-accent/60" : dropState === "no" ? "opacity-50" : "border-line",
@@ -187,7 +187,7 @@ function BidCard({ b, esign, onMove, onDragStart, onDragEnd }: { b: BoardBid; es
   return (
     <article
       draggable onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", b.id); onDragStart(b.id); }} onDragEnd={onDragEnd}
-      data-testid="bid-card" data-bid={b.id}
+      data-testid="bid-card" data-guide="bids.card" data-bid={b.id}
       // The whole card opens the bid: the title link stretches over the card (after:inset-0), and the menu and
       // next-action button sit above it (relative z-10), so they keep their own clicks. Drag still moves the card.
       className="card-link-host group relative cursor-pointer rounded-lg border border-line bg-surface p-3 shadow-sm transition-[border-color,box-shadow] hover:border-brand/50 hover:shadow-md active:cursor-grabbing"
@@ -235,7 +235,7 @@ function SignBadge({ b }: { b: BoardBid }) {
 function MoveMenu({ b, col, onMove }: { b: BoardBid; col: Column; onMove: (b: BoardBid, to: Column) => void }) {
   return (
     <Menu.Root>
-      <Menu.Trigger aria-label={`Move ${b.title}`} className="relative z-10 -mr-1 -mt-1 grid h-9 w-9 shrink-0 place-items-center rounded-md text-muted hover:bg-black/5 hover:text-navy" data-testid="move-menu">
+      <Menu.Trigger aria-label={`Move ${b.title}`} className="relative z-10 -mr-1 -mt-1 grid h-9 w-9 shrink-0 place-items-center rounded-md text-muted hover:bg-black/5 hover:text-navy" data-testid="move-menu" data-guide="bids.card-menu">
         <MoreVertical className="h-4 w-4" />
       </Menu.Trigger>
       <Menu.Portal>

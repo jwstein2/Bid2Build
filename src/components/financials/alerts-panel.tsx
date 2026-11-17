@@ -47,7 +47,7 @@ export function AlertsPanel({ alerts, canAct, onChanged, showRefresh = true }: {
   const order = { action_required: 0, warning: 1, info: 2 } as Record<string, number>;
   const sorted = [...alerts].sort((a, b) => (order[a.severity] ?? 3) - (order[b.severity] ?? 3));
   return (
-    <section aria-labelledby="fin-alerts-h" className="rounded-xl border border-line bg-surface p-4" data-testid="fin-alerts">
+    <section aria-labelledby="fin-alerts-h" className="rounded-xl border border-line bg-surface p-4" data-testid="fin-alerts" data-guide="fin.alerts">
       <div className="flex flex-wrap items-center gap-2">
         <h2 id="fin-alerts-h" className="font-display text-lg font-extrabold">Alerts</h2>
         <span className="text-xs text-muted">Alerts never block your work.</span>

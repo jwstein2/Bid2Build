@@ -42,7 +42,7 @@ export default async function ProjectsPage() {
   const ready = list && queue === null ? await readyToSchedule(supabase, new Set(list.map((s) => s.estimate_id))) : [];
   const tz = ws?.projects[0]?.calendar.timezone ?? "America/Chicago";
   return (
-    <div className={`mx-auto space-y-6 ${ws ? "max-w-7xl" : "max-w-5xl"}`}>
+    <div className={`mx-auto space-y-6 ${ws ? "max-w-7xl" : "max-w-5xl"}`} data-guide-page="projects.list">
       <div>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h1 className="flex items-center gap-2 text-3xl font-extrabold text-navy"><CalendarRange className="h-7 w-7 text-accent-ink" aria-hidden /> Projects</h1>
@@ -61,7 +61,7 @@ export default async function ProjectsPage() {
         </Suspense>
       )}
 
-      {!ws && <section aria-labelledby="sched-h">
+      {!ws && <section aria-labelledby="sched-h" data-guide="projects.schedules">
         <h2 id="sched-h" className="font-display text-lg font-extrabold text-navy">Schedules</h2>
         {list && list.length === 0 && <p className="mt-2 text-sm text-muted">No schedules yet. Choose Schedule Now on a won bid below.</p>}
         <ul className="mt-2 space-y-2">
@@ -87,7 +87,7 @@ export default async function ProjectsPage() {
       </section>}
 
       {ready.length > 0 && (
-        <section aria-labelledby="ready-h">
+        <section aria-labelledby="ready-h" data-guide="projects.ready">
           <h2 id="ready-h" className="font-display text-lg font-extrabold text-navy">Ready to schedule</h2>
           <p className="text-sm text-ink-soft">Won or signed bids without a schedule.</p>
           <ul className="mt-2 divide-y divide-line rounded-xl border border-line bg-surface">

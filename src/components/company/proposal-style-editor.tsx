@@ -76,7 +76,7 @@ export function ProposalStyleEditor({ initial, ownerBusiness, people }: { initia
       <div className="space-y-5">
         {!initial.exists && <p className="rounded-lg bg-brand-tint px-3 py-2 text-sm"><Building2 className="mr-1 inline h-4 w-4" aria-hidden />Your company hasn&apos;t set a proposal style yet, so each bid uses its author&apos;s own settings. Saving here makes this the company style.</p>}
 
-        <section className="rounded-xl border border-line bg-surface p-4">
+        <section className="rounded-xl border border-line bg-surface p-4" data-guide="style.policy">
           <h2 className="font-bold">Team customization</h2>
           <label className="mt-2 flex items-start gap-3">
             <input type="checkbox" className="mt-1 h-5 w-5" checked={allow} disabled={!canPolicy} onChange={(e) => setAllow(e.target.checked)} data-testid="allow-customization" />
@@ -88,7 +88,7 @@ export function ProposalStyleEditor({ initial, ownerBusiness, people }: { initia
         </section>
 
         <fieldset disabled={!canStyle} className="space-y-5">
-          <section className="rounded-xl border border-line bg-surface p-4">
+          <section className="rounded-xl border border-line bg-surface p-4" data-guide="style.editor">
             <div className="flex items-center justify-between"><h2 className="font-bold">Template</h2>{lockBtn("template")}</div>
             <div className="mt-2 grid gap-2" role="radiogroup" aria-label="Company template">
               {TEMPLATES.map((t) => (

@@ -47,7 +47,7 @@ export function CustomizeDashboard({ cards: initial, kpis: initialKpis, allKpis,
   };
 
   return (
-    <section aria-label="Customize Financials home" className="rounded-xl border border-line bg-surface">
+    <section aria-label="Customize Financials home" data-guide="fin.customize" className="rounded-xl border border-line bg-surface">
       <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="fin-customize"
         className="flex min-h-11 w-full items-center gap-2 px-4 py-2 text-left text-sm font-semibold text-ink-soft hover:text-ink" data-testid="fin-customize-toggle">
         <SlidersHorizontal className="h-4 w-4" aria-hidden /> Customize this page
@@ -129,7 +129,7 @@ export function ModeToggle({ mode }: { mode: "contractor" | "accountant" }) {
     if (r.ok) router.refresh();
   };
   return (
-    <div role="group" aria-label="View mode" className="inline-flex rounded-lg border border-line bg-surface p-0.5" data-testid="fin-mode">
+    <div role="group" aria-label="View mode" className="inline-flex rounded-lg border border-line bg-surface p-0.5" data-testid="fin-mode" data-guide="fin.mode">
       {(["contractor", "accountant"] as const).map((m) => (
         <button key={m} type="button" disabled={busy} aria-pressed={mode === m} onClick={() => set(m)}
           className={`min-h-10 rounded-md px-3 text-sm font-semibold ${mode === m ? "bg-brand text-white" : "text-ink-soft hover:text-ink"}`}>

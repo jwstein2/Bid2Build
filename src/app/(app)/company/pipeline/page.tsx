@@ -45,7 +45,7 @@ export default async function PipelinePage({ searchParams }: PageProps<"/company
   const select = "mt-1 h-11 w-full rounded-lg border border-line bg-surface px-2 text-base";
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="mx-auto max-w-6xl space-y-6" data-guide-page="company.pipeline">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-3xl font-extrabold">{wide ? "Team bids" : "My company bids"}</h1>
@@ -56,7 +56,7 @@ export default async function PipelinePage({ searchParams }: PageProps<"/company
         </a>
       </div>
 
-      <Card className="p-4">
+      <Card className="p-4" data-guide="company.pipeline-filters">
         <form method="get" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr_1fr_auto] lg:items-end" aria-label="Filter bids">
           <div className="min-w-0"><label htmlFor="pf-q" className="text-sm font-semibold">Search</label>
             <input id="pf-q" name="q" defaultValue={f.q ?? ""} placeholder="Bid, customer or number" className="mt-1 h-11 w-full rounded-lg border border-line bg-surface px-3 text-base" /></div>
@@ -78,7 +78,7 @@ export default async function PipelinePage({ searchParams }: PageProps<"/company
 
       {error && <Notice tone="danger">Bids couldn&apos;t be loaded. Please refresh.</Notice>}
 
-      <Card className="p-0">
+      <Card className="p-0" data-guide="company.pipeline-list">
         <p className="border-b border-line px-4 py-3 text-sm text-ink-soft" data-testid="pipeline-count">{total} bid{total === 1 ? "" : "s"}{total > PAGE && ` · page ${page} of ${Math.ceil(total / PAGE)}`}</p>
         {rows.length === 0 ? <p className="px-4 py-8 text-center text-ink-soft">No bids match these filters.</p> : (
           <ul className="divide-y divide-line">{rows.map((r) => (

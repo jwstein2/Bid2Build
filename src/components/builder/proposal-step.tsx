@@ -105,7 +105,7 @@ export function ProposalStep({ estimate, business, config, onConfig, textExtra, 
 
         {textExtra}
 
-        <section className="rounded-xl border border-line bg-surface p-4">
+        <section className="rounded-xl border border-line bg-surface p-4" data-guide="builder.payment-schedule">
           <h2 className="font-bold">Payment schedule</h2>
           <div className="mt-3 space-y-2">
             {config.paymentSchedule.map((m, i) => (

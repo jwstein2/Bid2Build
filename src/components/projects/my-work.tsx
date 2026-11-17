@@ -11,7 +11,7 @@ export function MyWorkView({ buckets, projects, onOpen, labelOf }: {
   const byId = new Map(projects.map((p) => [p.id, p]));
   const total = BUCKETS.reduce((n, b) => n + (b.key === "completed" ? 0 : buckets[b.key].length), 0);
   return (
-    <div className="space-y-4" data-testid="view-mywork">
+    <div className="space-y-4" data-testid="view-mywork" data-guide="projects.mywork">
       {total === 0 && (
         <p className="rounded-xl border border-dashed border-line p-6 text-center text-sm text-muted">
           Nothing open for you. Tasks show here when they&apos;re assigned to you, or when you&apos;re the project manager.

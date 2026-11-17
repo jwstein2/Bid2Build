@@ -88,7 +88,7 @@ export function CompanyStep({ business, onChange, signedIn, onDone, missing }: {
         <p className="mt-1 text-ink-soft">This appears on every proposal. {signedIn ? "It's saved to your account and reused on future bids." : "It's saved on this device until you create an account."}</p>
       </div>
 
-      <section className="rounded-xl border border-line bg-surface p-5">
+      <section className="rounded-xl border border-line bg-surface p-5" data-guide="company.website">
         <h3 className="font-bold">Do you have a company website?</h3>
         <p className="text-sm text-muted">We can pull your name, logo, colors, and contact details so you don&apos;t have to type them. You review everything first.</p>
         <div className="mt-3 flex gap-2">
@@ -144,7 +144,7 @@ export function CompanyStep({ business, onChange, signedIn, onDone, missing }: {
         )}
       </section>
 
-      <section className="rounded-xl border border-line bg-surface p-5">
+      <section className="rounded-xl border border-line bg-surface p-5" data-guide="company.business">
         <h3 className="font-bold">Business information</h3>
         <p className="text-sm text-muted">Fields marked <span className="text-danger">*</span> are required for a professional proposal. Everything appears only on proposals you create.</p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -160,7 +160,7 @@ export function CompanyStep({ business, onChange, signedIn, onDone, missing }: {
         </div>
       </section>
 
-      <section className="rounded-xl border border-line bg-surface p-5">
+      <section className="rounded-xl border border-line bg-surface p-5" data-guide="company.branding">
         <h3 className="font-bold">Logo and colors</h3>
         <div className="mt-4 flex flex-wrap items-center gap-4">
           <div className="grid h-20 w-44 place-items-center rounded-lg border border-dashed border-line-strong bg-paper">

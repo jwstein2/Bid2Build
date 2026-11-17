@@ -14,13 +14,13 @@ export default async function CommunicationsPage() {
   if (!user) redirect("/login?next=/dashboard/customers/communications");
   const access = await loadCommAccess(await createClient());
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="mx-auto max-w-6xl space-y-6" data-guide-page="customers.communications">
       <Breadcrumbs items={[{ label: "Customers", href: "/dashboard/customers" }, { label: "Communications" }]} />
       <div className="space-y-3">
         <h1 className="text-3xl font-extrabold">Customers</h1>
         <CustomerTabs active="communications" pm={Boolean(access?.pm)} />
       </div>
-      <div data-feature="customer_communications"><Suspense><CommunicationsCenter /></Suspense></div>
+      <div data-feature="customer_communications" data-guide="customers.comms-center"><Suspense><CommunicationsCenter /></Suspense></div>
     </div>
   );
 }

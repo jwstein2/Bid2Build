@@ -110,7 +110,7 @@ export function BusinessConfigForm({ trades, initial, canEdit }: { trades: Picke
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
-      <form className="space-y-5 rounded-xl border border-line bg-surface p-4 sm:p-5" onSubmit={(e) => { e.preventDefault(); void save(); }} data-testid="fin-config-form">
+      <form className="space-y-5 rounded-xl border border-line bg-surface p-4 sm:p-5" onSubmit={(e) => { e.preventDefault(); void save(); }} data-testid="fin-config-form" data-guide="fin.trade-config">
         <fieldset disabled={!canEdit} className="space-y-5">
           <Field label="Main type of work" htmlFor="cfg-primary">
             <TradeCombobox id="cfg-primary" trades={trades} value={primary} onPick={(slug) => { setPrimary(slug); setExtra(extra.filter((x) => x !== slug)); const p = PRESETS[presetForTrade(slug)]; setModel(p.defaultProjectModel); setPayment(p.defaultPaymentStructure); }} placeholder="Choose your main trade" />
@@ -147,7 +147,7 @@ export function BusinessConfigForm({ trades, initial, canEdit }: { trades: Picke
           : <p className="text-sm text-muted">Only people who can manage financial settings can change this.</p>}
         <p className="text-xs text-muted">This only changes what Financials shows first. It never changes recorded amounts, history or anyone&apos;s access. Each project can override it.</p>
       </form>
-      <aside className="space-y-3 rounded-xl border border-line bg-paper p-4" aria-label="Preview" data-testid="fin-config-preview">
+      <aside className="space-y-3 rounded-xl border border-line bg-paper p-4" aria-label="Preview" data-testid="fin-config-preview" data-guide="fin.config-preview">
         <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">Preview</p>
         <p className="font-display text-lg font-extrabold">{PRESETS[profile.presetKey].label}</p>
         <div><p className="label">Home cards</p><ul className="flex flex-wrap gap-1">{profile.cards.map((c) => <li key={c} className="rounded-full bg-surface px-2 py-1 text-xs">{CARDS[c].title}</li>)}</ul></div>

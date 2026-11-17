@@ -15,7 +15,7 @@ export default async function BusinessConfigPage() {
   if (!isFinancialsEnabled()) notFound();
   const state = await loadFinState(await createClient());
   return (
-    <div className="mx-auto max-w-6xl space-y-4">
+    <div className="mx-auto max-w-6xl space-y-4" data-guide-page="company.business-config">
       <Breadcrumbs className="mb-3" items={[{ label: "Company", href: "/settings/company" }, { label: "Business & Trade Configuration" }]} />
       <h1 className="text-3xl font-extrabold">Business &amp; Trade Configuration</h1>
       <p className="max-w-2xl text-ink-soft">Tell Financials what kind of work you do and how you bill. Your Financials home, quick actions, reports and starter cost codes follow it.</p>

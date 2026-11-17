@@ -131,7 +131,7 @@ export function SavedItemsPicker({ group, estimate, suggestions, lib, dispatch }
 
   return (
     <div className="relative" ref={ref}>
-      <Button ref={trigger} size="sm" variant="ghost" onClick={() => setOpen(!open)} aria-expanded={open} className="max-md:min-h-11"><Search className="h-4 w-4" /> Suggested &amp; Saved Items</Button>
+      <Button ref={trigger} size="sm" variant="ghost" onClick={() => setOpen(!open)} aria-expanded={open} className="max-md:min-h-11" data-guide="builder.saved-items"><Search className="h-4 w-4" /> Suggested &amp; Saved Items</Button>
       {open && (
         <div className="absolute left-0 z-30 mt-1 w-[360px] max-w-[calc(100vw-2rem)] rounded-lg border border-line bg-surface p-2 shadow-xl">
           <div className="flex items-center gap-2">
