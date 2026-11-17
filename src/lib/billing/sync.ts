@@ -1,3 +1,4 @@
+import { isFinItem } from "../financials/billing";
 /**
  * Pure mapping from a Stripe subscription to our entitlement record. Kept free of I/O so it can be
  * unit-tested; the webhook route and reconciliation both use it.
@@ -64,7 +65,7 @@ export function subscriptionToUpdate(sub: SubscriptionLike, userId: string, even
   const seats = enterpriseSeats(sub, prices);
   // The plan item, never a PM add-on/editor item (those are mirrored separately by apply_pm_update).
   const pm = pmIds(prices);
-  const item = seats !== null ? sub.items.data.find((i) => i.price?.id === prices.enterpriseBase)! : (sub.items.data.find((i) => !pm.has(i.price?.id)) ?? sub.items.data[0]);
+  const item = seats !== null ? sub.items.data.find((i) => i.price?.id === prices.enterpriseBase)! : (sub.items.data.find((i) => !pm.has(i.price?.id) && !isFinItem(i as never)) ?? sub.items.data[0]);
   const priceId = item?.price?.id ?? null;
   const periodEnd = item?.current_period_end ?? sub.current_period_end ?? null;
   return {

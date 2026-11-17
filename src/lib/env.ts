@@ -61,5 +61,16 @@ export const isPmBillingConfigured = (kind: "addon" | "editor") => {
  */
 export const isFinancialsEnabled = () => process.env.NEXT_PUBLIC_FINANCIALS === "on";
 
+/**
+ * Solo Financials add-on purchases: Financials on and Stripe configured. With a live key they also need
+ * FIN_BILLING_LIVE=true, so live charges are switched on deliberately (same pattern as PM billing).
+ */
+export const isFinBillingConfigured = () => {
+  const e = serverEnv();
+  if (!isFinancialsEnabled() || !isStripeConfigured()) return false;
+  if (/^(sk|rk)_live_/.test(e.stripeSecretKey) && process.env.FIN_BILLING_LIVE !== "true") return false;
+  return true;
+};
+
 /** One home for every pillar (owner decision 2026-11-17). Off: /dashboard stays the landing page. */
 export const isUnifiedHomeEnabled = () => process.env.NEXT_PUBLIC_UNIFIED_HOME === "on";

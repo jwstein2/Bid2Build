@@ -21,7 +21,7 @@ export const PM_INCLUDED_ENTERPRISE_EDITORS = 1;
 export const PM_MAX_EXTRA_EDITORS = 1000;
 
 export type PmPrices = { addonMonthly?: string; addonAnnual?: string; editor?: string };
-export type PmItem = { id: string; price: { id: string; recurring?: { interval?: string } | null }; quantity?: number | null };
+export type PmItem = { id: string; price: { id: string; lookup_key?: string | null; recurring?: { interval?: string } | null }; quantity?: number | null };
 export type ItemUpdate = { id?: string; price?: string; quantity?: number; deleted?: boolean };
 
 export const isPmPrice = (priceId: string | undefined | null, p: PmPrices) =>
@@ -36,7 +36,7 @@ export function pmFromItems(items: PmItem[], p: PmPrices): { addon: boolean; ext
 
 /** Billing interval of the subscription's plan item (not a PM item). */
 export function planInterval(items: PmItem[], p: PmPrices): "month" | "year" | null {
-  const base = items.find((i) => !isPmPrice(i.price?.id, p));
+  const base = items.find((i) => !isPmPrice(i.price?.id, p) && !i.price?.lookup_key?.startsWith("b2b_fin_"));
   const iv = base?.price?.recurring?.interval;
   return iv === "month" || iv === "year" ? iv : null;
 }

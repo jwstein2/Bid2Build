@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { serverEnv } from "../env";
 import { enterpriseSeats, subscriptionToUpdate, type PriceIds, type SubscriptionLike } from "./sync";
 import { pmFromItems, type PmItem } from "../pm/billing";
+import { finFromItems, type FinItem } from "../financials/billing";
 import { logError } from "../http/api";
 
 export const prices = (): PriceIds => {
@@ -48,6 +49,15 @@ export async function applySubscription(admin: SupabaseClient, sub: Stripe.Subsc
     const pm = pmFromItems(s.items.data as unknown as PmItem[], { addonMonthly: p.pmAddonMonthly, addonAnnual: p.pmAddonAnnual, editor: p.pmEditor });
     const { error: pe } = await admin.rpc("apply_pm_update", { p_stripe_subscription_id: s.id, p_pm_addon: pm.addon, p_pm_extra_editors: pm.extraEditors, p_event_created: update.p_event_created });
     if (pe) logError("billing.pm_sync", pe, { subscription: s.id });
+  }
+  // Solo Financials add-on (items recognised by lookup key). Enterprise Financials seats are not sold yet.
+  if (data && update.p_plan !== "enterprise") {
+    const fin = finFromItems(s.items.data as unknown as FinItem[]);
+    const { data: row } = await admin.from("subscriptions").select("fin_addon").eq("stripe_subscription_id", s.id).maybeSingle();
+    if (fin.addon || row?.fin_addon) {
+      const { error: fe } = await admin.rpc("apply_fin_update", { p_stripe_subscription_id: s.id, p_fin_addon: fin.addon, p_fin_extra_seats: 0, p_event_created: update.p_event_created });
+      if (fe) logError("billing.fin_sync", fe, { subscription: s.id });
+    }
   }
   return { applied: Boolean(data), userId };
 }
