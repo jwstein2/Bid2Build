@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PmLockNotice } from "@/components/billing/pm-lock";
+import { getAccountStatus } from "@/lib/account/server";
 import { notFound } from "next/navigation";
 import { CalendarRange, ChevronRight, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
@@ -31,7 +33,7 @@ export default async function ProjectsPage() {
   if (!isPmEnabled()) notFound();
   const supabase = await createClient();
   const win = defaultWindow();
-  const [list, pm, ws, team, queue] = await Promise.all([listSchedules(supabase), loadPmAccess(supabase), loadWorkspace(supabase, win.from, win.to), loadTeam(supabase), loadReviewQueue(supabase)]);
+  const [list, pm, ws, team, queue, account] = await Promise.all([listSchedules(supabase), loadPmAccess(supabase), loadWorkspace(supabase, win.from, win.to), loadTeam(supabase), loadReviewQueue(supabase), getAccountStatus()]);
   // V4.2 directory: workload capacity/crews, contact info in the drawer, "my" tasks for linked staff.
   const resourceInfo: Record<string, ResourceInfo> = {};
   for (const r of team?.resources ?? []) resourceInfo[`r:${r.id}`] = { id: r.id, label: r.name, kind: r.kind === "subcontractor" ? "Subcontractor" : r.kind === "crew" ? "Crew" : "Staff", email: r.email, phone: r.phone, trade: r.trades.join(", ") || null };
@@ -49,11 +51,7 @@ export default async function ProjectsPage() {
         <p className="mt-1 text-ink-soft">{ws ? "Every job in one place: who sold it, who runs it, what's happening this week and what the customer should hear." : "Turn won bids into job schedules built from the estimate, then track progress."}</p>
       </div>
       {list === null && <Notice tone="warn" title="Project Command Center is being set up">The database update for schedules hasn&apos;t been applied yet.</Notice>}
-      {pm && !pm.canEdit && (
-        <Notice title="View only">
-          {pm.scope === "company" ? "Ask your company admin for a scheduling editor seat to create or edit schedules." : <>Creating and editing schedules needs Project Command Center. <Link href="/settings/billing" className="font-semibold underline">Unlock Project Command Center</Link></>}
-        </Notice>
-      )}
+      {pm && !pm.canEdit && <PmLockNotice kind={pm.scope === "company" ? "company" : account.kind === "unlimited" ? "unlimited" : "free"} title="View only" />}
 
       {queue !== null && queue.length > 0 && <div id="review" className="scroll-mt-4"><ReviewQueue items={queue} canSchedule={Boolean(pm?.canEdit)} /></div>}
 

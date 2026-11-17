@@ -1,5 +1,6 @@
 import { openGraphFor } from "@/lib/seo/open-graph";
 import type { Metadata } from "next";
+import { pmMarketedLive } from "@/lib/marketing/catalog";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Calculator, Check, EyeOff, Percent } from "lucide-react";
@@ -212,6 +213,8 @@ export default async function TradePage({ params }: PageProps<"/bids/[trade]">) 
                 <li key={r.slug}><Link href={`/bids/${r.slug}`} className="inline-block rounded-full border border-line bg-surface px-3 py-1.5 text-sm font-medium hover:border-brand/40">{r.seoTitle}</Link></li>
               ))}
               <li><Link href="/learn/markup-vs-margin" className="inline-block rounded-full border border-line bg-surface px-3 py-1.5 text-sm font-medium hover:border-brand/40">Markup vs. margin guide</Link></li>
+              {pmMarketedLive() && <li><Link href="/#run-the-job" className="inline-block rounded-full border border-line bg-surface px-3 py-1.5 text-sm font-medium hover:border-brand/40">Contractor project scheduling</Link></li>}
+              <li><Link href="/pricing" className="inline-block rounded-full border border-line bg-surface px-3 py-1.5 text-sm font-medium hover:border-brand/40">Compare plans</Link></li>
             </ul>
           </>
         )}

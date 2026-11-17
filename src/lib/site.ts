@@ -27,8 +27,11 @@ export const site = {
   /** Canonical public URL of this deploy (app and marketing share one origin). */
   url,
   tagline: "Build estimates. Create bids. Win more work.",
+  // Mentions scheduling only on deploys where Project Command Center is switched on (inlined at build).
   description:
-    "Build clear estimates and professional, branded proposals for your trade. Price with markup or margin, choose what your customer sees, and download a PDF. 3 free bids to start, plus 1 free bid every month. No credit card.",
+    process.env.NEXT_PUBLIC_PROJECT_SCHEDULING === "on"
+      ? "Contractor estimating, proposal and project scheduling software. Build branded bids for your trade, get them signed online, track your pipeline and schedule won jobs. 3 free bids to start, plus 1 free bid every month. No credit card."
+      : "Contractor estimating and proposal software for every trade. Build branded bids with markup or margin, get them signed online and track your pipeline. 3 free bids to start, plus 1 free bid every month. No credit card.",
   // Set NEXT_PUBLIC_SUPPORT_EMAIL and NEXT_PUBLIC_SITE_DOMAIN in production (domain not yet registered).
   supportEmail: process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "support@example.com",
 } as const;

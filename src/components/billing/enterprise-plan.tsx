@@ -9,7 +9,8 @@ export const ENTERPRISE_FEATURES = [
   "3 full-access users included",
   "Unlimited bidding",
   "Company management dashboard",
-  "Team and manager permissions",
+  "Roles and permissions for owners, managers, estimators and viewers",
+  "Company-wide bid style with locks",
   "Company-wide bid analytics and sales pipeline",
   "Saved Items & Pricing",
   "Proposal Templates",
@@ -24,7 +25,7 @@ const MAX_ESTIMATE = 500;
  * `mode` decides the action: open = checkout is live; contact = prices not configured yet;
  * member = already in a company; owner = already the owner (manage instead).
  */
-export function EnterprisePlan({ signedIn, mode, supportEmail }: { signedIn: boolean; mode: "open" | "contact" | "member" | "owner"; supportEmail: string }) {
+export function EnterprisePlan({ signedIn, mode, supportEmail, extraFeatures = [] }: { signedIn: boolean; mode: "open" | "contact" | "member" | "owner"; supportEmail: string; extraFeatures?: string[] }) {
   const router = useRouter();
   const params = useSearchParams();
   const [users, setUsers] = useState(ENTERPRISE_INCLUDED_USERS);
@@ -63,7 +64,7 @@ export function EnterprisePlan({ signedIn, mode, supportEmail }: { signedIn: boo
           <p className="mt-1 text-sm font-semibold text-ink">Built for growing contracting teams.</p>
           <p className="mt-2 text-sm text-ink-soft">Includes your primary administrator account plus two additional team members at no extra charge. All three accounts include full access to unlimited bidding.</p>
           <p className="mt-2 text-sm text-ink-soft">Manage your team&apos;s estimates, customers, pipeline, and performance from one powerful company dashboard.</p>
-          <ul className="mt-5 space-y-2 text-sm">{ENTERPRISE_FEATURES.map((f) => <li key={f} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-ok" aria-hidden />{f}</li>)}</ul>
+          <ul className="mt-5 space-y-2 text-sm">{[...ENTERPRISE_FEATURES, ...extraFeatures].map((f) => <li key={f} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-ok" aria-hidden />{f}</li>)}</ul>
         </div>
         <div className="min-w-0 rounded-xl bg-paper p-4 sm:p-5">
           <h3 className="font-display font-bold">Additional users</h3>

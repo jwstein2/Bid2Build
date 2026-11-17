@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { getAccountStatus } from "@/lib/account/server";
 import { createClient } from "@/lib/supabase/server";
 import { isPmEnabled } from "@/lib/env";
 import { loadSchedule } from "@/lib/schedule/server";
@@ -25,9 +26,9 @@ export default async function SchedulePage({ params, searchParams }: { params: P
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const supabase = await createClient();
-  const [data, pm, publications] = await Promise.all([loadSchedule(supabase, id), loadPmAccess(supabase), listPublications(supabase, id)]);
+  const [data, pm, publications, account] = await Promise.all([loadSchedule(supabase, id), loadPmAccess(supabase), listPublications(supabase, id), getAccountStatus()]);
   if (!data) notFound();
-  const editHint = data.canEdit ? null : pm?.scope === "company" || data.schedule.companyId ? "seat" : "addon";
+  const editHint = data.canEdit ? null : pm?.scope === "company" || data.schedule.companyId ? "seat" : account.kind === "unlimited" ? "addon" : "upgrade";
   const { created, tab } = await searchParams;
   // V4.1 summary (people, closeout, activity). Absent before the V4.1 SQL runs: the editor still works.
   const [{ data: row }, activity, { data: peopleRaw }, { data: sig }, { data: est }] = await Promise.all([
