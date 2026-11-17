@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isFinancialsEnabled, isPmEnabled } from "@/lib/env";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { JobFinancials } from "@/components/financials/job-financials";
+import { loadJobHeader } from "@/lib/financials/loaders";
 
 export const metadata: Metadata = { title: "Job financials", robots: { index: false } };
 
@@ -14,7 +15,7 @@ export default async function JobFinancialsPage({ params, searchParams }: { para
   const { estimateId } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(estimateId)) notFound();
   const db = await createClient();
-  const { data: est } = await db.from("estimates").select("id, title").eq("id", estimateId).maybeSingle();
+  const est = await loadJobHeader(db, estimateId);
   if (!est) notFound();
   const { data: sched } = isPmEnabled() ? await db.from("project_schedules").select("id").eq("estimate_id", estimateId).maybeSingle() : { data: null };
   const sp = await searchParams;
