@@ -19,7 +19,8 @@
 --   * fin_audit_log (append-only), gapless numbering, the private financial-documents bucket and
 --     fin_documents, Business & Trade Configuration (presentation only: never read by entitlement or
 --     permission checks, never rewrites history), per-project presentation overrides, AI preferences
---     (every toggle defaults OFF), dashboard defaults / role layouts / per-user preferences with
+--     (every new financial toggle defaults OFF; photo labeling defaults ON because it is today's live
+--     behavior and must not change on deploy), dashboard defaults / role layouts / per-user preferences with
 --     company locks and non-hideable alerts, and the per-user Contractor/Accountant mode.
 --
 -- Money is numeric(14,2); amounts cross the API as strings. Writes only through SECURITY DEFINER
@@ -594,22 +595,24 @@ revoke execute on function public.fin_business_config_save(uuid, jsonb), public.
 grant execute on function public.fin_business_config_save(uuid, jsonb), public.fin_project_profile_save(uuid, jsonb) to authenticated;
 
 -- 12. AI & Automation preferences (every financial AI toggle defaults OFF) -----------------------------------
+-- Exception: photo_labeling defaults ON. Photo label suggestions are live today (PHOTO_AI_LABELS), so a
+-- company that never opens AI & Automation keeps exactly today's behavior; only an explicit OFF stops them.
 create table if not exists public.fin_ai_preferences (
   book_id                uuid primary key references public.fin_books (id) on delete restrict,
   expense_suggestions    boolean not null default false,
   document_extraction    boolean not null default false,
   communication_drafting boolean not null default false,
-  photo_labeling         boolean not null default false,
+  photo_labeling         boolean not null default true,
   updated_by             uuid references auth.users (id) on delete set null,
   updated_at             timestamptz not null default now()
 );
 
--- A book without a row has everything off.
+-- A book without a row has every financial AI feature off, and photo labeling on (today's live behavior).
 create or replace function public.fin_ai_enabled(p_book_id uuid, p_feature text) returns boolean
 language sql stable security definer set search_path = public as $$
   select coalesce((select case p_feature when 'expense_suggestions' then a.expense_suggestions when 'document_extraction' then a.document_extraction
                      when 'communication_drafting' then a.communication_drafting when 'photo_labeling' then a.photo_labeling else false end
-                   from public.fin_ai_preferences a where a.book_id = p_book_id), false)
+                   from public.fin_ai_preferences a where a.book_id = p_book_id), p_feature = 'photo_labeling')
 $$;
 
 create or replace function public.fin_ai_preferences_save(p_book_id uuid, p jsonb) returns void
@@ -618,7 +621,7 @@ begin
   perform public.fin_require(p_book_id, 'manage_financial_config', false);
   insert into public.fin_ai_preferences as a (book_id, expense_suggestions, document_extraction, communication_drafting, photo_labeling, updated_by)
   values (p_book_id, coalesce((p ->> 'expenseSuggestions')::boolean, false), coalesce((p ->> 'documentExtraction')::boolean, false),
-          coalesce((p ->> 'communicationDrafting')::boolean, false), coalesce((p ->> 'photoLabeling')::boolean, false), auth.uid())
+          coalesce((p ->> 'communicationDrafting')::boolean, false), coalesce((p ->> 'photoLabeling')::boolean, true), auth.uid())
   on conflict (book_id) do update set
     expense_suggestions = coalesce((p ->> 'expenseSuggestions')::boolean, a.expense_suggestions),
     document_extraction = coalesce((p ->> 'documentExtraction')::boolean, a.document_extraction),

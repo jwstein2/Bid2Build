@@ -149,12 +149,20 @@ d("Financial Command Center: foundation and costs (database)", () => {
     expect(nums).toEqual(expected);
   });
 
-  it("AI preferences: every toggle is off by default; turning one on leaves the rest off", async () => {
+  it("AI preferences: financial toggles are off by default, photo labeling stays on (live today); toggles are independent", async () => {
     const enabled = async (f: string) => (await as<{ e: boolean }>(w.owner, "select public.fin_ai_enabled($1, $2) as e", [w.book, f])).e;
-    for (const f of ["expense_suggestions", "document_extraction", "communication_drafting", "photo_labeling"]) expect(await enabled(f), f).toBe(false);
+    for (const f of ["expense_suggestions", "document_extraction", "communication_drafting"]) expect(await enabled(f), f).toBe(false);
+    expect(await enabled("photo_labeling"), "photo labeling keeps today's behavior with no row").toBe(true);
+    expect(await enabled("unknown_feature")).toBe(false);
     await as(w.owner, "select public.fin_ai_preferences_save($1, $2)", [w.book, { documentExtraction: true }]);
     expect(await enabled("document_extraction")).toBe(true);
-    for (const f of ["expense_suggestions", "communication_drafting", "photo_labeling"]) expect(await enabled(f), f).toBe(false);
+    for (const f of ["expense_suggestions", "communication_drafting"]) expect(await enabled(f), f).toBe(false);
+    expect(await enabled("photo_labeling"), "saving another toggle doesn't turn photo labeling off").toBe(true);
+    await as(w.owner, "select public.fin_ai_preferences_save($1, $2)", [w.book, { photoLabeling: false }]);
+    expect(await enabled("photo_labeling"), "an explicit OFF sticks").toBe(false);
+    expect(await enabled("document_extraction")).toBe(true);
+    await as(w.owner, "select public.fin_ai_preferences_save($1, $2)", [w.book, { photoLabeling: true }]);
+    expect(await enabled("photo_labeling")).toBe(true);
     const row = (await pool.query("select * from public.fin_ai_preferences where book_id = $1", [w.soloBook])).rows[0];
     expect(row).toBeUndefined();
     expect(await fails(as(w.bk, "select public.fin_ai_preferences_save($1, $2)", [w.book, { photoLabeling: true }]))).toBe("forbidden");
