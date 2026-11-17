@@ -5,12 +5,12 @@
  * Without CREATOR_OUTREACH_SECRET this function exits immediately.
  * Docs: https://docs.netlify.com/functions/scheduled-functions/
  */
+import { runCron } from "../lib/cron";
 const tick = async () => {
   const secret = process.env.CREATOR_OUTREACH_SECRET;
   const base = process.env.URL; // Netlify sets the site's primary URL in every function
   if (!secret || !base) return new Response("not configured", { status: 200 });
-  const r = await fetch(new URL("/api/cron/creator-outreach", base), { method: "POST", headers: { authorization: `Bearer ${secret}` } });
-  return new Response(await r.text(), { status: r.ok ? 200 : 502 });
+  return runCron("creator_outreach", "/api/cron/creator-outreach", secret, base);
 };
 
 export default tick;

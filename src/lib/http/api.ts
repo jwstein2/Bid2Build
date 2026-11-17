@@ -2,6 +2,7 @@ import "server-only";
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { createHash } from "node:crypto";
+import { reportHandledError } from "@/lib/monitoring/report-server";
 
 export const json = (data: unknown, status = 200) => NextResponse.json(data, { status, headers: { "cache-control": "no-store" } });
 export const fail = (status: number, code: string, message: string, extra: Record<string, unknown> = {}) =>
@@ -66,4 +67,7 @@ export async function sameOrigin(): Promise<boolean> {
 export function logError(scope: string, err: unknown, meta: Record<string, string | number | boolean | undefined> = {}) {
   const e = err as { message?: string; code?: string };
   console.error(JSON.stringify({ level: "error", scope, message: e?.message?.slice(0, 300), code: e?.code, ...meta }));
+  // Handled errors never reach Next.js's onRequestError, so forward them to Sentry too (checkout, webhook,
+  // email, cron, customer linking...). Off without a DSN.
+  reportHandledError(scope, e?.message, e?.code, meta);
 }
