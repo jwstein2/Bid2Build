@@ -31,6 +31,7 @@ await fetch(`${M}/__features`);
 
 const browser = await chromium.launch();
 const errors = [];
+const FIN = Boolean(process.env.WALK_FINANCIALS);
 const VIEWPORTS = { desktop: { viewport: { width: 1440, height: 1000 } }, tablet: { ...devices["iPad Mini"] }, phone: { ...devices["iPhone 13"] } };
 
 async function open(vpName, path, theme = "light") {
@@ -138,6 +139,61 @@ const writesOk = (name, writes) => {
   const bad = writes.filter((w) => w !== "POST /api/features" && w !== "POST /api/theme");
   check(`${name}: nothing saved, sent or changed (only the walkthrough's own record)`, bad.length === 0, bad.join(", "));
 };
+
+// ── Financials (WALK_FINANCIALS=1): real fin_* SQL on a throwaway local database, TEST DATA ONLY ────────
+//   scripts/test-db.sh start && export RADAR_PG_URL=$(node scripts/financials/setup-db.mjs)
+//   PG_REST_AS_USER=00000000-0000-4000-8000-000000000001 PG_REST_PREFIXES=fin_,estimates,estimate_versions,subcontractor_quote,change_orders \
+//     node scripts/ux-audit/mock-supabase.mjs &   (then build with NEXT_PUBLIC_FINANCIALS=on)
+//   WALK_FINANCIALS=1 RADAR_PG_URL=... node scripts/features/page-guide-walk.mjs <screenshotDir>
+if (FIN) {
+  const { Client } = createRequire(import.meta.url)("pg");
+  const db = new Client({ connectionString: process.env.RADAR_PG_URL }); await db.connect();
+  const est = async (t) => (await db.query("select id from public.estimates where title = $1", [t])).rows[0].id;
+  const KITCHEN = await est("Kitchen remodel – Ortiz"), RIVERA = await est("Backyard deck – Rivera");
+  await db.end();
+  const as = (u) => fetch(`${M}/__as?user=${u}`);
+  const OWNER = "00000000-0000-4000-8000-000000000001", PMU = "00000000-0000-4000-8000-0000000000b2", VIEWER = "00000000-0000-4000-8000-0000000000b3";
+  await as(OWNER);
+  const run = async (name, path, opts = {}, vp = "desktop", theme = "light") => {
+    const { ctx, page, writes } = await open(vp, path, theme);
+    if (opts.before) await opts.before(page);
+    const titles = await walk(name, page, { how: vp === "desktop" ? "sidebar" : "sidebar-phone", expectLabel: opts.label });
+    writesOk(name, writes);
+    await ctx.close();
+    return titles;
+  };
+  const home = await run("fin-home-owner", "/financials", { label: "Financials ·" });
+  check("financials: owner home teaches headline numbers, alerts and customizing", ["Headline numbers", "Needs attention", "Customize this page"].every((t) => home.includes(t)), home.join(" | "));
+  await run("fin-home-phone-dark", "/financials", { label: "Financials ·" }, "phone", "dark");
+  await run("fin-records", "/financials/records?view=jobs", { label: "Financials · Records" });
+  await run("fin-tools", "/financials/tools", { label: "Financials · All tools" }, "tablet", "black");
+  const billing = await run("fin-job-billing", `/financials/jobs/${KITCHEN}`, { label: "Job financials · Billing" });
+  {
+    // The job's own trades (kitchen + electrical) pick the examples, not the account's usual trades.
+    const { ctx, page } = await open("desktop", `/financials/jobs/${KITCHEN}`);
+    await start(page, "sidebar");
+    let text = "";
+    for (let n = 0; n < 8; n++) { const p = await probe(page); text += ` ${p.body} ${p.hint}`; if (await page.getByTestId("tour-card").getByRole("button", { name: "Finish" }).count()) break; await page.getByTestId("tour-card").getByRole("button", { name: "Next" }).click(); await page.waitForTimeout(150); }
+    check("financials trade: a kitchen job's tips speak to remodeling, not roofing", /kitchen|remodel/i.test(text) && !/roof/i.test(text), text);
+    await page.keyboard.press("Escape");
+    await ctx.close();
+  }
+  check("financials: job billing explains contract, milestones, invoices and payments", ["The contract", "Payment milestones", "Invoices", "Payments"].every((t) => billing.includes(t)), billing.join(" | "));
+  const costs = await run("fin-job-costs-owner", `/financials/jobs/${KITCHEN}`, { label: "Job financials · Costs", before: async (p) => { await p.getByRole("tab", { name: "Costs" }).click(); await p.waitForTimeout(300); } });
+  check("financials: the Costs tab on screen decides the tutorial", costs.includes("Add a cost") && !costs.includes("Payments"), costs.join(" | "));
+  await run("fin-open-job", `/financials/jobs/${RIVERA}`, { label: "Job financials ·" });
+  await run("fin-business-config", "/company/business-config", { label: "Business & Trade Configuration" });
+  await run("fin-ai-automation", "/company/ai-automation", { label: "AI & Automation" });
+  // Roles: the screens hide what a role can't use, and the walkthrough skips those steps.
+  await as(PMU);
+  const pmCosts = await run("fin-job-costs-pm", `/financials/jobs/${KITCHEN}`, { label: "Job financials ·", before: async (p) => { await p.getByRole("tab", { name: "Costs" }).click(); await p.waitForTimeout(300); } });
+  check("financials: a project manager is walked through costs they can record", pmCosts.includes("Add a cost"), pmCosts.join(" | "));
+  await as(VIEWER);
+  const viewHome = await run("fin-home-view-only", "/financials", { label: "Financials ·" });
+  check("financials: view-only isn't shown quick actions, trade setup or Accountant Mode", !["Quick actions", "Trade setup", "Contractor or Accountant Mode"].some((t) => viewHome.includes(t)), viewHome.join(" | "));
+  await as(OWNER);
+  await report();
+}
 
 // ── 1. Free account: Bids Pipeline, with typed search + date range that must survive ─────────────
 await scenario("starter"); await pm({ scope: "none", canEdit: false, editorLimit: 0, editorsAssigned: 0, addon: false });
@@ -344,10 +400,14 @@ await scenario("starter"); await fetch(`${M}/__features`);
   await ctx.close();
 }
 
-await browser.close();
-const relevant = errors.filter((e) => !/Failed to load resource|ResizeObserver/.test(e));
-check("no page errors", relevant.length === 0, relevant.slice(0, 5).join(" | "));
-const failed = results.filter((r) => !r.ok);
-fs.writeFileSync(`${dir}/results.json`, JSON.stringify({ passed: results.length - failed.length, failed: failed.length, results }, null, 2));
-console.log(`\n${results.length - failed.length}/${results.length} checks passed`);
-process.exit(failed.length ? 1 : 0);
+await report();
+
+async function report() {
+  await browser.close();
+  const relevant = errors.filter((e) => !/Failed to load resource|ResizeObserver/.test(e));
+  check("no page errors", relevant.length === 0, relevant.slice(0, 5).join(" | "));
+  const failed = results.filter((r) => !r.ok);
+  fs.writeFileSync(`${dir}/results${FIN ? "-financials" : ""}.json`, JSON.stringify({ passed: results.length - failed.length, failed: failed.length, results }, null, 2));
+  console.log(`\n${results.length - failed.length}/${results.length} checks passed`);
+  process.exit(failed.length ? 1 : 0);
+}

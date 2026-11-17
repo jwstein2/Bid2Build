@@ -51,11 +51,11 @@ export default async function AllTools() {
   if (state.kind !== "ready") return <div className="mx-auto max-w-4xl space-y-4">{crumbs}<h1 className="text-3xl font-extrabold">All financial tools</h1><FinStateNotice state={state} /></div>;
   const perms = state.ctx.access.permissions;
   return (
-    <div className="mx-auto max-w-5xl space-y-5" data-testid="fin-tools">
+    <div className="mx-auto max-w-5xl space-y-5" data-testid="fin-tools" data-guide-page="financials.tools">
       {crumbs}
       <h1 className="text-3xl font-extrabold">All financial tools</h1>
       <p className="text-ink-soft">Your home page shows what fits your trade. Everything is always here too.</p>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2" data-guide="fin.tool-groups">
         {GROUPS.map((g) => (
           <section key={g.title} className="rounded-xl border border-line bg-surface p-4">
             <h2 className="font-display text-lg font-extrabold">{g.title}</h2>

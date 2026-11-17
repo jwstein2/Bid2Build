@@ -21,8 +21,9 @@
  *
  * Rules (tests/page-guides.test.ts, run in CI):
  * - Every target and page key here is used in the app as a literal `data-guide` / `data-guide-page`.
- * - Copy only describes controls that exist on main. Financial Command Center steps are added when its
- *   screens ship (none exist on main yet), and so is a Business & Trade Configuration screen.
+ * - Copy only describes controls that exist on main. Financial Command Center screens render only when
+ *   NEXT_PUBLIC_FINANCIALS is on, so their guides can only start there; each screen already hides what a
+ *   person's financial role can't use, and the walkthrough skips steps whose control isn't on screen.
  */
 import type { Permission } from "@/lib/enterprise/permissions";
 import { getFeature, type FeatureId } from "./registry";
@@ -520,6 +521,92 @@ export const PAGE_GUIDES = {
       { target: "company.licenses", title: "Licensed users", body: "How many seats you pay for and how many are in use." },
       { target: "company.seats", title: "Add or remove licenses", body: "Change your seat count. The price change is shown before you confirm." },
       { target: "company.portal", title: "Payment method and invoices", body: "Update your card, see invoices or cancel in the secure billing portal." },
+    ],
+  },
+  // ── Financial Command Center (only reachable when NEXT_PUBLIC_FINANCIALS is on) ───────────────
+  "financials.home": {
+    route: "/financials",
+    label: "Financials",
+    steps: [
+      { target: "fin.kpis", title: "Headline numbers", body: "Your key money numbers for the period. Each badge says what the number is based on, like Contracted, Invoiced or Paid. Click a number for the records behind it." },
+      { target: "fin.attention", title: "Needs attention", body: "Always-on cards for money that needs action, like milestones ready to invoice or overdue invoices. You can't hide these." },
+      { target: "fin.alerts", title: "Alerts", body: "Problems Financials found, such as a payment that doesn't match an invoice. Each one says what to check; nothing is changed for you.", hint: "On {job}, alerts point to the exact milestone or cost." },
+      { target: "fin.quick", title: "Quick actions", body: "Shortcuts for your kind of work. They open the right job first, and nothing is recorded until you save a form." },
+      { target: "fin.cards", title: "Your cards", body: "Cards picked for your trade and role, such as job profit or what's committed to {sub}. Click one for its records." },
+      { target: "fin.reports", title: "Reports for your kind of work", body: "Reports that fit how {trade} track money. Ones marked later aren't available yet." },
+      { target: "fin.mode", title: "Contractor or Accountant Mode", body: "Accountant Mode uses accounting terms and shows ledger detail. It only changes what you see." },
+      { target: "fin.customize", title: "Customize this page", body: "Show, hide or reorder cards and pick your headline numbers. Restore puts the trade defaults back." },
+      { target: "fin.tools", title: "All tools", body: "Every Financials tool in one list, whatever your home page shows." },
+      { target: "fin.config", title: "Trade setup", body: "Tell Financials your trades and how you bill. The home page, quick actions and starter cost codes follow it." },
+    ],
+  },
+  "financials.records": {
+    route: "/financials/records",
+    label: "Financials · Records",
+    steps: [
+      { target: "fin.record-tabs", title: "Record types", body: "Jobs, milestones, invoices, payments, costs, commitments, alerts and items that need review. Every number on the home page opens one of these lists." },
+      { target: "fin.won-bids", title: "Won bids without financials", body: "Won bids that don't have job financials yet. Open one to set up its contract and payment schedule." },
+      { target: "fin.records-list", title: "The records", body: "Each row shows the amount, what it's based on and its status. Click a row for that job's financials.", hint: "For {job}, the job row compares contract, invoiced and actual cost." },
+    ],
+  },
+  "financials.tools": {
+    route: "/financials/tools",
+    label: "Financials · All tools",
+    steps: [
+      { target: "fin.tool-groups", title: "Every tool, grouped", body: "Getting paid, job costs, cleanup and settings. Tools outside your role are greyed out, and ones coming later say when." },
+    ],
+  },
+  "financials.job": {
+    route: "/financials/jobs/[id]",
+    label: "Job financials",
+    steps: [
+      { target: "fin.open-job", title: "Start job financials", body: "Once a bid is won, opening job financials locks in the contract amount and signed payment schedule. It doesn't create an invoice or send anything." },
+    ],
+  },
+  "financials.job.billing": {
+    route: "/financials/jobs/[id]",
+    label: "Job financials · Billing",
+    steps: [
+      { target: "fin.job-tabs", title: "Billing, costs and review", body: "Switch between getting paid, what the job costs and items that need a second look." },
+      { target: "fin.alerts", title: "Job alerts", body: "Anything on this job that doesn't add up, with what to check." },
+      { target: "fin.contract", title: "The contract", body: "The amount from the signed proposal, plus approved change orders. Invoices are checked against it." },
+      { target: "fin.milestones", title: "Payment milestones", body: "The payment schedule from the proposal. Each milestone shows when it's ready to invoice and what's been paid.", hint: "For {job}, milestones often follow {phases}." },
+      { target: "fin.invoices", title: "Invoices", body: "Drafts and issued invoices with what's still owed. A draft isn't sent to anyone." },
+      { target: "fin.payments", title: "Payments", body: "Payments you've recorded and whether they're verified. Recording a payment doesn't charge anyone." },
+    ],
+  },
+  "financials.job.costs": {
+    route: "/financials/jobs/[id]#costs",
+    label: "Job financials · Costs",
+    steps: [
+      { target: "fin.job-tabs", title: "Billing, costs and review", body: "Switch between getting paid, what the job costs and items that need a second look." },
+      { target: "fin.cost-actions", title: "Add a cost", body: "Record an expense, enter a vendor bill or commit a sub quote. Each opens a form; nothing is saved until you save it.", hint: "Typical costs here are {materials} and {sub}." },
+      { target: "fin.budget", title: "Budget vs actual", body: "Your estimate's costs by cost code next to what's committed and spent so far." },
+      { target: "fin.profit", title: "Job profit", body: "Contract value minus costs, so you can see the margin while the job is still running." },
+      { target: "fin.cost-lists", title: "Expenses, bills and commitments", body: "Every cost on the job with its status, such as waiting for approval." },
+    ],
+  },
+  "financials.job.review": {
+    route: "/financials/jobs/[id]#review",
+    label: "Job financials · Needs review",
+    steps: [
+      { target: "fin.job-tabs", title: "Billing, costs and review", body: "Switch between getting paid, what the job costs and items that need a second look." },
+      { target: "fin.review", title: "Needs review", body: "Items Financials couldn't file on its own, like a cost without a cost code. People with approval access resolve them here." },
+    ],
+  },
+  "company.business-config": {
+    route: "/company/business-config",
+    label: "Business & Trade Configuration",
+    steps: [
+      { target: "fin.trade-config", title: "Your trades and billing", body: "Pick your main trade, any others, your market and how you bill. Changes apply when you save.", hint: "For {trade}, the preset suggests starter cost codes for {materials}." },
+      { target: "fin.config-preview", title: "Preview", body: "What your Financials home, quick actions and reports will look like with these choices, before you save." },
+    ],
+  },
+  "company.ai-automation": {
+    route: "/company/ai-automation",
+    label: "AI & Automation",
+    steps: [
+      { target: "fin.ai-toggles", title: "Opt-in AI features", body: "Each AI feature is off until you turn it on, and says what it does. Balances, invoices and reports never depend on AI." },
     ],
   },
   "whats-new": {

@@ -75,8 +75,22 @@ navigating or switching views, which is exactly what V5.2 forbids.
 | whats-new | /whats-new | whats-new.releases, whats-new.tour |
 | admin | /admin/* (platform owner only) | admin.nav, admin.tools, admin.test-data, admin.exit |
 
-**Financials:** no Financial Command Center or Business & Trade Configuration screens are on `main`
-yet, so no steps are defined (a test enforces this). Add them when those screens merge.
+**Financials** (Financial Command Center, merged to `main` behind `NEXT_PUBLIC_FINANCIALS`, off in
+production, so these guides can only start once it's turned on):
+
+| Page key | Route / view | Steps (targets, in order) |
+| --- | --- | --- |
+| financials.home | /financials | fin.kpis, fin.attention, fin.alerts, fin.quick, fin.cards, fin.reports, fin.mode, fin.customize, fin.tools, fin.config |
+| financials.records | /financials/records | fin.record-tabs, fin.won-bids, fin.records-list |
+| financials.tools | /financials/tools | fin.tool-groups |
+| financials.job | job not opened yet | fin.open-job |
+| financials.job.billing / .costs / .review | job tabs (also the project's Financials tab) | fin.job-tabs, then contract, milestones, invoices, payments / cost actions, budget, profit, cost lists / review queue |
+| company.business-config | /company/business-config | fin.trade-config, fin.config-preview |
+| company.ai-automation | /company/ai-automation | fin.ai-toggles |
+
+Financial roles are handled by the screens themselves (they hide what a role can't use) plus the
+walkthrough's rule of skipping steps whose control isn't on screen: a view-only seat gets 7 home steps
+(no quick actions, trade setup or Accountant Mode), an owner gets 10. Job tips use the job's own trades.
 
 ## 4. Trade-adaptive copy (one engine, deterministic)
 
@@ -136,6 +150,8 @@ changed it themselves.
   permission filtering, completion state, and a source guard: no router pushes or programmatic clicks
   in the walkthrough code).
 - `scripts/features/page-guide-walk.mjs`: Playwright walk against the mock backend, **501/501 checks**
+  (plus `WALK_FINANCIALS=1` against the real `fin_*` SQL on a throwaway local database: **274/274**, owner,
+  project manager and view-only seats, desktop / tablet Black / phone Dark)
   across desktop (1440×1000), tablet (iPad Mini) and phone (iPhone 13) in Light, Dark and Black. Every
   step checks: spotlight on the real control, card in view and covering < 35% of the target, no
   horizontal overflow, URL unchanged. Each run checks: no writes besides the completion record, typed

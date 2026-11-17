@@ -80,9 +80,14 @@ describe("the active view decides the tutorial", () => {
     expect(titles("dashboard.analytics", c)).toEqual(expect.arrayContaining(["How sales are going", "Estimate your sales pay"]));
     expect(titles("dashboard.analytics", c)).not.toContain("Stages");
   });
-  it("defines no Financial Command Center steps until those screens exist on main", () => {
-    expect(PAGES.some((p) => p.startsWith("financ"))).toBe(false);
-    expect(SRC.some(({ s }) => /data-guide-page="financ/.test(s))).toBe(false);
+  it("Financials screens (behind NEXT_PUBLIC_FINANCIALS) have their own guides, marked only on Financials screens", () => {
+    for (const p of ["financials.home", "financials.records", "financials.tools", "financials.job", "financials.job.billing", "financials.job.costs", "financials.job.review", "company.business-config", "company.ai-automation"]) expect(isPageKey(p), p).toBe(true);
+    const marked = SRC.filter(({ s }) => /data-guide-page="financials|financials\.job\.billing/.test(s)).map(({ p }) => path.relative(ROOT, p));
+    expect(marked.length).toBeGreaterThan(0);
+    for (const f of marked) expect(f).toMatch(/financials/);
+    expect(titles("financials.job.costs", ctx())).toContain("Add a cost");
+    expect(titles("financials.job.costs", ctx())).not.toContain("Payments");
+    expect(bodies("financials.job.billing", ctx())).toMatch(/doesn't charge anyone/);
   });
 });
 

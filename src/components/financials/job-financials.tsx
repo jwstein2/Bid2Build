@@ -14,6 +14,9 @@ import { BillDialog, BudgetTable, CommitmentDialog, CostLists, ExpenseDialog, Pr
 
 const s = (v: unknown) => (v === null || v === undefined ? "" : String(v));
 type Section = "billing" | "costs" | "review";
+const GUIDE_PAGE = { billing: "financials.job.billing", costs: "financials.job.costs", review: "financials.job.review" } as const;
+/** The job's own trades, so the walkthrough's examples match the job on screen. */
+const guideTrade = (est: R) => (Array.isArray(est.trades) ? (est.trades as unknown[]).filter((t) => typeof t === "string").join(" ") : undefined);
 type Open = { kind: "invoice"; milestone: R | null; draft: R | null } | { kind: "payment"; invoice?: string | null } | { kind: "credit" } | { kind: "expense" } | { kind: "bill" } | { kind: "commitment" } | { kind: "email"; invoiceId?: string; paymentId?: string } | null;
 
 interface Payload {
@@ -81,7 +84,7 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
       void load();
     };
     return (
-      <section className="rounded-xl border border-line bg-surface p-4" data-testid="fin-open-job">
+      <section className="rounded-xl border border-line bg-surface p-4" data-testid="fin-open-job" data-guide-page="financials.job" data-guide-trade={guideTrade(data.estimate)} data-guide="fin.open-job">
         <h2 className="font-display text-lg font-extrabold">Job financials</h2>
         {!won ? <p className="mt-2 text-sm text-ink-soft">Financials start when the bid is won. Mark it won in your pipeline, then come back.</p>
           : !perms.invoice || !writable ? <p className="mt-2 text-sm text-ink-soft">Someone with invoicing access opens the job&apos;s financials. Nothing is recorded yet.</p> : (
@@ -109,7 +112,7 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
   const verify = async (paymentId: unknown) => { const r = await finAction({ action: "verify_payment", paymentId }); if (!r.ok) setError(r.message); else done(); };
 
   return (
-    <div className="space-y-4" data-testid="fin-job">
+    <div className="space-y-4" data-testid="fin-job" data-guide-page={GUIDE_PAGE[section]} data-guide-trade={guideTrade(data.estimate)}>
       <div className="flex flex-wrap items-center gap-2">
         <div className="min-w-0 flex-1">
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">Job {s(job.job_number)}</p>
@@ -122,7 +125,7 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
 
       <AlertsPanel alerts={alerts} canAct={writable && (perms.invoice || perms.config)} onChanged={done} />
 
-      <div role="tablist" aria-label="Job financials" className="flex gap-1 overflow-x-auto border-b border-line">
+      <div role="tablist" aria-label="Job financials" data-guide="fin.job-tabs" className="flex gap-1 overflow-x-auto border-b border-line">
         {([["billing", "Billing"], ["costs", "Costs"], ["review", `Needs review${data.review?.length ? ` (${data.review.length})` : ""}`]] as [Section, string][]).map(([k, l]) => (
           <button key={k} type="button" role="tab" aria-selected={section === k} onClick={() => setSection(k)}
             className={cn("-mb-px inline-flex min-h-11 shrink-0 items-center border-b-2 px-3 text-sm font-semibold", section === k ? "border-brand text-navy" : "border-transparent text-muted hover:text-ink")}>{l}</button>
@@ -138,7 +141,7 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
               onPay={(m) => setOpen({ kind: "payment", invoice: s(invoices.find((i) => i.milestone_id === m.milestone_id && i.status === "issued")?.invoice_id) || null })} />
           </div>
 
-          <section className="rounded-xl border border-line bg-surface p-4" aria-labelledby="fin-inv-h" data-testid="fin-invoices">
+          <section className="rounded-xl border border-line bg-surface p-4" aria-labelledby="fin-inv-h" data-testid="fin-invoices" data-guide="fin.invoices">
             <div className="flex flex-wrap items-center gap-2">
               <h2 id="fin-inv-h" className="font-display text-lg font-extrabold">Invoices</h2>
               {perms.invoice && writable && <Button size="sm" variant="secondary" className="ml-auto" onClick={() => setOpen({ kind: "invoice", milestone: null, draft: null })}>Custom invoice</Button>}
@@ -173,7 +176,7 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
             <p className="mt-2 text-xs text-muted">Invoice PDFs come in the next update. Issued invoices are recorded here; nothing is emailed.</p>
           </section>
 
-          <section className="rounded-xl border border-line bg-surface p-4" aria-labelledby="fin-pay-h" data-testid="fin-payments">
+          <section className="rounded-xl border border-line bg-surface p-4" aria-labelledby="fin-pay-h" data-testid="fin-payments" data-guide="fin.payments">
             <div className="flex flex-wrap items-center gap-2">
               <h2 id="fin-pay-h" className="font-display text-lg font-extrabold">Payments</h2>
               {perms.pay && writable && <Button size="sm" variant="secondary" className="ml-auto" onClick={() => setOpen({ kind: "payment" })} data-testid="fin-record-payment">Record payment</Button>}
@@ -214,7 +217,7 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
 
       {section === "costs" && (
         <div id="costs" className="space-y-4">
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2" data-guide="fin.cost-actions">
             {perms.expense && writable && <Button size="sm" onClick={() => setOpen({ kind: "expense" })} data-testid="fin-add-expense">Record expense</Button>}
             {perms.bill && writable && <Button size="sm" variant="secondary" onClick={() => setOpen({ kind: "bill" })}>Enter a vendor bill</Button>}
             {perms.bill && writable && <Button size="sm" variant="secondary" onClick={() => setOpen({ kind: "commitment" })}>Commit a sub quote</Button>}
