@@ -192,7 +192,7 @@ d("Financial Command Center: foundation and costs (database)", () => {
     expect((await rows(w.bk, "select user_id from public.fin_dashboard_prefs where scope = 'user'")).length).toBe(0);
   });
 
-  it("quick actions: saved per person in order, kept when a later save leaves them out, null clears (20261129001000)", async () => {
+  it("quick actions: saved per person in order, kept when a later save leaves them out, null clears (20261129002000)", async () => {
     const layout = async () => (await as<{ l: Row }>(w.bk, "select public.fin_dashboard_layout($1) as l", [w.book])).l;
     await as(w.bk, "select public.fin_dashboard_save($1, 'user', null, $2)", [w.book, { cards: [], kpis: ["invoiced"], quickActions: ["record_payment", "export", "record_payment", "create_invoice"] }]);
     let l = await layout();

@@ -132,15 +132,15 @@ d("Project operations V4.3 + proposal style V4.4 (database)", () => {
     expect(oq.q.some((x) => x.estimateId === b.id)).toBe(false);
   });
 
-  it("publishing a schedule moves the bid to Scheduled; a draft doesn't", async () => {
+  it("publishing a schedule moves the bid to In Progress, effective on its start date; a draft doesn't", async () => {
     const b = await bid(solo, null);
     await as(solo, "select public.set_estimate_stage($1, 'won')", [b.id]);
     const sid = await schedule(solo, b);
     expect((await pool.query("select pipeline_stage from public.estimates where id = $1", [b.id])).rows[0].pipeline_stage).toBe("won");
     await as(solo, "select public.schedule_save($1, $2, $3)", [sid, await rev(sid), { summary: "Publish", schedule: { status: "active" } }]);
-    expect((await pool.query("select pipeline_stage from public.estimates where id = $1", [b.id])).rows[0].pipeline_stage).toBe("scheduled");
-    const hist = (await pool.query("select to_stage, note from public.estimate_stage_history where estimate_id = $1 order by created_at desc limit 1", [b.id])).rows[0];
-    expect(hist).toMatchObject({ to_stage: "scheduled", note: "Schedule published" });
+    expect((await pool.query("select pipeline_stage from public.estimates where id = $1", [b.id])).rows[0].pipeline_stage).toBe("in_progress");
+    const hist = (await pool.query("select h.to_stage, h.note, h.effective_at::date = s.start_date as on_start from public.estimate_stage_history h join public.project_schedules s on s.id = $2 where h.estimate_id = $1 order by h.created_at desc limit 1", [b.id, sid])).rows[0];
+    expect(hist).toMatchObject({ to_stage: "in_progress", note: "Schedule published", on_start: true });
     // The queue no longer lists it.
     const q = await as<{ q: Row[] }>(solo, "select public.project_review_queue() as q");
     expect(q.q.some((x) => x.estimateId === b.id)).toBe(false);
@@ -415,7 +415,9 @@ d("Project operations V4.3 + proposal style V4.4 (database)", () => {
   it("rollbacks remove everything and the migrations re-apply", async () => {
     const { readFileSync } = await import("node:fs");
     // The Financial Command Center points at change orders / quotes / the directory: roll it back first (newest first).
-    for (const f of ["20261129001000", "20261128001000", "20261126001000", "20261125001000", "20261124004000", "20261124003000", "20261124002000", "20261124001000"]) await pool.query(readFileSync(`docs/financials/rollback_${f}.sql`, "utf8"));
+    await pool.query(readFileSync("docs/financials/rollback_20261129002000.sql", "utf8"));
+    await pool.query(readFileSync("docs/project-operations/rollback_20261129001000.sql", "utf8")); // newest first
+    for (const f of ["20261128001000", "20261126001000", "20261125001000", "20261124004000", "20261124003000", "20261124002000", "20261124001000"]) await pool.query(readFileSync(`docs/financials/rollback_${f}.sql`, "utf8"));
     for (const f of ["20261119004000", "20261119003000", "20261119002000", "20261119001000"]) await pool.query(readFileSync(`docs/project-operations/rollback_${f}.sql`, "utf8"));
     for (const t of ["project_reviews", "user_notifications", "change_orders", "project_scope_sections", "subcontractor_quotes", "project_photos", "company_proposal_styles"])
       expect((await pool.query("select to_regclass($1) as t", [`public.${t}`])).rows[0].t, t).toBeNull();

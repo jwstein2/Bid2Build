@@ -1,4 +1,4 @@
--- Rollback for 20261129001000_fin_quick_actions.sql. Deploy the previous app version first.
+-- Rollback for 20261129002000_fin_quick_actions.sql. Deploy the previous app version first.
 -- Restores the 20261124001000 dashboard functions and drops the quick-action choices (cards and numbers stay).
 begin;
 create or replace function public.fin_dashboard_save(p_book_id uuid, p_scope text, p_role text, p jsonb) returns void

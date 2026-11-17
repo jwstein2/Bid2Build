@@ -26,7 +26,7 @@ export interface FinContext {
   profile: ResolvedProfile;
   layout: ResolvedLayout;
   stored: { company: StoredPrefs | null; roleLayout: StoredPrefs | null; user: StoredPrefs | null };
-  /** The quick-actions SQL (20261129001000) is applied, so quick-action choices can be saved. */
+  /** The quick-actions SQL (20261129002000) is applied, so quick-action choices can be saved. */
   quickActionsReady: boolean;
   ai: AiPrefs;
 }
