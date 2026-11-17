@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import { Mail, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { FileDown, Mail, RefreshCw } from "lucide-react";
+import { Button, buttonClass } from "@/components/ui/button";
 import { Badge, Field, Notice } from "@/components/ui/misc";
 import { cmp } from "@/lib/financials/money";
 import { cn } from "@/lib/cn";
@@ -10,19 +10,20 @@ import { BasisBadge } from "./basis";
 import { EmailDraftDialog } from "./email-draft-dialog";
 import { finAction, fmtDate, usd } from "./fin-client";
 import { ContractCard, CreditDialog, InvoiceDialog, MilestoneCard, PaymentDialog, VoidDialog, type Perms, type R } from "./job-billing";
-import { BillDialog, BudgetTable, CommitmentDialog, CostLists, ExpenseDialog, ProfitCard, ReviewQueue } from "./job-costs";
+import { BillDialog, BillPaymentDialog, BudgetTable, CommitmentDialog, CostLists, ExpenseDialog, ProfitCard, ReviewQueue } from "./job-costs";
+import { JobSummary, type SummaryTarget } from "./job-summary";
 
 const s = (v: unknown) => (v === null || v === undefined ? "" : String(v));
 type Section = "billing" | "costs" | "review";
 const GUIDE_PAGE = { billing: "financials.job.billing", costs: "financials.job.costs", review: "financials.job.review" } as const;
 /** The job's own trades, so the walkthrough's examples match the job on screen. */
 const guideTrade = (est: R) => (Array.isArray(est.trades) ? (est.trades as unknown[]).filter((t) => typeof t === "string").join(" ") : undefined);
-type Open = { kind: "invoice"; milestone: R | null; draft: R | null } | { kind: "payment"; invoice?: string | null } | { kind: "credit" } | { kind: "expense" } | { kind: "bill" } | { kind: "commitment" } | { kind: "email"; invoiceId?: string; paymentId?: string } | null;
+type Open = { kind: "invoice"; milestone: R | null; draft: R | null } | { kind: "payment"; invoice?: string | null } | { kind: "credit" } | { kind: "expense" } | { kind: "bill" } | { kind: "commitment" } | { kind: "bill_payment"; bill: R } | { kind: "email"; invoiceId?: string; paymentId?: string } | null;
 
 interface Payload {
   estimate: R; versions: R[]; job: R | null; contract?: R | null; milestones?: R[]; invoices?: R[]; payments?: R[]; credits?: R[];
   expenses?: R[]; bills?: R[]; billLines?: R[]; commitments?: R[]; budget?: R[]; profit?: R | null; review?: R[]; alerts?: R[];
-  costCodes?: R[]; vendors?: R[]; quotes?: R[];
+  costCodes?: R[]; vendors?: R[]; quotes?: R[]; summary?: R | null;
   access: { permissions: string[]; readOnly: boolean; active: boolean; role: string | null };
 }
 
@@ -36,7 +37,7 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
   const [error, setError] = useState<string | null>(null);
   const [section, setSection] = useState<Section>(initialAction === "expense" || initialAction === "bill" || initialAction === "commitment" ? "costs" : "billing");
   const [open, setOpen] = useState<Open>(null);
-  const [voiding, setVoiding] = useState<{ kind: "invoice" | "payment"; id: string; label: string } | null>(null);
+  const [voiding, setVoiding] = useState<{ kind: "invoice" | "payment" | "bill_payment"; id: string; label: string } | null>(null);
   const [versionId, setVersionId] = useState("");
   const [busy, setBusy] = useState(false);
   const [actionUsed, setActionUsed] = useState(false);
@@ -109,6 +110,16 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
   const alerts: AlertRow[] = (data.alerts ?? []) as unknown as AlertRow[];
   const done = () => { void load(); };
   const del = async (invoiceId: unknown) => { const r = await finAction({ action: "delete_invoice_draft", invoiceId }); if (!r.ok) setError(r.message); else done(); };
+  // Summary cards open the records behind each number on this page.
+  const jumpTo = (t: SummaryTarget) => {
+    const target = { contract: ["billing", "fin-contract"], invoices: ["billing", "fin-invoices"], payments: ["billing", "fin-payments"], budget: ["costs", "fin-budget"], bills: ["costs", "fin-bills"] }[t] as [Section, string];
+    setSection(target[0]);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const el = document.getElementById(target[1]);
+      el?.scrollIntoView({ behavior: "smooth", block: "start" });
+      el?.focus({ preventScroll: true });
+    }));
+  };
   const verify = async (paymentId: unknown) => { const r = await finAction({ action: "verify_payment", paymentId }); if (!r.ok) setError(r.message); else done(); };
 
   return (
@@ -123,6 +134,17 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
         <Button variant="ghost" size="sm" onClick={done} aria-label="Reload"><RefreshCw className="h-4 w-4" aria-hidden /></Button>
       </div>
 
+      {data.summary && (
+        <JobSummary summary={data.summary} estimateId={estimateId} customerId={s(job.customer_id) || null} writable={writable}
+          perms={{ invoice: perms.invoice, pay: perms.pay, expense: perms.expense, bill: perms.bill, company: perms.company }}
+          onOpen={jumpTo}
+          onAction={(a) => {
+            if (a === "invoice") setOpen({ kind: "invoice", milestone: (data.milestones ?? []).find((m) => m.state === "ready_to_invoice") ?? null, draft: null });
+            else if (a === "payment") setOpen({ kind: "payment" });
+            else { setSection("costs"); setOpen({ kind: a }); }
+          }} />
+      )}
+
       <AlertsPanel alerts={alerts} canAct={writable && (perms.invoice || perms.config)} onChanged={done} />
 
       <div role="tablist" aria-label="Job financials" data-guide="fin.job-tabs" className="flex gap-1 overflow-x-auto border-b border-line">
@@ -135,13 +157,13 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
       {section === "billing" && (
         <div className="space-y-4">
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
-            <ContractCard contract={data.contract ?? null} jobId={jobId} canEdit={writable && perms.invoice} onChanged={done} />
+            <div id="fin-contract" tabIndex={-1} className="outline-none"><ContractCard contract={data.contract ?? null} jobId={jobId} canEdit={writable && perms.invoice} onChanged={done} /></div>
             <MilestoneCard milestones={data.milestones ?? []} perms={perms} writable={writable} jobId={jobId} onChanged={done}
               onInvoice={(m) => setOpen({ kind: "invoice", milestone: m, draft: invoices.find((i) => i.milestone_id === m.milestone_id && i.status === "draft") ?? null })}
               onPay={(m) => setOpen({ kind: "payment", invoice: s(invoices.find((i) => i.milestone_id === m.milestone_id && i.status === "issued")?.invoice_id) || null })} />
           </div>
 
-          <section className="rounded-xl border border-line bg-surface p-4" aria-labelledby="fin-inv-h" data-testid="fin-invoices" data-guide="fin.invoices">
+          <section id="fin-invoices" tabIndex={-1} className="rounded-xl border border-line bg-surface p-4 outline-none" aria-labelledby="fin-inv-h" data-testid="fin-invoices" data-guide="fin.invoices">
             <div className="flex flex-wrap items-center gap-2">
               <h2 id="fin-inv-h" className="font-display text-lg font-extrabold">Invoices</h2>
               {perms.invoice && writable && <Button size="sm" variant="secondary" className="ml-auto" onClick={() => setOpen({ kind: "invoice", milestone: null, draft: null })}>Custom invoice</Button>}
@@ -166,6 +188,7 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
                         <Button size="sm" variant="ghost" onClick={() => del(i.invoice_id)}>Delete draft</Button>
                       </>}
                       {i.status === "issued" && perms.pay && writable && cmp(s(i.balance) || "0", 0) > 0 && <Button size="sm" variant="secondary" onClick={() => setOpen({ kind: "payment", invoice: s(i.invoice_id) })}>Record payment</Button>}
+                      {i.status === "issued" && <a className={buttonClass("ghost", "sm")} href={`/api/financials/invoices/${s(i.invoice_id)}/pdf`} target="_blank" rel="noopener" data-testid="fin-invoice-pdf"><FileDown className="h-4 w-4" aria-hidden /> PDF</a>}
                       {i.status === "issued" && perms.invoice && <Button size="sm" variant="ghost" onClick={() => setOpen({ kind: "email", invoiceId: s(i.invoice_id) })}><Mail className="h-4 w-4" aria-hidden /> Email draft</Button>}
                       {i.status === "issued" && perms.invoice && writable && <Button size="sm" variant="ghost" onClick={() => setVoiding({ kind: "invoice", id: s(i.invoice_id), label: `invoice ${s(i.number)}` })}>Void</Button>}
                     </div>
@@ -173,10 +196,10 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
                 ))}
               </ul>
             )}
-            <p className="mt-2 text-xs text-muted">Invoice PDFs come in the next update. Issued invoices are recorded here; nothing is emailed.</p>
+            <p className="mt-2 text-xs text-muted">Issued invoices have a customer PDF (no internal costs or margin). Nothing is emailed from here.</p>
           </section>
 
-          <section className="rounded-xl border border-line bg-surface p-4" aria-labelledby="fin-pay-h" data-testid="fin-payments" data-guide="fin.payments">
+          <section id="fin-payments" tabIndex={-1} className="rounded-xl border border-line bg-surface p-4 outline-none" aria-labelledby="fin-pay-h" data-testid="fin-payments" data-guide="fin.payments">
             <div className="flex flex-wrap items-center gap-2">
               <h2 id="fin-pay-h" className="font-display text-lg font-extrabold">Payments</h2>
               {perms.pay && writable && <Button size="sm" variant="secondary" className="ml-auto" onClick={() => setOpen({ kind: "payment" })} data-testid="fin-record-payment">Record payment</Button>}
@@ -226,7 +249,7 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
             <BudgetTable budget={data.budget ?? []} />
             <ProfitCard profit={data.profit ?? null} />
           </div>
-          <CostLists data={{ expenses: data.expenses ?? [], bills: data.bills ?? [], billLines: data.billLines ?? [], commitments: data.commitments ?? [], costCodes: data.costCodes ?? [], vendors: data.vendors ?? [] }} perms={perms} writable={writable} onChanged={done} />
+          <CostLists onPayBill={(b) => setOpen({ kind: "bill_payment", bill: b })} onVoidBillPayment={(p) => setVoiding({ kind: "bill_payment", id: s(p.id), label: `bill payment of ${usd(p.amount)}` })} data={{ expenses: data.expenses ?? [], bills: data.bills ?? [], billLines: data.billLines ?? [], commitments: data.commitments ?? [], costCodes: data.costCodes ?? [], vendors: data.vendors ?? [] }} perms={perms} writable={writable} onChanged={done} />
         </div>
       )}
 
@@ -238,6 +261,7 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
       {open?.kind === "expense" && <ExpenseDialog open onOpenChange={(o) => { if (!o) setOpen(null); }} jobId={jobId} codes={data.costCodes ?? []} vendors={data.vendors ?? []} onDone={done} />}
       {open?.kind === "bill" && <BillDialog open onOpenChange={(o) => { if (!o) setOpen(null); }} jobId={jobId} codes={data.costCodes ?? []} vendors={data.vendors ?? []} commitments={data.commitments ?? []} onDone={done} />}
       {open?.kind === "commitment" && <CommitmentDialog open onOpenChange={(o) => { if (!o) setOpen(null); }} jobId={jobId} codes={data.costCodes ?? []} vendors={data.vendors ?? []} quotes={data.quotes ?? []} onDone={done} />}
+      {open?.kind === "bill_payment" && <BillPaymentDialog open onOpenChange={(o) => { if (!o) setOpen(null); }} bill={open.bill} onDone={done} />}
       {open?.kind === "email" && <EmailDraftDialog open onOpenChange={(o) => { if (!o) setOpen(null); }} invoiceId={open.invoiceId} paymentId={open.paymentId} />}
       <VoidDialog target={voiding} onOpenChange={(o) => { if (!o) setVoiding(null); }} onDone={done} />
     </div>

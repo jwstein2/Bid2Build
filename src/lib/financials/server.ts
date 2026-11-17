@@ -74,6 +74,10 @@ export const reviseCommitment = (db: Db, commitmentId: string, delta: string, re
 export const recordBill = (db: Db, bookId: string, p: BillInput, key?: string) =>
   call<{ billId: string; number: string; total: string }>(db, "fin_bill_record", { p_book_id: bookId, p, p_idempotency_key: key ?? null });
 export const approveBill = (db: Db, billId: string) => call(db, "fin_bill_approve", { p_bill_id: billId });
+/** Record a payment made to a vendor/sub outside Built2Bid (check, ACH...). Never more than the bill. */
+export const payBill = (db: Db, bookId: string, p: { billId: string; amount: string; method: string; paidOn?: string; reference?: string; memo?: string }, key?: string) =>
+  call<{ billPaymentId: string; balance: string }>(db, "fin_bill_payment_record", { p_book_id: bookId, p, p_idempotency_key: key ?? null });
+export const voidBillPayment = (db: Db, billPaymentId: string, reason: string) => call(db, "fin_bill_payment_void", { p_bill_payment_id: billPaymentId, p_reason: reason });
 export const recordExpense = (db: Db, bookId: string, p: ExpenseInput, key?: string) =>
   call<{ expenseId: string; number: string }>(db, "fin_expense_record", { p_book_id: bookId, p, p_idempotency_key: key ?? null });
 export const decideExpense = (db: Db, expenseId: string, action: "approve" | "reject" | "void", note?: string) =>

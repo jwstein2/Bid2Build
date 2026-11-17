@@ -46,34 +46,39 @@ export function ProfitCard({ profit }: { profit: R | null }) {
 export function BudgetTable({ budget }: { budget: R[] }) {
   const tot = (k: string) => add(0, ...budget.map((b) => s(b[k]) || "0"));
   return (
-    <section className="rounded-xl border border-line bg-surface p-4" aria-labelledby="fin-budget-h" data-testid="fin-budget" data-guide="fin.budget">
-      <h2 id="fin-budget-h" className="font-display text-lg font-extrabold">Budget vs actual</h2>
+    <section id="fin-budget" tabIndex={-1} className="rounded-xl border border-line bg-surface p-4 outline-none" aria-labelledby="fin-budget-h" data-testid="fin-budget" data-guide="fin.budget">
+      <h2 id="fin-budget-h" className="font-display text-lg font-extrabold">Original estimate vs forecast vs actual</h2>
+      <p className="text-xs text-muted">The estimate is frozen from the signed bid. Forecast = actual + still committed, or the estimate if that&apos;s higher. Cost changes never change the customer&apos;s price; use a change order for that.</p>
       {budget.length === 0 ? <p className="mt-2 text-sm text-ink-soft">No budget or costs on this job yet.</p> : (
         <div className="mt-2 overflow-x-auto">
-          <table className="w-full min-w-[32rem] text-sm">
+          <table className="w-full min-w-[38rem] text-sm">
             <thead>
               <tr className="border-b border-line text-left text-xs text-muted">
                 <th className="py-2 pr-2 font-semibold">Cost code</th>
                 <th className="py-2 pr-2 text-right font-semibold">Estimated <BasisBadge basis="Estimated" /></th>
                 <th className="py-2 pr-2 text-right font-semibold">Committed <BasisBadge basis="Committed" /></th>
                 <th className="py-2 pr-2 text-right font-semibold">Actual <BasisBadge basis="Actual" /></th>
-                <th className="py-2 text-right font-semibold">Left in budget</th>
+                <th className="py-2 pr-2 text-right font-semibold">Forecast <BasisBadge basis="Forecast" /></th>
+                <th className="py-2 text-right font-semibold">vs estimate</th>
               </tr>
             </thead>
             <tbody>
               {budget.map((b, i) => {
-                const left = sub(s(b.estimated) || "0", add(s(b.committed) || "0", s(b.actual) || "0"));
+                // Forecast per cost code = the higher of the estimate and actual + still committed (matches fin_job_budget_v).
+                const forecast = s(b.forecast) || (cmp(s(b.estimated) || "0", add(s(b.committed) || "0", s(b.actual) || "0")) >= 0 ? s(b.estimated) || "0" : add(s(b.committed) || "0", s(b.actual) || "0"));
+                const left = sub(s(b.estimated) || "0", forecast);
                 return (
                   <tr key={i} className="border-b border-line last:border-0">
                     <td className="py-2 pr-2">{s(b.cost_code_name) || <span className="text-warn">Uncoded</span>}</td>
                     <td className="py-2 pr-2 text-right tabular">{usd(b.estimated)}</td>
                     <td className="py-2 pr-2 text-right tabular">{usd(b.committed)}</td>
                     <td className="py-2 pr-2 text-right tabular">{usd(b.actual)}</td>
+                    <td className="py-2 pr-2 text-right tabular">{usd(forecast)}</td>
                     <td className={`py-2 text-right tabular ${cmp(left, 0) < 0 ? "font-semibold text-danger" : ""}`}>{usd(left)}</td>
                   </tr>
                 );
               })}
-              <tr className="font-bold"><td className="py-2 pr-2">Total</td><td className="py-2 pr-2 text-right tabular">{usd(tot("estimated"))}</td><td className="py-2 pr-2 text-right tabular">{usd(tot("committed"))}</td><td className="py-2 pr-2 text-right tabular">{usd(tot("actual"))}</td><td className="py-2 text-right tabular">{usd(sub(tot("estimated"), add(tot("committed"), tot("actual"))))}</td></tr>
+              <tr className="font-bold"><td className="py-2 pr-2">Total</td><td className="py-2 pr-2 text-right tabular">{usd(tot("estimated"))}</td><td className="py-2 pr-2 text-right tabular">{usd(tot("committed"))}</td><td className="py-2 pr-2 text-right tabular">{usd(tot("actual"))}</td><td className="py-2 pr-2 text-right tabular">{usd(tot("forecast"))}</td><td className={`py-2 text-right tabular ${cmp(sub(tot("estimated"), tot("forecast")), 0) < 0 ? "text-danger" : ""}`}>{usd(sub(tot("estimated"), tot("forecast")))}</td></tr>
             </tbody>
           </table>
         </div>
@@ -279,7 +284,46 @@ export function CommitmentDialog({ open, onOpenChange, jobId, codes, vendors, qu
   );
 }
 
-export function CostLists({ data, perms, writable, onChanged }: { data: { expenses: R[]; bills: R[]; billLines: R[]; commitments: R[]; costCodes: R[]; vendors: R[] }; perms: Perms; writable: boolean; onChanged: () => void }) {
+/** Record a payment made to a vendor/sub outside Built2Bid. Never more than the bill's open balance. */
+export function BillPaymentDialog({ open, onOpenChange, bill, onDone }: { open: boolean; onOpenChange: (o: boolean) => void; bill: R; onDone: () => void }) {
+  const [amount, setAmount] = useState(s(bill.balance));
+  const [date, setDate] = useState(today());
+  const [method, setMethod] = useState("check");
+  const [ref, setRef] = useState("");
+  const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [key] = useState(newKey);
+  const save = async () => {
+    setErr(null);
+    if (!MONEY.test(amount) || cmp(amount, 0) <= 0) return setErr("Enter the amount paid.");
+    if (cmp(amount, s(bill.balance) || "0") > 0) return setErr(`That's more than the ${usd(bill.balance)} still owed on this bill.`);
+    setBusy(true);
+    const r = await finAction({ action: "pay_bill", key, p: { billId: bill.id, amount: toMoney(amount), method, paidOn: date, ...(ref.trim() ? { reference: ref.trim() } : {}) } });
+    setBusy(false);
+    if (!r.ok) return setErr(r.message);
+    onDone(); onOpenChange(false);
+  };
+  return (
+    <FinDialog open={open} onOpenChange={onOpenChange} title={`Pay bill ${s(bill.number)}`} description={`${usd(bill.balance)} still owed of ${usd(bill.total)}. This records a payment you made; Built2Bid doesn't send money.`}>
+      <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); void save(); }} data-testid="fin-bill-pay-dialog">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label="Amount paid" htmlFor="bp-amt"><input id="bp-amt" className="field" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))} required /></Field>
+          <Field label="Date paid" htmlFor="bp-date"><input id="bp-date" type="date" className="field" value={date} max={today()} onChange={(e) => setDate(e.target.value)} required /></Field>
+          <Field label="Paid with" htmlFor="bp-method">
+            <select id="bp-method" className="field" value={method} onChange={(e) => setMethod(e.target.value)}>
+              <option value="check">Check</option><option value="ach">ACH / bank transfer</option><option value="card">Card</option><option value="cash">Cash</option><option value="wire">Wire</option><option value="other">Other</option>
+            </select>
+          </Field>
+          <Field label="Check # or reference" optional htmlFor="bp-ref"><input id="bp-ref" className="field" value={ref} onChange={(e) => setRef(e.target.value)} maxLength={120} /></Field>
+        </div>
+        {err && <Notice tone="danger">{err}</Notice>}
+        <Button type="submit" disabled={busy}>{busy ? "Saving…" : "Record payment"}</Button>
+      </form>
+    </FinDialog>
+  );
+}
+
+export function CostLists({ data, perms, writable, onChanged, onPayBill, onVoidBillPayment }: { onPayBill?: (bill: R) => void; onVoidBillPayment?: (p: R) => void; data: { expenses: R[]; bills: R[]; billLines: R[]; commitments: R[]; costCodes: R[]; vendors: R[] }; perms: Perms; writable: boolean; onChanged: () => void }) {
   const [err, setErr] = useState<string | null>(null);
   const codeName = (id: unknown) => s(data.costCodes.find((c) => c.id === id)?.name) || "Uncoded";
   const vendorName = (id: unknown) => s(data.vendors.find((v) => v.id === id)?.name);
@@ -323,7 +367,7 @@ export function CostLists({ data, perms, writable, onChanged }: { data: { expens
         )}
       </div>
       <div className="rounded-xl border border-line bg-surface p-4">
-        <h2 className="font-display text-lg font-extrabold">Vendor bills</h2>
+        <h2 id="fin-bills" tabIndex={-1} className="font-display text-lg font-extrabold outline-none">Vendor &amp; sub bills</h2>
         {data.bills.length === 0 ? <p className="mt-2 text-sm text-ink-soft">No bills on this job yet.</p> : (
           <ul className="mt-2 divide-y divide-line">
             {data.bills.map((b) => {
@@ -334,6 +378,16 @@ export function CostLists({ data, perms, writable, onChanged }: { data: { expens
                   <span className="flex items-center gap-2 tabular">{usd(onJob)} {b.status === "approved" && <BasisBadge basis="Actual" />}</span>
                   <Badge tone={statusTone(s(b.status))}>{b.status === "pending_approval" ? "Waiting for approval" : s(b.status)}</Badge>
                   {b.status === "pending_approval" && perms.approveBill && writable && <Button size="sm" variant="secondary" onClick={() => act({ action: "approve_bill", billId: b.id })}>Approve</Button>}
+                  {b.status === "approved" && b.balance !== null && b.balance !== undefined && (cmp(s(b.balance) || "0", 0) > 0
+                    ? <Badge tone={Number(b.days_overdue) > 0 ? "danger" : "warn"}>{usd(b.balance)} unpaid</Badge>
+                    : <Badge tone="ok">Paid</Badge>)}
+                  {b.status === "approved" && perms.bill && writable && onPayBill && cmp(s(b.balance) || "0", 0) > 0 && <Button size="sm" variant="secondary" onClick={() => onPayBill(b)}>Record bill payment</Button>}
+                  {((b.payments as R[] | undefined) ?? []).filter((p) => p.status === "active").length > 0 && (
+                    <span className="basis-full text-xs text-muted">Paid: {((b.payments as R[]) ?? []).filter((p) => p.status === "active").map((p) => `${usd(p.amount)} ${s(p.method)} ${fmtDate(p.paid_on)}${p.reference ? ` #${s(p.reference)}` : ""}`).join(" · ")}
+                      {perms.approveBill && writable && onVoidBillPayment && ((b.payments as R[]) ?? []).filter((p) => p.status === "active").map((p) => (
+                        <button key={s(p.id)} type="button" className="ml-2 min-h-9 underline" onClick={() => onVoidBillPayment(p)}>void {usd(p.amount)}</button>
+                      ))}</span>
+                  )}
                 </li>
               );
             })}

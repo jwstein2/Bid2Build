@@ -129,11 +129,11 @@ export async function loadHome(db: Db, ctx: FinContext) {
     invoiced: money(sumOf(issued, "total"), "Invoiced", "/financials/records?view=invoices", { sub: `${issued.length} issued invoice${issued.length === 1 ? "" : "s"}` }),
     collected: money(sub(sumOf(activePay, "amount"), sumOf(activePay, "refunded")), "Paid", "/financials/records?view=payments",
       { sub: `${activePay.filter((r) => !r.verified).length} not yet verified`, note: "Recorded payments, verified or not" }),
-    ar_outstanding: money(sumOf(open, "balance"), "Outstanding", "/financials/records?view=invoices&filter=open", { sub: `${open.length} open invoice${open.length === 1 ? "" : "s"}` }),
-    overdue_amount: money(sumOf(overdue, "balance"), "Outstanding", "/financials/records?view=invoices&filter=overdue", { sub: `${overdue.length} past due`, tone: overdue.length ? "danger" : "default" }),
+    ar_outstanding: money(sumOf(open, "balance"), "Outstanding", "/financials/receivables", { sub: `${open.length} open invoice${open.length === 1 ? "" : "s"}` }),
+    overdue_amount: money(sumOf(overdue, "balance"), "Outstanding", "/financials/receivables?bucket=overdue", { sub: `${overdue.length} past due`, tone: overdue.length ? "danger" : "default" }),
     estimated_margin: hasCostData ? money(estProfit, "Estimated", "/financials/records?view=jobs", { sub: `${pct(estProfit, contract) ?? "0.0"}% of contract (from the bid's costs)` })
       : { value: "Not enough cost data", money: false, basis: "Estimated", href: "/financials/records?view=jobs", empty: true },
-    projected_margin: hasCostData ? money(projProfit, "Forecast", "/financials/records?view=jobs", { sub: `${pct(projProfit, contract) ?? "0.0"}% · uses actual + committed when higher than the estimate` })
+    projected_margin: hasCostData ? money(projProfit, "Forecast", "/financials/records?view=jobs", { sub: `${pct(projProfit, contract) ?? "0.0"}% · per trade: actual + committed when higher than the estimate` })
       : { value: "Not enough cost data", money: false, basis: "Forecast", href: "/financials/records?view=jobs", empty: true },
     committed_cost: money(sumOf(P, "committed_cost"), "Committed", "/financials/records?view=commitments", { sub: "Open commitments not yet billed" }),
     actual_cost: money(sumOf(P, "actual_cost"), "Actual", "/financials/records?view=costs", { sub: "Approved bills + approved expenses" }),
@@ -150,7 +150,7 @@ export async function loadHome(db: Db, ctx: FinContext) {
   const soon = (label: string): Figure => ({ value: "Coming soon", money: false, basis: "Count", href: "/financials/tools", empty: true, note: label });
 
   const cards: Partial<Record<CardKey, Figure>> = {
-    overdue_invoices: count(overdue.length, "/financials/records?view=invoices&filter=overdue", { sub: overdue.length ? `${$(sumOf(overdue, "balance"))} past due` : "Nothing past due", tone: overdue.length ? "danger" : "ok" }),
+    overdue_invoices: count(overdue.length, "/financials/receivables?bucket=overdue", { sub: overdue.length ? `${$(sumOf(overdue, "balance"))} past due` : "Nothing past due", tone: overdue.length ? "danger" : "ok" }),
     unapplied_payments: count(unapplied.length, "/financials/records?view=payments&filter=unapplied", { sub: unapplied.length ? `${$(sumOf(unapplied, "unapplied"))} not applied to an invoice` : "Every payment is applied", tone: unapplied.length ? "warn" : "ok" }),
     unverified_payments: count(unverified.length, "/financials/records?view=payments&filter=unverified", { sub: "Recorded by hand, not yet checked against the bank", tone: unverified.length ? "warn" : "ok" }),
     bills_due: count(billsDue.length, "/financials/records?view=costs&filter=bills_due", { sub: "Approved bills due in the next 14 days", tone: billsDue.some((x) => String(x.due_date) < today) ? "danger" : "default" }),
@@ -158,7 +158,7 @@ export async function loadHome(db: Db, ctx: FinContext) {
     commitment_overruns: count(overruns.length, "/financials/records?view=commitments&filter=overrun", { sub: "Billed more than committed", tone: overruns.length ? "danger" : "ok" }),
     uncoded_costs: count(uncoded, "/financials/records?view=review&filter=uncoded", { sub: "Costs on a job without a cost code", tone: uncoded ? "warn" : "ok" }),
     read_only_books: { value: ctx.access.readOnly ? "Read-only" : "Active", money: false, basis: "Count", href: "/financials/tools", tone: ctx.access.readOnly ? "warn" : "ok", sub: ctx.access.readOnly ? (P.length ? "Add-on lapsed: everything stays readable and exportable" : "Recording turns on with the Financials add-on") : "Recording is on" },
-    ar_aging: money(sumOf(open, "balance"), "Outstanding", "/financials/records?view=invoices&filter=open", { sub: agingSub(open) }),
+    ar_aging: money(sumOf(open, "balance"), "Outstanding", "/financials/receivables", { sub: agingSub(open) }),
     invoices_to_send: count(I.filter((r) => r.status === "draft").length, "/financials/records?view=invoices&filter=draft", { sub: "Draft invoices not yet issued" }),
     milestones_ready: count(readyMs.length, "/financials/records?view=milestones&filter=ready", { sub: readyMs.length ? `${$(sumOf(readyMs, "current_amount"))} ready to bill` : "No milestone is waiting for an invoice", tone: readyMs.length ? "warn" : "default" }),
     deposits_outstanding: count(deposits.length, "/financials/records?view=milestones&filter=deposits", { sub: deposits.length ? `${$(sub(sumOf(deposits, "current_amount"), sumOf(deposits, "paid")))} of deposits unpaid` : "All deposits paid" }),
@@ -252,6 +252,12 @@ export async function loadJob(db: Db, estimateId: string, ctx: FinContext) {
     db.from("fin_vendors").select("id, name, kind, resource_id").eq("book_id", ctx.bookId).eq("status", "active").order("name"),
     db.from("subcontractor_quotes").select("id, item_name, vendor_name, resource_id, status, applied_revision_id").eq("estimate_id", estimateId).eq("status", "accepted"),
   ]);
+  // V5.1 summary + bill balances/payments (20261126001000). Missing objects (migration not run yet) read as null.
+  const [summary, billBal, billPays] = await Promise.all([
+    db.from("fin_job_summary_v").select("*").eq("job_id", jid).maybeSingle(),
+    db.from("fin_bill_balances_v").select("bill_id, paid, balance, days_overdue").eq("book_id", ctx.bookId),
+    db.from("fin_bill_payments").select("id, bill_id, paid_on, method, reference, amount, status").eq("book_id", ctx.bookId).order("paid_on", { ascending: false }),
+  ]);
   const ms = (msRows.data ?? []) as Row[];
   const quoteRows = (quotes.data ?? []) as Row[];
   const { data: revRows } = quoteRows.length
@@ -278,7 +284,12 @@ export async function loadJob(db: Db, estimateId: string, ctx: FinContext) {
     payments: ((payments.data ?? []) as Row[]).map((p) => ({ ...p, allocations: allocs.filter((a) => a.payment_id === p.payment_id && invIds.has(String(a.invoice_id))) })),
     credits: (credits.data ?? []) as Row[],
     expenses: (expenses.data ?? []) as Row[],
-    bills: ((bills.data ?? []) as Row[]).filter((b) => jobBillIds.has(String(b.id))),
+    bills: ((bills.data ?? []) as Row[]).filter((b) => jobBillIds.has(String(b.id))).map((b) => {
+      const bb = ((billBal.data ?? []) as Row[]).find((x) => x.bill_id === b.id);
+      return { ...b, paid: bb?.paid ?? null, balance: bb?.balance ?? null, days_overdue: bb?.days_overdue ?? 0,
+        payments: ((billPays.data ?? []) as Row[]).filter((p) => p.bill_id === b.id) };
+    }),
+    summary: (summary.error ? null : (summary.data as Row | null)) ?? null,
     billLines: (billLines.data ?? []) as Row[],
     commitments: (commitments.data ?? []) as Row[],
     budget: (budget.data ?? []) as Row[],

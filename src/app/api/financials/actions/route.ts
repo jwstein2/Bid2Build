@@ -56,6 +56,8 @@ const body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("record_bill"), p: z.object({ vendorId: id, vendorInvoiceNumber: text(80).min(1), billDate: day.optional(), dueDate: day.optional(), memo: text(1000).optional(), documentId: id.optional(),
     lines: z.array(z.object({ jobId: id.optional(), costCodeId: id.optional(), commitmentId: id.optional(), description: text(500).min(1), amount })).min(1).max(50) }), key }),
   z.object({ action: z.literal("approve_bill"), billId: id }),
+  z.object({ action: z.literal("pay_bill"), key, p: z.object({ billId: id, amount, method: z.enum(["check", "ach", "card", "cash", "wire", "other"]), paidOn: day.optional(), reference: text(120).optional(), memo: text(1000).optional() }) }),
+  z.object({ action: z.literal("void_bill_payment"), billPaymentId: id, reason: text(500).min(1) }),
   z.object({ action: z.literal("record_expense"), p: z.object({ jobId: id.optional(), vendorId: id.optional(), payee: text(200).optional(), costCodeId: id.optional(), spentOn: day.optional(), amount, method: z.enum(["card", "cash", "check", "ach", "reimbursement", "other"]).optional(), description: text(500).min(1), receiptDocumentId: id.optional() }), key }),
   z.object({ action: z.literal("decide_expense"), expenseId: id, decision: z.enum(["approve", "reject", "void"]), note: text(500).optional() }),
   z.object({ action: z.literal("review_resolve"), itemId: id, status: z.enum(["resolved", "dismissed"]), resolution: text(500).optional() }),
@@ -107,6 +109,8 @@ export async function POST(req: Request) {
       }
       case "record_bill": return json(await fin.recordBill(db, bookId, a.p, a.key));
       case "approve_bill": return json({ ok: await fin.approveBill(db, a.billId) ?? true });
+      case "pay_bill": return json(await fin.payBill(db, bookId, a.p, a.key));
+      case "void_bill_payment": return json({ ok: await fin.voidBillPayment(db, a.billPaymentId, a.reason) ?? true });
       case "record_expense": return json(await fin.recordExpense(db, bookId, a.p, a.key));
       case "decide_expense": return json({ status: await fin.decideExpense(db, a.expenseId, a.decision, a.note) });
       case "review_resolve": { const { error } = await db.rpc("fin_review_resolve", { p_item_id: a.itemId, p_status: a.status, p_resolution: a.resolution ?? null }); if (error) throw new fin.FinError(error.message, error.message); return json({ ok: true }); }
