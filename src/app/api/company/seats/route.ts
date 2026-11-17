@@ -23,8 +23,9 @@ const Body = z.object({
 /**
  * Buy or remove Enterprise licensed users. Preview first (exact new monthly price + today's prorated
  * charge or credit from Stripe), then confirm. Only people with manage_billing in an Enterprise company
- * with a paid subscription can do this. Adding users is invoiced immediately; removing users credits
- * the next invoice. The database is updated right away and again by the webhook.
+ * with a paid subscription can do this. Adding users is invoiced immediately. Removing users gives no
+ * credit or refund for the period already paid: the lower price starts with the next invoice. Only
+ * unused seats can be removed (checkSeatTarget). The database is updated right away and again by the webhook.
  */
 export async function POST(req: Request) {
   if (!(await sameOrigin())) return fail(403, "bad_origin", "Cross-site request refused.");
@@ -73,15 +74,16 @@ export async function POST(req: Request) {
       return json({
         fromUsers: current, toUsers: p.data.users, ...change,
         prorationCents, dueNowCents: adding ? Math.max(0, preview.amount_due) : 0,
-        creditCents: adding ? 0 : Math.max(0, -prorationCents),
+        creditCents: 0, // removals are never credited: paid periods are non-refundable
         prorationDate, currentPeriodEnd: row.current_period_end,
       });
     }
 
     const updated = await stripe.subscriptions.update(row.stripe_subscription_id, {
       items: updates,
-      proration_behavior: adding ? "always_invoice" : "create_prorations",
-      proration_date: prorationDate,
+      // Removing: no proration, so no credit for the paid period; the next invoice is at the new count.
+      proration_behavior: adding ? "always_invoice" : "none",
+      proration_date: adding ? prorationDate : undefined,
       payment_behavior: adding ? "error_if_incomplete" : undefined,
       metadata: { ...sub.metadata, users: String(p.data.users) },
     }, { idempotencyKey: `seats-${row.stripe_subscription_id}-${current}-${p.data.users}-${p.data.attempt ?? prorationDate}` });

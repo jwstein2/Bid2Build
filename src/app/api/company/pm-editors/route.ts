@@ -23,8 +23,9 @@ const Body = z.object({
 
 /**
  * Enterprise PM editors beyond the included one, $1.99/month each, on the company's Enterprise
- * subscription. Preview first (Stripe's exact prorated amount), then confirm. Adding is invoiced now;
- * removing credits the next invoice. Licensed users are never changed here.
+ * subscription. Preview first (Stripe's exact prorated amount), then confirm. Adding is invoiced now.
+ * Removing gives no credit or refund for the paid period; the lower price starts with the next invoice.
+ * Licensed users are never changed here.
  */
 export async function POST(req: Request) {
   if (!(await sameOrigin())) return fail(403, "bad_origin", "Cross-site request refused.");
@@ -73,15 +74,16 @@ export async function POST(req: Request) {
       const pr = prorationCents(preview.lines.data as never);
       return json({
         fromExtra: current, toExtra: p.data.extra, ...change, interval: "month",
-        dueNowCents: adding ? Math.max(0, pr) : 0, creditCents: adding ? 0 : Math.max(0, -pr),
+        dueNowCents: adding ? Math.max(0, pr) : 0, creditCents: 0, // removals are never credited
         effective: new Date(prorationDate * 1000).toISOString(), prorationDate, nextInvoiceAt: row.current_period_end,
       });
     }
 
     const updated = await stripe.subscriptions.update(row.stripe_subscription_id, {
       items: updates,
-      proration_behavior: adding ? "always_invoice" : "create_prorations",
-      proration_date: prorationDate,
+      // Removing: no proration, so no credit for the paid period; the next invoice is at the new count.
+      proration_behavior: adding ? "always_invoice" : "none",
+      proration_date: adding ? prorationDate : undefined,
       payment_behavior: adding ? "error_if_incomplete" : undefined,
     }, { idempotencyKey: `pm-editors-${row.stripe_subscription_id}-${current}-${p.data.extra}-${p.data.attempt ?? prorationDate}` });
     await applySubscription(admin, updated, Math.floor(Date.now() / 1000)).catch((e2) => logError("pm.editors.sync", e2, { company: company.id }));
