@@ -57,6 +57,25 @@ export const PERMISSION_KEYS = [
   "enable_auto_project_updates",
   "view_customer_replies",
   "manage_opt_outs",
+  // Financial Command Center (supabase/migrations/20261123001000_fin_foundation.sql). No company role gets
+  // these by default: financial access comes from a financial seat's role preset (src/lib/financials/permissions.ts).
+  "view_company_financials",
+  "view_project_financials",
+  "create_invoices",
+  "record_payments",
+  "record_expenses",
+  "approve_expenses",
+  "record_bills",
+  "approve_vendor_bills",
+  "manage_accounts",
+  "post_journal_entries",
+  "reconcile",
+  "close_periods",
+  "export_financials",
+  "manage_financial_config",
+  "manage_sub_compliance",
+  "manage_payment_connections",
+  "manage_financial_seats",
 ] as const;
 export type Permission = (typeof PERMISSION_KEYS)[number];
 
@@ -87,7 +106,7 @@ export const ROLE_PERMISSIONS: Record<CompanyRole, readonly Permission[]> = {
 };
 
 /** Only the company owner may grant these. */
-export const OWNER_ONLY_PERMISSIONS: readonly Permission[] = ["manage_billing", "manage_users", "manage_pm_seats", "manage_pm_addons", "change_proposal_policy", "enable_customer_nurture", "enable_auto_project_updates"];
+export const OWNER_ONLY_PERMISSIONS: readonly Permission[] = ["manage_billing", "manage_users", "manage_pm_seats", "manage_pm_addons", "change_proposal_policy", "enable_customer_nurture", "enable_auto_project_updates", "manage_payment_connections", "manage_financial_seats"];
 
 export const ROLE_LABELS: Record<CompanyRole, string> = {
   owner: "Company Owner",
@@ -145,6 +164,23 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   enable_auto_project_updates: "Turn on automatic project update sending",
   view_customer_replies: "Read customer replies",
   manage_opt_outs: "Manage opt-outs and paused contacts",
+  view_company_financials: "View company financials",
+  view_project_financials: "View financials of their projects",
+  create_invoices: "Create and send invoices",
+  record_payments: "Record customer payments",
+  record_expenses: "Record expenses",
+  approve_expenses: "Approve expenses",
+  record_bills: "Record vendor bills and commitments",
+  approve_vendor_bills: "Approve vendor bills",
+  manage_accounts: "Manage chart of accounts",
+  post_journal_entries: "Post journal entries",
+  reconcile: "Reconcile bank accounts",
+  close_periods: "Close accounting periods",
+  export_financials: "Export financial data",
+  manage_financial_config: "Manage financial settings",
+  manage_sub_compliance: "Manage subcontractor compliance",
+  manage_payment_connections: "Manage payment connections",
+  manage_financial_seats: "Manage financial seats",
 };
 
 /** How the Users & Permissions screen groups permissions. */
@@ -165,6 +201,11 @@ export const PERMISSION_GROUPS: { title: string; keys: readonly Permission[]; no
     title: "Customer communications",
     keys: ["view_communications", "view_customer_replies", "edit_nurture_templates", "approve_marketing_outreach", "enable_customer_nurture", "configure_project_updates", "approve_customer_updates", "enable_auto_project_updates", "manage_opt_outs"],
     note: "Needs Project Command Center. Only the company owner can grant turning on company-wide follow-ups or automatic sending.",
+  },
+  {
+    title: "Financials",
+    keys: ["view_company_financials", "view_project_financials", "create_invoices", "record_payments", "record_expenses", "approve_expenses", "record_bills", "approve_vendor_bills", "manage_accounts", "post_journal_entries", "reconcile", "close_periods", "export_financials", "manage_financial_config", "manage_sub_compliance", "manage_payment_connections", "manage_financial_seats"],
+    note: "Needs the Financial Command Center add-on and a financial seat. Only the company owner can grant payment connections and financial seats.",
   },
   { title: "Administration", keys: ["manage_teams", "manage_users", "manage_billing", "manage_pm_seats", "manage_pm_addons"] },
 ];
