@@ -34,7 +34,7 @@ export const CARDS: Record<CardKey, CardDef> = {
   needs_review: { key: "needs_review", title: "Needs review", needs: VIEW_PRJ, essential: true },
   commitment_overruns: { key: "commitment_overruns", title: "Commitment overruns", needs: VIEW_PRJ, essential: true },
   uncoded_costs: { key: "uncoded_costs", title: "Uncoded costs", needs: VIEW_PRJ, essential: true },
-  read_only_books: { key: "read_only_books", title: "Books are read-only", needs: VIEW_PRJ, essential: true },
+  read_only_books: { key: "read_only_books", title: "Recording status", needs: VIEW_PRJ, essential: true },
   ar_aging: { key: "ar_aging", title: "Receivables aging", needs: VIEW_CO },
   invoices_to_send: { key: "invoices_to_send", title: "Draft invoices", needs: ["create_invoices"] },
   milestones_ready: { key: "milestones_ready", title: "Milestones ready to invoice", needs: VIEW_PRJ },
