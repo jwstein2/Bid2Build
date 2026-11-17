@@ -18,7 +18,7 @@ const session = { access_token: jwt, refresh_token: "mock", token_type: "bearer"
 const cookieValue = `base64-${b64u(JSON.stringify(session))}`;
 const authCookie = { name: "sb-localhost-auth-token", value: cookieValue, domain: "localhost", path: "/" };
 
-const FREE_PROMO = /create a free bid|3 free bids to start|no sign-up until you download/i;
+const FREE_PROMO = /create a free bid|start your 3 free bids|3 free bids to start|no sign-up until you download/i;
 const scenarios = [
   { id: "signed-out", mock: "starter", auth: false, primary: "Create a Free Bid", secondary: "See How It Works", badge: null, promo: true },
   { id: "starter-credits", mock: "starter", primary: "Create New Bid", secondary: "View My Bids", badge: "2 free bids left" },
@@ -74,7 +74,9 @@ for (const sc of scenarios) {
       if (pg.id === "home") {
         const hero = page.locator("section").first().locator("[data-cta]");
         const labels = (await hero.allInnerTexts()).map((s) => s.trim());
-        check(`${tag} hero CTAs`, labels[0] === sc.primary && labels[1] === sc.secondary, labels.join(" | "));
+        // V4.7: signed-out homepage hero leads with the 3 free bids and Project Command Center.
+        const [p1, p2] = sc.auth === false ? ["Start Your 3 Free Bids", "Explore Project Command Center"] : [sc.primary, sc.secondary];
+        check(`${tag} hero CTAs`, labels[0] === p1 && labels[1] === p2, labels.join(" | "));
         if (sc.auth !== false) check(`${tag} neutral tagline`, (await page.getByTestId("hero-tagline").innerText()) === "Professional estimates. Customer-ready proposals.");
       }
       if (pg.id === "trade") {
@@ -121,7 +123,7 @@ for (const pth of ["/", "/pricing", "/bids/roofing"]) {
   // Visible markup only: <head> meta descriptions and JSON-LD stay public SEO copy by design.
   const raw = await (await fetch(BASE + pth, { headers: { cookie: `${authCookie.name}=${cookieValue}` } })).text();
   const html = raw.slice(raw.indexOf("<body")).replace(/<script[\s\S]*?<\/script>/g, "");
-  check(`slow auth ${pth}: server HTML has no free-bid promo (${Date.now() - t0}ms)`, !/Create a Free Bid|3 free bids to start/.test(html));
+  check(`slow auth ${pth}: server HTML has no free-bid promo (${Date.now() - t0}ms)`, !/Create a Free Bid|Start Your 3 Free Bids|3 free bids to start/.test(html));
   check(`slow auth ${pth}: server HTML has member CTA`, html.includes("Create New Bid"));
 }
 {

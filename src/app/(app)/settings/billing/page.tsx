@@ -82,7 +82,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
       </Card>
 
       {pm && pm.scope !== "company" && (paidActive || pm.source === "complimentary") && (
-        <PmAddonCard state={pm} periodEnd={current?.current_period_end ?? null} annual={current?.plan === "annual" && !process.env.STRIPE_PRICE_PM_ADDON_ANNUAL} yearly={current?.plan === "annual" && Boolean(process.env.STRIPE_PRICE_PM_ADDON_ANNUAL)} purchasable={isPmBillingConfigured("addon")} />
+        <div id="project-command-center" className="scroll-mt-20"><PmAddonCard state={pm} periodEnd={current?.current_period_end ?? null} annual={current?.plan === "annual" && !process.env.STRIPE_PRICE_PM_ADDON_ANNUAL} yearly={current?.plan === "annual" && Boolean(process.env.STRIPE_PRICE_PM_ADDON_ANNUAL)} purchasable={isPmBillingConfigured("addon")} /></div>
       )}
       {credits && !credits.unlimited && <CreditBalances credits={credits} showUpgrade={false} />}
 

@@ -1,42 +1,40 @@
 import Link from "next/link";
-import { Check, ClipboardList, Download, FileText, LayoutGrid, Ruler, Timer, TrendingUp } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { Container } from "@/components/ui/misc";
 import { TradePicker } from "@/components/marketing/trade-picker";
 import { ProposalSample } from "@/components/marketing/proposal-sample";
 import { SampleProposal } from "@/components/marketing/sample-proposal";
+import { PILLAR_ANCHOR, PILLAR_ICON, PILLAR_ORDER, PillarSections } from "@/components/marketing/pillars";
+import { PILLARS, PM_PRODUCT_NAME, PRICES, pmMarketedLive } from "@/lib/marketing/catalog";
 import { pickerTrades } from "@/lib/trades/picker";
-import { trades } from "@/lib/trades/catalog";
 import { plans, site } from "@/lib/site";
 import { AccountCtas } from "@/components/account/account-ctas";
 import { ReplayTourButton } from "@/components/onboarding/replay-tour-button";
 import { getAccountStatus } from "@/lib/account/server";
 import { accountCtas, creditBadge, MEMBER_TAGLINE, type AccountStatus } from "@/lib/account/status";
 
-const steps = [
-  { icon: LayoutGrid, title: "Choose your trade", body: "Start from sections made for your work (roofing, decks, kitchens and 30+ more) or a blank estimate. Nothing is pre-priced." },
-  { icon: Ruler, title: "Scope the project", body: "Add your company details once, then the customer, address and scope. Your draft saves as you go." },
-  { icon: ClipboardList, title: "Build the estimate", body: "Enter quantities and your own costs. Pick markup or target margin and see price, profit and tax update live." },
-  { icon: Download, title: "Review and export", body: "Choose what the customer sees, preview the proposal, then download a branded PDF to send from your own email." },
-];
-
-const faqs: { q: string; a: string; visitorOnly?: boolean; freePlanOnly?: boolean }[] = [
+const faqs: { q: string; a: string; visitorOnly?: boolean; freePlanOnly?: boolean; pmOnly?: boolean }[] = [
   { visitorOnly: true, q: "Is it really free?", a: `Yes. Every verified account gets ${plans.starterCredits} free bids to start, plus ${plans.monthlyCredits} free bid every month from your second month on. Drafts and previews are unlimited, with every trade and your branding. No credit card required.` },
   { visitorOnly: true, q: "Do I need to sign up before I can try it?", a: "No. Pick a trade and start building right away. Your draft is saved in your browser. You only create an account (with a one-time email link) when you are ready to download your first PDF or save to the cloud." },
   { q: "Will my customer see my costs or markup?", a: "Never. Customer-facing proposals are built only from customer prices. Internal costs, margins, and notes are not included in the preview or the PDF." },
   { q: "Do you provide local material prices?", a: "Only when a licensed pricing source is connected. We never show made-up prices. Until then, you enter your own costs, which is what accurate bids are built on anyway." },
   { q: "Where is my draft saved?", a: "Before you sign in, drafts are saved in this browser on this device. After you sign in, they autosave to your account so you can pick them up on any device." },
+  { q: `What is ${PM_PRODUCT_NAME}?`, a: `An add-on for Unlimited that turns won bids into job schedules: a Gantt timeline built from your estimate, a company calendar, staff and subcontractor assignments, progress tracking, and customer progress updates you review and share. It's ${PRICES.pmMonthly}/month (${PRICES.pmAnnual}/year on annual plans). Enterprise includes ${PRICES.pmIncludedEnterpriseEditors} schedule editor, and extra editors are ${PRICES.pmEditor}/month each.`, pmOnly: true },
+  { q: "Does Built2Bid work for a team?", a: `Yes. Enterprise is ${PRICES.enterpriseBase}/month for ${PRICES.enterpriseIncludedUsers} licensed users, each with their own login and unlimited bidding, plus roles and permissions, a company dashboard, and one proposal style for the whole company. More users are added at volume pricing.` },
   { freePlanOnly: true, q: "What counts as one of my free bids?", a: "A credit is used when you finalize a new bid. Editing, re-finalizing, or re-downloading a bid you already finalized is free, and drafts never use a credit. Your monthly bid is used first, then starter credits." },
 ];
 
 const VISITOR_POINTS = ["No sign-up until you download", "No credit card", "Your costs stay private"];
 const MEMBER_POINTS = ["Every trade, one pricing engine", "Your costs stay private", "Branded PDF proposals"];
 
+
 export default async function HomePage() {
   const status = await getAccountStatus();
   const visitor = !status.signedIn;
   const badge = creditBadge(status);
-  const shownFaqs = faqs.filter((f) => (!f.visitorOnly || visitor) && (!f.freePlanOnly || status.kind !== "unlimited"));
+  const pm = pmMarketedLive();
+  const shownFaqs = faqs.filter((f) => (!f.visitorOnly || visitor) && (!f.freePlanOnly || status.kind !== "unlimited") && (!f.pmOnly || pm));
   const softwareApp = {
     "@type": "SoftwareApplication",
     name: site.name,
@@ -47,6 +45,8 @@ export default async function HomePage() {
       { "@type": "Offer", price: "0", priceCurrency: "USD", name: "Free" },
       { "@type": "Offer", price: "19.99", priceCurrency: "USD", name: "Unlimited Monthly" },
       { "@type": "Offer", price: "149", priceCurrency: "USD", name: "Unlimited Annual" },
+      ...(pm ? [{ "@type": "Offer", price: PRICES.pmMonthly.replace("$", ""), priceCurrency: "USD", name: `${PM_PRODUCT_NAME} add-on (monthly)` }] : []),
+      { "@type": "Offer", price: PRICES.enterpriseBase.replace("$", ""), priceCurrency: "USD", name: `Enterprise (${PRICES.enterpriseIncludedUsers} users, monthly)` },
     ],
   };
   // One graph: the business, the website and the product, linked by @id so search engines can
@@ -79,13 +79,17 @@ export default async function HomePage() {
               <span data-testid="hero-tagline">{visitor ? `For contractors in every trade · ${plans.starterCredits} free bids to start` : MEMBER_TAGLINE}</span>
               {badge && <span className="whitespace-nowrap border-l border-white/20 pl-2" data-testid="hero-credits">{badge}</span>}
             </p>
-            <h1 className="mt-5 max-w-xl text-4xl font-extrabold leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-[3.5rem]">
-              Win More Bids. Look More Professional. <span className="relative inline-block text-cyan">Get Back to Building.<svg aria-hidden viewBox="0 0 300 12" preserveAspectRatio="none" className="absolute -bottom-2 left-0 h-2.5 w-full"><path d="M3 9C80 3 200 2 297 6" fill="none" stroke="#14B8A6" strokeWidth="4" strokeLinecap="round" /></svg></span>
+            <h1 className="mt-5 max-w-xl text-4xl font-extrabold leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-[3.25rem]">
+              Win More Bids. Manage Every Job. <span className="relative inline-block text-cyan">Grow Your Business.<svg aria-hidden viewBox="0 0 300 12" preserveAspectRatio="none" className="absolute -bottom-2 left-0 h-2.5 w-full"><path d="M3 9C80 3 200 2 297 6" fill="none" stroke="#14B8A6" strokeWidth="4" strokeLinecap="round" /></svg></span>
             </h1>
             <p className="mt-6 max-w-xl text-lg text-[#D5DFE9]">
-              Turn rough estimates into organized, customer-ready proposals for your trade. Price with markup or margin, choose what your customer sees, and download a branded PDF.
+              {pm
+                ? "Create professional estimates, track every bid from draft to signed, schedule won jobs, assign your crew and subs, and keep customers informed. All from one contractor platform."
+                : "Create professional estimates, send proposals customers can sign online, and track every bid from draft to signed. All from one contractor platform."}
             </p>
-            <AccountCtas status={status} tone="dark" arrow howHref="#how-it-works" className="mt-8" />
+            <AccountCtas status={status} tone="dark" arrow createFreeLabel={`Start Your ${plans.starterCredits} Free Bids`}
+              secondary={visitor && pm ? { action: "pm", label: `Explore ${PM_PRODUCT_NAME}`, href: `#${PILLAR_ANCHOR.run}` } : undefined}
+              howHref="#how-it-works" className="mt-8" />
             <ReplayTourButton testId="watch-demo" className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-lg px-1 text-sm font-semibold text-cyan underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan">
               Watch Demo <span className="font-normal text-[#B8C6D4]">(3 min)</span>
             </ReplayTourButton>
@@ -97,18 +101,22 @@ export default async function HomePage() {
           </div>
           <SampleProposal className="mx-auto w-full max-w-xl lg:max-w-none" dark />
         </Container>
-        <div className="relative border-t border-white/10">
-          <Container className="grid grid-cols-2 gap-4 py-5 text-sm font-semibold text-white md:grid-cols-4">
-            {[
-              { icon: LayoutGrid, t: `${trades.length} trade templates` },
-              { icon: FileText, t: "Professional proposals" },
-              { icon: Timer, t: "Saves as you go" },
-              { icon: TrendingUp, t: "Know your profit" },
-            ].map((f) => (
-              <p key={f.t} className="flex items-center gap-2.5"><f.icon className="h-5 w-5 text-cyan" aria-hidden /> {f.t}</p>
-            ))}
+        <nav aria-label="What Built2Bid does" className="relative border-t border-white/10">
+          <Container className="grid gap-3 py-5 sm:grid-cols-3">
+            {PILLAR_ORDER.map((p) => {
+              const Icon = PILLAR_ICON[p];
+              return (
+                <a key={p} href={`#${PILLAR_ANCHOR[p]}`} className="group flex min-h-11 items-start gap-3 rounded-xl px-2 py-2 hover:bg-white/5" data-testid={`pillar-link-${p}`}>
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-white/10 text-cyan"><Icon className="h-5 w-5" aria-hidden /></span>
+                  <span className="min-w-0">
+                    <span className="flex items-center gap-1 font-display font-bold text-white">{PILLARS[p].title}<ArrowRight className="h-4 w-4 opacity-0 transition group-hover:opacity-100" aria-hidden /></span>
+                    <span className="block text-sm text-[#B8C6D4]">{p === "run" && !pm ? "Coming soon" : PILLARS[p].kicker}</span>
+                  </span>
+                </a>
+              );
+            })}
           </Container>
-        </div>
+        </nav>
       </section>
 
       <section id="trades" className="scroll-mt-20 border-b border-line py-16 sm:py-20">
@@ -124,25 +132,14 @@ export default async function HomePage() {
         </Container>
       </section>
 
-      <section id="how-it-works" className="scroll-mt-20 py-20">
+      <section id="how-it-works" className="scroll-mt-20 py-20" aria-labelledby="pillars-h">
         <Container>
           <div className="max-w-2xl">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-accent-ink">How it works</p>
-            <h2 className="mt-2 text-3xl font-extrabold text-navy sm:text-4xl">From project details to a proposal you&apos;re proud to send</h2>
-            <p className="mt-3 text-lg text-ink-soft">Four steps, no training, no project-management bloat.</p>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-accent-ink">One workflow</p>
+            <h2 id="pillars-h" className="mt-2 text-3xl font-extrabold text-navy sm:text-4xl">From first estimate to finished job</h2>
+            <p className="mt-3 text-lg text-ink-soft">Estimating, proposals and your pipeline are included on every plan. Scheduling and team tools are there when you need them. Each feature below shows the plan it needs.</p>
           </div>
-          <ol className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {steps.map((s, i) => (
-              <li key={s.title} className="relative rounded-xl border border-line bg-surface p-5 shadow-card">
-                <div className="flex items-center gap-3">
-                  <span className="grid h-10 w-10 place-items-center rounded-lg bg-navy text-cyan"><s.icon className="h-5 w-5" aria-hidden /></span>
-                  <span className="font-display text-xs font-bold uppercase tracking-wider text-muted">Step {i + 1} of {steps.length}</span>
-                </div>
-                <h3 className="mt-4 text-lg font-bold">{s.title}</h3>
-                <p className="mt-1.5 text-sm text-ink-soft">{s.body}</p>
-              </li>
-            ))}
-          </ol>
+          <div className="mt-10"><PillarSections /></div>
         </Container>
       </section>
 
@@ -160,33 +157,13 @@ export default async function HomePage() {
                 "Separate sales tax from revenue, with taxable and non-taxable items",
                 "Overhead, contingency, permits, and delivery as costs or pass-through charges",
                 "Precise decimal math: every printed line multiplies out exactly",
+                "Show the customer group totals, item names only, full itemization or one project total",
               ].map((x) => (
                 <li key={x} className="flex gap-2"><Check className="mt-0.5 h-5 w-5 shrink-0 text-ok" aria-hidden />{x}</li>
               ))}
             </ul>
           </div>
           <ProposalSample />
-        </Container>
-      </section>
-
-      <section className="py-20">
-        <Container>
-          <h2 className="text-3xl font-extrabold text-navy sm:text-4xl">Show the customer exactly what you want them to see</h2>
-          <p className="mt-3 max-w-2xl text-lg text-ink-soft">Mix display modes across sections. Totals are identical in every mode.</p>
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              { t: "Group total only", d: "Decking Material Package: one price." },
-              { t: "Item names, no prices", d: "List what is included under one package price." },
-              { t: "Fully itemized", d: "Quantity, unit price, and amount for every line." },
-              { t: "Single project total", d: "One number for the whole job." },
-            ].map((m, i) => (
-              <div key={m.t} className="rounded-xl border border-line bg-surface p-5 shadow-card">
-                <span className="font-display text-xs font-bold text-accent-ink">Mode {String.fromCharCode(65 + i)}</span>
-                <h3 className="mt-1 font-bold">{m.t}</h3>
-                <p className="mt-1 text-sm text-ink-soft">{m.d}</p>
-              </div>
-            ))}
-          </div>
         </Container>
       </section>
 
@@ -236,7 +213,9 @@ function PlanBand({ status }: { status: AccountStatus }) {
     },
     unlimited: {
       h: "You're on Unlimited.",
-      p: "Finalize as many bids as you need. Your company details and branding carry over to every proposal.",
+      p: pmMarketedLive()
+        ? `Finalize as many bids as you need. Add ${PM_PRODUCT_NAME} for ${PRICES.pmMonthly}/month to schedule won jobs and keep customers updated.`
+        : "Finalize as many bids as you need. Your company details and branding carry over to every proposal.",
     },
   }[status.kind];
   // Visitors compare plans; Free-plan members see plans next to Create; others get their usual pair.

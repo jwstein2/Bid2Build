@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { PmLockNotice } from "@/components/billing/pm-lock";
 import { AlertTriangle, CalendarRange, History, List, MoveHorizontal, RefreshCw, Send, Undo2, GanttChart } from "lucide-react";
 import { Modal } from "@/components/builder/dialogs";
 import { Button } from "@/components/ui/button";
@@ -22,7 +23,7 @@ import { liveDateChanges, type LiveChange } from "@/lib/operations/live-schedule
 type UndoEntry = { tasks: Task[]; deps: Dep[]; summary: string };
 type SaveMeta = Partial<Pick<ScheduleMeta, "status" | "progressMethod" | "targetEndDate">>;
 
-export function ScheduleEditor({ initial, tradeLabels, editHint, created, publications = [] }: { initial: ScheduleData; tradeLabels: Record<string, string>; editHint: "addon" | "seat" | null; created?: boolean; publications?: Publication[] }) {
+export function ScheduleEditor({ initial, tradeLabels, editHint, created, publications = [] }: { initial: ScheduleData; tradeLabels: Record<string, string>; editHint: "addon" | "upgrade" | "seat" | null; created?: boolean; publications?: Publication[] }) {
   const [data, setData] = useState(initial);
   const [undo, setUndo] = useState<UndoEntry[]>([]);
   const [saving, setSaving] = useState(false);
@@ -141,13 +142,13 @@ export function ScheduleEditor({ initial, tradeLabels, editHint, created, public
       </div>
 
       {created && <Notice tone="ok" title="Draft schedule saved">Your customer hasn&apos;t been notified. Drag tasks to adjust dates, or use the list icon on a section to schedule individual line items.</Notice>}
-      {!canEdit && (
-        <Notice title="View only">
-          {editHint === "addon" ? <>Editing schedules needs Project Command Center. Your schedules and data stay here. <Link className="font-semibold underline" href="/settings/billing">Unlock Project Command Center</Link></>
-            : editHint === "seat" ? "Ask your company admin to assign you a scheduling editor seat to make changes."
-              : "You can view this schedule but can't edit it."}
-        </Notice>
-      )}
+      {!canEdit && (editHint === "addon" || editHint === "upgrade"
+        ? <PmLockNotice kind={editHint === "addon" ? "unlimited" : "free"} title="View only: your schedules and data stay here" />
+        : (
+          <Notice title="View only">
+            {editHint === "seat" ? "Ask your company admin to assign you a scheduling editor seat to make changes." : "You can view this schedule but can't edit it."}
+          </Notice>
+        ))}
       {canEdit && !perms.edit && (
         <div data-testid="progress-only"><Notice title="Progress updates only">Your company role lets you update status and % complete. Changing dates, tasks or dependencies needs permission to edit this schedule.</Notice></div>
       )}
