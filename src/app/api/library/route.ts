@@ -15,6 +15,9 @@ const mapItem = (r: any): SavedItem => ({
   id: r.id, name: r.name, description: r.description ?? undefined, trade: r.trade ?? null, category: r.category ?? undefined,
   costType: r.cost_type ?? "material", treatment: r.treatment ?? "marked_up", quantity: r.quantity === null || r.quantity === undefined ? undefined : num(r.quantity),
   unit: r.unit ?? "each", unitCost: num(r.unit_cost), taxable: r.taxable ?? true,
+  // Price-source metadata (V5). Absent until migration 20261127001000 is applied.
+  supplierName: r.supplier_name ?? null, supplierSku: r.supplier_sku ?? null, priceSource: r.price_source ?? null,
+  priceEffectiveOn: r.price_effective_on ? String(r.price_effective_on).slice(0, 10) : null,
 });
 
 /**
@@ -33,17 +36,20 @@ export async function GET() {
     ]);
     return json({ access: false, lockedCount: (a ?? 0) + (b ?? 0), items: [], stacks: [] } satisfies LibraryData);
   }
-  const [{ data: items }, { data: asm }, { data: asmItems }, { data: recent }] = await Promise.all([
+  const [{ data: items }, { data: asm }, { data: asmItems }, { data: recent }, { data: profile }] = await Promise.all([
     supabase.from("saved_items").select("*").order("name").limit(2000),
     supabase.from("assemblies").select("*").order("created_at", { ascending: false }).limit(500),
     supabase.from("assembly_items").select("*").order("sort_order").limit(10000),
     // "Frequently used first": names on up to 5,000 of the contractor's own estimate rows (read only).
     supabase.from("estimate_items").select("name").eq("user_id", user.id).order("id").limit(5000),
+    // Errors (column not there yet) leave the target unset.
+    supabase.from("business_profiles").select("target_margin_pct").eq("user_id", user.id).maybeSingle(),
   ]);
   const counts = usageCounts((recent ?? []).map((r: any) => r.name));
   return json({
     access: true,
     lockedCount: 0,
+    targetMarginPct: (profile as any)?.target_margin_pct === null || (profile as any)?.target_margin_pct === undefined ? null : num((profile as any).target_margin_pct),
     items: (items ?? []).map((r: any) => ({ ...mapItem(r), uses: usesFor(counts, r.name) })),
     stacks: (asm ?? []).map((a: any) => ({
       id: a.id, name: a.name, trade: a.trade ?? null,

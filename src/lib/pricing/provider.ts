@@ -49,7 +49,7 @@ const UNIT_ALIASES: Record<string, string> = {
   hr: "hour", hrs: "hour", hour: "hour", hours: "hour",
   day: "day", days: "day", ls: "lump sum", "lump sum": "lump sum",
   ton: "ton", tons: "ton", gal: "gallon", gallon: "gallon", gallons: "gallon",
-  sht: "sheet", sheet: "sheet", box: "box", bdl: "bundle", bundle: "bundle", sq: "square", square: "square",
+  sht: "sheet", sheet: "sheet", box: "box", bx: "box", rl: "roll", roll: "roll", rolls: "roll", cs: "case", case: "case", pr: "pair", pair: "pair", bdl: "bundle", bundle: "bundle", sq: "square", square: "square",
 };
 
 export function normalizeUnit(u: string): string {
