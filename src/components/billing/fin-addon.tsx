@@ -5,13 +5,13 @@ import { useId, useState } from "react";
 import { Button } from "../ui/button";
 import { Badge, Card } from "../ui/misc";
 import { formatCents } from "@/lib/enterprise/pricing";
-import { FIN_SOLO_CENTS } from "@/lib/financials/billing";
+import { FIN_SOLO_ANNUAL_CENTS, FIN_SOLO_CENTS } from "@/lib/financials/billing";
 
-type Preview = { monthlyCents: number; effective: string; dueNowCents: number; nextInvoiceAt: string | null; prorationDate: number };
+type Preview = { monthlyCents: number; interval: "month" | "year"; effective: string; dueNowCents: number; nextInvoiceAt: string | null; prorationDate: number };
 const day = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("en-US", { dateStyle: "long" }) : "your next billing date");
 
 /**
- * Solo Financials add-on: $21.99/month on the Standard plan. Preview shows the exact charge first;
+ * Solo Financials add-on: $21.99/month ($219.99/year on annual plans) on the Standard plan. Preview shows the exact charge first;
  * removal keeps recording on until the end of the paid period, and the books stay readable after.
  */
 export function FinAddonCard({ active, periodEnd, annual, purchasable, hasPlan }: {
@@ -19,7 +19,7 @@ export function FinAddonCard({ active, periodEnd, annual, purchasable, hasPlan }
 }) {
   const router = useRouter();
   const id = useId();
-  const price = `${formatCents(FIN_SOLO_CENTS)}/month`;
+  const price = annual ? `${formatCents(FIN_SOLO_ANNUAL_CENTS)}/year` : `${formatCents(FIN_SOLO_CENTS)}/month`;
   const [preview, setPreview] = useState<Preview | null>(null);
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
@@ -78,14 +78,13 @@ export function FinAddonCard({ active, periodEnd, annual, purchasable, hasPlan }
         {!active && !preview && (
           !purchasable ? <p className="text-sm text-ink-soft">Coming soon. You&apos;ll be able to add Financials here shortly.</p>
           : !hasPlan ? <p className="text-sm text-ink-soft">Financials is added to the Unlimited plan. <a href="/pricing" className="font-semibold underline">See plans</a></p>
-          : annual ? <p className="text-sm text-ink-soft">Available on monthly plans now; annual plans are coming soon.</p>
           : <Button onClick={() => call("preview")} disabled={busy !== null}>{busy === "preview" && <Loader2 className="h-4 w-4 animate-spin" />}Add Financials, {price}</Button>
         )}
         {preview && (
           <div role="dialog" aria-labelledby={`${id}-pv`} className="rounded-xl border border-line bg-paper p-4" data-testid="fin-preview">
             <h3 id={`${id}-pv`} className="font-display font-bold">Add Financials?</h3>
             <dl className="mt-2 space-y-1 text-sm">
-              <div className="flex justify-between gap-3"><dt className="text-ink-soft">New charge</dt><dd className="font-semibold">{formatCents(preview.monthlyCents)}/month</dd></div>
+              <div className="flex justify-between gap-3"><dt className="text-ink-soft">New charge</dt><dd className="font-semibold">{formatCents(preview.monthlyCents)}/{preview.interval === "year" ? "year" : "month"}</dd></div>
               <div className="flex justify-between gap-3"><dt className="text-ink-soft">Starts</dt><dd>Today, {day(preview.effective)}</dd></div>
               <div className="flex justify-between gap-3"><dt className="text-ink-soft">Next invoice ({day(preview.nextInvoiceAt)})</dt><dd>+{formatCents(preview.monthlyCents)}</dd></div>
               <div className="flex justify-between gap-3 border-t border-line pt-1 font-bold"><dt>Charged now (prorated to {day(preview.nextInvoiceAt)})</dt><dd>{formatCents(preview.dueNowCents)}</dd></div>

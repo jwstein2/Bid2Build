@@ -4,7 +4,7 @@ import { applySubscription } from "@/lib/billing/apply";
 import { previewTaxParams } from "@/lib/billing/tax";
 import { planInterval, type PmItem } from "@/lib/pm/billing";
 import { individualSubscription, pmPrices, prorationCents } from "@/lib/pm/server";
-import { ensureFinSoloPrice, FIN_SOLO_CENTS, isFinItem, type FinItem } from "@/lib/financials/billing";
+import { ensureFinSoloPrice, finSoloCents, isFinItem, type FinItem } from "@/lib/financials/billing";
 import { loadMyCompany } from "@/lib/enterprise/server";
 import { createAdminClient, createClient, getUser } from "@/lib/supabase/server";
 import { isFinBillingConfigured } from "@/lib/env";
@@ -20,7 +20,7 @@ const Body = z.object({
 });
 
 /**
- * Solo Financials add-on ($21.99/month on the person's Standard subscription). Preview shows the exact
+ * Solo Financials add-on ($21.99/month, or $219.99/year on annual plans, on the person's Standard subscription). Preview shows the exact
  * charge from Stripe; add charges the prorated amount now; remove takes it off with no refund and keeps
  * recording on until the end of the paid period (then the books stay readable). Company Financials is
  * not sold here.
@@ -51,8 +51,9 @@ export async function POST(req: Request) {
     const on = p.data.action !== "remove";
     if (on && existing) return fail(409, "already_active", "Financials is already on your plan.");
     if (!on && !existing) return fail(409, "not_active", "Financials isn't on your plan.");
-    if (on && planInterval(items, pmPrices()) !== "month") return fail(409, "annual_unavailable", "The Financials add-on is available on monthly plans now; annual plans are coming soon.");
-    const updates = on ? [{ price: await ensureFinSoloPrice(stripe), quantity: 1 }] : [{ id: existing!.id, deleted: true }];
+    const interval = planInterval(items, pmPrices());
+    if (on && !interval) return fail(409, "unknown_interval", "We couldn't match the add-on to your plan. Please contact support.");
+    const updates = on ? [{ price: await ensureFinSoloPrice(stripe, interval!), quantity: 1 }] : [{ id: existing!.id, deleted: true }];
     const periodEnd = row.current_period_end;
 
     if (p.data.action === "preview") {
@@ -63,7 +64,7 @@ export async function POST(req: Request) {
         subscription_details: { items: updates, proration_behavior: "always_invoice", proration_date: prorationDate },
         ...previewTaxParams(sub),
       });
-      return json({ monthlyCents: FIN_SOLO_CENTS, interval: "month", effective: new Date(prorationDate * 1000).toISOString(), dueNowCents: Math.max(0, prorationCents(preview.lines.data as never)), nextInvoiceAt: periodEnd, prorationDate });
+      return json({ monthlyCents: finSoloCents(interval ?? "month"), interval: interval ?? "month", effective: new Date(prorationDate * 1000).toISOString(), dueNowCents: Math.max(0, prorationCents(preview.lines.data as never)), nextInvoiceAt: periodEnd, prorationDate });
     }
 
     const updated = await stripe.subscriptions.update(row.stripe_subscription_id, {
