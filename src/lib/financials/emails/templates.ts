@@ -15,7 +15,8 @@ export interface Template { subject: string; body: string }
 /** Placeholders: {customer_first_name} {company_name} {sender_name} {project_name} {invoice_number} {amount_due} {due_date}
  * {milestone} {schedule} {balance} {payment_amount} {payment_date} {payment_status_sentence} {credit_amount} {change_order} {contract_total} {pay_instructions} */
 const GREETING: Record<Tone, string> = { friendly: "Hi {customer_first_name},", professional: "Hello {customer_first_name},", brief: "Hi {customer_first_name}," };
-const SIGN: Record<Tone, string> = { friendly: "Thanks so much,\n{sender_name}\n{company_name}", professional: "Thank you,\n{sender_name}\n{company_name}", brief: "Thanks,\n{sender_name}" };
+// Signed with the company name by default (owner decision 2026-11-17); {sender_name} stays available to edit in.
+const SIGN: Record<Tone, string> = { friendly: "Thanks so much,\n{company_name}", professional: "Thank you,\n{company_name}", brief: "Thanks,\n{company_name}" };
 
 const BODIES: Record<TemplateKind, Record<Tone, string>> = {
   deposit: {
