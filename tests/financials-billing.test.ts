@@ -1,6 +1,6 @@
 /** Solo Financials add-on: items recognised by lookup key, never mistaken for the plan; price created once. */
 import { describe, expect, it, vi } from "vitest";
-import { ensureFinSoloPrice, finFromItems, FIN_SOLO_CENTS, FIN_SOLO_LOOKUP, isFinItem } from "@/lib/financials/billing";
+import { ensureFinSoloPrice, finFromItems, FIN_SOLO_ANNUAL_LOOKUP, FIN_SOLO_CENTS, FIN_SOLO_LOOKUP, isFinItem } from "@/lib/financials/billing";
 import { planInterval } from "@/lib/pm/billing";
 import { subscriptionToUpdate, type SubscriptionLike } from "@/lib/billing/sync";
 
@@ -34,6 +34,16 @@ describe("solo Financials add-on", () => {
     const missing = { prices: { list: vi.fn().mockResolvedValue({ data: [] }), create: vi.fn().mockResolvedValue(good) } };
     expect(await ensureFinSoloPrice(missing as never)).toBe("price_ok");
     expect(missing.prices.create).toHaveBeenCalledWith(expect.objectContaining({ unit_amount: 2199, lookup_key: FIN_SOLO_LOOKUP, recurring: { interval: "month" } }), expect.anything());
+  });
+
+  it("annual plans get the $219.99 yearly price on the same product as the monthly one", async () => {
+    const yearly = { id: "price_year_fin", unit_amount: 21999, currency: "usd", recurring: { interval: "year" } };
+    const list = vi.fn()
+      .mockResolvedValueOnce({ data: [] })                                   // no yearly price yet
+      .mockResolvedValueOnce({ data: [{ id: "price_ok", product: "prod_fin" }] });   // the monthly sibling
+    const stripe = { prices: { list, create: vi.fn().mockResolvedValue(yearly) } };
+    expect(await ensureFinSoloPrice(stripe as never, "year")).toBe("price_year_fin");
+    expect(stripe.prices.create).toHaveBeenCalledWith(expect.objectContaining({ unit_amount: 21999, lookup_key: FIN_SOLO_ANNUAL_LOOKUP, recurring: { interval: "year" }, product: "prod_fin" }), expect.anything());
   });
 
   it("refuses a price with the wrong amount", async () => {
