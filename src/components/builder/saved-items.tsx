@@ -6,6 +6,7 @@ import { UNIT_ABBR, getTrade, parseTemplateItem, type TemplateItem } from "@/lib
 import { sectionTrade } from "@/lib/estimate/trades";
 import { frequentItems, lineContext, lineFromSaved, matchesQuery, type SavedItem } from "@/lib/library/saved-items";
 import { cn } from "@/lib/cn";
+import { useDismiss } from "@/components/ui/use-dismiss";
 import { Button } from "../ui/button";
 import { Modal } from "./dialogs";
 import type { Action } from "./state";
@@ -113,14 +114,9 @@ export function SavedItemsPicker({ group, estimate, suggestions, lib, dispatch }
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const onDoc = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
-    const onEsc = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
-    document.addEventListener("mousedown", onDoc);
-    document.addEventListener("keydown", onEsc);
-    return () => { document.removeEventListener("mousedown", onDoc); document.removeEventListener("keydown", onEsc); };
-  }, [open]);
+  const trigger = useRef<HTMLButtonElement>(null);
+  // Multi-select: stays open while picking; Done, an outside click or Escape closes it.
+  useDismiss(open, () => setOpen(false), { inside: [ref], returnFocus: trigger });
   const s = q.trim().toLowerCase();
   // Items already in this section stay listed with an "Added" mark (instead of vanishing) and can't be added twice by accident.
   const inSection = new Set(estimate.items.filter((i) => i.groupId === group.id).map((i) => i.name.trim().toLowerCase()));
@@ -135,12 +131,12 @@ export function SavedItemsPicker({ group, estimate, suggestions, lib, dispatch }
 
   return (
     <div className="relative" ref={ref}>
-      <Button size="sm" variant="ghost" onClick={() => setOpen(!open)} aria-expanded={open} className="max-md:min-h-11"><Search className="h-4 w-4" /> Suggested &amp; Saved Items</Button>
+      <Button ref={trigger} size="sm" variant="ghost" onClick={() => setOpen(!open)} aria-expanded={open} className="max-md:min-h-11"><Search className="h-4 w-4" /> Suggested &amp; Saved Items</Button>
       {open && (
         <div className="absolute left-0 z-30 mt-1 w-[360px] max-w-[calc(100vw-2rem)] rounded-lg border border-line bg-surface p-2 shadow-xl">
           <div className="flex items-center gap-2">
             <input autoFocus className="field field-sm min-w-0 flex-1" placeholder="Search items…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search suggested and saved items" />
-            <Button size="sm" variant="secondary" onClick={() => setOpen(false)}>Done</Button>
+            <Button size="sm" variant="secondary" onClick={() => { setOpen(false); trigger.current?.focus(); }}>Done</Button>
           </div>
           <p className="mt-1 px-1 text-[11px] text-muted">Pick as many as you need. Added items show a check.</p>
           <div className="mt-1 max-h-[min(22rem,60dvh)] overflow-y-auto overscroll-contain text-sm">

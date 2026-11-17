@@ -3,6 +3,7 @@ import { Bell, CalendarClock, CheckCircle2, Clock, Gauge, Loader2 } from "lucide
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
+import { useDismiss } from "@/components/ui/use-dismiss";
 
 interface Notice {
   id: string; kind: string; scheduleId: string; taskId: string; reason: "end_date" | "progress_100" | "both"; title: string; status: string;
@@ -32,13 +33,8 @@ export function NotificationBell() {
     window.addEventListener("focus", onFocus);
     return () => { clearInterval(t); window.removeEventListener("focus", onFocus); };
   }, [load]);
-  useEffect(() => {
-    if (!open) return;
-    const close = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
-    const esc = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
-    document.addEventListener("mousedown", close); document.addEventListener("keydown", esc);
-    return () => { document.removeEventListener("mousedown", close); document.removeEventListener("keydown", esc); };
-  }, [open]);
+  const bell = useRef<HTMLButtonElement>(null);
+  useDismiss(open, () => setOpen(false), { inside: [ref], returnFocus: bell });
   if (items === null) return null;
   const act = async (n: Notice, action: "confirm" | "later" | "read") => {
     setBusy(n.id); setErr(null);
@@ -52,7 +48,7 @@ export function NotificationBell() {
   const unread = items.filter((n) => !n.readAt).length;
   return (
     <div className="relative" ref={ref}>
-      <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-haspopup="dialog" data-testid="notification-bell"
+      <button ref={bell} type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-haspopup="dialog" data-testid="notification-bell"
         className="relative grid min-h-9 min-w-9 place-items-center rounded-md text-ink-soft hover:bg-black/5" aria-label={`Task review notices${items.length ? `, ${items.length} open` : ""}`}>
         <Bell className="h-5 w-5" aria-hidden />
         {items.length > 0 && <span className={cn("absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full px-1 text-[10px] font-bold", unread ? "bg-danger text-white" : "bg-black/10 text-ink")}>{items.length}</span>}

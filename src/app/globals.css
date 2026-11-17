@@ -180,7 +180,7 @@ a[data-card-link]:focus-visible { outline: none; }
 /* Touch screens: 16px fields in the quantity calculator so iOS Safari doesn't zoom the page on
    focus (which pushed the calculator sheet off screen). */
 @media (pointer: coarse), (max-width: 639px) {
-  .calc-panel .field, .calc-panel .cell { font-size: 16px; }
+  .calc-panel .field, .calc-panel .cell, .sub-quote-form .field { font-size: 16px; }
 }
 
 /*
