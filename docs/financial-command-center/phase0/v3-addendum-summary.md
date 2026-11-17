@@ -1,0 +1,19 @@
+# Financial Command Center V3 addendum (James, 2026-11-17) — summary for workstreams
+
+Trade-adaptive UX on ONE accounting engine. Combine QuickBooks bookkeeping/reconciliation/accountant workflows + Sage 100 Contractor job-costing depth (committed costs, POs, subcontract commitments, progress billing/retainage, cost codes, WIP, sub compliance) + Built2Bid's existing estimating/pipeline/projects/schedules/customers/proposals/change orders/staff & subs.
+
+1. Capability matrix: Feature | QuickBooks | Sage | Built2Bid Existing | Proposed Addition | Relevant Trades | Priority | Validation Required. Current capabilities vs historical comparisons/editorial opinions. Sources: Contractor ToolStack Sage 100 Contractor article + a 2023 Sage 100 Contractor vs QuickBooks PDF (not yet received), official Sage 100 Contractor docs, QBO/Advanced docs, reviews.
+2. Company Profile → Business & Trade Configuration (primary account holder): primary business type, additional trades, residential/commercial/mixed, typical project model, common payment structure, labor model (employees/subs/both), optional inventory & equipment. Reuse existing trade taxonomy (no second taxonomy). Project-level overrides.
+3. Presets: GC, residential remodeler, deck, roofing & siding, electrical, plumbing, HVAC, concrete, painting, exterior cleaning, drywall, commercial, other/custom. Presets are UX/workflow only, never gate entitled features; switching trade never changes historical transactions.
+4. Per profile adapt: dashboard cards, quick actions, default reports, cost-code suggestions, estimate templates, billing workflows, job-cost categories, sub workflows, setup, onboarding, help. Keep "All Financial Tools" area. Admins can customize homepage cards; essential accounting alerts can't be hidden.
+5. One GL for all trades; all trade operations post via shared accounting services. No schedule-% revenue recognition; contract value ≠ revenue/cash.
+6. Dimensions: Company → Customer → Project → Trade → Section/Phase → Task/Cost Code. Track original budget, approved revisions, actual, committed, unbilled commitments, ETC, forecast final cost, variance, forecast margin. Overhead (non-job) costs, split costs across jobs, Needs Review queue, AI suggestions require review.
+7. Subcontract commitments & POs from existing Team & Subcontractors: quotes ≠ commitments ≠ payables; revised commitments; bills relieve commitments without double counting; committed-cost reporting.
+8. Billing: deposits, milestone, progress, T&M, cost-plus, retainage, CO billing, final, credit memos, partial payments; evaluate AIA-style pay apps/SOV (no AIA compliance claims or licensed forms). Billing rules separate from contract and posting rules.
+9. Labor: time entries → project/task, estimated vs actual hours, cost rates, burdened cost, variance, approval. NO payroll tax/wages/certified payroll. Optional equipment directory/usage/maintenance/job allocation.
+10. Optional sub compliance docs (COI, workers' comp, licenses, contracts, expirations, warnings); no claims of verification; no auto pay.
+11. Core reports for all FCC customers; extra reports prioritized by profile (residential / commercial WIP, retainage, committed / service utilization / equipment). Explain missing data; every total drills down.
+12. Progressive onboarding; preserve existing UX standards.
+13. Delegated permissions incl. financial configuration and sub compliance; owner override; FCC seats separate from Enterprise & PM seats.
+14. Pricing unchanged: $24.99 incl 3 seats, $4.99/extra; no trade tiers.
+16. 20 acceptance tests (trade select, overrides, history unchanged, actual vs committed distinct, reports reconcile to ledger, no double counting, retainage/progress correct, review queue, permissions, privacy, mobile, dark mode, regressions, fixtures, no live billing changes).

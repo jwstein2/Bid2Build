@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getAccountStatus } from "@/lib/account/server";
 import { createClient } from "@/lib/supabase/server";
-import { isPmEnabled } from "@/lib/env";
+import { isFinancialsEnabled, isPmEnabled } from "@/lib/env";
 import { loadSchedule } from "@/lib/schedule/server";
 import { loadPmAccess } from "@/lib/pm/server";
 import { listPublications } from "@/lib/schedule/publications";
@@ -60,7 +60,7 @@ export default async function SchedulePage({ params, searchParams }: { params: P
       {comm?.pm && comm.perms.includes("view_communications") && (
         <ProjectUpdatesPanel scheduleId={id} canConfigure={comm.perms.includes("configure_project_updates")} canAuto={comm.perms.includes("enable_auto_project_updates")} />
       )}
-      <ProjectTabs estimateId={data.schedule.estimateId} initialTab={tab} customerId={(est?.customer_id as string | null) ?? null}>
+      <ProjectTabs estimateId={data.schedule.estimateId} initialTab={tab} customerId={(est?.customer_id as string | null) ?? null} financials={isFinancialsEnabled()}>
         <ScheduleEditor initial={data} editHint={editHint} created={created === "1"} publications={publications} tradeLabels={Object.fromEntries(data.snapshot.trades.map((t) => [t, tradeName(t)]))} />
       </ProjectTabs>
     </div>

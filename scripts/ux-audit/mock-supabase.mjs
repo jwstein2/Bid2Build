@@ -19,6 +19,7 @@ const item = (n, g, name, cost_type, qty, unit, cost, sort) => ({
   show_on_proposal: true, notes: null, sort_order: sort,
 });
 
+const finStorage = new Map();
 const tables = {
   pm_editors: [],
   business_profiles: process.env.MOCK_EMPTY_PROFILE ? [] : [{ user_id: USER.id, company_name: "Summit Exteriors LLC", contact_name: "Alex Rivera", email: "office@summit.test", phone: "(555) 010-2030", address: "120 Main St, Springfield", website: null, license_number: "CBC-12345", logo_path: null, accent_color: "#00C2E0", default_terms: null, default_payment_terms: null }],
@@ -698,6 +699,17 @@ http.createServer((req, res) => {
       }
     }
     if (u.pathname.startsWith("/storage/v1/") && opsStorage(u, raw, send, res)) return;
+    // Financials walk (scripts/financials/walk.mjs): receipts go to an in-memory financial-documents bucket.
+    if (u.pathname.startsWith("/storage/v1/object/financial-documents")) {
+      const key = decodeURIComponent(u.pathname.replace(/^\/storage\/v1\/object\//, ""));
+      if (req.method === "POST" || req.method === "PUT") { finStorage.set(key, bodyBuf); return send(res, 200, { Key: key }); }
+      if (req.method === "DELETE") return send(res, 200, []);
+      const b = finStorage.get(key);
+      if (!b) return send(res, 400, { statusCode: "404", error: "not_found", message: "Object not found" });
+      res.writeHead(200, { "content-type": "application/octet-stream" }); return void res.end(b);
+    }
+    // Financials walk: switch the database user the real-SQL bridge runs as (owner / bookkeeper / PM / view only).
+    if (u.pathname === "/__as") { process.env.PG_REST_AS_USER = u.searchParams.get("user") ?? ""; return send(res, 200, { as: process.env.PG_REST_AS_USER }); }
     if (u.pathname.startsWith("/storage/v1/")) return send(res, 400, { error: "not available in mock" });
     // Opportunity Radar walk (scripts/radar/walk.mjs) and bid check walk (scripts/bid-check/walk.mjs): tables and
     // RPCs with the PG_REST_PREFIXES prefixes (default radar_) run real SQL when RADAR_PG_URL is set.
