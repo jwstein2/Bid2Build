@@ -597,6 +597,11 @@ http.createServer((req, res) => {
       return send(res, 200, [p]);
     }
     // Project scheduling: GET /__pm?state=<json for my_pm_access>. company_pm_assign toggles tables.pm_editors.
+    // Customer communications V4.6: GET /__comms?on=1 makes comm_access return a PM account with every permission.
+    if (u.pathname === "/__comms") {
+      rpcs.comm_access = u.searchParams.get("on") === "1" ? { accountId: USER.id, kind: "user", pm: true, perms: ["view_communications", "edit_nurture_templates", "enable_customer_nurture", "approve_marketing_outreach", "configure_project_updates", "approve_customer_updates", "enable_auto_project_updates", "view_customer_replies", "manage_opt_outs"] } : null;
+      return send(res, 200, { ok: true });
+    }
     if (u.pathname === "/__pm") { tables.pm_editors ??= []; rpcs.my_pm_access = u.searchParams.get("state") ? JSON.parse(u.searchParams.get("state")) : null; return send(res, 200, { ok: true }); }
     // Phase 9 seat overview and reassignment, from tables.pm_editors (order = rank).
     if (u.pathname === "/rest/v1/rpc/company_pm_seats") {

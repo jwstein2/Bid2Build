@@ -9,6 +9,8 @@ import { locationQuality } from "@/lib/admin/metrics";
 import { loadReport } from "@/lib/admin/load";
 import { carry, href } from "@/lib/admin/view";
 import { previewLifecycle, sendLifecycleSamplesAction } from "./actions";
+import { CommsOpsPanel } from "@/components/admin/comms-panel";
+import { createAdminClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Operations" };
@@ -18,6 +20,7 @@ const STATE: Record<IntegrationState, { tone: Tone; label: string }> = { ok: { t
 export default async function Operations({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const sp = await searchParams;
   const lifecycleNote = typeof sp.lifecycle === "string" ? sp.lifecycle.slice(0, 300) : null;
+  const commsNote = typeof sp.comms === "string" ? sp.comms.slice(0, 300) : null;
   const { r, error, view } = await loadReport(sp, { costs: true });
   if (!r) return <ReportUnavailable error={error} />;
   const { facts, sc, snap, now } = r;
@@ -91,6 +94,7 @@ export default async function Operations({ searchParams }: { searchParams: Promi
             <form action={sendLifecycleSamplesAction}><button type="submit" className="cc-mono rounded-md border border-[var(--cc-line)] px-3 py-1.5 text-xs text-white hover:border-[var(--cc-blue)]">Send me the 5 samples</button></form>
           </div>
         </Panel>
+        <CommsOpsPanel db={createAdminClient()} note={commsNote} />
       </div>
 
       <SectionTitle id="auth" kicker="Authentication" title="Sign-in and email delivery" />

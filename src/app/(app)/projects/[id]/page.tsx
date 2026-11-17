@@ -13,6 +13,8 @@ import { progressOf } from "@/lib/schedule/progress";
 import { todayIn } from "@/lib/schedule/calendar";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { ProjectTabs } from "@/components/operations/project-tabs";
+import { ProjectUpdatesPanel } from "@/components/comms/project-updates-panel";
+import { loadCommAccess } from "@/lib/comms/server";
 
 export const metadata: Metadata = { title: "Project schedule", robots: { index: false } };
 
@@ -25,7 +27,7 @@ export default async function SchedulePage({ params, searchParams }: { params: P
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const supabase = await createClient();
-  const [data, pm, publications] = await Promise.all([loadSchedule(supabase, id), loadPmAccess(supabase), listPublications(supabase, id)]);
+  const [data, pm, publications, comm] = await Promise.all([loadSchedule(supabase, id), loadPmAccess(supabase), listPublications(supabase, id), loadCommAccess(supabase)]);
   if (!data) notFound();
   const editHint = data.canEdit ? null : pm?.scope === "company" || data.schedule.companyId ? "seat" : "addon";
   const { created, tab } = await searchParams;
@@ -54,6 +56,9 @@ export default async function SchedulePage({ params, searchParams }: { params: P
     <div className="mx-auto max-w-7xl">
       <Breadcrumbs className="mb-3" items={[{ label: "Projects", href: "/projects" }, { label: data.schedule.name }]} />
       {summary && <ProjectSummary {...summary} />}
+      {comm?.pm && comm.perms.includes("view_communications") && (
+        <ProjectUpdatesPanel scheduleId={id} canConfigure={comm.perms.includes("configure_project_updates")} canAuto={comm.perms.includes("enable_auto_project_updates")} />
+      )}
       <ProjectTabs estimateId={data.schedule.estimateId} initialTab={tab} customerId={(est?.customer_id as string | null) ?? null}>
         <ScheduleEditor initial={data} editHint={editHint} created={created === "1"} publications={publications} tradeLabels={Object.fromEntries(data.snapshot.trades.map((t) => [t, tradeName(t)]))} />
       </ProjectTabs>

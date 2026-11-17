@@ -1,4 +1,4 @@
-import { BarChart3, CalendarRange, Calculator, ClipboardCheck, FilePlus2, FileSpreadsheet, HandCoins, LayoutTemplate, Library, Palette, SquareKanban, type LucideIcon } from "lucide-react";
+import { BarChart3, CalendarRange, Calculator, ClipboardCheck, FilePlus2, FileSpreadsheet, HandCoins, LayoutTemplate, Library, MailCheck, Palette, SquareKanban, type LucideIcon } from "lucide-react";
 import type { FeatureId } from "@/lib/features/registry";
 
 export const FEATURE_ICONS: Record<FeatureId, LucideIcon> = {
@@ -13,4 +13,5 @@ export const FEATURE_ICONS: Record<FeatureId, LucideIcon> = {
   change_orders: FilePlus2,
   project_operations: ClipboardCheck,
   proposal_style: Palette,
+  customer_communications: MailCheck,
 };
