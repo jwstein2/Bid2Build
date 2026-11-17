@@ -198,8 +198,20 @@ function agingSub(open: Row[]) {
 // ---------------------------------------------------------------------------------------------------------
 // Job (project) financials
 // ---------------------------------------------------------------------------------------------------------
-export async function loadJob(db: Db, estimateId: string, ctx: FinContext) {
+/**
+ * The bid's basic details for a job page. People who can read the bid get it directly; a Financials seat
+ * alone (no bid permission) gets the same basics through fin_job_header(), never line items or costs.
+ */
+export async function loadJobHeader(db: Db, estimateId: string): Promise<Row | null> {
   const { data: est } = await db.from("estimates").select("id, title, customer_name, customer_email, customer_id, pipeline_stage, trades, company_id, user_id").eq("id", estimateId).maybeSingle();
+  if (est) return { ...(est as Row), bid_readable: true };
+  const { data: hdr, error } = await db.rpc("fin_job_header", { p_estimate_id: estimateId });
+  if (error || !hdr) return null;
+  return hdr as Row;
+}
+
+export async function loadJob(db: Db, estimateId: string, ctx: FinContext) {
+  const est = await loadJobHeader(db, estimateId);
   if (!est) return null;
   const [{ data: job }, { data: versions }, { data: override }] = await Promise.all([
     db.from("fin_jobs").select("*").eq("estimate_id", estimateId).maybeSingle(),

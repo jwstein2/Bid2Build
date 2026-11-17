@@ -1,14 +1,18 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { listLocalDrafts } from "@/lib/drafts/local";
+import { unsavedLocalDrafts, type LocalDraftEntry } from "@/lib/drafts/local";
 import { Notice } from "@/components/ui/misc";
 
-/** Drafts started before signing in (or while offline) that haven't reached the account yet. */
-export function LocalDraftsBanner() {
-  const [drafts, setDrafts] = useState<{ id: string; title: string; savedAt: string }[]>([]);
+/**
+ * Drafts started before signing in (or while offline), or edits the server never confirmed, that haven't
+ * reached the account yet. Plain safety copies of bids already in the account (`accountIds`) don't count.
+ */
+export function LocalDraftsBanner({ accountIds }: { accountIds: string[] }) {
+  const [drafts, setDrafts] = useState<LocalDraftEntry[]>([]);
+  const key = accountIds.join(",");
   // eslint-disable-next-line react-hooks/set-state-in-effect -- browser storage is only readable after hydration
-  useEffect(() => { setDrafts(listLocalDrafts()); }, []);
+  useEffect(() => { setDrafts(unsavedLocalDrafts(key ? key.split(",") : [])); }, [key]);
   if (!drafts.length) return null;
   return (
     <Notice tone="warn" title={`You have ${drafts.length} draft${drafts.length > 1 ? "s" : ""} saved only on this device`}>

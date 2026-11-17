@@ -36,8 +36,8 @@ for (const [name, viewport] of Object.entries(viewports)) {
 
   await page.getByRole("button", { name: "Add line item" }).first().click();
   await page.keyboard.type("Composite deck boards");
-  await page.getByLabel("Quantity").first().fill("10");
-  await page.getByLabel("Internal unit cost").first().fill("40");
+  await page.getByLabel("Quantity", { exact: true }).first().fill("10");
+  await page.getByLabel("Internal unit cost", { exact: true }).first().fill("40");
   await page.waitForTimeout(300);
   // 10 x 40 = 400 cost; 25% default markup -> 500 price (no tax by default).
   check(await page.getByText("$500.00").first().isVisible(), "line item price computes 10 x $40 at 25% markup = $500.00");

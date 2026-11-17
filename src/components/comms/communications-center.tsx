@@ -65,6 +65,8 @@ export function CommunicationsCenter() {
     fetch("/api/comms", { cache: "no-store" }).then((r) => r.json()).then((d) => { setNow(Date.now()); setData(d); }).catch(() => setErr("We couldn't load communications."));
   }, []);
   useEffect(() => { load(); }, [load]);
+  // Success messages fade after a few seconds; errors stay until the next action.
+  useEffect(() => { if (!flash) return; const t = setTimeout(() => setFlash(null), 5000); return () => clearTimeout(t); }, [flash]);
 
   const setParam = (patch: Record<string, string | null>) => {
     const p = new URLSearchParams(sp.toString());
@@ -114,8 +116,11 @@ export function CommunicationsCenter() {
       </div>
 
       <StatusBanner data={data} />
-      {flash && <Notice tone="ok">{flash}</Notice>}
-      {err && <Notice tone="danger">{err}</Notice>}
+      {(flash || err) && (
+        <div className="sticky top-2 z-20 rounded-lg bg-paper shadow-md" role={err ? "alert" : "status"} aria-live="polite" data-testid="comms-feedback">
+          {err ? <Notice tone="danger">{err}</Notice> : <Notice tone="ok">{flash}</Notice>}
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
         <MetricCard size="sm" title="Needs review" value={review.length} tone={review.length ? "warn" : "default"} empty={!review.length} onSelect={() => setParam({ tab: "attention", status: null })} pressed={tab === "attention"} action="Review" testId="kpi-review" />
@@ -325,7 +330,7 @@ function Settings({ data, perms, busy, run, reload }: { data: Data; perms: Set<s
   const [body, setBody] = useState(s.nurtureBody ?? DEFAULT_BODY);
   const [preview, setPreview] = useState<{ to: string; subject: string; body: string } | null>(null);
   const [sender, setSender] = useState({ senderName: s.senderName ?? "", postalAddress: s.postalAddress ?? "", replyTo: s.replyTo ?? "" });
-  const [autoConfirm, setAutoConfirm] = useState<"nurture" | "updates" | null>(null);
+  const [autoConfirm, setAutoConfirm] = useState<"nurture" | null>(null);
   const save = (patch: Record<string, unknown>, ok = "Saved.") => run("settings", () => call("/api/comms/settings", "PUT", patch), ok);
   const loadAudience = () => run("aud", async () => {
     const d = await call("/api/comms/audience", "GET") as { entries: Entry[] };
@@ -380,13 +385,20 @@ function Settings({ data, perms, busy, run, reload }: { data: Data; perms: Set<s
               <option value={6}>Every 6 months</option><option value={12}>Every 12 months</option><option value={3}>Every 3 months</option>
             </select>
           </Field>
-          <Field label="Sending mode" htmlFor="n-mode" hint={data.platform.monitoring.active ? undefined : "Automatic needs reply monitoring, so it's not available yet."}>
-            <select id="n-mode" className="field" value={s.nurtureMode} disabled={!perms.has("enable_customer_nurture")}
-              onChange={(e) => (e.target.value === "automatic" ? setAutoConfirm("nurture") : save({ nurtureMode: "review" }))}>
-              <option value="review">Review first (recommended)</option>
-              <option value="automatic" disabled={!data.platform.monitoring.active}>Automatic</option>
-            </select>
-          </Field>
+          {data.platform.monitoring.active && perms.has("enable_customer_nurture") ? (
+            <Field label="Sending mode" htmlFor="n-mode">
+              <select id="n-mode" className="field" value={s.nurtureMode} disabled={busy !== null}
+                onChange={(e) => (e.target.value === "automatic" ? setAutoConfirm("nurture") : save({ nurtureMode: "review" }, "Follow-ups will wait for your review."))} data-testid="nurture-mode">
+                <option value="review">Review first (recommended)</option>
+                <option value="automatic">Automatic</option>
+              </select>
+            </Field>
+          ) : (
+            <FixedSetting label="Sending mode" value="Review first" testId="nurture-mode-fixed"
+              note={data.platform.monitoring.active
+                ? "Only someone your company owner allows can turn on automatic follow-ups."
+                : "Every follow-up waits for your approval. Automatic sending becomes available once reply monitoring is set up and tested, so anyone who replies is never emailed again automatically."} />
+          )}
         </div>
         {autoConfirm === "nurture" && (
           <ConfirmAuto text="Follow-ups will send automatically to enrolled contacts when they're due. Replies, unsubscribes and bounces stop them automatically, and you can pause at any time."
@@ -428,12 +440,8 @@ function Settings({ data, perms, busy, run, reload }: { data: Data; perms: Set<s
                 {(Object.keys(FREQUENCY_LABEL) as UpdateFrequency[]).map((k) => <option key={k} value={k}>{FREQUENCY_LABEL[k]}</option>)}
               </select>
             </Field>
-            <Field label="Sending mode" htmlFor="u-mode">
-              <select id="u-mode" className="field" value={s.updatesMode} disabled={!perms.has("configure_project_updates")} onChange={(e) => (e.target.value === "automatic" ? setAutoConfirm("updates") : save({ updatesMode: "review" }))}>
-                <option value="review">Review first (recommended)</option>
-                <option value="automatic" disabled={!perms.has("enable_auto_project_updates")}>Automatic</option>
-              </select>
-            </Field>
+            <FixedSetting label="Sending mode" value="Review first" testId="updates-mode-fixed"
+              note="New projects always start with review first. Automatic sending is turned on per project, in its Customer updates panel, with a confirmation." />
             <Field label="Weekly send day" htmlFor="u-day">
               <select id="u-day" className="field" value={s.updatesWeekday} disabled={!perms.has("configure_project_updates")} onChange={(e) => save({ updatesWeekday: Number(e.target.value) })}>
                 {WEEKDAYS.map((d, i) => <option key={d} value={i + 1}>{d}</option>)}
@@ -445,10 +453,6 @@ function Settings({ data, perms, busy, run, reload }: { data: Data; perms: Set<s
               </select>
             </Field>
           </div>
-          {autoConfirm === "updates" && (
-            <ConfirmAuto text="Project updates will be sent automatically using the latest verified project information. You will receive advance reminders, but an update may send without manual review."
-              onCancel={() => setAutoConfirm(null)} onConfirm={() => { setAutoConfirm(null); save({ updatesMode: "automatic", confirmAutomatic: true }, "New projects will default to automatic sending."); }} />
-          )}
           <p className="text-xs text-muted">Your PM gets a reminder the day before each planned update. Work is only described as complete after someone confirms it.</p>
           {data.projects.length > 0 && (
             <ul className="divide-y divide-line rounded-lg border border-line text-sm">
@@ -463,6 +467,17 @@ function Settings({ data, perms, busy, run, reload }: { data: Data; perms: Set<s
         </Card>
         <Offers offers={data.offers} canEdit={perms.has("edit_nurture_templates")} busy={busy} run={run} reload={reload} />
       </div>
+    </div>
+  );
+}
+
+/** A setting with one valid value right now: shown as text, not as a control that does nothing. */
+function FixedSetting({ label, value, note, testId }: { label: string; value: string; note: string; testId: string }) {
+  return (
+    <div className="space-y-1" data-testid={testId}>
+      <p className="text-sm font-semibold">{label}</p>
+      <p className="flex items-center gap-1.5 text-sm font-medium"><CheckCircle2 className="h-4 w-4 text-ok" aria-hidden /> {value}</p>
+      <p className="text-xs text-muted">{note}</p>
     </div>
   );
 }

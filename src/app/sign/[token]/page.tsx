@@ -8,6 +8,8 @@ import { acceptanceText, consentText, CONSENT_VERSION, isEsignEnabled } from "@/
 import { loadLogo, loadRequestByToken } from "@/lib/esign/server";
 import { site } from "@/lib/site";
 import { SignForm } from "./sign-form";
+import { isContractorSigningEnabled } from "@/lib/esign/contractor/config";
+import { executionFor, viewSignature } from "@/lib/esign/contractor/server";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -45,6 +47,12 @@ export default async function SignPage({ params }: PageProps<"/sign/[token]">) {
   const view = { ...doc, brand: { ...doc.brand, logoUrl: logo ? `data:image/png;base64,${logo.data.toString("base64")}` : null } };
   const proposalExpires = doc.meta.expires ? doc.meta.expires : null;
   const signed = r.phase === "signed";
+  // V5.3: the contractor signature, when one is recorded on this version. Before the customer signs it
+  // only appears if it was applied before the link was created (it is part of what they review).
+  const ex = isContractorSigningEnabled() ? await executionFor(admin, { request_id: r.id, version_id: r.versionId }) : null;
+  const contractorView = ex?.contractor && (signed || ex.contractor.applied_at <= r.createdAt) ? viewSignature(ex.contractor) : null;
+  const executed = ex?.state === "fully_executed";
+  const awaitingContractor = signed && ex?.state === "awaiting_contractor";
 
   return (
     <Shell company={doc.brand.companyName}>
@@ -55,7 +63,7 @@ export default async function SignPage({ params }: PageProps<"/sign/[token]">) {
             <h1 id="summary-h" className="mt-1 font-display text-2xl font-extrabold text-navy sm:text-3xl">{doc.meta.title}</h1>
           </div>
           {signed
-            ? <span className="inline-flex items-center gap-1.5 rounded-full bg-ok-tint px-3 py-1 text-sm font-bold text-ok"><CheckCircle2 className="h-4 w-4" aria-hidden /> Signed</span>
+            ? <span className="inline-flex items-center gap-1.5 rounded-full bg-ok-tint px-3 py-1 text-sm font-bold text-ok" data-testid="customer-status"><CheckCircle2 className="h-4 w-4" aria-hidden /> {executed ? "Fully executed" : awaitingContractor ? "Signed · awaiting contractor signature" : "Signed"}</span>
             : <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-tint px-3 py-1 text-sm font-bold text-navy"><FileSignature className="h-4 w-4" aria-hidden /> Ready for your signature</span>}
         </div>
         <dl className="mt-4 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
@@ -69,19 +77,19 @@ export default async function SignPage({ params }: PageProps<"/sign/[token]">) {
         <div className="mt-4 flex flex-wrap gap-2">
           <a href="#proposal" className="inline-flex min-h-11 items-center rounded-lg bg-navy px-4 font-semibold text-white hover:bg-navy/90">Review the full proposal</a>
           <a href={`/api/sign/${token}/pdf`} className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-line px-4 font-semibold text-navy hover:bg-black/5">
-            <Download className="h-4 w-4" aria-hidden /> {signed ? "Download signed copy (PDF)" : "Download PDF"}
+            <Download className="h-4 w-4" aria-hidden /> {executed ? "Download executed agreement (PDF)" : signed ? "Download signed copy (PDF)" : "Download PDF"}
           </a>
         </div>
       </section>
 
       <section id="proposal" aria-label="Full proposal" className="mt-6 scroll-mt-4 rounded-xl bg-[#e4eaf1] p-2 sm:p-5">
-        <ProposalView doc={view} />
+        <ProposalView doc={view} contractorSignature={contractorView} />
       </section>
 
       <section aria-labelledby="sign-h" className="mt-6 rounded-2xl border border-line bg-surface p-4 shadow-sm sm:p-6" id="sign">
         <h2 id="sign-h" className="font-display text-xl font-extrabold text-navy">{signed ? "Signature recorded" : "Accept & sign"}</h2>
         {signed ? (
-          <p className="mt-2 text-ink-soft">This proposal was accepted and signed electronically. You can download your signed copy at any time from this page{contact ? <>, or contact {doc.brand.companyName} at <span className="font-semibold">{contact}</span></> : ""}.</p>
+          <p className="mt-2 text-ink-soft">This proposal was accepted and signed electronically.{executed ? ` ${doc.brand.companyName} has also signed it, so the agreement is fully executed.` : awaitingContractor ? ` ${doc.brand.companyName} still needs to countersign it; until then this is your signed acceptance, not the fully executed agreement.` : ""} You can download your copy at any time from this page{contact ? <>, or contact {doc.brand.companyName} at <span className="font-semibold">{contact}</span></> : ""}.</p>
         ) : (
           <SignForm
             token={token}

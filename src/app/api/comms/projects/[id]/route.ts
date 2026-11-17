@@ -21,7 +21,7 @@ async function state(g: Extract<Awaited<ReturnType<typeof requireComm>>, { ok: t
   const last = (msgs ?? []).find((m) => m.sent_at);
   const weeklyAt = wantsWeekly(frequency as never) && !p?.paused_at ? upcomingWeekly(new Date(), settings.timezone, settings.updatesWeekday, settings.updatesHour).slot.toISOString() : null;
   return { settings: p ? { frequency, mode: p.mode, recipientEmail: p.recipient_email, recipientName: p.recipient_name, pausedAt: p.paused_at, autoConfirmedAt: p.auto_confirmed_at } : null,
-    defaults: { frequency: settings.updatesFrequency, mode: settings.updatesMode, weekday: settings.updatesWeekday, hour: settings.updatesHour, timezone: settings.timezone },
+    defaults: { frequency: settings.updatesFrequency, mode: "review" as const, weekday: settings.updatesWeekday, hour: settings.updatesHour, timezone: settings.timezone },
     next: next ?? null, nextWeeklyAt: weeklyAt, last: last ?? null, history: msgs ?? [] };
 }
 

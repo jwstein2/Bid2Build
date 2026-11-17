@@ -60,7 +60,7 @@ export function ProjectUpdatesPanel({ scheduleId, canConfigure, canAuto }: { sch
             {(Object.keys(FREQUENCY_LABEL) as UpdateFrequency[]).map((k) => <option key={k} value={k}>{FREQUENCY_LABEL[k]}</option>)}
           </select>
         </Field>
-        <Field label="Sending mode" htmlFor="pu-mode" hint={st.defaults.mode === "automatic" && cur.mode !== "automatic" ? "Your company default is Automatic. Choose it here to confirm it for this project." : undefined}>
+        <Field label="Sending mode" htmlFor="pu-mode" hint={canAuto ? undefined : "Only someone your company owner allows can turn on automatic sending."}>
           <select id="pu-mode" className="field" disabled={!canConfigure || busy} value={cur.mode} onChange={(e) => (e.target.value === "automatic" ? setConfirm(true) : save({ mode: "review" }))} data-testid="pu-mode">
             <option value="review">Review first (recommended)</option>
             <option value="automatic" disabled={!canAuto}>Automatic</option>

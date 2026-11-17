@@ -28,8 +28,12 @@ export function NotificationBell() {
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+  // Stops after a 401 (the session ended in this tab) and skips hidden tabs, so an idle tab doesn't call a
+  // server function every 5 minutes for nothing. A focus after sign-in again reloads the page anyway.
+  const signedOut = useRef(false);
   const load = useCallback(() => {
-    fetch("/api/notifications", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((d) => { if (d?.available) setItems(d.items); else setItems(null); }).catch(() => {});
+    if (signedOut.current || document.hidden) return;
+    fetch("/api/notifications", { cache: "no-store" }).then((r) => { if (r.status === 401) signedOut.current = true; return r.ok ? r.json() : null; }).then((d) => { if (d?.available) setItems(d.items); else setItems(null); }).catch(() => {});
   }, []);
   useEffect(() => {
     load();

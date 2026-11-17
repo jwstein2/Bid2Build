@@ -1,3 +1,4 @@
+import { isFinancialsEnabled } from "@/lib/env";
 import type { Metadata } from "next";
 import { Container } from "@/components/ui/misc";
 import { site } from "@/lib/site";
@@ -26,6 +27,7 @@ export default function Privacy() {
         <p>If you ask us to import branding from a website, we fetch that public page once, extract details for you to review, and record only the host name and outcome.</p>
         <h2 className="pt-2 text-xl font-bold text-ink">Your choices</h2>
         <p>You can export your data or delete your account from Account settings. Deleting your account removes your bids, customers, logos, and generated documents. To prevent repeat free-credit signups, we keep a one-way hash of your email address (not the address itself).</p>
+        {isFinancialsEnabled() && <p>If you used Financials to issue invoices, record payments or track job costs, we keep those financial records read-only for 7 years after your last financial activity, because tax and business-record rules require them. In that case deleting your account closes it instead: you can&apos;t sign in, your subscription is canceled, and the records are deleted when the 7 years end. You can ask for a copy at any time.</p>}
         <h2 className="pt-2 text-xl font-bold text-ink">Service providers</h2>
         <p>Supabase (database, authentication, file storage), Stripe (payments), Google Analytics (website analytics), and our hosting provider process data on our behalf.</p>
         <h2 className="pt-2 text-xl font-bold text-ink">Contact</h2>

@@ -60,3 +60,6 @@ export const isPmBillingConfigured = (kind: "addon" | "editor") => {
  * default: with it off there is no nav item, page, tab, settings section or API route (all answer 404).
  */
 export const isFinancialsEnabled = () => process.env.NEXT_PUBLIC_FINANCIALS === "on";
+
+/** One home for every pillar (owner decision 2026-11-17). Off: /dashboard stays the landing page. */
+export const isUnifiedHomeEnabled = () => process.env.NEXT_PUBLIC_UNIFIED_HOME === "on";
