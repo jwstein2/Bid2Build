@@ -58,6 +58,9 @@ const body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("approve_bill"), billId: id }),
   z.object({ action: z.literal("pay_bill"), key, p: z.object({ billId: id, amount, method: z.enum(["check", "ach", "card", "cash", "wire", "other"]), paidOn: day.optional(), reference: text(120).optional(), memo: text(1000).optional() }) }),
   z.object({ action: z.literal("void_bill_payment"), billPaymentId: id, reason: text(500).min(1) }),
+  z.object({ action: z.literal("void_bill"), billId: id, reason: text(500).min(1) }),
+  z.object({ action: z.literal("void_credit"), creditMemoId: id, reason: text(500).min(1) }),
+  z.object({ action: z.literal("mark_duplicate"), expenseId: id, keepId: id }),
   z.object({ action: z.literal("record_expense"), p: z.object({ jobId: id.optional(), vendorId: id.optional(), payee: text(200).optional(), costCodeId: id.optional(), spentOn: day.optional(), amount, method: z.enum(["card", "cash", "check", "ach", "reimbursement", "other"]).optional(), description: text(500).min(1), receiptDocumentId: id.optional() }), key }),
   z.object({ action: z.literal("decide_expense"), expenseId: id, decision: z.enum(["approve", "reject", "void"]), note: text(500).optional() }),
   z.object({ action: z.literal("review_resolve"), itemId: id, status: z.enum(["resolved", "dismissed"]), resolution: text(500).optional() }),
@@ -67,6 +70,13 @@ const body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("email_template_save"), templateKind: z.enum(["deposit", "progress", "final", "time_materials", "change_order", "balance_reminder", "overdue_reminder", "receipt", "partial_payment", "final_thanks", "credit_refund"]),
     tone: z.enum(["friendly", "professional", "brief"]), subject: text(300).min(1), body: text(10000).min(1) }),
 ]);
+
+type RpcDb = { rpc: (fn: string, args: Record<string, unknown>) => PromiseLike<{ error: { message: string; details?: string | null } | null }> };
+async function rpcOk(db: RpcDb, fn: string, args: Record<string, unknown>) {
+  const { error } = await db.rpc(fn, args);
+  if (error) throw new fin.FinError(error.message, error.message, error.details ?? undefined);
+  return json({ ok: true });
+}
 
 export async function POST(req: Request) {
   const g = await finGuard({ write: true, limitKey: "fin-action" });
@@ -111,6 +121,9 @@ export async function POST(req: Request) {
       case "approve_bill": return json({ ok: await fin.approveBill(db, a.billId) ?? true });
       case "pay_bill": return json(await fin.payBill(db, bookId, a.p, a.key));
       case "void_bill_payment": return json({ ok: await fin.voidBillPayment(db, a.billPaymentId, a.reason) ?? true });
+      case "void_bill": return rpcOk(db, "fin_bill_void", { p_bill_id: a.billId, p_reason: a.reason });
+      case "void_credit": return rpcOk(db, "fin_credit_memo_void", { p_credit_memo_id: a.creditMemoId, p_reason: a.reason });
+      case "mark_duplicate": return rpcOk(db, "fin_expense_mark_duplicate", { p_expense_id: a.expenseId, p_keep_id: a.keepId });
       case "record_expense": return json(await fin.recordExpense(db, bookId, a.p, a.key));
       case "decide_expense": return json({ status: await fin.decideExpense(db, a.expenseId, a.decision, a.note) });
       case "review_resolve": { const { error } = await db.rpc("fin_review_resolve", { p_item_id: a.itemId, p_status: a.status, p_resolution: a.resolution ?? null }); if (error) throw new fin.FinError(error.message, error.message); return json({ ok: true }); }

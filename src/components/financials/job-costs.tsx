@@ -1,13 +1,13 @@
 "use client";
 import { useState } from "react";
-import { Paperclip } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { FileDown, Paperclip } from "lucide-react";
+import { Button, buttonClass } from "@/components/ui/button";
 import { Badge, Field, Notice } from "@/components/ui/misc";
 import { add, cmp, sub, toMoney } from "@/lib/financials/money";
 import { BasisBadge } from "./basis";
 import { FinDialog } from "./fin-dialog";
 import { finAction, fmtDate, newKey, today, usd } from "./fin-client";
-import type { Perms, R } from "./job-billing";
+import type { Perms, R, VoidTarget } from "./job-billing";
 
 const s = (v: unknown) => (v === null || v === undefined ? "" : String(v));
 const MONEY = /^\d{1,12}(\.\d{1,2})?$/;
@@ -323,7 +323,7 @@ export function BillPaymentDialog({ open, onOpenChange, bill, onDone }: { open: 
   );
 }
 
-export function CostLists({ data, perms, writable, onChanged, onPayBill, onVoidBillPayment }: { onPayBill?: (bill: R) => void; onVoidBillPayment?: (p: R) => void; data: { expenses: R[]; bills: R[]; billLines: R[]; commitments: R[]; costCodes: R[]; vendors: R[] }; perms: Perms; writable: boolean; onChanged: () => void }) {
+export function CostLists({ data, perms, writable, onChanged, onPayBill, onVoid }: { onPayBill?: (bill: R) => void; onVoid?: (t: VoidTarget) => void; data: { expenses: R[]; bills: R[]; billLines: R[]; commitments: R[]; costCodes: R[]; vendors: R[] }; perms: Perms; writable: boolean; onChanged: () => void }) {
   const [err, setErr] = useState<string | null>(null);
   const codeName = (id: unknown) => s(data.costCodes.find((c) => c.id === id)?.name) || "Uncoded";
   const vendorName = (id: unknown) => s(data.vendors.find((v) => v.id === id)?.name);
@@ -352,8 +352,8 @@ export function CostLists({ data, perms, writable, onChanged, onPayBill, onVoidB
           <ul className="mt-2 divide-y divide-line">
             {data.expenses.map((x) => (
               <li key={s(x.id)} className="flex flex-wrap items-center gap-2 py-2 text-sm">
-                <span className="min-w-0 flex-1"><span className="font-semibold">{s(x.number)} · {s(x.description)}</span>
-                  <span className="block text-xs text-muted">{fmtDate(x.spent_on)} · {vendorName(x.vendor_id) || s(x.payee) || "No payee"} · {codeName(x.cost_code_id)}{x.receipt_document_id ? " · receipt attached" : ""}</span></span>
+                <span className="min-w-0 basis-full sm:basis-0 sm:flex-1"><span className="font-semibold">{s(x.number)} · {s(x.description)}</span>
+                  <span className="block text-xs text-muted">{fmtDate(x.spent_on)} · {vendorName(x.vendor_id) || s(x.payee) || "No payee"} · {codeName(x.cost_code_id)}{x.receipt_document_id ? " · receipt attached" : ""}{x.status === "void" && x.decision_note ? ` · ${s(x.decision_note)}` : ""}</span></span>
                 {x.receipt_document_id ? <Paperclip className="h-4 w-4 text-muted" aria-label="Receipt attached" /> : null}
                 <span className="flex items-center gap-2 tabular">{usd(x.amount)} {x.status === "approved" && <BasisBadge basis="Actual" />}</span>
                 <Badge tone={statusTone(s(x.status))}>{s(x.status)}</Badge>
@@ -361,6 +361,7 @@ export function CostLists({ data, perms, writable, onChanged, onPayBill, onVoidB
                   <span className="flex gap-1"><Button size="sm" variant="secondary" onClick={() => act({ action: "decide_expense", expenseId: x.id, decision: "approve" })}>Approve</Button>
                     <Button size="sm" variant="ghost" onClick={() => act({ action: "decide_expense", expenseId: x.id, decision: "reject" })}>Reject</Button></span>
                 )}
+                {x.status === "approved" && perms.approveExpense && writable && onVoid && <Button size="sm" variant="ghost" onClick={() => onVoid({ kind: "expense", id: s(x.id), label: `expense ${s(x.number)}` })}>Void</Button>}
               </li>
             ))}
           </ul>
@@ -374,7 +375,7 @@ export function CostLists({ data, perms, writable, onChanged, onPayBill, onVoidB
               const onJob = add(0, ...data.billLines.filter((l) => l.bill_id === b.id).map((l) => s(l.amount) || "0"));
               return (
                 <li key={s(b.id)} className="flex flex-wrap items-center gap-2 py-2 text-sm">
-                  <span className="min-w-0 flex-1"><span className="font-semibold">{s(b.number)} · {vendorName(b.vendor_id)} #{s(b.vendor_invoice_number)}</span><span className="block text-xs text-muted">Billed {fmtDate(b.bill_date)} · due {fmtDate(b.due_date)}{cmp(onJob, s(b.total) || "0") !== 0 ? ` · ${usd(onJob)} on this job` : ""}</span></span>
+                  <span className="min-w-0 basis-full sm:basis-0 sm:flex-1"><span className="font-semibold">{s(b.number)} · {vendorName(b.vendor_id)} #{s(b.vendor_invoice_number)}</span><span className="block text-xs text-muted">Billed {fmtDate(b.bill_date)} · due {fmtDate(b.due_date)}{cmp(onJob, s(b.total) || "0") !== 0 ? ` · ${usd(onJob)} on this job` : ""}</span></span>
                   <span className="flex items-center gap-2 tabular">{usd(onJob)} {b.status === "approved" && <BasisBadge basis="Actual" />}</span>
                   <Badge tone={statusTone(s(b.status))}>{b.status === "pending_approval" ? "Waiting for approval" : s(b.status)}</Badge>
                   {b.status === "pending_approval" && perms.approveBill && writable && <Button size="sm" variant="secondary" onClick={() => act({ action: "approve_bill", billId: b.id })}>Approve</Button>}
@@ -382,10 +383,14 @@ export function CostLists({ data, perms, writable, onChanged, onPayBill, onVoidB
                     ? <Badge tone={Number(b.days_overdue) > 0 ? "danger" : "warn"}>{usd(b.balance)} unpaid</Badge>
                     : <Badge tone="ok">Paid</Badge>)}
                   {b.status === "approved" && perms.bill && writable && onPayBill && cmp(s(b.balance) || "0", 0) > 0 && <Button size="sm" variant="secondary" onClick={() => onPayBill(b)}>Record bill payment</Button>}
+                  {b.status !== "void" && perms.approveBill && writable && onVoid && !((b.payments as R[] | undefined) ?? []).some((p) => p.status === "active") && <Button size="sm" variant="ghost" onClick={() => onVoid({ kind: "bill", id: s(b.id), label: `bill ${s(b.number)}` })}>Void</Button>}
                   {((b.payments as R[] | undefined) ?? []).filter((p) => p.status === "active").length > 0 && (
                     <span className="basis-full text-xs text-muted">Paid: {((b.payments as R[]) ?? []).filter((p) => p.status === "active").map((p) => `${usd(p.amount)} ${s(p.method)} ${fmtDate(p.paid_on)}${p.reference ? ` #${s(p.reference)}` : ""}`).join(" · ")}
-                      {perms.approveBill && writable && onVoidBillPayment && ((b.payments as R[]) ?? []).filter((p) => p.status === "active").map((p) => (
-                        <button key={s(p.id)} type="button" className="ml-2 min-h-9 underline" onClick={() => onVoidBillPayment(p)}>void {usd(p.amount)}</button>
+                      {((b.payments as R[]) ?? []).filter((p) => p.status === "active").map((p) => (
+                        <span key={s(p.id)} className="ml-2 inline-flex gap-2">
+                          <a className="inline-flex min-h-9 items-center gap-1 underline" href={`/api/financials/bill-payments/${s(p.id)}/receipt`} target="_blank" rel="noopener" data-testid="fin-bill-payment-receipt"><FileDown className="h-3.5 w-3.5" aria-hidden />record {usd(p.amount)}</a>
+                          {perms.approveBill && writable && onVoid && <button type="button" className="min-h-9 underline" onClick={() => onVoid({ kind: "bill_payment", id: s(p.id), label: `bill payment of ${usd(p.amount)}` })}>void {usd(p.amount)}</button>}
+                        </span>
                       ))}</span>
                   )}
                 </li>
@@ -401,7 +406,8 @@ export function CostLists({ data, perms, writable, onChanged, onPayBill, onVoidB
 export function ReviewQueue({ items, canResolve, onChanged }: { items: R[]; canResolve: boolean; onChanged: () => void }) {
   const [err, setErr] = useState<string | null>(null);
   const LABEL: Record<string, string> = { uncoded_cost: "Cost without a cost code", missing_receipt: "Receipt missing", commitment_overrun: "Billed more than committed", duplicate_suspected: "Possible duplicate", other: "Needs a look" };
-  const act = async (id: unknown, status: "resolved" | "dismissed") => { setErr(null); const r = await finAction({ action: "review_resolve", itemId: id, status }); if (!r.ok) setErr(r.message); else onChanged(); };
+  const act = async (id: unknown, status: "resolved" | "dismissed", resolution?: string) => { setErr(null); const r = await finAction({ action: "review_resolve", itemId: id, status, resolution }); if (!r.ok) setErr(r.message); else onChanged(); };
+  const dup = async (i: R) => { setErr(null); const r = await finAction({ action: "mark_duplicate", expenseId: i.entity_id, keepId: (i.details as R | null)?.duplicateOfId }); if (!r.ok) setErr(r.message); else onChanged(); };
   return (
     <section id="review" className="rounded-xl border border-line bg-surface p-4" aria-labelledby="fin-review-h" data-testid="fin-review" data-guide="fin.review">
       <h2 id="fin-review-h" className="font-display text-lg font-extrabold">Needs review</h2>
@@ -410,8 +416,11 @@ export function ReviewQueue({ items, canResolve, onChanged }: { items: R[]; canR
         <ul className="mt-2 divide-y divide-line">
           {items.map((i) => (
             <li key={s(i.id)} className="flex flex-wrap items-center gap-2 py-2 text-sm">
-              <span className="min-w-0 flex-1 font-semibold">{LABEL[s(i.kind)] ?? s(i.kind)} <span className="font-normal text-muted">({s(i.entity_type).replace("_", " ")})</span></span>
-              {canResolve && <span className="flex gap-1"><Button size="sm" variant="secondary" onClick={() => act(i.id, "resolved")}>Mark fixed</Button><Button size="sm" variant="ghost" onClick={() => act(i.id, "dismissed")}>Dismiss</Button></span>}
+              <span className="min-w-0 flex-1 font-semibold">{LABEL[s(i.kind)] ?? s(i.kind)} <span className="font-normal text-muted">({s(i.entity_type).replace("_", " ")})</span>
+                {i.kind === "duplicate_suspected" && (i.details as R | null)?.duplicateOf ? <span className="block text-xs font-normal text-muted">Same amount ({usd((i.details as R).amount)}) and payee as {s((i.details as R).duplicateOf)}, within 3 days. Nothing was changed.</span> : null}</span>
+              {canResolve && (i.kind === "duplicate_suspected" && i.entity_type === "expense" && (i.details as R | null)?.duplicateOfId
+                ? <span className="flex gap-1"><Button size="sm" variant="secondary" onClick={() => dup(i)} data-testid="fin-void-duplicate">Void as duplicate of {s((i.details as R).duplicateOf)}</Button><Button size="sm" variant="ghost" onClick={() => act(i.id, "dismissed", "Not a duplicate")}>Not a duplicate</Button></span>
+                : <span className="flex gap-1"><Button size="sm" variant="secondary" onClick={() => act(i.id, "resolved")}>Mark fixed</Button><Button size="sm" variant="ghost" onClick={() => act(i.id, "dismissed")}>Dismiss</Button></span>)}
             </li>
           ))}
         </ul>
