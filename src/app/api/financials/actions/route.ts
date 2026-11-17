@@ -33,6 +33,7 @@ const body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("save_dashboard"), scope: z.enum(["company", "role", "user"]), role: text(40).nullable().optional(), p: z.object({
     cards: z.array(z.object({ key: text(60), visible: z.boolean().optional() })).max(60).optional(), kpis: z.array(text(40)).max(9).optional(),
     lockedCards: z.array(text(60)).max(60).optional(), collapsedSections: z.array(text(40)).max(20).optional(),
+    quickActions: z.array(text(40)).max(20).nullable().optional(),
   }) }),
   z.object({ action: z.literal("reset_dashboard") }),
   z.object({ action: z.literal("set_mode"), mode: z.enum(["contractor", "accountant"]) }),

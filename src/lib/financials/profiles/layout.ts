@@ -5,7 +5,7 @@
  * RPC checks are the real gate). Contractor Mode is the default; Accountant Mode only when authorized.
  */
 import { canUseAccountantMode, type FinRole } from "../permissions";
-import { CARDS, ESSENTIAL_ALERT_KEYS, KPI_KEYS, type CardKey, type KpiKey } from "./catalog";
+import { CARDS, ESSENTIAL_ALERT_KEYS, KPI_KEYS, QUICK_ACTIONS, QUICK_ACTION_NEEDS, type CardKey, type KpiKey, type QuickAction } from "./catalog";
 import type { ResolvedProfile } from "./engine";
 
 export type DashboardRole = "owner" | "sales_rep" | "project_manager" | "bookkeeper" | "view_only" | "financial_admin" | "accountant";
@@ -35,7 +35,8 @@ export const dashboardRoleFor = (role: FinRole | null | undefined): DashboardRol
 
 export interface CardPref { key: string; visible?: boolean }
 export interface SavedView { name: string; filters: { estimateIds?: string[]; trades?: string[]; from?: string; to?: string } }
-export interface StoredPrefs { cards?: CardPref[]; kpis?: string[]; saved_views?: SavedView[]; collapsed_sections?: string[]; locked_cards?: string[] }
+/** quick_actions: null/absent = no choice at this level; an array (even empty) is the choice, in order. */
+export interface StoredPrefs { cards?: CardPref[]; kpis?: string[]; saved_views?: SavedView[]; collapsed_sections?: string[]; locked_cards?: string[]; quick_actions?: string[] | null }
 
 export interface LayoutInput {
   profile: ResolvedProfile;
@@ -52,12 +53,17 @@ export interface ResolvedLayout {
   mode: Mode;
   cards: ResolvedCard[];
   kpis: KpiKey[];
+  /** Quick actions in order, already filtered to the person's permissions. */
+  quickActions: QuickAction[];
+  /** Where the quick actions came from: the person's own choice, the company/role default, or the trade profile. */
+  quickActionsFrom: "user" | "company" | "profile";
   savedViews: SavedView[];
   collapsedSections: string[];
 }
 
 const isCard = (k: string): k is CardKey => k in CARDS;
 const isKpi = (k: string): k is KpiKey => (KPI_KEYS as readonly string[]).includes(k);
+export const isQuickAction = (k: string): k is QuickAction => (QUICK_ACTIONS as readonly string[]).includes(k);
 
 /**
  * Apply one stored layer: the cards it mentions come first in its order (with its visibility), then the
@@ -100,10 +106,18 @@ export function resolveLayout(input: LayoutInput): ResolvedLayout {
   });
 
   const kpis = (input.user?.kpis ?? input.roleLayout?.kpis ?? input.company?.kpis ?? ROLE_DEFAULT_KPIS[role]).filter(isKpi);
+  // Quick actions: the first level that made a choice wins (user, role, company), else the trade profile.
+  const has = (p?: StoredPrefs | null) => Array.isArray(p?.quick_actions);
+  const quickFrom = has(input.user) ? "user" : has(input.roleLayout) || has(input.company) ? "company" : "profile";
+  const quickRaw = (has(input.user) ? input.user!.quick_actions : has(input.roleLayout) ? input.roleLayout!.quick_actions : has(input.company) ? input.company!.quick_actions : input.profile.quickActions) ?? [];
+  const quickActions = quickRaw.filter(isQuickAction).filter((q, i, a) => a.indexOf(q) === i && input.permissions.includes(QUICK_ACTION_NEEDS[q]));
+
   return {
     mode,
     cards: resolved,
     kpis: kpis.length ? kpis : [...ROLE_DEFAULT_KPIS[role]],
+    quickActions,
+    quickActionsFrom: quickFrom,
     savedViews: input.user?.saved_views ?? [],
     collapsedSections: input.user?.collapsed_sections ?? [],
   };

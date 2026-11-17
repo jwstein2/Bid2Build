@@ -8,33 +8,56 @@ import { KPI_LABELS } from "@/lib/financials/ui-labels";
 import { finAction } from "./fin-client";
 
 export interface CustomCard { key: string; title: string; visible: boolean; locked: boolean; essential: boolean }
+export interface QuickOption { key: string; label: string; built: boolean }
+export interface QuickSetup { ready: boolean; selected: string[]; options: QuickOption[]; from: "user" | "company" | "profile" }
 
 /**
- * Customize the Financials home: show/hide and reorder cards, pick the headline numbers, and restore the
- * defaults. Essential alerts are always shown (the database also refuses to hide them); cards the company
+ * Customize the Financials home: show/hide and reorder cards, pick the headline numbers, choose the quick
+ * actions (add, remove, reorder), and restore the defaults. Essential alerts are always shown (the database also refuses to hide them); cards the company
  * locked stay put. Admins (manage_financial_config) can save the layout as the company default and lock cards.
  * An inline panel, not a popup: it opens only when the person asks.
  */
-export function CustomizeDashboard({ cards: initial, kpis: initialKpis, allKpis, canCompany }: { cards: CustomCard[]; kpis: string[]; allKpis: readonly string[]; canCompany: boolean }) {
+export function CustomizeDashboard({ cards: initial, kpis: initialKpis, allKpis, canCompany, quick }: { cards: CustomCard[]; kpis: string[]; allKpis: readonly string[]; canCompany: boolean; quick: QuickSetup }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [cards, setCards] = useState(initial);
   const [kpis, setKpis] = useState(initialKpis);
   const [scope, setScope] = useState<"user" | "company">("user");
   const [locks, setLocks] = useState<string[]>(initial.filter((c) => c.locked).map((c) => c.key));
+  const [quickSel, setQuickSel] = useState(quick.selected);
+  // undefined = untouched (keep what's saved), null = back to the trade defaults, array = a new choice.
+  const [quickChoice, setQuickChoice] = useState<string[] | null | undefined>(undefined);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ tone: "ok" | "danger"; text: string } | null>(null);
+  // A drag on the home page (or another save) refreshes the server layout: take it in while the panel is closed,
+  // so saving the panel later never puts back an older order.
+  const serverSig = JSON.stringify([initial, initialKpis, quick.selected]);
+  const [seenSig, setSeenSig] = useState(serverSig);
+  if (serverSig !== seenSig && !open) {
+    setSeenSig(serverSig); setCards(initial); setKpis(initialKpis); setLocks(initial.filter((c) => c.locked).map((c) => c.key));
+    setQuickSel(quick.selected); setQuickChoice(undefined);
+  }
 
   const move = (i: number, d: -1 | 1) => setCards((cs) => {
     const j = i + d; if (j < 0 || j >= cs.length) return cs;
     const next = [...cs]; [next[i], next[j]] = [next[j], next[i]]; return next;
   });
+  const pickQuick = (next: string[]) => { setQuickSel(next); setQuickChoice(next); };
+  const moveQuick = (i: number, d: -1 | 1) => {
+    const j = i + d; if (j < 0 || j >= quickSel.length) return;
+    const next = [...quickSel]; [next[i], next[j]] = [next[j], next[i]]; pickQuick(next);
+  };
+  const label = (k: string) => quick.options.find((o) => o.key === k)?.label ?? k;
   const save = async () => {
     setBusy(true); setMsg(null);
-    const r = await finAction({ action: "save_dashboard", scope, role: null, p: { cards: cards.map((c) => ({ key: c.key, visible: c.visible })), kpis, ...(scope === "company" ? { lockedCards: locks } : {}) } });
+    const r = await finAction({ action: "save_dashboard", scope, role: null, p: {
+      cards: cards.map((c) => ({ key: c.key, visible: c.visible })), kpis, ...(scope === "company" ? { lockedCards: locks } : {}),
+      ...(quick.ready && quickChoice !== undefined ? { quickActions: quickChoice } : {}),
+    } });
     setBusy(false);
     if (!r.ok) return setMsg({ tone: "danger", text: r.message });
     setMsg({ tone: "ok", text: scope === "company" ? "Saved as the company default." : "Saved for you." });
+    setQuickChoice(undefined);
     router.refresh();
   };
   const restore = async () => {
@@ -51,7 +74,7 @@ export function CustomizeDashboard({ cards: initial, kpis: initialKpis, allKpis,
       <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="fin-customize"
         className="flex min-h-11 w-full items-center gap-2 px-4 py-2 text-left text-sm font-semibold text-ink-soft hover:text-ink" data-testid="fin-customize-toggle">
         <SlidersHorizontal className="h-4 w-4" aria-hidden /> Customize this page
-        <span className="ml-auto text-xs font-normal text-muted">{open ? "Close" : "Choose cards and numbers"}</span>
+        <span className="ml-auto text-xs font-normal text-muted">{open ? "Close" : "Choose cards, numbers and quick actions"}</span>
       </button>
       {open && (
         <div id="fin-customize" className="space-y-4 border-t border-line p-4">
@@ -79,6 +102,46 @@ export function CustomizeDashboard({ cards: initial, kpis: initialKpis, allKpis,
               })}
             </div>
           </div>
+          <fieldset data-testid="fin-customize-quick">
+            <legend className="label">Quick actions</legend>
+            {!quick.ready ? (
+              <p className="text-sm text-muted">Choosing your own quick actions turns on after a short database update. For now they follow your trade setup.</p>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm text-ink-soft">
+                  {quick.from === "user" ? "You picked these." : quick.from === "company" ? "Your company picked these." : "These come from your trade setup."} Tick to add or remove, and use the arrows (or press and hold on the home page) to change the order.
+                </p>
+                {quickSel.length > 0 && (
+                  <ol className="divide-y divide-line rounded-lg border border-line" aria-label="Quick actions in order">
+                    {quickSel.map((k, i) => (
+                      <li key={k} className="flex items-center gap-2 px-3 py-1 text-sm">
+                        <span className="w-5 text-xs text-muted">{i + 1}.</span>
+                        <span className="min-w-0 flex-1 truncate">{label(k)}</span>
+                        <Button variant="ghost" size="sm" aria-label={`Move ${label(k)} earlier`} disabled={i === 0} onClick={() => moveQuick(i, -1)}><ArrowUp className="h-4 w-4" aria-hidden /></Button>
+                        <Button variant="ghost" size="sm" aria-label={`Move ${label(k)} later`} disabled={i === quickSel.length - 1} onClick={() => moveQuick(i, 1)}><ArrowDown className="h-4 w-4" aria-hidden /></Button>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {quick.options.map((o) => {
+                    const on = quickSel.includes(o.key);
+                    return (
+                      <label key={o.key} className="flex min-h-11 items-center gap-2 rounded-lg border border-line px-3 text-sm">
+                        <input type="checkbox" checked={on} disabled={!on && quickSel.length >= 12} onChange={() => pickQuick(on ? quickSel.filter((x) => x !== o.key) : [...quickSel, o.key])} />
+                        <span className="min-w-0">{o.label}{!o.built && <span className="text-xs text-muted"> · coming later</span>}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+                {quick.from !== "profile" && scope === "user" && (
+                  <Button variant="ghost" size="sm" onClick={() => setQuickChoice(null)} disabled={quickChoice === null}>
+                    <RotateCcw className="h-4 w-4" aria-hidden /> {quickChoice === null ? "Will use the defaults when you save" : "Use the default quick actions"}
+                  </Button>
+                )}
+              </div>
+            )}
+          </fieldset>
           <div>
             <p className="label">Cards</p>
             <ul className="divide-y divide-line rounded-lg border border-line">

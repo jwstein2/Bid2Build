@@ -375,14 +375,14 @@ d("Financial Command Center: receivables, milestones and emails (database)", () 
   });
 
   it("rollbacks remove the financial objects (newest first) and the migrations re-apply", async () => {
-    for (const f of ["20261128001000", "20261126001000", "20261125001000", "20261124005000", "20261124004000", "20261124003000", "20261124002000", "20261124001000"]) await pool.query(readFileSync(`docs/financials/rollback_${f}.sql`, "utf8"));
+    for (const f of ["20261129001000", "20261128001000", "20261126001000", "20261125001000", "20261124005000", "20261124004000", "20261124003000", "20261124002000", "20261124001000"]) await pool.query(readFileSync(`docs/financials/rollback_${f}.sql`, "utf8"));
     expect((await pool.query("select count(*)::int as n from pg_class where relname like 'fin\\_%' and relnamespace = 'public'::regnamespace")).rows[0].n).toBe(0);
     expect((await pool.query("select count(*)::int as n from pg_proc where proname like 'fin\\_%' and pronamespace = 'public'::regnamespace")).rows[0].n).toBe(0);
     expect((await pool.query("select count(*)::int as n from public.comm_messages where kind = 'financial'")).rows.length).toBe(1);
     expect((await pool.query("select public.company_permission_keys() as k")).rows[0].k).not.toContain("view_company_financials");
     // Change orders and estimates were never touched by finance.
     expect((await pool.query("select count(*)::int as n from public.change_orders where estimate_id = $1", [est.id])).rows[0].n).toBe(3);
-    for (const f of ["20261124001000_fin_foundation.sql", "20261124002000_fin_receivables.sql", "20261124003000_fin_costs.sql", "20261124004000_fin_communications.sql", "20261124005000_fin_customer_merge.sql", "20261125001000_fin_access_retention.sql", "20261126001000_fin_v5_ar_job_summary.sql", "20261128001000_fin_v6_corrections.sql"]) await applyMigration(pool, f);
+    for (const f of ["20261124001000_fin_foundation.sql", "20261124002000_fin_receivables.sql", "20261124003000_fin_costs.sql", "20261124004000_fin_communications.sql", "20261124005000_fin_customer_merge.sql", "20261125001000_fin_access_retention.sql", "20261126001000_fin_v5_ar_job_summary.sql", "20261128001000_fin_v6_corrections.sql", "20261129001000_fin_quick_actions.sql"]) await applyMigration(pool, f);
     expect((await pool.query("select public.company_permission_keys() as k")).rows[0].k).toContain("manage_financial_seats");
   });
 });

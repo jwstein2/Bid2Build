@@ -26,6 +26,8 @@ export interface FinContext {
   profile: ResolvedProfile;
   layout: ResolvedLayout;
   stored: { company: StoredPrefs | null; roleLayout: StoredPrefs | null; user: StoredPrefs | null };
+  /** The quick-actions SQL (20261129001000) is applied, so quick-action choices can be saved. */
+  quickActionsReady: boolean;
   ai: AiPrefs;
 }
 
@@ -74,7 +76,7 @@ export async function loadFinState(db: Db): Promise<FinState> {
   return {
     kind: "ready",
     ctx: {
-      bookId, access, config, configSaved: Boolean(cfg.data), profile, layout, stored,
+      bookId, access, config, configSaved: Boolean(cfg.data), profile, layout, stored, quickActionsReady: layoutRaw.quickActionsReady === true,
       ai: {
         expenseSuggestions: bool(a.expense_suggestions, AI_DEFAULTS.expenseSuggestions), documentExtraction: bool(a.document_extraction, AI_DEFAULTS.documentExtraction),
         communicationDrafting: bool(a.communication_drafting, AI_DEFAULTS.communicationDrafting), photoLabeling: bool(a.photo_labeling, AI_DEFAULTS.photoLabeling),
