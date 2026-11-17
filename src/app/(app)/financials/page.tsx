@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { LayoutGrid, Settings2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { isFinancialsEnabled } from "@/lib/env";
+import { site } from "@/lib/site";
 import { loadFinState, loadHome, type Figure } from "@/lib/financials/loaders";
 import { canUseAccountantMode } from "@/lib/financials/permissions";
 import { CARDS, KPI_KEYS, QUICK_ACTION_NEEDS, type CardKey } from "@/lib/financials/profiles/catalog";
@@ -67,7 +68,9 @@ export default async function FinancialsHome() {
         {perms.includes("manage_financial_config") && <ButtonLink href="/company/business-config" variant="ghost" size="sm" data-guide="fin.config"><Settings2 className="h-4 w-4" aria-hidden /> Trade setup</ButtonLink>}
       </header>
 
-      {access.readOnly && <Notice tone="warn" title="Read-only">The Financials add-on lapsed. Everything stays readable and exportable; nothing was deleted.</Notice>}
+      {access.readOnly && (home.jobs > 0
+        ? <Notice tone="warn" title="Read-only">The Financials add-on lapsed. Everything stays readable and exportable; nothing was deleted.</Notice>
+        : <Notice title="Financials isn't on your plan yet">You can look around and set up your trades. Recording invoices, payments and costs turns on with the Financials add-on. For early access, email <a href={`mailto:${site.supportEmail}`} className="font-semibold underline">{site.supportEmail}</a>.</Notice>)}
       {!ctx.configSaved && perms.includes("manage_financial_config") && (
         <Notice title="Tell Financials what kind of work you do">
           Your home page adapts to your trades and how you bill. <Link href="/company/business-config" className="font-semibold underline">Set up Business &amp; Trade Configuration</Link>

@@ -157,7 +157,7 @@ export async function loadHome(db: Db, ctx: FinContext) {
     needs_review: count(R.length, "/financials/records?view=review", { sub: "Uncoded costs, missing receipts, overruns", tone: R.length ? "warn" : "ok" }),
     commitment_overruns: count(overruns.length, "/financials/records?view=commitments&filter=overrun", { sub: "Billed more than committed", tone: overruns.length ? "danger" : "ok" }),
     uncoded_costs: count(uncoded, "/financials/records?view=review&filter=uncoded", { sub: "Costs on a job without a cost code", tone: uncoded ? "warn" : "ok" }),
-    read_only_books: { value: ctx.access.readOnly ? "Read-only" : "Active", money: false, basis: "Count", href: "/financials/tools", tone: ctx.access.readOnly ? "warn" : "ok", sub: ctx.access.readOnly ? "Add-on lapsed: everything stays readable and exportable" : "Recording is on" },
+    read_only_books: { value: ctx.access.readOnly ? "Read-only" : "Active", money: false, basis: "Count", href: "/financials/tools", tone: ctx.access.readOnly ? "warn" : "ok", sub: ctx.access.readOnly ? (P.length ? "Add-on lapsed: everything stays readable and exportable" : "Recording turns on with the Financials add-on") : "Recording is on" },
     ar_aging: money(sumOf(open, "balance"), "Outstanding", "/financials/records?view=invoices&filter=open", { sub: agingSub(open) }),
     invoices_to_send: count(I.filter((r) => r.status === "draft").length, "/financials/records?view=invoices&filter=draft", { sub: "Draft invoices not yet issued" }),
     milestones_ready: count(readyMs.length, "/financials/records?view=milestones&filter=ready", { sub: readyMs.length ? `${$(sumOf(readyMs, "current_amount"))} ready to bill` : "No milestone is waiting for an invoice", tone: readyMs.length ? "warn" : "default" }),
