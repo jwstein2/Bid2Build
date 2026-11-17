@@ -6,7 +6,9 @@ Use this code to securely sign in to Built2Bid:
 
 {{ .Token }}
 
-Enter this code on the Built2Bid website to continue.
+Enter this code on the Built2Bid website to continue. It works once, and only the newest code works.
+
+This code was requested for {{ .Email }}. Built2Bid will never ask you to share it by phone, text or email.
 
 If you didn't request this code, you can safely ignore this email.
 

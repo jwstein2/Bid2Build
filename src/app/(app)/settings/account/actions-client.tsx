@@ -9,7 +9,7 @@ export function AccountActions({ marketing }: { marketing: boolean }) {
   const [msg, setMsg] = useState<string | null>(null);
   async function toggle(v: boolean) {
     setOptIn(v);
-    await fetch("/api/account/marketing", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ optIn: v }) });
+    await fetch("/api/account/marketing", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ optIn: v, source: "account_settings" }) });
   }
   async function del() {
     const r = await fetch("/api/account/delete", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ confirm }) });
@@ -20,7 +20,7 @@ export function AccountActions({ marketing }: { marketing: boolean }) {
     <>
       <Card className="p-5">
         <h2 className="font-bold">Email preferences</h2>
-        <p className="text-sm text-ink-soft">Account and transactional emails (sign-in links, receipts) are always sent. Marketing emails are optional.</p>
+        <p className="text-sm text-ink-soft">Sign-in codes, receipts and account notices are always sent, whatever you choose here. Marketing emails are optional.</p>
         <label className="mt-3 flex items-center gap-2 text-sm"><input type="checkbox" checked={optIn} onChange={(e) => toggle(e.target.checked)} className="accent-[var(--color-brand)]" /> Send me product tips and offers</label>
       </Card>
       <Card className="p-5">

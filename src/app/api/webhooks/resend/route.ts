@@ -4,6 +4,7 @@ import { commConfig } from "@/lib/comms/config";
 import { processInbound } from "@/lib/comms/inbound";
 import { logEvent, suppress } from "@/lib/comms/server";
 import { verifySvix } from "@/lib/comms/svix";
+import { DELIVERY_KINDS, emailStream, recipientDomain } from "@/lib/email/streams";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -16,6 +17,9 @@ type Row = Record<string, unknown>;
  *   email.bounced     -> hard bounces suppress the address for everyone; soft bounces are logged
  *   email.complained  -> spam complaint: suppress all email to that address from that contractor
  *   email.received    -> a reply arrived at reply+<token>@COMM_REPLY_DOMAIN: fetch the body, then pause/opt out
+ * Every delivery event (sign-in codes included) is also counted in email_delivery_events: stream (from
+ * the sender address), recipient DOMAIN only, bounce type and timing. No recipient address, subject or
+ * body is stored, and nothing there can say "inbox": provider delivery is not inbox placement.
  * Each event is processed once (svix-id). Unknown messages are acknowledged and ignored.
  */
 export async function POST(req: Request) {
@@ -44,6 +48,18 @@ export async function POST(req: Request) {
         inReplyTo: (body.in_reply_to as string) ?? hv("in-reply-to"), references: (body.references as string) ?? hv("references"), providerEventId: eventId,
       });
       return json(res);
+    }
+    const kind = DELIVERY_KINDS[evt.type ?? ""];
+    if (kind) {
+      const bounce = (d.bounce ?? null) as Row | null;
+      // Best effort: metrics must never block suppression handling below (table may not exist yet).
+      await admin.from("email_delivery_events").insert({
+        provider: "resend", provider_event_id: eventId, provider_email_id: String(d.email_id ?? "").slice(0, 100) || null,
+        kind, stream: emailStream(String(d.from ?? "")), recipient_domain: recipientDomain(d.to),
+        bounce_type: bounce ? String(bounce.type ?? "").slice(0, 40) || null : null,
+        bounce_subtype: bounce ? String(bounce.subType ?? bounce.subtype ?? "").slice(0, 60) || null : null,
+        email_created_at: typeof d.created_at === "string" ? d.created_at : null,
+      }).then(() => undefined, () => undefined);
     }
     const providerId = String(d.email_id ?? "");
     const { data: m } = providerId ? await admin.from("comm_messages").select("id, account_id, to_email, status").eq("provider_id", providerId).maybeSingle() : { data: null };

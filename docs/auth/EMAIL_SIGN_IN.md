@@ -1,5 +1,8 @@
 # Email-only sign-in with 6-digit codes (SMS paused)
 
+> **2026-11-17:** live state, DNS check, sender plan, templates and monitoring are in
+> [EMAIL_DELIVERABILITY.md](EMAIL_DELIVERABILITY.md). Steps A–F below were completed on 2026-11-15.
+
 **Status (2026-11-15):** code ready in this branch. Production Supabase, SMTP and DNS are **not** changed:
 each step below needs the owner's go-ahead and is done in the Supabase / Resend / Netlify dashboards.
 

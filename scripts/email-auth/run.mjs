@@ -78,7 +78,7 @@ await test("Code box: numeric, one-time-code autofill, exactly 6 digits, submit 
   expect(await box.getAttribute("inputmode") === "numeric", "inputmode numeric");
   expect(await box.getAttribute("autocomplete") === "one-time-code", "autocomplete one-time-code");
   expect(await box.getAttribute("maxlength") === "6", "maxlength 6");
-  expect(await dialog(page).getByText("We sent a 6-digit code to new-contractor@example.test").isVisible(), "sent copy names 6 digits");
+  expect(await dialog(page).getByText("Your 6-digit code is on its way to new-contractor@example.test").isVisible(), "sent copy names 6 digits");
   expect(await dialog(page).getByText(/link/i).count() === 0, "code step still mentions a link");
   await box.pressSequentially("12345");
   expect(await page.getByRole("button", { name: /Verify and continue/ }).isDisabled(), "submit enabled with 5 digits");
@@ -113,7 +113,7 @@ await test("Pasted code with a leading zero and spacing is kept intact (012 345 
   await paste(page, " 012 345\n");
   expect(await codeBox(page).inputValue() === "012345", `pasted value ${await codeBox(page).inputValue()}`);
   await page.getByRole("button", { name: /Verify and continue/ }).click();
-  await page.waitForURL(/\/dashboard/); // the mock only accepts "012345" with its zero
+  await page.waitForURL((u) => u.pathname === "/dashboard"); // the mock only accepts "012345" with its zero
   await ctx.close();
 });
 
@@ -140,6 +140,53 @@ await test("Resend is rate-limited in the UI and sends a fresh email code", asyn
   const l = await log();
   expect(l.filter((x) => x.kind === "otp").length === 1 && l[0].email === "new-contractor@example.test", "one email code request");
   noPhoneRequests(l);
+  await ctx.close();
+});
+
+await test("Resend backs off (60 s, then 2 min) and never claims delivery", async () => {
+  const { ctx, page } = await setup();
+  await page.clock.install();
+  await page.goto(`${BASE}/login?next=/dashboard`);
+  await requestCode(page);
+  for (let i = 0; i < 62; i++) await page.clock.runFor(1000); // the countdown re-arms a 1 s timer each tick
+  await page.getByRole("button", { name: /^Resend code$/ }).click();
+  await page.getByText(/A new code is on its way to new-contractor@example\.test/).waitFor();
+  expect(await page.getByRole("button", { name: /Resend code in [12]:\d\d/ }).isDisabled(), "second cooldown is about 2 minutes");
+  expect(!(await dialog(page).getByText(/We sent/).count()), "says 'We sent'");
+  const l = await log();
+  expect(l.filter((x) => x.kind === "otp").length === 2, "two code requests");
+  await shot(page, "resend-backoff");
+  await ctx.close();
+});
+
+await test("Marketing box is unchecked by default; ticking it records source signup_dialog after sign-in", async () => {
+  const { ctx, page } = await setup();
+  const bodies = [];
+  await page.route("**/api/account/marketing", async (route) => { bodies.push(JSON.parse(route.request().postData() ?? "{}")); await route.fulfill({ status: 200, body: "{\"ok\":true}", contentType: "application/json" }); });
+  await page.goto(`${BASE}/login?next=/dashboard`);
+  const box = page.getByRole("checkbox", { name: /product tips and offers/ });
+  expect(!(await box.isChecked()), "marketing box starts checked");
+  await box.check();
+  await requestCode(page);
+  await codeBox(page).fill("123456");
+  await page.getByRole("button", { name: /Verify and continue/ }).click();
+  await page.waitForURL((u) => u.pathname === "/dashboard");
+  expect(bodies.length === 1 && bodies[0].optIn === true && bodies[0].source === "signup_dialog", `consent call ${JSON.stringify(bodies)}`);
+  await ctx.close();
+});
+
+await test("Without the box ticked, the code is still sent and no consent is recorded", async () => {
+  const { ctx, page } = await setup();
+  let calls = 0;
+  await page.route("**/api/account/marketing", async (route) => { calls++; await route.fulfill({ status: 200, body: "{}" }); });
+  await page.goto(`${BASE}/login?next=/dashboard`);
+  await requestCode(page);
+  await codeBox(page).fill("123456");
+  await page.getByRole("button", { name: /Verify and continue/ }).click();
+  await page.waitForURL((u) => u.pathname === "/dashboard");
+  expect(calls === 0, "consent recorded without the box");
+  const l = await log();
+  expect(l.some((x) => x.kind === "otp"), "code request was sent");
   await ctx.close();
 });
 

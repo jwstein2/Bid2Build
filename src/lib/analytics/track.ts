@@ -12,7 +12,9 @@ const META_CUSTOM: Record<string, string> = { bid_activated: "ActivatedContracto
 
 export type TrackEvent = "landing_view" | "signup_started" | "sign_up" | "proposal_previewed" | "pdf_exported" | "begin_checkout" | "bid_activated"
   // Bid check questionnaire (answer keys only: trade, goal, campaign; never an email or name).
-  | "bid_check_start" | "bid_check_complete" | "bid_check_result" | "bid_check_invite";
+  | "bid_check_start" | "bid_check_complete" | "bid_check_result" | "bid_check_invite"
+  // Sign-in code funnel (method and attempt number only; never the email or the code).
+  | "otp_requested" | "otp_resent" | "otp_verify_failed" | "otp_verified";
 
 export function track(event: TrackEvent, params: Params = {}, eventId?: string) {
   if (typeof window === "undefined") return;
