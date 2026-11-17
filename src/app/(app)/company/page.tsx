@@ -38,7 +38,7 @@ export default async function CompanyOverviewPage({ searchParams }: PageProps<"/
     return (
       <div className="mx-auto max-w-4xl space-y-6">
         <h1 className="text-3xl font-extrabold">Company Overview</h1>
-        <Notice title="Analytics aren't part of your access">Ask your company owner for the &quot;View analytics&quot; permission. Your bids are on <Link href="/company/pipeline" className="underline">Bids & Pipeline</Link>.</Notice>
+        <Notice title="Analytics aren't part of your access">Ask your company owner for the &quot;View analytics&quot; permission. Your company bids are on <Link href="/company/pipeline" className="underline">Team bids</Link>.</Notice>
       </div>
     );
   }
@@ -70,7 +70,7 @@ export default async function CompanyOverviewPage({ searchParams }: PageProps<"/
           <h1 className="text-3xl font-extrabold">Company Overview</h1>
           <p className="text-ink-soft">{company.name}{team && teamList.find((t) => t.id === team) ? ` · ${teamList.find((t) => t.id === team)!.name}` : ""}</p>
         </div>
-        <ButtonLink href={pipeHref()} variant="secondary">Open Bids & Pipeline</ButtonLink>
+        <ButtonLink href={pipeHref()} variant="secondary">Open Team bids</ButtonLink>
       </div>
 
       <div className="flex flex-wrap gap-2" aria-label="Date range">

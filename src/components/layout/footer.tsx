@@ -26,7 +26,7 @@ export async function Footer() {
           <li><Link href="/#how-it-works" className="inline-block py-1 hover:text-white hover:underline">How it works</Link></li>
           <li><Link href="/pricing" className="inline-block py-1 hover:text-white hover:underline">Pricing</Link></li>
           <li><Link href="/learn" className="inline-block py-1 hover:text-white hover:underline">Contractor guides</Link></li>
-          <li><Link href="/dashboard" className="inline-block py-1 hover:text-white hover:underline">Your bids</Link></li>
+          <li><Link href="/dashboard" className="inline-block py-1 hover:text-white hover:underline">My bids</Link></li>
         </FooterCol>
         <FooterCol title="Support">
           <li><a href={`mailto:${site.supportEmail}`} className="inline-block py-1 hover:text-white hover:underline">Contact support</a></li>

@@ -60,8 +60,10 @@ const FIN_SETTINGS: NavItem[] = [
 const PROJECTS: NavItem = { href: "/projects", label: "Projects", icon: CalendarRange };
 
 export function AppSidebar({ isAdmin, email, company, projects = false, financials = false, theme = null, learning }: { isAdmin: boolean; email: string | null; company?: CompanyNav | null; projects?: boolean; financials?: boolean; theme?: ThemePref | null; learning?: LearningNav | null }) {
-  const work: NavItem[] = projects ? [NAV[0], PROJECTS, ...NAV.slice(1)] : NAV;
-  const nav: NavItem[] = [...work, ...(financials ? [FINANCIALS, ...FIN_SETTINGS] : []), ...ACCOUNT_NAV];
+  // In a company, say whose bids and whose subscription each link is ("Team bids" is in the Company section).
+  const own = (n: NavItem): NavItem => (!company ? n : n.href === "/dashboard" ? { ...n, label: "My bids" } : n.href === "/settings/billing" ? { ...n, label: "My subscription" } : n);
+  const work: NavItem[] = (projects ? [NAV[0], PROJECTS, ...NAV.slice(1)] : NAV).map(own);
+  const nav: NavItem[] = [...work, ...(financials ? [FINANCIALS, ...FIN_SETTINGS] : []), ...ACCOUNT_NAV.map(own)];
   const path = usePathname();
   const [open, setOpen] = useState(false);
   // eslint-disable-next-line react-hooks/set-state-in-effect -- close the mobile menu after navigating
@@ -150,7 +152,7 @@ export function AppSidebar({ isAdmin, email, company, projects = false, financia
           );
         })}
         <p className="mt-3 px-3 pb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#B8C6D4]">Account</p>
-        {ACCOUNT_NAV.map(link)}
+        {ACCOUNT_NAV.map(own).map(link)}
         {learning && (learning.creator || learning.participant) && (
           <>
             {learning.creator && (

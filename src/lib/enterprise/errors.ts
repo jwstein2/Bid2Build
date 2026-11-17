@@ -19,7 +19,7 @@ const MESSAGES: Record<string, [number, string]> = {
   invalid_stage: [400, "Choose a valid pipeline stage."],
   estimate_not_found: [404, "That bid isn't available to you."],
   approval_required: [409, "This bid needs approval before it can be marked Sent. Ask a manager or the owner to approve it."],
-  use_set_estimate_stage: [409, "Change the stage from Bids & Pipeline."],
+  use_set_estimate_stage: [409, "Change the stage from Team bids."],
   bid_signed: [409, "This bid was e-signed, so it stays Won or later. Move it to Lost / Declined if the job was cancelled."],
   not_won: [409, "Mark the bid Approved / Won before scheduling the job."],
   invalid_date: [400, "Choose a date that isn't in the future."],
