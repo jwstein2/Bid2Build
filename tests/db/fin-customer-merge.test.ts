@@ -1,5 +1,5 @@
 /**
- * Financial Command Center, migration 20261123005000: merging customers that have financial records.
+ * Financial Command Center, migration 20261124005000: merging customers that have financial records.
  *   - customer_merge re-points fin_jobs / fin_invoices / fin_payments / fin_credit_memos (voided rows too)
  *   - the frozen bill-to copy on issued invoices, numbers, amounts and statuses stay exactly as they were
  *   - outside a merge (or a merge that changes anything but customer_id) the guards still refuse
@@ -88,10 +88,10 @@ d("Financial Command Center: customer merge with financial records (database)", 
   });
 
   it("rollback restores the previous functions; the migration re-applies", async () => {
-    await pool.query(readFileSync("docs/financials/rollback_20261123005000.sql", "utf8"));
+    await pool.query(readFileSync("docs/financials/rollback_20261124005000.sql", "utf8"));
     expect((await pool.query("select count(*)::int n from pg_proc where proname = 'fin_merge_only_customer'")).rows[0].n).toBe(0);
     expect((await pool.query("select prosrc from pg_proc where proname = 'customer_merge'")).rows[0].prosrc).not.toContain("fin_jobs");
-    await applyMigration(pool, "20261123005000_fin_customer_merge.sql");
+    await applyMigration(pool, "20261124005000_fin_customer_merge.sql");
     expect((await pool.query("select prosrc from pg_proc where proname = 'customer_merge'")).rows[0].prosrc).toContain("fin_jobs");
   });
 });

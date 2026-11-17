@@ -1,7 +1,7 @@
--- Rollback for 20261123005000_fin_customer_merge.sql (customer merge re-points financial records).
+-- Rollback for 20261124005000_fin_customer_merge.sql (customer merge re-points financial records).
 -- Deploy the previous app version first. Restores customer_merge as defined in 20261122001000_customer_hub.sql
 -- (a merge of customers with financial records fails again with a foreign-key error) and the immutability
--- guards as defined in 20261123002000_fin_receivables.sql. Records already merged stay on the kept customer.
+-- guards as defined in 20261124002000_fin_receivables.sql. Records already merged stay on the kept customer.
 -- Rollbacks run newest first: 005, 004, 003, 002, 001.
 begin;
 create or replace function public.customer_merge(p_keep uuid, p_remove uuid) returns void

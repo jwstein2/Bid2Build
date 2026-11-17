@@ -1,4 +1,4 @@
--- Rollback for 20261123002000_fin_receivables.sql (jobs, contract baselines, payment milestones, invoices,
+-- Rollback for 20261124002000_fin_receivables.sql (jobs, contract baselines, payment milestones, invoices,
 -- payments, credits, refunds, billing alerts). Deploy the previous app version first.
 -- WARNING: drops every invoice, payment, credit memo and refund. Export them first. Run 004 and 003 first.
 -- Change orders, estimates and customers are untouched (finance only ever pointed at them).

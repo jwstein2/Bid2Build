@@ -15,8 +15,8 @@
 -- Nothing here sends anything: queuing only marks a reviewed draft; the existing sender stays gated by
 -- COMM_EMAIL_MODE (unset everywhere) and no financial send path exists yet.
 --
--- Safe to run more than once. Requires 20261123003000_fin_costs.sql.
--- Rollback: docs/financials/rollback_20261123004000.sql
+-- Safe to run more than once. Requires 20261124003000_fin_costs.sql.
+-- Rollback: docs/financials/rollback_20261124004000.sql
 
 -- 1. comm_messages: financial kind, states and links ------------------------------------------------------
 alter table public.comm_messages drop constraint if exists comm_messages_kind_check;

@@ -1,6 +1,6 @@
 /**
  * Financial seat role presets: mirror of public.fin_permission_keys() / fin_role_permissions() in
- * supabase/migrations/20261123001000_fin_foundation.sql (a DB test keeps them in sync). The database is
+ * supabase/migrations/20261124001000_fin_foundation.sql (a DB test keeps them in sync). The database is
  * the authority; this drives the UI only.
  */
 export const FIN_PERMISSION_KEYS = [

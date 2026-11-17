@@ -1,4 +1,4 @@
--- Rollback for 20261123004000_fin_communications.sql (financial emails on the Customer Hub module).
+-- Rollback for 20261124004000_fin_communications.sql (financial emails on the Customer Hub module).
 -- Deploy the previous app version first. WARNING: financial email drafts / history (comm_messages with
 -- kind = 'financial') are deleted; templates, tone, reminder rules and dispute flags are dropped.
 -- Rollbacks run newest first: 004, 003, 002, 001.

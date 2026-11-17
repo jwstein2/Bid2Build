@@ -1,6 +1,6 @@
--- Rollback for 20261123003000_fin_costs.sql (vendors, cost codes, budgets, commitments, bills, expenses, review queue).
+-- Rollback for 20261124003000_fin_costs.sql (vendors, cost codes, budgets, commitments, bills, expenses, review queue).
 -- Deploy the previous app version first. WARNING: drops every recorded vendor bill, expense and commitment.
--- Export them first. Run 20261123004000's rollback before this one.
+-- Export them first. Run 20261124004000's rollback before this one.
 begin;
 drop policy if exists fin_vendor_bills_select on public.fin_vendor_bills;  -- reads fin_vendor_bill_lines
 drop trigger if exists fin_contract_snapshots_budget on public.fin_contract_snapshots;

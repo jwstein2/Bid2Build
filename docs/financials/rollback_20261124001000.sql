@@ -1,4 +1,4 @@
--- Rollback for 20261123001000_fin_foundation.sql (books, seats, financial permissions, audit log, numbering,
+-- Rollback for 20261124001000_fin_foundation.sql (books, seats, financial permissions, audit log, numbering,
 -- financial-documents bucket, configuration, AI preferences, dashboard preferences, mode).
 -- Deploy the previous app version first. WARNING: drops the financial audit log and document register.
 -- Stored files in the financial-documents bucket are NOT deleted here: export / remove them with the

@@ -18,8 +18,8 @@
 --   * Views: fin_job_costs_v (actual only), fin_job_budget_v and fin_job_profitability_v, every amount
 --     labeled estimated / committed / actual.
 --
--- Safe to run more than once. Requires 20261123002000_fin_receivables.sql.
--- Rollback: docs/financials/rollback_20261123003000.sql
+-- Safe to run more than once. Requires 20261124002000_fin_receivables.sql.
+-- Rollback: docs/financials/rollback_20261124003000.sql
 
 -- 1. Cost codes -------------------------------------------------------------------------------------------
 create or replace function public.fin_cost_types() returns text[]

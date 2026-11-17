@@ -57,7 +57,7 @@ export const PERMISSION_KEYS = [
   "enable_auto_project_updates",
   "view_customer_replies",
   "manage_opt_outs",
-  // Financial Command Center (supabase/migrations/20261123001000_fin_foundation.sql). No company role gets
+  // Financial Command Center (supabase/migrations/20261124001000_fin_foundation.sql). No company role gets
   // these by default: financial access comes from a financial seat's role preset (src/lib/financials/permissions.ts).
   "view_company_financials",
   "view_project_financials",

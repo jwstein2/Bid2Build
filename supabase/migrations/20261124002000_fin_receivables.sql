@@ -20,8 +20,8 @@
 --     constraint triggers re-check the totals at commit as a backstop. Optional idempotency keys.
 --   * No ledger tables (Phase 2).
 --
--- Safe to run more than once. Requires 20261123001000_fin_foundation.sql.
--- Rollback: docs/financials/rollback_20261123002000.sql
+-- Safe to run more than once. Requires 20261124001000_fin_foundation.sql.
+-- Rollback: docs/financials/rollback_20261124002000.sql
 
 -- 1. Idempotency ----------------------------------------------------------------------------------------
 create table if not exists public.fin_idempotency (

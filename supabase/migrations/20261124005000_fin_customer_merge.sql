@@ -14,8 +14,8 @@
 --     from this SECURITY DEFINER function.
 --   * One fin_audit_log entry per affected book records the merge.
 --
--- Safe to run more than once. Requires 20261123002000_fin_receivables.sql.
--- Rollback: docs/financials/rollback_20261123005000.sql
+-- Safe to run more than once. Requires 20261124002000_fin_receivables.sql.
+-- Rollback: docs/financials/rollback_20261124005000.sql
 
 -- 1. Guards: let a merge change customer_id and nothing else ------------------------------------------------
 create or replace function public.fin_merge_only_customer(p_new jsonb, p_old jsonb) returns boolean

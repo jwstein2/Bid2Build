@@ -28,7 +28,7 @@
 -- financial records. Nothing here charges anyone or creates Stripe objects.
 --
 -- Safe to run more than once. Requires every earlier migration (through 20261122001000).
--- Rollback: docs/financials/rollback_20261123001000.sql
+-- Rollback: docs/financials/rollback_20261124001000.sql
 
 -- 1. Permission catalog -------------------------------------------------------------------------------
 create or replace function public.company_permission_keys() returns text[]
@@ -48,7 +48,7 @@ language sql immutable set search_path = public, pg_temp as $$
     'view_communications', 'edit_nurture_templates', 'enable_customer_nurture', 'approve_marketing_outreach',
     'configure_project_updates', 'approve_customer_updates', 'enable_auto_project_updates',
     'view_customer_replies', 'manage_opt_outs',
-    -- Financial Command Center (20261123001000_fin_foundation.sql)
+    -- Financial Command Center (20261124001000_fin_foundation.sql)
     'view_company_financials', 'view_project_financials', 'create_invoices', 'record_payments',
     'record_expenses', 'approve_expenses', 'record_bills', 'approve_vendor_bills', 'manage_accounts',
     'post_journal_entries', 'reconcile', 'close_periods', 'export_financials', 'manage_financial_config',
