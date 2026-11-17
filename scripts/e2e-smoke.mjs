@@ -63,7 +63,7 @@ for (const [name, viewport] of Object.entries(viewports)) {
   check(await dialog.getByText("Example Customer").first().isVisible(), "preview shows the customer");
   await dialog.getByRole("button", { name: /Download PDF/ }).click();
   await page.waitForTimeout(400);
-  check(await page.getByRole("dialog").getByText(/Create your free account to download/).isVisible(), "anonymous download asks for a free account (no credit used)");
+  check(await page.getByRole("dialog").getByText(/Create your free account to finish your bid/).isVisible(), "anonymous download asks for a free account (no credit used)");
   check(errors.length === 0, `no uncaught page errors${errors.length ? `: ${errors.join(" | ")}` : ""}`);
 }
 await browser.close();

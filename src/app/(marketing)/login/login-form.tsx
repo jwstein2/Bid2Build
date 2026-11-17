@@ -1,9 +1,29 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { AuthDialog } from "@/components/auth/auth-dialog";
+import { AuthDialog, type AuthDialogCopy } from "@/components/auth/auth-dialog";
 import { Button } from "@/components/ui/button";
 import { isSmsSignInEnabled } from "@/lib/auth/phone";
+import { codeRequestedText, emailOtpLength } from "@/lib/auth/config";
+
+/**
+ * Plain sign-in wording. The dialog's default copy is written for the builder ("your bid is saved"),
+ * which is wrong here: a visitor on /login may have no bid at all, or be on the way to Enterprise.
+ */
+export function loginCopy(next: string): AuthDialogCopy {
+  const enterprise = /[?&]plan=enterprise\b/.test(next);
+  const goal = enterprise ? "continue with Enterprise" : "sign in";
+  return {
+    title: enterprise ? "Verify your email to continue with Enterprise" : "Log in or sign up",
+    emailDescription: enterprise
+      ? "No password needed. Your Enterprise selection stays selected, and nothing is charged until you review checkout."
+      : "No password needed. New here? Entering your email creates your free account.",
+    sentDescription: (email) => `${codeRequestedText(email, emailOtpLength())} Enter it here to ${goal}.`,
+    phoneDescription: enterprise ? "Verify your mobile number to continue with Enterprise." : "No password needed. We'll text you a 6-digit code.",
+    phoneSentDescription: (phone) => `We texted a 6-digit code to ${phone}. Enter it here to ${goal}.`,
+    submitLabel: enterprise ? "Verify and continue" : "Verify and sign in",
+  };
+}
 
 export function LoginForm({ next }: { next: string }) {
   const [open, setOpen] = useState(true);
@@ -11,7 +31,7 @@ export function LoginForm({ next }: { next: string }) {
   return (
     <div className="mt-6">
       <Button size="lg" className="w-full" onClick={() => setOpen(true)}>{isSmsSignInEnabled() ? "Continue with phone" : "Continue with email"}</Button>
-      <AuthDialog title="Log in or sign up" open={open} onOpenChange={setOpen} next={next} onVerified={() => { router.replace(next); router.refresh(); }} />
+      <AuthDialog open={open} onOpenChange={setOpen} next={next} copy={loginCopy(next)} onVerified={() => { router.replace(next); router.refresh(); }} />
     </div>
   );
 }
