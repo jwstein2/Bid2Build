@@ -14,6 +14,7 @@ export const ops = {
 };
 
 const rev = (id, n, amount, note, d) => ({ id, revision: n, amount, quoteDate: iso(d).slice(0, 10), note, documentPath: n === 1 ? "x/quote.pdf" : null, documentName: n === 1 ? "ABC quote.pdf" : null, createdAt: iso(d), createdBy: U });
+const recorded = [];
 const quotes = () => [
   { id: "88888888-8888-4888-8888-000000000001", itemId: item(3), groupId: G(2), itemName: "Vinyl siding panels", resourceId: "r-abc", vendorName: "ABC Supply", estimatedCost: 2900, status: "under_review", internalNotes: "Price increase on Dutch lap", appliedRevisionId: null, createdAt: iso(6),
     revisions: [rev("88888888-8888-4888-8888-0000000000a1", 1, 2900, "Original quote", 6), rev("88888888-8888-4888-8888-0000000000a2", 2, 3150, "Revised: mill price increase", 1)] },
@@ -43,7 +44,27 @@ export const opsRpc = {
   project_review_detail: () => [200, null],
   project_mark_reviewed: () => [200, null],
   my_notifications: () => [200, [{ id: "n1", kind: "task_review", scheduleId: null, taskId: null, reason: "planned_end", title: "Framing reached its planned end date", data: { project: "Deck Rebuild – Lee", task: "Framing", plannedEnd: iso(0).slice(0, 10), percent: 70 }, status: "open", readAt: null, snoozedUntil: null, createdAt: iso(0.1), canConfirm: true }]],
-  sub_quotes_for_estimate: () => [200, { canView: true, canRecord: true, canApply: true, quotes: quotes(), adjustments: [{ id: "88888888-8888-4888-8888-0000000000c1", itemId: item(4), groupId: G(2), quoteId: "88888888-8888-4888-8888-000000000002", revisionId: "88888888-8888-4888-8888-0000000000b1", amount: -150, forecastCost: 2250, note: null, createdAt: iso(4), createdBy: U }] }],
+  // Quotes recorded during a walk persist in memory (subcontractor picker walk, V5 UX audit).
+  can_record_sub_quotes: () => [200, true],
+  sub_quote_record: ({ p }) => {
+    const pp = typeof p === "string" ? JSON.parse(p) : p;
+    if (pp.quoteId) {
+      const q = recorded.find((x) => x.id === pp.quoteId);
+      if (!q) return [400, { code: "22023", message: "unknown_quote" }];
+      if (pp.amount) q.revisions.push(rev(crypto.randomUUID(), q.revisions.length + 1, Number(pp.amount), pp.note ?? null, 0));
+      if (pp.status) q.status = pp.status;
+      return [200, { id: q.id }];
+    }
+    const res = pp.resourceId ? (globalThis.__mockTeam?.list ?? []).find((r) => r.id === pp.resourceId) : null;
+    if (pp.resourceId && !res) return [400, { code: "22023", message: "bad_resource" }];
+    const name = (pp.vendorName ?? "").trim() || res?.name;
+    if (!name) return [400, { code: "22023", message: "vendor_required" }];
+    const q = { id: crypto.randomUUID(), itemId: pp.itemId, groupId: null, itemName: "", resourceId: pp.resourceId ?? null, vendorName: name, estimatedCost: 0, status: "received", internalNotes: pp.internalNotes ?? null, appliedRevisionId: null,
+      revisions: pp.amount ? [rev(crypto.randomUUID(), 1, Number(pp.amount), "Original quote", 0)] : [] };
+    recorded.push(q);
+    return [200, { id: q.id }];
+  },
+  sub_quotes_for_estimate: () => [200, { canView: true, canRecord: true, canApply: true, quotes: [...quotes(), ...recorded], adjustments: [{ id: "88888888-8888-4888-8888-0000000000c1", itemId: item(4), groupId: G(2), quoteId: "88888888-8888-4888-8888-000000000002", revisionId: "88888888-8888-4888-8888-0000000000b1", amount: -150, forecastCost: 2250, note: null, createdAt: iso(4), createdBy: U }] }],
   project_proposal_history: () => [200, {
     estimate: { id: EST, title: "Siding replacement – Johnson residence", number: "B-1004", stage: "won", updatedAt: iso(0), ownerId: U, wonAt: iso(1), companyId: null },
     approval: { versionId: V2, source: "signature", total: 14980 },

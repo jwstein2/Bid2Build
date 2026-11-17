@@ -229,6 +229,7 @@ Object.assign(scheduleRpc, {
 });
 // Team & Subcontractors V4.2 (scripts/projects/team-walk.mjs). Real SQL: tests/db/team-assignments.test.ts.
 const team = { canManage: true, list: [] };
+globalThis.__mockTeam = team;
 Object.defineProperty(tables, "pm_resources", { get: () => team.list.map((r) => ({ id: r.id, name: r.name, kind: r.kind, trades: r.trades, phone: r.phone, email: r.email, status: r.status })), configurable: true });
 // V4.3/V4.4 tables (scripts/project-operations/walk.mjs).
 for (const k of Object.keys(opsTables)) Object.defineProperty(tables, k, Object.getOwnPropertyDescriptor(opsTables, k));
