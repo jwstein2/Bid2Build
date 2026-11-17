@@ -91,8 +91,8 @@ export function EmailDraftDialog({ open, onOpenChange, invoiceId, paymentId }: {
             <input id="em-to" type="email" className="field" value={toEmail} onChange={(e) => setToEmail(e.target.value)} inputMode="email" autoComplete="off" />
           </Field>
           <div className="flex gap-1" role="group" aria-label="Edit or preview">
-            <Button variant={mode === "edit" ? "primary" : "secondary"} size="sm" onClick={() => setMode("edit")}><Pencil className="h-4 w-4" aria-hidden /> Edit</Button>
-            <Button variant={mode === "preview" ? "primary" : "secondary"} size="sm" onClick={() => setMode("preview")}><Eye className="h-4 w-4" aria-hidden /> Preview</Button>
+            <Button variant={mode === "edit" ? "primary" : "secondary"} size="sm" aria-pressed={mode === "edit"} onClick={() => setMode("edit")}><Pencil className="h-4 w-4" aria-hidden /> Edit</Button>
+            <Button variant={mode === "preview" ? "primary" : "secondary"} size="sm" aria-pressed={mode === "preview"} onClick={() => setMode("preview")}><Eye className="h-4 w-4" aria-hidden /> Preview</Button>
           </div>
           {mode === "edit" ? (
             <>

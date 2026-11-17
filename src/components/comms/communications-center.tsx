@@ -160,11 +160,11 @@ export function CommunicationsCenter() {
       {tab === "attention" && (
         <div className="space-y-3">
           {unread.length > 0 && <Notice tone="warn" title={`${unread.length} customer ${unread.length === 1 ? "reply needs" : "replies need"} a personal response`}><button className="font-semibold underline" onClick={() => setParam({ tab: "replies" })}>Open replies</button></Notice>}
-          <MessageList list={show(review)} empty="Nothing waiting for review." open={open} setOpen={setOpen} busy={busy} run={run} perms={perms} />
+          <MessageList list={show(review)} empty="Nothing waiting for review. Follow-ups for past customers and progress emails for active projects land here as drafts. Nothing sends until someone approves it." open={open} setOpen={setOpen} busy={busy} run={run} perms={perms} />
         </div>
       )}
-      {tab === "scheduled" && <MessageList list={show(scheduled)} empty="No emails are scheduled." open={open} setOpen={setOpen} busy={busy} run={run} perms={perms} />}
-      {tab === "sent" && <MessageList list={filtered.filter((m) => !["awaiting_review", "scheduled", "approved"].includes(m.status))} empty="No emails in this period." open={open} setOpen={setOpen} busy={busy} run={run} perms={perms} />}
+      {tab === "scheduled" && <MessageList list={show(scheduled)} empty="No emails are scheduled. Approved follow-ups and project updates wait here until their send time." open={open} setOpen={setOpen} busy={busy} run={run} perms={perms} />}
+      {tab === "sent" && <MessageList list={filtered.filter((m) => !["awaiting_review", "scheduled", "approved"].includes(m.status))} empty="No emails in this period. Try a longer date range, or check Needs attention for drafts waiting on approval." open={open} setOpen={setOpen} busy={busy} run={run} perms={perms} />}
       {tab === "replies" && <Replies events={replies} messages={data.messages} busy={busy} run={run} canRead={perms.has("view_customer_replies")} />}
       {tab === "contacts" && <Contacts contacts={data.contacts} filter={status} busy={busy} run={run} canManage={perms.has("manage_opt_outs")} />}
       {tab === "settings" && <Settings data={data} perms={perms} busy={busy} run={run} reload={load} />}
@@ -315,7 +315,7 @@ function Contacts({ contacts, filter, busy, run, canManage }: { contacts: Contac
             </div>
           </li>
         ))}
-        {!list.length && <li className="p-6 text-center text-sm text-muted">No contacts match.</li>}
+        {!list.length && <li className="p-6 text-center text-sm text-muted">No contacts match this filter.</li>}
       </ul>
     </Card>
   );

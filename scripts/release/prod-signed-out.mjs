@@ -28,7 +28,7 @@ await p.getByRole("button", { name: /Next: customer/ }).click(); await p.waitFor
 await fill("Customer name", "Pat QA"); await fill("Project address", "48 Oak Lane, Springfield, IL"); await p.keyboard.press("Escape");
 await fill("Project title", "QA siding replacement"); await shot("02-customer");
 check("Customer entered", (await p.getByLabel("Customer name", { exact: false }).first().inputValue()) === "Pat QA");
-await p.getByRole("button", { name: /Next: build the estimate/ }).click(); await p.waitForTimeout(800);
+await p.getByRole("button", { name: /Next: estimate costs/ }).click(); await p.waitForTimeout(800);
 await p.getByRole("button", { name: /Add Remove existing siding/ }).click(); await p.waitForTimeout(400);
 await p.locator('input[aria-label="Quantity"]').first().fill("20");
 await p.locator('input[aria-label="Internal unit cost"]').first().fill("85"); await p.keyboard.press("Tab"); await p.waitForTimeout(400);

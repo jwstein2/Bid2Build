@@ -105,6 +105,6 @@ export const TOUR_STEPS: readonly TourStep[] = [
     title: "You're Ready to Bid!",
     body: "Review your completed estimate, choose a proposal style and what your customer sees, then preview the customer-facing proposal. Download a branded PDF to send from your own email, and find every bid again in your dashboard.",
     note: "You're ready to create your first professional estimate with Built2Bid. Let's get bidding!",
-    media: { kind: "image", src: "/media/onboarding/review.webp", alt: "The Proposal step with Preview My Bid and Download PDF buttons and a live preview of the customer proposal" },
+    media: { kind: "image", src: "/media/onboarding/review.webp", alt: "The Proposal settings step with Preview customer proposal and Download PDF buttons and a live preview of the customer proposal" },
   },
 ];

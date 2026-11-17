@@ -69,10 +69,10 @@ const GUIDE_PAGE = { company: "builder.company", project: "builder.project", est
 
 const STEPS: { id: Step; label: string; next: string }[] = [
   { id: "company", label: "Company", next: "Next: customer & project" },
-  { id: "project", label: "Customer & project", next: "Next: build the estimate" },
-  { id: "estimate", label: "Estimate", next: "Next: scope & exclusions" },
-  { id: "scope", label: "Scope & exclusions", next: "Next: proposal & terms" },
-  { id: "proposal", label: "Proposal", next: "Preview & download" },
+  { id: "project", label: "Customer & project", next: "Next: estimate costs" },
+  { id: "estimate", label: "Estimate costs", next: "Next: scope & exclusions" },
+  { id: "scope", label: "Scope & exclusions", next: "Next: proposal settings" },
+  { id: "proposal", label: "Proposal settings", next: "Preview & download" },
 ];
 
 function base64File(b64: string, filename: string): File {
@@ -465,7 +465,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
             )}
             {cloudMode && user && save === "saved" && <ScheduleNowButton estimateId={estimate.id} />}
             {cloudMode && user && <InternalReportButton estimateId={estimate.id} locked={credits ? !credits.unlimited : false} saved={save === "saved"} signedIn={Boolean(user)} businessEmail={business.email} title={estimate.title} />}
-            <Button size="sm" variant="secondary" onClick={() => setPreviewOpen(true)} data-guide="builder.preview"><Eye className="h-4 w-4" /> <span className="hidden sm:inline">Preview My Bid</span><span className="sm:hidden">Preview</span></Button>
+            <Button size="sm" variant="secondary" onClick={() => setPreviewOpen(true)} data-guide="builder.preview"><Eye className="h-4 w-4" /> <span className="hidden sm:inline">Preview customer proposal</span><span className="sm:hidden">Preview</span></Button>
             <Button size="sm" variant="secondary" onClick={startSend} disabled={exporting} aria-label="Send via My Email" data-testid="send-email-header" data-guide="builder.send">
               <Mail className="h-4 w-4" aria-hidden /> <span className="max-[419px]:hidden"><span className="sm:hidden">Email</span><span className="hidden sm:inline xl:hidden">Send by email</span><span className="hidden xl:inline">Send via My Email</span></span>
             </Button>
@@ -522,7 +522,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
               {missingNow.map((m) => (
                 <li key={m.code} className="flex flex-wrap items-center justify-between gap-x-3">
                   <span>{m.message}</span>
-                  <button type="button" className="min-h-9 text-sm font-semibold text-brand underline" onClick={() => fixIssue(m)}>{m.step === "company" ? "Go to company" : m.step === "project" ? "Go to customer & project" : "Go to estimate"}</button>
+                  <button type="button" className="min-h-9 text-sm font-semibold text-brand underline" onClick={() => fixIssue(m)}>{m.step === "company" ? "Go to company" : m.step === "project" ? "Go to customer & project" : "Go to estimate costs"}</button>
                 </li>
               ))}
             </ul>
@@ -537,6 +537,12 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
           </div>
         )}
 
+        {step === "company" && !isCompanyComplete(business) && (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface p-3 text-sm" data-testid="estimate-first">
+            <span className="text-ink-soft">Want to price the job first? Company and customer details are only needed before you download or send.</span>
+            <Button size="sm" variant="secondary" onClick={() => goTo("estimate")}>Estimate costs first <ArrowRight className="h-4 w-4" aria-hidden /></Button>
+          </div>
+        )}
         {step === "company" && <CompanyStep business={business} onChange={setBusiness} signedIn={Boolean(user)} missing={missingCodes} />}
         {step === "project" && <ProjectStep estimate={estimate} dispatch={dispatch} signedIn={Boolean(user)} missing={missingCodes} />}
         {step === "estimate" && (customerView ? (
