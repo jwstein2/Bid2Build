@@ -35,7 +35,7 @@ export function ProjectTabs({ estimateId, initialTab, children, customerId, fina
   };
   return (
     <div>
-      <div role="tablist" aria-label="Project sections" className="mb-4 flex gap-1 overflow-x-auto border-b border-line" data-testid="project-tabs">
+      <div role="tablist" aria-label="Project sections" className="mb-4 flex gap-1 overflow-x-auto border-b border-line" data-testid="project-tabs" data-guide="project.tabs">
         {tabs.map(({ id, label, icon: Icon }) => (
           <button key={id} role="tab" id={`ptab-${id}`} aria-selected={tab === id} aria-controls={`ppanel-${id}`} onClick={() => go(id)}
             className={cn("-mb-px inline-flex min-h-11 shrink-0 items-center gap-1.5 border-b-2 px-3 text-sm font-semibold", tab === id ? "border-brand text-navy" : "border-transparent text-muted hover:text-ink")}>

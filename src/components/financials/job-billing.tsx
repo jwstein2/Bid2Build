@@ -38,7 +38,7 @@ export function ContractCard({ contract, jobId, canEdit, onChanged }: { contract
     setOpen(false); setAmount(""); setDesc(""); onChanged();
   };
   return (
-    <section className="rounded-xl border border-line bg-surface p-4" aria-labelledby="fin-contract-h" data-testid="fin-contract">
+    <section className="rounded-xl border border-line bg-surface p-4" aria-labelledby="fin-contract-h" data-testid="fin-contract" data-guide="fin.contract">
       <h2 id="fin-contract-h" className="font-display text-lg font-extrabold">Contract</h2>
       <div className="mt-2">
         {line("Original contract (signed)", contract.original_contract, "Contracted")}
@@ -88,7 +88,7 @@ export function MilestoneCard({ milestones, perms, writable, jobId, onInvoice, o
     setConfirm(null); setNote(""); onChanged();
   };
   return (
-    <section className="rounded-xl border border-line bg-surface p-4" aria-labelledby="fin-ms-h" data-testid="fin-milestones">
+    <section className="rounded-xl border border-line bg-surface p-4" aria-labelledby="fin-ms-h" data-testid="fin-milestones" data-guide="fin.milestones">
       <h2 id="fin-ms-h" className="font-display text-lg font-extrabold">Contract Payment Schedule</h2>
       <p className="text-xs text-muted">From the signed agreement. Invoices are checked against it.</p>
       <ol className="mt-3 space-y-2">

@@ -52,7 +52,7 @@ export default async function Records({ searchParams }: { searchParams: Promise<
     const { data: won } = await db.from("estimates").select("id, title, customer_name, pipeline_stage").in("pipeline_stage", ["won", "scheduled", "in_progress", "completed"]).order("updated_at", { ascending: false }).limit(50);
     const open = ((won ?? []) as Row[]).filter((e) => ![...jobs.values()].some((j) => j.estimate_id === e.id));
     if (open.length) extra = (
-      <section className="rounded-xl border border-line bg-surface p-4">
+      <section className="rounded-xl border border-line bg-surface p-4" data-guide="fin.won-bids">
         <h2 className="font-display text-lg font-extrabold">Won bids without job financials yet</h2>
         <ul className="mt-2 divide-y divide-line">
           {open.map((e) => <li key={String(e.id)}><Link href={`/financials/jobs/${e.id}${doAction ? `?do=${doAction}` : ""}`} className="flex min-h-11 items-center gap-2 text-sm"><span className="font-semibold text-accent-ink underline">{String(e.title)}</span><span className="text-muted">{String(e.customer_name ?? "")}</span></Link></li>)}
@@ -125,11 +125,11 @@ export default async function Records({ searchParams }: { searchParams: Promise<
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-4" data-testid={`fin-records-${view}`}>
+    <div className="mx-auto max-w-5xl space-y-4" data-testid={`fin-records-${view}`} data-guide-page="financials.records">
       {crumbs}
       <h1 className="text-3xl font-extrabold">{VIEWS[view]}{filter ? <span className="ml-2 text-base font-semibold text-muted">({filter.replace(/_/g, " ")})</span> : null}</h1>
       {doAction && <p className="text-sm text-ink-soft">Pick a job to continue.</p>}
-      <nav aria-label="Record types" className="flex gap-1 overflow-x-auto border-b border-line">
+      <nav aria-label="Record types" data-guide="fin.record-tabs" className="flex gap-1 overflow-x-auto border-b border-line">
         {(Object.keys(VIEWS) as View[]).map((v) => (
           <Link key={v} href={`/financials/records?view=${v}${doAction ? `&do=${doAction}` : ""}`} aria-current={v === view ? "page" : undefined}
             className={`-mb-px inline-flex min-h-11 shrink-0 items-center border-b-2 px-3 text-sm font-semibold ${v === view ? "border-brand text-navy" : "border-transparent text-muted hover:text-ink"}`}>{VIEWS[v]}</Link>
@@ -137,7 +137,7 @@ export default async function Records({ searchParams }: { searchParams: Promise<
       </nav>
       {extra}
       {rows.length === 0 ? <p className="rounded-xl border border-dashed border-line-strong p-6 text-center text-sm text-ink-soft">Nothing here yet.</p> : (
-        <ul className="divide-y divide-line rounded-xl border border-line bg-surface">
+        <ul className="divide-y divide-line rounded-xl border border-line bg-surface" data-guide="fin.records-list">
           {rows.map((r) => {
             const inner = (
               <>

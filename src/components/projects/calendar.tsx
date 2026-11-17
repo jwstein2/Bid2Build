@@ -44,7 +44,7 @@ export function CalendarView({ projects, tasks, today, anchor, setAnchor, mode, 
     const who = labelOf(t);
     return (
       <button type="button" draggable={canEdit(t)} onDragStart={(e) => { setDragId(t.id); e.dataTransfer.setData("text/plain", t.id); }}
-        onClick={() => onOpen(t)} style={projectStyle(p.id)} data-testid="cal-event"
+        onClick={() => onOpen(t)} style={projectStyle(p.id)} data-testid="cal-event" data-guide="projects.cal-event"
         className={cn("block w-full truncate rounded border-l-4 px-1.5 text-left text-[11px] leading-5 text-ink hover:brightness-95", canEdit(t) && "cursor-grab", t.status === "complete" && "opacity-60 line-through")}
         title={`${p.name}: ${t.name} (${formatRange(t.plannedStart, t.plannedEnd)}) · ${statusLabel(t.status)} ${t.percentComplete}%${who ? ` · ${who}` : ""}`}>
         {compact ? <><span className="font-semibold">{p.name}</span> · {t.name}</> : <><span className="font-semibold">{t.name}</span> <span className="text-ink-soft">· {p.name}</span></>}
@@ -55,7 +55,7 @@ export function CalendarView({ projects, tasks, today, anchor, setAnchor, mode, 
   return (
     <div className="space-y-3" data-testid="view-calendar">
       <div className="flex flex-wrap items-center gap-2">
-        <div className="inline-flex rounded-lg border border-line p-0.5" role="group" aria-label="Calendar view">
+        <div className="inline-flex rounded-lg border border-line p-0.5" role="group" aria-label="Calendar view" data-guide="projects.cal-modes">
           {MODES.map((m) => <button key={m.v} type="button" aria-pressed={mode === m.v} onClick={() => setMode(m.v)} className={cn("min-h-9 rounded-md px-2.5 text-sm font-semibold", mode === m.v ? "bg-navy text-white" : "text-ink-soft")} data-testid={`cal-${m.v}`}>{m.label}</button>)}
         </div>
         <div className="ml-auto flex items-center gap-1">
@@ -136,7 +136,7 @@ function DayList({ day, items, byId, labelOf, onOpen, bare }: { day: string; ite
         const who = labelOf(t);
         return (
           <li key={t.id}>
-            <button type="button" onClick={() => onOpen(t)} className="flex w-full items-start gap-3 p-3 text-left hover:bg-paper" data-testid="agenda-item">
+            <button type="button" onClick={() => onOpen(t)} className="flex w-full items-start gap-3 p-3 text-left hover:bg-paper" data-testid="agenda-item" data-guide="projects.cal-event">
               <span className="mt-1 h-8 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: projectStyle(p.id).borderColor }} aria-hidden />
               <span className="min-w-0 flex-1">
                 <span className="block font-semibold text-navy">{t.name}</span>

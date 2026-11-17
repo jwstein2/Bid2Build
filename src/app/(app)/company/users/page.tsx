@@ -35,7 +35,7 @@ export default async function CompanyUsersPage() {
   // here; buying more seats stays on Billing (owner).
   const seatCard = isPmEnabled() && company.entitlement.active && can(company, "manage_pm_seats") ? await loadSeatCard(supabase, 0) : null;
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
+    <div className="mx-auto max-w-5xl space-y-6" data-guide-page="company.users">
       <div>
         <h1 className="text-3xl font-extrabold">Users & Permissions</h1>
         <p className="text-ink-soft">{company.name}</p>

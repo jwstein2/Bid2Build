@@ -45,7 +45,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
   const href = (f: string) => `/dashboard/customers${f === "all" ? "" : `?focus=${f}`}`;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="mx-auto max-w-6xl space-y-6" data-guide-page="customers.directory">
       <Breadcrumbs items={[{ label: "Customers" }]} />
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="space-y-3">
@@ -54,7 +54,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
           <p className="text-ink-soft">Manage your customers, estimates, projects, and communication history in one place.</p>
         </div>
         {summaries.length > 0 && (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2" data-guide="customers.new">
             <ButtonLink href="/dashboard/customers/new" variant="secondary"><UserPlus className="h-4 w-4" aria-hidden /> New customer</ButtonLink>
             <ButtonLink href="/bids" variant="accent">Create New Bid</ButtonLink>
           </div>
@@ -81,7 +81,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
         )
       ) : (
         <>
-          <section aria-label="Customer metrics" className="grid grid-cols-2 gap-3 lg:grid-cols-4" data-testid="customer-metrics">
+          <section aria-label="Customer metrics" className="grid grid-cols-2 gap-3 lg:grid-cols-4" data-testid="customer-metrics" data-guide="customers.metrics">
             <MetricCard title="Total customers" value={m.total} href={href("all")} action="View all customers" testId="metric-total" />
             <MetricCard title="Customers with open bids" value={m.open} empty={!m.open} href={href("open")} action="View customers with open bids" testId="metric-open" hint="At least one bid in Draft, Ready to Send, Sent or Awaiting Signature." />
             <MetricCard title="Customers with active projects" value={m.projects} empty={!m.projects} href={href("projects")} action="View active projects" testId="metric-projects" hint="An active project schedule, or a job marked Scheduled or In Progress." />
@@ -112,7 +112,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
                   const contact = [c.email, c.phone].filter(Boolean).join(" · ");
                   return (
                     <li key={c.id}>
-                      <Link href={`/dashboard/customers/${c.id}`} className="group grid gap-x-4 gap-y-1 px-4 py-3 hover:bg-black/[0.03] focus-visible:bg-black/[0.03] md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1fr)_auto] md:items-center" data-testid="customer-row" data-customer-id={c.id}>
+                      <Link href={`/dashboard/customers/${c.id}`} className="group grid gap-x-4 gap-y-1 px-4 py-3 hover:bg-black/[0.03] focus-visible:bg-black/[0.03] md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1fr)_auto] md:items-center" data-testid="customer-row" data-guide="customers.row" data-customer-id={c.id}>
                         <span className="min-w-0">
                           <span className="flex flex-wrap items-center gap-2">
                             <span className="font-semibold group-hover:underline" data-testid="customer-row-name">{c.name}</span>

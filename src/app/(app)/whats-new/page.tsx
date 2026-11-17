@@ -19,17 +19,19 @@ export default async function WhatsNewPage() {
   const access = { unlimited: data === true };
   const releases = [...RELEASES].reverse().map((r) => ({ ...r, features: FEATURES.filter((f) => f.status === "released" && f.release === r.version) })).filter((r) => r.features.length);
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-3xl space-y-6" data-guide-page="whats-new">
       <MarkNoticeSeen />
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-3xl font-extrabold text-navy">What&apos;s New</h1>
           <p className="mt-1 text-ink-soft">New features in Built2Bid and where to find them.</p>
         </div>
-        <FeatureTourButton className={buttonClass("secondary", "sm")} label="Take the walkthrough" />
+        {/* Walks through the features this account can use, newest first, on this page (each card links to where the feature lives). */}
+        <FeatureTourButton className={buttonClass("secondary", "sm")} label="Take the walkthrough" guide="whats-new.tour"
+          ids={releases.flatMap((r) => r.features).filter((f) => hasAccess(f, access)).map((f) => f.id)} />
       </div>
-      {releases.map((r) => (
-        <section key={r.version} aria-labelledby={`rel-${r.version}`} className="rounded-2xl border border-line bg-surface p-4 sm:p-5" data-testid="release">
+      {releases.map((r, ri) => (
+        <section key={r.version} data-guide={ri === 0 ? "whats-new.releases" : undefined} aria-labelledby={`rel-${r.version}`} className="rounded-2xl border border-line bg-surface p-4 sm:p-5" data-testid="release">
           <p className="text-xs font-semibold uppercase tracking-wider text-muted">{dateLabel(r.date)} · Version {r.version}</p>
           <h2 id={`rel-${r.version}`} className="mt-1 font-display text-lg font-extrabold text-navy">{r.title}</h2>
           <ul className="mt-3 divide-y divide-line">

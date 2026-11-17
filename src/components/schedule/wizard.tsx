@@ -141,14 +141,14 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
   }
 
   return (
-    <div className="mx-auto max-w-[1520px] space-y-5" data-testid="schedule-wizard">
+    <div className="mx-auto max-w-[1520px] space-y-5" data-testid="schedule-wizard" data-guide-page="projects.schedule-now" data-guide-trade={Object.keys(tradeLabels).join(" ")}>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
           <Breadcrumbs items={[{ label: "Projects", href: "/projects" }, { label: "Schedule Now" }]} />
           <h1 className="mt-2 flex items-center gap-2 text-2xl font-extrabold text-navy sm:text-3xl"><CalendarRange className="h-7 w-7 text-accent-ink" aria-hidden /> Schedule Now</h1>
           <p className="mt-1 text-ink-soft">Build a draft job schedule from <strong>{estimate.title || "this bid"}</strong>. Your customer isn&apos;t notified.</p>
         </div>
-        <Button type="button" variant="secondary" className="xl:hidden" aria-expanded={calOpen} aria-controls="company-cal-panel" data-testid="view-company-calendar"
+        <Button type="button" variant="secondary" className="xl:hidden" aria-expanded={calOpen} aria-controls="company-cal-panel" data-testid="view-company-calendar" data-guide="schedule.calendar-toggle"
           onClick={() => { const next = !calOpen; setCalOpen(next); if (next && !phone) setTimeout(() => document.getElementById("company-cal-panel")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50); }}>
           <CalendarDays className="h-4 w-4" aria-hidden /> {calOpen && !phone ? "Hide Company Calendar" : "View Company Calendar"}
         </Button>
@@ -156,7 +156,7 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
 
       <div className="xl:grid xl:grid-cols-[minmax(0,58fr)_minmax(380px,42fr)] xl:items-start xl:gap-6" data-testid="schedule-split">
       <div className="min-w-0 space-y-5" data-testid="wizard-column">
-      <ol ref={stepNav} className="flex gap-1 overflow-x-auto pb-1 text-xs [scrollbar-width:thin]" aria-label="Steps">
+      <ol ref={stepNav} className="flex gap-1 overflow-x-auto pb-1 text-xs [scrollbar-width:thin]" aria-label="Steps" data-guide="schedule.steps">
         {STEPS.map((s, i) => (
           <li key={s} className="shrink-0">
             <button type="button" disabled={i > step} onClick={() => setStep(i)} aria-current={i === step ? "step" : undefined}
@@ -167,7 +167,7 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
         ))}
       </ol>
 
-      <section className="rounded-2xl border border-line bg-surface p-4 sm:p-6" aria-labelledby="step-title">
+      <section className="rounded-2xl border border-line bg-surface p-4 sm:p-6" aria-labelledby="step-title" data-guide="schedule.step">
         <h2 id="step-title" className="font-display text-lg font-extrabold text-navy">Step {step + 1} of {STEPS.length}: {step === 7 ? "Assign who's doing the work" : STEPS[step]}</h2>
 
         {step === 0 && (
@@ -356,7 +356,7 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
       </div>
 
       {calExpanded && !phone && <div className="fixed inset-0 z-40 bg-ink/40" aria-hidden onClick={() => setCalExpanded(false)} />}
-      <aside id="company-cal-panel" aria-label="Company Calendar" data-testid="company-cal-panel"
+      <aside id="company-cal-panel" aria-label="Company Calendar" data-testid="company-cal-panel" data-guide="schedule.calendar"
         className={cn(
           calOpen ? "block" : "hidden", "xl:block",
           // Phones: full screen over the wizard (the wizard stays mounted underneath, so nothing is lost).

@@ -40,7 +40,7 @@ export function UsersManager(p: Props) {
       {!p.seats.active && <Notice tone="warn" title="Enterprise isn't active">You can review your team, but invitations and reactivations are paused until the subscription is active.</Notice>}
       {manageUsers && <InviteForm teams={p.teams} free={free} canBuySeats={p.canBuySeats} disabled={!p.seats.active} />}
       {manageUsers && p.invites.length > 0 && <PendingInvites invites={p.invites} teams={p.teams} />}
-      <Card className="p-0">
+      <Card className="p-0" data-guide="company.members">
         <h2 className="border-b border-line px-4 py-3 font-display text-lg font-bold">Team members ({active.length})</h2>
         <ul className="divide-y divide-line">{active.map((m) => <MemberRow key={m.user_id} m={m} {...p} manageUsers={manageUsers} manageTeams={manageTeams} />)}</ul>
       </Card>
@@ -76,7 +76,7 @@ function InviteForm({ teams, free, canBuySeats, disabled }: { teams: Team[]; fre
   }
   const mailto = link ? `mailto:${link.email}?subject=${encodeURIComponent("You're invited to join our team on Built2Bid")}&body=${encodeURIComponent(`Join our company account on Built2Bid using this link (valid for 7 days):\n\n${link.url}\n\nSign in with this email address to accept.`)}` : "";
   return (
-    <Card className="p-4" data-testid="invite-form">
+    <Card className="p-4" data-testid="invite-form" data-guide="company.invite">
       <h2 className="flex items-center gap-2 font-display text-lg font-bold"><UserPlus className="h-5 w-5" aria-hidden /> Invite a team member</h2>
       <p className="mt-1 text-sm text-ink-soft">Each invitation uses one of your free licensed seats and never adds a charge. {free === 0 && (canBuySeats ? "All seats are in use: add licenses first." : "All seats are in use.")}</p>
       <form onSubmit={send} className="mt-3 grid gap-3 sm:grid-cols-[1fr_auto_auto_auto] sm:items-end">
@@ -263,7 +263,7 @@ function TeamsCard({ teams }: { teams: Team[] }) {
     if (!r.ok) setErr(r.message); else { setName(""); router.refresh(); }
   }
   return (
-    <Card className="scroll-mt-20 p-4" id="teams">
+    <Card className="scroll-mt-20 p-4" id="teams" data-guide="company.teams">
       <h2 className="font-display text-lg font-bold">Teams</h2>
       <p className="text-sm text-ink-soft">Managers and reviewers see bids from the teams they belong to. Example: a Roofing team with a Roofing manager and roofing estimators.</p>
       {teams.length > 0 && <ul className="mt-2 divide-y divide-line">{teams.map((t) => <li key={t.id} className="flex justify-between py-2 text-sm"><span className="font-semibold">{t.name}</span><span className="text-ink-soft">{t.member_count} member{t.member_count === 1 ? "" : "s"} · {t.manager_count} manager{t.manager_count === 1 ? "" : "s"}</span></li>)}</ul>}

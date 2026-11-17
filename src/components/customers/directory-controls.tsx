@@ -29,7 +29,7 @@ export function DirectoryControls({ q, focus, sort, focusOptions, sortOptions }:
   };
 
   return (
-    <form role="search" aria-label="Find customers" className="flex flex-wrap items-end gap-3" onSubmit={(e) => { e.preventDefault(); go({}); }} data-testid="customer-controls" aria-busy={pending}>
+    <form role="search" aria-label="Find customers" className="flex flex-wrap items-end gap-3" onSubmit={(e) => { e.preventDefault(); go({}); }} data-testid="customer-controls" data-guide="customers.controls" aria-busy={pending}>
       <label className="min-w-0 flex-1 basis-64">
         <span className="label">Search</span>
         <span className="relative block">

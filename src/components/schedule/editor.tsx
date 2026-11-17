@@ -117,7 +117,7 @@ export function ScheduleEditor({ initial, tradeLabels, editHint, created, public
   const reload = () => window.location.reload();
 
   return (
-    <div className="space-y-4" data-testid="schedule-editor">
+    <div className="space-y-4" data-testid="schedule-editor" data-guide="project.schedule">
       <div>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">

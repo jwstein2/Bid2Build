@@ -49,7 +49,7 @@ export function Overview({ projects: filteredProjects, allProjects, nameOf, toda
 
   return (
     <div className="space-y-4" data-testid="view-overview">
-      <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5" aria-label="Key numbers">
+      <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5" aria-label="Key numbers" data-guide="projects.metrics">
         {metrics.map((x) => (
           <li key={x.label} data-testid="metric">
             <MetricCard size="sm" className="h-full w-full" title={x.label} value={x.value} hint={x.hint} tone={x.warn ? "warn" : "default"} empty={x.value === 0}
@@ -83,7 +83,7 @@ export function Overview({ projects: filteredProjects, allProjects, nameOf, toda
             const act = ACTION[nextAction(p, today)];
             const st = STATUS[p.status] ?? STATUS.draft;
             return (
-              <li key={p.id} className="flex flex-col rounded-xl border border-line bg-surface p-4" data-testid="project-card">
+              <li key={p.id} className="flex flex-col rounded-xl border border-line bg-surface p-4" data-testid="project-card" data-guide="projects.card">
                 <div className="flex items-start gap-2">
                   <span className="mt-1.5 h-3 w-3 shrink-0 rounded-full" style={projectDot(p.id)} aria-hidden />
                   <div className="min-w-0 flex-1">
@@ -122,7 +122,7 @@ export function Overview({ projects: filteredProjects, allProjects, nameOf, toda
             </thead>
             <tbody className="divide-y divide-line">
               {list.map((p) => (
-                <tr key={p.id} data-testid="project-row">
+                <tr key={p.id} data-testid="project-row" data-guide="projects.card">
                   <td className="px-3 py-2"><span className="mr-2 inline-block h-2.5 w-2.5 rounded-full align-middle" style={projectDot(p.id)} aria-hidden /><Link href={`/projects/${p.id}`} className="font-semibold text-navy hover:underline">{p.name}</Link></td>
                   <td className="px-3 py-2">{p.customerName || "—"}</td>
                   <td className="px-3 py-2">{nameOf(p.salesRepId)}</td>

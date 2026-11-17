@@ -39,7 +39,7 @@ export function WorkloadView({ projects, tasks, resources, today, onOpen, nameOf
         </label>
       </div>
 
-      <section aria-labelledby="conf-h" className={cn("rounded-xl border p-4", conflicts.length ? "border-warn/50 bg-warn-tint" : "border-line bg-surface")} data-testid="conflicts">
+      <section aria-labelledby="conf-h" className={cn("rounded-xl border p-4", conflicts.length ? "border-warn/50 bg-warn-tint" : "border-line bg-surface")} data-testid="conflicts" data-guide="projects.conflicts">
         <h3 id="conf-h" className="flex items-center gap-2 font-semibold text-navy"><AlertTriangle className={cn("h-4 w-4", conflicts.length ? "text-warn" : "text-muted")} aria-hidden />
           {conflicts.length ? `${conflicts.length} possible double-booking${conflicts.length === 1 ? "" : "s"}` : "No double-bookings found"}</h3>
         {!conflicts.length && <p className="mt-1 text-sm text-ink-soft">Checked every assigned task in this range. Unassigned tasks and overlapping work within one project aren&apos;t conflicts.</p>}
@@ -58,7 +58,7 @@ export function WorkloadView({ projects, tasks, resources, today, onOpen, nameOf
       </section>
 
       <div className="overflow-x-auto rounded-xl border border-line bg-surface">
-        <table className="w-full min-w-[40rem] text-sm" data-testid="workload-table">
+        <table className="w-full min-w-[40rem] text-sm" data-testid="workload-table" data-guide="projects.workload-table">
           <thead className="border-b border-line text-left text-xs uppercase tracking-wide text-muted">
             <tr><th scope="col" className="px-3 py-2">Who</th><th scope="col" className="px-3 py-2">Booked days</th><th scope="col" className="px-3 py-2">Projects</th><th scope="col" className="px-3 py-2">Tasks</th></tr>
           </thead>

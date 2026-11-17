@@ -23,7 +23,7 @@ export function ProfitCard({ profit }: { profit: R | null }) {
     </div>
   );
   return (
-    <section className="rounded-xl border border-line bg-surface p-4" aria-labelledby="fin-profit-h" data-testid="fin-profit">
+    <section className="rounded-xl border border-line bg-surface p-4" aria-labelledby="fin-profit-h" data-testid="fin-profit" data-guide="fin.profit">
       <h2 id="fin-profit-h" className="font-display text-lg font-extrabold">Job profit</h2>
       <div className="mt-2 divide-y divide-line">
         {row("Contract value", profit.contract_value, "Contracted")}
@@ -46,7 +46,7 @@ export function ProfitCard({ profit }: { profit: R | null }) {
 export function BudgetTable({ budget }: { budget: R[] }) {
   const tot = (k: string) => add(0, ...budget.map((b) => s(b[k]) || "0"));
   return (
-    <section className="rounded-xl border border-line bg-surface p-4" aria-labelledby="fin-budget-h" data-testid="fin-budget">
+    <section className="rounded-xl border border-line bg-surface p-4" aria-labelledby="fin-budget-h" data-testid="fin-budget" data-guide="fin.budget">
       <h2 id="fin-budget-h" className="font-display text-lg font-extrabold">Budget vs actual</h2>
       {budget.length === 0 ? <p className="mt-2 text-sm text-ink-soft">No budget or costs on this job yet.</p> : (
         <div className="mt-2 overflow-x-auto">
@@ -286,7 +286,7 @@ export function CostLists({ data, perms, writable, onChanged }: { data: { expens
   const act = async (payload: Record<string, unknown>) => { setErr(null); const r = await finAction(payload); if (!r.ok) setErr(r.message); else onChanged(); };
   const statusTone = (st: string) => (st === "approved" ? "ok" : st === "pending" || st === "pending_approval" ? "warn" : "neutral") as "ok" | "warn" | "neutral";
   return (
-    <section className="space-y-4" aria-label="Costs" data-testid="fin-costs">
+    <section className="space-y-4" aria-label="Costs" data-testid="fin-costs" data-guide="fin.cost-lists">
       {err && <Notice tone="danger">{err}</Notice>}
       <div className="rounded-xl border border-line bg-surface p-4">
         <h2 className="font-display text-lg font-extrabold">Commitments</h2>
@@ -349,7 +349,7 @@ export function ReviewQueue({ items, canResolve, onChanged }: { items: R[]; canR
   const LABEL: Record<string, string> = { uncoded_cost: "Cost without a cost code", missing_receipt: "Receipt missing", commitment_overrun: "Billed more than committed", duplicate_suspected: "Possible duplicate", other: "Needs a look" };
   const act = async (id: unknown, status: "resolved" | "dismissed") => { setErr(null); const r = await finAction({ action: "review_resolve", itemId: id, status }); if (!r.ok) setErr(r.message); else onChanged(); };
   return (
-    <section id="review" className="rounded-xl border border-line bg-surface p-4" aria-labelledby="fin-review-h" data-testid="fin-review">
+    <section id="review" className="rounded-xl border border-line bg-surface p-4" aria-labelledby="fin-review-h" data-testid="fin-review" data-guide="fin.review">
       <h2 id="fin-review-h" className="font-display text-lg font-extrabold">Needs review</h2>
       {err && <Notice tone="danger" className="mt-2">{err}</Notice>}
       {items.length === 0 ? <p className="mt-2 text-sm text-ink-soft">Nothing to review on this job.</p> : (

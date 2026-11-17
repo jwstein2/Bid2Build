@@ -8,6 +8,7 @@
  *   acked       premium feature ids the account has already been told are unlocked
  *   notice      newest release version whose What's New notice was seen or dismissed
  *   tour        walkthrough finished or skipped (it is never forced)
+ *   guides      page guides (page-guides.ts) the person finished; they can always be replayed
  */
 import { FEATURES, LATEST_RELEASE, RELEASES, compareVersions, type Feature, type FeatureId } from "./registry";
 
@@ -16,6 +17,8 @@ export interface FeatureState {
   acked: FeatureId[];
   notice: string | null;
   tour: "completed" | "dismissed" | null;
+  /** Page keys whose walkthrough was finished. Only present once one has been. */
+  guides?: string[];
 }
 
 export interface Access {
@@ -29,13 +32,15 @@ export const META_KEY = "b2b_features";
 /** Window event that starts the feature walkthrough; detail = feature ids (optional). */
 export const START_TOUR_EVENT = "b2b:features:tour";
 /**
- * Window event the walkthrough sends when it moves to a step; detail = the feature id, or null when
- * the walkthrough ends. The bids dashboard switches to the step's `view` and the mobile menu opens
- * for sidebar links, so the step's control is on screen before the walkthrough looks for it.
+ * Window event the walkthrough sends before a step that needs local, temporary UI opened (a phone
+ * menu, a collapsed list, the Bids view a feature announcement lives in); detail = the step's reveal
+ * key, or null when the walkthrough ends. The component that owns that UI opens it, remembers what it
+ * changed, and puts it back on null unless the person changed it themselves in the meantime. It never
+ * navigates, saves or sends anything.
  */
 export const REVEAL_FEATURE_EVENT = "b2b:features:reveal";
-/** sessionStorage key: ids to walk through after navigating to the dashboard. */
-export const PENDING_TOUR_KEY = "b2b:features:pending-tour";
+/** Reveal key for a feature announcement step: the feature's Bids view, or the phone menu for sidebar links. */
+export const revealKeyFor = (f: Pick<Feature, "id" | "view">): string => (f.view ? `bids.view:${f.view}` : `feature:${f.id}`);
 
 const isId = (x: unknown): x is FeatureId => typeof x === "string" && FEATURES.some((f) => f.id === x);
 
@@ -47,6 +52,7 @@ export function parseState(raw: unknown): FeatureState | null {
     acked: Array.isArray(r.acked) ? [...new Set(r.acked.filter(isId))] : [],
     notice: typeof r.notice === "string" && RELEASES.some((x) => x.version === r.notice) ? r.notice : null,
     tour: r.tour === "completed" || r.tour === "dismissed" ? r.tour : null,
+    ...(Array.isArray(r.guides) && r.guides.length ? { guides: [...new Set(r.guides.filter((g): g is string => typeof g === "string" && /^[a-z][a-z.-]{0,63}$/.test(g)))].slice(0, 80) } : {}),
   };
 }
 
@@ -91,7 +97,7 @@ export function whatsNew(s: FeatureState, a: Access, list: readonly Feature[] = 
   return available(a, list).filter((f) => (s.notice ? compareVersions(f.release, s.notice) > 0 : f.release === LATEST_RELEASE.version) && !unlocked.has(f.id));
 }
 
-export type FeatureAction = { ack: string[] } | { notice: string } | { tour: "completed" | "dismissed" };
+export type FeatureAction = { ack: string[] } | { notice: string } | { tour: "completed" | "dismissed" } | { guide: string };
 
 /** Applies a client action. Unknown ids and versions are ignored; acknowledging is additive only. */
 export function applyAction(s: FeatureState, act: FeatureAction): FeatureState {
@@ -99,6 +105,10 @@ export function applyAction(s: FeatureState, act: FeatureAction): FeatureState {
   if ("notice" in act) {
     if (!RELEASES.some((r) => r.version === act.notice)) return s;
     return s.notice && compareVersions(s.notice, act.notice) >= 0 ? s : { ...s, notice: act.notice };
+  }
+  if ("guide" in act) {
+    if (!/^[a-z][a-z.-]{0,63}$/.test(act.guide) || s.guides?.includes(act.guide)) return s;
+    return { ...s, guides: [...(s.guides ?? []), act.guide].slice(-80) };
   }
   return { ...s, tour: act.tour };
 }

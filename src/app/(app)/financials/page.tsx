@@ -55,7 +55,7 @@ export default async function FinancialsHome() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6" data-testid="fin-home" data-preset={profile.presetKey}>
+    <div className="mx-auto max-w-7xl space-y-6" data-testid="fin-home" data-preset={profile.presetKey} data-guide-page="financials.home" data-guide-trade={profile.trades.join(" ")}>
       <header className="flex flex-wrap items-end gap-3">
         <div className="min-w-0 basis-full sm:basis-auto sm:flex-1">
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">Know Your Numbers</p>
@@ -63,8 +63,8 @@ export default async function FinancialsHome() {
           <p className="text-sm text-ink-soft">{access.name} · {PRESETS[profile.presetKey].label}{profile.trades.length > 1 ? ` + ${profile.trades.length - 1} more trade${profile.trades.length > 2 ? "s" : ""}` : ""}</p>
         </div>
         {canUseAccountantMode(perms) && <ModeToggle mode={layout.mode} />}
-        <ButtonLink href="/financials/tools" variant="secondary" size="sm"><LayoutGrid className="h-4 w-4" aria-hidden /> All tools</ButtonLink>
-        {perms.includes("manage_financial_config") && <ButtonLink href="/company/business-config" variant="ghost" size="sm"><Settings2 className="h-4 w-4" aria-hidden /> Trade setup</ButtonLink>}
+        <ButtonLink href="/financials/tools" variant="secondary" size="sm" data-guide="fin.tools"><LayoutGrid className="h-4 w-4" aria-hidden /> All tools</ButtonLink>
+        {perms.includes("manage_financial_config") && <ButtonLink href="/company/business-config" variant="ghost" size="sm" data-guide="fin.config"><Settings2 className="h-4 w-4" aria-hidden /> Trade setup</ButtonLink>}
       </header>
 
       {access.readOnly && <Notice tone="warn" title="Read-only">The Financials add-on lapsed. Everything stays readable and exportable; nothing was deleted.</Notice>}
@@ -74,7 +74,7 @@ export default async function FinancialsHome() {
         </Notice>
       )}
 
-      <section aria-labelledby="fin-kpi-h">
+      <section aria-labelledby="fin-kpi-h" data-guide="fin.kpis">
         <h2 id="fin-kpi-h" className="sr-only">Headline numbers</h2>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {layout.kpis.map((k) => {
@@ -84,7 +84,7 @@ export default async function FinancialsHome() {
         </div>
       </section>
 
-      <section aria-labelledby="fin-essential-h">
+      <section aria-labelledby="fin-essential-h" data-guide="fin.attention">
         <h2 id="fin-essential-h" className="mb-2 font-display text-lg font-extrabold">Needs attention</h2>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">{essential.map((c) => card(c.key, "sm"))}</div>
       </section>
@@ -92,7 +92,7 @@ export default async function FinancialsHome() {
       <AlertsPanel alerts={alerts} canAct={canWrite && (perms.includes("create_invoices") || perms.includes("manage_financial_config"))} />
 
       {quick.length > 0 && (
-        <section aria-labelledby="fin-quick-h">
+        <section aria-labelledby="fin-quick-h" data-guide="fin.quick">
           <h2 id="fin-quick-h" className="mb-2 font-display text-lg font-extrabold">Quick actions</h2>
           <div className="flex flex-wrap gap-2">
             {quick.map((q) => {
@@ -106,13 +106,13 @@ export default async function FinancialsHome() {
       )}
 
       {regular.length > 0 && (
-        <section aria-labelledby="fin-cards-h">
+        <section aria-labelledby="fin-cards-h" data-guide="fin.cards">
           <h2 id="fin-cards-h" className="mb-2 font-display text-lg font-extrabold">Your cards</h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">{regular.map((c) => card(c.key))}</div>
         </section>
       )}
 
-      <section aria-labelledby="fin-reports-h" className="rounded-xl border border-line bg-surface p-4">
+      <section aria-labelledby="fin-reports-h" data-guide="fin.reports" className="rounded-xl border border-line bg-surface p-4">
         <h2 id="fin-reports-h" className="font-display text-lg font-extrabold">Reports for your kind of work</h2>
         <ul className="mt-2 grid gap-1 sm:grid-cols-2 lg:grid-cols-3">
           {profile.reports.map((r) => (

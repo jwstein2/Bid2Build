@@ -41,7 +41,7 @@ export function ProjectStep({ estimate: e, dispatch, signedIn, onDone, missing }
         <p className="mt-1 text-ink-soft">Customer details appear on the proposal. We never contact your customers.</p>
       </div>
 
-      <section className="rounded-xl border border-line bg-surface p-5">
+      <section className="rounded-xl border border-line bg-surface p-5" data-guide="builder.customer">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="font-bold">Customer</h3>
           {signedIn && customers.length > 0 && (
@@ -80,7 +80,7 @@ export function ProjectStep({ estimate: e, dispatch, signedIn, onDone, missing }
         )}
       </section>
 
-      <section className="rounded-xl border border-line bg-surface p-5">
+      <section className="rounded-xl border border-line bg-surface p-5" data-guide="builder.project-details">
         <h3 className="font-bold">Project</h3>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2"><Field label="Project title" required htmlFor="p-title" error={missing?.has("project_title") ? "Add a project title before downloading this proposal." : undefined} hint={titleIsStarter ? `Your proposal uses “${e.title}” until you type a name.` : undefined}>
@@ -97,7 +97,7 @@ export function ProjectStep({ estimate: e, dispatch, signedIn, onDone, missing }
             <Field label="City" optional htmlFor="p-city"><input id="p-city" className="field" value={e.location.city ?? ""} onChange={(ev) => dispatch({ type: "patchLocation", patch: { city: ev.target.value } })} /></Field>
             <Field label="State" optional htmlFor="p-state"><input id="p-state" className="field" value={e.location.state ?? ""} onChange={(ev) => dispatch({ type: "patchLocation", patch: { state: ev.target.value } })} maxLength={50} /></Field>
           </div>
-          <div className="sm:col-span-2">
+          <div className="sm:col-span-2" data-guide="builder.trades">
             <span className="label" id="trades-label">Trades in this project</span>
             <p className="mb-2 text-xs text-muted">Each trade gets its own section in the estimate, in this order.</p>
             <ol aria-labelledby="trades-label" className="flex flex-wrap gap-2">

@@ -160,7 +160,7 @@ function ScopeEditor({ estimate, signedIn, estimateId, fingerprint, canGenerate,
   const rows = expanded ? 24 : Math.min(18, Math.max(8, text.split("\n").length + 2));
 
   return (
-    <section aria-labelledby="sow-h" className="rounded-xl border border-line bg-surface p-4 sm:p-5">
+    <section aria-labelledby="sow-h" className="rounded-xl border border-line bg-surface p-4 sm:p-5" data-guide="builder.scope">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 id="sow-h" className="font-display text-lg font-bold">Scope of Work</h2>
@@ -316,7 +316,7 @@ export function ExclusionsEditor({ estimate, signedIn, estimateId, fingerprint, 
   };
 
   return (
-    <section aria-labelledby="exc-h" className="rounded-xl border border-line bg-surface p-4 sm:p-5">
+    <section aria-labelledby="exc-h" className="rounded-xl border border-line bg-surface p-4 sm:p-5" data-guide="builder.exclusions">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 id="exc-h" className="font-display text-lg font-bold">Exclusions &amp; Clarifications</h2>

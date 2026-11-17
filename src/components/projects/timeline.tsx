@@ -94,7 +94,7 @@ export function TimelineView({ projects, tasks, deps, today, labelOf, onOpen, on
       </div>
       {rows.length === 0 && <p className="rounded-xl border border-dashed border-line p-6 text-center text-sm text-muted">No scheduled tasks match these filters in this date range.</p>}
       {rows.length > 0 && (
-        <div ref={scroller} className="relative max-h-[70vh] overflow-auto rounded-xl border border-line bg-surface" role="region" aria-label="Company timeline">
+        <div ref={scroller} className="relative max-h-[70vh] overflow-auto rounded-xl border border-line bg-surface" role="region" aria-label="Company timeline" data-guide="projects.timeline">
           <div style={{ width: LABEL + width }} className="relative">
             <div className="sticky top-0 z-20 flex border-b border-line bg-surface" style={{ height: 28 }}>
               <div className="sticky left-0 z-30 shrink-0 border-r border-line bg-surface px-3 py-1 text-xs font-bold uppercase tracking-wider text-muted" style={{ width: LABEL }}>Project / task</div>

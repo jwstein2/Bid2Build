@@ -51,6 +51,7 @@ export function QuantityCalculator({ item, estimate, dispatch, className }: { it
           )}
           aria-label={`Calculate quantity for ${name}${status ? `. ${status}` : ""}`}
           title={status || "Quantity calculator"}
+          data-guide="builder.calculator"
         >
           <Calculator className="h-4 w-4" aria-hidden />
           {record && <span className={cn("absolute right-1 top-1 h-1.5 w-1.5 rounded-full", matches ? "bg-teal" : "bg-warn")} aria-hidden />}
