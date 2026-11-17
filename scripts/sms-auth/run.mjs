@@ -128,6 +128,25 @@ await test("New number + existing email account → email code → confirm phone
   await ctx.close();
 });
 
+await test("Linking when the text can't be sent: says so plainly, no code box, Continue signs in", async () => {
+  const { ctx, page } = await setup();
+  await page.goto(`${BASE}/login?next=/dashboard`);
+  await enterPhone(page, "5558880000");
+  await page.getByRole("button", { name: /I signed up with email before/ }).click();
+  await page.getByLabel("Email on your account").fill("ux-test@built2bid.test");
+  await page.getByRole("button", { name: /Email me a verification code/ }).click();
+  await enterCode(page);
+  await dialog(page).getByText("We couldn't add your phone yet").waitFor();
+  const text = await dialog(page).innerText();
+  expect(!/We texted a code/.test(text), "never claims a code was texted");
+  expect(!/couldn't text that number/.test(text), "no contradictory error box");
+  expect(await page.getByLabel("Verification code").count() === 0, "no code box when nothing was sent");
+  await shot(page, "desktop-link-send-failed");
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.waitForURL(/\/dashboard/);
+  await ctx.close();
+});
+
 await test("Linking refuses an email with no account (a typo can't create a second account)", async () => {
   const { ctx, page } = await setup();
   await page.goto(`${BASE}/login`);

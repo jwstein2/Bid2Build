@@ -109,7 +109,7 @@ export function EnterprisePlan({ signedIn, mode, supportEmail, extraFeatures = [
               : mode === "contact" ? <ButtonLink href={`mailto:${supportEmail}?subject=${encodeURIComponent("Built2Bid Enterprise")}`} size="lg" className="w-full">Contact us about Enterprise</ButtonLink>
               : <Button size="lg" className="h-auto min-h-12 w-full whitespace-normal py-3" onClick={start} disabled={busy}>{busy && <Loader2 className="h-4 w-4 animate-spin" />}{open ? `Continue to checkout · ${formatCents(q.monthlyCents)}/month` : "Get Started with Enterprise"}</Button>}
             {err && <p role="alert" className="mt-2 text-sm text-danger">{err}</p>}
-            <p className="mt-2 text-xs text-ink-soft">Billed monthly. Add or remove users any time; changes are prorated. Prices in USD; taxes may apply.</p>
+            <p className="mt-2 text-xs text-ink-soft">Billed monthly, no long-term contract. Added users are prorated; removed users lower your price from the next invoice, with no refund for the current month. Prices in USD; taxes may apply.</p>
           </div>
         </div>
       </div>
