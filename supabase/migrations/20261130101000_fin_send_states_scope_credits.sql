@@ -110,14 +110,14 @@ revoke execute on function public.fin_invoice_delete_blocker(uuid) from public, 
 -- 2. Scope-removal credits ---------------------------------------------------------------------------------
 alter table public.fin_credit_memos add column if not exists change_order_id uuid references public.change_orders (id) on delete restrict;
 create index if not exists fin_credit_memos_co_idx on public.fin_credit_memos (change_order_id) where change_order_id is not null;
-create unique index if not exists fin_credit_memos_one_live_co on public.fin_credit_memos (change_order_id) where change_order_id is not null and status = 'issued';
+create unique index if not exists fin_credit_memos_one_live_co on public.fin_credit_memos (book_id, change_order_id) where change_order_id is not null and status = 'issued';
 
--- A change order is settled one way only: its own milestones, an amendment, or a credit.
+-- A change order is settled one way only per job: its own milestones, an amendment, or a credit.
 create or replace function public.fin_change_order_settle_once() returns trigger
 language plpgsql set search_path = public as $$
 begin
   if new.change_order_id is not null
-     and exists (select 1 from public.fin_credit_memos where change_order_id = new.change_order_id and status = 'issued') then
+     and exists (select 1 from public.fin_credit_memos where change_order_id = new.change_order_id and job_id = new.job_id and status = 'issued') then
     raise exception 'already_billed_plan' using errcode = '22023';
   end if;
   return new;
@@ -142,9 +142,9 @@ begin
   if not found then raise exception 'not_found' using errcode = 'P0002'; end if;
   if co.status not in ('approved', 'signed') then raise exception 'not_approved' using errcode = '22023'; end if;
   if co.amount >= 0 then raise exception 'not_a_reduction' using errcode = '22023'; end if;
-  if exists (select 1 from public.fin_payment_milestones where change_order_id = co.id)
-     or exists (select 1 from public.fin_milestone_amendments where change_order_id = co.id and status <> 'rejected')
-     or exists (select 1 from public.fin_credit_memos where change_order_id = co.id and status = 'issued') then
+  if exists (select 1 from public.fin_payment_milestones where change_order_id = co.id and job_id = j.id)
+     or exists (select 1 from public.fin_milestone_amendments where change_order_id = co.id and job_id = j.id and status <> 'rejected')
+     or exists (select 1 from public.fin_credit_memos where change_order_id = co.id and job_id = j.id and status = 'issued') then
     raise exception 'already_billed_plan' using errcode = '22023';
   end if;
   select * into n from public.fin_next_number(j.book_id, 'credit_memo');
@@ -207,8 +207,8 @@ language sql stable security definer set search_path = public as $$
   select j.id, 'change_order_affects_billing', 'warning', 'change_order_affects_billing:' || cc.change_order_id, jsonb_build_object('changeOrderId', cc.change_order_id, 'amount', cc.amount::text)
     from public.fin_contract_changes cc join public.fin_jobs j on j.id = cc.job_id
    where cc.book_id = p_book_id and cc.kind = 'change_order' and j.status = 'open'
-     and not exists (select 1 from public.fin_payment_milestones m where m.change_order_id = cc.change_order_id)
-     and not exists (select 1 from public.fin_credit_memos cm where cm.change_order_id = cc.change_order_id and cm.status = 'issued' and cm.amount = -cc.amount)
-     and coalesce((select sum(delta) from public.fin_milestone_amendments a where a.change_order_id = cc.change_order_id and a.status = 'approved'), 0) <> cc.amount
+     and not exists (select 1 from public.fin_payment_milestones m where m.change_order_id = cc.change_order_id and m.job_id = cc.job_id)
+     and not exists (select 1 from public.fin_credit_memos cm where cm.change_order_id = cc.change_order_id and cm.job_id = cc.job_id and cm.status = 'issued' and cm.amount = -cc.amount)
+     and coalesce((select sum(delta) from public.fin_milestone_amendments a where a.change_order_id = cc.change_order_id and a.job_id = cc.job_id and a.status = 'approved'), 0) <> cc.amount
 $$;
 revoke execute on function public.fin_alert_candidates(uuid) from public, anon, authenticated;
