@@ -193,7 +193,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
       )}
       {trial && !trial.has_paid_subscription && (trial.state === "active" || trial.state === "expired") && <TrialBanner state={trial.state} expiresAt={trial.expires_at} />}
       <WhatsNewNotice />
-      <LocalDraftsBanner />
+      <LocalDraftsBanner accountIds={ests.map((e) => e.id)} />
       {esign && <RefreshOnFocus />}
       {awaiting.length > 0 && <AwaitingCountersign rows={awaiting} />}
       {esign && recentSigned.length > 0 && <RecentlySigned bids={recentSigned} days={RECENT_SIGNED_DAYS} />}

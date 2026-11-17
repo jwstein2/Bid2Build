@@ -161,10 +161,16 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
   const setBusiness = (b: Biz) => { setBusinessState(b); setBizDirty((n) => n + 1); };
   const onConfig = (c: ProposalConfig) => { setConfig(c); setConfigDirty((n) => n + 1); };
 
-  // Always keep a local copy (safety net against refreshes, expired sessions, and network loss).
+  // Keep a local copy (safety net against refreshes, expired sessions, and network loss). A bid that is
+  // already in the account gets one only once it has edits, marked unsynced until the server confirms
+  // them; just opening a saved bid writes nothing, so the dashboard never warns about safely saved bids.
+  const latest = useRef({ estimate, config });
+  useEffect(() => { latest.current = { estimate, config }; }, [estimate, config]);
+  const openedClean = useRef(cloudMode);
   useEffect(() => {
-    saveLocalDraft({ estimate, proposalConfig: config });
-  }, [estimate, config]);
+    if (openedClean.current) { openedClean.current = false; return; }
+    saveLocalDraft({ estimate, proposalConfig: config }, { origin: cloudMode ? "cloud" : "local" });
+  }, [estimate, config]); // eslint-disable-line react-hooks/exhaustive-deps -- origin follows the mode at write time
   useEffect(() => {
     if (!user) saveLocalBusiness(business);
   }, [business, user]);
@@ -177,6 +183,8 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
       if (r.status === 401) { setSave("error"); setExportMsg({ tone: "warn", text: "Your session expired. Sign in again; your work is saved on this device." }); return false; }
       if (!r.ok) { setSave("error"); return false; }
       setSave("saved");
+      // The server has exactly what this device has: drop the safety copy (kept if edits arrived meanwhile).
+      if (latest.current.estimate === estimate && latest.current.config === config) deleteLocalDraft(estimate.id);
       return true;
     } catch {
       setSave("error");
