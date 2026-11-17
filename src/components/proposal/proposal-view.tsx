@@ -6,7 +6,15 @@ import { accessibleOnWhite } from "@/lib/onboarding/brand-review";
  * HTML rendering of the canonical ProposalDocument. It receives only customer-safe data, so it
  * cannot display internal costs even by mistake. The PDF renderer consumes the same document.
  */
-export function ProposalView({ doc }: { doc: ProposalDocument }) {
+/** A signature recorded on this version, shown in the signature block (never a placeholder). */
+export interface ViewSignature { name: string; date: string; image?: string | null; typed?: string | null }
+export interface ViewContractorSignature extends ViewSignature { title?: string | null; company: string; auto: boolean }
+
+export function ProposalView({ doc, customerSignature, contractorSignature }: {
+  doc: ProposalDocument;
+  customerSignature?: ViewSignature | null;
+  contractorSignature?: ViewContractorSignature | null;
+}) {
   const st = templateStyle(doc.template);
   const brand = doc.brand.primaryColor;
   const accent = doc.brand.secondaryColor;
@@ -127,19 +135,42 @@ export function ProposalView({ doc }: { doc: ProposalDocument }) {
 
         {doc.terms && <Prose title="Terms and Conditions" body={doc.terms} gap={st.sectionGap} color={brand} small />}
 
-        {doc.signature && (
-          <section className="grid gap-8 sm:grid-cols-2" style={{ marginTop: st.sectionGap * 2.2 }}>
-            {["Customer acceptance", doc.brand.companyName].map((who) => (
-              <div key={who}>
-                <div className="h-10 border-b border-[#16202e]" />
-                <div className="mt-1 flex justify-between text-[#6b7686]" style={{ fontSize: px(st.baseSize * 0.85) }}><span>{who}</span><span>Date</span></div>
-              </div>
-            ))}
+        {(doc.signature || contractorSignature) && (
+          <section className="grid gap-8 sm:grid-cols-2" style={{ marginTop: st.sectionGap * 2.2 }} aria-label="Signatures" data-testid="signature-block">
+            <SigCol heading="Customer signature" sig={customerSignature} fs={px(st.baseSize * 0.85)}
+              lines={customerSignature ? [`Customer: ${customerSignature.name} (electronic signature)`] : [`Customer: ${doc.customer.name}`]} />
+            <SigCol heading="Contractor signature" sig={contractorSignature} fs={px(st.baseSize * 0.85)} testId="contractor-signature"
+              lines={contractorSignature
+                ? [`${contractorSignature.name}${contractorSignature.title ? `, ${contractorSignature.title}` : ""}`, `For ${contractorSignature.company} (electronic signature${contractorSignature.auto ? ", applied under prior authorization" : ""})`]
+                : [`Authorized signer, ${doc.brand.companyName}`]} />
           </section>
         )}
       </div>
       <footer className="border-t px-[6%] py-3 text-center text-[#6b7686]" style={{ borderColor: "#e4e0d8", fontSize: px(st.baseSize * 0.8) }}>{doc.footer}</footer>
     </article>
+  );
+}
+
+function SigCol({ heading, sig, lines, fs, testId }: { heading: string; sig?: ViewSignature | null; lines: string[]; fs: string; testId?: string }) {
+  return (
+    <div className="min-w-0" data-testid={testId}>
+      <p className="font-bold uppercase tracking-wider text-[#6b7686]" style={{ fontSize: `calc(${fs} * 0.85)` }}>{heading}</p>
+      <div className="flex h-12 items-end justify-between gap-2 border-b border-[#16202e]">
+        {sig ? (
+          <>
+            {sig.image
+              // eslint-disable-next-line @next/next/no-img-element
+              ? <img src={sig.image} alt={`Signature of ${sig.name}`} className="max-h-11 max-w-[60%] object-contain" />
+              : <span className="truncate font-serif text-2xl italic">{sig.typed ?? sig.name}</span>}
+            <span className="shrink-0 pb-0.5" style={{ fontSize: fs }}>{sig.date}</span>
+          </>
+        ) : null}
+      </div>
+      <div className="mt-1 flex justify-between gap-3 text-[#6b7686]" style={{ fontSize: fs }}>
+        <span className="min-w-0 [overflow-wrap:anywhere]">{lines[0]}</span><span className="shrink-0">{sig ? `Date signed: ${sig.date}` : "Date"}</span>
+      </div>
+      {lines.slice(1).map((l) => <p key={l} className="text-[#6b7686] [overflow-wrap:anywhere]" style={{ fontSize: fs }}>{l}</p>)}
+    </div>
   );
 }
 

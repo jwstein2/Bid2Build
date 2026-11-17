@@ -20,6 +20,8 @@ import { ROLE_LABELS } from "@/lib/enterprise/permissions";
 import { isEsignEnabled, RECENT_SIGNED_DAYS } from "@/lib/esign/config";
 import { recentSignatures, signingByEstimate, type RequestRow, type SignatureRow } from "@/lib/esign/status";
 import { RecentlySigned, type SignedBid } from "./recently-signed";
+import { AwaitingCountersign, type AwaitingRow } from "./awaiting-countersign";
+import { isContractorSigningEnabled } from "@/lib/esign/contractor/config";
 import { ReviewQueue } from "@/components/operations/review-queue";
 import { loadReviewQueue } from "@/lib/operations/queue-server";
 import { loadPmAccess } from "@/lib/pm/server";
@@ -126,6 +128,12 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   const trial = (Array.isArray(trialRows) ? trialRows[0] : null) as { state: string; expires_at: string; has_paid_subscription: boolean } | null;
   const pay = payRow ? sanitizePay({ method: payRow.method, rate: Number(payRow.rate), flatFee: Number(payRow.flat_fee), baseSalary: Number(payRow.base_salary), baseExclusions: Number(payRow.base_exclusions) }) : DEFAULT_PAY;
   const referral = (referralData as MyReferral | null)?.code ? referralData as MyReferral : null;
+  // V5.3: contracts waiting for this person's countersignature (authority checked in the database).
+  let awaiting: AwaitingRow[] = [];
+  if (isContractorSigningEnabled()) {
+    const { data } = await createAdminClient().rpc("contractor_awaiting_for", { p_actor: user.id });
+    awaiting = (data ?? []) as AwaitingRow[];
+  }
   const signing = signingByEstimate((reqRows ?? []) as RequestRow[], (sigRows ?? []) as SignatureRow[]);
   const recentSigned: SignedBid[] = recentSignatures((sigRows ?? []) as SignatureRow[], RECENT_SIGNED_DAYS)
     .map((x) => ({ id: x.id, estimateId: x.estimate_id, customer: x.customer_name || x.signer_name, project: x.project_title || "Untitled bid", total: Number(x.total), signedAt: x.signed_at, versionNumber: x.version_number, pdfStatus: x.pdf_status }));
@@ -187,6 +195,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
       <WhatsNewNotice />
       <LocalDraftsBanner />
       {esign && <RefreshOnFocus />}
+      {awaiting.length > 0 && <AwaitingCountersign rows={awaiting} />}
       {esign && recentSigned.length > 0 && <RecentlySigned bids={recentSigned} days={RECENT_SIGNED_DAYS} />}
       {reviewQueue && reviewQueue.length > 0 && <ReviewQueue items={reviewQueue} canSchedule={Boolean(pmAccess?.canEdit)} compact max={5} />}
       {ests.length === 0 && <FirstBidStart companyName={biz?.company_name?.trim() || null} />}

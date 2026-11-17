@@ -6,17 +6,21 @@ import { bidSigning, SIGNING_LABELS, type RequestRow, type SignatureRow } from "
 import { Button } from "../ui/button";
 import { LocalTime } from "./local-time";
 import { SignedPdfButton } from "./signed-pdf-button";
+import { ContractorStatus } from "./contractor-status";
+import type { ContractorState } from "@/lib/esign/contractor/state";
 
 /** A signing link just created; shown in the Email Proposal dialog. */
 export interface CreatedLink { url: string; requestId: string; expiresAt: string; versionNumber: number; total: string; file?: File; message: string }
 
 /** Signing status of this bid + Create Signing Link, on the Proposal step. */
-export function SigningPanel({ estimateId, onCreate, creating, refreshKey, onRevoked }: {
+export function SigningPanel({ estimateId, onCreate, creating, refreshKey, onRevoked, signBeforeSend, onSignBeforeSend }: {
   estimateId: string; onCreate: () => void; creating: boolean; refreshKey: number;
+  /** V5.3: the bid owner signs for the contractor before the link is created (contractor-first). */
+  signBeforeSend?: boolean; onSignBeforeSend?: (v: boolean) => void;
   /** A revoked link must never be offered again in the Email Proposal dialog. */
   onRevoked?: (requestId: string) => void;
 }) {
-  const [data, setData] = useState<{ requests: RequestRow[]; signatures: SignatureRow[] } | null>(null);
+  const [data, setData] = useState<{ requests: RequestRow[]; signatures: SignatureRow[]; contractor?: ContractorState | null } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const load = useCallback(async () => {
@@ -69,6 +73,13 @@ export function SigningPanel({ estimateId, onCreate, creating, refreshKey, onRev
           )}
           {s.signed && s.state === "signed" && <p className="text-xs text-muted">Changing the bid never alters the signed version. To get a revision signed, edit the bid and create a new signing link.</p>}
           {err && <p className="text-danger" role="alert">{err}</p>}
+        </div>
+      )}
+      {data?.contractor && (
+        <div className="mt-3 border-t border-line pt-3">
+          <ContractorStatus estimateId={estimateId} state={data.contractor} pending={Boolean(pending)}
+            signed={s?.signed ? (() => { const row = data.signatures.find((x) => x.id === s.signed!.id); return row ? { id: row.id, request_id: row.request_id, version_id: row.version_id, version_number: row.version_number, signed_at: row.signed_at } : null; })() : null}
+            signBeforeSend={signBeforeSend} onSignBeforeSend={onSignBeforeSend} onChanged={() => void load()} />
         </div>
       )}
     </section>

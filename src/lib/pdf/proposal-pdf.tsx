@@ -24,11 +24,17 @@ const T = (s?: string | null) => pdfSafe(s);
 
 /** Filled into the customer acceptance line of a signed copy (e-signatures). */
 export interface PdfAcceptance { name: string; date: string; image?: Buffer | null; typed?: string | null }
+/**
+ * The contractor-side signature actually applied to this version (V5.3). Only ever filled from a
+ * recorded contractor_signatures row: never a placeholder or a generic signature.
+ */
+export interface PdfContractorSignature { name: string; title?: string | null; company: string; date: string; image?: Buffer | null; typed?: string | null; auto: boolean }
 
-export function ProposalPdf({ doc, logo, acceptance, appendix }: {
+export function ProposalPdf({ doc, logo, acceptance, contractor, appendix }: {
   doc: ProposalDocument;
   logo?: { data: Buffer; format: "png" | "jpg" } | null;
   acceptance?: PdfAcceptance | null;
+  contractor?: PdfContractorSignature | null;
   /** Extra pages after the proposal (the signature certificate of a signed copy). */
   appendix?: ReactNode;
 }) {
@@ -158,26 +164,54 @@ export function ProposalPdf({ doc, logo, acceptance, appendix }: {
 
           {doc.terms ? <Prose title="Terms and Conditions" body={doc.terms} gap={st.sectionGap} color={brand} fs={fs} small /> : null}
 
-          {doc.signature && (
+          {(doc.signature || contractor) && (
             <View style={{ flexDirection: "row", gap: 30, marginTop: st.sectionGap * 2 }} wrap={false}>
-              {["Customer acceptance", doc.brand.companyName].map((who, i) => (
-                <View key={who} style={{ flex: 1 }}>
-                  <View style={{ height: 28, borderBottomWidth: 0.75, borderBottomColor: "#16202e", flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between" }}>
-                    {i === 0 && acceptance ? (
-                      <>
-                        {acceptance.image
-                          ? <Image src={{ data: acceptance.image, format: "png" }} style={{ height: 26, maxWidth: 160, objectFit: "contain" }} />
-                          : <Text style={{ fontFamily: "Times-Italic", fontSize: fs * 1.5 }}>{T(acceptance.typed ?? acceptance.name)}</Text>}
-                        <Text style={[s.small, { marginBottom: 2 }]}>{T(acceptance.date)}</Text>
-                      </>
-                    ) : null}
+              {/* Customer Signature | Contractor Signature (same layout in every template and trade). */}
+              <View style={{ flex: 1 }}>
+                <Text style={[s.muted, { fontSize: fs * 0.72, fontFamily: "Helvetica-Bold", letterSpacing: 0.8, marginBottom: 2 }]}>CUSTOMER SIGNATURE</Text>
+                <View style={{ height: 28, borderBottomWidth: 0.75, borderBottomColor: "#16202e", flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between" }}>
+                  {acceptance ? (
+                    <>
+                      {acceptance.image
+                        ? <Image src={{ data: acceptance.image, format: "png" }} style={{ height: 26, maxWidth: 160, objectFit: "contain" }} />
+                        : <Text style={{ fontFamily: "Times-Italic", fontSize: fs * 1.5 }}>{T(acceptance.typed ?? acceptance.name)}</Text>}
+                      <Text style={[s.small, { marginBottom: 2 }]}>{T(acceptance.date)}</Text>
+                    </>
+                  ) : null}
+                </View>
+                <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 3 }}>
+                  <Text style={[s.muted, s.small, { flexShrink: 1, marginRight: 6 }]}>{T(`Customer: ${acceptance ? acceptance.name : doc.customer.name}`)}</Text>
+                  <Text style={[s.muted, s.small]}>{acceptance ? `Date signed: ${T(acceptance.date)}` : "Date"}</Text>
+                </View>
+                {acceptance ? <Text style={[s.muted, s.small]}>Electronic signature</Text> : null}
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[s.muted, { fontSize: fs * 0.72, fontFamily: "Helvetica-Bold", letterSpacing: 0.8, marginBottom: 2 }]}>CONTRACTOR SIGNATURE</Text>
+                <View style={{ height: 28, borderBottomWidth: 0.75, borderBottomColor: "#16202e", flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between" }}>
+                  {contractor ? (
+                    <>
+                      {contractor.image
+                        ? <Image src={{ data: contractor.image, format: "png" }} style={{ height: 26, maxWidth: 160, objectFit: "contain" }} />
+                        : <Text style={{ fontFamily: "Times-Italic", fontSize: fs * 1.5 }}>{T(contractor.typed ?? contractor.name)}</Text>}
+                      <Text style={[s.small, { marginBottom: 2 }]}>{T(contractor.date)}</Text>
+                    </>
+                  ) : null}
+                </View>
+                {contractor ? (
+                  <View style={{ marginTop: 3 }}>
+                    <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                      <Text style={[s.muted, s.small, { flexShrink: 1, marginRight: 6 }]}>{T(`${contractor.name}${contractor.title ? `, ${contractor.title}` : ""}`)}</Text>
+                      <Text style={[s.muted, s.small]}>{`Date signed: ${T(contractor.date)}`}</Text>
+                    </View>
+                    <Text style={[s.muted, s.small]}>{T(`For ${contractor.company} (electronic signature${contractor.auto ? ", applied under prior authorization" : ""})`)}</Text>
                   </View>
+                ) : (
                   <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 3 }}>
-                    <Text style={[s.muted, s.small]}>{T(i === 0 && acceptance ? `${who}: ${acceptance.name} (electronic signature)` : who)}</Text>
+                    <Text style={[s.muted, s.small]}>{T(`Authorized signer, ${doc.brand.companyName}`)}</Text>
                     <Text style={[s.muted, s.small]}>Date</Text>
                   </View>
-                </View>
-              ))}
+                )}
+              </View>
             </View>
           )}
         </View>

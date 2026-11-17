@@ -5,6 +5,9 @@ import { AccountActions } from "./actions-client";
 import { MarketSharing } from "./market-sharing";
 import { SignInMethods } from "./sign-in-methods";
 import { isSmsSignInEnabled } from "@/lib/auth/phone";
+import Link from "next/link";
+import { Card } from "@/components/ui/misc";
+import { isContractorSigningEnabled } from "@/lib/esign/contractor/config";
 
 export const metadata: Metadata = { title: "Account settings", robots: { index: false } };
 
@@ -21,6 +24,13 @@ export default async function AccountPage() {
     <div className="mx-auto max-w-3xl space-y-6">
       <h1 className="text-3xl font-extrabold">Account settings</h1>
       <SignInMethods email={user.email} emailVerified={user.emailVerified} phone={user.phone} phoneVerified={user.phoneVerified} smsEnabled={isSmsSignInEnabled()} />
+      {isContractorSigningEnabled() && (
+        <Card className="p-5" data-testid="my-signature-link">
+          <h2 className="font-bold">My signature</h2>
+          <p className="text-sm text-ink-soft">Draw, upload or type the signature you use on proposals and contracts, and review your signing authorization.</p>
+          <Link href="/settings/account/signature" className="mt-2 inline-block font-semibold text-accent-ink underline">Manage my signature</Link>
+        </Card>
+      )}
       <MarketSharing initial={{ sharePrices: Boolean(consent?.share_prices), shareCosts: Boolean(consent?.share_costs), commercialUse: Boolean(consent?.commercial_use) }} />
       <AccountActions marketing={Boolean(profile?.marketing_opt_in)} />
     </div>
