@@ -4,7 +4,9 @@ import { ButtonLink } from "@/components/ui/button";
 import { Container } from "@/components/ui/misc";
 import { TradePicker } from "@/components/marketing/trade-picker";
 import { ProposalSample } from "@/components/marketing/proposal-sample";
-import { SampleProposal } from "@/components/marketing/sample-proposal";
+import { HeroQuickStart } from "@/components/marketing/hero-quick-start";
+import { quickStartTrades } from "@/lib/trades/quick-start";
+import { trades as allTrades } from "@/lib/trades/catalog";
 import { PILLAR_ANCHOR, PILLAR_ICON, PILLAR_ORDER, PillarSections } from "@/components/marketing/pillars";
 import { PILLARS, PM_PRODUCT_NAME, PRICES, pmMarketedLive } from "@/lib/marketing/catalog";
 import { pickerTrades } from "@/lib/trades/picker";
@@ -99,7 +101,7 @@ export default async function HomePage() {
               ))}
             </ul>
           </div>
-          <SampleProposal className="mx-auto w-full max-w-xl lg:max-w-none" dark />
+          <HeroQuickStart trades={quickStartTrades()} totalTrades={allTrades.length} />
         </Container>
         <nav aria-label="What Built2Bid does" className="relative border-t border-white/10">
           <Container className="grid gap-3 py-5 sm:grid-cols-3">
@@ -163,7 +165,7 @@ export default async function HomePage() {
               ))}
             </ul>
           </div>
-          <ProposalSample />
+          <div id="sample-proposal" className="scroll-mt-24"><ProposalSample /></div>
         </Container>
       </section>
 
