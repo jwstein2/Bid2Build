@@ -1,0 +1,92 @@
+/** Plain-language labels for the Financials UI (client-safe). */
+import type { KpiKey, QuickAction, ReportKey } from "./profiles/catalog";
+import type { AlertKind, AlertSeverity, MilestoneState, MilestoneTriggerKind } from "./types";
+
+export const KPI_LABELS: Record<KpiKey, string> = {
+  contract_value: "Contract value", invoiced: "Invoiced", collected: "Collected", ar_outstanding: "Owed to you", overdue_amount: "Past due",
+  estimated_margin: "Estimated profit", projected_margin: "Forecast profit", committed_cost: "Committed cost", actual_cost: "Actual cost",
+};
+
+export const QUICK_ACTION_LABELS: Record<QuickAction, string> = {
+  create_invoice: "Create invoice", invoice_milestone: "Invoice a milestone", record_payment: "Record payment", record_expense: "Record expense",
+  snap_receipt: "Add a receipt", record_bill: "Enter a vendor bill", create_commitment: "Commit a sub quote", bill_change_order: "Bill a change order",
+  log_time_materials: "Log time & materials", bill_service_call: "Bill a service call", issue_credit: "Issue a credit", export: "Export for your accountant",
+};
+/** Quick actions that open on a job (the rest are not built yet and say so). */
+export const QUICK_ACTION_TARGET: Partial<Record<QuickAction, string>> = {
+  create_invoice: "invoice", invoice_milestone: "invoice", record_payment: "payment", record_expense: "expense", snap_receipt: "expense",
+  record_bill: "bill", create_commitment: "commitment", bill_change_order: "invoice", issue_credit: "credit",
+};
+
+export const REPORT_LABELS: Record<ReportKey, string> = {
+  ar_aging: "Receivables aging", job_profitability: "Job profitability", budget_vs_actual: "Budget vs actual", cost_by_code: "Cost by cost code",
+  commitments: "Commitments", payments_received: "Payments received", change_order_log: "Change order log", wip_placeholder: "Work in progress (coming later)",
+  sales_tax_placeholder: "Sales tax (coming later)", vendor_spend: "Vendor spend", material_spend: "Material spend", tm_billing: "Time & materials billing",
+};
+export const REPORT_HREF: Partial<Record<ReportKey, string>> = {
+  ar_aging: "/financials/records?view=invoices&filter=open", job_profitability: "/financials/records?view=jobs", budget_vs_actual: "/financials/records?view=jobs",
+  cost_by_code: "/financials/records?view=costs", commitments: "/financials/records?view=commitments", payments_received: "/financials/records?view=payments",
+  vendor_spend: "/financials/records?view=costs", material_spend: "/financials/records?view=costs&filter=material",
+};
+
+export const TRIGGER_LABELS: Record<MilestoneTriggerKind, string> = {
+  agreement_signed: "When the agreement is signed", project_start_confirmed: "When the start is confirmed", phase_completed_verified: "When the phase is verified complete",
+  final_completion_confirmed: "When completion is confirmed", calendar_date: "On a set date", custom_approved: "When you approve it",
+};
+export const STATE_LABELS: Record<MilestoneState, string> = {
+  not_triggered: "Waiting on trigger", ready_to_invoice: "Ready to invoice", invoiced: "Invoiced", partially_paid: "Partly paid", paid: "Paid",
+};
+export const SEVERITY_LABELS: Record<AlertSeverity, string> = { info: "Info", warning: "Warning", action_required: "Action required" };
+export const ALERT_LABELS: Record<AlertKind, string> = {
+  deposit_not_invoiced: "The deposit hasn't been invoiced yet",
+  deposit_overdue: "The deposit is past due",
+  start_with_prestart_unpaid: "The job started with a pre-start payment unpaid",
+  milestone_ready_not_invoiced: "A milestone is ready but not invoiced",
+  invoice_milestone_mismatch: "An invoice differs from the signed schedule",
+  duplicate_milestone_invoice: "A milestone has more than one invoice",
+  billed_over_contract: "Invoices add up to more than the contract",
+  completion_with_balance: "The job is complete with a balance still owed",
+  change_order_affects_billing: "An approved change order affects billing",
+};
+export const DISCREPANCY_LABELS: Record<string, string> = {
+  amount_differs: "The amount differs from the signed schedule",
+  due_date_differs: "The due date differs from the schedule's terms",
+  not_triggered: "The milestone's trigger hasn't happened yet",
+  duplicate_milestone_invoice: "This milestone already has an invoice",
+};
+export const BASIS_TONE: Record<string, "neutral" | "ok" | "warn" | "danger" | "brand" | "accent"> = {
+  Contracted: "brand", Invoiced: "accent", Paid: "ok", Outstanding: "warn", Estimated: "neutral", Committed: "warn", Actual: "ok", Forecast: "accent", Count: "neutral",
+};
+
+/** Friendly text for the database's error codes (the database stays the authority). */
+const ERRORS: Record<string, string> = {
+  forbidden: "Your financial role doesn't allow this.",
+  read_only: "Financials is read-only right now (the add-on lapsed). Everything stays readable.",
+  not_entitled: "Financials isn't active for this account.",
+  milestone_discrepancy: "This invoice differs from the signed schedule. Add an exception reason to issue it.",
+  bad_amount: "Check the amount.",
+  over_applied_invoice: "That's more than the invoice's balance.",
+  over_applied_payment: "Allocations add up to more than the payment.",
+  over_applied_credit: "That's more than the credit available.",
+  over_refund: "That's more than can be refunded.",
+  invoice_not_open: "That invoice isn't open.",
+  reason_required: "Add a reason.",
+  record_immutable: "Issued records can't be edited. Void it instead.",
+  empty_invoice: "Add at least one line.",
+  duplicate_bill: "That vendor invoice number is already recorded.",
+  milestone_invoiced: "That milestone already has an invoice.",
+  essential_alert: "Essential alerts can't be hidden.",
+  forbidden_mode: "Accountant Mode needs an accounting permission.",
+  stale_draft: "The amounts changed since this draft was written. Re-create the draft.",
+  bad_lines: "Check the lines.",
+  not_accepted: "This bid isn't marked as won yet.",
+  version_required: "Pick which proposal version is the contract.",
+  bad_state: "That can't be done in the record's current state.",
+  has_refunds: "Void the refund first.",
+  has_applications: "Reverse the credit's applications first.",
+  has_bills: "This commitment already has bills.",
+  customer_mismatch: "That invoice belongs to a different customer.",
+  not_found: "We couldn't find that record.",
+  idempotency_conflict: "That was already saved.",
+};
+export const finErrorText = (code: string | undefined | null) => (code && ERRORS[code]) || "Something went wrong. Nothing was changed.";

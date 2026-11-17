@@ -33,7 +33,9 @@ export function ProjectUpdatesPanel({ scheduleId, canConfigure, canAuto }: { sch
   }, [scheduleId]);
   useEffect(() => { load(); }, [load]);
   if (!st) return null;
-  const cur = st.settings ?? { frequency: "off" as UpdateFrequency, mode: st.defaults.mode, recipientEmail: null, recipientName: null, pausedAt: null, autoConfirmedAt: null };
+  // A project without its own settings starts in Review first, even if the company default is automatic:
+  // automatic sending is always confirmed per project (with the disclaimer) before it applies.
+  const cur = st.settings ?? { frequency: "off" as UpdateFrequency, mode: "review" as const, recipientEmail: null, recipientName: null, pausedAt: null, autoConfirmedAt: null };
   const save = async (patch: Partial<{ frequency: UpdateFrequency; mode: string; paused: boolean; recipientEmail: string | null; confirmAutomatic: boolean }>) => {
     setBusy(true); setErr(null);
     const r = await fetch(`/api/comms/projects/${scheduleId}`, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ frequency: cur.frequency, mode: cur.mode, ...patch }) });
@@ -58,7 +60,7 @@ export function ProjectUpdatesPanel({ scheduleId, canConfigure, canAuto }: { sch
             {(Object.keys(FREQUENCY_LABEL) as UpdateFrequency[]).map((k) => <option key={k} value={k}>{FREQUENCY_LABEL[k]}</option>)}
           </select>
         </Field>
-        <Field label="Sending mode" htmlFor="pu-mode">
+        <Field label="Sending mode" htmlFor="pu-mode" hint={st.defaults.mode === "automatic" && cur.mode !== "automatic" ? "Your company default is Automatic. Choose it here to confirm it for this project." : undefined}>
           <select id="pu-mode" className="field" disabled={!canConfigure || busy} value={cur.mode} onChange={(e) => (e.target.value === "automatic" ? setConfirm(true) : save({ mode: "review" }))} data-testid="pu-mode">
             <option value="review">Review first (recommended)</option>
             <option value="automatic" disabled={!canAuto}>Automatic</option>

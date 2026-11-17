@@ -1,6 +1,7 @@
 import type Stripe from "stripe";
 import { getStripe } from "@/lib/billing/stripe";
 import { applySubscription } from "@/lib/billing/apply";
+import { subscriptionListCents } from "@/lib/billing/sync";
 import { createAdminClient } from "@/lib/supabase/server";
 import { serverEnv } from "@/lib/env";
 import { logError } from "@/lib/http/api";
@@ -12,7 +13,7 @@ import { recordEvent } from "@/lib/growth/events";
 
 /** List value of a new subscription's first period, in USD, from its price (for ad conversion value only). */
 function listValueUsd(sub: Stripe.Subscription): number | null {
-  const cents = sub.items?.data?.reduce((n, i) => n + (i.price?.unit_amount ?? 0) * (i.quantity ?? 1), 0) ?? 0;
+  const cents = subscriptionListCents((sub.items?.data ?? []) as never, { enterpriseSeat: serverEnv().stripePriceEnterpriseSeat || undefined });
   return cents > 0 ? cents / 100 : null;
 }
 

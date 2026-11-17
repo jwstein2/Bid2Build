@@ -10,6 +10,17 @@ import { ROLE_LABELS, type CompanyRole } from "@/lib/enterprise/permissions";
 
 export const metadata: Metadata = { title: "Join your team", robots: { index: false } };
 
+/** An active personal (non-Enterprise) paid subscription. Best effort: any error hides the warning. */
+async function hasPersonalPaidPlan(userId: string): Promise<boolean> {
+  try {
+    const { data } = await createAdminClient().from("subscriptions").select("stripe_subscription_id")
+      .eq("user_id", userId).or("plan.is.null,plan.neq.enterprise").in("status", ["active", "trialing", "past_due"]).limit(1);
+    return Array.isArray(data) && data.length > 0;
+  } catch {
+    return false;
+  }
+}
+
 type Peek = { company_name: string; role: CompanyRole; email_hint: string; expires_at: string; email_matches: boolean };
 
 async function accept(formData: FormData) {
@@ -38,6 +49,9 @@ export default async function JoinCompanyPage({ searchParams }: PageProps<"/comp
   const { data } = token ? await (await createClient()).rpc("peek_company_invitation", { p_token: token }) : { data: null };
   const inv = (Array.isArray(data) ? data[0] : data) as Peek | undefined;
   const err = typeof sp.error === "string" ? companyRpcError({ message: sp.error }).message : null;
+  // Joining never cancels a personal plan. Warn people who pay for their own Unlimited so they don't
+  // keep paying for access the company seat already includes.
+  const paysPersonally = user && inv ? await hasPersonalPaidPlan(user.id) : false;
 
   return (
     <Container className="py-14">
@@ -55,6 +69,11 @@ export default async function JoinCompanyPage({ searchParams }: PageProps<"/comp
             <p className="mt-2 text-ink-soft">You&apos;ve been invited as <b>{ROLE_LABELS[inv.role]}</b>. Your company provides your license, so there&apos;s nothing to pay.</p>
             <p className="mt-1 text-sm text-ink-soft">Invitation for {inv.email_hint}, valid until {new Date(inv.expires_at).toLocaleDateString(undefined, { dateStyle: "long" })}.</p>
             {err && <Notice tone="danger" className="mt-4">{err}</Notice>}
+            {paysPersonally && (
+              <Notice tone="warn" className="mt-4" title="You still have your own paid plan">
+                Joining doesn&apos;t cancel your personal Unlimited subscription. Your company seat includes everything it does, so after you join, cancel it in <a className="underline" href="/settings/billing">Subscription settings</a> to avoid paying twice. Your bids and customers stay with you either way.
+              </Notice>
+            )}
             {!user ? (
               <ButtonLink href={`/login?next=${encodeURIComponent(here)}`} size="lg" className="mt-5 w-full">Sign in or create your account</ButtonLink>
             ) : inv.email_matches ? (

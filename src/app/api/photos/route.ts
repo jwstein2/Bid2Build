@@ -2,7 +2,7 @@ import { createAdminClient, createClient, getUser } from "@/lib/supabase/server"
 import { fail, json, logError, rateLimit, sameOrigin } from "@/lib/http/api";
 import { isAiConfigured } from "@/lib/ai/provider";
 import { UUID, missingMigration } from "@/lib/operations/server";
-import { isPhotoAiEnabled, MAX_PHOTO_BYTES, MAX_PHOTOS_PER_UPLOAD, processPhoto, signPhotos, storePhoto } from "@/lib/operations/photos-server";
+import { isPhotoAiEnabled, photoAiAllowedFor, MAX_PHOTO_BYTES, MAX_PHOTOS_PER_UPLOAD, processPhoto, signPhotos, storePhoto } from "@/lib/operations/photos-server";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -27,9 +27,11 @@ export async function GET(req: Request) {
     return fail(500, "server_error", "We couldn't load photos.");
   }
   const { data: canUpload } = await supabase.rpc("can_upload_photos", { p_customer_id: customerId, p_estimate_id: estimateId });
-  const photos = await signPhotos(createAdminClient(), (data ?? []) as { storage_path: string; thumb_path: string | null }[]);
+  const admin = createAdminClient();
+  const photos = await signPhotos(admin, (data ?? []) as { storage_path: string; thumb_path: string | null }[]);
+  const aiEnabled = isPhotoAiEnabled() && isAiConfigured() && (await photoAiAllowedFor(admin, { estimateId, customerId }));
   return json({
-    available: true, canUpload: canUpload === true, aiEnabled: isPhotoAiEnabled() && isAiConfigured(),
+    available: true, canUpload: canUpload === true, aiEnabled,
     photos: photos.map(({ storage_path: _s, thumb_path: _t, ...p }) => { void _s; void _t; return p; }),
   });
 }
