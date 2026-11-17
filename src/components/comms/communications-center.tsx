@@ -16,7 +16,7 @@ interface Msg {
   replied_at: string | null; approved_at: string | null; automation: boolean; created_at: string;
 }
 interface Evt { id: string; kind: string; message_id: string | null; from_email: string | null; subject: string | null; excerpt: string | null; details: { label?: string; classification?: string }; needs_attention: boolean; handled_at: string | null; created_at: string }
-interface Contact { id: string; email: string; name: string | null; status: ContactStatus; status_reason: string | null; basis: string; last_nurture_at: string | null; last_reply_at: string | null }
+interface Contact { id: string; email: string; name: string | null; customer_id?: string | null; status: ContactStatus; status_reason: string | null; basis: string; last_nurture_at: string | null; last_reply_at: string | null }
 interface Proj { schedule_id: string; name: string; frequency: UpdateFrequency; mode: string; paused_at: string | null; scheduleStatus: string | null }
 interface Data {
   available: boolean; locked?: boolean; access?: CommAccess; settings: CommSettings; offers: Offer[]; messages: Msg[]; events: Evt[]; contacts: Contact[]; projects: Proj[];
@@ -298,7 +298,7 @@ function Contacts({ contacts, filter, busy, run, canManage }: { contacts: Contac
         {list.map((c) => (
           <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
             <div className="min-w-0">
-              <p className="font-semibold">{c.name || c.email}</p>
+              <p className="font-semibold">{c.customer_id ? <Link className="underline-offset-2 hover:underline" href={`/dashboard/customers/${c.customer_id}`}>{c.name || c.email}</Link> : (c.name || c.email)}</p>
               <p className="truncate text-xs text-muted">{c.email} · last follow-up {day(c.last_nurture_at)}{c.status_reason ? ` · ${c.status_reason}` : ""}</p>
             </div>
             <div className="flex flex-wrap items-center gap-1.5">

@@ -15,7 +15,6 @@ interface SavedCustomer { id: string; name: string; email?: string; phone?: stri
 
 export function ProjectStep({ estimate: e, dispatch, signedIn, onDone, missing }: { estimate: Estimate; dispatch: Dispatch<Action>; signedIn: boolean; onDone?: () => void; /** Readiness codes still blocking download (shown inline). */ missing?: ReadonlySet<string> }) {
   const [customers, setCustomers] = useState<SavedCustomer[]>([]);
-  const [savedMsg, setSavedMsg] = useState<string | null>(null);
   const [titleTouched, setTitleTouched] = useState(false);
   const titleIsStarter = !titleTouched && isDefaultTitle(e);
   useEffect(() => {
@@ -26,11 +25,14 @@ export function ProjectStep({ estimate: e, dispatch, signedIn, onDone, missing }
   const c = e.customer;
   const pc = (patch: Partial<Estimate["customer"]>) => dispatch({ type: "patchCustomer", patch });
 
-  async function saveCustomer() {
-    const r = await fetch("/api/customers", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: c.name, email: c.email, phone: c.phone, projectAddress: c.projectAddress, notes: c.notes }) });
-    if (r.ok) { const d = await r.json(); setCustomers([d.customer, ...customers]); setSavedMsg("Saved to your customers."); }
-    else setSavedMsg("Could not save this customer.");
-  }
+  // Customers are added to the directory automatically when the bid saves; a picked customer stays linked
+  // until the name is changed to someone else.
+  const linked = e.customerId ? customers.find((x) => x.id === e.customerId) ?? null : null;
+  const norm = (v: string) => v.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const setName = (name: string) => {
+    pc({ name });
+    if (linked && norm(name) !== norm(linked.name)) dispatch({ type: "patch", patch: { customerId: null } });
+  };
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -43,17 +45,17 @@ export function ProjectStep({ estimate: e, dispatch, signedIn, onDone, missing }
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="font-bold">Customer</h3>
           {signedIn && customers.length > 0 && (
-            <select aria-label="Use a saved customer" className="field field-sm w-auto" value="" onChange={(ev) => {
+            <select aria-label="Choose an existing customer" className="field field-sm w-auto" value="" onChange={(ev) => {
               const s = customers.find((x) => x.id === ev.target.value);
               if (s) { pc({ name: s.name, email: s.email, phone: s.phone, projectAddress: s.projectAddress }); dispatch({ type: "patch", patch: { customerId: s.id } }); }
             }}>
-              <option value="">Use a saved customer…</option>
+              <option value="">Choose an existing customer…</option>
               {customers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
           )}
         </div>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <Field label="Customer name" required htmlFor="c-name" error={missing?.has("customer_name") ? "Add the customer's name before downloading this proposal." : undefined}><input id="c-name" className="field" value={c.name} onChange={(ev) => pc({ name: ev.target.value })} /></Field>
+          <Field label="Customer name" required htmlFor="c-name" error={missing?.has("customer_name") ? "Add the customer's name before downloading this proposal." : undefined}><input id="c-name" className="field" value={c.name} onChange={(ev) => setName(ev.target.value)} /></Field>
           <Field label="Customer email" optional htmlFor="c-email"><input id="c-email" type="email" className="field" value={c.email ?? ""} onChange={(ev) => pc({ email: ev.target.value })} /></Field>
           <Field label="Customer phone" optional htmlFor="c-phone"><input id="c-phone" type="tel" className="field" value={c.phone ?? ""} onChange={(ev) => pc({ phone: ev.target.value })} /></Field>
           <Field label="Project address" required htmlFor="c-addr" error={missing?.has("project_address") ? "Add a project address before downloading this proposal." : undefined}><AddressInput
@@ -72,10 +74,9 @@ export function ProjectStep({ estimate: e, dispatch, signedIn, onDone, missing }
           <div className="sm:col-span-2"><Field label="Project notes" optional htmlFor="c-notes" hint="Private to you. Not shown on the proposal."><textarea id="c-notes" rows={2} className="field" value={c.notes ?? ""} onChange={(ev) => pc({ notes: ev.target.value })} /></Field></div>
         </div>
         {signedIn && c.name.trim() && (
-          <div className="mt-3 flex items-center gap-3">
-            <Button size="sm" variant="secondary" onClick={saveCustomer}>Save to my customers</Button>
-            {savedMsg && <span className="text-sm text-muted" role="status">{savedMsg}</span>}
-          </div>
+          <p className="mt-3 text-sm text-muted" role="status" data-testid="customer-link-status">
+            {linked ? <>Using <a href={`/dashboard/customers/${linked.id}`} className="font-semibold text-accent-ink underline">{linked.name}</a> from your Customers.</> : "This customer is added to your Customers automatically. No need to save them separately."}
+          </p>
         )}
       </section>
 
