@@ -2,6 +2,7 @@ import { companyNav, loadMyCompany } from "@/lib/enterprise/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
+import { after } from "next/server";
 import { getUser, createClient, createAdminClient } from "@/lib/supabase/server";
 import { isPmEnabled, isSupabaseConfigured, serverEnv } from "@/lib/env";
 import { ATTRIBUTION_COOKIE, decodeAttribution } from "@/lib/growth/attribution";
@@ -32,13 +33,17 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const supabase = await createClient();
   const [{ data: isAdmin }, company, premium, learning] = await Promise.all([supabase.rpc("is_admin", { p_user_id: user.id }), loadMyCompany(supabase), hasPremiumAccess(supabase), loadLearningNav(supabase)]);
   // Link the account to its lead + first-touch attribution (best effort, one indexed lookup when already linked).
+  // Runs after the page is sent (next/server after()), so this bookkeeping never delays a signed-in page.
   if (serverEnv().supabaseServiceKey) {
     const jar = await cookies();
-    const admin = createAdminClient();
-    await syncSignedInUser(admin, user, decodeAttribution(jar.get(ATTRIBUTION_COOKIE)?.value));
+    const attribution = decodeAttribution(jar.get(ATTRIBUTION_COOKIE)?.value);
     // Arrived through a member's referral link: record it (only new accounts count; idempotent).
     const ref = jar.get(REFERRAL_COOKIE)?.value;
-    if (ref) await recordReferral(admin, user.id, ref);
+    after(async () => {
+      const admin = createAdminClient();
+      await syncSignedInUser(admin, user, attribution);
+      if (ref) await recordReferral(admin, user.id, ref);
+    });
   }
   return (
     <PremiumAccessProvider unlocked={premium}>

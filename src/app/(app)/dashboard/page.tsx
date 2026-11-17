@@ -3,7 +3,7 @@ import { WhatsNewNotice } from "@/components/features/whats-new-notice";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { FileCheck2 } from "lucide-react";
-import { createAdminClient, createClient, getUser } from "@/lib/supabase/server";
+import { createAdminClient, createClient, getAuthUser, getUser } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/misc";
 import { ButtonLink } from "@/components/ui/button";
 import { BidList, type BidRow } from "./bid-list";
@@ -62,8 +62,9 @@ async function loadHistory(supabase: SupabaseClient, userId: string): Promise<Hi
  */
 async function loadChecklist(supabase: SupabaseClient, userId: string, f: { companyName: boolean; estimateIds: string[]; latestEstimateId: string | null; delivered: boolean }): Promise<ChecklistStep[] | null> {
   if (f.delivered && f.companyName) return null;
-  const { data: auth } = await supabase.auth.getUser();
-  if ((auth.user?.user_metadata as Record<string, unknown> | undefined)?.[CHECKLIST_DISMISSED_KEY]) return null;
+  // Same request-cached Auth lookup the layout and page already made: no extra round trip.
+  const authUser = await getAuthUser();
+  if ((authUser?.user_metadata as Record<string, unknown> | undefined)?.[CHECKLIST_DISMISSED_KEY]) return null;
   let meaningfulEstimates = 0, previewed = false;
   if (f.estimateIds.length && !f.delivered) {
     const [{ data: items }, prev] = await Promise.all([
@@ -89,7 +90,11 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   // The layout redirects too, but pages render in parallel with it: never assume a session here.
   if (!user) redirect("/login?next=/dashboard");
   const supabase = await createClient();
-  const [{ rows: estimates, migrated }, { data: versions }, credits, { data: biz }, libraryAccess, company, { data: referralData }] = await Promise.all([
+  const esign = isEsignEnabled();
+  const pmOn = isPmEnabled();
+  // Every independent read goes out at once: one database round trip of waiting instead of six in a row.
+  const [{ rows: estimates, migrated }, { data: versions }, credits, { data: biz }, libraryAccess, company, { data: referralData },
+    { data: gifts }, { data: trialRows }, history, { data: payRow }, [{ data: reqRows }, { data: sigRows }], [reviewQueue, pmAccess]] = await Promise.all([
     // "My bids" stays personal: Enterprise owners/managers can also read teammates' company bids (RLS),
     // which belong in the company Command Center, not here.
     loadBids(supabase, user.id),
@@ -100,28 +105,27 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     loadMyCompany(supabase),
     // Referral code + counts. Missing function (migration not run yet) just hides the card.
     supabase.rpc("my_referral"),
-  ]);
-  // Creator Partner Program: gifted members get a welcome line with their mentor and end date.
-  // Missing function (migration not applied) or no gift: nothing is shown.
-  const { data: gifts } = await supabase.rpc("my_mentorship");
-  const gift = ((gifts ?? []) as { state: string; program_state: string; channel_name: string | null; workspace_name: string; expires_at: string | null }[])
-    .find((g) => g.state === "active" && g.program_state === "active") ?? null;
-  // Facebook BID trial (exact expiry + optional upgrade). Missing function = no banner.
-  const { data: trialRows } = await supabase.rpc("my_campaign_trial");
-  const trial = (Array.isArray(trialRows) ? trialRows[0] : null) as { state: string; expires_at: string; has_paid_subscription: boolean } | null;
-  const [history, { data: payRow }] = await Promise.all([
+    // Creator Partner Program: gifted members get a welcome line with their mentor and end date.
+    // Missing function (migration not applied) or no gift: nothing is shown.
+    supabase.rpc("my_mentorship"),
+    // Facebook BID trial (exact expiry + optional upgrade). Missing function = no banner.
+    supabase.rpc("my_campaign_trial"),
     loadHistory(supabase, user.id),
     supabase.from("sales_pay_settings").select("method, rate, flat_fee, base_salary, base_exclusions").eq("user_id", user.id).maybeSingle(),
+    // Signing status (personal bids, like the list below). A missing table (migration not run yet)
+    // just means no signing data: the dashboard never fails because of it.
+    esign ? Promise.all([
+      supabase.from("signing_requests").select("id, estimate_id, version_id, status, expires_at, created_at, revoke_reason, signed_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1000),
+      supabase.from("signatures").select("id, estimate_id, version_id, version_number, total, signed_at, signer_name, pdf_status, customer_name, project_title, proposal_number").eq("user_id", user.id).order("signed_at", { ascending: false }).limit(1000),
+    ]) : Promise.resolve([{ data: null }, { data: null }] as const),
+    // V4.3 "Newly approved — needs review" (same queue as Projects; null before the SQL runs).
+    pmOn ? Promise.all([loadReviewQueue(supabase), loadPmAccess(supabase)]) : Promise.resolve([null, null] as const),
   ]);
+  const gift = ((gifts ?? []) as { state: string; program_state: string; channel_name: string | null; workspace_name: string; expires_at: string | null }[])
+    .find((g) => g.state === "active" && g.program_state === "active") ?? null;
+  const trial = (Array.isArray(trialRows) ? trialRows[0] : null) as { state: string; expires_at: string; has_paid_subscription: boolean } | null;
   const pay = payRow ? sanitizePay({ method: payRow.method, rate: Number(payRow.rate), flatFee: Number(payRow.flat_fee), baseSalary: Number(payRow.base_salary), baseExclusions: Number(payRow.base_exclusions) }) : DEFAULT_PAY;
   const referral = (referralData as MyReferral | null)?.code ? referralData as MyReferral : null;
-  // Signing status (personal bids, like the list below). A missing table (migration not run yet)
-  // just means no signing data: the dashboard never fails because of it.
-  const esign = isEsignEnabled();
-  const [{ data: reqRows }, { data: sigRows }] = esign ? await Promise.all([
-    supabase.from("signing_requests").select("id, estimate_id, version_id, status, expires_at, created_at, revoke_reason, signed_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1000),
-    supabase.from("signatures").select("id, estimate_id, version_id, version_number, total, signed_at, signer_name, pdf_status, customer_name, project_title, proposal_number").eq("user_id", user.id).order("signed_at", { ascending: false }).limit(1000),
-  ]) : [{ data: null }, { data: null }];
   const signing = signingByEstimate((reqRows ?? []) as RequestRow[], (sigRows ?? []) as SignatureRow[]);
   const recentSigned: SignedBid[] = recentSignatures((sigRows ?? []) as SignatureRow[], RECENT_SIGNED_DAYS)
     .map((x) => ({ id: x.id, estimateId: x.estimate_id, customer: x.customer_name || x.signer_name, project: x.project_title || "Untitled bid", total: Number(x.total), signedAt: x.signed_at, versionNumber: x.version_number, pdfStatus: x.pdf_status }));
@@ -160,8 +164,6 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   const rawDismissed = (await cookies()).get(PROFILE_REMINDER_COOKIE)?.value;
   const reminderDismissed = rawDismissed ? decodeURIComponent(rawDismissed) : null;
 
-  // V4.3 "Newly approved — needs review" (same queue as Projects; null before the SQL runs).
-  const [reviewQueue, pmAccess] = isPmEnabled() ? await Promise.all([loadReviewQueue(supabase), loadPmAccess(supabase)]) : [null, null];
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">

@@ -8,7 +8,7 @@ const read = (p: string) => fs.readFileSync(path.resolve(import.meta.dirname, ".
 const staticImport = /^\s*import[^;]*from\s+["']@sentry\/nextjs["']/m;
 
 describe("lazy Sentry", () => {
-  it.each(["src/instrumentation-client.ts", "src/app/error.tsx", "src/app/global-error.tsx", "src/lib/monitoring/sentry-client.ts"])(
+  it.each(["src/instrumentation.ts", "src/instrumentation-client.ts", "src/app/error.tsx", "src/app/global-error.tsx", "src/lib/monitoring/sentry-client.ts"])(
     "%s has no static @sentry/nextjs import",
     (file) => expect(read(file)).not.toMatch(staticImport),
   );
