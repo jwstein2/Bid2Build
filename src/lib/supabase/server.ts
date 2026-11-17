@@ -1,5 +1,7 @@
 import "server-only";
+import { cache } from "react";
 import { createServerClient } from "@supabase/ssr";
+import type { User } from "@supabase/supabase-js";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { isSupabaseConfigured, publicEnv, serverEnv } from "../env";
@@ -44,13 +46,23 @@ export interface SessionUser {
   createdAt?: string | null;
 }
 
-/** Verified server-side user lookup (contacts the Auth server; never trusts the cookie alone). */
-export async function getUser(): Promise<SessionUser | null> {
+/**
+ * The verified Supabase auth user for this request (contacts the Auth server; never trusts the cookie
+ * alone). Cached per server request with React cache(), so the layout, the page and helpers that all
+ * ask "who is signed in?" share one Auth round trip instead of making one each.
+ */
+export const getAuthUser = cache(async (): Promise<User | null> => {
   if (!isSupabaseConfigured()) return null;
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getUser();
   if (error || !data.user) return null;
-  return sessionUserFrom(data.user);
+  return data.user;
+});
+
+/** Verified server-side user lookup (one Auth round trip per request, shared via getAuthUser). */
+export async function getUser(): Promise<SessionUser | null> {
+  const user = await getAuthUser();
+  return user ? sessionUserFrom(user) : null;
 }
 
 /** Supabase stores phones as digits without "+"; normalise to E.164 for the app. */
