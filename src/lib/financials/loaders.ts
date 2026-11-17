@@ -11,6 +11,8 @@ import { dashboardLayout, finAccess, myBook } from "./server";
 import type { FinAccess } from "./types";
 import { resolveLayout, resolveProfile, resolveProjectProfile, type BusinessConfig, type ProjectOverride, type ResolvedLayout, type ResolvedProfile, type StoredPrefs } from "./profiles";
 import type { CardKey, KpiKey } from "./profiles/catalog";
+import { invoiceSendInfo } from "./send-state";
+import { changeOrderSettlement } from "./change-orders";
 
 type Db = SupabaseClient;
 type Row = Record<string, unknown>;
@@ -233,7 +235,7 @@ export async function loadJob(db: Db, estimateId: string, ctx: FinContext) {
   const [contract, snapshot, changes, msStatus, msRows, triggers, invoices, invRows, payments, allocations, credits, expenses, bills, billLines, commitments, budget, profit, review, alerts, codes, vendors, quotes] = await Promise.all([
     db.from("fin_job_contract_v").select("*").eq("job_id", jid).maybeSingle(),
     db.from("fin_contract_snapshots").select("id, total, payment_schedule, source, version_number, created_at").eq("job_id", jid).maybeSingle(),
-    db.from("fin_contract_changes").select("id, kind, amount, description, effective_at").eq("job_id", jid).order("effective_at"),
+    db.from("fin_contract_changes").select("id, kind, amount, description, effective_at, change_order_id").eq("job_id", jid).order("effective_at"),
     db.from("fin_milestone_status_v").select("*").eq("job_id", jid).order("seq"),
     db.from("fin_payment_milestones").select("id, due_days, due_date, percent").eq("job_id", jid),
     db.from("fin_milestone_triggers").select("id, milestone_id, trigger_kind, occurred_at, note").eq("job_id", jid).order("occurred_at"),
@@ -260,6 +262,16 @@ export async function loadJob(db: Db, estimateId: string, ctx: FinContext) {
     db.from("fin_bill_balances_v").select("bill_id, paid, balance, days_overdue").eq("book_id", ctx.bookId),
     db.from("fin_bill_payments").select("id, bill_id, paid_on, method, reference, amount, status").eq("book_id", ctx.bookId).order("paid_on", { ascending: false }),
   ]);
+  // V6 P1-B part 2 (20261130101000): send states and change-order settlement. Missing objects read as empty.
+  const jobInvIds = ((invoices.data ?? []) as Row[]).map((r) => String(r.invoice_id));
+  const [emails, sends, amendments, coCredits] = await Promise.all([
+    jobInvIds.length ? db.from("comm_messages").select("fin_invoice_id, status, sent_at, created_at").in("fin_invoice_id", jobInvIds) : Promise.resolve({ data: [] as Row[] }),
+    jobInvIds.length ? db.from("fin_invoice_sends").select("invoice_id, method, sent_on, note").in("invoice_id", jobInvIds).is("undone_at", null) : Promise.resolve({ data: [] as Row[] }),
+    db.from("fin_milestone_amendments").select("id, milestone_id, change_order_id, delta, status, reason").eq("job_id", jid),
+    db.from("fin_credit_memos").select("id, number, change_order_id, amount, status").eq("job_id", jid).not("change_order_id", "is", null),
+  ]);
+  const emailRows = ((emails as { data: Row[] | null }).data ?? []) as Row[];
+  const sendRows = ((sends as { data: Row[] | null; error?: unknown }).error ? [] : (sends as { data: Row[] | null }).data ?? []) as Row[];
   const ms = (msRows.data ?? []) as Row[];
   const quoteRows = (quotes.data ?? []) as Row[];
   const { data: revRows } = quoteRows.length
@@ -268,7 +280,11 @@ export async function loadJob(db: Db, estimateId: string, ctx: FinContext) {
   const invExtra = new Map(((invRows.data ?? []) as Row[]).map((r) => [String(r.id), r]));
   const jobBillIds = new Set(((billLines.data ?? []) as Row[]).map((l) => String(l.bill_id)));
   const allocs = ((allocations.data ?? []) as Row[]);
-  const invoiceList = ((invoices.data ?? []) as Row[]).map((r) => ({ ...r, ...invExtra.get(String(r.invoice_id)) }));
+  const invoiceList = ((invoices.data ?? []) as Row[]).map((r) => {
+    const id = String(r.invoice_id);
+    const mark = sendRows.find((x) => String(x.invoice_id) === id) ?? null;
+    return { ...r, ...invExtra.get(id), send: invoiceSendInfo(r, emailRows.filter((e) => String(e.fin_invoice_id) === id), mark), send_note: mark?.note ?? null } as Row;
+  });
   const invIds = new Set(invoiceList.map((r) => String(r.invoice_id)));
   return {
     ...base,
@@ -283,6 +299,8 @@ export async function loadJob(db: Db, estimateId: string, ctx: FinContext) {
     }),
     triggers: (triggers.data ?? []) as Row[],
     invoices: invoiceList,
+    changeOrders: changeOrderSettlement((changes.data ?? []) as Row[], (msStatus.data ?? []) as Row[],
+      ((amendments as { data: Row[] | null; error?: unknown }).data ?? []) as Row[], ((coCredits as { data: Row[] | null; error?: unknown }).error ? [] : (coCredits as { data: Row[] | null }).data ?? []) as Row[]),
     payments: ((payments.data ?? []) as Row[]).map((p) => ({ ...p, allocations: allocs.filter((a) => a.payment_id === p.payment_id && invIds.has(String(a.invoice_id))) })),
     credits: (credits.data ?? []) as Row[],
     expenses: (expenses.data ?? []) as Row[],

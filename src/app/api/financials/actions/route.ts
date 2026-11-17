@@ -45,6 +45,12 @@ const body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("delete_invoice_draft"), invoiceId: id }),
   z.object({ action: z.literal("void_invoice"), invoiceId: id, reason: text(500).min(1) }),
   z.object({ action: z.literal("delete_invoice"), invoiceId: id, reason: text(500).min(1) }),
+  z.object({ action: z.literal("mark_sent"), invoiceId: id, method: z.enum(["own_email", "printed", "in_person", "text", "other"]), sentOn: day.optional(), note: text(500).optional() }),
+  z.object({ action: z.literal("unmark_sent"), invoiceId: id, reason: text(500).min(1) }),
+  z.object({ action: z.literal("co_credit"), jobId: id, changeOrderId: id, applyTo: alloc.optional(), key }),
+  z.object({ action: z.literal("co_milestone"), jobId: id, changeOrderId: id, amount, description: text(300).optional() }),
+  z.object({ action: z.literal("co_amend"), milestoneId: id, changeOrderId: id, delta: amount, reason: text(500).min(1) }),
+  z.object({ action: z.literal("amendment_decide"), amendmentId: id, approve: z.boolean() }),
   z.object({ action: z.literal("record_payment"), p: z.object({ customerId: id.optional(), jobId: id.optional(), receivedOn: day.optional(), method: z.enum(["check", "cash", "ach", "card", "wire", "other"]), reference: text(120).optional(), amount, memo: text(1000).optional(), allocations: alloc.optional() }), key }),
   z.object({ action: z.literal("allocate_payment"), paymentId: id, allocations: alloc, key }),
   z.object({ action: z.literal("verify_payment"), paymentId: id }),
@@ -79,6 +85,12 @@ async function rpcOk(db: RpcDb, fn: string, args: Record<string, unknown>) {
   if (error) throw new fin.FinError(error.message, error.message, error.details ?? undefined);
   return json({ ok: true });
 }
+type RpcDataDb = { rpc: (fn: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: { message: string; details?: string | null } | null }> };
+async function rpcData(db: RpcDataDb, fn: string, args: Record<string, unknown>) {
+  const { data, error } = await db.rpc(fn, args);
+  if (error) throw new fin.FinError(error.message, error.message, error.details ?? undefined);
+  return data;
+}
 
 export async function POST(req: Request) {
   const g = await finGuard({ write: true, limitKey: "fin-action" });
@@ -105,6 +117,12 @@ export async function POST(req: Request) {
         if (error) throw new fin.FinError(error.message, error.message, error.details ?? undefined);
         return json(data);
       }
+      case "mark_sent": return json({ id: await rpcData(db, "fin_invoice_mark_sent", { p_invoice_id: a.invoiceId, p: { method: a.method, sentOn: a.sentOn, note: a.note } }) });
+      case "unmark_sent": await rpcData(db, "fin_invoice_unmark_sent", { p_invoice_id: a.invoiceId, p_reason: a.reason }); return json({ ok: true });
+      case "co_credit": return json((await rpcData(db, "fin_change_order_credit", { p_job_id: a.jobId, p: { changeOrderId: a.changeOrderId, applyTo: a.applyTo ?? [] }, p_idempotency_key: a.key ?? null })) as Record<string, unknown>);
+      case "co_milestone": return json((await rpcData(db, "fin_change_order_milestones_add", { p_job_id: a.jobId, p: { changeOrderId: a.changeOrderId, milestones: [{ description: a.description || undefined, amount: a.amount }] } })) as Record<string, unknown>);
+      case "co_amend": return json({ amendmentId: await rpcData(db, "fin_milestone_amendment_request", { p_milestone_id: a.milestoneId, p: { changeOrderId: a.changeOrderId, delta: a.delta, reason: a.reason } }) });
+      case "amendment_decide": return json({ status: await rpcData(db, "fin_milestone_amendment_decide", { p_amendment_id: a.amendmentId, p_approve: a.approve }) });
       case "void_invoice": return json({ ok: await fin.voidInvoice(db, a.invoiceId, a.reason) ?? true });
       case "record_payment": return json(await fin.recordPayment(db, bookId, a.p, a.key));
       case "allocate_payment": return json({ ok: await fin.allocatePayment(db, a.paymentId, a.allocations, a.key) ?? true });

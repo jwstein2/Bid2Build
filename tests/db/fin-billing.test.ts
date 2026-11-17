@@ -375,6 +375,7 @@ d("Financial Command Center: receivables, milestones and emails (database)", () 
   });
 
   it("rollbacks remove the financial objects (newest first) and the migrations re-apply", async () => {
+    await pool.query(readFileSync("docs/financials/rollback_20261130101000.sql", "utf8"));
     await pool.query(readFileSync("docs/financials/rollback_20261130001000.sql", "utf8"));
     await pool.query(readFileSync("docs/financials/rollback_20261129002000.sql", "utf8"));
     await pool.query(readFileSync("docs/project-operations/rollback_20261129001000.sql", "utf8")); // newest first
@@ -385,7 +386,7 @@ d("Financial Command Center: receivables, milestones and emails (database)", () 
     expect((await pool.query("select public.company_permission_keys() as k")).rows[0].k).not.toContain("view_company_financials");
     // Change orders and estimates were never touched by finance.
     expect((await pool.query("select count(*)::int as n from public.change_orders where estimate_id = $1", [est.id])).rows[0].n).toBe(3);
-    for (const f of ["20261124001000_fin_foundation.sql", "20261124002000_fin_receivables.sql", "20261124003000_fin_costs.sql", "20261124004000_fin_communications.sql", "20261124005000_fin_customer_merge.sql", "20261125001000_fin_access_retention.sql", "20261126001000_fin_v5_ar_job_summary.sql", "20261128001000_fin_v6_corrections.sql", "20261129002000_fin_quick_actions.sql", "20261130001000_fin_invoice_delete_mistake.sql"]) await applyMigration(pool, f);
+    for (const f of ["20261124001000_fin_foundation.sql", "20261124002000_fin_receivables.sql", "20261124003000_fin_costs.sql", "20261124004000_fin_communications.sql", "20261124005000_fin_customer_merge.sql", "20261125001000_fin_access_retention.sql", "20261126001000_fin_v5_ar_job_summary.sql", "20261128001000_fin_v6_corrections.sql", "20261129002000_fin_quick_actions.sql", "20261130001000_fin_invoice_delete_mistake.sql", "20261130101000_fin_send_states_scope_credits.sql"]) await applyMigration(pool, f);
     expect((await pool.query("select public.company_permission_keys() as k")).rows[0].k).toContain("manage_financial_seats");
   });
 });

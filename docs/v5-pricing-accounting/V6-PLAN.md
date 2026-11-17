@@ -45,7 +45,13 @@ V6 replaces V5 and V5.1. Work that already shipped stays. Every phase is a separ
 - **Void with a reason** on bills, credits and approved expenses (invoices, payments and bill payments already had it). Posted records are never deleted; to correct one, void it and enter it again. Drafts are still the only thing that can be deleted.
 - **Possible duplicate expenses (Scenario B):** a new expense with the same amount and vendor/payee within 3 days of a live one goes to Needs review. Nothing changes until a person picks "Void as duplicate" (keeps the original, voids the copy with "Duplicate of EXP-x", audit kept) or "Not a duplicate".
 - **SQL:** `run-v6-p1b-corrections.sql` (= `supabase/migrations/20261128001000_fin_v6_corrections.sql`). Rollback: `docs/financials/rollback_20261128001000.sql`.
-- Still to come in P1-B: invoice email draft states (Draft → Issued → Email prepared → Sent → Paid), scope-removal credit change orders, dashboard cards and quick actions.
+- Dashboard cards and quick actions shipped in #109 and #110. Invoice preview and safe delete-a-mistake shipped in #111.
+
+## P1-B, second PR: send states and scope-removal change orders
+
+- **Invoice status track** on every invoice: Draft → Issued → Email prepared → Sent → Paid (also "Email failed", "partly paid", days late). It comes from Built2Bid emails plus a new **Mark as sent** for invoices sent another way (own email, printed, in person, text). A mark made by mistake is undone with a reason; both stay in the history. A sent invoice can no longer be deleted as a mistake.
+- **Change orders card (Scenario D):** approved/signed change orders and how each is billed. Added scope becomes its own payment. Removed scope is taken off a remaining payment (owner/financial admin approves) or credited with a credit memo linked to the change order. Each change order is billed one way only. The original signed agreement and issued invoices never change. Credits now count against the "billed over contract" alert.
+- **SQL:** `run-v6-send-scope.sql` (= `supabase/migrations/20261130101000_fin_send_states_scope_credits.sql`). Rollback: `docs/financials/rollback_20261130101000.sql`.
 
 ## Next phases (recommended order)
 
