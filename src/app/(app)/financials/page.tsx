@@ -1,0 +1,131 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { LayoutGrid, Settings2 } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
+import { isFinancialsEnabled } from "@/lib/env";
+import { loadFinState, loadHome, type Figure } from "@/lib/financials/loaders";
+import { canUseAccountantMode } from "@/lib/financials/permissions";
+import { CARDS, KPI_KEYS, QUICK_ACTION_NEEDS, type CardKey } from "@/lib/financials/profiles/catalog";
+import { PRESETS } from "@/lib/financials/profiles/presets";
+import { KPI_LABELS, QUICK_ACTION_LABELS, QUICK_ACTION_TARGET, REPORT_HREF, REPORT_LABELS } from "@/lib/financials/ui-labels";
+import { formatCurrency } from "@/lib/estimate/money";
+import { MetricCard } from "@/components/ui/metric-card";
+import { Notice } from "@/components/ui/misc";
+import { ButtonLink } from "@/components/ui/button";
+import { BasisBadge } from "@/components/financials/basis";
+import { AlertsPanel, type AlertRow } from "@/components/financials/alerts-panel";
+import { CustomizeDashboard, ModeToggle } from "@/components/financials/customize-dashboard";
+import { FinStateNotice } from "@/components/financials/fin-state-notice";
+
+export const metadata: Metadata = { title: "Financials", robots: { index: false } };
+
+const show = (f: Figure) => (f.money ? formatCurrency(f.value) : f.value);
+
+/**
+ * Financials home (Know Your Numbers). Driven by the trade profile + the person's role: which cards, quick
+ * actions and reports appear comes from src/lib/financials/profiles; the person can customize and restore.
+ * Essential alerts are always shown. Every number opens the records behind it.
+ */
+export default async function FinancialsHome() {
+  if (!isFinancialsEnabled()) notFound();
+  const db = await createClient();
+  const state = await loadFinState(db);
+  if (state.kind !== "ready") {
+    return <div className="mx-auto max-w-4xl space-y-4"><h1 className="text-3xl font-extrabold">Financials</h1><FinStateNotice state={state} /></div>;
+  }
+  const { ctx } = state;
+  const { access, layout, profile } = ctx;
+  const home = await loadHome(db, ctx);
+  const perms = access.permissions;
+  const canWrite = access.active && !access.readOnly;
+  const essential = layout.cards.filter((c) => c.essential);
+  const regular = layout.cards.filter((c) => !c.essential && c.visible);
+  const { data: jobs } = await db.from("fin_jobs").select("id, estimate_id").eq("book_id", ctx.bookId);
+  const jobHref = new Map(((jobs ?? []) as { id: string; estimate_id: string }[]).map((j) => [j.id, `/financials/jobs/${j.estimate_id}`] as const));
+  const alerts: AlertRow[] = (home.alerts as unknown as AlertRow[]).map((a) => ({ ...a, jobHref: a.job_id ? jobHref.get(a.job_id) ?? null : null }));
+  const quick = profile.quickActions.filter((q) => perms.includes(QUICK_ACTION_NEEDS[q]));
+  const card = (key: CardKey, size: "md" | "sm" = "md") => {
+    const f = home.cards[key];
+    if (!f) return null;
+    return (
+      <MetricCard key={key} size={size} title={CARDS[key].title} value={show(f)} sub={f.sub ?? f.note} href={f.href} tone={f.tone} empty={f.empty}
+        status={<BasisBadge basis={f.basis} />} action={f.value === "Coming soon" ? "See what's available" : "View records"} testId={`fin-card-${key}`} />
+    );
+  };
+
+  return (
+    <div className="mx-auto max-w-7xl space-y-6" data-testid="fin-home" data-preset={profile.presetKey}>
+      <header className="flex flex-wrap items-end gap-3">
+        <div className="min-w-0 basis-full sm:basis-auto sm:flex-1">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">Know Your Numbers</p>
+          <h1 className="text-3xl font-extrabold">Financials</h1>
+          <p className="text-sm text-ink-soft">{access.name} · {PRESETS[profile.presetKey].label}{profile.trades.length > 1 ? ` + ${profile.trades.length - 1} more trade${profile.trades.length > 2 ? "s" : ""}` : ""}</p>
+        </div>
+        {canUseAccountantMode(perms) && <ModeToggle mode={layout.mode} />}
+        <ButtonLink href="/financials/tools" variant="secondary" size="sm"><LayoutGrid className="h-4 w-4" aria-hidden /> All tools</ButtonLink>
+        {perms.includes("manage_financial_config") && <ButtonLink href="/company/business-config" variant="ghost" size="sm"><Settings2 className="h-4 w-4" aria-hidden /> Trade setup</ButtonLink>}
+      </header>
+
+      {access.readOnly && <Notice tone="warn" title="Read-only">The Financials add-on lapsed. Everything stays readable and exportable; nothing was deleted.</Notice>}
+      {!ctx.configSaved && perms.includes("manage_financial_config") && (
+        <Notice title="Tell Financials what kind of work you do">
+          Your home page adapts to your trades and how you bill. <Link href="/company/business-config" className="font-semibold underline">Set up Business &amp; Trade Configuration</Link>
+        </Notice>
+      )}
+
+      <section aria-labelledby="fin-kpi-h">
+        <h2 id="fin-kpi-h" className="sr-only">Headline numbers</h2>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {layout.kpis.map((k) => {
+            const f = home.kpis[k];
+            return <MetricCard key={k} title={KPI_LABELS[k]} value={show(f)} sub={f.sub} href={f.href} tone={f.tone} empty={f.empty} status={<BasisBadge basis={f.basis} />} hint={f.note} testId={`fin-kpi-${k}`} />;
+          })}
+        </div>
+      </section>
+
+      <section aria-labelledby="fin-essential-h">
+        <h2 id="fin-essential-h" className="mb-2 font-display text-lg font-extrabold">Needs attention</h2>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">{essential.map((c) => card(c.key, "sm"))}</div>
+      </section>
+
+      <AlertsPanel alerts={alerts} canAct={canWrite && (perms.includes("create_invoices") || perms.includes("manage_financial_config"))} />
+
+      {quick.length > 0 && (
+        <section aria-labelledby="fin-quick-h">
+          <h2 id="fin-quick-h" className="mb-2 font-display text-lg font-extrabold">Quick actions</h2>
+          <div className="flex flex-wrap gap-2">
+            {quick.map((q) => {
+              const target = QUICK_ACTION_TARGET[q];
+              return target && canWrite
+                ? <ButtonLink key={q} href={`/financials/records?view=jobs&do=${target}`} variant="secondary" size="sm">{QUICK_ACTION_LABELS[q]}</ButtonLink>
+                : <span key={q} className="inline-flex min-h-9 items-center rounded-lg border border-dashed border-line px-3 text-sm text-muted" title="Coming in a later update">{QUICK_ACTION_LABELS[q]} · later</span>;
+            })}
+          </div>
+        </section>
+      )}
+
+      {regular.length > 0 && (
+        <section aria-labelledby="fin-cards-h">
+          <h2 id="fin-cards-h" className="mb-2 font-display text-lg font-extrabold">Your cards</h2>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">{regular.map((c) => card(c.key))}</div>
+        </section>
+      )}
+
+      <section aria-labelledby="fin-reports-h" className="rounded-xl border border-line bg-surface p-4">
+        <h2 id="fin-reports-h" className="font-display text-lg font-extrabold">Reports for your kind of work</h2>
+        <ul className="mt-2 grid gap-1 sm:grid-cols-2 lg:grid-cols-3">
+          {profile.reports.map((r) => (
+            <li key={r}>{REPORT_HREF[r]
+              ? <Link href={REPORT_HREF[r]!} className="flex min-h-11 items-center text-sm font-semibold text-accent-ink underline">{REPORT_LABELS[r]}</Link>
+              : <span className="flex min-h-11 items-center text-sm text-muted">{REPORT_LABELS[r]}</span>}</li>
+          ))}
+        </ul>
+      </section>
+
+      <CustomizeDashboard
+        cards={layout.cards.map((c) => ({ key: c.key, title: CARDS[c.key].title, visible: c.visible, locked: c.locked, essential: c.essential }))}
+        kpis={layout.kpis} allKpis={KPI_KEYS} canCompany={perms.includes("manage_financial_config")} />
+    </div>
+  );
+}

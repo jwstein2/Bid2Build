@@ -2,6 +2,8 @@
  * Pure mapping from a Stripe subscription to our entitlement record. Kept free of I/O so it can be
  * unit-tested; the webhook route and reconciliation both use it.
  */
+import { ENTERPRISE_BASE_CENTS, ENTERPRISE_INCLUDED_USERS, enterpriseMonthlyCents } from "../enterprise/pricing";
+
 export type Plan = "monthly" | "annual" | "enterprise";
 
 /** Configured Stripe price ids. Enterprise ids are optional until the Enterprise prices exist. */
@@ -86,4 +88,24 @@ export function subscriptionToUpdate(sub: SubscriptionLike, userId: string, even
 export function isEntitled(u: Pick<SubscriptionUpdate, "p_status" | "p_current_period_end">, now = new Date()): boolean {
   if (!["active", "trialing", "past_due"].includes(u.p_status)) return false;
   return !u.p_current_period_end || new Date(u.p_current_period_end) > now;
+}
+
+type ListItem = { quantity?: number | null; price: { id: string; unit_amount?: number | null } };
+
+/**
+ * List value of one billing period of a subscription, in cents. Per-unit items are unit_amount x
+ * quantity. The Enterprise seat price is graduated (Stripe reports unit_amount null for tiered prices),
+ * so it is priced with the same tier table the customer was quoted.
+ */
+export function subscriptionListCents(items: ListItem[], prices: Pick<PriceIds, "enterpriseSeat">): number {
+  let cents = 0;
+  for (const i of items) {
+    const qty = Math.max(0, i.quantity ?? 1);
+    if (prices.enterpriseSeat && i.price?.id === prices.enterpriseSeat) {
+      if (qty > 0) cents += enterpriseMonthlyCents(ENTERPRISE_INCLUDED_USERS + qty) - ENTERPRISE_BASE_CENTS;
+    } else {
+      cents += (i.price?.unit_amount ?? 0) * qty;
+    }
+  }
+  return cents;
 }

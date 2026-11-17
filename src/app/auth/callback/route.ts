@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { safeNext } from "@/lib/http/redirect";
 import { eventIds, recordEvent } from "@/lib/growth/events";
+import { recordMarketingConsent } from "@/lib/email/consent";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -12,7 +13,7 @@ export async function GET(request: Request) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error && data.user) {
       if (url.searchParams.get("marketing") === "1") {
-        await supabase.from("profiles").update({ marketing_opt_in: true, marketing_opt_in_at: new Date().toISOString() }).eq("id", data.user.id);
+        try { await recordMarketingConsent(createAdminClient(), data.user.id, { optIn: true, source: "email_link" }); } catch { /* sign-in never fails over a preference */ }
       }
       // Same stable id as the signed-in sync in leads.ts, so a signup is counted once.
       try { await recordEvent(createAdminClient(), { userId: data.user.id, event: "account_created", eventId: eventIds.accountCreated(data.user.id) }); } catch { /* best effort */ }

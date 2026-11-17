@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { REVEAL_FEATURE_EVENT } from "@/lib/features/state";
-import { Sparkles, CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, Plug, LayoutTemplate, LogOut, X, UserCog, Receipt, Gauge, SquareKanban, CalendarRange, GraduationCap, Palette } from "lucide-react";
+import { Sparkles, CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, Plug, LayoutTemplate, LogOut, X, UserCog, Receipt, Gauge, SquareKanban, CalendarRange, GraduationCap, Palette, Landmark, Shapes, Bot, House } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ButtonLink } from "@/components/ui/button";
 import { Logo } from "./logo";
@@ -49,12 +49,20 @@ export type LearningNav = { creator: boolean; participant: boolean };
  */
 const COMPANY_PROFILE: NavItem = { href: "/settings/company", label: "Company profile", icon: Building2 };
 
+/** Financials (NEXT_PUBLIC_FINANCIALS=on only): its own "Know Your Numbers" group, plus two Company settings pages. */
+const FINANCIALS: NavItem = { href: "/financials", label: "Financials", icon: Landmark };
+const FIN_SETTINGS: NavItem[] = [
+  { href: "/company/business-config", label: "Business & trades", icon: Shapes },
+  { href: "/company/ai-automation", label: "AI & Automation", icon: Bot },
+];
+
 /** Projects (schedules) sit right below Bids when project scheduling is switched on. */
 const PROJECTS: NavItem = { href: "/projects", label: "Projects", icon: CalendarRange };
+const HOME: NavItem = { href: "/home", label: "Home", icon: House, exact: true };
 
-export function AppSidebar({ isAdmin, email, company, projects = false, theme = null, learning }: { isAdmin: boolean; email: string | null; company?: CompanyNav | null; projects?: boolean; theme?: ThemePref | null; learning?: LearningNav | null }) {
-  const work: NavItem[] = projects ? [NAV[0], PROJECTS, ...NAV.slice(1)] : NAV;
-  const nav: NavItem[] = [...work, ...ACCOUNT_NAV];
+export function AppSidebar({ isAdmin, email, company, projects = false, financials = false, home = false, theme = null, learning }: { isAdmin: boolean; email: string | null; company?: CompanyNav | null; projects?: boolean; financials?: boolean; home?: boolean; theme?: ThemePref | null; learning?: LearningNav | null }) {
+  const work: NavItem[] = [...(home ? [HOME] : []), ...(projects ? [NAV[0], PROJECTS, ...NAV.slice(1)] : NAV)];
+  const nav: NavItem[] = [...work, ...(financials ? [FINANCIALS, ...FIN_SETTINGS] : []), ...ACCOUNT_NAV];
   const path = usePathname();
   const [open, setOpen] = useState(false);
   // eslint-disable-next-line react-hooks/set-state-in-effect -- close the mobile menu after navigating
@@ -101,7 +109,7 @@ export function AppSidebar({ isAdmin, email, company, projects = false, theme = 
   return (
     <>
       <div className="flex items-center justify-between gap-1 px-3 py-3 sm:gap-2 sm:px-4 md:py-4">
-        <Logo tone="dark" href="/dashboard" />
+        <Logo tone="dark" href={home ? "/home" : "/dashboard"} />
         <div className="flex items-center gap-1 max-[380px]:gap-0 md:hidden">
           <ButtonLink href="/bids" variant="accent" size="sm" className="min-h-11 max-[380px]:px-2.5"><FileText className="h-4 w-4 max-[380px]:hidden" aria-hidden /> New bid</ButtonLink>
           <ThemeToggle signedIn account={theme} tone="dark" />
@@ -122,10 +130,17 @@ export function AppSidebar({ isAdmin, email, company, projects = false, theme = 
       {!open && current && <p className="flex items-center gap-1.5 px-4 pb-2 text-xs text-[#B8C6D4] md:hidden">{current.label}{"premium" in current && current.premium && <PremiumDiamond tone="dark" />}</p>}
       <nav id="account-nav" aria-label="Account" className={cn("flex-col gap-1 px-2 pb-3 md:mt-4 md:flex", open ? "flex max-md:motion-drop-in" : "hidden")}>
         {work.map(link)}
+        {financials && (
+          <>
+            <p className="mt-3 px-3 pb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#B8C6D4]" data-testid="nav-numbers-heading">Know Your Numbers</p>
+            {link(FINANCIALS)}
+          </>
+        )}
         <p className="mt-3 truncate px-3 pb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#B8C6D4]" title={company?.name} data-testid="nav-company-heading">{company ? `Company · ${company.name}` : "Company"}</p>
         <Link href={COMPANY_PROFILE.href} aria-current={active(COMPANY_PROFILE.href) ? "page" : undefined} data-testid="nav-company-profile" className={cn(item, active(COMPANY_PROFILE.href) ? "bg-white/10 text-white shadow-[inset_3px_0_0_var(--color-cyan)]" : "text-[#C9D6E3] hover:bg-white/5 hover:text-white")}>
           <Building2 className={cn("h-4 w-4", active(COMPANY_PROFILE.href) ? "text-cyan" : "")} aria-hidden /> {COMPANY_PROFILE.label}
         </Link>
+        {financials && FIN_SETTINGS.map(link)}
         {company?.links.map((l) => {
           const on = active(l.href, companyExact(l.href));
           const Icon = COMPANY_ICONS[l.href];

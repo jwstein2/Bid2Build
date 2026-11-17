@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { after } from "next/server";
 import { getUser, createClient, createAdminClient } from "@/lib/supabase/server";
-import { isPmEnabled, isSupabaseConfigured, serverEnv } from "@/lib/env";
+import { isFinancialsEnabled, isPmEnabled, isSupabaseConfigured, isUnifiedHomeEnabled, serverEnv } from "@/lib/env";
 import { ATTRIBUTION_COOKIE, decodeAttribution } from "@/lib/growth/attribution";
 import { syncSignedInUser } from "@/lib/growth/leads";
 import { REFERRAL_COOKIE } from "@/lib/growth/referral";
@@ -51,7 +51,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     {/* app-theme: marks a customer app screen, so the Dark Mode tokens (globals.css) apply. */}
     <div className="app-theme flex min-h-screen flex-col md:flex-row">
       <aside className="on-dark bg-navy text-white md:sticky md:top-0 md:flex md:h-screen md:w-64 md:shrink-0 md:flex-col md:overflow-y-auto md:overscroll-contain no-print">
-        <AppSidebar isAdmin={Boolean(isAdmin)} projects={isPmEnabled()} company={companyNav(company)} learning={learning} email={user.email ?? (user.phone ? formatPhone(user.phone) : null)} theme={user.theme ?? null} />
+        <AppSidebar isAdmin={Boolean(isAdmin)} projects={isPmEnabled()} financials={isFinancialsEnabled()} home={isUnifiedHomeEnabled()} company={companyNav(company)} learning={learning} email={user.email ?? (user.phone ? formatPhone(user.phone) : null)} theme={user.theme ?? null} />
       </aside>
       <main id="main" className="min-w-0 flex-1 px-4 py-6 sm:px-8 md:pt-2">
         {/* Desktop header row: Light/Dark switch, top right. On phones it sits in the top bar. */}

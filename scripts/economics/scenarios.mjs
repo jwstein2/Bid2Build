@@ -1,0 +1,135 @@
+#!/usr/bin/env node
+/**
+ * Built2Bid unit-economics scenario model (V5.0 pricing audit). Deterministic: every number in
+ * docs/pricing-audit-v5/ECONOMICS.md is produced by `node scripts/economics/scenarios.mjs`.
+ *
+ * Every input below is an ASSUMPTION unless marked LIVE (read from Stripe/Supabase on 2026-11-17)
+ * or PUBLIC (provider list price). No provider invoices were available: James has not entered
+ * actual costs in /admin/costs yet. Replace the constants and re-run when real numbers exist.
+ */
+
+// ---- Prices (LIVE in Stripe, except FCC which is PROPOSED and not created) --------------------
+const STD_M = 19.99, STD_Y = 149, PM_M = 4.99, PM_Y = 49.99, ED = 1.99;
+const ENT_BASE = 49.99;
+const ENT_TIERS = [[2, 19.99], [7, 17.99], [Infinity, 15.99]]; // cumulative extra seats
+const FCC_BASE = 24.99, FCC_SEAT = 4.99; // PROPOSED (3 financial users included in the base)
+
+const entMonthly = (users) => {
+  let extra = Math.max(0, users - 3), prev = 0, t = ENT_BASE;
+  for (const [upTo, unit] of ENT_TIERS) { if (extra <= prev) break; t += (Math.min(extra, upTo) - prev) * unit; prev = upTo; }
+  return t;
+};
+
+// ---- Stripe fees (PUBLIC, US cards; confirm on stripe.com/pricing) ----------------------------
+// Card 2.9% + $0.30 per successful charge, Billing 0.7% of recurring volume, Tax 0.5% per transaction.
+const PCT = 0.029 + 0.007 + 0.005;
+const fee = (invoice) => invoice * PCT + 0.30;
+
+// ---- Customer mix (share of ALL signed-up companies; ASSUMPTION) -----------------------------
+const ENT_USERS = 6, ENT_EXTRA_EDITORS = 1, ENT_FCC_EXTRA_SEATS = 1;
+const MIX = [
+  // [segment, share, monthly list revenue, invoices per month, usage weight, revenue without proposed Financials (if any)]
+  ["Free", 0.55, 0, 0, 0.3],
+  ["Standard monthly", 0.17, STD_M, 1, 1],
+  ["Standard annual", 0.08, STD_Y / 12, 1 / 12, 1],
+  ["Standard + PM (monthly)", 0.06, STD_M + PM_M, 1, 1.2],
+  ["Standard + Financials (proposed)", 0.05, STD_M + FCC_BASE, 1, 1.6, STD_M],
+  ["Standard + PM + Financials (proposed)", 0.04, STD_M + PM_M + FCC_BASE, 1, 1.8, STD_M + PM_M],
+  ["Enterprise (6 users, 1 extra editor)", 0.035, entMonthly(ENT_USERS) + ENT_EXTRA_EDITORS * ED, 1, ENT_USERS * 0.8],
+  ["Enterprise + Financials (proposed, 4 fin seats)", 0.015, entMonthly(ENT_USERS) + ENT_EXTRA_EDITORS * ED + FCC_BASE + ENT_FCC_EXTRA_SEATS * FCC_SEAT, 1, ENT_USERS, entMonthly(ENT_USERS) + ENT_EXTRA_EDITORS * ED],
+];
+
+// ---- Variable cost per usage unit per month (ASSUMPTION; 1 unit = one active solo contractor) --
+const CASES = {
+  conservative: { email: 0.02, storage: 0.02, ai: 0.01, compute: 0.03, supportMin: 4 },
+  expected: { email: 0.04, storage: 0.05, ai: 0.03, compute: 0.06, supportMin: 6 },
+  high: { email: 0.12, storage: 0.25, ai: 0.15, compute: 0.20, supportMin: 15 },
+};
+const SUPPORT_RATE_PER_HOUR = 40; // founder time is NOT free: priced at a $40/h loaded rate
+const FREE_SUPPORT_FACTOR = 0.1;  // free accounts get docs/email only
+
+// ---- Fixed platform cost by company count (PUBLIC list prices + ASSUMED sizing) --------------
+function fixed(n) {
+  const supabaseCompute = n <= 250 ? 0 : n <= 1000 ? 15 : n <= 2500 ? 60 : n <= 5000 ? 110 : 210; // Small/Medium/Large/XL beyond $10 credit
+  const pitr = n >= 100 ? 100 : 0; // recommended once financial records exist
+  const netlify = 19 + (n <= 500 ? 0 : n <= 2500 ? 25 : n <= 5000 ? 75 : 175); // Pro seat + function/bandwidth overage estimate
+  const resend = n <= 100 ? 0 : n <= 1500 ? 20 : n <= 3000 ? 90 : n <= 6000 ? 160 : 350;
+  const sentry = n <= 500 ? 0 : 26;
+  const uptime = n <= 500 ? 0 : 20;
+  return { supabase: 25 + supabaseCompute + pitr, netlify, email: resend, workspace: 8.4, domain: 1.5, sentry, uptime };
+}
+const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
+
+const money = (x) => (x < 0 ? "-" : "") + "$" + Math.abs(x).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+const pct = (x) => (x * 100).toFixed(1) + "%";
+
+function scenario(n, caseName, includeProposed = true) {
+  const c = CASES[caseName];
+  let revenue = 0, stripe = 0, variable = 0, paying = 0;
+  for (const [, share, rev, inv, weight, proposed] of MIX) {
+    const count = n * share;
+    const r = proposed !== undefined && !includeProposed ? proposed : rev;
+    revenue += count * r;
+    if (r > 0) { stripe += count * inv * fee(r / inv); paying += count; }
+    const perUnit = c.email + c.storage + c.ai + c.compute;
+    const supportMin = r > 0 ? c.supportMin : c.supportMin * FREE_SUPPORT_FACTOR;
+    variable += count * (weight * perUnit + (supportMin / 60) * SUPPORT_RATE_PER_HOUR * Math.max(1, weight / 2));
+  }
+  const f = fixed(n);
+  const contribution = revenue - stripe - variable;
+  return { n, revenue, stripe, variable, fixed: sum(f), f, contribution, afterFixed: contribution - sum(f), paying, margin: revenue ? contribution / revenue : 0 };
+}
+
+const out = [];
+const p = (s = "") => out.push(s);
+p("<!-- Generated by scripts/economics/scenarios.mjs. Edit the script, not this block. -->");
+p("### Monthly scenarios, expected costs, with proposed Financials revenue");
+p("");
+p("| Companies | Paying | MRR | Stripe fees | Direct variable | Contribution | Contribution margin | Fixed platform | After fixed platform |");
+p("|---:|---:|---:|---:|---:|---:|---:|---:|---:|");
+for (const n of [100, 500, 1000, 2500, 5000, 10000]) {
+  const s = scenario(n, "expected");
+  p(`| ${n.toLocaleString()} | ${Math.round(s.paying).toLocaleString()} | ${money(s.revenue)} | ${money(s.stripe)} | ${money(s.variable)} | ${money(s.contribution)} | ${pct(s.margin)} | ${money(s.fixed)} | ${money(s.afterFixed)} |`);
+}
+p("");
+p("### Same mix, three cost cases (contribution margin / monthly result after fixed platform)");
+p("");
+p("| Companies | Conservative | Expected | High usage | Expected, without Financials revenue |");
+p("|---:|---:|---:|---:|---:|");
+for (const n of [100, 500, 1000, 2500, 5000, 10000]) {
+  const cell = (k, inc = true) => { const s = scenario(n, k, inc); return `${pct(s.margin)} / ${money(s.afterFixed)}`; };
+  p(`| ${n.toLocaleString()} | ${cell("conservative")} | ${cell("expected")} | ${cell("high")} | ${cell("expected", false)} |`);
+}
+p("");
+p("### Per-segment monthly unit economics (expected costs)");
+p("");
+p("| Segment | List revenue / mo | Stripe fees / mo | Direct variable / mo | Contribution / mo | Margin |");
+p("|---|---:|---:|---:|---:|---:|");
+for (const [name, , rev, inv, weight] of MIX) {
+  const c = CASES.expected;
+  const st = rev > 0 ? inv * fee(rev / inv) : 0;
+  const v = weight * (c.email + c.storage + c.ai + c.compute) + ((rev > 0 ? c.supportMin : c.supportMin * FREE_SUPPORT_FACTOR) / 60) * SUPPORT_RATE_PER_HOUR * Math.max(1, weight / 2);
+  p(`| ${name} | ${money2(rev)} | ${money2(st)} | ${money2(v)} | ${money2(rev - st - v)} | ${rev ? pct((rev - st - v) / rev) : "n/a"} |`);
+}
+function money2(x) { return (x < 0 ? "-$" : "$") + Math.abs(x).toFixed(2); }
+p("");
+p("### Enterprise graduated seats (monthly, LIVE prices)");
+p("");
+p("| Users | Monthly | Effective per user |");
+p("|---:|---:|---:|");
+for (const u of [3, 5, 10, 20]) p(`| ${u} | ${money2(entMonthly(u))} | ${money2(entMonthly(u) / u)} |`);
+p("");
+p("### Annual vs monthly Standard (per customer)");
+const netM = STD_M - fee(STD_M), netY = STD_Y - fee(STD_Y);
+p("");
+p(`- Monthly: ${money2(STD_M)} list, ${money2(fee(STD_M))} Stripe fees, **${money2(netM)} net per month**.`);
+p(`- Annual: ${money2(STD_Y)} list (${money2(STD_Y / 12)}/mo, ${pct(1 - STD_Y / 12 / STD_M)} off), ${money2(fee(STD_Y))} fees once a year, **${money2(netY)} net per year (${money2(netY / 12)}/mo)**.`);
+p(`- Annual collects ${pct(netY / 12 / netM)} of the monthly plan's net per month, but up to 12 months up front.`);
+p("");
+p("| Monthly churn of monthly plan | Expected net lifetime, monthly | Annual renewal rate needed to match |");
+p("|---:|---:|---:|");
+for (const c of [0.03, 0.05, 0.07, 0.1]) {
+  const life = netM / c; const r = 1 - netY / life;
+  p(`| ${pct(c)} | ${money2(life)} | ${r <= 0 ? "any (annual wins)" : pct(r)} |`);
+}
+console.log(out.join("\n"));

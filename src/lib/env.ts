@@ -54,3 +54,12 @@ export const isPmBillingConfigured = (kind: "addon" | "editor") => {
   if (/^(sk|rk)_live_/.test(e.stripeSecretKey) && process.env.PM_BILLING_LIVE !== "true") return false;
   return true;
 };
+
+/**
+ * Financial Command Center (Phase 1) is shown only when switched on with NEXT_PUBLIC_FINANCIALS=on. Off by
+ * default: with it off there is no nav item, page, tab, settings section or API route (all answer 404).
+ */
+export const isFinancialsEnabled = () => process.env.NEXT_PUBLIC_FINANCIALS === "on";
+
+/** One home for every pillar (owner decision 2026-11-17). Off: /dashboard stays the landing page. */
+export const isUnifiedHomeEnabled = () => process.env.NEXT_PUBLIC_UNIFIED_HOME === "on";

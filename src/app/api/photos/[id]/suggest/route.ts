@@ -3,7 +3,7 @@ import { createAdminClient, createClient, getUser } from "@/lib/supabase/server"
 import { fail, json, logError, rateLimit, sameOrigin } from "@/lib/http/api";
 import { aiSettings, AiUnavailableError, DEFAULT_MODEL, generateStructured, isAiConfigured } from "@/lib/ai/provider";
 import { filterSuggestions, PHOTO_LABELS } from "@/lib/operations/photo-labels";
-import { isPhotoAiEnabled } from "@/lib/operations/photos-server";
+import { isPhotoAiEnabled, photoAiAllowedFor } from "@/lib/operations/photos-server";
 import { UUID } from "@/lib/operations/server";
 
 export const runtime = "nodejs";
@@ -13,6 +13,7 @@ const out = z.object({ labels: z.array(z.string()).max(8) });
  * Suggest labels for one photo (only when PHOTO_AI_LABELS=on and an AI key is configured, and only
  * when the person asks). Sends the small preview to Claude Haiku; suggestions stay marked as
  * suggestions until someone accepts or corrects them. Never changes costs or anything customer-facing.
+ * A company (or solo owner) that turned Photo labeling OFF in Company → AI & Automation gets no suggestions.
  */
 export async function POST(_req: Request, ctx: { params: Promise<{ id: string }> }) {
   if (!(await sameOrigin())) return fail(403, "bad_origin", "Cross-site request refused.");
@@ -29,6 +30,9 @@ export async function POST(_req: Request, ctx: { params: Promise<{ id: string }>
   if (can !== true) return fail(403, "forbidden", "Your company role can't edit these photos.");
 
   const admin = createAdminClient();
+  if (!(await photoAiAllowedFor(admin, { estimateId: ph.estimate_id, customerId: ph.customer_id }))) {
+    return fail(409, "ai_off", "Photo label suggestions are turned off in Company → AI & Automation.");
+  }
   const settings = aiSettings();
   if (settings.monthlyBudgetUsd > 0) {
     const monthStart = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1)).toISOString();

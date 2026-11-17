@@ -51,3 +51,27 @@ export async function signPhotos<T extends { storage_path: string; thumb_path: s
 
 /** AI label suggestions are opt-in: PHOTO_AI_LABELS=on plus a configured AI key. */
 export const isPhotoAiEnabled = () => ["on", "true", "1"].includes((process.env.PHOTO_AI_LABELS ?? "").trim().toLowerCase());
+
+/**
+ * Company/owner AI & Automation switch for photo labeling (fin_ai_preferences.photo_labeling). Only an
+ * explicit OFF stops suggestions: no financial book, no saved preference, or the Financials migrations not
+ * applied yet all keep today's behavior (the column defaults to ON). Looked up with the admin client
+ * because the person asking may have no financial seat; it reads one boolean and nothing else.
+ */
+export async function photoAiAllowedFor(admin: SupabaseClient, scope: { estimateId?: string | null; customerId?: string | null }): Promise<boolean> {
+  try {
+    let owner: { company_id: string | null; user_id: string | null } | null = null;
+    if (scope.estimateId) owner = (await admin.from("estimates").select("company_id, user_id").eq("id", scope.estimateId).maybeSingle()).data;
+    if (!owner && scope.customerId) owner = (await admin.from("customers").select("company_id, user_id").eq("id", scope.customerId).maybeSingle()).data;
+    if (!owner) return true;
+    const book = owner.company_id
+      ? await admin.from("fin_books").select("id").eq("company_id", owner.company_id).maybeSingle()
+      : await admin.from("fin_books").select("id").eq("owner_user_id", owner.user_id).maybeSingle();
+    if (book.error || !book.data) return true;
+    const pref = await admin.from("fin_ai_preferences").select("photo_labeling").eq("book_id", book.data.id).maybeSingle();
+    if (pref.error || !pref.data) return true;
+    return pref.data.photo_labeling !== false;
+  } catch {
+    return true;
+  }
+}

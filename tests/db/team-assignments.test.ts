@@ -165,6 +165,8 @@ d("Team & Subcontractors + assignments (database)", () => {
 
   it("rollback removes V4.2 and the migration re-applies", async () => {
     // Later migrations depend on the directory: roll them back first (newest first).
+    // The Financial Command Center points at change orders / quotes / the directory: roll it back first (newest first).
+    for (const f of ["20261125001000", "20261124004000", "20261124003000", "20261124002000", "20261124001000"]) await pool.query(readFileSync(`docs/financials/rollback_${f}.sql`, "utf8"));
     for (const f of ["20261119004000", "20261119003000", "20261119002000", "20261119001000"]) await pool.query(readFileSync(`docs/project-operations/rollback_${f}.sql`, "utf8"));
     await pool.query(readFileSync("docs/projects-workspace/rollback_20261118002000.sql", "utf8"));
     expect((await pool.query("select to_regclass('public.pm_resources') as t")).rows[0].t).toBeNull();
