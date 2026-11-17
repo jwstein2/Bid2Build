@@ -85,7 +85,7 @@ if (sid) {
   await page.screenshot({ path: `${dir}/06-project-schedule-tab-desktop.png` });
   await page.getByRole("tab", { name: "Trade scope" }).click();
   await page.getByTestId("scope-panel").waitFor();
-  await page.getByTestId("scope-section").first().locator("button[aria-expanded]").click();
+  await page.getByTestId("scope-section").first().locator("button[aria-expanded]").first().click();
   await page.waitForTimeout(300);
   check("scope keeps internal notes separate (never shared)", (await page.getByText("Internal notes (never shared)").count()) > 0);
   await page.screenshot({ path: `${dir}/07-trade-scope-desktop.png`, fullPage: true });

@@ -7,7 +7,7 @@ import { RANGES, STAGES, STAGE_LABELS, STAGE_TONES, money, parseFilters, rpcArgs
 import { Badge, Card, Notice } from "@/components/ui/misc";
 import { StageControl } from "@/components/company/stage-control";
 
-export const metadata: Metadata = { title: "Bids & Pipeline", robots: { index: false } };
+export const metadata: Metadata = { title: "Team bids", robots: { index: false } };
 
 const PAGE = 50;
 
@@ -18,8 +18,8 @@ export default async function PipelinePage({ searchParams }: PageProps<"/company
   if (!company) {
     return (
       <div className="mx-auto max-w-4xl space-y-6">
-        <h1 className="text-3xl font-extrabold">Bids & Pipeline</h1>
-        <Notice title="No company account">Bids & Pipeline is part of Enterprise.</Notice>
+        <h1 className="text-3xl font-extrabold">Team bids</h1>
+        <Notice title="No company account">Team bids are part of Enterprise.</Notice>
       </div>
     );
   }
@@ -48,8 +48,8 @@ export default async function PipelinePage({ searchParams }: PageProps<"/company
     <div className="mx-auto max-w-6xl space-y-6" data-guide-page="company.pipeline">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-3xl font-extrabold">Bids & Pipeline</h1>
-          <p className="text-ink-soft">{company.name} · {wide ? "bids you can see across the company" : "your bids"}</p>
+          <h1 className="text-3xl font-extrabold">{wide ? "Team bids" : "My company bids"}</h1>
+          <p className="text-ink-soft">{company.name} · {wide ? "every bid you can see across the company, with filters by person and team" : "the bids you own in this company"}. Your personal list is <Link href="/dashboard" className="underline">My bids</Link>.</p>
         </div>
         <a href={`/api/company/pipeline/export?${qs({ page: null })}`} className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-line-strong bg-surface px-4 text-sm font-semibold hover:bg-paper" data-testid="csv-export">
           <Download className="h-4 w-4" aria-hidden /> Export CSV

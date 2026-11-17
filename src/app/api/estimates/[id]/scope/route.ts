@@ -26,7 +26,7 @@ export async function GET(_req: Request, ctx: Ctx) {
     supabase.rpc("can_manage_project_scope", { p_estimate_id: id }),
     supabase.rpc("can_share_project_scope", { p_estimate_id: id }),
     supabase.rpc("project_scope_shares", { p_estimate_id: id }),
-    supabase.from("pm_resources").select("id, name, kind, email, phone").eq("status", "active").order("name").limit(500),
+    supabase.from("pm_resources").select("id, name, kind, email, phone, trades, company_id, owner_id").eq("status", "active").order("name").limit(500),
     supabase.rpc("sub_quotes_for_estimate", { p_estimate_id: id }),
     supabase.from("project_photos").select("id, scope_section_id").eq("estimate_id", id).is("archived_at", null).not("scope_section_id", "is", null),
   ]);
@@ -41,9 +41,17 @@ export async function GET(_req: Request, ctx: Ctx) {
   }
   const photoCount: Record<string, number> = {};
   for (const p of (photos.data ?? []) as { scope_section_id: string }[]) photoCount[p.scope_section_id] = (photoCount[p.scope_section_id] ?? 0) + 1;
+  // Offer only directory entries the save will accept: the project's company directory, or the solo
+  // owner's own directory. (RLS can return both to a company member; picking the wrong one used to fail
+  // silently and snap back to "Unassigned".)
+  const first = (sections.data ?? [])[0] as { company_id: string | null; user_id: string } | undefined;
+  type Res = { id: string; name: string; kind: string; email: string | null; phone: string | null; trades: string[] | null; company_id: string | null; owner_id: string | null };
+  const assignable = ((resources.data ?? []) as Res[])
+    .filter((r) => !first || (first.company_id ? r.company_id === first.company_id : !r.company_id && r.owner_id === first.user_id))
+    .map((r) => ({ id: r.id, name: r.name, kind: r.kind, email: r.email, phone: r.phone, trades: r.trades ?? [] }));
   return json({
     available: true, sections: sections.data ?? [], canManage: canManage.data === true, canShare: canShare.data === true,
-    shares: shares.data ?? [], resources: resources.data ?? [], quotesByGroup: byGroup, showCosts: Boolean(b?.canView), photoCount,
+    shares: shares.data ?? [], resources: assignable, quotesByGroup: byGroup, showCosts: Boolean(b?.canView), photoCount,
   });
 }
 

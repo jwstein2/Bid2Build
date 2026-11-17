@@ -177,7 +177,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           {gift && <p className="text-sm font-semibold text-accent-ink">{biz?.company_name ? `Welcome back, ${biz.company_name}` : "Let's build your next professional bid"}</p>}
-          <h1 className="text-3xl font-extrabold text-navy">Your bids</h1>
+          <h1 className="text-3xl font-extrabold text-navy">My bids</h1>
           <p className="text-ink-soft">{biz?.company_name ? biz.company_name : <Link href="/settings/company" className="text-accent-ink underline">Set up your company profile</Link>}</p>
         </div>
         <div className="flex items-center gap-2">

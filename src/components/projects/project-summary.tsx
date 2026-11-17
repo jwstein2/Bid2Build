@@ -2,7 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, FileText, History, MessageSquare, RotateCcw, UserCog } from "lucide-react";
+import { ArrowRight, CheckCircle2, FileText, History, MessageSquare, RotateCcw, UserCog } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge, Notice } from "@/components/ui/misc";
 import { formatDay, formatRange, isIsoDate } from "@/lib/schedule/calendar";
@@ -58,7 +58,20 @@ export function ProjectSummary(p: SummaryProps) {
     setClosing(false); setMsg({ ok: true, text: action === "complete" ? "Project completed. Its history and schedule are kept." : "Project reopened." }); router.refresh();
   }
 
-  const activity = showAll ? p.activity : p.activity.slice(0, 6);
+  const activity = showAll ? p.activity : p.activity.slice(0, 3);
+  // Needs attention: only real, recorded conditions (status, people, sent updates, planned dates), most
+  // important first. The first one becomes the single "Next step". Elapsed time is never read as progress.
+  const attention: { key: string; text: string; action?: { label: string; href?: string; onClick?: () => void } }[] = [];
+  if (!completed) {
+    if (p.status !== "active" && p.canPublish) attention.push({ key: "publish", text: "This schedule is still a draft. Your crew and customer see it only after you publish.", action: { label: "Review dates and publish", onClick: () => {
+      const b = document.querySelector<HTMLElement>('[data-testid="publish-schedule"]');
+      if (b) { b.scrollIntoView({ block: "center", behavior: "smooth" }); b.focus({ preventScroll: true }); } else router.push(`/projects/${p.id}?tab=schedule`);
+    } } });
+    if (!p.projectManagerId && p.canEdit) attention.push({ key: "pm", text: "No project manager is assigned.", action: { label: "Assign a project manager", onClick: () => setEditPeople(true) } });
+    if (p.status === "active" && !p.lastUpdateAt && p.canPublish) attention.push({ key: "update", text: "The customer hasn't received an update yet.", action: { label: "Prepare a customer update", href: `/projects/${p.id}/update` } });
+    if (p.finishDate && p.finishDate < p.today && p.openTasks > 0) attention.push({ key: "late", text: `The planned finish (${formatDay(p.finishDate, { month: "short", day: "numeric" })}) has passed with ${p.openTasks} open task${p.openTasks === 1 ? "" : "s"}.`, action: p.canEdit ? { label: "Update the schedule", href: `/projects/${p.id}?tab=schedule` } : undefined });
+  }
+  const [next, ...more] = attention;
   return (
     <section className="mb-5 grid gap-4 lg:grid-cols-[1.4fr_1fr]" aria-label="Project summary" data-testid="project-summary" data-guide="project.summary">
       <div className="rounded-2xl border border-line bg-surface p-4">
@@ -68,15 +81,38 @@ export function ProjectSummary(p: SummaryProps) {
           <Badge tone={completed ? "ok" : p.status === "active" ? "accent" : "neutral"}>{completed ? "Completed" : p.status === "active" ? "Active" : "Draft"}</Badge>
           {p.signatureId ? <Badge tone="ok">Signed electronically</Badge> : p.manuallyApproved ? <Badge>Approved manually</Badge> : null}
         </div>
-        <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-4">
+        <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-5">
           <div><dt className="text-xs text-muted">Sold by</dt><dd data-testid="summary-rep">{nameOf(p.salesRepId)}</dd></div>
           <div><dt className="text-xs text-muted">Project manager</dt><dd data-testid="summary-pm">{nameOf(p.projectManagerId)}</dd></div>
           <div><dt className="text-xs text-muted">Planned</dt><dd>{p.finishDate ? formatRange(p.startDate, p.finishDate) : formatDay(p.startDate)}</dd></div>
+          <div><dt className="text-xs text-muted" title="From task % complete, never from elapsed time">Progress</dt><dd className="font-bold text-navy" data-testid="summary-progress">{p.progress}%</dd></div>
           <div><dt className="text-xs text-muted">{completed ? "Finished" : "Target"}</dt><dd>{completed && p.actualFinish ? formatDay(p.actualFinish, { month: "short", day: "numeric", year: "numeric" }) : p.targetEndDate ? formatDay(p.targetEndDate, { month: "short", day: "numeric", year: "numeric" }) : "—"}</dd></div>
         </dl>
-        <div className="mt-3"><div className="flex justify-between text-xs"><span className="text-muted">Progress (from task % complete)</span><span className="font-bold text-navy">{p.progress}%</span></div>
-          <div className="mt-1 h-1.5 rounded-full bg-paper"><div className="h-1.5 rounded-full bg-teal" style={{ width: `${p.progress}%` }} /></div></div>
         {completed && p.closeoutNote && <p className="mt-2 text-sm text-ink-soft">Closed with unfinished tasks: {p.closeoutNote}</p>}
+
+        {next && (
+          <div className="mt-3 rounded-xl border border-accent/40 bg-accent/5 p-3" data-testid="next-step" aria-label="Next step">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-accent-ink">Next step</p>
+            <div className="mt-0.5 flex flex-wrap items-center justify-between gap-2">
+              <p className="min-w-0 flex-1 text-sm text-ink">{next.text}</p>
+              {next.action && (next.action.href
+                ? <Link href={next.action.href} className="inline-flex min-h-11 items-center gap-1 rounded-lg bg-navy px-3 text-sm font-semibold text-white md:min-h-9" data-testid="next-step-action">{next.action.label} <ArrowRight className="h-4 w-4" aria-hidden /></Link>
+                : <Button size="sm" onClick={next.action.onClick} data-testid="next-step-action">{next.action.label} <ArrowRight className="h-4 w-4" aria-hidden /></Button>)}
+            </div>
+            {more.length > 0 && (
+              <ul className="mt-2 space-y-1 border-t border-accent/20 pt-2 text-sm text-ink-soft" aria-label="Also needs attention" data-testid="needs-attention">
+                {more.map((m) => (
+                  <li key={m.key} className="flex flex-wrap items-center gap-x-2">
+                    <span>{m.text}</span>
+                    {m.action && (m.action.href
+                      ? <Link href={m.action.href} className="font-semibold text-accent-ink underline">{m.action.label}</Link>
+                      : <button type="button" className="min-h-8 font-semibold text-accent-ink underline" onClick={m.action.onClick}>{m.action.label}</button>)}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
 
         <div className="mt-3 flex flex-wrap gap-2 border-t border-line pt-3">
           {p.canEdit && !completed && <Button size="sm" variant="secondary" onClick={() => setEditPeople(!editPeople)} aria-expanded={editPeople} data-testid="edit-people"><UserCog className="h-4 w-4" aria-hidden /> Change people</Button>}
@@ -137,7 +173,7 @@ export function ProjectSummary(p: SummaryProps) {
               </li>
             ))}
           </ol>
-          {p.activity.length > 6 && <button type="button" className="mt-2 text-sm font-semibold text-accent-ink" onClick={() => setShowAll(!showAll)}>{showAll ? "Show less" : `Show all ${p.activity.length}`}</button>}
+          {p.activity.length > 3 && <button type="button" className="mt-2 min-h-11 text-sm font-semibold text-accent-ink md:min-h-8" aria-expanded={showAll} onClick={() => setShowAll(!showAll)}>{showAll ? "Show less" : `Show all ${p.activity.length}`}</button>}
         </div>
       </div>
     </section>

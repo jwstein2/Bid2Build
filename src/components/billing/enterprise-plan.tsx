@@ -1,8 +1,10 @@
 "use client";
 import { Check, Loader2, Minus, Plus } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useId, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useId, useRef, useState } from "react";
 import { Button, ButtonLink } from "../ui/button";
+import { AuthDialog } from "../auth/auth-dialog";
+import { codeRequestedText, emailOtpLength } from "@/lib/auth/config";
 import { ENTERPRISE_INCLUDED_USERS, enterpriseQuote, formatCents } from "@/lib/enterprise/pricing";
 
 export const ENTERPRISE_FEATURES = [
@@ -19,6 +21,9 @@ export const ENTERPRISE_FEATURES = [
 ];
 
 const MAX_ESTIMATE = 500;
+const clampUsers = (n: number) => Math.min(MAX_ESTIMATE, Math.max(ENTERPRISE_INCLUDED_USERS, Number.isFinite(n) ? Math.round(n) : ENTERPRISE_INCLUDED_USERS));
+/** Where verification returns to: the Enterprise card, with the seat estimate the visitor chose. */
+export const enterpriseReturnPath = (users: number) => `/pricing?plan=enterprise&users=${clampUsers(users)}#enterprise`;
 
 /**
  * Enterprise card: live seat estimate (same pricing module the server bills with) and checkout.
@@ -26,18 +31,28 @@ const MAX_ESTIMATE = 500;
  * member = already in a company; owner = already the owner (manage instead).
  */
 export function EnterprisePlan({ signedIn, mode, supportEmail, extraFeatures = [] }: { signedIn: boolean; mode: "open" | "contact" | "member" | "owner"; supportEmail: string; extraFeatures?: string[] }) {
-  const router = useRouter();
   const params = useSearchParams();
-  const [users, setUsers] = useState(ENTERPRISE_INCLUDED_USERS);
+  // The seat estimate survives sign-in (and a refresh) through the return URL.
+  const [users, setUsers] = useState(() => clampUsers(Number(params.get("users") ?? ENTERPRISE_INCLUDED_USERS)));
   const [company, setCompany] = useState("");
-  const [open, setOpen] = useState(params.get("plan") === "enterprise" && signedIn && mode === "open");
+  const resumed = params.get("plan") === "enterprise" && signedIn && mode === "open";
+  const [open, setOpen] = useState(resumed);
+  const [authOpen, setAuthOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const id = useId();
+  const companyInput = useRef<HTMLInputElement>(null);
   const q = enterpriseQuote(users);
 
+  // Back from verification: bring the Enterprise card into view with the company step ready.
+  useEffect(() => {
+    if (!resumed) return;
+    document.getElementById("enterprise")?.scrollIntoView({ block: "start" });
+    companyInput.current?.focus({ preventScroll: true });
+  }, [resumed]);
+
   async function start() {
-    if (!signedIn) { router.push(`/login?next=${encodeURIComponent("/pricing?plan=enterprise#enterprise")}`); return; }
+    if (!signedIn) { setAuthOpen(true); return; }
     if (!open) { setOpen(true); return; }
     if (!company.trim()) { setErr("Enter your company name."); return; }
     setBusy(true); setErr(null);
@@ -48,11 +63,11 @@ export function EnterprisePlan({ signedIn, mode, supportEmail, extraFeatures = [
     const d = await r?.json().catch(() => null);
     if (r?.ok && d?.url) { window.location.assign(d.url); return; }
     setBusy(false);
-    if (d?.error?.code === "not_authenticated") router.push(`/login?next=${encodeURIComponent("/pricing?plan=enterprise#enterprise")}`);
+    if (d?.error?.code === "not_authenticated") setAuthOpen(true);
     else setErr(d?.error?.message ?? "We couldn't start checkout. Please try again.");
   }
 
-  const clamp = (n: number) => Math.min(MAX_ESTIMATE, Math.max(ENTERPRISE_INCLUDED_USERS, Number.isFinite(n) ? Math.round(n) : ENTERPRISE_INCLUDED_USERS));
+  const clamp = clampUsers;
 
   return (
     <section id="enterprise" aria-labelledby={`${id}-h`} className="mx-auto mt-10 max-w-5xl rounded-2xl border border-navy/20 bg-surface p-4 shadow-sm sm:p-6 md:p-8" data-testid="enterprise-plan">
@@ -99,7 +114,8 @@ export function EnterprisePlan({ signedIn, mode, supportEmail, extraFeatures = [
           {mode === "open" && open && (
             <div className="mt-4">
               <label htmlFor={`${id}-co`} className="text-sm font-semibold">Company name</label>
-              <input id={`${id}-co`} value={company} maxLength={200} autoComplete="organization" onChange={(e) => setCompany(e.target.value)}
+              {resumed && <p className="mt-1 text-xs text-ok" role="status">You&apos;re signed in. Add your company name to review checkout.</p>}
+              <input ref={companyInput} id={`${id}-co`} value={company} maxLength={200} autoComplete="organization" onChange={(e) => setCompany(e.target.value)}
                 className="mt-1 h-11 w-full rounded-lg border border-line bg-surface px-3 text-base" />
             </div>
           )}
@@ -113,6 +129,36 @@ export function EnterprisePlan({ signedIn, mode, supportEmail, extraFeatures = [
           </div>
         </div>
       </div>
+      {authOpen && (
+        <AuthDialog
+          open
+          onOpenChange={setAuthOpen}
+          next={enterpriseReturnPath(users)}
+          copy={{
+            title: "Verify your email to continue with Enterprise",
+            emailDescription: "No password needed. Your Enterprise selection and team size stay selected. Nothing is charged until you review checkout.",
+            sentDescription: (email) => `${codeRequestedText(email, emailOtpLength())} Enter it to continue with Enterprise.`,
+            phoneDescription: "Verify your mobile number to continue with Enterprise. Your team size stays selected.",
+            phoneSentDescription: (phone) => `We texted a 6-digit code to ${phone}. Enter it here to continue with Enterprise.`,
+            submitLabel: "Verify and continue",
+          }}
+          summary={
+            <div className="mb-4 rounded-xl border border-line bg-paper p-3" aria-label="Your plan" data-testid="enterprise-auth-summary">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted">Your plan</p>
+                  <p className="mt-0.5 font-display text-lg font-extrabold leading-tight">Enterprise</p>
+                </div>
+                <p className="shrink-0 text-right"><span className="font-display text-xl font-extrabold">{formatCents(q.monthlyCents)}</span><span className="text-sm font-semibold text-muted">/month</span></p>
+              </div>
+              <p className="mt-1 text-sm text-ink-soft">{users} licensed users ({ENTERPRISE_INCLUDED_USERS} included). Billed monthly; you review the total before paying.</p>
+            </div>
+          }
+          // Full navigation so the server re-checks the account (it may already own or belong to a company).
+          onVerified={() => { window.location.assign(enterpriseReturnPath(users)); }}
+          footer={<p className="mt-3 text-center text-xs text-muted">Secure payment by Stripe. Review before you pay.</p>}
+        />
+      )}
     </section>
   );
 }

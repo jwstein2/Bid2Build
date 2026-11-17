@@ -16,7 +16,7 @@ import { accountCtas, creditBadge, MEMBER_TAGLINE, type AccountStatus } from "@/
 
 const faqs: { q: string; a: string; visitorOnly?: boolean; freePlanOnly?: boolean; pmOnly?: boolean }[] = [
   { visitorOnly: true, q: "Is it really free?", a: `Yes. Every verified account gets ${plans.starterCredits} free bids to start, plus ${plans.monthlyCredits} free bid every month from your second month on. Drafts and previews are unlimited, with every trade and your branding. No credit card required.` },
-  { visitorOnly: true, q: "Do I need to sign up before I can try it?", a: "No. Pick a trade and start building right away. Your draft is saved in your browser. You only create an account (with a one-time email link) when you are ready to download your first PDF or save to the cloud." },
+  { visitorOnly: true, q: "Do I need to sign up before I can try it?", a: "No. Pick a trade and start building right away, including the customer proposal preview. Your draft is saved in your browser. You create a free account, verified with a 6-digit code we email you, only when you download the PDF, send it by email, or save to the cloud. Finalizing a new bid uses one free bid credit; editing and downloading it again does not." },
   { q: "Will my customer see my costs or markup?", a: "Never. Customer-facing proposals are built only from customer prices. Internal costs, margins, and notes are not included in the preview or the PDF." },
   { q: "Do you provide local material prices?", a: "Only when a licensed pricing source is connected. We never show made-up prices. Until then, you enter your own costs, which is what accurate bids are built on anyway." },
   { q: "Where is my draft saved?", a: "Before you sign in, drafts are saved in this browser on this device. After you sign in, they autosave to your account so you can pick them up on any device." },
@@ -25,7 +25,7 @@ const faqs: { q: string; a: string; visitorOnly?: boolean; freePlanOnly?: boolea
   { freePlanOnly: true, q: "What counts as one of my free bids?", a: "A credit is used when you finalize a new bid. Editing, re-finalizing, or re-downloading a bid you already finalized is free, and drafts never use a credit. Your monthly bid is used first, then starter credits." },
 ];
 
-const VISITOR_POINTS = ["No sign-up until you download", "No credit card", "Your costs stay private"];
+const VISITOR_POINTS = ["Build and preview without an account", "No credit card", "Your costs stay private"];
 const MEMBER_POINTS = ["Every trade, one pricing engine", "Your costs stay private", "Branded PDF proposals"];
 
 

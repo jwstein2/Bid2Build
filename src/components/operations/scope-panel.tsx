@@ -1,13 +1,14 @@
 "use client";
 import { Camera, ChevronDown, Copy, Eye, History, Loader2, Lock, Share2, Users } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { formatCurrency } from "@/lib/estimate/money";
 import { DEFAULT_SHARE_FIELDS, SHAREABLE_FIELDS, type ScopeSection, type ShareField } from "@/lib/operations/scope";
 import { cn } from "@/lib/cn";
 import { Button } from "../ui/button";
 import { Drawer } from "../projects/task-drawer";
+import { ResourcePicker, type DirectoryResource } from "../projects/resource-picker";
 
-interface Resource { id: string; name: string; kind: string; email: string | null; phone: string | null }
+interface Resource { id: string; name: string; kind: string; email: string | null; phone: string | null; trades?: string[] }
 interface Share { id: string; sectionId: string; resourceId: string | null; createdAt: string; expiresAt: string; revokedAt: string | null; version: number; sectionRevision: number; sharedAt: string; fields: string[] | null; photoCount: number }
 interface QuoteChip { itemName: string; vendorName: string; resourceId: string | null; latest: string | null; status: string }
 interface ScopeData {
@@ -48,6 +49,9 @@ export function ScopePanel({ estimateId }: { estimateId: string }) {
   if (!data) return <p className="flex items-center gap-2 text-sm text-muted"><Loader2 className="h-4 w-4 animate-spin" aria-hidden /> Loading scope…</p>;
   if (!data.available) return <p className="text-sm text-muted">The trade scope workspace turns on after the project operations update is installed.</p>;
   const resName = (id: string | null) => data.resources.find((r) => r.id === id)?.name ?? null;
+  // A contact added inline shows up in every section's picker right away (the reload confirms it).
+  const addResource = (r: DirectoryResource) => setData((d) => (d && !d.resources.some((x) => x.id === r.id) ? { ...d, resources: [...d.resources, { email: null, phone: null, ...r }] } : d));
+  const unassigned = data.sections.filter((x) => !x.resource_id);
 
   return (
     <div className="space-y-3" data-testid="scope-panel">
@@ -56,29 +60,75 @@ export function ScopePanel({ estimateId }: { estimateId: string }) {
         {data.canManage && <Button size="sm" variant={data.sections.length ? "ghost" : "primary"} onClick={() => void init()} disabled={busy}>{data.sections.length ? "Add missing sections" : "Build scope from approved proposal"}</Button>}
       </div>
       {!data.sections.length && <p className="rounded-xl border border-dashed border-line p-6 text-sm text-muted">No scope sections yet{data.canManage ? "." : ". A project manager can build them from the approved proposal."}</p>}
+      {data.canManage && data.sections.length > 1 && unassigned.length > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-dashed border-line bg-paper p-3" data-testid="bulk-assign">
+          <p className="text-sm"><span className="font-semibold">{unassigned.length} unassigned {unassigned.length === 1 ? "section" : "sections"}.</span> <span className="text-muted">Assign them all to one person, crew or sub.</span></p>
+          <ResourcePicker label="Assign all unassigned sections" testId="bulk-picker" resources={data.resources} value={null} onCreated={addResource}
+            onAssign={async (rid) => {
+              if (!rid) return null;
+              for (const sec of unassigned) {
+                const err = await assignSection(sec, rid);
+                if (err) { void load(); return `${sec.title}: ${err}`; }
+              }
+              void load();
+              return null;
+            }} />
+        </div>
+      )}
       {data.sections.map((s) => (
-        <SectionCard key={s.id} s={s} data={data} resName={resName} onSaved={load} onShare={() => setSharing(s)} />
+        <SectionCard key={s.id} s={s} data={data} resName={resName} onSaved={load} onShare={() => setSharing(s)} onCreated={addResource} />
       ))}
       {sharing && <ShareDrawer section={sharing} data={data} resName={resName} onClose={() => setSharing(null)} onChanged={load} />}
     </div>
   );
 }
 
-function SectionCard({ s, data, resName, onSaved, onShare }: { s: ScopeSection; data: ScopeData; resName: (id: string | null) => string | null; onSaved: () => void; onShare: () => void }) {
+/**
+ * Assign (or unassign) one section without touching its text: the save RPC replaces every field, so the
+ * last SAVED values are sent back unchanged (never the unsaved edits in an open form).
+ */
+async function assignSection(s: ScopeSection, resourceId: string | null): Promise<string | null> {
+  const body = {
+    baseRevision: s.revision, resourceId: resourceId ?? "", summary: resourceId ? "Assignment changed" : "Unassigned",
+    workDescription: s.work_description ?? "", technicalInstructions: s.technical_instructions ?? "", installationNotes: s.installation_notes ?? "",
+    customerInfo: s.customer_info ?? "", internalNotes: s.internal_notes ?? "",
+  };
+  const r = await fetch(`/api/scope/${s.id}`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }).catch(() => null);
+  if (!r) return "We couldn't reach Built2Bid. Check your connection and try again.";
+  if (r.ok) return null;
+  const d = await r.json().catch(() => null);
+  if (r.status === 409) return "Someone else changed this section first. We reloaded it; pick again.";
+  return d?.error?.message ?? "We couldn't save the assignment.";
+}
+
+const sectionText = (s: ScopeSection) => ({ workDescription: s.work_description ?? "", technicalInstructions: s.technical_instructions ?? "", installationNotes: s.installation_notes ?? "", customerInfo: s.customer_info ?? "", internalNotes: s.internal_notes ?? "" });
+
+function SectionCard({ s, data, resName, onSaved, onShare, onCreated }: { s: ScopeSection; data: ScopeData; resName: (id: string | null) => string | null; onSaved: () => void; onShare: () => void; onCreated: (r: DirectoryResource) => void }) {
   const [open, setOpen] = useState(false);
-  const [f, setF] = useState({ workDescription: s.work_description ?? "", technicalInstructions: s.technical_instructions ?? "", installationNotes: s.installation_notes ?? "", customerInfo: s.customer_info ?? "", internalNotes: s.internal_notes ?? "", resourceId: s.resource_id ?? "" });
+  const [f, setF] = useState(() => sectionText(s));
+  const savedText = useRef(sectionText(s));
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [revs, setRevs] = useState<{ revision: number; summary: string | null; created_at: string }[] | null>(null);
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- reset the form when a newer revision of the section arrives
-  useEffect(() => { setF({ workDescription: s.work_description ?? "", technicalInstructions: s.technical_instructions ?? "", installationNotes: s.installation_notes ?? "", customerInfo: s.customer_info ?? "", internalNotes: s.internal_notes ?? "", resourceId: s.resource_id ?? "" }); }, [s]);
+  // A newer revision arrived (a save, an assignment, a teammate): take its text, but keep anything typed
+  // here and not saved yet, so assigning someone never wipes notes in progress.
+  useEffect(() => {
+    const next = sectionText(s);
+    const before = savedText.current;
+    savedText.current = next;
+    setF((cur) => {
+      const out = { ...next };
+      for (const k of Object.keys(next) as (keyof typeof next)[]) if (cur[k] !== before[k]) out[k] = cur[k];
+      return out;
+    });
+  }, [s]);
   const quotes = data.quotesByGroup[s.source_group_id] ?? [];
   const shares = data.shares.filter((x) => x.sectionId === s.id && !x.revokedAt);
   const ro = !data.canManage;
 
   const save = async (patch?: Partial<typeof f>) => {
     setBusy(true); setErr(null);
-    const body = { ...f, ...patch, baseRevision: s.revision };
+    const body = { ...f, ...patch, resourceId: s.resource_id ?? "", baseRevision: s.revision };
     const r = await fetch(`/api/scope/${s.id}`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
     const d = await r.json().catch(() => null);
     setBusy(false);
@@ -109,10 +159,8 @@ function SectionCard({ s, data, resName, onSaved, onShare }: { s: ScopeSection; 
               {shares.length ? ` · Shared with ${shares.length}` : ""}</span></span>
         </button>
         {data.canManage && (
-          <select aria-label={`Assign ${s.title}`} className="field field-sm w-44" value={f.resourceId} disabled={busy} onChange={(e) => { setF({ ...f, resourceId: e.target.value }); void save({ resourceId: e.target.value }); }}>
-            <option value="">Unassigned</option>
-            {data.resources.map((r) => <option key={r.id} value={r.id}>{r.name}{r.kind === "subcontractor" ? " (sub)" : ""}</option>)}
-          </select>
+          <ResourcePicker label={`Assign ${s.title}`} testId="scope-assign" resources={data.resources} value={s.resource_id} trade={s.trade} disabled={busy} onCreated={onCreated}
+            onAssign={async (rid) => { const err = await assignSection(s, rid); onSaved(); return err; }} />
         )}
         {data.canShare && <Button size="sm" variant="secondary" onClick={onShare}><Share2 className="h-4 w-4" aria-hidden /> Share</Button>}
       </div>
