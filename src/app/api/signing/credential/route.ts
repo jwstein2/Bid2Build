@@ -50,6 +50,11 @@ export async function POST(req: Request) {
   }
   const admin = createAdminClient();
   const tenant = await signingTenant(admin, user.id);
+  if (input.method === "typed" && input.typedAs === "company") {
+    if (!tenant.companyName) return fail(422, "invalid_signature", "Add your company name in Company Profile first.", { field: "signatureText" });
+    if ((input.signatureText ?? "").toLowerCase() !== tenant.companyName.toLowerCase()) return fail(422, "invalid_signature", `A company signature must be your company's name: ${tenant.companyName}.`, { field: "signatureText" });
+    input.signatureText = tenant.companyName;
+  }
   const wording = { legalName: input.legalName, companyName: tenant.companyName };
   const ev = await requestEvidence();
   const { error } = await admin.rpc("contractor_adopt_credential", {

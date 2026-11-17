@@ -31,7 +31,11 @@ export interface Resolution {
 /** The caller's active company (if any) and whether they manage its signing policy. */
 export async function signingTenant(admin: SupabaseClient, userId: string): Promise<{ companyId: string | null; companyName: string | null; role: string | null; isOwner: boolean; canManage: boolean }> {
   const { data: m } = await admin.from("company_members").select("company_id, role").eq("user_id", userId).eq("status", "active").maybeSingle();
-  if (!m) return { companyId: null, companyName: null, role: null, isOwner: false, canManage: true };
+  if (!m) {
+    // Solo account: the business profile's company name (used for wording and the company-name signature).
+    const { data: bp } = await admin.from("business_profiles").select("company_name").eq("user_id", userId).maybeSingle();
+    return { companyId: null, companyName: (bp?.company_name as string | null | undefined)?.trim() || null, role: null, isOwner: false, canManage: true };
+  }
   const [{ data: c }, { data: can }] = await Promise.all([
     admin.from("companies").select("name, owner_user_id").eq("id", m.company_id).maybeSingle(),
     admin.rpc("contractor_can_manage_signing", { p_actor: userId, p_company: m.company_id }),

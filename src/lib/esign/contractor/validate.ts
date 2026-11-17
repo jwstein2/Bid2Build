@@ -22,6 +22,8 @@ export const credentialSchema = z.object({
   title: z.string().transform(clean).pipe(z.string().max(120)).optional().default(""),
   method: z.enum(["drawn", "typed", "uploaded"]),
   signatureText: z.string().transform(clean).pipe(z.string().max(200)).optional(),
+  // "company": the typed signature is the company's name, signed by this person (shown "By: name, title").
+  typedAs: z.enum(["name", "company"]).default("name"),
   signatureImage: z.string().max(MAX_UPLOAD_DATA_URL).optional(),
   // Must be literally true: never pre-checked.
   adopt: z.literal(true, { message: "Confirm that this is your signature to continue." }),
@@ -30,7 +32,7 @@ export const credentialSchema = z.object({
 }).superRefine((v, ctx) => {
   if (v.method === "typed") {
     if (!v.signatureText || v.signatureText.length < 2) ctx.addIssue({ code: "custom", path: ["signatureText"], message: "Type your name to create a typed signature." });
-    else if (v.signatureText.toLowerCase() !== v.legalName.toLowerCase()) ctx.addIssue({ code: "custom", path: ["signatureText"], message: "A typed signature must match your full legal name." });
+    else if (v.typedAs === "name" && v.signatureText.toLowerCase() !== v.legalName.toLowerCase()) ctx.addIssue({ code: "custom", path: ["signatureText"], message: "A typed signature must match your full legal name." });
   } else if (!v.signatureImage || !/^data:image\/(png|jpeg|webp);base64,/.test(v.signatureImage)) {
     ctx.addIssue({ code: "custom", path: ["signatureImage"], message: v.method === "drawn" ? "Draw your signature in the box." : "Choose a PNG or JPG image of your signature." });
   }

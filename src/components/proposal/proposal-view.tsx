@@ -141,7 +141,7 @@ export function ProposalView({ doc, customerSignature, contractorSignature }: {
               lines={customerSignature ? [`Customer: ${customerSignature.name} (electronic signature)`] : [`Customer: ${doc.customer.name}`]} />
             <SigCol heading="Contractor signature" sig={contractorSignature} fs={px(st.baseSize * 0.85)} testId="contractor-signature"
               lines={contractorSignature
-                ? [`${contractorSignature.name}${contractorSignature.title ? `, ${contractorSignature.title}` : ""}`, `For ${contractorSignature.company} (electronic signature${contractorSignature.auto ? ", applied under prior authorization" : ""})`]
+                ? [`By: ${contractorSignature.name}${contractorSignature.title ? `, ${contractorSignature.title}` : ""}`, `For ${contractorSignature.company} (electronic signature${contractorSignature.auto ? ", applied under prior authorization" : ""})`]
                 : [`Authorized signer, ${doc.brand.companyName}`]} />
           </section>
         )}
