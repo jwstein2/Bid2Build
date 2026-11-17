@@ -19,7 +19,7 @@ export default function FinishSignIn() {
     supabase.auth.setSession({ access_token, refresh_token }).then(async ({ error }: { error: unknown }) => {
       if (error) { fail(); return; }
       if (query.get("marketing") === "1") {
-        await fetch("/api/account/marketing", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ optIn: true }) }).catch(() => {});
+        await fetch("/api/account/marketing", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ optIn: true, source: "email_link" }) }).catch(() => {});
       }
       window.location.replace(next);
     });

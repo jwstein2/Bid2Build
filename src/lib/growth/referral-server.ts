@@ -2,7 +2,7 @@ import "server-only";
 import type Stripe from "stripe";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { logError } from "../http/api";
-import { normalizeReferralCode, oneMonthCents, REFERRAL_REWARD_DAYS } from "./referral";
+import { normalizeReferralCode, oneMonthCents, pickPlanItem, REFERRAL_REWARD_DAYS } from "./referral";
 
 /**
  * Record that a newly created account arrived through a member's referral link. Best effort and
@@ -55,9 +55,11 @@ export async function rewardReferrer(db: SupabaseClient, stripe: Stripe, referee
 
   try {
     const sub = await stripe.subscriptions.retrieve(claim.subscription);
-    const item = sub.items.data.find((i) => (i.quantity ?? 1) > 0 && i.price?.recurring) ?? sub.items.data[0];
+    // The plan item: the per-unit recurring item worth the most per month. This skips add-ons (PM
+    // $4.99, editors $1.99) and the graduated Enterprise seat price, whose unit_amount is null.
+    const item = pickPlanItem(sub.items.data);
     const cents = item?.price ? oneMonthCents(item.price) : null;
-    if (!cents) throw new Error("Could not price one month of the referrer's plan");
+    if (!item || !cents) throw new Error("Could not price one month of the referrer's plan");
     const txn = await stripe.customers.createBalanceTransaction(
       claim.customer,
       { amount: -cents, currency: item.price.currency, description: "Referral reward: 1 free month (thanks for referring a contractor)", metadata: { referral_id: claim.id } },

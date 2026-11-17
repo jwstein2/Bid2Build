@@ -46,3 +46,17 @@ export function oneMonthCents(price: { unit_amount: number | null; recurring?: {
 }
 
 export interface MyReferral { code: string; eligible: boolean; signed_up: number; paying: number; months_earned: number; pending_rewards: number }
+
+type PricedItem = { quantity?: number | null; price: Parameters<typeof oneMonthCents>[0] };
+
+/** The subscription's plan item for a "one free month" reward: highest monthly per-unit price, add-ons and tiered prices skipped. */
+export function pickPlanItem<T extends PricedItem>(items: T[]): T | null {
+  let best: T | null = null;
+  let bestCents = 0;
+  for (const i of items) {
+    if ((i.quantity ?? 1) <= 0) continue;
+    const c = oneMonthCents(i.price) ?? 0;
+    if (c > bestCents) { best = i; bestCents = c; }
+  }
+  return best;
+}

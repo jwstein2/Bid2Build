@@ -115,4 +115,4 @@ Captcha, Fraud Guard and Geo permissions bring that down further.
 - `src/app/(app)/settings/account/sign-in-methods.tsx`: add/change phone, add email.
 - `src/lib/supabase/server.ts`: `SessionUser` now has `phone`, `phoneVerified`, `verified`.
 - `supabase/migrations/20261114000100_phone_sign_in.sql` + `tests/db/phone-sign-in.test.ts`.
-- `scripts/sms-auth/run.mjs`: 13 browser checks against the mock Supabase (accepts code 123456).
+- `scripts/sms-auth/run.mjs`: 14 browser checks against the mock Supabase (accepts code 123456).

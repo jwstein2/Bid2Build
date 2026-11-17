@@ -63,8 +63,9 @@ describe("verification email templates", () => {
       expect(html).not.toMatch(/ConfirmationURL|TokenHash|<a\s/i);
       expect(html).not.toMatch(/<img/i);
       expect(html).not.toMatch(/\b\d{6,10}\b/);
-      expect(html).toContain("Use this code to securely sign in to Built2Bid:");
-      expect(html).toContain("If you didn't request this code, you can safely ignore this email.");
+      expect(html).toContain("Your Built2Bid verification code:");
+      expect(html).toContain("Enter this code to securely sign in to your account.");
+      expect(html).toContain("If you didn't request this code, you can ignore this email.");
     });
   }
 });

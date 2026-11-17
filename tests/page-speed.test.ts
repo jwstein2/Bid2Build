@@ -27,4 +27,10 @@ describe("signed-in page speed guards", () => {
     expect(src.match(/await Promise\.all\(/g)?.length ?? 0).toBeLessThanOrEqual(2); // main batch + checklist batch
     expect(src).not.toMatch(/await supabase\.rpc\(/);
   });
+
+  it("the proxy refreshes the session with getClaims (local verification), not getUser", () => {
+    const src = read("src/proxy.ts");
+    expect(src).toMatch(/supabase\.auth\.getClaims\(\)/);
+    expect(src).not.toMatch(/supabase\.auth\.getUser\(\)/);
+  });
 });

@@ -172,8 +172,9 @@ export function PmEditorsCard({ seats, members, extra, canManage, canBuy, comp, 
                 <div className="flex justify-between gap-3"><dt className="text-ink-soft">Next invoice ({day(preview.nextInvoiceAt)})</dt><dd>{preview.deltaCents > 0 ? "+" : ""}{formatCents(preview.deltaCents)}/month</dd></div>
                 {adding
                   ? <div className="flex justify-between gap-3 border-t border-line pt-1 font-bold"><dt>Charged now (prorated)</dt><dd data-testid="pm-editor-due">{formatCents(preview.dueNowCents)}</dd></div>
-                  : <div className="flex justify-between gap-3 border-t border-line pt-1 font-bold"><dt>Credit on your next invoice</dt><dd>{formatCents(preview.creditCents)}</dd></div>}
+                  : <div className="flex justify-between gap-3 border-t border-line pt-1 font-bold"><dt>Refund or credit</dt><dd data-testid="pm-editor-no-credit">None (this period is already paid)</dd></div>}
               </dl>
+              {!adding && <p className="mt-2 text-xs text-ink-soft">The unassigned editor seats are removed now. Your next invoice is at the new price.</p>}
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button onClick={() => buy("confirm")} disabled={busy !== null}>{busy === "confirm" && <Loader2 className="h-4 w-4 animate-spin" />}{adding ? `Confirm and pay ${formatCents(preview.dueNowCents)}` : "Confirm removal"}</Button>
                 <Button variant="secondary" onClick={() => setPreview(null)} disabled={busy !== null}>Cancel</Button>
