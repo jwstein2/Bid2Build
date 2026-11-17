@@ -6,13 +6,13 @@ export const metadata: Metadata = { title: "Pricing data", robots: { index: fals
 
 export default function PricingSettings() {
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-3xl space-y-6" data-guide-page="settings.pricing">
       <div>
         <h1 className="text-3xl font-extrabold">Regional pricing data</h1>
         <p className="mt-1 text-ink-soft">Optional reference prices shown next to your own cost. We only show prices from licensed or authorized sources, always with the source, region, unit, and date.</p>
       </div>
       <Notice tone="neutral" title="Currently">{UNAVAILABLE_MESSAGE} Your own costs drive every price on your proposals.</Notice>
-      <div className="space-y-3">
+      <div className="space-y-3" data-guide="pricing.data">
         {PROVIDER_CATALOG.map((p) => (
           <Card key={p.id} className="p-4">
             <div className="flex items-center justify-between gap-3">

@@ -54,7 +54,7 @@ export default async function SchedulePage({ params, searchParams }: { params: P
     activity, today: todayIn(data.schedule.calendar.timezone),
   } : null;
   return (
-    <div className="mx-auto max-w-7xl">
+    <div className="mx-auto max-w-7xl" data-guide-page="project.detail" data-guide-trade={data.snapshot.trades.join(" ")}>
       <Breadcrumbs className="mb-3" items={[{ label: "Projects", href: "/projects" }, { label: data.schedule.name }]} />
       {summary && <ProjectSummary {...summary} />}
       {comm?.pm && comm.perms.includes("view_communications") && (

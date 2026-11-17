@@ -41,11 +41,11 @@ export function BidList({ rows }: { rows: BidRow[] }) {
   return (
     <Card>
       <div className="flex flex-wrap items-center gap-2 border-b border-line p-3">
-        <div className="relative min-w-[200px] flex-1">
+        <div className="relative min-w-[200px] flex-1" data-guide="bids.table-search">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
           <input aria-label="Search bids" className="field pl-9" placeholder="Search by project, customer, or number" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
-        <div role="group" aria-label="Filter by status" className="flex flex-wrap gap-1">
+        <div role="group" aria-label="Filter by status" className="flex flex-wrap gap-1" data-guide="bids.table-filters">
           {FILTERS.map(([v, l]) => (
             <button key={v} aria-pressed={filter === v} onClick={() => setFilter(v)} className={`min-h-9 rounded-md px-3 py-1.5 text-sm font-medium ${filter === v ? "bg-navy text-white" : "text-ink-soft hover:bg-black/5"}`}>{l}</button>
           ))}
@@ -104,7 +104,7 @@ function Row({ r, first }: { r: BidRow; first: boolean }) {
   }
 
   return (
-    <li className="flex flex-wrap items-center gap-3 px-4 py-3">
+    <li className="flex flex-wrap items-center gap-3 px-4 py-3" data-guide={first ? "bids.row" : undefined}>
       <div className="min-w-0 flex-1 max-sm:basis-full">
         {renaming ? (
           <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); start(() => renameEstimate(r.id, title)); setRenaming(false); }}>
@@ -125,12 +125,12 @@ function Row({ r, first }: { r: BidRow; first: boolean }) {
         {r.signing?.signed && r.signing.state !== "signed" && <SigningBadge s={{ ...r.signing, state: "signed" }} />}
         {r.latestVersion && <span className="tabular text-sm font-semibold">{formatCurrency(String(r.signing?.state === "signed" && r.signing.signed ? r.signing.signed.total : r.latestVersion.total))}</span>}
       </div>
-      <div className="flex flex-wrap items-center gap-1">
+      <div className="flex flex-wrap items-center gap-1" data-guide={first ? "bids.row-actions" : undefined}>
         {r.signing?.signed && (
             <Link href={`/signed/${r.signing.signed.id}`} className="inline-flex min-h-10 items-center gap-1 rounded-md px-2 text-sm font-semibold text-ok hover:bg-ok-tint" aria-label={`View signed proposal: ${r.title}`}><CheckCircle2 className="h-4 w-4" aria-hidden />View signed</Link>
         )}
         {/* The first bid's Open link is where the walkthrough points for the Internal Estimate Report (it lives inside a bid). */}
-        <IconLink href={`/estimates/${r.id}`} label="Open / edit" feature={first ? "internal_report" : undefined}><Pencil className="h-4 w-4" /></IconLink>
+        <IconLink href={`/estimates/${r.id}`} label="Open / edit" feature={first ? "internal_report" : undefined} guide={first ? "bids.open" : undefined}><Pencil className="h-4 w-4" /></IconLink>
         <IconLink href={`/estimates/${r.id}?step=proposal`} label="Preview"><Eye className="h-4 w-4" /></IconLink>
         <IconBtn label={r.latestVersion ? "Download latest PDF (no credit used)" : "Export from the editor first"} onClick={download} disabled={!r.latestVersion || dl}>{dl ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}</IconBtn>
         <IconBtn label="Duplicate" onClick={() => start(() => duplicateEstimate(r.id))} disabled={pending}><Copy className="h-4 w-4" /></IconBtn>
@@ -162,6 +162,6 @@ function SigningBadge({ s }: { s: BidSigning }) {
 function IconBtn({ label, onClick, disabled, children }: { label: string; onClick: () => void; disabled?: boolean; children: React.ReactNode }) {
   return <button title={label} aria-label={label} onClick={onClick} disabled={disabled} className="grid h-10 w-10 place-items-center rounded-md text-ink-soft hover:bg-brand-tint hover:text-navy disabled:opacity-40">{children}</button>;
 }
-function IconLink({ href, label, feature, children }: { href: string; label: string; feature?: FeatureId; children: React.ReactNode }) {
-  return <Link href={href} data-feature={feature} title={label} aria-label={label} className="grid h-10 w-10 place-items-center rounded-md text-ink-soft hover:bg-brand-tint hover:text-navy">{children}</Link>;
+function IconLink({ href, label, feature, guide, children }: { href: string; label: string; feature?: FeatureId; guide?: string; children: React.ReactNode }) {
+  return <Link href={href} data-feature={feature} data-guide={guide} title={label} aria-label={label} className="grid h-10 w-10 place-items-center rounded-md text-ink-soft hover:bg-brand-tint hover:text-navy">{children}</Link>;
 }

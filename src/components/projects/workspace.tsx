@@ -19,6 +19,8 @@ import { AssignPanel } from "./assign-panel";
 import type { Team } from "@/lib/projects/team";
 
 export type View = "overview" | "calendar" | "timeline" | "workload" | "mywork";
+/** Page walkthrough per view (src/lib/features/page-guides.ts): the active view decides what it teaches. */
+const GUIDE_PAGE = { overview: "projects.overview", calendar: "projects.calendar", timeline: "projects.timeline", workload: "projects.workload", mywork: "projects.mywork" } as const satisfies Record<View, string>;
 const VIEWS: { v: View; label: string; icon: typeof LayoutDashboard; tip: string }[] = [
   { v: "overview", label: "Overview", icon: LayoutDashboard, tip: "Active projects, what needs attention and what's next" },
   { v: "calendar", label: "Calendar", icon: CalendarDays, tip: "Every project's tasks on one calendar" },
@@ -111,9 +113,9 @@ export function ProjectsWorkspace({ initial, today, myName, extras = {} }: { ini
 
   const primary = VIEWS.slice(0, 2), overflow = VIEWS.slice(2);
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-guide-page={GUIDE_PAGE[view]} data-guide-trade={trades.join(" ")}>
       {/* Views: segmented control; below lg (where the sidebar leaves little room) the last views move into a "More" menu. */}
-      <nav aria-label="Project views" className="flex items-center gap-1 border-b border-line pb-px">
+      <nav aria-label="Project views" className="flex items-center gap-1 border-b border-line pb-px" data-guide="projects.views">
         {VIEWS.map((x, i) => (
           <button key={x.v} type="button" onClick={() => setView(x.v)} aria-current={view === x.v ? "page" : undefined} title={x.tip} data-testid={`tab-${x.v}`}
             className={cn("-mb-px flex min-h-11 shrink-0 items-center gap-1.5 border-b-2 px-2.5 text-sm font-semibold sm:px-3", i >= 2 && "hidden lg:flex",
@@ -126,7 +128,7 @@ export function ProjectsWorkspace({ initial, today, myName, extras = {} }: { ini
       </nav>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-end gap-2" role="group" aria-label="Filters" data-testid="filters">
+      <div className="flex flex-wrap items-end gap-2" role="group" aria-label="Filters" data-testid="filters" data-guide="projects.filters">
         {showRep && <FilterSelect label="Sold by" value={filters.rep} onChange={(v) => set({ rep: v })} testid="f-rep"
           options={[["all", "All salespeople"], ["mine", "My sales"], ...ws.people.map((p) => [p.id, p.name] as [string, string])]} />}
         {showRep && <FilterSelect label="Project manager" value={filters.pm} onChange={(v) => set({ pm: v })} testid="f-pm"

@@ -22,6 +22,8 @@ export const metadata: Metadata = { title: "Customer", robots: { index: false } 
 const day = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—");
 const money = (n: number | null | undefined) => (n == null ? "—" : n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }));
 const TABS = [["overview", "Overview"], ["bids", "Bids"], ["projects", "Projects"], ["activity", "Activity"]] as const;
+/** Page walkthrough per tab (src/lib/features/page-guides.ts). */
+const GUIDE_PAGE = { overview: "customers.detail.overview", bids: "customers.detail.bids", projects: "customers.detail.projects", activity: "customers.detail.activity" } as const;
 type Tab = (typeof TABS)[number][0];
 
 /** Customer profile: contact, relationship, linked bids and projects, activity and communications. */
@@ -106,7 +108,7 @@ export default async function CustomerDetail({ params, searchParams }: { params:
 
   const tabHref = (t: Tab) => `/dashboard/customers/${id}${t === "overview" ? "" : `?tab=${t}`}`;
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
+    <div className="mx-auto max-w-5xl space-y-6" data-guide-page={GUIDE_PAGE[tab]} data-guide-trade={[...new Set(s.bids.flatMap((b) => b.trades))].join(" ")}>
       <Breadcrumbs items={[{ label: "Customers", href: "/dashboard/customers" }, { label: c.name }]} />
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
@@ -118,10 +120,10 @@ export default async function CustomerDetail({ params, searchParams }: { params:
           {c.companyName && <p className="font-semibold text-ink-soft">{c.companyName}</p>}
           <p className="text-ink-soft">{[c.email, c.phone, c.address].filter(Boolean).join(" · ") || "No contact details yet"}</p>
         </div>
-        <NewBidForCustomer customer={{ id: c.id, name: c.name, email: c.email, phone: c.phone, address: c.address }} />
+        <NewBidForCustomer guide="customer.new-bid" customer={{ id: c.id, name: c.name, email: c.email, phone: c.phone, address: c.address }} />
       </div>
 
-      <nav aria-label="Customer sections" className="flex gap-1 overflow-x-auto border-b border-line" data-testid="customer-detail-tabs">
+      <nav aria-label="Customer sections" className="flex gap-1 overflow-x-auto border-b border-line" data-testid="customer-detail-tabs" data-guide="customer.tabs">
         {TABS.map(([t, label]) => {
           const count = t === "bids" ? s.bids.length : t === "projects" ? s.projects.length : null;
           return (
@@ -135,13 +137,13 @@ export default async function CustomerDetail({ params, searchParams }: { params:
 
       {tab === "overview" && (
         <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-          <Card className="space-y-3 p-4">
+          <Card className="space-y-3 p-4" data-guide="customer.contact">
             <h2 className="font-bold">Contact</h2>
             <CustomerEditor canEdit={canEdit} canDelete={canEdit && s.bids.length === 0} customer={{ id: c.id, name: c.name, email: c.email ?? "", phone: c.phone ?? "", projectAddress: c.address ?? "", notes: c.notes ?? "", customerType: c.customerType, companyName: c.companyName ?? "" }} />
             {!canEdit && <p className="text-xs text-muted">You can view this customer. Ask your company owner if you need to edit it.</p>}
           </Card>
           <div className="space-y-4">
-            <Card className="space-y-2 p-4" data-testid="customer-next">
+            <Card className="space-y-2 p-4" data-testid="customer-next" data-guide="customer.next">
               <h2 className="font-bold">Next action</h2>
               {s.next ? <Link className="font-semibold text-accent-ink hover:underline" href={s.next.href}>{s.next.label}</Link> : <p className="text-sm text-muted">Nothing to do right now.</p>}
               {s.attention.length > 0 && (
@@ -155,13 +157,13 @@ export default async function CustomerDetail({ params, searchParams }: { params:
                 <div><dt className="text-muted">Active projects</dt><dd className="text-lg font-bold">{s.activeProjects}</dd></div>
               </dl>
             </Card>
-            <Card className="p-4">
+            <Card className="p-4" data-guide="customer.activity-summary">
               <div className="flex items-center justify-between gap-2"><h2 className="font-bold">Recent activity</h2><Link className="text-sm font-semibold text-accent-ink hover:underline" href={tabHref("activity")}>All activity</Link></div>
               <ul className="mt-2 space-y-1.5 text-sm">{events.slice(0, 5).map((e, i) => <li key={i} className="flex justify-between gap-3"><span className="min-w-0 truncate">{e.href ? <Link className="hover:underline" href={e.href}>{e.text}</Link> : e.text}</span><span className="shrink-0 text-muted">{day(e.at)}</span></li>)}</ul>
             </Card>
           </div>
           {dupes.length > 0 && <div className="lg:col-span-2"><MergeDuplicates keepId={c.id} keepName={c.name} candidates={dupes} /></div>}
-          <Card className="space-y-3 p-4 lg:col-span-2" data-testid="customer-comms-summary">
+          <Card className="space-y-3 p-4 lg:col-span-2" data-testid="customer-comms-summary" data-guide="customer.comms">
             <div className="flex items-center justify-between gap-2"><h2 className="font-bold">Communications</h2>{pm && <Link className="text-sm font-semibold text-accent-ink hover:underline" href="/dashboard/customers/communications">All communications</Link>}</div>
             {!pm ? <p className="text-sm text-ink-soft">Follow-ups and project update emails are part of Project Command Center.</p> : !email ? <p className="text-sm text-muted">Add an email address to this customer to include them in communications.</p> : (
               <>
@@ -180,7 +182,7 @@ export default async function CustomerDetail({ params, searchParams }: { params:
       )}
 
       {tab === "bids" && (
-        <Card data-testid="customer-bids">
+        <Card data-testid="customer-bids" data-guide="customer.bids">
           {!s.bids.length ? (
             <div className="p-8 text-center text-sm text-muted"><p>No bids for this customer yet.</p></div>
           ) : (
@@ -208,7 +210,7 @@ export default async function CustomerDetail({ params, searchParams }: { params:
       )}
 
       {tab === "projects" && (
-        <Card data-testid="customer-projects">
+        <Card data-testid="customer-projects" data-guide="customer.projects">
           {!s.projects.length ? (
             <div className="p-8 text-center text-sm text-muted">
               <p>No projects for this customer yet.</p>
@@ -228,7 +230,7 @@ export default async function CustomerDetail({ params, searchParams }: { params:
       )}
 
       {tab === "activity" && (
-        <Card data-testid="customer-activity">
+        <Card data-testid="customer-activity" data-guide="customer.activity">
           <ol className="divide-y divide-line">
             {events.map((e, i) => (
               <li key={i} className="flex flex-wrap justify-between gap-2 px-4 py-2.5 text-sm">

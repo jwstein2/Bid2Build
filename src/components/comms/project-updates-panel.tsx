@@ -43,7 +43,7 @@ export function ProjectUpdatesPanel({ scheduleId, canConfigure, canAuto }: { sch
   };
   const on = cur.frequency !== "off" && !cur.pausedAt;
   return (
-    <Card id="customer-updates" className="mb-4 space-y-3 p-4" data-testid="project-updates-panel">
+    <Card id="customer-updates" className="mb-4 space-y-3 p-4" data-testid="project-updates-panel" data-guide="project.updates">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h2 className="font-bold">Customer updates</h2>

@@ -42,6 +42,8 @@ import { stepStatuses } from "@/lib/estimate/step-status";
 import type { ShareEmailInput } from "@/lib/proposal/share-email";
 import { displayPhone } from "@/lib/proposal/customer-text";
 import { ThemeToggle } from "../theme/theme-toggle";
+import { FeatureHost } from "../features/feature-host";
+import { PageGuideButton } from "../features/tour-buttons";
 import type { ThemePref } from "@/lib/theme";
 import { track } from "@/lib/analytics/track";
 
@@ -61,6 +63,9 @@ export interface BuilderProps {
   /** Credit balances loaded with the page, so the header (Upgrade, credit line) is right on first paint. */
   initialCredits?: CreditStatus | null;
 }
+
+/** Page walkthrough for each builder step (src/lib/features/page-guides.ts). */
+const GUIDE_PAGE = { company: "builder.company", project: "builder.project", estimate: "builder.estimate", scope: "builder.scope", proposal: "builder.proposal" } as const satisfies Record<Step, string>;
 
 const STEPS: { id: Step; label: string; next: string }[] = [
   { id: "company", label: "Company", next: "Next: customer & project" },
@@ -443,14 +448,14 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
           <div className="flex w-full flex-wrap items-start justify-end gap-2 lg:w-auto lg:flex-nowrap">
             {credits && !credits.unlimited && <UpgradeLink compact className="border-transparent text-xs sm:text-sm" />}
             {step === "estimate" && (
-              <Button size="sm" variant="ghost" onClick={() => setCustomerView(!customerView)} aria-pressed={customerView} className="hidden md:inline-flex">
+              <Button size="sm" variant="ghost" onClick={() => setCustomerView(!customerView)} aria-pressed={customerView} className="hidden md:inline-flex" data-guide="builder.customer-view">
                 {customerView ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />} Customer view
               </Button>
             )}
             {cloudMode && user && save === "saved" && <ScheduleNowButton estimateId={estimate.id} />}
             {cloudMode && user && <InternalReportButton estimateId={estimate.id} locked={credits ? !credits.unlimited : false} saved={save === "saved"} signedIn={Boolean(user)} businessEmail={business.email} title={estimate.title} />}
-            <Button size="sm" variant="secondary" onClick={() => setPreviewOpen(true)}><Eye className="h-4 w-4" /> <span className="hidden sm:inline">Preview My Bid</span><span className="sm:hidden">Preview</span></Button>
-            <Button size="sm" variant="secondary" onClick={startSend} disabled={exporting} aria-label="Send via My Email" data-testid="send-email-header">
+            <Button size="sm" variant="secondary" onClick={() => setPreviewOpen(true)} data-guide="builder.preview"><Eye className="h-4 w-4" /> <span className="hidden sm:inline">Preview My Bid</span><span className="sm:hidden">Preview</span></Button>
+            <Button size="sm" variant="secondary" onClick={startSend} disabled={exporting} aria-label="Send via My Email" data-testid="send-email-header" data-guide="builder.send">
               <Mail className="h-4 w-4" aria-hidden /> <span className="max-[419px]:hidden"><span className="sm:hidden">Email</span><span className="hidden sm:inline xl:hidden">Send by email</span><span className="hidden xl:inline">Send via My Email</span></span>
             </Button>
             <div className="flex flex-col items-end">
@@ -463,10 +468,11 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
               {user && !credits && <span className="invisible mt-0.5 text-[11px] tabular" aria-hidden>Monthly 0 · Starter 0</span>}
               {credits && !credits.unlimited && <span className="text-[11px] text-muted">{alreadyFinalized ? "Updates are free" : "Uses 1 credit"}</span>}
             </div>
+            <PageGuideButton compact className="min-h-9 min-w-9 justify-center" />
             <ThemeToggle signedIn={Boolean(user)} account={user?.theme ?? null} className="min-h-9 min-w-9 md:min-h-9 md:min-w-9" />
           </div>
         </div>
-        <nav aria-label="Builder steps" className="mx-auto max-w-[1400px] px-3 sm:px-5">
+        <nav aria-label="Builder steps" className="mx-auto max-w-[1400px] px-3 sm:px-5" data-guide="builder.steps">
           <p className="sr-only" aria-live="polite">Step {stepIndex + 1} of {STEPS.length}: {STEPS[stepIndex]?.label}</p>
           <ol ref={stepsRef} className="relative flex gap-1 overflow-x-auto">
             {STEPS.map((s, i) => (
@@ -492,7 +498,8 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
         </nav>
       </header>
 
-      <main id="main" className="mx-auto w-full max-w-[1400px] flex-1 px-3 py-5 pb-28 sm:px-5 lg:pb-8">
+      {/* The page walkthrough teaches the step on screen, in the language of this bid's trades. */}
+      <main id="main" className="mx-auto w-full max-w-[1400px] flex-1 px-3 py-5 pb-28 sm:px-5 lg:pb-8" data-guide-page={GUIDE_PAGE[step]} data-guide-trade={estimate.trades.join(" ")}>
         {exportMsg && (
           <Notice tone={exportMsg.tone === "ok" ? "ok" : exportMsg.tone} className="mb-4">
             <span className="flex items-center justify-between gap-3">{exportMsg.text}<button onClick={() => setExportMsg(null)} className="text-xs underline">Dismiss</button></span>
@@ -584,6 +591,8 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
         link={signingLink} onCreateLink={() => void createSigning(true)} creatingLink={creatingLink} />
       <AuthDialog open={authOpen} onOpenChange={setAuthOpen} next={`/builder?draft=${estimate.id}&export=1`} onVerified={() => { window.location.assign(`/builder?draft=${estimate.id}&export=1`); }} />
       <UpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} nextCycleAt={credits?.nextCycleAt} />
+      {/* The builder sits outside the signed-in layout: its own host runs the page walkthrough (no automatic popups here). */}
+      <FeatureHost auto={false} />
     </div>
     </BuilderOpsProvider>
   );
@@ -608,7 +617,7 @@ function SaveBadge({ state, signedIn }: { state: SaveState; signedIn: boolean })
   return (
     <>
       {/* Remounts on each state change, so the new status fades in (motion-fade) and is noticed. */}
-      <span key={state} className="inline-flex motion-fade" data-testid="save-badge" data-state={state}>{label}</span>
+      <span key={state} className="inline-flex motion-fade" data-testid="save-badge" data-guide="builder.save" data-state={state}>{label}</span>
       {/* Screen readers hear only a failed sync, not every autosave. */}
       <span className="sr-only" role="status">{state === "error" ? "Changes not synced to your account. Your work is saved on this device." : ""}</span>
     </>

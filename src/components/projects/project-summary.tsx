@@ -60,7 +60,7 @@ export function ProjectSummary(p: SummaryProps) {
 
   const activity = showAll ? p.activity : p.activity.slice(0, 6);
   return (
-    <section className="mb-5 grid gap-4 lg:grid-cols-[1.4fr_1fr]" aria-label="Project summary" data-testid="project-summary">
+    <section className="mb-5 grid gap-4 lg:grid-cols-[1.4fr_1fr]" aria-label="Project summary" data-testid="project-summary" data-guide="project.summary">
       <div className="rounded-2xl border border-line bg-surface p-4">
         <div className="flex flex-wrap items-center gap-2">
           <span className="h-3 w-3 rounded-full" style={projectDot(p.id)} aria-hidden />

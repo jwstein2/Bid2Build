@@ -18,11 +18,11 @@ export default async function AccountPage() {
     supabase.from("market_consent").select("share_prices, share_costs, commercial_use").eq("user_id", user.id).maybeSingle(),
   ]);
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-3xl space-y-6" data-guide-page="settings.account">
       <h1 className="text-3xl font-extrabold">Account settings</h1>
-      <SignInMethods email={user.email} emailVerified={user.emailVerified} phone={user.phone} phoneVerified={user.phoneVerified} smsEnabled={isSmsSignInEnabled()} />
-      <MarketSharing initial={{ sharePrices: Boolean(consent?.share_prices), shareCosts: Boolean(consent?.share_costs), commercialUse: Boolean(consent?.commercial_use) }} />
-      <AccountActions marketing={Boolean(profile?.marketing_opt_in)} />
+      <div data-guide="account.signin"><SignInMethods email={user.email} emailVerified={user.emailVerified} phone={user.phone} phoneVerified={user.phoneVerified} smsEnabled={isSmsSignInEnabled()} /></div>
+      <div data-guide="account.sharing"><MarketSharing initial={{ sharePrices: Boolean(consent?.share_prices), shareCosts: Boolean(consent?.share_costs), commercialUse: Boolean(consent?.commercial_use) }} /></div>
+      <div data-guide="account.actions"><AccountActions marketing={Boolean(profile?.marketing_opt_in)} /></div>
     </div>
   );
 }

@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Saved Items & Pricing Library", robo
 
 export default function ItemsPage() {
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="mx-auto max-w-4xl space-y-6" data-guide-page="library.items">
       <div>
         <h1 className="flex items-center gap-2 text-3xl font-extrabold text-navy">Saved Items &amp; Pricing Library <PremiumDiamond className="[&_svg]:h-5 [&_svg]:w-5" /></h1>
         <p className="text-ink-soft">

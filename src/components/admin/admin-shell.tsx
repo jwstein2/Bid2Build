@@ -6,6 +6,8 @@ import { Suspense, useEffect, useLayoutEffect, useRef, useState, type ReactNode 
 import { cn } from "@/lib/cn";
 import { menuKeyDown, useDismiss } from "@/components/ui/use-dismiss";
 import { PRIMARY, TOOLS } from "./nav";
+import { FeatureHost } from "@/components/features/feature-host";
+import { PageGuideButton } from "@/components/features/tour-buttons";
 
 /** Pages that render on the dark command-center theme; the rest keep the light theme. */
 const DARK = ["/admin", "/admin/marketing", "/admin/customers", "/admin/revenue", "/admin/usage", "/admin/operations", "/admin/states", "/admin/definitions", "/admin/complimentary", "/admin/costs"];
@@ -107,18 +109,21 @@ export function AdminShell({ email, logo, children }: { email: string; logo: Rea
             {logo}
             <span className="cc-mono hidden rounded border border-[var(--cc-line-strong)] px-2 py-0.5 text-[11px] uppercase tracking-[0.18em] text-[var(--cc-green)] sm:inline">Owner</span>
           </div>
-          <nav aria-label="Owner command center" className="cc-mono flex flex-wrap gap-1 text-[13px]">
+          <nav aria-label="Owner command center" className="cc-mono flex flex-wrap gap-1 text-[13px]" data-guide="admin.nav">
             <Suspense fallback={null}><NavLinks path={path} /></Suspense>
-            <ToolsMenu path={path} />
+            <span data-guide="admin.tools" className="inline-flex"><ToolsMenu path={path} /></span>
           </nav>
           <div className="ml-auto flex items-center gap-3">
-            {dark && <Suspense fallback={null}><TestDataToggle path={path} /></Suspense>}
+            {dark && <span data-guide="admin.test-data" className="inline-flex"><Suspense fallback={null}><TestDataToggle path={path} /></Suspense></span>}
+            <PageGuideButton compact className="text-[#8fa6b4] hover:bg-white/10 hover:text-white" />
             <span className="hidden text-xs text-[#8fa6b4] lg:inline">{email}</span>
-            <Link href="/dashboard" className="text-xs text-[#8fa6b4] underline hover:text-white">Exit</Link>
+            <Link href="/dashboard" className="text-xs text-[#8fa6b4] underline hover:text-white" data-guide="admin.exit">Exit</Link>
           </div>
         </div>
       </header>
-      <main id="main" className={cn("mx-auto px-4 py-7", dark ? "max-w-7xl" : "max-w-6xl")}>{children}</main>
+      <main id="main" className={cn("mx-auto px-4 py-7", dark ? "max-w-7xl" : "max-w-6xl")} data-guide-page="admin">{children}</main>
+      {/* Owner-only walkthrough (page-guides.ts "admin"): started from the compass button, never automatically. */}
+      <FeatureHost auto={false} />
     </div>
   );
 }

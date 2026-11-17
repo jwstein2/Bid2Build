@@ -24,7 +24,7 @@ export default async function TeamPage() {
   const usage: Record<string, number> = {};
   for (const t of ws?.tasks ?? []) if (t.resourceId && t.status !== "complete") usage[t.resourceId] = (usage[t.resourceId] ?? 0) + 1;
   return (
-    <div className="mx-auto max-w-5xl space-y-5">
+    <div className="mx-auto max-w-5xl space-y-5" data-guide-page="projects.team">
       <div>
         <Link href="/projects" className="inline-flex items-center gap-1 text-sm font-semibold text-accent-ink hover:underline"><ChevronLeft className="h-4 w-4" aria-hidden /> Projects</Link>
         <h1 className="mt-1 flex items-center gap-2 text-3xl font-extrabold text-navy"><Users className="h-7 w-7 text-accent-ink" aria-hidden /> Team &amp; Subcontractors</h1>

@@ -44,7 +44,7 @@ export function AnalyticsView({ a, rangeLabel, pay, paySaved, bids = [] }: { a: 
   ];
   return (
     <div className="space-y-4" data-testid="pipeline-analytics">
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3" data-guide="bids.analytics-kpis">
         {tiles.map((t) => {
           const d = drill[t.testid];
           return (

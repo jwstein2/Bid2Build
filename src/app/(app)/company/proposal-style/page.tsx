@@ -38,7 +38,7 @@ export default async function ProposalStylePage() {
   const ownerBusiness = owner?.owner_user_id ? await loadOwnerBusiness(createAdminClient(), owner.owner_user_id as string, { signedLogo: true }) : null;
   const names = Object.fromEntries(((people as { id: string; name: string }[] | null) ?? []).map((p) => [p.id, p.name]));
   return (
-    <div className="mx-auto max-w-7xl space-y-4">
+    <div className="mx-auto max-w-7xl space-y-4" data-guide-page="company.proposal-style">
       {crumbs}
       <div>
         <h1 className="text-3xl font-extrabold">Proposal &amp; Bid Style</h1>

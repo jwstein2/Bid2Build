@@ -173,7 +173,7 @@ export function Workspace({ estimate, dispatch, lib: library }: { estimate: Esti
           );
         })}
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2" data-guide="builder.add-trade">
           {!multiTrade && <Button variant="secondary" onClick={() => dispatch({ type: "addGroup" })}><Plus className="h-4 w-4" /> Add section</Button>}
           <AddTradeSelect estimate={estimate} dispatch={dispatch} className="min-h-11 md:min-h-9" label={multiTrade ? "+ Add another trade" : "+ Add a trade to this project"} />
         </div>
@@ -274,7 +274,7 @@ function GroupCard(props: {
   const [userToggled, setUserToggled] = useState(false);
 
   return (
-    <section className="rounded-xl border border-line bg-surface shadow-card" aria-label={`Section ${g.name || "untitled"}`}>
+    <section className="rounded-xl border border-line bg-surface shadow-card" aria-label={`Section ${g.name || "untitled"}`} data-guide="builder.section">
       <header className={cn("flex flex-wrap items-center gap-x-2 gap-y-1 px-2 py-2 sm:px-3", open && "border-b border-line")}>
         <button
           type="button"
@@ -642,7 +642,7 @@ function ItemRow({ item: it, isLast, totals, estimate, dispatch, selected, toggl
         </td>
         <td className="px-1 py-1 max-md:col-span-10 max-md:row-start-1 max-md:p-0">
           <div className="flex items-center gap-1">
-            <button onClick={() => setExpanded(!expanded)} className="grid shrink-0 place-items-center rounded p-0.5 text-muted hover:bg-black/5 max-md:h-11 max-md:w-8" aria-label={expanded ? "Hide item details" : "Show item details"} aria-expanded={expanded}>
+            <button onClick={() => setExpanded(!expanded)} className="grid shrink-0 place-items-center rounded p-0.5 text-muted hover:bg-black/5 max-md:h-11 max-md:w-8" aria-label={expanded ? "Hide item details" : "Show item details"} aria-expanded={expanded} data-guide="builder.item-details">
               {expanded ? <ChevronDown className="h-3.5 w-3.5 max-md:h-4 max-md:w-4" /> : <ChevronRight className="h-3.5 w-3.5 max-md:h-4 max-md:w-4" />}
             </button>
             <input data-focus={`${it.id}:name`} data-col="name" value={it.name} onChange={(e) => up({ name: e.target.value })} onKeyDown={onKey} className="cell font-medium max-md:min-h-11 max-md:border-line max-md:text-base" placeholder="Item name" aria-label="Item name" />

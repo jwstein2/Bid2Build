@@ -20,12 +20,12 @@ export default async function TemplatesPage() {
     hasPremiumAccess(supabase),
   ]);
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="mx-auto max-w-6xl space-y-6" data-guide-page="library.templates">
       <div>
         <h1 className="flex items-center gap-2 text-3xl font-extrabold">Proposal Templates <PremiumDiamond className="[&_svg]:h-5 [&_svg]:w-5" /></h1>
         <p className="mt-1 text-ink-soft">Choose your default style, wording, and payment schedule. New bids start with these settings; you can still change anything per bid.</p>
       </div>
-      <DefaultsEditor business={business} initial={proposalConfigFrom(row?.default_proposal_config)} unlimited={unlimited} />
+      <div data-guide="templates.editor"><DefaultsEditor business={business} initial={proposalConfigFrom(row?.default_proposal_config)} unlimited={unlimited} /></div>
     </div>
   );
 }

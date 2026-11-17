@@ -64,7 +64,7 @@ export default async function CompanyOverviewPage({ searchParams }: PageProps<"/
   const rangeText = RANGES[range];
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="mx-auto max-w-6xl space-y-6" data-guide-page="company.overview">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-3xl font-extrabold">Company Overview</h1>
@@ -82,7 +82,7 @@ export default async function CompanyOverviewPage({ searchParams }: PageProps<"/
 
       {error || !s ? <Notice tone="danger">The overview couldn&apos;t be loaded. Please refresh.</Notice> : (
         <>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4" data-testid="kpis">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4" data-testid="kpis" data-guide="company.kpis">
             <MetricCard title="Bids created" value={String(s.bids)} sub={`${s.sent} sent to customers`} href={pipeHref()} action="View these bids" testId="kpi-bids" />
             <MetricCard title="Win rate" value={s.winRate === null ? "—" : `${s.winRate}%`} sub={`${s.won} won · ${s.lost} lost`} testId="kpi-winrate" action="Won and lost bids"
               drawer={{ id: "company-winrate", title: "Win rate", description: rangeText, body: <>
@@ -107,7 +107,7 @@ export default async function CompanyOverviewPage({ searchParams }: PageProps<"/
             </Notice>
           )}
 
-          <Card className="p-4">
+          <Card className="p-4" data-guide="company.stages">
             <h2 className="font-display text-lg font-bold">Pipeline</h2>
             <ul className="mt-3 space-y-2" data-testid="stage-bars">{STAGES.map((k) => {
               const st = s.stages[k] ?? { count: 0, value: 0 };
@@ -123,7 +123,7 @@ export default async function CompanyOverviewPage({ searchParams }: PageProps<"/
             })}</ul>
           </Card>
 
-          <Card className="p-0">
+          <Card className="p-0" data-guide="company.team">
             <h2 className="border-b border-line px-4 py-3 font-display text-lg font-bold">Team performance</h2>
             {s.members.length === 0 ? <p className="px-4 py-6 text-center text-ink-soft">No bids in this period yet.</p> : (
               <div className="overflow-x-auto">
@@ -147,7 +147,7 @@ export default async function CompanyOverviewPage({ searchParams }: PageProps<"/
             )}
           </Card>
 
-          {company.isOwner && <Card className="p-4"><h2 className="mb-2 font-display text-lg font-bold">Approval rule</h2><ApprovalToggle required={s.requireApproval} /></Card>}
+          {company.isOwner && <Card className="p-4" data-guide="company.approval"><h2 className="mb-2 font-display text-lg font-bold">Approval rule</h2><ApprovalToggle required={s.requireApproval} /></Card>}
           <p className="text-xs text-ink-soft">Win rate counts bids marked Won or Lost. Values use each bid&apos;s latest finalized version; drafts without one count as bids but add no value.</p>
         </>
       )}

@@ -80,7 +80,7 @@ export default async function CompanyBillingPage({ searchParams }: PageProps<"/c
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-3xl space-y-6" data-guide-page="company.billing">
       <div>
         <h1 className="text-3xl font-extrabold">Billing & Licenses</h1>
         <p className="text-ink-soft">{company.name}</p>
@@ -89,7 +89,7 @@ export default async function CompanyBillingPage({ searchParams }: PageProps<"/c
       {row?.status === "past_due" && <Notice tone="danger" title="Payment failed">Your last Enterprise payment didn&apos;t go through. Stripe retries automatically and your team keeps access meanwhile. Update your payment method to avoid losing access.</Notice>}
       {!company.entitlement.active && <Notice tone="warn" title="Enterprise isn't active">Your team&apos;s bids and customers are safe, but licensed access is paused until the subscription is active again.</Notice>}
 
-      <Card className="p-5">
+      <Card className="p-5" data-guide="company.licenses">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-sm text-muted">Plan</p>
@@ -114,7 +114,7 @@ export default async function CompanyBillingPage({ searchParams }: PageProps<"/c
       </Card>
 
       {canChangeSeats && (
-        <Card className="scroll-mt-24 p-5" id="seats">
+        <Card className="scroll-mt-24 p-5" id="seats" data-guide="company.seats">
           <h2 className="font-display text-lg font-bold">Add or remove licensed users</h2>
           <p className="mb-3 text-sm text-ink-soft">Each person on your team needs their own license. Inviting someone uses a free license; it never buys one. Buy licenses here first, and you&apos;ll see the exact charge before confirming.</p>
           <SeatChanger current={licensed} seatsInUse={company.seatsUsed} />
@@ -124,7 +124,7 @@ export default async function CompanyBillingPage({ searchParams }: PageProps<"/c
       {comp && <Notice tone="neutral" title="Need more users?">Complimentary accounts include 3 users. Contact Built2Bid to arrange more.</Notice>}
 
       {row && (
-        <Card className="p-5">
+        <Card className="p-5" data-guide="company.portal">
           <h2 className="font-display text-lg font-bold">Payment method, invoices & cancellation</h2>
           <div className="mt-3"><PortalButton label="Manage payment method & subscription" /></div>
           <p className="mt-2 text-xs text-muted">Opens Stripe&apos;s secure portal to update your card, download invoices, or cancel. Canceling never deletes your company&apos;s bids or customers.</p>

@@ -26,7 +26,7 @@ export function PricingPanel({ estimate: e, totals: t, dispatch }: { estimate: E
 
   return (
     <aside className="space-y-4 lg:sticky lg:top-[7.5rem] lg:self-start" aria-label="Pricing">
-      <div className="rounded-xl border border-line bg-surface p-4">
+      <div className="rounded-xl border border-line bg-surface p-4" data-guide="builder.pricing">
         <h2 className="font-display font-bold">Pricing method</h2>
         <div role="radiogroup" aria-label="Pricing method" className="mt-3 grid grid-cols-2 rounded-lg border border-line-strong p-0.5 text-sm font-semibold">
           {(["markup", "margin"] as const).map((m) => (

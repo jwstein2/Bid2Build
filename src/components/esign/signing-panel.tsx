@@ -37,7 +37,7 @@ export function SigningPanel({ estimateId, onCreate, creating, refreshKey, onRev
   const s = data ? bidSigning(data.requests, data.signatures) : null;
   const pending = data?.requests.find((r) => r.status === "pending" && new Date(r.expires_at) > new Date());
   return (
-    <section aria-labelledby="signing-h" className="mb-5 rounded-xl border border-line bg-surface p-4" data-testid="signing-panel">
+    <section aria-labelledby="signing-h" className="mb-5 rounded-xl border border-line bg-surface p-4" data-testid="signing-panel" data-guide="builder.signing">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 id="signing-h" className="flex items-center gap-2 font-display text-lg font-extrabold text-navy"><FileSignature className="h-5 w-5" aria-hidden /> Get it signed online</h2>

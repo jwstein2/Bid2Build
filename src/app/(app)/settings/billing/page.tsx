@@ -51,7 +51,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
   const end = current?.current_period_end ? new Date(current.current_period_end).toLocaleDateString(undefined, { dateStyle: "long" }) : null;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-3xl space-y-6" data-guide-page="settings.billing">
       <h1 className="text-3xl font-extrabold">Subscription</h1>
       {sp.checkout === "success" && <ClearCheckoutIntent />}
       {sp.checkout === "success" && (q?.unlimited
@@ -66,7 +66,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
 
       {ended && <Notice tone="neutral" title="Your Unlimited plan has ended">Unlimited ended on {new Date(ended).toLocaleDateString(undefined, { dateStyle: "long" })}. All your bids are still here, and your free credits apply again. Resubscribe any time below.</Notice>}
 
-      <Card className="p-5">
+      <Card className="p-5" data-guide="billing.plan">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-sm text-muted">Current plan</p>
@@ -78,16 +78,16 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
           </div>
           {compOnly ? <Badge tone="ok">complimentary</Badge> : current && <Badge tone={q?.unlimited ? "ok" : "neutral"}>{current.status.replace("_", " ")}</Badge>}
         </div>
-        {bc && <div className="mt-5 border-t border-line pt-4"><PortalButton label="Manage subscription, payment method & billing history" /><p className="mt-2 text-xs text-muted">Opens Stripe&apos;s secure customer portal, where you can change plans, cancel, update your card, and download invoices.</p></div>}
+        {bc && <div className="mt-5 border-t border-line pt-4" data-guide="billing.manage"><PortalButton label="Manage subscription, payment method & billing history" /><p className="mt-2 text-xs text-muted">Opens Stripe&apos;s secure customer portal, where you can change plans, cancel, update your card, and download invoices.</p></div>}
       </Card>
 
       {pm && pm.scope !== "company" && (paidActive || pm.source === "complimentary") && (
-        <div id="project-command-center" className="scroll-mt-20"><PmAddonCard state={pm} periodEnd={current?.current_period_end ?? null} annual={current?.plan === "annual" && !process.env.STRIPE_PRICE_PM_ADDON_ANNUAL} yearly={current?.plan === "annual" && Boolean(process.env.STRIPE_PRICE_PM_ADDON_ANNUAL)} purchasable={isPmBillingConfigured("addon")} /></div>
+        <div id="project-command-center" className="scroll-mt-20" data-guide="billing.pm-addon"><PmAddonCard state={pm} periodEnd={current?.current_period_end ?? null} annual={current?.plan === "annual" && !process.env.STRIPE_PRICE_PM_ADDON_ANNUAL} yearly={current?.plan === "annual" && Boolean(process.env.STRIPE_PRICE_PM_ADDON_ANNUAL)} purchasable={isPmBillingConfigured("addon")} /></div>
       )}
-      {credits && !credits.unlimited && <CreditBalances credits={credits} showUpgrade={false} />}
+      {credits && !credits.unlimited && <div data-guide="billing.credits"><CreditBalances credits={credits} showUpgrade={false} /></div>}
 
       {(!q?.unlimited || compOnly) && stripeReady && (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2" data-guide="billing.upgrade">
           {compOnly && <p className="text-sm text-ink-soft sm:col-span-2">Want to keep Unlimited after your complimentary access ends? Subscribing starts billing today.</p>}
           <Card className="flex flex-col p-5"><p className="font-bold">{MONTHLY.name}</p><p className="text-2xl font-extrabold">{MONTHLY.price}<span className="text-sm font-semibold text-muted">/month</span></p><p className="mb-4 flex-1 text-sm text-ink-soft">Billed monthly. Cancel anytime.</p><CheckoutButton plan="monthly" signedIn label="Choose Monthly" variant="primary" /></Card>
           <Card className="flex flex-col border-accent p-5"><p className="font-bold">{ANNUAL.name} <Badge tone="accent">Best value</Badge></p><p className="text-2xl font-extrabold">{ANNUAL.price}<span className="text-sm font-semibold text-muted">/year</span></p><p className="mb-4 flex-1 text-sm text-ink-soft">Billed annually. Equivalent to {ANNUAL_MONTHLY_EQUIVALENT}/month.</p><CheckoutButton plan="annual" signedIn label="Choose Annual" /></Card>
