@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isFinBillingConfigured, isFinancialsEnabled } from "@/lib/env";
 import { FinAddonCard } from "@/components/billing/fin-addon";
 import { site } from "@/lib/site";
+import { SandboxBar } from "@/components/financials/sandbox-bar";
 import { loadFinState, loadHome, type Figure } from "@/lib/financials/loaders";
 import { canUseAccountantMode } from "@/lib/financials/permissions";
 import { CARDS, KPI_KEYS, QUICK_ACTIONS, QUICK_ACTION_NEEDS, type CardKey, type QuickAction } from "@/lib/financials/profiles/catalog";
@@ -75,6 +76,7 @@ export default async function FinancialsHome() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6" data-testid="fin-home" data-preset={profile.presetKey} data-guide-page="financials.home" data-guide-trade={profile.trades.join(" ")}>
+      {access.sandbox && <SandboxBar sandbox canManage={perms.includes("manage_financial_config")} />}
       <header className="flex flex-wrap items-end gap-3">
         <div className="min-w-0 basis-full sm:basis-auto sm:flex-1">
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">Know Your Numbers</p>
@@ -83,6 +85,7 @@ export default async function FinancialsHome() {
         </div>
         {canUseAccountantMode(perms) && <ModeToggle mode={layout.mode} />}
         <ButtonLink href="/financials/receivables" variant="secondary" size="sm" data-guide="fin.receivables">Accounts receivable</ButtonLink>
+        {!access.sandbox && canWrite && <SandboxBar sandbox={false} canManage={perms.includes("manage_financial_config")} />}
         <ButtonLink href="/financials/tools" variant="secondary" size="sm" data-guide="fin.tools"><LayoutGrid className="h-4 w-4" aria-hidden /> All tools</ButtonLink>
         {perms.includes("manage_financial_config") && <ButtonLink href="/company/business-config" variant="ghost" size="sm" data-guide="fin.config"><Settings2 className="h-4 w-4" aria-hidden /> Trade setup</ButtonLink>}
       </header>

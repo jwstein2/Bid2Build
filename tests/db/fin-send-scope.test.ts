@@ -110,6 +110,7 @@ d("invoice send states and scope-removal credits (database)", () => {
   });
 
   it("rollback restores the old rules and the migration re-applies", async () => {
+    await pool.query(readFileSync("docs/financials/rollback_20261130201000.sql", "utf8"));
     await pool.query(readFileSync("docs/financials/rollback_20261130101000.sql", "utf8"));
     expect((await pool.query("select to_regclass('public.fin_invoice_sends') as t")).rows[0].t).toBeNull();
     expect((await pool.query("select to_regprocedure('public.fin_change_order_credit(uuid, jsonb, text)') as f")).rows[0].f).toBeNull();

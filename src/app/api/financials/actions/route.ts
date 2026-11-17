@@ -38,6 +38,9 @@ const body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("reset_dashboard") }),
   z.object({ action: z.literal("set_mode"), mode: z.enum(["contractor", "accountant"]) }),
   z.object({ action: z.literal("open_job"), estimateId: id, versionId: id.optional() }),
+  z.object({ action: z.literal("sandbox_enter") }),
+  z.object({ action: z.literal("sandbox_leave") }),
+  z.object({ action: z.literal("sandbox_reset") }),
   z.object({ action: z.literal("save_project_profile"), estimateId: id, p: z.object({ primaryTradeSlug: text(60).nullable(), market: text(20).nullable(), projectModel: text(30).nullable(), paymentStructure: text(30).nullable(), workflow: text(20).nullable() }).partial() }),
   z.object({ action: z.literal("add_deduction"), jobId: id, amount, description: text(300).min(1), key }),
   z.object({ action: z.literal("save_invoice"), jobId: id, p: z.object({ id: id.optional(), kind: z.enum(["deposit", "milestone", "progress", "final", "custom"]).optional(), milestoneId: id.optional(), dueDate: day.optional(), memo: text(1000).optional(), lines: z.array(line).max(100).optional() }), key }),
@@ -106,7 +109,18 @@ export async function POST(req: Request) {
       case "save_dashboard": return json({ ok: await fin.saveDashboard(db, bookId, a.scope, a.role ?? null, a.p) ?? true });
       case "reset_dashboard": return json({ ok: await fin.resetDashboard(db, bookId) ?? true });
       case "set_mode": return json({ mode: await fin.setMode(db, bookId, a.mode) });
-      case "open_job": return json(await fin.openJob(db, a.estimateId, a.versionId));
+      case "open_job": {
+        // In the sandbox a job is never opened for real: it is copied in from the real books.
+        const { data: sbx } = await db.rpc("fin_is_sandbox", { p_book_id: bookId });
+        if (sbx === true) return json((await rpcData(db, "fin_sandbox_copy_job", { p_sandbox: bookId, p_estimate_id: a.estimateId })) as Record<string, unknown>);
+        return json(await fin.openJob(db, a.estimateId, a.versionId));
+      }
+      case "sandbox_enter": case "sandbox_reset": {
+        const { data: live, error } = await db.rpc("fin_book_live", { p_book_id: bookId });
+        if (error) throw new fin.FinError(error.message, error.message);
+        return json((await rpcData(db, a.action === "sandbox_enter" ? "fin_sandbox_enter" : "fin_sandbox_reset", { p_live_book: live })) as Record<string, unknown>);
+      }
+      case "sandbox_leave": await rpcData(db, "fin_sandbox_leave", {}); return json({ ok: true });
       case "save_project_profile": return json({ ok: await fin.saveProjectProfile(db, a.estimateId, a.p) ?? true });
       case "add_deduction": return json({ ok: await fin.addDeduction(db, a.jobId, a.amount, a.description, a.key) ?? true });
       case "save_invoice": return json(await fin.saveInvoiceDraft(db, a.jobId, { ...a.p, lines: a.p.lines ?? [] }, a.key));

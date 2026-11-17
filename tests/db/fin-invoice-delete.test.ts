@@ -108,6 +108,7 @@ d("delete a mistaken invoice (database)", () => {
   });
 
   it("rollback restores the old guards and the migration re-applies", async () => {
+    await pool.query(readFileSync("docs/financials/rollback_20261130201000.sql", "utf8"));
     await pool.query(readFileSync("docs/financials/rollback_20261130101000.sql", "utf8"));
     await pool.query(readFileSync("docs/financials/rollback_20261130001000.sql", "utf8"));
     expect((await pool.query("select to_regprocedure('public.fin_invoice_delete_mistake(uuid, text)') as f")).rows[0].f).toBeNull();

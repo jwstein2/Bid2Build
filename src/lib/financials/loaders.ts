@@ -218,7 +218,7 @@ export async function loadJob(db: Db, estimateId: string, ctx: FinContext) {
   const est = await loadJobHeader(db, estimateId);
   if (!est) return null;
   const [{ data: job }, { data: versions }, { data: override }] = await Promise.all([
-    db.from("fin_jobs").select("*").eq("estimate_id", estimateId).maybeSingle(),
+    db.from("fin_jobs").select("*").eq("estimate_id", estimateId).eq("book_id", ctx.bookId).maybeSingle(),
     db.from("estimate_versions").select("id, version_number, total, created_at").eq("estimate_id", estimateId).order("version_number", { ascending: false }).limit(5),
     db.from("fin_project_profiles").select("*").eq("estimate_id", estimateId).maybeSingle(),
   ]);
