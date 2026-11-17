@@ -18,7 +18,7 @@ means the receiving server accepted the message, not that a person saw it in the
 
 | Mail | Sent by | From | Status |
 |---|---|---|---|
-| Sign-in code, new account (Supabase "Confirm sign up" template) | Supabase Auth → custom SMTP `smtp.resend.com` → Resend | `login@built2bid.org` | Live since 2026-11-15. Gmail header test that day: SPF, DKIM and DMARC pass, return path `rsend.built2bid.org`. |
+| Sign-in code, new account (Supabase "Confirm sign up" template) | Supabase Auth → custom SMTP `smtp.resend.com` → Resend (Amazon SES underneath) | `Built2Bid Security <login@built2bid.org>` | Live. Confirmed on a real code delivered to Gmail 2026-11-17 05:45 UTC (section 2a). |
 | Sign-in code, returning user ("Magic link or OTP" template) | Same | Same | Same |
 | Subscription receipts | Stripe (Stripe's own receipt emails, if turned on in Stripe) | Stripe's sending domain | Not verified: Stripe → Settings → Customer emails. Not part of built2bid.org reputation. |
 | Founder welcome after first payment | App → Resend HTTP API | `james@built2bid.org` | Live (`FOUNDER_EMAIL_ENABLED=true`). 1 row so far (skipped). |
@@ -49,8 +49,29 @@ Code paths: `src/components/auth/auth-dialog.tsx` (code request, entry, resend),
 | `auth.built2bid.org` | Doesn't exist | `login@auth.built2bid.org` can't be used until it's set up (section 5). |
 | MTA-STS / TLS-RPT / BIMI | None | Optional; not needed now. |
 
-**TLS:** Gmail, Outlook and Resend use STARTTLS when the other side supports it, which all of these do. Confirm
-on a received code: Gmail → ⋮ → Show original → "TLS" in the Received lines.
+### 2a. A real delivered sign-in code (Gmail, 2026-11-17 05:45 UTC; code redacted)
+
+Read from the raw message ("Show original") of the newest code in James's Gmail:
+
+| Header | Value |
+|---|---|
+| From | `Built2Bid Security <login@built2bid.org>` |
+| SPF | pass, `smtp.mailfrom=…@rsend.built2bid.org`, sending IP 54.240.48.52 (Amazon SES, us-east-1) |
+| DKIM | pass `d=built2bid.org` (selector `resend`), plus pass `d=amazonses.com` |
+| DMARC | pass (`p=NONE`), `header.from=built2bid.org` |
+| TLS | `version=TLS1_3` from Amazon SES to Gmail |
+| Structure | `multipart/alternative`: a `text/plain` part and a `text/html` part. Supabase only has an HTML template; Resend builds the plain-text part from it. |
+| Template live in Supabase | The PR #33 template (navy "Built2Bid" header, "Hi, Use this code to securely sign in…"). |
+
+The plain-text part already had real blank lines around the code, and Gmail's web inbox snippet reads
+"Built2Bid Your Built2Bid verification code Hi, Use this code to securely sign in to Built2Bid: [code] …",
+with spaces. So the run-together "Built2Bid308182" was not in the message text itself. The likely cause is how
+the Android Gmail notification builds its preview: the old email's very first text was the bare wordmark
+"Built2Bid", and Android Gmail now pulls verification codes out of emails and shows them next to that first
+text. That explanation is not confirmed (I couldn't see the Android notification). The new template (section 6)
+removes the trigger either way: the first text is now a full preview sentence, and the code sits in its own
+block under a label. **Whether the Android notification now looks right can only be confirmed on a real
+delivered message after the new template is pasted into Supabase** (owner step 3, then step 8).
 
 **Bounce handling:** Resend handles bounces on the `send` / `rsend` subdomains and keeps its own suppression
 list for hard bounces and complaints. Built2Bid didn't see those events because no Resend webhook is set up
@@ -147,12 +168,19 @@ separated only by a separate Resend account or by upgrading Resend (Pro, $20/mon
 `supabase/templates/confirm-signup.html` (new email) and `supabase/templates/magic-link.html` (existing account).
 Subject for both: **Your Built2Bid verification code**.
 
-- Built2Bid wordmark in text, no images, no links, no tracking pixel, no web fonts, no marketing. About 2 KB.
-- The code in large monospace type; a hidden first line puts "Your Built2Bid verification code is 123456" in the
-  inbox preview, so it can be read from a phone notification.
-- "This code was requested for {email}. Built2Bid will never ask you to share it." Helps people spot phishing.
-- "It works once, and only the newest code works."
-- Plain-text copy: `supabase/templates/verification-code.txt`.
+- Hidden first line (inbox and notification preview): **"Use your 6-digit code to sign in securely to
+  Built2Bid."** The code itself is kept out of the preview line.
+- Then the label **"Your Built2Bid verification code:"**, then the code alone in its own block: large monospace,
+  spaced, on a light panel, easy to long-press and copy (letter spacing doesn't add real spaces).
+- "Enter this code to securely sign in to your account. It works once, and only the newest code works."
+- "If you didn't request this code, you can ignore this email."
+- "Requested for {email}. Built2Bid will never ask you to share this code." Helps people spot phishing.
+- Every piece of text is its own block element, so the plain-text part Resend generates keeps a blank line
+  before and after the code (checked by converting the HTML the same way: output matches the real old message
+  line for line).
+- No images, links, tracking pixel, web fonts or marketing. About 2.4 KB.
+- Plain-text reference copy: `supabase/templates/verification-code.txt`. Previews:
+  `/mnt/project-files/email-deliverability/otp-email-phone-390.png` and `otp-email-desktop.png` (sample code 123456).
 
 Codes are never logged by the app: the browser sends them straight to Supabase, analytics events carry only
 the method and attempt number, and tests use fixed mock codes.
@@ -181,17 +209,19 @@ Run on this branch against the local mock Supabase (no real email sent):
   from the login page, desktop and phones.
 - Unit tests 1,112 pass; database tests 338 pass (incl. 4 new for this migration); typecheck clean.
 
-**Not tested here: real mailboxes.** This thread has no Gmail, Outlook, Yahoo or business test inbox, so no
-placement is claimed. The only real result on record is James's Gmail test on 2026-11-15 (inbox; SPF, DKIM,
-DMARC pass). Owner test matrix (fill in):
+**Real mailboxes.** One real delivered code was inspected (Gmail, current production template, section 2a):
+authentication passes and it is in the inbox conversation list. The new template can't be tested on real mail
+until it's pasted into Supabase, and Outlook, Yahoo and Android notifications weren't available here, so no
+placement or notification result is claimed for them. Owner test matrix (fill in):
 
-| Mailbox | New-user code | Returning code | Resend | Expired code msg | SPF/DKIM/DMARC | Folder seen |
-|---|---|---|---|---|---|---|
-| Gmail (personal) | | | | | | |
-| Google Workspace (built2bid.org) | | | | | | |
-| Outlook.com / Hotmail | | | | | | |
-| Yahoo | | | | | | |
-| Other business (e.g. Microsoft 365) | | | | | | |
+| Mailbox | New-user code | Returning code | Resend | Expired code msg | SPF/DKIM/DMARC | Folder seen | Phone notification preview |
+|---|---|---|---|---|---|---|---|
+| Gmail (personal), old template, 2026-11-17 | | ✓ delivered | | | pass / pass / pass | Inbox | "Built2Bid308182" (reported by James) |
+| Gmail (personal), new template | | | | | | | |
+| Google Workspace (built2bid.org) | | | | | | | |
+| Outlook.com / Hotmail | | | | | | | |
+| Yahoo | | | | | | | |
+| Other business (e.g. Microsoft 365) | | | | | | | |
 
 How to read headers: Gmail ⋮ → Show original (top shows SPF/DKIM/DMARC). Outlook.com: open message → ⋯ → View
 → View message source, look for `Authentication-Results: spf=pass … dkim=pass … dmarc=pass`. Yahoo: ⋯ → View raw
@@ -251,7 +281,8 @@ group by 1, 2 order by 3 desc;
    `supabase/rollback/20261123001000_email_consent_and_delivery_down.sql`).
 3. **Paste the templates** at https://supabase.com/dashboard/project/asiiqmegvajtuspeumio/auth/templates:
    "Confirm sign up" ← `confirm-signup.html`, "Magic link" ← `magic-link.html`, both with the subject above.
-   Save the current bodies first.
+   Save the current bodies first. Optional: change the SMTP sender name from "Built2Bid Security" to "Built2Bid"
+   (step 4). Then request a code on your Android phone and check the notification.
 4. **Check Supabase settings** (read and adjust):
    - https://supabase.com/dashboard/project/asiiqmegvajtuspeumio/auth/smtp: custom SMTP on, sender
      `login@built2bid.org`, sender name `Built2Bid`.

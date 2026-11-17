@@ -1,16 +1,15 @@
 Subject: Your Built2Bid verification code
+Preview: Use your 6-digit code to sign in securely to Built2Bid.
 
-Hi,
-
-Use this code to securely sign in to Built2Bid:
+Your Built2Bid verification code:
 
 {{ .Token }}
 
-Enter this code on the Built2Bid website to continue. It works once, and only the newest code works.
+Enter this code to securely sign in to your account. It works once, and only the newest code works.
 
-This code was requested for {{ .Email }}. Built2Bid will never ask you to share it by phone, text or email.
+If you didn't request this code, you can ignore this email.
 
-If you didn't request this code, you can safely ignore this email.
+Requested for {{ .Email }}. Built2Bid will never ask you to share this code.
 
 Built2Bid
 built2bid.org

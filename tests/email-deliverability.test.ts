@@ -41,11 +41,24 @@ describe("OTP templates", () => {
       expect(html).not.toMatch(/unsubscribe|offer|discount|upgrade|newsletter/i);
       expect(Buffer.byteLength(html)).toBeLessThan(4000);
     });
+    it(`${f} keeps the code apart from the brand name in previews and plain text`, () => {
+      const body = html.replace(/<!--[\s\S]*?-->\s*/g, "");
+      // The first thing in the body is the hidden preview line, so a notification never starts with "Built2Bid".
+      expect(body.startsWith('<div style="display:none')).toBe(true);
+      expect(body).toContain(">Use your 6-digit code to sign in securely to Built2Bid.</div>");
+      expect(body).not.toMatch(/display:none[^>]*>[^<]*\{\{ \.Token \}\}/); // code stays out of the preview
+      // The code sits alone in its own block, right after the label block.
+      expect(body).toMatch(/verification code:<\/h1>\s*<p[^>]*>\{\{ \.Token \}\}<\/p>/);
+      // The wordmark is a block of its own (not a bare inline span next to other text).
+      expect(body).toMatch(/<p[^>]*>Built<span[^>]*>2<\/span>Bid<\/p>/);
+    });
   }
   it("plain-text copy matches the HTML wording", () => {
     const txt = readFileSync("supabase/templates/verification-code.txt", "utf8");
     expect(txt).toContain("{{ .Token }}");
-    expect(txt).toContain("Built2Bid will never ask you to share it");
+    expect(txt).toContain("Built2Bid will never ask you to share this code");
+    // Real newlines and a blank line on each side of the code.
+    expect(txt).toMatch(/Your Built2Bid verification code:\n\n\{\{ \.Token \}\}\n\n/);
   });
 });
 

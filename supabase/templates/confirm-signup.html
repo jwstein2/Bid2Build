@@ -1,20 +1,20 @@
 <!-- Supabase > Authentication > Emails > "Confirm sign up". Subject: Your Built2Bid verification code -->
 <!-- Sent the first time a new email asks for a code (this creates the account). {{ .Token }} and {{ .Email }} are filled in by Supabase. -->
-<!-- Lightweight on purpose: no images, links, tracking pixels, web fonts or marketing. Hidden first line = inbox preview. -->
-<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">Your Built2Bid verification code is {{ .Token }}. Built2Bid will never ask you to share it.</div>
+<!-- Lightweight on purpose: no images, links, tracking pixels, web fonts or marketing. -->
+<!-- The hidden first line is the inbox / notification preview. Resend builds the plain-text part from this HTML, -->
+<!-- so every piece of text is its own block element: the wordmark, label and code never run together. -->
+<div style="display:none;max-height:0;max-width:0;overflow:hidden;opacity:0;mso-hide:all;font-size:1px;line-height:1px;color:#ffffff;">Use your 6-digit code to sign in securely to Built2Bid.</div>
 <div style="font-family:Arial,Helvetica,sans-serif;background:#F4F6F8;padding:24px 12px;">
   <div style="max-width:480px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #E2E8F0;">
     <div style="background:#0B2D4D;padding:16px 24px;">
-      <span style="font-size:22px;font-weight:800;color:#ffffff;">Built<span style="color:#00C2E0;">2</span>Bid</span>
+      <p style="margin:0;font-size:22px;font-weight:800;color:#ffffff;">Built<span style="color:#00C2E0;">2</span>Bid</p>
     </div>
     <div style="padding:24px;color:#0B2D4D;">
-      <h1 style="margin:0 0 12px;font-size:20px;line-height:1.3;">Your Built2Bid verification code</h1>
-      <p style="margin:0 0 8px;color:#4B5563;font-size:15px;line-height:1.5;">Hi,</p>
-      <p style="margin:0 0 16px;color:#4B5563;font-size:15px;line-height:1.5;">Use this code to securely sign in to Built2Bid:</p>
-      <p style="margin:0 0 20px;font-family:'SFMono-Regular',Menlo,Consolas,'Courier New',monospace;font-size:34px;font-weight:700;letter-spacing:8px;color:#0B2D4D;">{{ .Token }}</p>
-      <p style="margin:0 0 16px;color:#4B5563;font-size:15px;line-height:1.5;">Enter this code on the Built2Bid website to continue. It works once, and only the newest code works.</p>
-      <p style="margin:0 0 16px;color:#4B5563;font-size:13px;line-height:1.5;">This code was requested for {{ .Email }}. Built2Bid will never ask you to share it by phone, text or email.</p>
-      <p style="margin:0 0 20px;color:#4B5563;font-size:13px;line-height:1.5;">If you didn't request this code, you can safely ignore this email.</p>
+      <h1 style="margin:0 0 16px;font-size:20px;line-height:1.3;">Your Built2Bid verification code:</h1>
+      <p style="margin:0 0 20px;padding:14px 0;text-align:center;background:#F1F5F9;border-radius:8px;font-family:'SFMono-Regular',Menlo,Consolas,'Courier New',monospace;font-size:34px;font-weight:700;letter-spacing:8px;color:#0B2D4D;">{{ .Token }}</p>
+      <p style="margin:0 0 16px;color:#4B5563;font-size:15px;line-height:1.5;">Enter this code to securely sign in to your account. It works once, and only the newest code works.</p>
+      <p style="margin:0 0 16px;color:#4B5563;font-size:13px;line-height:1.5;">If you didn't request this code, you can ignore this email.</p>
+      <p style="margin:0 0 16px;color:#4B5563;font-size:13px;line-height:1.5;">Requested for {{ .Email }}. Built2Bid will never ask you to share this code.</p>
       <p style="margin:0;color:#4B5563;font-size:13px;">Built2Bid<br>built2bid.org</p>
     </div>
   </div>
