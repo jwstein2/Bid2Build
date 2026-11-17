@@ -231,7 +231,9 @@ Object.assign(scheduleRpc, {
 // Team & Subcontractors V4.2 (scripts/projects/team-walk.mjs). Real SQL: tests/db/team-assignments.test.ts.
 const team = { canManage: true, list: [] };
 globalThis.__mockTeam = team;
-Object.defineProperty(tables, "pm_resources", { get: () => team.list.map((r) => ({ id: r.id, name: r.name, kind: r.kind, trades: r.trades, phone: r.phone, email: r.email, status: r.status })), configurable: true });
+// companyId set = an entry from another directory (e.g. a company member's old personal list), which RLS can
+// still return; the scope workspace must not offer it (scripts/v6/scope-assign-walk.mjs).
+Object.defineProperty(tables, "pm_resources", { get: () => team.list.map((r) => ({ id: r.id, name: r.name, kind: r.kind, trades: r.trades, phone: r.phone, email: r.email, status: r.status, company_id: r.companyId ?? null, owner_id: r.companyId ? null : "00000000-0000-4000-8000-000000000001" })), configurable: true });
 // V4.3/V4.4 tables (scripts/project-operations/walk.mjs).
 for (const k of Object.keys(opsTables)) Object.defineProperty(tables, k, Object.getOwnPropertyDescriptor(opsTables, k));
 Object.defineProperty(tables, "schedule_tasks", { get: () => [...sched.list.values()].flatMap((x) => x.tasks.map((t) => ({ ...t, schedule_id: x.row.id }))), configurable: true });
@@ -728,6 +730,8 @@ http.createServer((req, res) => {
       if (u.searchParams.get("reset")) team.list = [];
       if (u.searchParams.get("seed")) seedTeam();
       if (u.searchParams.get("manage")) team.canManage = u.searchParams.get("manage") === "1";
+      if (u.searchParams.get("foreign")) team.list.push({ id: "f0000000-0000-4000-8000-0000000000f1", kind: "subcontractor", name: "Northside Gutters (other directory)", trades: ["gutters"], phone: null, email: null, status: "active", members: [], companyId: "c-other" });
+      if (u.searchParams.get("empty")) team.list = [];
       return send(res, 200, { ok: true, count: team.list.length });
     }
     if (u.pathname === "/__sched") {

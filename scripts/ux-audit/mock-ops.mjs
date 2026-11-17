@@ -25,9 +25,9 @@ const quotes = () => [
 export function seedOps(team = []) {
   const crew = team.find((r) => r.kind === "crew")?.id ?? "r-crew";
   ops.scope = [
-    { id: "77777777-7777-4777-8777-000000000001", estimate_id: EST, source_group_id: G(1), trade: "siding", title: "Siding: Tear-off & prep", sort_order: 0, approved_scope: "• Remove existing siding\n• House wrap", work_description: "Strip all four elevations to sheathing; replace damaged sheathing as found.", technical_instructions: "Tyvek HomeWrap, cap nails 12\" o.c.", installation_notes: null, internal_notes: "Customer is picky about the flower beds.", customer_info: "Dog in the backyard; use the side gate.", resource_id: crew, revision: 3, updated_at: iso(1), updated_by: U },
-    { id: "77777777-7777-4777-8777-000000000002", estimate_id: EST, source_group_id: G(2), trade: "siding", title: "Siding: Siding installation", sort_order: 1, approved_scope: "• Vinyl siding panels\n• Siding install labor", work_description: "Install Dutch lap vinyl, color Sandstone.", technical_instructions: null, installation_notes: "Start at the north elevation.", internal_notes: null, customer_info: null, resource_id: null, revision: 1, updated_at: iso(2), updated_by: U },
-    { id: "77777777-7777-4777-8777-000000000003", estimate_id: EST, source_group_id: G(3), trade: "siding", title: "Siding: Trim & accessories", sort_order: 2, approved_scope: "• J-channel", work_description: null, technical_instructions: null, installation_notes: null, internal_notes: null, customer_info: null, resource_id: null, revision: 1, updated_at: iso(2), updated_by: U },
+    { id: "77777777-7777-4777-8777-000000000001", estimate_id: EST, source_group_id: G(1), trade: "siding", title: "Siding: Tear-off & prep", sort_order: 0, approved_scope: "• Remove existing siding\n• House wrap", work_description: "Strip all four elevations to sheathing; replace damaged sheathing as found.", technical_instructions: "Tyvek HomeWrap, cap nails 12\" o.c.", installation_notes: null, internal_notes: "Customer is picky about the flower beds.", customer_info: "Dog in the backyard; use the side gate.", resource_id: crew, revision: 3, updated_at: iso(1), updated_by: U, company_id: null, user_id: U },
+    { id: "77777777-7777-4777-8777-000000000002", estimate_id: EST, source_group_id: G(2), trade: "siding", title: "Siding: Siding installation", sort_order: 1, approved_scope: "• Vinyl siding panels\n• Siding install labor", work_description: "Install Dutch lap vinyl, color Sandstone.", technical_instructions: null, installation_notes: "Start at the north elevation.", internal_notes: null, customer_info: null, resource_id: null, revision: 1, updated_at: iso(2), updated_by: U, company_id: null, user_id: U },
+    { id: "77777777-7777-4777-8777-000000000003", estimate_id: EST, source_group_id: G(3), trade: "siding", title: "Siding: Trim & accessories", sort_order: 2, approved_scope: "• J-channel", work_description: null, technical_instructions: null, installation_notes: null, internal_notes: null, customer_info: null, resource_id: null, revision: 1, updated_at: iso(2), updated_by: U, company_id: null, user_id: U },
   ];
   ops.shares = [{ id: "77777777-7777-4777-8777-0000000000f1", sectionId: "77777777-7777-4777-8777-000000000001", resourceId: crew, createdAt: iso(1), expiresAt: iso(-59), revokedAt: null, version: 1, sectionRevision: 2, sharedAt: iso(1), fields: ["workDescription", "technicalInstructions"], photoCount: 0 }];
   const labels = [["before", "exterior"], ["damage"], ["during", "siding"], ["material", "delivery"], ["exterior"], ["after"]];
@@ -82,7 +82,22 @@ export const opsRpc = {
   can_manage_project_scope: () => [200, true],
   can_share_project_scope: () => [200, true],
   project_scope_shares: () => [200, ops.shares],
-  project_scope_save: ({ p_section_id, p }) => { const s = ops.scope.find((x) => x.id === p_section_id); if (s) { s.revision++; if (p.resourceId !== undefined) s.resource_id = p.resourceId || null; } return [200, s?.revision ?? 1]; },
+  // Mirrors public.project_scope_save: revision check, resource must be active and in the section's own
+  // directory (company or solo owner), and EVERY text field is replaced by what was sent.
+  project_scope_save: ({ p_section_id, p_base_revision, p }) => {
+    const s = ops.scope.find((x) => x.id === p_section_id);
+    if (!s) return [403, { code: "42501", message: "forbidden" }];
+    if (s.revision !== p_base_revision) return [409, { code: "40001", message: "stale_revision", details: String(s.revision) }];
+    const rid = p.resourceId || null;
+    if (rid) {
+      const r = (globalThis.__mockTeam?.list ?? []).find((x) => x.id === rid);
+      if (!r || r.status !== "active" || (s.company_id ? r.companyId !== s.company_id : (r.companyId ?? null) !== null)) return [400, { code: "22023", message: "bad_resource" }];
+    }
+    const t = (k, n) => (p[k] ? String(p[k]).slice(0, n) : null);
+    Object.assign(s, { work_description: t("workDescription", 8000), technical_instructions: t("technicalInstructions", 8000), installation_notes: t("installationNotes", 8000),
+      internal_notes: t("internalNotes", 8000), customer_info: t("customerInfo", 4000), resource_id: rid, revision: s.revision + 1, updated_at: new Date().toISOString() });
+    return [200, s.revision];
+  },
   can_upload_photos: () => [200, true],
   photo_update: () => [200, null],
   proposal_style_policy: () => [200, ops.styleManaged ? { managed: true, companyId: "c1", companyOwnerId: U, style: { template: "modern", primaryColor: "#0a5c36", secondaryColor: "#f2a900", show: { itemPrices: false } }, locked: ["template", "primaryColor"], allowCustomization: ops.allow, canCustomize: ops.allow, canOverride: ops.canOverride, revision: 4, updatedAt: iso(2) } : { managed: false }],
