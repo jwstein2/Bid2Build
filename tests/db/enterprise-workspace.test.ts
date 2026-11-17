@@ -60,6 +60,8 @@ d("Enterprise workspace, roles and entitlement (database)", () => {
     // This database stops before later migrations; the V4 Phase 9 keys are mirrored in tests/db/pm-permissions.test.ts.
     const phase9 = new Set<string>(PERMISSION_GROUPS.find((g) => g.title.startsWith("Project Command Center"))!.keys);
     for (const k of ["view_internal_reports", "download_internal_reports", "send_internal_reports", "manage_pm_seats", "manage_pm_addons"]) phase9.add(k);
+    // V4.3 / V4.4 / V4.6 keys are mirrored in tests/db/project-operations.test.ts.
+    for (const g of PERMISSION_GROUPS.filter((x) => x.title === "Project operations" || x.title === "Proposal style" || x.title === "Customer communications")) for (const k of g.keys) phase9.add(k);
     const pre = (list: readonly string[]) => list.filter((k) => !phase9.has(k));
     const keys = (await pool.query("select public.company_permission_keys() as k")).rows[0].k;
     expect(keys).toEqual(pre(PERMISSION_KEYS));

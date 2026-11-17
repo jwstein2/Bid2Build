@@ -1,14 +1,17 @@
 "use client";
-import type { FeatureId } from "@/lib/features/registry";
+import { getFeature, type FeatureId } from "@/lib/features/registry";
+import { REVEAL_FEATURE_EVENT } from "@/lib/features/state";
 import { FeatureHelp } from "@/components/features/feature-help";
-import { useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { BarChart3, Columns3, List, Search } from "lucide-react";
 import {
-  RANGES, analytics, boardSummary, filterBoard, isRange, resolveRange, MIN_DECIDED,
-  type BoardBid, type BoardDateField, type HistoryRow, type RangeKey,
+  FOCUS, RANGES, analytics, boardSummary, columnTotals, filterBoard, isFocus, isRange, resolveRange, MIN_DECIDED,
+  type BoardBid, type BoardDateField, type FocusKey, type HistoryRow, type RangeKey,
 } from "@/lib/pipeline/board";
 import type { PaySettings } from "@/lib/pipeline/sales-pay";
 import { Card } from "@/components/ui/misc";
+import { ButtonLink } from "@/components/ui/button";
+import { MetricCard } from "@/components/ui/metric-card";
 import { cn } from "@/lib/cn";
 import { PipelineBoard } from "./pipeline-board";
 import { AnalyticsView } from "./analytics-view";
@@ -22,19 +25,81 @@ const VIEWS: { id: BidsView; label: string; icon: typeof List; feature?: Feature
 ];
 
 /** Bids dashboard: Pipeline (default), Table (the existing list with every bid action) and Analytics. */
-export function BidsWorkspace({ bids, history, esign, table, pay, paySaved, migrated, initialView }: {
+export function BidsWorkspace({ bids, history, esign, table, pay, paySaved, migrated, initialView, initialFocus, initialRange, initialQuery, initialDateField }: {
   bids: BoardBid[]; history: HistoryRow[]; esign: boolean; table: ReactNode; pay: PaySettings; paySaved: boolean; migrated: boolean; initialView?: BidsView;
+  /** From ?focus= and ?range= (validated): a KPI card's filter survives refresh, Back and shared links. */
+  initialFocus?: FocusKey | null; initialRange?: RangeKey;
+  /** From ?q= and ?date=, so Back from an opened bid card keeps the search and date field. */
+  initialQuery?: string; initialDateField?: BoardDateField;
 }) {
-  const [view, setView] = useState<BidsView>(initialView ?? "pipeline");
-  const [range, setRange] = useState<RangeKey>("all");
+  // Browser Back can restore this page from the router cache with props from an earlier visit, so in the
+  // browser the address bar is the source of truth. On the server the props come from the same URL.
+  const fromUrl = typeof window !== "undefined" ? new URL(window.location.href).searchParams : null;
+  const [view, setView] = useState<BidsView>(() => {
+    const v = fromUrl ? fromUrl.get("view") : initialView;
+    return v === "table" || v === "analytics" ? v : "pipeline";
+  });
+  const [range, setRangeState] = useState<RangeKey>(() => {
+    const r = fromUrl ? fromUrl.get("range") : initialRange;
+    return isRange(r) && r !== "custom" ? r : "all";
+  });
+  const [focus, setFocusState] = useState<FocusKey | null>(() => {
+    const f = fromUrl ? fromUrl.get("focus") : initialFocus;
+    return isFocus(f) ? f : null;
+  });
   const [custom, setCustom] = useState<{ from?: string; to?: string }>({});
-  const [field, setField] = useState<BoardDateField>("activity");
-  const [q, setQ] = useState("");
+  const [field, setField] = useState<BoardDateField>(() => ((fromUrl ? fromUrl.get("date") : initialDateField) === "created" ? "created" : "activity"));
+  const [q, setQ] = useState(() => (fromUrl ? fromUrl.get("q")?.slice(0, 100) : initialQuery) ?? "");
 
-  function pick(v: BidsView) {
+  const pick = useCallback((v: BidsView) => {
     setView(v);
     const u = new URL(window.location.href); u.searchParams.set("view", v); window.history.replaceState(null, "", u);
-  }
+  }, []);
+  // KPI card filters are history entries (Back returns to the previous view); the range is kept in place.
+  const setFocus = (k: FocusKey | null) => {
+    const next = k === focus ? null : k;
+    setFocusState(next);
+    const u = new URL(window.location.href); u.searchParams.set("view", "pipeline");
+    if (next) u.searchParams.set("focus", next); else u.searchParams.delete("focus");
+    window.history.pushState(null, "", u);
+  };
+  const setRange = (r: RangeKey) => {
+    setRangeState(r);
+    const u = new URL(window.location.href);
+    if (r === "all" || r === "custom") u.searchParams.delete("range"); else u.searchParams.set("range", r);
+    window.history.replaceState(null, "", u);
+  };
+  // Search text and the date field live in the URL too, so opening a bid card and pressing Back
+  // returns to the same filtered board.
+  useEffect(() => {
+    const u = new URL(window.location.href);
+    const before = u.search;
+    const s = q.trim();
+    if (s) u.searchParams.set("q", s); else u.searchParams.delete("q");
+    if (field === "created") u.searchParams.set("date", "created"); else u.searchParams.delete("date");
+    if (u.search !== before) window.history.replaceState(null, "", u);
+  }, [q, field]);
+  useEffect(() => {
+    const onPop = () => {
+      const u = new URL(window.location.href);
+      const f = u.searchParams.get("focus");
+      setFocusState(isFocus(f) ? f : null);
+      const r = u.searchParams.get("range");
+      setRangeState(isRange(r) && r !== "custom" ? r : "all");
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  // The feature walkthrough opens the view a step's control lives in (e.g. Analytics for Sales pay).
+  useEffect(() => {
+    const on = (e: Event) => {
+      const v = getFeature(String((e as CustomEvent).detail ?? ""))?.view;
+      if (v) pick(v);
+    };
+    window.addEventListener(REVEAL_FEATURE_EVENT, on);
+    return () => window.removeEventListener(REVEAL_FEATURE_EVENT, on);
+  }, [pick]);
 
   const r = useMemo(() => resolveRange(range, new Date(), custom), [range, custom]);
   const searched = useMemo(() => {
@@ -43,6 +108,9 @@ export function BidsWorkspace({ bids, history, esign, table, pay, paySaved, migr
   }, [bids, q]);
   const shown = useMemo(() => filterBoard(searched, r, field), [searched, r, field]);
   const summary = useMemo(() => boardSummary(shown), [shown]);
+  const counts = useMemo(() => columnTotals(shown), [shown]);
+  const focusCols = focus ? [...FOCUS[focus].columns] : null;
+  const focusCount = focusCols ? focusCols.reduce((n, c) => n + counts[c].count, 0) : 0;
   const stats = useMemo(() => analytics(searched.filter((b) => b.status !== "archived"), history, r), [searched, history, r]);
   const rangeLabel = range === "custom" ? `${custom.from ?? "start"} to ${custom.to ?? "today"}` : RANGES[range];
 
@@ -93,35 +161,50 @@ export function BidsWorkspace({ bids, history, esign, table, pay, paySaved, migr
 
       {view === "pipeline" && (
         <>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5" data-testid="pipeline-summary">
-            <Metric label="Active pipeline" value={money(summary.activeValue)} hint="Ready, Sent and Awaiting proposals" />
-            <Metric label="Open bids" value={String(summary.openCount)} hint="Draft through Awaiting" />
-            <Metric label="Awaiting signature" value={String(summary.awaitingCount)} hint="Signing link out or awaiting decision" />
-            <Metric label="Won value" value={money(summary.wonValue)} hint={`${summary.wonCount} won, including jobs`} />
-            <Metric label="Win rate" value={summary.winRate === null ? "—" : `${summary.winRate}%`}
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-7" data-testid="pipeline-summary">
+            <Metric k="active" focus={focus} onFocus={setFocus} label="Active pipeline" value={money(summary.activeValue)} hint="Ready, Sent and Awaiting proposals" />
+            <Metric k="open" focus={focus} onFocus={setFocus} label="Open bids" value={String(summary.openCount)} hint="Draft through Awaiting" />
+            <Metric k="draft" focus={focus} onFocus={setFocus} label="Drafts" value={String(counts.draft.count)} hint="Estimates you're still building" />
+            <Metric k="sent" focus={focus} onFocus={setFocus} label="Sent" value={String(counts.sent.count)} hint="Proposals the customer has received" />
+            <Metric k="awaiting" focus={focus} onFocus={setFocus} label="Awaiting signature" value={String(summary.awaitingCount)} hint="Signing link out or awaiting decision" />
+            <Metric k="won" focus={focus} onFocus={setFocus} label="Won value" value={money(summary.wonValue)} hint={`${summary.wonCount} won, including jobs`} />
+            <Metric k="decided" focus={focus} onFocus={setFocus} label="Win rate" value={summary.winRate === null ? "—" : `${summary.winRate}%`}
               hint={summary.winRate === null ? `${summary.wonCount} of ${summary.decided} decided · needs ${MIN_DECIDED}` : `${summary.wonCount} won of ${summary.decided} decided`} />
           </div>
+          {focus && (
+            <p className="flex flex-wrap items-center gap-2 rounded-lg border border-accent/40 bg-accent-tint px-3 py-2 text-sm text-ink" role="status" data-testid="pipeline-focus-note">
+              <span>Showing <b>{FOCUS[focus].label}</b>: {focusCount} bid{focusCount === 1 ? "" : "s"}{range === "all" ? "" : ` · ${rangeLabel}`}.</span>
+              <button type="button" onClick={() => setFocus(null)} className="font-semibold text-accent-ink underline">Show all stages</button>
+            </p>
+          )}
           <p className="text-xs text-muted">
             Showing each bid&apos;s current stage{range === "all" ? "" : `, filtered by ${field === "created" ? "created date" : "last activity"}: ${rangeLabel}`}. {shown.length} bid{shown.length === 1 ? "" : "s"}.
             <span className="hidden md:inline"> Drag cards between stages, or use ⋮ to move.</span><span className="md:hidden"> Use ⋮ on a card to move it.</span>
           </p>
           {bids.length === 0 ? (
             <Card className="p-10 text-center"><p className="font-semibold">No bids yet.</p><p className="mt-1 text-sm text-muted">Create a bid and it shows up here as a Draft.</p></Card>
-          ) : <PipelineBoard bids={shown} esign={esign} />}
+          ) : focus && focusCount === 0 ? (
+            <Card className="p-8 text-center" data-testid="metric-empty">
+              <p className="font-semibold">{FOCUS[focus].empty}</p>
+              <p className="mt-1 text-sm text-muted">{range === "all" ? "Try another card, or show every stage." : `Nothing in ${rangeLabel}. Try a wider date range.`}</p>
+              <div className="mt-3 flex flex-wrap justify-center gap-2">
+                <button type="button" onClick={() => setFocus(null)} className="inline-flex min-h-10 items-center rounded-lg border border-line-strong px-3 text-sm font-semibold hover:bg-paper">Show all stages</button>
+                {(focus === "draft" || focus === "open") && <ButtonLink href="/bids" variant="accent" size="sm">Create New Bid</ButtonLink>}
+              </div>
+            </Card>
+          ) : <PipelineBoard bids={shown} esign={esign} focus={focusCols ?? undefined} />}
         </>
       )}
       {view === "table" && table}
-      {view === "analytics" && <AnalyticsView a={stats} rangeLabel={rangeLabel} pay={pay} paySaved={paySaved} />}
+      {view === "analytics" && <AnalyticsView a={stats} rangeLabel={rangeLabel} pay={pay} paySaved={paySaved} bids={searched} />}
     </section>
   );
 }
 
-function Metric({ label, value, hint }: { label: string; value: string; hint: string }) {
+function Metric({ k, focus, onFocus, label, value, hint }: { k: FocusKey; focus: FocusKey | null; onFocus: (k: FocusKey) => void; label: string; value: string; hint: string }) {
+  const on = focus === k;
   return (
-    <Card className="p-3">
-      <p className="text-xs font-semibold text-muted">{label}</p>
-      <p className="tabular text-xl font-extrabold text-navy">{value}</p>
-      <p className="text-[11px] leading-tight text-muted">{hint}</p>
-    </Card>
+    <MetricCard size="sm" title={label} value={value} sub={hint} onSelect={() => onFocus(k)} pressed={on} testId={`metric-${k}`}
+      action={on ? "Showing · tap to clear" : `Show ${FOCUS[k].label.toLowerCase()}`} />
   );
 }

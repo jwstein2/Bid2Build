@@ -1,5 +1,6 @@
 import type { ProposalDocument, ProposalSection } from "@/lib/proposal/types";
 import { onColor, templateStyle } from "@/lib/proposal/templates";
+import { accessibleOnWhite } from "@/lib/onboarding/brand-review";
 
 /**
  * HTML rendering of the canonical ProposalDocument. It receives only customer-safe data, so it
@@ -9,6 +10,8 @@ export function ProposalView({ doc }: { doc: ProposalDocument }) {
   const st = templateStyle(doc.template);
   const brand = doc.brand.primaryColor;
   const accent = doc.brand.secondaryColor;
+  // Small text in the brand's accent color is darkened only as much as needed to stay readable on white.
+  const accentText = /^#[0-9a-f]{6}$/i.test(accent) ? accessibleOnWhite(accent) : accent;
   const px = (pt: number) => `${(pt * 1.45).toFixed(1)}px`;
   const text = { fontSize: px(st.baseSize) };
   const headerDark = st.header === "band" || st.header === "dark";
@@ -49,7 +52,7 @@ export function ProposalView({ doc }: { doc: ProposalDocument }) {
         {/* Title block */}
         <div className="flex flex-wrap items-end justify-between gap-4 border-b pb-4" style={{ borderColor: "#e4e0d8" }}>
           <div>
-            <p className="font-semibold uppercase tracking-wider" style={{ color: accent, fontSize: px(st.baseSize * 0.85) }}>Proposal</p>
+            <p className="font-semibold uppercase tracking-wider" style={{ color: accentText, fontSize: px(st.baseSize * 0.85) }}>Proposal</p>
             <h2 className="font-display font-extrabold leading-tight" style={{ fontSize: px(st.titleSize), color: brand }}>{doc.meta.title}</h2>
           </div>
           <dl className="grid grid-cols-[auto_auto] gap-x-4 gap-y-0.5" style={{ fontSize: px(st.baseSize * 0.9) }}>

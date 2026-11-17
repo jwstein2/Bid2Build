@@ -1,13 +1,16 @@
+import { redirect } from "next/navigation";
 import { WhatsNewNotice } from "@/components/features/whats-new-notice";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { FileCheck2 } from "lucide-react";
-import { createAdminClient, createClient, getUser } from "@/lib/supabase/server";
+import { createAdminClient, createClient, getAuthUser, getUser } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/misc";
 import { ButtonLink } from "@/components/ui/button";
 import { BidList, type BidRow } from "./bid-list";
 import { LocalDraftsBanner } from "./local-drafts";
 import { ProfileReminder } from "./profile-reminder";
+import { PROFILE_REMINDER_COOKIE } from "./profile-reminder-cookie";
+import { cookies } from "next/headers";
 import { CreditBalances, UpgradeLink } from "@/components/billing/credits";
 import { loadCreditStatus } from "@/lib/credits/server";
 import { PremiumTiles } from "./library-tile";
@@ -17,12 +20,16 @@ import { ROLE_LABELS } from "@/lib/enterprise/permissions";
 import { isEsignEnabled, RECENT_SIGNED_DAYS } from "@/lib/esign/config";
 import { recentSignatures, signingByEstimate, type RequestRow, type SignatureRow } from "@/lib/esign/status";
 import { RecentlySigned, type SignedBid } from "./recently-signed";
+import { ReviewQueue } from "@/components/operations/review-queue";
+import { loadReviewQueue } from "@/lib/operations/queue-server";
+import { loadPmAccess } from "@/lib/pm/server";
+import { isPmEnabled } from "@/lib/env";
 import { RefreshOnFocus } from "@/components/esign/refresh-on-focus";
 import { ReferCard } from "./refer-card";
 import { TrialBanner } from "@/components/billing/trial-banner";
 import { referralLink, type MyReferral } from "@/lib/growth/referral";
 import { BidsWorkspace, type BidsView } from "@/components/pipeline/bids-workspace";
-import { isStage, type BoardBid, type HistoryRow } from "@/lib/pipeline/board";
+import { isFocus, isRange, isStage, type BoardBid, type HistoryRow } from "@/lib/pipeline/board";
 import { DEFAULT_PAY, sanitizePay } from "@/lib/pipeline/sales-pay";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { CHECKLIST_DISMISSED_KEY, checklistSteps, isMeaningfulItem, MEANINGFUL_ITEMS, showChecklist, type ChecklistStep } from "@/lib/growth/activation";
@@ -55,8 +62,9 @@ async function loadHistory(supabase: SupabaseClient, userId: string): Promise<Hi
  */
 async function loadChecklist(supabase: SupabaseClient, userId: string, f: { companyName: boolean; estimateIds: string[]; latestEstimateId: string | null; delivered: boolean }): Promise<ChecklistStep[] | null> {
   if (f.delivered && f.companyName) return null;
-  const { data: auth } = await supabase.auth.getUser();
-  if ((auth.user?.user_metadata as Record<string, unknown> | undefined)?.[CHECKLIST_DISMISSED_KEY]) return null;
+  // Same request-cached Auth lookup the layout and page already made: no extra round trip.
+  const authUser = await getAuthUser();
+  if ((authUser?.user_metadata as Record<string, unknown> | undefined)?.[CHECKLIST_DISMISSED_KEY]) return null;
   let meaningfulEstimates = 0, previewed = false;
   if (f.estimateIds.length && !f.delivered) {
     const [{ data: items }, prev] = await Promise.all([
@@ -78,9 +86,15 @@ export const metadata: Metadata = { title: "Dashboard", robots: { index: false }
 export default async function Dashboard({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const sp = await searchParams;
   const initialView = (["pipeline", "table", "analytics"] as const).find((v) => v === sp.view) as BidsView | undefined;
-  const user = (await getUser())!;
+  const user = await getUser();
+  // The layout redirects too, but pages render in parallel with it: never assume a session here.
+  if (!user) redirect("/login?next=/dashboard");
   const supabase = await createClient();
-  const [{ rows: estimates, migrated }, { data: versions }, credits, { data: biz }, libraryAccess, company, { data: referralData }] = await Promise.all([
+  const esign = isEsignEnabled();
+  const pmOn = isPmEnabled();
+  // Every independent read goes out at once: one database round trip of waiting instead of six in a row.
+  const [{ rows: estimates, migrated }, { data: versions }, credits, { data: biz }, libraryAccess, company, { data: referralData },
+    { data: gifts }, { data: trialRows }, history, { data: payRow }, [{ data: reqRows }, { data: sigRows }], [reviewQueue, pmAccess]] = await Promise.all([
     // "My bids" stays personal: Enterprise owners/managers can also read teammates' company bids (RLS),
     // which belong in the company Command Center, not here.
     loadBids(supabase, user.id),
@@ -91,23 +105,27 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     loadMyCompany(supabase),
     // Referral code + counts. Missing function (migration not run yet) just hides the card.
     supabase.rpc("my_referral"),
-  ]);
-  // Facebook BID trial (exact expiry + optional upgrade). Missing function = no banner.
-  const { data: trialRows } = await supabase.rpc("my_campaign_trial");
-  const trial = (Array.isArray(trialRows) ? trialRows[0] : null) as { state: string; expires_at: string; has_paid_subscription: boolean } | null;
-  const [history, { data: payRow }] = await Promise.all([
+    // Creator Partner Program: gifted members get a welcome line with their mentor and end date.
+    // Missing function (migration not applied) or no gift: nothing is shown.
+    supabase.rpc("my_mentorship"),
+    // Facebook BID trial (exact expiry + optional upgrade). Missing function = no banner.
+    supabase.rpc("my_campaign_trial"),
     loadHistory(supabase, user.id),
     supabase.from("sales_pay_settings").select("method, rate, flat_fee, base_salary, base_exclusions").eq("user_id", user.id).maybeSingle(),
+    // Signing status (personal bids, like the list below). A missing table (migration not run yet)
+    // just means no signing data: the dashboard never fails because of it.
+    esign ? Promise.all([
+      supabase.from("signing_requests").select("id, estimate_id, version_id, status, expires_at, created_at, revoke_reason, signed_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1000),
+      supabase.from("signatures").select("id, estimate_id, version_id, version_number, total, signed_at, signer_name, pdf_status, customer_name, project_title, proposal_number").eq("user_id", user.id).order("signed_at", { ascending: false }).limit(1000),
+    ]) : Promise.resolve([{ data: null }, { data: null }] as const),
+    // V4.3 "Newly approved — needs review" (same queue as Projects; null before the SQL runs).
+    pmOn ? Promise.all([loadReviewQueue(supabase), loadPmAccess(supabase)]) : Promise.resolve([null, null] as const),
   ]);
+  const gift = ((gifts ?? []) as { state: string; program_state: string; channel_name: string | null; workspace_name: string; expires_at: string | null }[])
+    .find((g) => g.state === "active" && g.program_state === "active") ?? null;
+  const trial = (Array.isArray(trialRows) ? trialRows[0] : null) as { state: string; expires_at: string; has_paid_subscription: boolean } | null;
   const pay = payRow ? sanitizePay({ method: payRow.method, rate: Number(payRow.rate), flatFee: Number(payRow.flat_fee), baseSalary: Number(payRow.base_salary), baseExclusions: Number(payRow.base_exclusions) }) : DEFAULT_PAY;
   const referral = (referralData as MyReferral | null)?.code ? referralData as MyReferral : null;
-  // Signing status (personal bids, like the list below). A missing table (migration not run yet)
-  // just means no signing data: the dashboard never fails because of it.
-  const esign = isEsignEnabled();
-  const [{ data: reqRows }, { data: sigRows }] = esign ? await Promise.all([
-    supabase.from("signing_requests").select("id, estimate_id, version_id, status, expires_at, created_at, revoke_reason, signed_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1000),
-    supabase.from("signatures").select("id, estimate_id, version_id, version_number, total, signed_at, signer_name, pdf_status, customer_name, project_title, proposal_number").eq("user_id", user.id).order("signed_at", { ascending: false }).limit(1000),
-  ]) : [{ data: null }, { data: null }];
   const signing = signingByEstimate((reqRows ?? []) as RequestRow[], (sigRows ?? []) as SignatureRow[]);
   const recentSigned: SignedBid[] = recentSignatures((sigRows ?? []) as SignatureRow[], RECENT_SIGNED_DAYS)
     .map((x) => ({ id: x.id, estimateId: x.estimate_id, customer: x.customer_name || x.signer_name, project: x.project_title || "Untitled bid", total: Number(x.total), signedAt: x.signed_at, versionNumber: x.version_number, pdfStatus: x.pdf_status }));
@@ -143,10 +161,14 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   const missing = [!biz?.company_name && "company name", !biz?.logo_path && "logo", !(biz?.phone || biz?.email) && "phone or email", !biz?.address && "business address"]
     .filter((x): x is string => Boolean(x));
 
+  const rawDismissed = (await cookies()).get(PROFILE_REMINDER_COOKIE)?.value;
+  const reminderDismissed = rawDismissed ? decodeURIComponent(rawDismissed) : null;
+
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
+          {gift && <p className="text-sm font-semibold text-accent-ink">{biz?.company_name ? `Welcome back, ${biz.company_name}` : "Let's build your next professional bid"}</p>}
           <h1 className="text-3xl font-extrabold text-navy">Your bids</h1>
           <p className="text-ink-soft">{biz?.company_name ? biz.company_name : <Link href="/settings/company" className="text-accent-ink underline">Set up your company profile</Link>}</p>
         </div>
@@ -155,15 +177,22 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
           <ButtonLink href="/bids" variant="accent" className="hidden md:inline-flex">Create New Bid</ButtonLink>
         </div>
       </div>
+      {gift && (
+        <Card className="flex flex-wrap items-center justify-between gap-3 p-4" data-testid="gift-banner">
+          <p className="text-sm">Complimentary Unlimited from <span className="font-semibold">{gift.channel_name ?? gift.workspace_name}</span>{gift.expires_at ? ` through ${new Date(gift.expires_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "America/Chicago" })}` : ""}. No payment needed.</p>
+          <div className="flex gap-3 text-sm font-semibold"><Link href="/welcome" className="underline">Branding setup</Link><Link href="/mentorship" className="underline">Mentorship</Link></div>
+        </Card>
+      )}
       {trial && !trial.has_paid_subscription && (trial.state === "active" || trial.state === "expired") && <TrialBanner state={trial.state} expiresAt={trial.expires_at} />}
       <WhatsNewNotice />
       <LocalDraftsBanner />
       {esign && <RefreshOnFocus />}
       {esign && recentSigned.length > 0 && <RecentlySigned bids={recentSigned} days={RECENT_SIGNED_DAYS} />}
+      {reviewQueue && reviewQueue.length > 0 && <ReviewQueue items={reviewQueue} canSchedule={Boolean(pmAccess?.canEdit)} compact max={5} />}
       {ests.length === 0 && <FirstBidStart companyName={biz?.company_name?.trim() || null} />}
       {checklist && <ActivationChecklist steps={checklist} />}
-      {!checklist && ests.length > 0 && <ProfileReminder missing={missing} />}
-      <BidsWorkspace bids={board} history={history} esign={esign} pay={pay} paySaved={Boolean(payRow)} migrated={migrated} initialView={initialView} table={<BidList rows={rows} />} />
+      {!checklist && ests.length > 0 && <ProfileReminder missing={missing} dismissedSignature={reminderDismissed} />}
+      <BidsWorkspace bids={board} history={history} esign={esign} pay={pay} paySaved={Boolean(payRow)} migrated={migrated} initialView={initialView} initialFocus={isFocus(sp.focus) ? sp.focus : null} initialRange={isRange(sp.range) ? sp.range : undefined} initialQuery={typeof sp.q === "string" ? sp.q.slice(0, 100) : ""} initialDateField={sp.date === "created" ? "created" : "activity"} table={<BidList rows={rows} />} />
       <div className="grid gap-4 lg:grid-cols-3">
         {credits && <CreditBalances credits={credits} className="lg:col-span-2" showUpgrade={false} enterprise={enterprise} />}
         <div className="grid gap-4">

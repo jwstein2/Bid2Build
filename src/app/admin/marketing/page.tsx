@@ -4,9 +4,10 @@ import { RangeControl, ReportUnavailable, ScopeNote, SectionTitle } from "@/comp
 import { CHANNELS, CHANNEL_LABEL, isChannel } from "@/lib/admin/channels";
 import { tip } from "@/lib/admin/definitions";
 import { ga4Report, searchConsoleReport, stripeCheckouts } from "@/lib/admin/integrations";
-import { activationTiming, campaignReport, channelReport, cohortFunnel, insights, inWindow, landingReport, prorateCosts, ratio, windowOf } from "@/lib/admin/model";
+import { activationTiming, campaignReport, channelReport, cohortFunnel, creativeReport, creatorReport, insights, planOf, tradeReport, inWindow, landingReport, monthlyCents, paybackMonths, prorateCosts, ratio, windowOf } from "@/lib/admin/model";
 import { loadReport } from "@/lib/admin/load";
-import { href, str } from "@/lib/admin/view";
+import { carry, href, str } from "@/lib/admin/view";
+import { MetricFormula, MetricRecords } from "@/components/ui/metric-card";
 import { addCost, deleteCost } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -31,8 +32,13 @@ export default async function Marketing({ searchParams }: { searchParams: Promis
   const landings = [...new Set(facts.map((f) => f.landing).filter(Boolean))] as string[];
   const fLanding = landings.includes(str(sp.landing)) ? str(sp.landing) : "";
   const fDevice = ["mobile", "tablet", "desktop"].includes(str(sp.device)) ? str(sp.device) : "";
-  const filtered = facts.filter((f) => (!fChannel || f.channel === fChannel) && (!fCampaign || f.campaign === fCampaign) && (!fLanding || f.landing === fLanding) && (!fDevice || f.device === fDevice));
-  const anyFilter = Boolean(fChannel || fCampaign || fLanding || fDevice);
+  const creatives = [...new Set(facts.map((f) => f.creative).filter(Boolean))] as string[];
+  const fCreative = creatives.includes(str(sp.creative)) ? str(sp.creative) : "";
+  const trades = [...new Set(facts.map((f) => f.trade).filter(Boolean))].sort() as string[];
+  const fTrade = trades.includes(str(sp.trade)) ? str(sp.trade) : "";
+  const fPlan = ["free", "paid", "complimentary"].includes(str(sp.plan)) ? str(sp.plan) : "";
+  const filtered = facts.filter((f) => (!fChannel || f.channel === fChannel) && (!fCampaign || f.campaign === fCampaign) && (!fLanding || f.landing === fLanding) && (!fDevice || f.device === fDevice) && (!fCreative || f.creative === fCreative) && (!fTrade || f.trade === fTrade) && (!fPlan || planOf(f) === fPlan));
+  const anyFilter = Boolean(fChannel || fCampaign || fLanding || fDevice || fCreative || fTrade || fPlan);
 
   const all = cohortFunnel(facts, w.start, w.end);
   const fun = cohortFunnel(filtered, w.start, w.end);
@@ -41,12 +47,28 @@ export default async function Marketing({ searchParams }: { searchParams: Promis
   const ins = insights(facts, costs, sc.d.events, w.start, w.end, now, ga?.sessions ?? null);
   const spend = costs.reduce((n, c) => n + (Number(c.amount_usd) || 0), 0);
   const landingRows = landingReport(facts, w.start, w.end);
+  const creativeRows = creativeReport(facts, w.start, w.end);
+  const creatorRows = creatorReport(facts);
+  const tradeRows = tradeReport(facts, w.start, w.end);
+  const payingCohort = facts.filter((f) => inWindow(f.createdAt, w.start, w.end) && f.paying);
+  const payback = paybackMonths(spend || null, all.paid, payingCohort.reduce((n, f) => n + monthlyCents(f.sub!), 0), payingCohort.length);
   const timing = activationTiming(sc, facts, w.start, w.end, now);
   const cohort = facts.filter((f) => inWindow(f.createdAt, w.start, w.end));
   const ev = (name: string) => sc.d.events.filter((e) => e.event === name && inWindow(e.created_at, w.start, w.end)).length;
   const outreach = channels.find((c) => c.key === "email_outreach");
   const known = facts.filter((f) => inWindow(f.createdAt, w.start, w.end) && f.channel !== "unknown").length;
   const thisMonth = now.toISOString().slice(0, 7);
+  // KPI drilldowns: the signup cohort for this window, optionally narrowed to a funnel step.
+  const cohortHref = (step?: string) => carry("/admin/customers", view, { cohort: "signups", ...(step ? { step } : {}) }, "accounts");
+  const acquired = cohort.filter((f) => f.everPaid);
+  const spendDrawer = {
+    id: "spend", title: `Marketing spend and CAC · last ${range.label}`, description: "Manual spend entries overlapping this period (monthly entries are prorated by day), and the paying customers acquired from this signup cohort.",
+    body: <>
+      <MetricFormula><p>CAC = spend {usdWhole(spend)} ÷ {fmt(all.paid)} new paying customer{all.paid === 1 ? "" : "s"} = <b>{spend && all.paid ? usdWhole(spend / all.paid) : "–"}</b></p><p className="mt-1 text-xs text-muted">Paying customers = accounts created in this period that have ever paid. Complimentary access is excluded.</p></MetricFormula>
+      <MetricRecords title="Spend in this period" rows={costs.map((c) => ({ key: String(c.id), label: isChannel(c.channel) ? CHANNEL_LABEL[c.channel] : c.channel, detail: `${c.period_start.slice(0, 7)}${c.campaign_id ? ` · ${c.campaign_id}` : ""}`, value: usdWhole(Number(c.amount_usd) || 0) }))} empty="No spend entered for this period." more={{ href: href("/admin/marketing", view) + "#spend", label: "Add or edit spend" }} />
+      <MetricRecords title={`Acquired customers (${acquired.length})`} rows={acquired.slice(0, 12).map((f) => ({ key: f.id, label: f.business ?? f.email ?? "Account", detail: CHANNEL_LABEL[f.channel], href: `/admin/customers/${f.id}${view.includeTest ? "?data=all" : ""}` }))} empty="No paying customers from this signup cohort yet." />
+    </>,
+  };
   const recentCosts = [...snap.costs].sort((a, b) => b.period_start.localeCompare(a.period_start) || b.id - a.id).slice(0, 12);
 
   return (
@@ -57,33 +79,34 @@ export default async function Marketing({ searchParams }: { searchParams: Promis
       <ScopeNote sc={sc} />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-7">
-        <Kpi label="Website sessions" value={ga ? fmt(ga.sessions) : "Not connected"} na={!ga} tone="blue" def={tip("visitor_signup")} sub={ga ? `${fmt(ga.users)} users (GA4)` : "Connect GA4 reporting (see Operations)"} />
-        <Kpi label="New signups" value={all.cohort} def={tip("registered")} sub={ga ? <>Visitor → signup <Pct r={ratio(all.cohort, ga.sessions)} /></> : "Genuine accounts created"} />
-        <Kpi label="Started a bid" value={all.firstBid} tone="blue" def={tip("first_bid")} sub={<Pct r={all.steps[1].ofPrev} />} />
-        <Kpi label="Activated (finalized a bid)" value={all.finalized} def={tip("signup_activation")} sub={<Pct r={all.steps[2].ofCohort} />} />
-        <Kpi label="7-day activation (new)" value={snap.meaningful === null ? "Needs SQL" : all.activated7d} na={snap.meaningful === null} tone="blue" def={tip("activation_7d")}
+        <Kpi label="Website sessions" value={ga ? fmt(ga.sessions) : "Not connected"} na={!ga} href={ga ? href("/admin/marketing", view) + "#traffic" : "/admin/operations#integrations"} action={ga ? "Sessions by channel" : "Connect GA4"} tone="blue" def={tip("visitor_signup")} sub={ga ? `${fmt(ga.users)} users (GA4)` : "Connect GA4 reporting (see Operations)"} />
+        <Kpi label="New signups" value={all.cohort} href={cohortHref()} action="View this signup cohort" def={tip("registered")} sub={ga ? <>Visitor → signup <Pct r={ratio(all.cohort, ga.sessions)} /></> : "Genuine accounts created"} />
+        <Kpi label="Started a bid" value={all.firstBid} href={cohortHref("first_bid")} action="View who started a bid" tone="blue" def={tip("first_bid")} sub={<Pct r={all.steps[1].ofPrev} />} />
+        <Kpi label="Activated (finalized a bid)" value={all.finalized} href={cohortHref("finalized")} action="View activated accounts" def={tip("signup_activation")} sub={<Pct r={all.steps[2].ofCohort} />} />
+        <Kpi label="7-day activation (new)" value={snap.meaningful === null ? "Needs SQL" : all.activated7d} href={cohortHref("activated7d")} action="View 7-day activations" na={snap.meaningful === null} tone="blue" def={tip("activation_7d")}
           sub={snap.meaningful === null ? "Apply migration 20261117001000" : all.matured ? <>Matured cohort <Pct r={ratio(all.activated7dMatured, all.matured)} /></> : "No account is 7+ days old yet"} />
-        <Kpi label="New paying" value={all.paid} tone="violet" def={tip("signup_paid")} sub={<Pct r={all.steps[3].ofCohort} />} />
-        <Kpi label="Spend entered (manual)" value={spend ? usdWhole(spend) : "None entered"} na={!spend} tone="amber" def={tip("cac")} sub={spend && all.paid ? `CAC ${usdWhole(spend / all.paid)}` : spend ? "No paying customers yet in this cohort" : "Add spend below to see CAC"} />
+        <Kpi label="New paying" value={all.paid} href={cohortHref("paid")} action="View paid conversions" tone="violet" def={tip("signup_paid")} sub={<Pct r={all.steps[3].ofCohort} />} />
+        <Kpi label="Spend entered (manual)" value={spend ? usdWhole(spend) : "None entered"} drawer={spendDrawer} action="Spend ledger and CAC" na={!spend} tone="amber" def={tip("cac")} sub={spend && all.paid ? `CAC ${usdWhole(spend / all.paid)}${payback != null ? ` · payback ${payback.toFixed(1)} mo` : ""}` : spend ? "No paying customers yet in this cohort" : "Add spend below to see CAC"} />
       </div>
 
       <SectionTitle id="channels" kicker="Attribution · first touch" title="Channel performance" right={<span className="cc-mono text-[11px] text-muted">{fmt(known)} of {fmt(all.cohort)} signups have a recorded source</span>} />
       <Panel>
         {channels.length === 0 ? <p className="text-sm text-ink-soft">No signups or spend in this window.</p> : (
-          <Table head={["Channel", "Signups", "Started bid", "Activated", "Paying", "MRR now", "Spend", "CAC", "Cost / activation"]} align={["l", "r", "r", "r", "r", "r", "r", "r", "r"]} minWidth={860}>
+          <Table head={["Channel", "Signups", "Started bid", "7-day activated", "Finalized", "Paying", "MRR now", "Spend", "CAC", "Payback", "Cost / finalized"]} align={["l", "r", "r", "r", "r", "r", "r", "r", "r", "r", "r"]} minWidth={1000}>
             {channels.map((c) => (
               <tr key={c.key}>
                 <td className="font-sans"><Link href={href("/admin/marketing", view, { channel: c.key })} className="font-semibold text-white underline-offset-2 hover:underline">{c.label}</Link></td>
-                <td className="text-right text-white">{fmt(c.signups)}</td><td className="text-right">{fmt(c.firstBid)}</td><td className="text-right">{fmt(c.activated)}</td><td className="text-right">{fmt(c.paid)}</td>
+                <td className="text-right text-white">{fmt(c.signups)}</td><td className="text-right">{fmt(c.firstBid)}</td><td className="text-right">{fmt(c.activated7d)}</td><td className="text-right">{fmt(c.activated)}</td><td className="text-right">{fmt(c.paid)}</td>
                 <td className="text-right">{c.mrrCents ? usd(c.mrrCents) : "–"}</td>
                 <td className="text-right">{money(c.spendUsd) ?? <span className="text-muted">–</span>}</td>
                 <td className="text-right">{money(c.cacUsd) ?? <span className="text-muted">{c.spendUsd ? "no paid yet" : "–"}</span>}</td>
+                <td className="text-right">{c.paybackMonths != null ? `${c.paybackMonths.toFixed(1)} mo` : <span className="text-muted">–</span>}</td>
                 <td className="text-right">{money(c.costPerActivationUsd) ?? <span className="text-muted">–</span>}</td>
               </tr>
             ))}
           </Table>
         )}
-        <p className="mt-3 text-xs text-muted">Revenue model: first touch, current list-price MRR of accounts from that channel. Spend is what you entered below (no ad-platform API is connected). Click a channel to filter the funnel.</p>
+        <p className="mt-3 text-xs text-muted">Revenue model: first touch, current list-price MRR of accounts from that channel. Spend is what you entered below (no ad-platform API is connected). Payback = CAC ÷ average current MRR per paying account (list price; complimentary access is never revenue). Click a channel to filter the funnel.</p>
         <details className="mt-3 text-xs text-ink-soft"><summary className="cursor-pointer text-[var(--cc-blue)]">How each signup is assigned a channel</summary>
           <ul className="mt-2 space-y-1">{CHANNELS.map((c) => <li key={c.key}><span className="font-semibold text-white">{c.label}:</span> {c.rule}</li>)}</ul>
           {!snap.attributionV2 && <p className="mt-2 text-[var(--cc-amber)]">Referrer, ad click id and device capture start after migration 20261115002000 is applied. Until then, signups without UTM tags are Unknown.</p>}
@@ -92,14 +115,17 @@ export default async function Marketing({ searchParams }: { searchParams: Promis
 
       <div className="grid gap-6 lg:grid-cols-5">
         <Panel kicker="Funnel drilldown" title={anyFilter ? "Filtered funnel" : "Signup funnel"} className="lg:col-span-3">
-          <form method="get" action="/admin/marketing" className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-[repeat(4,minmax(0,1fr))_auto]">
+          <form method="get" action="/admin/marketing" className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             {view.range.key !== "30d" && <input type="hidden" name="range" value={view.range.key} />}
             {view.includeTest && <input type="hidden" name="data" value="all" />}
             <label className="text-xs"><span className="cc-kicker mb-1 block">Channel</span><select name="channel" defaultValue={fChannel} className="field field-sm"><option value="">All</option>{CHANNELS.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}</select></label>
             <label className="text-xs"><span className="cc-kicker mb-1 block">Campaign</span><select name="campaign" defaultValue={fCampaign} className="field field-sm"><option value="">All</option>{campaigns.map((c) => <option key={c}>{c}</option>)}</select></label>
             <label className="text-xs"><span className="cc-kicker mb-1 block">Landing page</span><select name="landing" defaultValue={fLanding} className="field field-sm"><option value="">All</option>{landings.slice(0, 200).map((c) => <option key={c}>{c}</option>)}</select></label>
             <label className="text-xs"><span className="cc-kicker mb-1 block">Device</span><select name="device" defaultValue={fDevice} className="field field-sm"><option value="">All</option><option value="mobile">Mobile</option><option value="tablet">Tablet</option><option value="desktop">Desktop</option></select></label>
-            <div className="flex items-end gap-2"><button type="submit" className="cc-mono rounded-md bg-[var(--cc-green)] px-3 py-1.5 text-sm font-bold text-[#03140c]">Apply</button>{anyFilter && <Link href={href("/admin/marketing", view, { channel: undefined, campaign: undefined, landing: undefined, device: undefined })} className="cc-mono px-1 py-1.5 text-xs text-ink-soft underline">Reset</Link>}</div>
+            <label className="text-xs"><span className="cc-kicker mb-1 block">Creative</span><select name="creative" defaultValue={fCreative} className="field field-sm"><option value="">All</option>{creatives.slice(0, 200).map((c) => <option key={c}>{c}</option>)}</select></label>
+            <label className="text-xs"><span className="cc-kicker mb-1 block">Trade</span><select name="trade" defaultValue={fTrade} className="field field-sm"><option value="">All</option>{trades.map((c) => <option key={c}>{c}</option>)}</select></label>
+            <label className="text-xs"><span className="cc-kicker mb-1 block">Plan now</span><select name="plan" defaultValue={fPlan} className="field field-sm"><option value="">All</option><option value="free">Free</option><option value="paid">Paid</option><option value="complimentary">Complimentary</option></select></label>
+            <div className="flex items-end gap-2"><button type="submit" className="cc-mono rounded-md bg-[var(--cc-green)] px-3 py-1.5 text-sm font-bold text-[#03140c]">Apply</button>{anyFilter && <Link href={href("/admin/marketing", view, { channel: undefined, campaign: undefined, landing: undefined, device: undefined, creative: undefined, trade: undefined, plan: undefined })} className="cc-mono px-1 py-1.5 text-xs text-ink-soft underline">Reset</Link>}</div>
           </form>
           <FunnelSteps steps={fun.steps.map((s, i) => ({ label: s.label, n: s.n, ofPrev: i ? s.ofPrev : undefined }))} />
           <p className="mt-3 text-xs text-muted">Denominators: each step is a share of the step before, for the same accounts. {fun.cohort < 10 ? "Fewer than 10 accounts match, so read the percentages as directional only." : ""} Device and landing page are recorded from the first visit after migration 20261115002000.</p>
@@ -138,6 +164,59 @@ export default async function Marketing({ searchParams }: { searchParams: Promis
           </Table>
         )}
         <p className="mt-3 text-xs text-muted">Ad clicks are never counted as customers. Live campaign status needs an ad-platform connection, which is not set up.</p>
+      </Panel>
+
+      <SectionTitle id="trades" kicker="Trades · signup cohort" title="Trade-level conversion" />
+      <Panel>
+        {tradeRows.length === 0 ? <p className="text-sm text-ink-soft">No signups in this window.</p> : (
+          <Table head={["Trade", "Signups", "Started bid", "7-day activated", "Paying", "7-day activation"]} align={["l", "r", "r", "r", "r", "r"]} minWidth={620}>
+            {tradeRows.slice(0, 20).map((r) => (
+              <tr key={r.trade}>
+                <td className="font-sans">{r.trade === "(no trade yet)" ? <span className="text-muted">{r.trade}</span> : <Link href={href("/admin/marketing", view, { trade: r.trade })} className="text-white hover:underline">{r.trade}</Link>}</td>
+                <td className="text-right text-white">{fmt(r.signups)}</td><td className="text-right">{fmt(r.firstBid)}</td><td className="text-right">{fmt(r.activated7d)}</td><td className="text-right">{fmt(r.paid)}</td>
+                <td className="text-right"><Pct r={r.activation} /></td>
+              </tr>
+            ))}
+          </Table>
+        )}
+        <p className="mt-3 text-xs text-muted">Trade = the first bid&apos;s trade, else the trade landing page the account arrived on. Small numbers are directional only.</p>
+      </Panel>
+
+      <SectionTitle id="creatives" kicker="Ads · utm_content" title="Creative performance" />
+      <Panel>
+        {creativeRows.length === 0 ? <p className="text-sm text-ink-soft">No signups with a creative tag in this window. Ad links carry the creative in <code className="text-white">utm_content</code> (naming standard in docs/growth/ADS.md), and each creative appears here with what its signups went on to do.</p> : (
+          <Table head={["Creative", "Channel", "Campaign", "Signups", "Started bid", "7-day activated", "Finalized", "Paying", "MRR now", "Activation"]} align={["l", "l", "l", "r", "r", "r", "r", "r", "r", "r"]} minWidth={980}>
+            {creativeRows.slice(0, 30).map((c) => (
+              <tr key={c.creative}>
+                <td className="max-w-[14rem] truncate font-sans"><Link href={href("/admin/marketing", view, { creative: c.creative })} className="text-white hover:underline">{c.creative}</Link></td>
+                <td className="font-sans text-ink-soft">{CHANNEL_LABEL[c.channel] ?? c.channel}</td>
+                <td className="max-w-[10rem] truncate font-sans text-ink-soft">{c.campaign ?? "–"}</td>
+                <td className="text-right text-white">{fmt(c.signups)}</td><td className="text-right">{fmt(c.firstBid)}</td><td className="text-right">{fmt(c.activated7d)}</td><td className="text-right">{fmt(c.finalized)}</td><td className="text-right">{fmt(c.paid)}</td>
+                <td className="text-right">{c.mrrCents ? usd(c.mrrCents) : "–"}</td>
+                <td className="text-right"><Pct r={c.activation} /></td>
+              </tr>
+            ))}
+          </Table>
+        )}
+        <p className="mt-3 text-xs text-muted">Sorted by paying, then 7-day activation, so a creative that brings contractors who actually bid beats one that only brings clicks. Spend is entered per campaign, so CAC per creative isn&apos;t shown. Small numbers are directional only.</p>
+      </Panel>
+
+      <SectionTitle id="creators" kicker="Creator Partners · all time" title="Creator Partner results" />
+      <Panel>
+        {creatorRows.length === 0 ? <p className="text-sm text-ink-soft">No Creator Partner signups yet. Give each creator a link tagged <code className="text-white">utm_medium=creator&amp;utm_campaign=&lt;creator-name&gt;</code> (see docs/growth/ADS.md) and their signups appear here.</p> : (
+          <Table head={["Creator", "Signups", "Started bid", "7-day activated", "Paid (Stripe)", "Paying now", "MRR now", "Complimentary (not paid)"]} align={["l", "r", "r", "r", "r", "r", "r", "r"]} minWidth={860}>
+            {creatorRows.map((c) => (
+              <tr key={c.creator}>
+                <td className="font-sans text-white">{c.creator}</td>
+                <td className="text-right text-white">{fmt(c.signups)}</td><td className="text-right">{fmt(c.firstBid)}</td><td className="text-right">{fmt(c.activated7d)}</td>
+                <td className="text-right">{fmt(c.paid)}</td><td className="text-right">{fmt(c.payingNow)}</td>
+                <td className="text-right">{c.mrrCents ? usd(c.mrrCents) : "–"}</td>
+                <td className="text-right text-ink-soft">{fmt(c.complimentary)}</td>
+              </tr>
+            ))}
+          </Table>
+        )}
+        <p className="mt-3 text-xs text-muted">Paid means a real Stripe subscription. Complimentary access (creators, gifts, comps) is counted separately and never as paid or revenue. Counts only: no contractor names, bids or prices are shown to or shared with creators.</p>
       </Panel>
 
       <div className="grid gap-6 lg:grid-cols-5">
@@ -204,7 +283,7 @@ export default async function Marketing({ searchParams }: { searchParams: Promis
           )}
         </Panel>
 
-        <Panel kicker="Traffic" title="GA4 sessions by channel">
+        <Panel id="traffic" kicker="Traffic" title="GA4 sessions by channel">
           {ga ? (
             <>
               <Table head={["GA4 channel group", "Sessions"]} align={["l", "r"]} minWidth={300}>{ga.byChannel.map((c) => <tr key={c.channel}><td className="font-sans">{c.channel}</td><td className="text-right">{fmt(c.sessions)}</td></tr>)}</Table>

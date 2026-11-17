@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Suspense, type ReactNode } from "react";
+import { Suspense, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import { menuKeyDown, useDismiss } from "@/components/ui/use-dismiss";
 import { PRIMARY, TOOLS } from "./nav";
 
 /** Pages that render on the dark command-center theme; the rest keep the light theme. */
@@ -19,7 +20,7 @@ function TestDataToggle({ path }: { path: string }) {
   next.delete("page");
   const q = next.toString();
   return (
-    <Link href={q ? `${path}?${q}` : path} aria-pressed={on} title="Business metrics count genuine accounts only. Turn on to include internal, test and demo accounts (diagnostics)."
+    <Link href={q ? `${path}?${q}` : path} aria-label={on ? "Including test data. Switch to genuine accounts only" : "Genuine accounts only. Switch to include test data"} title="Business metrics count genuine accounts only. Turn on to include internal, test and demo accounts (diagnostics)."
       className={cn("cc-mono rounded-md border px-2 py-1 text-[11px]", on ? "border-[var(--cc-amber)] text-[var(--cc-amber)]" : "border-[var(--cc-line)] text-[#8fa6b4] hover:text-white")}>
       {on ? "Including test data ✕" : "Genuine accounts only"}
     </Link>
@@ -45,6 +46,52 @@ function NavLinks({ path }: { path: string }) {
 }
 
 /**
+ * "Tools ▾" menu. Was a <details> element, which stayed open after picking a page (the shell
+ * persists across client navigation), ignored outside clicks and had no Escape. Now it closes on
+ * selection, navigation, outside click and Escape, and supports arrow keys.
+ */
+function ToolsMenu({ path }: { path: string }) {
+  const [open, setOpen] = useState(false);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
+  useDismiss(open, () => setOpen(false), { inside: [trigger, panel], returnFocus: trigger });
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- close after navigating
+  useEffect(() => { setOpen(false); }, [path]);
+  useEffect(() => { if (open) panel.current?.querySelector<HTMLElement>("a")?.focus(); }, [open]);
+  // Keep the whole menu on screen: line it up under the button, then nudge it left if it would run off
+  // the right edge (at tablet widths Tools sits near the right side and the menu was cut off).
+  const wrap = useRef<HTMLDivElement>(null);
+  const [left, setLeft] = useState(0);
+  useLayoutEffect(() => {
+    if (!open) return;
+    const place = () => {
+      const w = wrap.current?.getBoundingClientRect(), pw = panel.current?.offsetWidth ?? 256;
+      if (!w) return;
+      const vw = document.documentElement.clientWidth;
+      setLeft(Math.round(Math.max(8, Math.min(w.left, vw - pw - 8)) - w.left));
+    };
+    place();
+    window.addEventListener("resize", place);
+    return () => window.removeEventListener("resize", place);
+  }, [open]);
+  const active = TOOLS.some((n) => under(path, n.href));
+  return (
+    <div ref={wrap} className="relative">
+      <button ref={trigger} type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-controls="admin-tools-menu" data-testid="admin-tools"
+        onKeyDown={(e) => { if (e.key === "ArrowDown" && !open) { e.preventDefault(); setOpen(true); } }}
+        className={cn("rounded-md px-2.5 py-1.5 hover:bg-white/5 hover:text-white", active ? "text-[var(--cc-green)]" : "text-[#b9cbd6]")}>Tools ▾</button>
+      {open && (
+        <div ref={panel} id="admin-tools-menu" onKeyDown={menuKeyDown} style={{ left }}
+          className="absolute z-40 mt-1 max-h-[70dvh] w-64 max-w-[calc(100vw-1rem)] overflow-y-auto rounded-lg border border-[var(--cc-line)] bg-[#0a1117] p-1 shadow-2xl">
+          {TOOLS.map((n) => <Link key={n.href} href={n.href} onClick={() => setOpen(false)} aria-current={under(path, n.href) ? "page" : undefined}
+            className={cn("block rounded-md px-3 py-2 font-sans text-sm focus-visible:bg-white/10", under(path, n.href) ? "text-[var(--cc-green)]" : "text-[#b9cbd6] hover:bg-white/5 hover:text-white")}>{n.label}</Link>)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
  * Owner chrome. Report pages use the dark command-center theme; older operational tools (templates,
  * flags, logs...) keep the light theme under the same navigation. Authorization happens in the layout
  * and in every page/action (requireAdmin), never here.
@@ -62,12 +109,7 @@ export function AdminShell({ email, logo, children }: { email: string; logo: Rea
           </div>
           <nav aria-label="Owner command center" className="cc-mono flex flex-wrap gap-1 text-[13px]">
             <Suspense fallback={null}><NavLinks path={path} /></Suspense>
-            <details className="relative">
-              <summary className="cursor-pointer list-none rounded-md px-2.5 py-1.5 text-[#b9cbd6] hover:bg-white/5 hover:text-white [&::-webkit-details-marker]:hidden">Tools ▾</summary>
-              <div className="absolute right-0 z-40 mt-1 w-64 rounded-lg border border-[var(--cc-line)] bg-[#0a1117] p-1 shadow-2xl sm:left-0 sm:right-auto">
-                {TOOLS.map((n) => <Link key={n.href} href={n.href} className={cn("block rounded-md px-3 py-2 font-sans text-sm", under(path, n.href) ? "text-[var(--cc-green)]" : "text-[#b9cbd6] hover:bg-white/5 hover:text-white")}>{n.label}</Link>)}
-              </div>
-            </details>
+            <ToolsMenu path={path} />
           </nav>
           <div className="ml-auto flex items-center gap-3">
             {dark && <Suspense fallback={null}><TestDataToggle path={path} /></Suspense>}

@@ -16,7 +16,7 @@ import { money, relDay } from "./format";
 type Toast = { text: string; tone: "ok" | "danger"; undo?: () => void } | null;
 
 /** Kanban board. Native drag-and-drop on desktop; every move is also in each card's "Move to" menu (keyboard + touch). */
-export function PipelineBoard({ bids, esign }: { bids: BoardBid[]; esign: boolean }) {
+export function PipelineBoard({ bids, esign, focus }: { bids: BoardBid[]; esign: boolean; focus?: Column[] }) {
   const router = useRouter();
   const [overrides, setOverrides] = useState<Record<string, { stage: Stage; wonAt?: string | null }>>({});
   const [pending, setPending] = useState<{ bid: BoardBid; to: Column; confirm: "won" | "lost" | "reopen" | "job" } | null>(null);
@@ -97,17 +97,28 @@ export function PipelineBoard({ bids, esign }: { bids: BoardBid[]; esign: boolea
     <div data-testid="pipeline-board">
       {/* Row 1: selling stages. Row 2: jobs and the separate Lost / Declined outcome. Wide screens fit all columns;
           narrower ones scroll sideways; phones stack collapsible sections. */}
-      <div className="overflow-x-auto md:pb-1">
-        <div className="flex flex-col gap-3 md:grid md:grid-cols-[repeat(5,minmax(200px,1fr))] md:items-start">
-          {SALES_COLUMNS.map((c) => <BoardColumn key={c} {...colProps(c)} />)}
+      {focus ? (
+        // A KPI card narrowed the board: only the stages behind that number, in one row.
+        <div className="overflow-x-auto md:pb-1" data-testid="pipeline-focus">
+          <div className="flex flex-col gap-3 md:grid md:items-start" style={{ gridTemplateColumns: `repeat(${focus.length}, minmax(200px, 1fr))` }}>
+            {focus.map((c) => <BoardColumn key={c} {...colProps(c)} forceOpen />)}
+          </div>
         </div>
-      </div>
-      <h3 className="mb-2 mt-5 text-xs font-bold uppercase tracking-wider text-muted">Jobs &amp; outcomes</h3>
-      <div className="overflow-x-auto md:pb-1">
-        <div className="flex flex-col gap-3 md:grid md:grid-cols-[repeat(4,minmax(200px,1fr))] md:items-start">
-          {[...JOB_COLUMNS, "lost" as const].map((c) => <BoardColumn key={c} {...colProps(c)} />)}
-        </div>
-      </div>
+      ) : (
+        <>
+          <div className="overflow-x-auto md:pb-1">
+            <div className="flex flex-col gap-3 md:grid md:grid-cols-[repeat(5,minmax(200px,1fr))] md:items-start">
+              {SALES_COLUMNS.map((c) => <BoardColumn key={c} {...colProps(c)} />)}
+            </div>
+          </div>
+          <h3 className="mb-2 mt-5 text-xs font-bold uppercase tracking-wider text-muted">Jobs &amp; outcomes</h3>
+          <div className="overflow-x-auto md:pb-1">
+            <div className="flex flex-col gap-3 md:grid md:grid-cols-[repeat(4,minmax(200px,1fr))] md:items-start">
+              {[...JOB_COLUMNS, "lost" as const].map((c) => <BoardColumn key={c} {...colProps(c)} />)}
+            </div>
+          </div>
+        </>
+      )}
       {pending && (
         <MoveDialog
           bid={pending.bid} to={pending.to} kind={pending.confirm}
@@ -128,13 +139,13 @@ export function PipelineBoard({ bids, esign }: { bids: BoardBid[]; esign: boolea
   );
 }
 
-function BoardColumn({ col, bids, total, esign, onMove, dropState, onDragOver, onDrop, onDragStart, onDragEnd }: {
-  col: Column; bids: BoardBid[]; total: { count: number; value: number; unpriced: number }; esign: boolean;
+function BoardColumn({ col, bids, total, esign, onMove, dropState, onDragOver, onDrop, onDragStart, onDragEnd, forceOpen }: {
+  col: Column; bids: BoardBid[]; total: { count: number; value: number; unpriced: number }; esign: boolean; forceOpen?: boolean;
   onMove: (b: BoardBid, to: Column) => void; dropState: "over" | "can" | "no" | null;
   onDragOver: (e: React.DragEvent) => void; onDrop: (e: React.DragEvent) => void; onDragStart: (id: string) => void; onDragEnd: () => void;
 }) {
   // Mobile: columns stack and collapse. Empty columns and Lost start collapsed.
-  const [open, setOpen] = useState(col !== "lost" && col !== "completed" && bids.length > 0);
+  const [open, setOpen] = useState(Boolean(forceOpen) || (col !== "lost" && col !== "completed" && bids.length > 0));
   const headId = `col-${col}`;
   return (
     <section
@@ -177,12 +188,17 @@ function BidCard({ b, esign, onMove, onDragStart, onDragEnd }: { b: BoardBid; es
     <article
       draggable onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", b.id); onDragStart(b.id); }} onDragEnd={onDragEnd}
       data-testid="bid-card" data-bid={b.id}
-      className="group rounded-lg border border-line bg-surface p-3 shadow-sm hover:border-brand/40 md:cursor-grab md:active:cursor-grabbing"
+      // The whole card opens the bid: the title link stretches over the card (after:inset-0), and the menu and
+      // next-action button sit above it (relative z-10), so they keep their own clicks. Drag still moves the card.
+      className="card-link-host group relative cursor-pointer rounded-lg border border-line bg-surface p-3 shadow-sm transition-[border-color,box-shadow] hover:border-brand/50 hover:shadow-md active:cursor-grabbing"
     >
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
           <p className="truncate text-xs font-semibold text-muted">{b.customer || "No customer yet"}</p>
-          <Link href={`/estimates/${b.id}`} className="line-clamp-2 text-sm font-bold leading-snug text-ink hover:text-brand">{b.title}</Link>
+          <Link
+            href={`/estimates/${b.id}`} draggable={false} data-card-link data-testid="card-link"
+            className="line-clamp-2 text-sm font-bold leading-snug text-ink group-hover:text-brand after:absolute after:inset-0 after:rounded-lg after:content-['']"
+          >{b.title}</Link>
         </div>
         <MoveMenu b={b} col={col} onMove={onMove} />
       </div>
@@ -199,9 +215,9 @@ function BidCard({ b, esign, onMove, onDragStart, onDragEnd }: { b: BoardBid; es
       <p className="mt-1 text-[11px] text-muted">#{b.number} · {relDay(lastActivity(b))}</p>
       <div className="mt-2 flex justify-end">
         {action && (action.href ? (
-          <Link href={action.href} className="inline-flex min-h-8 items-center gap-1 rounded-md bg-brand-tint px-2 text-xs font-bold text-navy hover:bg-accent-tint" data-testid="next-action">{action.label}<ArrowRight className="h-3 w-3" aria-hidden /></Link>
+          <Link href={action.href} draggable={false} className="relative z-10 inline-flex min-h-8 items-center gap-1 rounded-md bg-brand-tint px-2 text-xs font-bold text-navy hover:bg-accent-tint" data-testid="next-action">{action.label}<ArrowRight className="h-3 w-3" aria-hidden /></Link>
         ) : (
-          <button type="button" onClick={() => onMove(b, action.move!)} className="inline-flex min-h-8 items-center gap-1 rounded-md bg-accent px-2 text-xs font-bold text-navy hover:bg-accent-hover" data-testid="next-action">{action.label}<ArrowRight className="h-3 w-3" aria-hidden /></button>
+          <button type="button" onClick={() => onMove(b, action.move!)} className="relative z-10 inline-flex min-h-8 items-center gap-1 rounded-md bg-accent px-2 text-xs font-bold text-navy hover:bg-accent-hover" data-testid="next-action">{action.label}<ArrowRight className="h-3 w-3" aria-hidden /></button>
         ))}
       </div>
     </article>
@@ -219,7 +235,7 @@ function SignBadge({ b }: { b: BoardBid }) {
 function MoveMenu({ b, col, onMove }: { b: BoardBid; col: Column; onMove: (b: BoardBid, to: Column) => void }) {
   return (
     <Menu.Root>
-      <Menu.Trigger aria-label={`Move ${b.title}`} className="-mr-1 -mt-1 grid h-9 w-9 shrink-0 place-items-center rounded-md text-muted hover:bg-black/5 hover:text-navy" data-testid="move-menu">
+      <Menu.Trigger aria-label={`Move ${b.title}`} className="relative z-10 -mr-1 -mt-1 grid h-9 w-9 shrink-0 place-items-center rounded-md text-muted hover:bg-black/5 hover:text-navy" data-testid="move-menu">
         <MoreVertical className="h-4 w-4" />
       </Menu.Trigger>
       <Menu.Portal>

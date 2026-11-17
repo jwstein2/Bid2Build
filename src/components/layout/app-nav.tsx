@@ -1,8 +1,9 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { Sparkles, CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, Plug, LayoutTemplate, LogOut, X, UserCog, Receipt, Gauge, SquareKanban, CalendarRange } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { REVEAL_FEATURE_EVENT } from "@/lib/features/state";
+import { Sparkles, CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, Plug, LayoutTemplate, LogOut, X, UserCog, Receipt, Gauge, SquareKanban, CalendarRange, GraduationCap, Palette } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ButtonLink } from "@/components/ui/button";
 import { Logo } from "./logo";
@@ -16,11 +17,12 @@ import { ThemeToggle } from "../theme/theme-toggle";
 type NavItem = { href: string; label: string; icon: typeof Library; exact?: boolean; premium?: boolean; feature?: FeatureId };
 const NAV: NavItem[] = [
   { href: "/dashboard", label: "Bids", icon: LayoutDashboard, exact: true },
-  // Directly below Bids: contractors set this up first and their proposals depend on it.
-  { href: "/settings/company", label: "Company profile", icon: Building2 },
-  { href: "/dashboard/customers", label: "Saved customers", icon: Users },
+  { href: "/dashboard/customers", label: "Customers", icon: Users },
   { href: "/dashboard/items", label: "Saved Items & Pricing", icon: Library, premium: true, feature: "library" },
   { href: "/dashboard/templates", label: "Proposal Templates", icon: LayoutTemplate, premium: true, feature: "templates" },
+];
+/** Personal account links, listed after the Company section. */
+const ACCOUNT_NAV: NavItem[] = [
   { href: "/settings/billing", label: "Subscription", icon: CreditCard },
   { href: "/settings/pricing", label: "Pricing data", icon: Plug },
   { href: "/settings/account", label: "Account settings", icon: Settings },
@@ -33,30 +35,78 @@ const item = "flex min-h-11 items-center gap-2.5 whitespace-nowrap rounded-md px
  * (logo, New bid, Menu) whose menu opens the same list, so content starts near the top of the screen.
  */
 /** Enterprise company links, chosen on the server from the member's permissions. */
-export type CompanyHref = "/company" | "/company/pipeline" | "/company/users" | "/company/billing";
+export type CompanyHref = "/company" | "/company/pipeline" | "/company/users" | "/company/billing" | "/company/proposal-style";
 export type CompanyNav = { name: string; links: { href: CompanyHref; label: string }[] };
-const COMPANY_ICONS = { "/company": Gauge, "/company/pipeline": SquareKanban, "/company/users": UserCog, "/company/billing": Receipt } as const;
+const COMPANY_ICONS = { "/company": Gauge, "/company/pipeline": SquareKanban, "/company/users": UserCog, "/company/billing": Receipt, "/company/proposal-style": Palette } as const;
 const companyExact = (href: CompanyHref) => href === "/company";
+
+/** Invitation-only Creator Partner Program links (only rendered for creators / gifted participants). */
+export type LearningNav = { creator: boolean; participant: boolean };
+
+/**
+ * Company section: shown to every account. Company profile (the business details on every proposal) is
+ * its first entry on every plan; Enterprise links follow only when the member's permissions allow them.
+ */
+const COMPANY_PROFILE: NavItem = { href: "/settings/company", label: "Company profile", icon: Building2 };
 
 /** Projects (schedules) sit right below Bids when project scheduling is switched on. */
 const PROJECTS: NavItem = { href: "/projects", label: "Projects", icon: CalendarRange };
 
-export function AppSidebar({ isAdmin, email, company, projects = false, theme = null }: { isAdmin: boolean; email: string | null; company?: CompanyNav | null; projects?: boolean; theme?: ThemePref | null }) {
-  const nav: NavItem[] = projects ? [NAV[0], PROJECTS, ...NAV.slice(1)] : NAV;
+export function AppSidebar({ isAdmin, email, company, projects = false, theme = null, learning }: { isAdmin: boolean; email: string | null; company?: CompanyNav | null; projects?: boolean; theme?: ThemePref | null; learning?: LearningNav | null }) {
+  const work: NavItem[] = projects ? [NAV[0], PROJECTS, ...NAV.slice(1)] : NAV;
+  const nav: NavItem[] = [...work, ...ACCOUNT_NAV];
   const path = usePathname();
   const [open, setOpen] = useState(false);
   // eslint-disable-next-line react-hooks/set-state-in-effect -- close the mobile menu after navigating
   useEffect(() => { setOpen(false); }, [path]);
+  // On phones the links are inside the Menu: the feature walkthrough opens it for a step that points
+  // at a sidebar link (Saved Items, Templates) and closes it again when the walkthrough ends.
+  const openedForTour = useRef(false);
+  const isOpen = useRef(open);
+  useEffect(() => { isOpen.current = open; }, [open]);
+  useEffect(() => {
+    const on = (e: Event) => {
+      const id = (e as CustomEvent).detail as string | null;
+      if (id && NAV.some((n) => n.feature === id)) {
+        if (!isOpen.current) { openedForTour.current = true; setOpen(true); }
+      } else if (openedForTour.current) {
+        openedForTour.current = false;
+        setOpen(false);
+      }
+    };
+    window.addEventListener(REVEAL_FEATURE_EVENT, on);
+    return () => window.removeEventListener(REVEAL_FEATURE_EVENT, on);
+  }, []);
+  // Escape closes the phone menu and puts focus back on the Menu button.
+  const menuButton = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && window.matchMedia("(max-width: 767px)").matches) { setOpen(false); menuButton.current?.focus(); }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
   const active = (href: string, exact?: boolean) => (exact ? path === href : path === href || path.startsWith(`${href}/`));
-  const current = nav.find((n) => active(n.href, n.exact)) ?? company?.links.find((l) => active(l.href, companyExact(l.href)));
+  const current = nav.find((n) => active(n.href, n.exact)) ?? (active(COMPANY_PROFILE.href) ? COMPANY_PROFILE : undefined) ?? company?.links.find((l) => active(l.href, companyExact(l.href)));
+  const link = (n: NavItem) => {
+    const on = active(n.href, n.exact);
+    return (
+      <Link key={n.href} href={n.href} data-feature={n.feature} aria-current={on ? "page" : undefined} className={cn(item, on ? "bg-white/10 text-white shadow-[inset_3px_0_0_var(--color-cyan)]" : "text-[#C9D6E3] hover:bg-white/5 hover:text-white")}>
+        <n.icon className={cn("h-4 w-4", on ? "text-cyan" : "")} aria-hidden /> {n.label}
+        {n.premium && <PremiumDiamond tone="dark" className="ml-auto pl-2" />}
+      </Link>
+    );
+  };
   return (
     <>
-      <div className="flex items-center justify-between gap-2 px-3 py-3 sm:px-4 md:py-4">
+      <div className="flex items-center justify-between gap-1 px-3 py-3 sm:gap-2 sm:px-4 md:py-4">
         <Logo tone="dark" href="/dashboard" />
         <div className="flex items-center gap-1 max-[380px]:gap-0 md:hidden">
           <ButtonLink href="/bids" variant="accent" size="sm" className="min-h-11 max-[380px]:px-2.5"><FileText className="h-4 w-4 max-[380px]:hidden" aria-hidden /> New bid</ButtonLink>
           <ThemeToggle signedIn account={theme} tone="dark" />
           <button
+            ref={menuButton}
             type="button"
             onClick={() => setOpen(!open)}
             aria-expanded={open}
@@ -70,28 +120,35 @@ export function AppSidebar({ isAdmin, email, company, projects = false, theme = 
       </div>
       <div className="hidden px-3 md:block"><ButtonLink href="/bids" variant="accent" className="w-full"><FileText className="h-4 w-4" aria-hidden /> Create New Bid</ButtonLink></div>
       {!open && current && <p className="flex items-center gap-1.5 px-4 pb-2 text-xs text-[#B8C6D4] md:hidden">{current.label}{"premium" in current && current.premium && <PremiumDiamond tone="dark" />}</p>}
-      <nav id="account-nav" aria-label="Account" className={cn("flex-col gap-1 px-2 pb-3 md:mt-4 md:flex", open ? "flex" : "hidden")}>
-        {nav.map((n) => {
-          const on = active(n.href, n.exact);
+      <nav id="account-nav" aria-label="Account" className={cn("flex-col gap-1 px-2 pb-3 md:mt-4 md:flex", open ? "flex max-md:motion-drop-in" : "hidden")}>
+        {work.map(link)}
+        <p className="mt-3 truncate px-3 pb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#B8C6D4]" title={company?.name} data-testid="nav-company-heading">{company ? `Company · ${company.name}` : "Company"}</p>
+        <Link href={COMPANY_PROFILE.href} aria-current={active(COMPANY_PROFILE.href) ? "page" : undefined} data-testid="nav-company-profile" className={cn(item, active(COMPANY_PROFILE.href) ? "bg-white/10 text-white shadow-[inset_3px_0_0_var(--color-cyan)]" : "text-[#C9D6E3] hover:bg-white/5 hover:text-white")}>
+          <Building2 className={cn("h-4 w-4", active(COMPANY_PROFILE.href) ? "text-cyan" : "")} aria-hidden /> {COMPANY_PROFILE.label}
+        </Link>
+        {company?.links.map((l) => {
+          const on = active(l.href, companyExact(l.href));
+          const Icon = COMPANY_ICONS[l.href];
           return (
-            <Link key={n.href} href={n.href} data-feature={n.feature} aria-current={on ? "page" : undefined} className={cn(item, on ? "bg-white/10 text-white shadow-[inset_3px_0_0_var(--color-cyan)]" : "text-[#C9D6E3] hover:bg-white/5 hover:text-white")}>
-              <n.icon className={cn("h-4 w-4", on ? "text-cyan" : "")} aria-hidden /> {n.label}
-              {n.premium && <PremiumDiamond tone="dark" className="ml-auto pl-2" />}
+            <Link key={l.href} href={l.href} aria-current={on ? "page" : undefined} className={cn(item, on ? "bg-white/10 text-white shadow-[inset_3px_0_0_var(--color-cyan)]" : "text-[#C9D6E3] hover:bg-white/5 hover:text-white")}>
+              <Icon className={cn("h-4 w-4", on ? "text-cyan" : "")} aria-hidden /> {l.label}
             </Link>
           );
         })}
-        {company && company.links.length > 0 && (
+        <p className="mt-3 px-3 pb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#B8C6D4]">Account</p>
+        {ACCOUNT_NAV.map(link)}
+        {learning && (learning.creator || learning.participant) && (
           <>
-            <p className="mt-3 truncate px-3 pb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#B8C6D4]" title={company.name}>Company · {company.name}</p>
-            {company.links.map((l) => {
-              const on = active(l.href, companyExact(l.href));
-              const Icon = COMPANY_ICONS[l.href];
-              return (
-                <Link key={l.href} href={l.href} aria-current={on ? "page" : undefined} className={cn(item, on ? "bg-white/10 text-white shadow-[inset_3px_0_0_var(--color-cyan)]" : "text-[#C9D6E3] hover:bg-white/5 hover:text-white")}>
-                  <Icon className={cn("h-4 w-4", on ? "text-cyan" : "")} aria-hidden /> {l.label}
-                </Link>
-              );
-            })}
+            {learning.creator && (
+              <Link href="/learning" aria-current={active("/learning") ? "page" : undefined} className={cn(item, active("/learning") ? "bg-white/10 text-white shadow-[inset_3px_0_0_var(--color-cyan)]" : "text-[#C9D6E3] hover:bg-white/5 hover:text-white")}>
+                <GraduationCap className={cn("h-4 w-4", active("/learning") ? "text-cyan" : "")} aria-hidden /> Learning Enterprise
+              </Link>
+            )}
+            {learning.participant && (
+              <Link href="/mentorship" aria-current={active("/mentorship") ? "page" : undefined} className={cn(item, active("/mentorship") ? "bg-white/10 text-white shadow-[inset_3px_0_0_var(--color-cyan)]" : "text-[#C9D6E3] hover:bg-white/5 hover:text-white")}>
+                <GraduationCap className={cn("h-4 w-4", active("/mentorship") ? "text-cyan" : "")} aria-hidden /> Mentorship
+              </Link>
+            )}
           </>
         )}
         <p className="mt-3 px-3 pb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#B8C6D4]">Help</p>

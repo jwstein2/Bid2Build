@@ -32,6 +32,31 @@ export const PERMISSION_KEYS = [
   "send_internal_reports",
   "manage_pm_seats",
   "manage_pm_addons",
+  // V4.3 project operations (20261119001000_project_operations.sql).
+  "review_approved_jobs",
+  "edit_live_schedules",
+  "confirm_task_completion",
+  "create_change_orders",
+  "send_change_orders",
+  "share_subcontractor_scopes",
+  "upload_photos",
+  "view_subcontractor_costs",
+  "edit_project_costs",
+  // V4.4 proposal style.
+  "view_proposal_style",
+  "customize_proposal_style",
+  "manage_proposal_templates",
+  "change_proposal_policy",
+  // V4.6 customer communications (20261121001000_customer_communications.sql).
+  "view_communications",
+  "edit_nurture_templates",
+  "enable_customer_nurture",
+  "approve_marketing_outreach",
+  "configure_project_updates",
+  "approve_customer_updates",
+  "enable_auto_project_updates",
+  "view_customer_replies",
+  "manage_opt_outs",
 ] as const;
 export type Permission = (typeof PERMISSION_KEYS)[number];
 
@@ -45,13 +70,24 @@ export const ROLE_PERMISSIONS: Record<CompanyRole, readonly Permission[]> = {
     "view_schedules", "create_schedules", "edit_assigned_schedules", "edit_all_schedules", "manage_dependencies",
     "update_progress", "publish_customer_updates", "download_schedule_pdf",
     "view_internal_reports", "download_internal_reports", "send_internal_reports",
+    "review_approved_jobs", "edit_live_schedules", "confirm_task_completion",
+    "create_change_orders", "send_change_orders", "share_subcontractor_scopes", "upload_photos",
+    "view_subcontractor_costs", "edit_project_costs",
+    "view_proposal_style", "customize_proposal_style",
+    "view_communications", "edit_nurture_templates", "approve_marketing_outreach",
+    "configure_project_updates", "approve_customer_updates", "view_customer_replies", "manage_opt_outs",
   ],
-  estimator: ["view_own_bids", "create_estimates", "view_costs", "view_schedules", "create_schedules", "edit_assigned_schedules", "manage_dependencies", "update_progress", "download_schedule_pdf"],
-  viewer: ["view_own_bids", "view_team_bids", "view_analytics", "view_schedules", "download_schedule_pdf"],
+  estimator: [
+    "view_own_bids", "create_estimates", "view_costs", "view_schedules", "create_schedules", "edit_assigned_schedules", "manage_dependencies", "update_progress", "download_schedule_pdf",
+    "review_approved_jobs", "edit_live_schedules", "confirm_task_completion", "create_change_orders", "upload_photos",
+    "view_proposal_style", "customize_proposal_style",
+    "view_communications", "view_customer_replies",
+  ],
+  viewer: ["view_own_bids", "view_team_bids", "view_analytics", "view_schedules", "download_schedule_pdf", "view_proposal_style", "view_communications"],
 };
 
 /** Only the company owner may grant these. */
-export const OWNER_ONLY_PERMISSIONS: readonly Permission[] = ["manage_billing", "manage_users", "manage_pm_seats", "manage_pm_addons"];
+export const OWNER_ONLY_PERMISSIONS: readonly Permission[] = ["manage_billing", "manage_users", "manage_pm_seats", "manage_pm_addons", "change_proposal_policy", "enable_customer_nurture", "enable_auto_project_updates"];
 
 export const ROLE_LABELS: Record<CompanyRole, string> = {
   owner: "Company Owner",
@@ -87,6 +123,28 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   send_internal_reports: "Send internal financial documents",
   manage_pm_seats: "Manage scheduling editor seats",
   manage_pm_addons: "Manage paid Project Command Center add-ons",
+  review_approved_jobs: "Review newly approved jobs",
+  edit_live_schedules: "Edit live (published) schedules",
+  confirm_task_completion: "Confirm task completion",
+  create_change_orders: "Create change orders",
+  send_change_orders: "Send and record approval of change orders",
+  share_subcontractor_scopes: "Share scopes with subcontractors",
+  upload_photos: "Upload and label photos",
+  view_subcontractor_costs: "View subcontractor quotes and costs",
+  edit_project_costs: "Edit internal project costs",
+  view_proposal_style: "View company proposal style",
+  customize_proposal_style: "Customize individual proposal style (when allowed)",
+  manage_proposal_templates: "Manage company proposal template",
+  change_proposal_policy: "Change company-wide proposal policy",
+  view_communications: "View customer communication history",
+  edit_nurture_templates: "Edit follow-up email templates and offers",
+  enable_customer_nurture: "Turn on customer follow-ups (company-wide)",
+  approve_marketing_outreach: "Approve and send follow-up emails",
+  configure_project_updates: "Set project update frequency",
+  approve_customer_updates: "Approve and send project update emails",
+  enable_auto_project_updates: "Turn on automatic project update sending",
+  view_customer_replies: "Read customer replies",
+  manage_opt_outs: "Manage opt-outs and paused contacts",
 };
 
 /** How the Users & Permissions screen groups permissions. */
@@ -95,8 +153,18 @@ export const PERMISSION_GROUPS: { title: string; keys: readonly Permission[]; no
   { title: "Costs and internal reports", keys: ["view_costs", "view_margin", "view_internal_reports", "download_internal_reports", "send_internal_reports", "view_analytics"] },
   {
     title: "Project Command Center",
-    keys: ["view_schedules", "create_schedules", "edit_assigned_schedules", "edit_all_schedules", "manage_dependencies", "update_progress", "publish_customer_updates", "download_schedule_pdf"],
+    keys: ["view_schedules", "create_schedules", "edit_assigned_schedules", "edit_all_schedules", "edit_live_schedules", "manage_dependencies", "update_progress", "confirm_task_completion", "publish_customer_updates", "download_schedule_pdf"],
     note: "Changing a schedule also needs a scheduling editor seat.",
+  },
+  {
+    title: "Project operations",
+    keys: ["review_approved_jobs", "create_change_orders", "send_change_orders", "share_subcontractor_scopes", "upload_photos", "view_subcontractor_costs", "edit_project_costs"],
+  },
+  { title: "Proposal style", keys: ["view_proposal_style", "customize_proposal_style", "manage_proposal_templates", "change_proposal_policy"], note: "Only the company owner can grant permission to change the company-wide proposal policy." },
+  {
+    title: "Customer communications",
+    keys: ["view_communications", "view_customer_replies", "edit_nurture_templates", "approve_marketing_outreach", "enable_customer_nurture", "configure_project_updates", "approve_customer_updates", "enable_auto_project_updates", "manage_opt_outs"],
+    note: "Needs Project Command Center. Only the company owner can grant turning on company-wide follow-ups or automatic sending.",
   },
   { title: "Administration", keys: ["manage_teams", "manage_users", "manage_billing", "manage_pm_seats", "manage_pm_addons"] },
 ];

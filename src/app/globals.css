@@ -10,8 +10,8 @@
  *  - cool gray #6B7A89 is for icons/rules; small text uses --color-muted (#56677A).
  */
 @theme {
-  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: "Montserrat Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter Variable", "Inter Fallback", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Montserrat Variable", "Montserrat Fallback", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
 
   /* Brand primitives */
   --color-navy: #0b2d4d;
@@ -63,6 +63,37 @@
   --radius-card: 0.75rem;
   --shadow-card: 0 1px 2px rgb(11 45 77 / 0.05), 0 1px 1px rgb(11 45 77 / 0.03);
   --shadow-raised: 0 8px 24px -8px rgb(11 45 77 / 0.18);
+
+  /* Motion curves: decelerate in, quick ease-in out. Utilities: ease-brand-out / ease-brand-in. */
+  --ease-brand-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-brand-in: cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* Motion durations (feedback / reveal / panel). Use these, not one-off values. */
+:root { --motion-fast: 120ms; --motion-base: 180ms; --motion-slow: 220ms; }
+
+/*
+ * Metric-matched fallbacks: while the web fonts download, text renders in Arial (or its metric twins)
+ * scaled to the same width and line height, so headlines don't reflow when Inter/Montserrat arrive
+ * (Lighthouse measured a 0.06 layout shift on the home hero). Values use the same formula as
+ * next/font, from its capsize metrics (Montserrat at heading weight vs Arial Bold), then checked
+ * in Chromium: rendered width within ~1% of the web fonts.
+ */
+@font-face {
+  font-family: "Inter Fallback";
+  src: local("Arial"), local("ArialMT"), local("Liberation Sans"), local("Arimo");
+  size-adjust: 107.12%;
+  ascent-override: 90.44%;
+  descent-override: 22.52%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Montserrat Fallback";
+  src: local("Arial Bold"), local("Arial-BoldMT"), local("Liberation Sans Bold"), local("LiberationSans-Bold"), local("Arimo Bold"), local("Arimo-Bold");
+  size-adjust: 111%;
+  ascent-override: 87.21%;
+  descent-override: 22.61%;
+  line-gap-override: 0%;
 }
 
 html { background: var(--color-paper); color-scheme: light; }
@@ -72,6 +103,9 @@ h1, h2, h3, .font-display { font-family: var(--font-display); letter-spacing: -0
 :focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
 /* On navy surfaces the focus ring flips to cyan (6.5:1 against navy). */
 .on-dark :focus-visible { outline-color: var(--color-cyan); }
+/* Whole-card links (Bids pipeline): the title link stretches over the card, so the focus ring goes on the card. */
+a[data-card-link]:focus-visible { outline: none; }
+.card-link-host:has(a[data-card-link]:focus-visible) { outline: 2px solid var(--color-focus); outline-offset: 2px; }
 
 /* Blueprint motif: faint drafting grid. Decorative only; never behind form labels. */
 .blueprint-grid {
@@ -125,6 +159,20 @@ h1, h2, h3, .font-display { font-family: var(--font-display); letter-spacing: -0
   .no-print { display: none !important; }
 }
 
+/* Shared CSS motion. Rules: motion only explains a change (opened, added, saved); short (120 /
+   180 / 220ms); opacity and transform only; nothing loops. Reduced motion: the rule below.
+   A panel dropping in from its trigger.
+   fill-mode backwards (not both): once finished the animation no longer applies a transform, so it
+   can't become the containing block for fixed children such as the calculator sheet or BulkBar. */
+@keyframes b2b-drop-in { from { opacity: 0; transform: translateY(-6px); } }
+@utility motion-drop-in { animation: b2b-drop-in var(--motion-slow) var(--ease-brand-out) backwards; }
+/* Status text swapping (Saving… → Saved): a quick fade-in. */
+@keyframes b2b-fade { from { opacity: 0; } }
+@utility motion-fade { animation: b2b-fade var(--motion-fast) var(--ease-brand-out) backwards; }
+/* Content revealed in place (an expanded estimate section). */
+@keyframes b2b-reveal { from { opacity: 0; transform: translateY(4px); } }
+@utility motion-reveal { animation: b2b-reveal var(--motion-base) var(--ease-brand-out) backwards; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
@@ -132,7 +180,7 @@ h1, h2, h3, .font-display { font-family: var(--font-display); letter-spacing: -0
 /* Touch screens: 16px fields in the quantity calculator so iOS Safari doesn't zoom the page on
    focus (which pushed the calculator sheet off screen). */
 @media (pointer: coarse), (max-width: 639px) {
-  .calc-panel .field, .calc-panel .cell { font-size: 16px; }
+  .calc-panel .field, .calc-panel .cell, .sub-quote-form .field { font-size: 16px; }
 }
 
 /*
@@ -208,6 +256,25 @@ h1, h2, h3, .font-display { font-family: var(--font-display); letter-spacing: -0
 @keyframes cc-rise { from { opacity: 0; } to { opacity: 1; } }
 .cc-bar, .cc-col { animation: none; }
 @media (prefers-reduced-motion: reduce) { .cc-rise { animation: none; } }
+/*
+ * Clickable metric cards (components/ui/metric-card.tsx). One interaction for every dashboard number:
+ * pointer, subtle lift on hover, pressed state, visible focus ring, and an arrow that nudges forward.
+ * Uses theme tokens, so it works on the owner theme (.cc) and the customer Light / Dark / Black themes.
+ */
+.metric-action { cursor: pointer; position: relative; transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease, background-color 150ms ease; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.metric-action:hover { border-color: var(--color-accent-ink); box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-accent-ink) 35%, transparent), var(--shadow-card, 0 1px 2px rgb(0 0 0 / 0.06)); transform: translateY(-1px); }
+.metric-action:active { transform: translateY(0) scale(0.985); }
+.metric-action:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.metric-action .metric-cta { color: var(--color-accent-ink); }
+.metric-action .metric-arrow { transition: transform 150ms ease; }
+.metric-action:hover .metric-arrow, .metric-action:focus-visible .metric-arrow { transform: translateX(2px); }
+.cc .metric-action:hover { border-color: var(--cc-line-strong); box-shadow: 0 0 0 1px rgb(61 255 168 / 0.25), 0 18px 40px -24px rgb(0 0 0 / 0.9); }
+.cc .metric-action .metric-cta { color: var(--cc-blue); font-family: var(--font-mono, ui-monospace, monospace); text-transform: uppercase; letter-spacing: 0.08em; font-size: 10px; }
+.cc .metric-action:focus-visible { outline-color: var(--cc-green); }
+@media (prefers-reduced-motion: reduce) { .metric-action, .metric-action .metric-arrow { transition: none; } .metric-action:hover, .metric-action:active { transform: none; } .metric-action:hover .metric-arrow { transform: none; } }
+.metric-action.metric-pressed { border-color: var(--color-accent-ink); box-shadow: inset 0 0 0 1px var(--color-accent-ink); }
+.cc .metric-value.text-navy { color: var(--color-ink); }
+.cc .metric-drawer { background: var(--cc-panel); border-color: var(--cc-line); }
 .cc table tr:hover td { background: rgb(56 182 255 / 0.04); }
 
 /*
@@ -238,6 +305,8 @@ html[data-theme]:has(.app-theme) {
   --color-accent-dark: #7ee4f4;
   --color-accent-tint: #0c3a4f;
   --color-focus: #4fd8ef;
+  /* Feature walkthrough dimming around the highlighted control: navy at 55% barely shows on navy. */
+  --tour-scrim: rgba(0, 0, 0, 0.62);
 
   --color-ok: #3fd5c0;
   --color-ok-tint: #0d3a3a;

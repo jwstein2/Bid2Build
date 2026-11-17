@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Card, Notice } from "@/components/ui/misc";
+import { MetricCard } from "@/components/ui/metric-card";
 import { labelForKey } from "@/lib/market/classify";
 import { toQuery, type Filters } from "@/lib/market/filters";
 import { US_STATES } from "@/lib/market/geo";
@@ -133,8 +134,9 @@ export function Histogram({ buckets, title }: { buckets: { label: string; n: num
   );
 }
 
-export function Stat({ k, v, sub }: { k: string; v: ReactNode; sub?: ReactNode }) {
-  return <Card className="p-4"><p className="text-sm text-ink-soft">{k}</p><p className="tabular mt-1 text-2xl font-extrabold">{v}</p>{sub && <p className="mt-0.5 text-xs text-muted">{sub}</p>}</Card>;
+/** Market KPI tile. `href` opens the report behind the number with the same filters (aggregates only). */
+export function Stat({ k, v, sub, href, action }: { k: string; v: ReactNode; sub?: ReactNode; href?: string; action?: string }) {
+  return <MetricCard title={k} value={v} sub={sub} href={href} action={action} />;
 }
 
 export function Methodology({ meta, children }: { meta?: ReportMeta; children?: ReactNode }) {

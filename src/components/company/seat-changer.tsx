@@ -58,11 +58,11 @@ export function SeatChanger({ current, seatsInUse }: { current: number; seatsInU
             <div className="flex justify-between gap-3"><dt className="text-ink-soft">Change per month</dt><dd>{preview.deltaCents > 0 ? "+" : ""}{formatCents(preview.deltaCents)}</dd></div>
             {adding
               ? <div className="flex justify-between gap-3 border-t border-line pt-1 font-bold"><dt>Charged now (prorated for the rest of this period)</dt><dd data-testid="due-now">{formatCents(preview.dueNowCents)}</dd></div>
-              : <div className="flex justify-between gap-3 border-t border-line pt-1 font-bold"><dt>Credit on your next invoice</dt><dd>{formatCents(preview.creditCents)}</dd></div>}
+              : <div className="flex justify-between gap-3 border-t border-line pt-1 font-bold"><dt>New price starts</dt><dd data-testid="new-price-starts">Next invoice{preview.currentPeriodEnd ? ` (${new Date(preview.currentPeriodEnd).toLocaleDateString("en-US", { month: "short", day: "numeric" })})` : ""}</dd></div>}
           </dl>
           <p className="mt-2 text-xs text-ink-soft">{adding
             ? "Your card on file is charged now. If it's declined, no licenses are added."
-            : "The licenses are removed now. Make sure everyone you still need has an active seat; deactivated users keep all their bids in the company."}</p>
+            : "The unused licenses are removed now. The current period is already paid and isn't refunded or credited; your next invoice is at the new price. Deactivated users keep all their bids in the company."}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             <Button onClick={() => call("confirm")} disabled={busy !== null}>{busy === "confirm" && <Loader2 className="h-4 w-4 animate-spin" />}{adding ? `Confirm and pay ${formatCents(preview.dueNowCents)}` : "Confirm removal"}</Button>
             <Button variant="secondary" onClick={() => setPreview(null)} disabled={busy !== null}>Cancel</Button>

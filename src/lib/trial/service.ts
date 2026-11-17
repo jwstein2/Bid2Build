@@ -12,7 +12,7 @@ import { readInviteToken } from "./token";
  * claim page). It can only ever ask Postgres for the fixed 7-day Unlimited pass.
  */
 
-export type InviteSource = "messenger" | "manychat" | "claim_page";
+export type InviteSource = "messenger" | "manychat" | "claim_page" | "questionnaire";
 
 /** Queue an invite and try to send it right away (the scheduled job retries failures). */
 export async function requestTrialInvite(db: SupabaseClient, o: { email: string; source: InviteSource; contactId?: string | null; checkins?: boolean; fetchImpl?: Fetch }): Promise<{ status: InviteStatus; inviteId: string; delivered: boolean }> {
@@ -118,7 +118,7 @@ export async function runTrialJobs(db: SupabaseClient, opts: { cfg?: TrialConfig
   if (cfg.pageToken && cfg.pageId) {
     const deps = metaFlowDeps(db, cfg, opts.fetchImpl);
     // Private replies that failed for a transient reason (or a worker that died), within Meta's window.
-    const { data: events } = await db.from("trial_campaign_events").select("id, comment_id, attempts, status, locked_until")
+    const { data: events } = await db.from("trial_campaign_events").select("id, comment_id, post_id, attempts, status, locked_until")
       .eq("kind", "comment").in("status", ["failed", "sending"]).lt("attempts", 5)
       .gte("occurred_at", new Date(now.getTime() - PRIVATE_REPLY_WINDOW_MS).toISOString()).limit(25);
     for (const ev of events ?? []) {
@@ -127,7 +127,7 @@ export async function runTrialJobs(db: SupabaseClient, opts: { cfg?: TrialConfig
         .update({ status: "sending", attempts: ev.attempts + 1, locked_until: new Date(now.getTime() + 60_000).toISOString() })
         .eq("id", ev.id).eq("attempts", ev.attempts).in("status", ["failed", "sending"]).select("id");
       if (!claimed?.length || !ev.comment_id) continue;
-      await replyToComment(ev.id, ev.comment_id, deps);
+      await replyToComment(ev.id, ev.comment_id, deps, ev.post_id as string | null);
       out.replyRetries++;
     }
 

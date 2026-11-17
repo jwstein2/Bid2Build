@@ -15,11 +15,13 @@ import type { Action } from "./state";
 import type { Library } from "./library";
 import { SavedItemsPicker, useSavedItemsUi, type SavedItemsUi } from "./saved-items";
 import { PricingPanel } from "./pricing-panel";
+import { Modal } from "./dialogs";
 import { useOpenSections } from "./open-sections";
 import { QuantityCalculator } from "./calculators/quantity-calculator";
 import { orderedSections, sectionTrade, tradeBlocks, tradeTotals, type TradeBlock, type TradeTotals } from "@/lib/estimate/trades";
 import { TradeIcon } from "../trade-icon";
 import { AddTradeSelect, useTradeRemoval } from "./trade-controls";
+import { SubQuoteBadge, SubQuotePanel } from "./sub-quote-panel";
 
 type Lib = SavedItemsUi;
 
@@ -268,19 +270,21 @@ function GroupCard(props: {
   const projectTotalMode = estimate.displayMode === "project_total";
   const panelId = `gp-${g.id}`;
   const sectionName = g.name || "untitled section";
+  // Fade the rows in only when the contractor opens the section, not on page load.
+  const [userToggled, setUserToggled] = useState(false);
 
   return (
     <section className="rounded-xl border border-line bg-surface shadow-card" aria-label={`Section ${g.name || "untitled"}`}>
       <header className={cn("flex flex-wrap items-center gap-x-2 gap-y-1 px-2 py-2 sm:px-3", open && "border-b border-line")}>
         <button
           type="button"
-          onClick={props.onToggle}
+          onClick={() => { setUserToggled(true); props.onToggle(); }}
           aria-expanded={open}
           aria-controls={panelId}
           aria-label={`${open ? "Collapse" : "Expand"} ${sectionName}`}
           className="grid h-11 w-11 shrink-0 place-items-center rounded-md text-ink-soft hover:bg-black/5 md:h-9 md:w-9"
         >
-          {open ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
+          <ChevronRight className={cn("h-5 w-5 transition-transform duration-(--motion-base) ease-brand-out", open && "rotate-90")} aria-hidden />
         </button>
         <label className="sr-only" htmlFor={`g-${g.id}`}>Section name</label>
         <input
@@ -303,7 +307,7 @@ function GroupCard(props: {
       </header>
 
       {open && (
-        <div id={panelId}>
+        <div id={panelId} className={userToggled ? "motion-reveal" : undefined}>
           <div className="flex flex-wrap items-center gap-2 border-b border-line bg-paper/60 px-3 py-2 text-xs sm:px-4">
             <label htmlFor={`gv-${g.id}`} className="font-semibold text-ink-soft">Customer sees:</label>
             <select
@@ -324,7 +328,7 @@ function GroupCard(props: {
           {items.length > 0 && (
             // `relative` keeps absolutely positioned children (sr-only labels) inside the scroll box,
             // otherwise they widen the whole page on phones. Below md each row renders as a card.
-            <div className="relative md:overflow-x-auto">
+            <div className="relative md:overflow-x-auto md:@container">
               <table className="w-full text-sm max-md:block md:min-w-[860px]">
                 <thead className="max-md:hidden">
                   <tr className="border-b border-line text-left text-xs font-semibold text-muted">
@@ -393,18 +397,19 @@ function TradeSection({ block: b, index, count, sums, open, onToggle, hasIssues,
 }) {
   const panelId = `trade-${b.trade}`;
   const icon = getTrade(b.trade)?.icon ?? "Hammer";
+  const [userToggled, setUserToggled] = useState(false);
   return (
     <section className="rounded-2xl border border-line-strong bg-paper/60" aria-label={`${b.name} trade`}>
       <header className={cn("flex flex-wrap items-center gap-x-2 gap-y-1 px-2 py-2 sm:px-3", open && "border-b border-line")}>
         <button
           type="button"
-          onClick={onToggle}
+          onClick={() => { setUserToggled(true); onToggle(); }}
           aria-expanded={open}
           aria-controls={panelId}
           aria-label={`${open ? "Collapse" : "Expand"} ${b.name} trade`}
           className="grid h-11 w-11 shrink-0 place-items-center rounded-md text-ink-soft hover:bg-black/5 md:h-9 md:w-9"
         >
-          {open ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
+          <ChevronRight className={cn("h-5 w-5 transition-transform duration-(--motion-base) ease-brand-out", open && "rotate-90")} aria-hidden />
         </button>
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-tint text-brand" aria-hidden><TradeIcon name={icon} className="h-5 w-5" /></span>
         <div className="min-w-0 flex-1 basis-40">
@@ -438,7 +443,7 @@ function TradeSection({ block: b, index, count, sums, open, onToggle, hasIssues,
         </Dropdown.Root>
       </header>
       {open && (
-        <div id={panelId} className="space-y-3 p-2 sm:p-3">
+        <div id={panelId} className={cn("space-y-3 p-2 sm:p-3", userToggled && "motion-reveal")}>
           {children}
           {b.groups.length === 0 && <p className="px-1 text-sm text-muted">No sections yet for {b.name}.</p>}
           <Button size="sm" variant="secondary" onClick={() => dispatch({ type: "addGroup", trade: b.trade })}><Plus className="h-4 w-4" /> Add section to {b.name}</Button>
@@ -579,11 +584,10 @@ function OverrideEditor({ title, rule, onSave, onClose }: { title: string; rule:
   const [pct, setPct] = useState(rule?.percent ?? "");
   const invalid = mode === "margin" && Number(pct) >= 100;
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/30 p-4" role="dialog" aria-modal aria-label={title} onClick={onClose}>
-      <div className="w-full max-w-sm rounded-xl bg-surface p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <h3 className="font-bold">{title}</h3>
-        <p className="mt-1 text-sm text-muted">Overrides the estimate pricing method for these items only.</p>
-        <div className="mt-4 flex gap-2">
+    // Radix dialog: Escape and the backdrop close it (nothing is saved until Save), focus stays inside.
+    <Modal open onOpenChange={(o) => { if (!o) onClose(); }} title={title} description="Overrides the estimate pricing method for these items only.">
+      <div>
+        <div className="flex gap-2">
           <select className="field w-auto" value={mode} onChange={(e) => setMode(e.target.value as "markup" | "margin")} aria-label="Mode">
             <option value="markup">Markup %</option><option value="margin">Target margin %</option>
           </select>
@@ -598,7 +602,7 @@ function OverrideEditor({ title, rule, onSave, onClose }: { title: string; rule:
           </div>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 
@@ -648,6 +652,7 @@ function ItemRow({ item: it, isLast, totals, estimate, dispatch, selected, toggl
             {it.treatment === "pass_through" && <span className="rounded bg-brand-tint px-1 text-[10px] font-semibold text-brand">at cost</span>}
             {!it.showOnProposal && <span className="rounded bg-black/5 px-1 text-[10px] font-semibold text-muted">hidden from customer</span>}
             {!it.taxable && <span className="rounded bg-black/5 px-1 text-[10px] font-semibold text-muted">non-taxable</span>}
+            <SubQuoteBadge itemId={it.id} />
           </div>
         </td>
         <td className="px-1 max-md:col-span-4 max-md:p-0">
@@ -659,8 +664,9 @@ function ItemRow({ item: it, isLast, totals, estimate, dispatch, selected, toggl
         <td className="px-1 max-md:col-span-4 max-md:p-0">
           <span aria-hidden="true" className="mb-0.5 block text-[11px] font-semibold text-muted md:hidden">Qty</span>
           <div className="flex items-center gap-0.5">
-            <input data-col="qty" value={it.quantity} onChange={(e) => up({ quantity: e.target.value })} onKeyDown={onKey} inputMode="decimal" className="cell tabular min-w-0 text-right max-md:min-h-11 max-md:border-line max-md:text-base" aria-label="Quantity" aria-invalid={invalid("quantity")} />
+            {/* Calculator sits left of the number so the quantity's right edge lines up with the right-aligned Qty header. */}
             <QuantityCalculator item={it} estimate={estimate} dispatch={dispatch} />
+            <input data-col="qty" value={it.quantity} onChange={(e) => up({ quantity: e.target.value })} onKeyDown={onKey} inputMode="decimal" className="cell tabular min-w-0 text-right max-md:min-h-11 max-md:border-line max-md:text-base" aria-label="Quantity" aria-invalid={invalid("quantity")} />
           </div>
         </td>
         <td className="px-1 max-md:col-span-4 max-md:p-0">
@@ -717,6 +723,9 @@ function ItemRow({ item: it, isLast, totals, estimate, dispatch, selected, toggl
         <tr className="border-b border-line bg-paper/60 max-md:block">
           <td className="max-md:hidden" />
           <td colSpan={9} className="px-2 py-3 max-md:block max-md:px-3">
+            {/* When the table scrolls sideways (tablet), keep the details pinned to the visible width so
+                fields, the subcontractor picker and its list aren't cut off at the left edge. */}
+            <div className="md:sticky md:left-2 md:w-[min(100%,calc(100cqw-1.5rem))]">
             <div className="grid gap-3 md:grid-cols-2">
               <div>
                 <label className="label" htmlFor={`d-${it.id}`}>Description <span className="font-normal text-muted">(can appear on proposal)</span></label>
@@ -744,6 +753,8 @@ function ItemRow({ item: it, isLast, totals, estimate, dispatch, selected, toggl
                 {t.appliedRule ? `Priced at ${t.appliedRule.percent}% ${t.appliedRule.mode}${it.pricingOverride ? " (item override)" : ""}.` : "Billed at cost."} Gross profit on this line: <span className="tabular font-semibold">{formatCurrency(t.grossProfit)}</span>
               </p>
             )}
+            <SubQuotePanel itemId={it.id} itemName={it.name} lineCost={t ? t.extendedCost.toFixed(2) : "0"} trade={(() => { const g = estimate.groups.find((x) => x.id === it.groupId); return g ? sectionTrade(estimate, g) : null; })()} />
+            </div>
           </td>
         </tr>
       )}

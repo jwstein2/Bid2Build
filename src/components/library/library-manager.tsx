@@ -3,7 +3,7 @@ import { ChevronRight, Layers, Pencil, Plus, Search, Trash2 } from "lucide-react
 import { useState } from "react";
 import { formatCurrency } from "@/lib/estimate/money";
 import { COST_TYPES, UNIT_ABBR, tradeName } from "@/lib/trades/catalog";
-import { matchesQuery, organizeLibrary, type SavedItem, type SavedStack } from "@/lib/library/saved-items";
+import { frequentItems, matchesQuery, organizeLibrary, type SavedItem, type SavedStack } from "@/lib/library/saved-items";
 import { useLibrary, type Library } from "../builder/library";
 import { Button } from "../ui/button";
 import { Card } from "../ui/misc";
@@ -70,6 +70,19 @@ export function LibraryManager() {
             onSave={async (s) => { const r = await lib.addItem(s); if (r.ok) { setEditing(null); say(`Saved “${s.name}”.`); } return r; }}
           />
         </Card>
+      )}
+
+      {!q.trim() && frequentItems(lib.items).length > 0 && (
+        <section aria-labelledby="frequent-h">
+          <h2 id="frequent-h" className="mb-2 font-display text-xl font-bold text-navy">Frequently used</h2>
+          <Card className="flex flex-wrap gap-2 p-3" data-testid="frequent-items">
+            {frequentItems(lib.items).map((i) => (
+              <button key={i.id} type="button" onClick={() => setEditing(i)} className="rounded-full border border-line px-3 py-1 text-left text-sm hover:border-brand/50">
+                <span className="font-semibold">{i.name}</span> <span className="text-xs text-muted">{rateLabel(i)} · used {i.uses}×</span>
+              </button>
+            ))}
+          </Card>
+        </section>
       )}
 
       <section aria-labelledby="saved-items-h">

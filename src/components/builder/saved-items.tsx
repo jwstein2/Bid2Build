@@ -4,8 +4,9 @@ import { useEffect, useRef, useState, type Dispatch, type ReactNode } from "reac
 import type { Estimate, EstimateGroup, LineItem } from "@/lib/estimate/types";
 import { UNIT_ABBR, getTrade, parseTemplateItem, type TemplateItem } from "@/lib/trades/catalog";
 import { sectionTrade } from "@/lib/estimate/trades";
-import { lineContext, lineFromSaved, matchesQuery, type SavedItem } from "@/lib/library/saved-items";
+import { frequentItems, lineContext, lineFromSaved, matchesQuery, type SavedItem } from "@/lib/library/saved-items";
 import { cn } from "@/lib/cn";
+import { useDismiss } from "@/components/ui/use-dismiss";
 import { Button } from "../ui/button";
 import { Modal } from "./dialogs";
 import type { Action } from "./state";
@@ -105,7 +106,7 @@ export type SavedItemsUi = ReturnType<typeof useSavedItemsUi>;
 function rankFor(items: SavedItem[], trade: string, section: string): SavedItem[] {
   const sec = section.trim().toLowerCase();
   const score = (i: SavedItem) => (i.trade === trade ? 0 : i.trade ? 2 : 1) * 2 + ((i.category ?? "").trim().toLowerCase() === sec ? 0 : 1);
-  return [...items].sort((a, b) => score(a) - score(b) || a.name.localeCompare(b.name));
+  return [...items].sort((a, b) => score(a) - score(b) || (b.uses ?? 0) - (a.uses ?? 0) || a.name.localeCompare(b.name));
 }
 
 /** "Suggested & Saved Items" picker under each section: Saved Stacks, Saved Items (premium) and Suggested Items. */
@@ -113,33 +114,29 @@ export function SavedItemsPicker({ group, estimate, suggestions, lib, dispatch }
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const onDoc = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
-    const onEsc = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
-    document.addEventListener("mousedown", onDoc);
-    document.addEventListener("keydown", onEsc);
-    return () => { document.removeEventListener("mousedown", onDoc); document.removeEventListener("keydown", onEsc); };
-  }, [open]);
+  const trigger = useRef<HTMLButtonElement>(null);
+  // Multi-select: stays open while picking; Done, an outside click or Escape closes it.
+  useDismiss(open, () => setOpen(false), { inside: [ref], returnFocus: trigger });
   const s = q.trim().toLowerCase();
   // Items already in this section stay listed with an "Added" mark (instead of vanishing) and can't be added twice by accident.
   const inSection = new Set(estimate.items.filter((i) => i.groupId === group.id).map((i) => i.name.trim().toLowerCase()));
   const has = (name: string) => inSection.has(name.trim().toLowerCase());
   const trade = sectionTrade(estimate, group);
   const sug = suggestions.filter((x) => !s || x.name.toLowerCase().includes(s)).slice(0, 20);
-  const saved = rankFor(lib.items.filter((x) => matchesQuery(x, q)), trade, group.name).slice(0, s ? 30 : 12);
+  const frequent = s ? [] : frequentItems(lib.items.filter((x) => !x.trade || x.trade === trade), 5);
+  const saved = rankFor(lib.items.filter((x) => matchesQuery(x, q) && !frequent.includes(x)), trade, group.name).slice(0, s ? 30 : 12);
   const stacks = lib.stacks.filter((x) => !s || x.name.toLowerCase().includes(s)).slice(0, 8);
   const custom = s && ![...sug, ...saved].some((x) => x.name.toLowerCase() === s) ? parseTemplateItem(q.trim()) : null;
   const heading = "px-2 pt-2 text-[11px] font-bold uppercase tracking-wider text-muted";
 
   return (
     <div className="relative" ref={ref}>
-      <Button size="sm" variant="ghost" onClick={() => setOpen(!open)} aria-expanded={open} className="max-md:min-h-11"><Search className="h-4 w-4" /> Suggested &amp; Saved Items</Button>
+      <Button ref={trigger} size="sm" variant="ghost" onClick={() => setOpen(!open)} aria-expanded={open} className="max-md:min-h-11"><Search className="h-4 w-4" /> Suggested &amp; Saved Items</Button>
       {open && (
         <div className="absolute left-0 z-30 mt-1 w-[360px] max-w-[calc(100vw-2rem)] rounded-lg border border-line bg-surface p-2 shadow-xl">
           <div className="flex items-center gap-2">
             <input autoFocus className="field field-sm min-w-0 flex-1" placeholder="Search items…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search suggested and saved items" />
-            <Button size="sm" variant="secondary" onClick={() => setOpen(false)}>Done</Button>
+            <Button size="sm" variant="secondary" onClick={() => { setOpen(false); trigger.current?.focus(); }}>Done</Button>
           </div>
           <p className="mt-1 px-1 text-[11px] text-muted">Pick as many as you need. Added items show a check.</p>
           <div className="mt-1 max-h-[min(22rem,60dvh)] overflow-y-auto overscroll-contain text-sm">
@@ -152,8 +149,10 @@ export function SavedItemsPicker({ group, estimate, suggestions, lib, dispatch }
                     <span className="shrink-0 text-xs text-muted">{a.items.length} items</span>
                   </button>
                 ))}
+                {frequent.length > 0 && <p className={heading}>Frequently used</p>}
+                {frequent.map((f) => <PickRow key={`fq-${f.id}`} name={f.name} added={has(f.name)} meta={`${rateLabel(f)} · used ${f.uses}×`} onPick={() => dispatch({ type: "addItem", groupId: group.id, from: lineFromSaved(f) })} />)}
                 <p className={heading}>Saved Items</p>
-                {!saved.length && <p className="px-2 py-1.5 text-xs text-muted">{lib.items.length ? "No saved items match." : "None yet. Use ⋯ → Save Item on any row."}</p>}
+                {!saved.length && !frequent.length && <p className="px-2 py-1.5 text-xs text-muted">{lib.items.length ? "No saved items match." : "None yet. Use ⋯ → Save Item on any row."}</p>}
                 {saved.map((f) => (
                   <div key={f.id} className="group/saved flex items-center gap-1">
                     <div className="min-w-0 flex-1">

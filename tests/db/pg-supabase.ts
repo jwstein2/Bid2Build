@@ -10,7 +10,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  */
 pg.types.setTypeParser(1184, (v: string) => new Date(v).toISOString()); // timestamptz -> ISO string, like PostgREST
 
-type Op = { kind: "select" | "update" | "upsert"; cols: string; patch?: Record<string, unknown>; onConflict?: string; ignore?: boolean };
+type Op = { kind: "select" | "update" | "upsert" | "insert"; cols: string; patch?: Record<string, unknown>; onConflict?: string; ignore?: boolean };
 
 const ident = (s: string) => {
   if (!/^[a-z_][a-z0-9_]*$/.test(s)) throw new Error(`bad identifier ${s}`);
@@ -27,18 +27,28 @@ export function pgSupabase(pool: Pool): SupabaseClient {
     let order = "";
     let limit = "";
     let mode: "many" | "single" | "maybe" = "many";
-    const p = (v: unknown) => { params.push(v); return `$${params.length}`; };
+    let countOnly = false;
+    // Arrays of objects are json(b) values in PostgREST; node-pg would send them as Postgres arrays.
+    const p = (v: unknown) => { params.push(Array.isArray(v) && v.some((x) => x !== null && typeof x === "object") ? JSON.stringify(v) : v); return `$${params.length}`; };
     const filt = (sql: (c: string) => string) => (k: string, ...rest: unknown[]) => { void rest; where.push(sql(ident(k))); return q; };
 
     async function run() {
       try {
         let sql: string;
         const w = where.length ? ` where ${where.join(" and ")}` : "";
+        if (op.kind === "select" && countOnly) {
+          const r = await pool.query(`select count(*)::int as n from public.${ident(table)}${w}`, params);
+          return { data: null, count: r.rows[0].n, error: null };
+        }
         if (op.kind === "select") {
           sql = `select ${colList(op.cols)} from public.${ident(table)}${w}${order}${limit}`;
         } else if (op.kind === "update") {
           const sets = Object.entries(op.patch!).map(([k, v]) => `${ident(k)} = ${p(v)}`).join(", ");
           sql = `update public.${ident(table)} set ${sets}${w} returning ${returning ? colList(returning) : "*"}`;
+        } else if (op.kind === "insert") {
+          const keys = Object.keys(op.patch!);
+          const vals = keys.map((k) => p(op.patch![k]));
+          sql = `insert into public.${ident(table)} (${keys.map(ident).join(", ")}) values (${vals.join(", ")}) returning ${returning ? colList(returning) : "*"}`;
         } else {
           const keys = Object.keys(op.patch!);
           const vals = keys.map((k) => p(op.patch![k]));
@@ -57,14 +67,31 @@ export function pgSupabase(pool: Pool): SupabaseClient {
     }
 
     const q: Record<string, unknown> = {
-      select: (cols = "*") => { if (op.kind === "select") op.cols = cols; else returning = cols; return q; },
+      select: (cols = "*", o?: { count?: string; head?: boolean }) => { if (op.kind === "select") { op.cols = cols; countOnly = Boolean(o?.head); } else returning = cols; return q; },
       update: (patch: Record<string, unknown>) => { op = { kind: "update", cols: "*", patch }; return q; },
       upsert: (row: Record<string, unknown>, o: { onConflict: string; ignoreDuplicates?: boolean }) => { op = { kind: "upsert", cols: "*", patch: row, onConflict: o.onConflict, ignore: o.ignoreDuplicates }; return q; },
+      insert: (row: Record<string, unknown>) => { op = { kind: "insert", cols: "*", patch: row }; return q; },
       eq: (k: string, v: unknown) => filt((c) => `${c} = ${p(v)}`)(k),
+      neq: (k: string, v: unknown) => filt((c) => `${c} <> ${p(v)}`)(k),
+      gt: (k: string, v: unknown) => filt((c) => `${c} > ${p(v)}`)(k),
+      // Only the simple "col.is.null,col.eq.value" shape the services use.
+      or: (expr: string) => {
+        const parts = expr.split(",").map((t) => {
+          const [col, opName, ...rest] = t.split(".");
+          const val = rest.join(".");
+          if (opName === "is" && val === "null") return `${ident(col)} is null`;
+          if (opName === "eq") return `${ident(col)}::text = ${p(val)}`;
+          throw new Error(`or: unsupported ${t}`);
+        });
+        where.push(`(${parts.join(" or ")})`); return q;
+      },
       lt: (k: string, v: unknown) => filt((c) => `${c} < ${p(v)}`)(k),
       lte: (k: string, v: unknown) => filt((c) => `${c} <= ${p(v)}`)(k),
       gte: (k: string, v: unknown) => filt((c) => `${c} >= ${p(v)}`)(k),
       in: (k: string, v: unknown[]) => filt((c) => `${c} = any(${p(v)})`)(k),
+      like: (k: string, v: string) => filt((c) => `${c} like ${p(v)}`)(k),
+      not: (k: string, opName: string, v: null) => { void v; if (opName !== "is") throw new Error("not: only is null"); return filt((c) => `${c} is not null`)(k); },
+      range: (a: number, b: number) => { limit = ` limit ${Number(b) - Number(a) + 1} offset ${Number(a)}`; return q; },
       is: (k: string, v: null) => { void v; return filt((c) => `${c} is null`)(k); },
       order: (k: string, o?: { ascending?: boolean }) => { order = ` order by ${ident(k)} ${o?.ascending === false ? "desc" : "asc"}`; return q; },
       limit: (n: number) => { limit = ` limit ${Number(n)}`; return q; },
@@ -78,6 +105,11 @@ export function pgSupabase(pool: Pool): SupabaseClient {
   async function rpc(name: string, args: Record<string, unknown> = {}) {
     const keys = Object.keys(args);
     try {
+      const set = await pool.query("select bool_or(proretset) as s from pg_proc where proname = $1", [name]);
+      if (set.rows[0]?.s) {
+        const r = await pool.query(`select * from public.${ident(name)}(${keys.map((k, i) => `${ident(k)} => $${i + 1}`).join(", ")})`, keys.map((k) => args[k]));
+        return { data: r.rows, error: null };
+      }
       const r = await pool.query(`select public.${ident(name)}(${keys.map((k, i) => `${ident(k)} => $${i + 1}`).join(", ")}) as r`, keys.map((k) => args[k]));
       return { data: r.rows[0]?.r ?? null, error: null };
     } catch (e) {
@@ -86,5 +118,18 @@ export function pgSupabase(pool: Pool): SupabaseClient {
     }
   }
 
-  return { from, rpc } as unknown as SupabaseClient;
+  const auth = {
+    admin: {
+      async listUsers({ page = 1, perPage = 50 }: { page?: number; perPage?: number } = {}) {
+        const r = await pool.query("select id, email, created_at from auth.users order by created_at, id limit $1 offset $2", [perPage, (page - 1) * perPage]);
+        return { data: { users: r.rows.map((u) => ({ ...u, created_at: new Date(u.created_at).toISOString() })) }, error: null };
+      },
+      async getUserById(id: string) {
+        const r = await pool.query("select id, email, created_at from auth.users where id = $1", [id]);
+        return { data: { user: r.rows[0] ?? null }, error: null };
+      },
+    },
+  };
+
+  return { from, rpc, auth } as unknown as SupabaseClient;
 }

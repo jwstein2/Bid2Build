@@ -1,11 +1,16 @@
 import Link from "next/link";
-import { Chip, PageHead, Panel, Row, Table, ago, fmt, type Tone } from "@/components/admin/cc";
+import { LIFECYCLE_STEPS, stepOfKind, type LifecycleStep } from "@/lib/email/lifecycle";
+import { Chip, Kpi, PageHead, Panel, Row, Table, ago, fmt, type Tone } from "@/components/admin/cc";
+import { MetricRecords } from "@/components/ui/metric-card";
 import { ReportUnavailable, ScopeNote, SectionTitle } from "@/components/admin/report";
 import { TOOLS } from "@/components/admin/nav";
 import { integrationStatus, type IntegrationState } from "@/lib/admin/integrations";
 import { locationQuality } from "@/lib/admin/metrics";
 import { loadReport } from "@/lib/admin/load";
-import { href } from "@/lib/admin/view";
+import { carry, href } from "@/lib/admin/view";
+import { previewLifecycle, sendLifecycleSamplesAction } from "./actions";
+import { CommsOpsPanel } from "@/components/admin/comms-panel";
+import { createAdminClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Operations" };
@@ -13,7 +18,10 @@ export const metadata = { title: "Operations" };
 const STATE: Record<IntegrationState, { tone: Tone; label: string }> = { ok: { tone: "green", label: "OK" }, warn: { tone: "amber", label: "Check" }, missing: { tone: "red", label: "Missing" }, not_connected: { tone: "muted", label: "Not connected" } };
 
 export default async function Operations({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  const { r, error, view } = await loadReport(await searchParams, { costs: true });
+  const sp = await searchParams;
+  const lifecycleNote = typeof sp.lifecycle === "string" ? sp.lifecycle.slice(0, 300) : null;
+  const commsNote = typeof sp.comms === "string" ? sp.comms.slice(0, 300) : null;
+  const { r, error, view } = await loadReport(sp, { costs: true });
   if (!r) return <ReportUnavailable error={error} />;
   const { facts, sc, snap, now } = r;
   const nowMs = now.getTime();
@@ -24,6 +32,10 @@ export default async function Operations({ searchParams }: { searchParams: Promi
   const sigPdfFailed = d.signatures.filter((s) => s.pdf_status === "failed").length;
   const outboxFailed = d.outbox.filter((o) => o.status === "failed");
   const outboxPending = d.outbox.filter((o) => o.status === "pending").length;
+  const lifecycleByStep = Object.fromEntries(LIFECYCLE_STEPS.map((st) => [st, 0])) as Record<LifecycleStep, number>;
+  for (const o of d.outbox) { const st = stepOfKind(o.kind); if (st && o.status === "sent" && Date.parse(o.updated_at ?? o.created_at) >= nowMs - 30 * 86_400_000) lifecycleByStep[st]++; }
+  const lifecycleSent = Object.values(lifecycleByStep).reduce((a, b) => a + b, 0);
+  const lifecycleMode = `sending ${process.env.LIFECYCLE_EMAIL_MODE === "live" ? "live" : process.env.LIFECYCLE_EMAIL_MODE === "test" ? "to test addresses only" : "off"}`;
   const unverified = facts.filter((f) => !f.confirmed && Date.parse(f.createdAt) < nowMs - 86_400_000);
   const loc = locationQuality(d.estimates);
   const coverage = loc.total ? Math.round((loc.withState / loc.total) * 100) : null;
@@ -32,12 +44,22 @@ export default async function Operations({ searchParams }: { searchParams: Promi
   const noLead = snap.leadsInstalled ? facts.filter((f) => !d.leads.some((l) => l.user_id === f.id)).length : null;
   const sharing = d.consents.filter((c) => c.share_prices).length;
   const ref = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").match(/^https:\/\/([a-z0-9]+)\.supabase\.co/)?.[1];
+  const appFailures = snap.pdfErrors7d + snap.importFailures7d + sigPdfFailed;
   const authLogs = ref ? `https://supabase.com/dashboard/project/${ref}/logs/auth-logs` : "https://supabase.com/dashboard";
 
   return (
     <div className="space-y-6">
       <PageHead kicker="Operations" title="Exceptions, reliability and diagnostics" intro="Technical health and data-quality checks. Only real failures are flagged; low volume is not an error." />
       <ScopeNote sc={sc} />
+
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4" data-testid="ops-kpis">
+        <Kpi label="App failures (7 days)" value={appFailures} tone={appFailures ? "amber" : "green"} sub={`${fmt(snap.pdfErrors7d)} PDF · ${fmt(snap.importFailures7d)} import · ${fmt(sigPdfFailed)} signed PDF`} href="/admin/logs" action="Import & PDF error log" />
+        <Kpi label="Stripe webhook problems" value={hookErrors.length + unprocessed.length} tone={hookErrors.length ? "red" : unprocessed.length ? "amber" : "green"} sub={`${fmt(hookErrors.length)} errors · ${fmt(unprocessed.length)} unprocessed`}
+          action="View failed events" drawer={{ id: "webhooks", title: "Stripe webhook problems (7 days)", body: <MetricRecords rows={[...hookErrors, ...unprocessed].slice(0, 20).map((e) => ({ key: String(e.id), label: e.type, detail: e.error ?? "Not processed after 1 hour", value: ago(e.received_at, nowMs) }))} empty="No webhook errors or stuck events in the last 7 days." more={{ href: "#health", label: "System health" }} /> }} />
+        <Kpi label="Emails failed" value={outboxFailed.length} tone={outboxFailed.length ? "red" : "green"} sub={`${fmt(outboxPending)} waiting to send`}
+          action="View failed emails" drawer={{ id: "outbox", title: "Background emails that gave up", body: <MetricRecords rows={outboxFailed.slice(0, 20).map((o, i) => ({ key: `${o.user_id}-${i}`, label: o.kind, detail: o.last_error ?? "No error recorded", value: `${o.attempts}×`, href: `/admin/customers/${o.user_id}${view.includeTest ? "?data=all" : ""}` }))} empty="No failed background emails." more={{ href: "#health", label: "Background email panel" }} /> }} />
+        <Kpi label="Never verified email" value={unverified.length} tone={unverified.length ? "amber" : "green"} sub="Accounts older than a day" href={carry("/admin/customers", view, { cohort: "unverified" }, "accounts")} action="View these accounts" />
+      </div>
 
       <SectionTitle id="health" kicker="System health" title="Failures in the last 7 days" />
       <div className="grid gap-6 lg:grid-cols-3">
@@ -58,14 +80,21 @@ export default async function Operations({ searchParams }: { searchParams: Promi
           </dl>
           {hookErrors.slice(0, 3).map((e) => <p key={e.id} className="cc-mono mt-2 truncate text-[11px] text-[var(--cc-red)]" title={e.error ?? ""}>{e.type}: {e.error}</p>)}
         </Panel>
-        <Panel title="Background email" >
+        <Panel title="Background email">
           <dl>
             <Row k="Failed (gave up)">{outboxFailed.length ? <span className="text-[var(--cc-red)]">{fmt(outboxFailed.length)}</span> : "0"}</Row>
             <Row k="Waiting to send">{fmt(outboxPending)}</Row>
+            <Row k="Lifecycle emails sent (30 days)">{lifecycleSent ? `${fmt(lifecycleSent)} (${LIFECYCLE_STEPS.map((st) => `${st.toUpperCase()} ${lifecycleByStep[st]}`).join(" · ")})` : `0 · ${lifecycleMode}`}</Row>
           </dl>
           {outboxFailed[0]?.last_error && <p className="cc-mono mt-2 truncate text-[11px] text-[var(--cc-red)]" title={outboxFailed[0].last_error}>{outboxFailed[0].last_error}</p>}
-          <p className="mt-2 text-xs text-muted">Founder welcome emails (Resend). Sign-in emails are sent by Supabase and are not in this queue.</p>
+          <p className="mt-2 text-xs text-muted">Founder welcome and lifecycle emails A–E (Resend). Sign-in emails are sent by Supabase and are not in this queue.</p>
+          {lifecycleNote && <p className="mt-2 text-xs" role="status">{lifecycleNote}</p>}
+          <div className="mt-2 flex flex-wrap gap-2">
+            <form action={previewLifecycle}><button type="submit" className="cc-mono rounded-md border border-[var(--cc-line)] px-3 py-1.5 text-xs text-white hover:border-[var(--cc-blue)]">Preview lifecycle emails due now</button></form>
+            <form action={sendLifecycleSamplesAction}><button type="submit" className="cc-mono rounded-md border border-[var(--cc-line)] px-3 py-1.5 text-xs text-white hover:border-[var(--cc-blue)]">Send me the 5 samples</button></form>
+          </div>
         </Panel>
+        <CommsOpsPanel db={createAdminClient()} note={commsNote} />
       </div>
 
       <SectionTitle id="auth" kicker="Authentication" title="Sign-in and email delivery" />

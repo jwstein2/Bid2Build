@@ -15,6 +15,10 @@ export const calendarSchema = z.object({
 export const createSchema = z.object({
   estimateId: uuid,
   provisional: z.boolean().default(false),
+  /** V4.3: mark the job reviewed (Needs PM Review → Ready to Schedule) as part of scheduling. */
+  markReviewed: z.boolean().optional(),
+  /** V4.3: publish straight away as the active schedule (moves the project to Scheduled). */
+  publish: z.boolean().optional(),
   name: z.string().max(300).optional(),
   calendar: calendarSchema,
   startDate: day,
@@ -46,6 +50,8 @@ export const taskSchema = z.object({
 
 export const saveSchema = z.object({
   baseRevision: z.number().int().min(1),
+  /** V4.3: the person confirmed a date change on a live (active) schedule. */
+  confirmLive: z.boolean().optional(),
   summary: z.string().min(1).max(500),
   tasks: z.array(taskSchema).max(2000),
   deps: z.array(z.object({ from: taskId, to: taskId, lagDays: z.number().int().min(-365).max(365), maxOverlap: z.number().int().min(0).max(365) })).max(4000),

@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { AccountActions } from "./actions-client";
@@ -8,7 +9,9 @@ import { isSmsSignInEnabled } from "@/lib/auth/phone";
 export const metadata: Metadata = { title: "Account settings", robots: { index: false } };
 
 export default async function AccountPage() {
-  const user = (await getUser())!;
+  const user = await getUser();
+  // The layout redirects too, but pages render in parallel with it: never assume a session here.
+  if (!user) redirect("/login?next=/settings/account");
   const supabase = await createClient();
   const [{ data: profile }, { data: consent }] = await Promise.all([
     supabase.from("profiles").select("marketing_opt_in").eq("id", user.id).maybeSingle(),

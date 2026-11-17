@@ -40,7 +40,7 @@ export default async function OpportunityRadar({ searchParams }: { searchParams:
       <div className="space-y-6">
         <PageHead kicker="Marketing · Opportunity Radar" title="Opportunity Radar" intro="Find contractors already asking about estimating, answer them well, and mention Built2Bid only when it helps." />
         <Panel title="Database migration not installed">
-          <p className="text-sm text-ink-soft">Apply <code className="text-white">supabase/migrations/20261116001000_opportunity_radar.sql</code> to this environment&apos;s Supabase project (owner approval required for production). Nothing else in the admin area depends on it.</p>
+          <p className="text-sm text-ink-soft">Apply <code className="break-all text-white">supabase/migrations/20261116001000_opportunity_radar.sql</code> to this environment&apos;s Supabase project (owner approval required for production). Nothing else in the admin area depends on it.</p>
         </Panel>
       </div>
     );

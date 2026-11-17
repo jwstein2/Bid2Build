@@ -13,6 +13,13 @@ type Funnel = {
   by_source: Record<string, number>; by_post: { post_id: string; comments: number; replied: number; last_at: string }[];
   reply_formats: Record<string, number>; last_errors: { kind: string; error: string; at: string }[];
 };
+type BidCheckFunnel = {
+  started: number; completed: number; result_shown: number; deep_completed: number; sample_opened: number; free_bid_clicked: number;
+  invite_requested: number; pass_activated: number; first_bid_finalized: number; paid_upgrade: number;
+  by_goal: Record<string, number>; by_trade: Record<string, number>;
+  by_campaign: { campaign: string; started: number; completed: number; invites: number }[];
+  recent_feedback: { at: string; trade: string | null; goal: string | null; text: string }[];
+};
 
 /**
  * Owner view of the Facebook "comment BID" funnel: live Meta readiness checks and counts. Organic
@@ -22,8 +29,12 @@ type Funnel = {
 export default async function FacebookTrialAdmin() {
   const { user, db } = await requireAdmin();
   const cfg = trialConfig();
-  const [{ data, error }, ready] = await Promise.all([db.rpc("trial_campaign_funnel", { p_caller: user.id }), metaReadiness(cfg)]);
+  const [{ data, error }, ready, bc] = await Promise.all([
+    db.rpc("trial_campaign_funnel", { p_caller: user.id }), metaReadiness(cfg), db.rpc("bid_check_funnel", { p_caller: user.id }),
+  ]);
   const f = (error ? null : data) as Funnel | null;
+  const q = (bc.error ? null : bc.data) as BidCheckFunnel | null;
+  const pairs = (r: Record<string, number>) => Object.entries(r).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${v}`).join(" · ") || "none yet";
   const step = (label: string, n: number | undefined) => ({ label, n: n ?? null });
   const byPost = new Map((f?.by_post ?? []).map((p) => [p.post_id, p]));
 
@@ -43,15 +54,44 @@ export default async function FacebookTrialAdmin() {
             ]} />
           </Panel>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-            <Kpi label="Private replies sent" value={f.private_replies_sent} sub={`${fmt(f.private_replies_failed)} failed or skipped`} />
-            <Kpi label="Reminders sent" value={f.reminders_sent} tone="blue" />
-            <Kpi label="Opt-outs" value={f.opt_outs} tone="amber" />
-            <Kpi label="Invite requests" value={f.invites_requested} sub={Object.entries(f.by_source).map(([k, v]) => `${k}: ${v}`).join(" · ") || "none yet"} tone="blue" />
-            <Kpi label="Invite emails failed" value={f.invite_emails_failed} tone="red" />
-            <Kpi label="Trials active now" value={f.trials_active_now} />
+            <Kpi label="Private replies sent" value={f.private_replies_sent} href="#posts" action="Replies by post" sub={`${fmt(f.private_replies_failed)} failed or skipped`} />
+            <Kpi label="Reminders sent" value={f.reminders_sent} tone="blue" href="#posts" action="Activity by post" />
+            <Kpi label="Opt-outs" value={f.opt_outs} tone="amber" action="What counts" drawer={{ id: "fb-optouts", title: "Opt-outs", body: <p>Messenger contacts who opted out (for example by replying STOP) in the last 90 days. They get no more reminders unless they reply START. Individual Messenger contacts are not listed here.</p> }} />
+            <Kpi label="Invite requests" value={f.invites_requested} href="/admin/complimentary?plan=unlimited#grants" action="View trial grants" sub={Object.entries(f.by_source).map(([k, v]) => `${k}: ${v}`).join(" · ") || "none yet"} tone="blue" />
+            <Kpi label="Invite emails failed" value={f.invite_emails_failed} tone="red" href={f.last_errors.length ? "#errors" : "/admin/operations#health"} action="View errors" />
+            <Kpi label="Trials active now" value={f.trials_active_now} href="/admin/complimentary?state=active&plan=unlimited#grants" action="View active trials" />
           </div>
         </>
       )}
+
+      <Panel title="Bid check questionnaire (/bid-check, last 90 days)">
+        {!q ? <Empty>Questionnaire numbers unavailable: run the migration 20261118003000_bid_check_questionnaire.sql.</Empty> : (
+          <div className="space-y-4">
+            <FunnelSteps steps={[
+              step("Started", q.started), step("Completed", q.completed), step("Result shown", q.result_shown),
+              step("Pass requested", q.invite_requested), step("Pass activated", q.pass_activated),
+              step("First bid finalized", q.first_bid_finalized), step("Paid upgrade", q.paid_upgrade),
+            ]} />
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+              <Kpi label="Bonus questions done" value={q.deep_completed} tone="blue" />
+              <Kpi label="Example opened in builder" value={q.sample_opened} tone="blue" />
+              <Kpi label="Free bid clicked" value={q.free_bid_clicked} />
+              <Kpi label="Goals" value={Object.values(q.by_goal).reduce((a, b) => a + b, 0)} sub={pairs(q.by_goal)} />
+            </div>
+            <p className="text-xs text-muted">Trades: {pairs(q.by_trade)}</p>
+            {q.by_campaign.length > 0 && (
+              <Table head={["Campaign", "Started", "Completed", "Pass requested"]} minWidth={480}>
+                {q.by_campaign.map((c) => <tr key={c.campaign}><td>{c.campaign}</td><td>{fmt(c.started)}</td><td>{fmt(c.completed)}</td><td>{fmt(c.invites)}</td></tr>)}
+              </Table>
+            )}
+            {q.recent_feedback.length > 0 && (
+              <Table head={["When", "Trade", "Goal", "What they'd change"]} minWidth={560}>
+                {q.recent_feedback.map((r, i) => <tr key={i}><td>{r.at.slice(0, 10)}</td><td>{r.trade ?? "–"}</td><td>{r.goal ?? "–"}</td><td className="text-ink-soft">{r.text}</td></tr>)}
+              </Table>
+            )}
+          </div>
+        )}
+      </Panel>
 
       <Panel title="Meta readiness (live check)">
         <Table head={["Check", "Status", "Detail"]} minWidth={560}>
@@ -62,7 +102,7 @@ export default async function FacebookTrialAdmin() {
         <p className="mt-3 text-xs text-muted">App mode (Development vs Live), App Review and Business Verification aren&apos;t readable through the API: check them in the Meta App Dashboard. In Development mode only people with a role on the app trigger the webhook.</p>
       </Panel>
 
-      <Panel title="Posts: organic test vs paid ad (verified separately)">
+      <Panel id="posts" title="Posts: organic test vs paid ad (verified separately)">
         {ready.posts.length === 0 ? <Empty>No post ids configured (META_TEST_POST_IDS / META_AD_POST_IDS).</Empty> : (
           <Table head={["Post", "Type", "Readable by our Page token", "BID comments received", "Private replies sent", "Verified end to end"]} minWidth={760}>
             {ready.posts.map((p) => {
@@ -85,7 +125,7 @@ export default async function FacebookTrialAdmin() {
       </Panel>
 
       {f && f.last_errors.length > 0 && (
-        <Panel title="Recent Meta errors">
+        <Panel id="errors" title="Recent Meta errors">
           <Table head={["When", "Event", "Error"]} minWidth={560}>
             {f.last_errors.map((e, i) => <tr key={i}><td>{e.at.slice(0, 16).replace("T", " ")}</td><td>{e.kind}</td><td className="text-ink-soft">{e.error}</td></tr>)}
           </Table>

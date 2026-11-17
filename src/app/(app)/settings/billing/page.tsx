@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { createAdminClient, createClient, getUser } from "@/lib/supabase/server";
 import { isPmBillingConfigured, isPmEnabled, isStripeConfigured } from "@/lib/env";
@@ -21,7 +22,9 @@ const longDate = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString
 
 export default async function BillingPage({ searchParams }: PageProps<"/settings/billing">) {
   const sp = await searchParams;
-  const user = (await getUser())!;
+  const user = await getUser();
+  // The layout redirects too, but pages render in parallel with it: never assume a session here.
+  if (!user) redirect("/login?next=/settings/billing");
   const stripeReady = isStripeConfigured();
   // After checkout, pull the truth from Stripe in case the webhook hasn't arrived yet.
   // Access is still granted only from Stripe's own subscription state, never from the redirect itself.
@@ -79,7 +82,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
       </Card>
 
       {pm && pm.scope !== "company" && (paidActive || pm.source === "complimentary") && (
-        <PmAddonCard state={pm} periodEnd={current?.current_period_end ?? null} annual={current?.plan === "annual" && !process.env.STRIPE_PRICE_PM_ADDON_ANNUAL} yearly={current?.plan === "annual" && Boolean(process.env.STRIPE_PRICE_PM_ADDON_ANNUAL)} purchasable={isPmBillingConfigured("addon")} />
+        <div id="project-command-center" className="scroll-mt-20"><PmAddonCard state={pm} periodEnd={current?.current_period_end ?? null} annual={current?.plan === "annual" && !process.env.STRIPE_PRICE_PM_ADDON_ANNUAL} yearly={current?.plan === "annual" && Boolean(process.env.STRIPE_PRICE_PM_ADDON_ANNUAL)} purchasable={isPmBillingConfigured("addon")} /></div>
       )}
       {credits && !credits.unlimited && <CreditBalances credits={credits} showUpgrade={false} />}
 

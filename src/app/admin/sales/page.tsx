@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/misc";
+import { MetricCard } from "@/components/ui/metric-card";
 import { requireAdmin } from "@/lib/admin/server";
 import { instantlyEnabled } from "@/lib/growth/instantly";
 
@@ -32,7 +33,7 @@ export default async function SalesDashboard({ searchParams }: { searchParams: P
     return (
       <div className="space-y-3">
         <h1 className="text-3xl font-extrabold">Sales</h1>
-        <p className="text-ink-soft">The sales funnel tables are not installed yet. Apply <code>supabase/migrations/20261112001000_growth_funnel.sql</code> in the Supabase SQL Editor, then reload.</p>
+        <p className="text-ink-soft">The sales funnel tables are not installed yet. Apply <code className="break-all">supabase/migrations/20261112001000_growth_funnel.sql</code> in the Supabase SQL Editor, then reload.</p>
       </div>
     );
   }
@@ -40,6 +41,10 @@ export default async function SalesDashboard({ searchParams }: { searchParams: P
   const paying = f.paying_monthly + f.paying_annual;
   const mrr = f.paying_monthly * MONTHLY + (f.paying_annual * ANNUAL) / 12;
   const cac = f.costs_usd > 0 && f.signups_new > 0 ? f.costs_usd / f.signups_new : null;
+  // Drilldowns: this page counts every account (no test filter), so customer links include test data.
+  const rk = days === 365 ? "12m" : days === 90 ? "90d" : "";
+  const cust = (q: Record<string, string>) => `/admin/customers?${new URLSearchParams({ ...q, data: "all", ...(rk ? { range: rk } : {}) })}#accounts`;
+  const rq = rk ? `?range=${rk}` : "";
 
   return (
     <div className="space-y-8">
@@ -60,14 +65,14 @@ export default async function SalesDashboard({ searchParams }: { searchParams: P
       )}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat k="Leads" v={f.leads_total.toLocaleString("en-US")} sub={`${f.leads_new} new · ${f.leads_suppressed} suppressed`} />
-        <Stat k="Signups" v={f.signups_total.toLocaleString("en-US")} sub={`${f.signups_new} new in range`} />
-        <Stat k="First-bid activations" v={f.activated_total.toLocaleString("en-US")} sub={`${f.activated_new} new · ${pct(f.activated_total, f.signups_total)} of signups`} />
-        <Stat k="Paying customers" v={paying.toLocaleString("en-US")} sub={`${f.paying_monthly} monthly · ${f.paying_annual} annual · ${pct(paying, f.signups_total)} of signups`} />
-        <Stat k="Run-rate MRR (list price)" v={usd(mrr)} sub="Estimate from active plans; see Stripe for collected revenue" />
-        <Stat k="Cancellations in range" v={f.churned_new.toLocaleString("en-US")} />
-        <Stat k="Recorded marketing spend" v={usd(f.costs_usd)} sub={`${usd(f.costs_total_usd)} all time`} />
-        <Stat k="Cost per signup" v={cac === null ? "—" : usd(cac)} sub={cac === null ? "Needs recorded spend in marketing_costs" : "Recorded spend ÷ signups in range"} />
+        <Stat k="Leads" v={f.leads_total.toLocaleString("en-US")} sub={`${f.leads_new} new · ${f.leads_suppressed} suppressed`} href="#leads" action="Leads by stage" />
+        <Stat k="Signups" v={f.signups_total.toLocaleString("en-US")} sub={`${f.signups_new} new in range`} href={cust({})} action="View all accounts" />
+        <Stat k="First-bid activations" v={f.activated_total.toLocaleString("en-US")} sub={`${f.activated_new} new · ${pct(f.activated_total, f.signups_total)} of signups`} href={cust({ activated: "yes" })} action="View activated accounts" />
+        <Stat k="Paying customers" v={paying.toLocaleString("en-US")} sub={`${f.paying_monthly} monthly · ${f.paying_annual} annual · ${pct(paying, f.signups_total)} of signups`} href={cust({ plan: "paying" })} action="View paying customers" />
+        <Stat k="Run-rate MRR (list price)" v={usd(mrr)} sub="Estimate from active plans; see Stripe for collected revenue" href={`/admin/revenue${rq}#by-product`} action="Subscription revenue breakdown" />
+        <Stat k="Cancellations in range" v={f.churned_new.toLocaleString("en-US")} href={cust({ cohort: "ended" })} action="View cancellations" />
+        <Stat k="Recorded marketing spend" v={usd(f.costs_usd)} sub={`${usd(f.costs_total_usd)} all time`} href={`/admin/marketing${rq}#metric-spend`} action="Spend ledger" />
+        <Stat k="Cost per signup" v={cac === null ? "—" : usd(cac)} sub={cac === null ? "Needs recorded spend in marketing_costs" : "Recorded spend ÷ signups in range"} href={`/admin/marketing${rq}#metric-spend`} action="Spend and CAC details" />
       </div>
 
       <Card className="overflow-x-auto p-5">
@@ -92,7 +97,7 @@ export default async function SalesDashboard({ searchParams }: { searchParams: P
         )}
       </Card>
 
-      <Card className="p-5">
+      <Card className="scroll-mt-24 p-5" id="leads">
         <h2 className="font-display text-lg font-bold">Leads by stage</h2>
         <table className="mt-3 w-full text-sm"><tbody>
           {Object.entries(f.leads_by_stage).length === 0 ? <tr><td className="text-muted">No leads yet.</td></tr> :
@@ -104,6 +109,6 @@ export default async function SalesDashboard({ searchParams }: { searchParams: P
   );
 }
 
-function Stat({ k, v, sub }: { k: string; v: string; sub?: string }) {
-  return <Card className="p-4"><p className="text-sm text-ink-soft">{k}</p><p className="tabular mt-1 text-2xl font-extrabold">{v}</p>{sub && <p className="mt-0.5 text-xs text-muted">{sub}</p>}</Card>;
+function Stat({ k, v, sub, href, action }: { k: string; v: string; sub?: string; href: string; action: string }) {
+  return <MetricCard title={k} value={v} sub={sub} href={href} action={action} />;
 }

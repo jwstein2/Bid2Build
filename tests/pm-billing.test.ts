@@ -184,13 +184,16 @@ describe("Enterprise PM editors route", () => {
     expect(S.updates.at(-1)).toMatchObject({ items: [{ price: "price_pm_ed", quantity: 2 }], proration_behavior: "always_invoice" });
     expect(S.audit.at(-1)).toMatchObject({ action: "billing.pm_editors_added", details: { from: 0, to: 2 } });
   });
-  it("removal credits the next invoice and can't drop below assigned editors", async () => {
+  it("removal is never credited (non-refundable period) and can't drop below assigned editors", async () => {
     S.items = [entBase, editors(2)];
     S.pm = { editorsAssigned: 3 };
     expect((await (await post("editors", { action: "preview", extra: 1, fromExtra: 2 })).json()).error.code).toBe("below_assigned");
     S.pm = { editorsAssigned: 1 };
+    S.previewLines = [proration(-200)];
+    expect((await (await post("editors", { action: "preview", extra: 0, fromExtra: 2 })).json()).creditCents).toBe(0);
     await post("editors", { action: "confirm", extra: 0, fromExtra: 2 });
-    expect(S.updates.at(-1)).toMatchObject({ items: [{ id: "si_ed", deleted: true }], proration_behavior: "create_prorations" });
+    expect(S.updates.at(-1)).toMatchObject({ items: [{ id: "si_ed", deleted: true }], proration_behavior: "none" });
+    expect(S.updates.at(-1)?.proration_date).toBeUndefined();
   });
   it("complimentary companies arrange editors with Built2Bid; stale previews are refused", async () => {
     S.items = [entBase, editors(1)];

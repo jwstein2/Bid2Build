@@ -72,7 +72,7 @@ export async function loadSnapshot(db: Db, callerId: string): Promise<Snapshot> 
     optional<GrantRow>(db, "complimentary_grants", "id,email,user_id,status,plan,starts_at,expires_at,created_at,company_id,granted_by,note,extra_seats,invite_expires_at,revoked_at"),
     all<ConsentRow>(db, "market_consent", "user_id,share_prices", "updated_at"),
     db.from("analytics_events").select("event,user_id,created_at").in("event", ["checkout_started", "subscribed", "account_created"]).order("created_at", { ascending: false }).limit(10_000),
-    optional<LeadRow>(db, "leads", "user_id,source,utm_source,utm_medium,utm_campaign,landing_path,first_touch_at,first_campaign_id,first_campaign_name,stage,created_at"),
+    optional<LeadRow>(db, "leads", "user_id,source,utm_source,utm_medium,utm_campaign,utm_content,landing_path,first_touch_at,first_campaign_id,first_campaign_name,stage,created_at"),
     optional<{ user_id: string | null; referrer_host: string | null; click_id_type: string | null; device_type: string | null }>(db, "leads", "user_id,referrer_host,click_id_type,device_type"),
     optional<CostRow>(db, "marketing_costs", "id,period_start,channel,campaign_id,amount_usd,note,created_at"),
     optional<OutboxRow>(db, "email_outbox", "kind,user_id,status,last_error,attempts,created_at,updated_at"),

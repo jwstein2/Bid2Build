@@ -1,8 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { AlertTriangle, ArrowLeft, ArrowRight, CalendarRange, Check, Plus, X } from "lucide-react";
+import { Breadcrumbs } from "@/components/layout/breadcrumbs";
+import { AlertTriangle, ArrowLeft, ArrowRight, CalendarDays, CalendarRange, Check, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge, Notice } from "@/components/ui/misc";
 import { cn } from "@/lib/cn";
@@ -13,6 +14,7 @@ import { api, COMMON_TIMEZONES } from "./client";
 import { MiniTimeline, type MiniEdit } from "./mini-timeline";
 import { AssignStep, type SectionAssignment } from "./assign-step";
 import type { Team } from "@/lib/projects/team";
+import { CompanyCalendar } from "./company-calendar";
 
 export interface WizardSection { id: string; name: string; trade: string | null; items: { id: string; name: string }[] }
 export interface WizardProps {
@@ -26,6 +28,8 @@ export interface WizardProps {
   team?: Team | null;
   people?: { id: string; name: string }[];
   me?: string | null;
+  /** V4.3: this newly approved job hasn't been reviewed yet (saving records the reviewer). */
+  needsReview?: boolean;
 }
 
 const STEPS = ["Source estimate", "Sections", "Start date", "Durations", "Dependencies", "Target date", "Review", "Assign", "Save"] as const;
@@ -33,7 +37,7 @@ const LAST = STEPS.length - 1;
 
 type Link_ = { after: string | null; lag: number; overlap: number };
 
-export function ScheduleWizard({ estimate, accepted, signed, sections, timezone, tradeLabels, team = null, people = [], me = null }: WizardProps) {
+export function ScheduleWizard({ estimate, accepted, signed, sections, timezone, tradeLabels, team = null, people = [], me = null, needsReview = false }: WizardProps) {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [provisional, setProvisional] = useState(false);
@@ -52,6 +56,22 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
   const [existing, setExisting] = useState<string | null>(null);
   // Who's doing the work, per section (saved right after the schedule is created).
   const [assign, setAssign] = useState<Record<string, SectionAssignment>>({});
+  const [reviewed, setReviewed] = useState(false);
+  // V4.5A Company Calendar: always beside the wizard on wide screens; a panel below it on tablets and a
+  // full-screen view on phones. Opening, expanding or closing it never resets the wizard (same component).
+  const [calOpen, setCalOpen] = useState(false);
+  const [calExpanded, setCalExpanded] = useState(false);
+  const phone = useIsPhone();
+  const stepNav = useRef<HTMLOListElement>(null);
+  useEffect(() => {
+    stepNav.current?.querySelector<HTMLElement>("[aria-current=step]")?.scrollIntoView({ block: "nearest", inline: "center" });
+  }, [step]);
+  useEffect(() => {
+    if (!calExpanded && !(phone && calOpen)) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { setCalExpanded(false); if (phone) setCalOpen(false); } };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [calExpanded, calOpen, phone]);
 
   const chosen = sections.filter((s) => included.includes(s.id));
   const planInput: PlanSection[] = chosen.map((s, i) => ({ key: s.id, sourceGroupId: s.id, name: s.name, durationDays: durations[s.id] || 1, sortOrder: i, offsetDays: offsets[s.id] ?? 0 }));
@@ -63,6 +83,8 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
   const plan = isIsoDate(start) ? planSections(planInput, deps, start, cal) : null;
   const feas = plan && isIsoDate(target) ? checkTarget(planInput, deps, start, target, cal) : null;
   const multiTrade = new Set(sections.map((s) => s.trade)).size > 1;
+  // The draft appears on the Company Calendar from the Start date step on (before that: existing work only).
+  const draftPlan = step >= 2 && plan ? plan.map((p) => ({ key: p.key, name: p.name, trade: sections.find((x) => x.id === p.key)?.trade ?? null, plannedStart: p.plannedStart, plannedEnd: p.plannedEnd, durationDays: p.durationDays })) : [];
 
   const canNext = [
     accepted || provisional,
@@ -87,13 +109,14 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
     if (r.dep) setLink(e.id, { lag: r.dep.lagDays, overlap: r.dep.maxOverlap });
   };
 
-  async function save() {
+  async function save(publish = false) {
     if (!plan) return;
     setSaving(true); setError(null);
     const r = await api<{ id: string }>("/api/schedules", {
       method: "POST",
       body: JSON.stringify({
         estimateId: estimate.id, provisional: !accepted && provisional, calendar: cal, startDate: start, targetEndDate: target || null,
+        ...(needsReview ? { markReviewed: reviewed } : {}), ...(publish && accepted ? { publish: true } : {}),
         sections: planInput.map((p) => ({ sourceGroupId: p.sourceGroupId, durationDays: p.durationDays, sortOrder: p.sortOrder, offsetDays: p.offsetDays ?? 0 })), deps,
       }),
     });
@@ -118,14 +141,22 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-5" data-testid="schedule-wizard">
-      <div>
-        <Link href="/projects" className="inline-flex items-center gap-1 text-sm font-semibold text-accent-ink hover:underline"><ArrowLeft className="h-4 w-4" aria-hidden /> Projects</Link>
-        <h1 className="mt-2 flex items-center gap-2 text-2xl font-extrabold text-navy sm:text-3xl"><CalendarRange className="h-7 w-7 text-accent-ink" aria-hidden /> Schedule Now</h1>
-        <p className="mt-1 text-ink-soft">Build a draft job schedule from <strong>{estimate.title || "this bid"}</strong>. Your customer isn&apos;t notified.</p>
+    <div className="mx-auto max-w-[1520px] space-y-5" data-testid="schedule-wizard">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="min-w-0">
+          <Breadcrumbs items={[{ label: "Projects", href: "/projects" }, { label: "Schedule Now" }]} />
+          <h1 className="mt-2 flex items-center gap-2 text-2xl font-extrabold text-navy sm:text-3xl"><CalendarRange className="h-7 w-7 text-accent-ink" aria-hidden /> Schedule Now</h1>
+          <p className="mt-1 text-ink-soft">Build a draft job schedule from <strong>{estimate.title || "this bid"}</strong>. Your customer isn&apos;t notified.</p>
+        </div>
+        <Button type="button" variant="secondary" className="xl:hidden" aria-expanded={calOpen} aria-controls="company-cal-panel" data-testid="view-company-calendar"
+          onClick={() => { const next = !calOpen; setCalOpen(next); if (next && !phone) setTimeout(() => document.getElementById("company-cal-panel")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50); }}>
+          <CalendarDays className="h-4 w-4" aria-hidden /> {calOpen && !phone ? "Hide Company Calendar" : "View Company Calendar"}
+        </Button>
       </div>
 
-      <ol className="flex gap-1 overflow-x-auto pb-1 text-xs" aria-label="Steps">
+      <div className="xl:grid xl:grid-cols-[minmax(0,58fr)_minmax(380px,42fr)] xl:items-start xl:gap-6" data-testid="schedule-split">
+      <div className="min-w-0 space-y-5" data-testid="wizard-column">
+      <ol ref={stepNav} className="flex gap-1 overflow-x-auto pb-1 text-xs [scrollbar-width:thin]" aria-label="Steps">
         {STEPS.map((s, i) => (
           <li key={s} className="shrink-0">
             <button type="button" disabled={i > step} onClick={() => setStep(i)} aria-current={i === step ? "step" : undefined}
@@ -302,7 +333,17 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
             <p className="text-ink-soft">Save this as a <strong>draft schedule</strong>. You can drag tasks, schedule individual line items and track progress next. Nothing is sent to your customer.</p>
             {!accepted && <Badge tone="warn">Provisional: bid not yet accepted</Badge>}
             {error && <Notice tone="danger">{error} {existing && <Link className="font-semibold underline" href={`/projects/${existing}`}>Open the existing schedule</Link>}</Notice>}
-            <Button type="button" variant="accent" onClick={save} disabled={saving} data-testid="save-schedule">{saving ? "Saving…" : "Save draft schedule"}</Button>
+            {needsReview && (
+              <label className="flex items-start gap-2 rounded-lg border border-warn/40 bg-warn-tint p-3 text-sm">
+                <input type="checkbox" className="mt-0.5 h-4 w-4" checked={reviewed} onChange={(e) => setReviewed(e.target.checked)} data-testid="confirm-reviewed" />
+                <span><strong>Newly approved: needs PM review.</strong> I reviewed the approved proposal, scope, notes and attachments. Saving records me as the reviewer with the time.</span>
+              </label>
+            )}
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant={accepted ? "secondary" : "accent"} onClick={() => void save(false)} disabled={saving || (needsReview && !reviewed)} data-testid="save-schedule">{saving ? "Saving…" : needsReview ? "Mark reviewed & save draft" : "Save draft schedule"}</Button>
+              {accepted && <Button type="button" variant="accent" onClick={() => void save(true)} disabled={saving || (needsReview && !reviewed)} data-testid="save-publish-schedule">{needsReview ? "Mark reviewed & publish" : "Save & publish as active"}</Button>}
+            </div>
+            {accepted && <p className="text-xs text-muted">Publishing makes it the active schedule and moves the project to Scheduled. A draft stays a draft until you publish it.</p>}
           </div>
         )}
       </section>
@@ -312,8 +353,41 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
         {step < LAST && <Button type="button" onClick={() => setStep((s) => s + 1)} disabled={!canNext} data-testid="wizard-next">Next <ArrowRight className="h-4 w-4" aria-hidden /></Button>}
       </div>
       {step === 4 && !plan && <Notice tone="danger"><AlertTriangle className="mr-1 inline h-4 w-4" aria-hidden />These dependencies loop back on themselves.</Notice>}
+      </div>
+
+      {calExpanded && !phone && <div className="fixed inset-0 z-40 bg-ink/40" aria-hidden onClick={() => setCalExpanded(false)} />}
+      <aside id="company-cal-panel" aria-label="Company Calendar" data-testid="company-cal-panel"
+        className={cn(
+          calOpen ? "block" : "hidden", "xl:block",
+          // Phones: full screen over the wizard (the wizard stays mounted underneath, so nothing is lost).
+          "max-md:fixed max-md:inset-0 max-md:z-50 max-md:bg-paper max-md:p-2",
+          // Tablets: a panel under the wizard. Desktop: sticky beside it, scrolling inside when tall.
+          "md:mt-5 xl:sticky xl:top-4 xl:mt-0 xl:h-[calc(100vh-2rem)] xl:max-h-[56rem]",
+          calExpanded && "md:fixed md:inset-4 md:z-50 md:mt-0 md:block md:h-auto md:max-h-none xl:fixed xl:inset-6 xl:h-auto xl:max-h-none",
+        )}>
+        <CompanyCalendar
+          plan={draftPlan} assign={assign} calendar={cal} team={team} today={todayIn(cal.timezone)} projectName={estimate.title}
+          onPickStart={step < LAST ? (d) => setStart(d) : undefined}
+          expanded={calExpanded && !phone} onToggleExpanded={() => setCalExpanded((v) => !v)}
+          onClose={phone ? () => setCalOpen(false) : undefined} stepLabel={`step ${step + 1}`}
+        />
+      </aside>
+      </div>
     </div>
   );
+}
+
+/** Phone layout (under the md breakpoint): the calendar opens full screen instead of inline. */
+function useIsPhone() {
+  const [phone, setPhone] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const on = () => setPhone(mq.matches);
+    on();
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
+  return phone;
 }
 
 function ChoiceButton({ title, detail, onClick, testid }: { title: string; detail: string; onClick: () => void; testid?: string }) {

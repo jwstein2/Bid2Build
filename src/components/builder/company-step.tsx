@@ -172,7 +172,7 @@ export function CompanyStep({ business, onChange, signedIn, onDone, missing }: {
             )}
           </div>
           <div className="space-y-2">
-            <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="sr-only" id="logo-file" onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f); e.target.value = ""; }} />
+            <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="sr-only" id="logo-file" aria-label="Upload company logo" tabIndex={-1} onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f); e.target.value = ""; }} />
             <div className="flex gap-2">
               <Button size="sm" variant="secondary" onClick={() => fileRef.current?.click()} disabled={uploading}>{uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />} {business.logoUrl ? "Replace logo" : "Upload logo"}</Button>
               {business.logoUrl && <Button size="sm" variant="ghost" onClick={() => set({ logoUrl: null, logoPath: null })}><X className="h-4 w-4" /> Remove</Button>}

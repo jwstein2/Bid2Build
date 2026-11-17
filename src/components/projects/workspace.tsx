@@ -1,11 +1,12 @@
 "use client";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { CalendarDays, ChevronDown, GanttChart, LayoutDashboard, ListTodo, RotateCcw, Users } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { menuKeyDown, useDismiss } from "@/components/ui/use-dismiss";
 import { addDays, formatDay, isIsoDate } from "@/lib/schedule/calendar";
 import {
-  DEFAULT_FILTERS, assigneeKey, cleanFilters, filterWorkspace, isDefaultFilters, myTasks, type Filters, type ResourceRef, type Workspace, type WsTask,
+  DEFAULT_FILTERS, assigneeKey, cleanFilters, filterWorkspace, isDefaultFilters, isOverviewFocus, myTasks, type Filters, type OverviewFocus, type ResourceRef, type Workspace, type WsTask,
 } from "@/lib/projects/workspace";
 import { api } from "@/components/schedule/client";
 import { Overview } from "./overview";
@@ -52,7 +53,6 @@ export function ProjectsWorkspace({ initial, today, myName, extras = {} }: { ini
   const [calMode, setCalMode] = useState<CalMode>("month");
   const [anchor, setAnchor] = useState(today);
   const [open, setOpen] = useState<{ task: WsTask; start?: string; end?: string } | null>(null);
-  const [moreOpen, setMoreOpen] = useState(false);
 
   // Restore saved filters (per browser) and pick a phone-friendly calendar mode.
   useEffect(() => {
@@ -77,11 +77,18 @@ export function ProjectsWorkspace({ initial, today, myName, extras = {} }: { ini
     if (anchor < addDays(ws.from, 7) || anchor > addDays(ws.to, -45)) void refresh(addDays(anchor, -60), addDays(anchor, 120));
   }, [anchor, ws.from, ws.to, refresh]);
 
+  // Overview KPI card filter lives in the URL (?focus=): Back undoes it, refresh and shared links keep it.
+  const focus = isOverviewFocus(params.get("focus")) ? (params.get("focus") as OverviewFocus) : null;
+  const setFocus = (f: OverviewFocus | null) => {
+    const q = new URLSearchParams(params.toString());
+    q.delete("view");
+    if (f) q.set("focus", f); else q.delete("focus");
+    router.push(`${pathname}${q.size ? `?${q}` : ""}`, { scroll: false });
+  };
   const setView = (v: View) => {
     const q = new URLSearchParams(params.toString());
-    if (v === "overview") q.delete("view"); else q.set("view", v);
+    if (v === "overview") q.delete("view"); else { q.set("view", v); q.delete("focus"); }
     router.replace(`${pathname}${q.size ? `?${q}` : ""}`, { scroll: false });
-    setMoreOpen(false);
   };
   const people = useMemo(() => new Map(ws.people.map((p) => [p.id, p.name])), [ws.people]);
   const nameOf = useCallback((id: string | null) => (id ? people.get(id) ?? "Former member" : "Not assigned"), [people]);
@@ -105,26 +112,16 @@ export function ProjectsWorkspace({ initial, today, myName, extras = {} }: { ini
   const primary = VIEWS.slice(0, 2), overflow = VIEWS.slice(2);
   return (
     <div className="space-y-4">
-      {/* Views: segmented control; on small screens the last views move into a "More" menu. */}
+      {/* Views: segmented control; below lg (where the sidebar leaves little room) the last views move into a "More" menu. */}
       <nav aria-label="Project views" className="flex items-center gap-1 border-b border-line pb-px">
         {VIEWS.map((x, i) => (
           <button key={x.v} type="button" onClick={() => setView(x.v)} aria-current={view === x.v ? "page" : undefined} title={x.tip} data-testid={`tab-${x.v}`}
-            className={cn("-mb-px flex min-h-11 shrink-0 items-center gap-1.5 border-b-2 px-2.5 text-sm font-semibold sm:px-3", i >= 2 && "hidden sm:flex",
+            className={cn("-mb-px flex min-h-11 shrink-0 items-center gap-1.5 border-b-2 px-2.5 text-sm font-semibold sm:px-3", i >= 2 && "hidden lg:flex",
               view === x.v ? "border-accent-ink text-navy" : "border-transparent text-ink-soft hover:text-navy")}>
             <x.icon className="hidden h-4 w-4 min-[380px]:block" aria-hidden />{x.label}
           </button>
         ))}
-        <div className="relative sm:hidden">
-          <button type="button" onClick={() => setMoreOpen(!moreOpen)} aria-expanded={moreOpen} data-testid="tab-more"
-            className={cn("-mb-px flex min-h-11 items-center gap-1 whitespace-nowrap border-b-2 px-2.5 text-sm font-semibold", overflow.some((x) => x.v === view) ? "border-accent-ink text-navy" : "border-transparent text-ink-soft")}>
-            {overflow.find((x) => x.v === view)?.label ?? "More"} <ChevronDown className="h-4 w-4" aria-hidden />
-          </button>
-          {moreOpen && (
-            <ul className="absolute right-0 z-30 mt-1 w-44 rounded-lg border border-line bg-surface p-1 shadow-lg">
-              {overflow.map((x) => <li key={x.v}><button type="button" className="flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm hover:bg-paper" onClick={() => setView(x.v)}><x.icon className="h-4 w-4" aria-hidden />{x.label}</button></li>)}
-            </ul>
-          )}
-        </div>
+        <MoreViews views={overflow} view={view} setView={setView} />
         <span className="sr-only">{primary.length} main views</span>
       </nav>
 
@@ -149,7 +146,7 @@ export function ProjectsWorkspace({ initial, today, myName, extras = {} }: { ini
       </div>
 
       {view === "overview" && <Overview projects={projects} allProjects={filterWorkspace(ws, { ...filters, status: "all" }, today).projects} nameOf={nameOf} today={today} periodStart={addDays(today, -30)}
-        onCalendar={(id) => { set({ project: id }); setView("calendar"); }} />}
+        onCalendar={(id) => { set({ project: id }); setView("calendar"); }} focus={focus} onFocus={setFocus} />}
       {view === "calendar" && <CalendarView projects={projects} tasks={tasks} today={today} anchor={anchor} setAnchor={setAnchor} mode={calMode} setMode={setCalMode}
         labelOf={labelOf} onOpen={(t) => setOpen({ task: t })}
         onDropMove={(t, day) => { const len = Math.round((Date.parse(t.plannedEnd) - Date.parse(t.plannedStart)) / 864e5); setOpen({ task: t, start: day, end: addDays(day, len) }); }} />}
@@ -179,5 +176,40 @@ function FilterSelect({ label, value, onChange, options, testid }: { label: stri
         {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
       </select>
     </label>
+  );
+}
+
+/**
+ * Below lg, the last project views live in a "More" menu. Picking a view closes it; so do an outside
+ * click and Escape (focus returns to the button). Arrow keys move between views.
+ */
+function MoreViews({ views, view, setView }: { views: typeof VIEWS; view: string; setView: (v: (typeof VIEWS)[number]["v"]) => void }) {
+  const [open, setOpen] = useState(false);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const panel = useRef<HTMLUListElement>(null);
+  useDismiss(open, () => setOpen(false), { inside: [trigger, panel], returnFocus: trigger });
+  useEffect(() => { if (open) panel.current?.querySelector<HTMLElement>("button")?.focus(); }, [open]);
+  const current = views.find((x) => x.v === view);
+  return (
+    <div className="relative lg:hidden">
+      <button ref={trigger} type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-controls="project-more-views" data-testid="tab-more"
+        onKeyDown={(e) => { if (e.key === "ArrowDown" && !open) { e.preventDefault(); setOpen(true); } }}
+        className={cn("-mb-px flex min-h-11 items-center gap-1 whitespace-nowrap border-b-2 px-2.5 text-sm font-semibold", current ? "border-accent-ink text-navy" : "border-transparent text-ink-soft")}>
+        {current?.label ?? "More"} <ChevronDown className={cn("h-4 w-4 transition-transform", open && "rotate-180")} aria-hidden />
+      </button>
+      {open && (
+        <ul ref={panel} id="project-more-views" onKeyDown={menuKeyDown} className="absolute right-0 z-30 mt-1 w-44 rounded-lg border border-line bg-surface p-1 shadow-lg" data-testid="more-menu">
+          {views.map((x) => (
+            <li key={x.v}>
+              <button type="button" aria-current={view === x.v ? "page" : undefined} data-testid={`more-${x.v}`}
+                className={cn("flex min-h-11 w-full items-center gap-2 rounded px-3 py-2 text-left text-sm hover:bg-paper focus-visible:bg-paper", view === x.v && "font-semibold text-navy")}
+                onClick={() => { setView(x.v); setOpen(false); trigger.current?.focus(); }}>
+                <x.icon className="h-4 w-4" aria-hidden />{x.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }

@@ -164,6 +164,8 @@ d("Team & Subcontractors + assignments (database)", () => {
   });
 
   it("rollback removes V4.2 and the migration re-applies", async () => {
+    // Later migrations depend on the directory: roll them back first (newest first).
+    for (const f of ["20261119004000", "20261119003000", "20261119002000", "20261119001000"]) await pool.query(readFileSync(`docs/project-operations/rollback_${f}.sql`, "utf8"));
     await pool.query(readFileSync("docs/projects-workspace/rollback_20261118002000.sql", "utf8"));
     expect((await pool.query("select to_regclass('public.pm_resources') as t")).rows[0].t).toBeNull();
     expect((await pool.query("select count(*)::int as n from information_schema.columns where table_name = 'schedule_tasks' and column_name = 'resource_id'")).rows[0].n).toBe(0);

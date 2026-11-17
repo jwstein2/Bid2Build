@@ -155,6 +155,31 @@ export function overviewMetrics(projects: WsProject[], today: string, periodStar
   };
 }
 
+/**
+ * Overview KPI drilldowns (?focus=). Each predicate is the exact rule its metric counts, so clicking a
+ * card always lists the same projects as the number on it.
+ */
+export const OVERVIEW_FOCUS = {
+  active: { label: "Active projects", empty: "No active projects." },
+  starting: { label: "Starting in 2 weeks", empty: "No projects start in the next 14 days." },
+  delayed: { label: "Delayed", empty: "No delayed projects. Every task is on schedule." },
+  update: { label: "Customer update due", empty: "No customer updates are due." },
+  completed: { label: "Completed (30 days)", empty: "No projects were completed in the last 30 days." },
+} as const;
+export type OverviewFocus = keyof typeof OVERVIEW_FOCUS;
+export const isOverviewFocus = (s: unknown): s is OverviewFocus => typeof s === "string" && Object.hasOwn(OVERVIEW_FOCUS, s);
+
+export function matchesFocus(p: WsProject, f: OverviewFocus, today: string, periodStart: string): boolean {
+  const live = p.status !== "completed";
+  switch (f) {
+    case "active": return live;
+    case "starting": return live && p.startDate >= today && p.startDate <= addDays(today, 14);
+    case "delayed": return live && (p.tasksDelayed > 0 || p.tasksOverdue > 0);
+    case "update": return live && needsCustomerUpdate(p, today);
+    case "completed": return p.status === "completed" && (p.actualFinish ?? "") >= periodStart;
+  }
+}
+
 export function needsCustomerUpdate(p: WsProject, today: string): boolean {
   if (p.status === "completed" || p.provisional) return false;
   if (!p.lastUpdateAt) return p.startDate <= addDays(today, 7);

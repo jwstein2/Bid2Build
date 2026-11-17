@@ -7,6 +7,7 @@ import { formatCurrency } from "@/lib/estimate/money";
 import { Badge, Card } from "@/components/ui/misc";
 import { Button } from "@/components/ui/button";
 import { deleteEstimate, duplicateEstimate, renameEstimate, setArchived } from "./actions";
+import type { FeatureId } from "@/lib/features/registry";
 import { SIGNING_LABELS, type BidSigning } from "@/lib/esign/status";
 
 export interface BidRow {
@@ -69,31 +70,36 @@ export function BidList({ rows }: { rows: BidRow[] }) {
           {!rows.length && <><p className="mt-1 text-sm text-muted">Pick a trade and you&apos;ll have a draft in seconds.</p><Link href="/bids" className="mt-4 inline-flex min-h-11 items-center rounded-lg bg-accent px-4 font-semibold text-navy hover:bg-accent-hover">Create your first bid</Link></>}
         </div>
       ) : (
-        <ul className="divide-y divide-line">{list.map((r) => <Row key={r.id} r={r} />)}</ul>
+        <ul className="divide-y divide-line">{list.map((r, i) => <Row key={r.id} r={r} first={i === 0} />)}</ul>
       )}
     </Card>
   );
 }
 
-function Row({ r }: { r: BidRow }) {
+function Row({ r, first }: { r: BidRow; first: boolean }) {
   const [pending, start] = useTransition();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [title, setTitle] = useState(r.title);
   const [dl, setDl] = useState(false);
+  const [dlErr, setDlErr] = useState<string | null>(null);
 
   async function download() {
     if (!r.latestVersion) return;
     setDl(true);
+    setDlErr(null);
     try {
       const res = await fetch(`/api/estimates/${r.id}/versions/${r.latestVersion.id}`);
-      const d = await res.json();
-      if (d.url) window.location.assign(d.url);
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) setDlErr(d?.error?.message ?? "Couldn't download that PDF. Try again, or open the bid.");
+      else if (d.url) window.location.assign(d.url);
       else if (d.pdfBase64) {
         const bytes = Uint8Array.from(atob(d.pdfBase64), (c) => c.charCodeAt(0));
         const url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
         Object.assign(document.createElement("a"), { href: url, download: d.filename }).click();
       }
+    } catch {
+      setDlErr("Couldn't download that PDF. Check your connection and try again.");
     } finally { setDl(false); }
   }
 
@@ -123,7 +129,8 @@ function Row({ r }: { r: BidRow }) {
         {r.signing?.signed && (
             <Link href={`/signed/${r.signing.signed.id}`} className="inline-flex min-h-10 items-center gap-1 rounded-md px-2 text-sm font-semibold text-ok hover:bg-ok-tint" aria-label={`View signed proposal: ${r.title}`}><CheckCircle2 className="h-4 w-4" aria-hidden />View signed</Link>
         )}
-        <IconLink href={`/estimates/${r.id}`} label="Open / edit"><Pencil className="h-4 w-4" /></IconLink>
+        {/* The first bid's Open link is where the walkthrough points for the Internal Estimate Report (it lives inside a bid). */}
+        <IconLink href={`/estimates/${r.id}`} label="Open / edit" feature={first ? "internal_report" : undefined}><Pencil className="h-4 w-4" /></IconLink>
         <IconLink href={`/estimates/${r.id}?step=proposal`} label="Preview"><Eye className="h-4 w-4" /></IconLink>
         <IconBtn label={r.latestVersion ? "Download latest PDF (no credit used)" : "Export from the editor first"} onClick={download} disabled={!r.latestVersion || dl}>{dl ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}</IconBtn>
         <IconBtn label="Duplicate" onClick={() => start(() => duplicateEstimate(r.id))} disabled={pending}><Copy className="h-4 w-4" /></IconBtn>
@@ -140,6 +147,7 @@ function Row({ r }: { r: BidRow }) {
           <IconBtn label="Delete" onClick={() => setConfirmDelete(true)}><Trash2 className="h-4 w-4 text-danger" /></IconBtn>
         )}
       </div>
+      {dlErr && <p role="alert" className="basis-full text-sm text-danger">{dlErr}</p>}
     </li>
   );
 }
@@ -154,6 +162,6 @@ function SigningBadge({ s }: { s: BidSigning }) {
 function IconBtn({ label, onClick, disabled, children }: { label: string; onClick: () => void; disabled?: boolean; children: React.ReactNode }) {
   return <button title={label} aria-label={label} onClick={onClick} disabled={disabled} className="grid h-10 w-10 place-items-center rounded-md text-ink-soft hover:bg-brand-tint hover:text-navy disabled:opacity-40">{children}</button>;
 }
-function IconLink({ href, label, children }: { href: string; label: string; children: React.ReactNode }) {
-  return <Link href={href} title={label} aria-label={label} className="grid h-10 w-10 place-items-center rounded-md text-ink-soft hover:bg-brand-tint hover:text-navy">{children}</Link>;
+function IconLink({ href, label, feature, children }: { href: string; label: string; feature?: FeatureId; children: React.ReactNode }) {
+  return <Link href={href} data-feature={feature} title={label} aria-label={label} className="grid h-10 w-10 place-items-center rounded-md text-ink-soft hover:bg-brand-tint hover:text-navy">{children}</Link>;
 }

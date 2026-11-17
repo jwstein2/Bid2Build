@@ -1,8 +1,9 @@
 "use client";
-import { useEffect, useId, useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { CircleHelp } from "lucide-react";
 import { getFeature, type FeatureId } from "@/lib/features/registry";
 import { cn } from "@/lib/cn";
+import { useDismiss } from "@/components/ui/use-dismiss";
 
 /** Small "?" next to a feature: its registry description, opened by tap, click or keyboard. */
 export function FeatureHelp({ id, className }: { id: FeatureId; className?: string }) {
@@ -10,18 +11,12 @@ export function FeatureHelp({ id, className }: { id: FeatureId; className?: stri
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLSpanElement>(null);
   const pop = useId();
-  useEffect(() => {
-    if (!open) return;
-    const away = (e: Event) => { if (!box.current?.contains(e.target as Node)) setOpen(false); };
-    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
-    document.addEventListener("pointerdown", away);
-    document.addEventListener("keydown", esc);
-    return () => { document.removeEventListener("pointerdown", away); document.removeEventListener("keydown", esc); };
-  }, [open]);
+  const btn = useRef<HTMLButtonElement>(null);
+  useDismiss(open, () => setOpen(false), { inside: [box], returnFocus: btn });
   if (!f) return null;
   return (
     <span ref={box} className={cn("relative inline-flex", className)}>
-      <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls={pop} aria-label={`About ${f.name}`}
+      <button ref={btn} type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls={pop} aria-label={`About ${f.name}`}
         className="grid h-8 w-8 place-items-center rounded-full text-muted hover:bg-black/5 hover:text-ink" data-testid={`help-${id}`}>
         <CircleHelp className="h-4 w-4" aria-hidden />
       </button>

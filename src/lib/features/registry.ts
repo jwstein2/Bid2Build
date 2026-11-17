@@ -29,6 +29,7 @@ export interface Release {
 export const RELEASES = [
   { version: "3.0.0", date: "2026-11-14", title: "Saved items and proposal templates" },
   { version: "4.0.0", date: "2026-11-15", title: "Sales pipeline and internal cost reports" },
+  { version: "4.3.0", date: "2026-11-19", title: "Project operations, change orders and company bid style" },
 ] as const satisfies readonly Release[];
 
 export type ReleaseVersion = (typeof RELEASES)[number]["version"];
@@ -40,6 +41,12 @@ interface FeatureInput {
   route: string;
   /** `data-feature` value on the control the walkthrough highlights, when there is one. */
   target?: string;
+  /**
+   * Bids dashboard view (Pipeline, Table or Analytics) the walkthrough switches to before it looks
+   * for `target`, when the control only exists in that view. Without it the step would point at a
+   * control that isn't rendered and say "This isn't on the current screen".
+   */
+  view?: "pipeline" | "table" | "analytics";
   /** One sentence, plain language. */
   description: string;
   /** Upgrade copy for locked accounts (premium features). */
@@ -77,6 +84,7 @@ const DEFS = {
     entitlement: "free",
     route: "/dashboard?view=pipeline",
     target: "pipeline",
+    view: "pipeline",
     description: "See every bid as a card from Draft to Won, drag it to a new stage, and see what's next for each one.",
     walkthrough: { title: "Your bids as a pipeline", body: "Each column is a sales stage. Drag a card or use its menu to move it. A signed bid moves to Won by itself.", cta: "Show pipeline" },
     release: "4.0.0",
@@ -87,6 +95,7 @@ const DEFS = {
     entitlement: "free",
     route: "/dashboard?view=analytics",
     target: "analytics",
+    view: "analytics",
     description: "Bids sent, won and lost, win rate and average job size for any date range.",
     walkthrough: { title: "How sales are going", body: "Pick a date range to see bids sent, approved and declined, your win rate and average bid.", cta: "Show analytics" },
     release: "4.0.0",
@@ -97,6 +106,7 @@ const DEFS = {
     entitlement: "free",
     route: "/dashboard?view=analytics",
     target: "sales_pay",
+    view: "analytics",
     description: "A private planning calculator for commission on won bids. Your settings are visible only to you.",
     walkthrough: { title: "Estimate your sales pay", body: "Choose percent of sale, percent of profit or a flat amount per job to estimate pay on won bids. It never changes bid prices." },
     release: "4.0.0",
@@ -107,6 +117,9 @@ const DEFS = {
     entitlement: "unlimited",
     route: "/dashboard?view=table",
     target: "internal_report",
+    // On the dashboard this highlights the first bid's Open link in the Table view; inside a bid it
+    // highlights the Internal report button itself.
+    view: "table",
     description: "A private PDF of costs, markup, margin and profit by section and line item. Never shown to customers.",
     pitch: "A private PDF of your costs, markup, margin and profit by section and line item, for you and your team. Never shown to customers. Included with Unlimited and Enterprise.",
     walkthrough: { title: "Know your numbers", body: "Open any saved bid and choose Internal report in the header to preview, download or email your private cost and profit report.", cta: "Open a bid" },
@@ -122,6 +135,61 @@ const DEFS = {
     walkthrough: { title: "Schedule the job", body: "Choose Schedule Now on a won bid to build a timeline from its sections, then drag tasks to adjust dates." },
     release: "4.0.0",
     // Billing and entitlements ship first (Phase 5); the scheduler itself ships in Phases 6-7.
+    status: "unreleased",
+  },
+  // V4.3 Project Operations and V4.4 Enterprise Bid Style. Released together with their SQL
+  // (20261119001000-004000); before it runs each screen says it turns on after the update.
+  sub_quotes: {
+    name: "Subcontractor quotes",
+    entitlement: "free",
+    route: "/dashboard?view=table",
+    description: "Record subcontractor quotes on any estimate line, compare original vs revised bids, and see the effect on your margin. Never shown to customers.",
+    walkthrough: { title: "Track sub quotes", body: "Open a line item and use the quote panel to record a subcontractor's bid and any revisions. Prices only change when you choose to." },
+    release: "4.3.0",
+    status: "released",
+  },
+  change_orders: {
+    name: "Change orders",
+    entitlement: "free",
+    route: "/projects",
+    description: "Separate, signable change orders on approved bids, with a running contract total and a full document history.",
+    walkthrough: { title: "Change orders", body: "On an approved bid, choose Create Change Order. Send it for e-signature or record an approval; the contract summary updates only when it's approved." },
+    release: "4.3.0",
+    status: "released",
+  },
+  project_operations: {
+    name: "Project review, scope and photos",
+    entitlement: "pm",
+    route: "/projects",
+    description: "Review newly approved jobs, build trade scopes from the approved proposal, share them with subcontractors, and keep job photos in one place.",
+    pitch: "Review approved jobs, build trade scopes, share them with subs and keep job photos together. Part of the Project Command Center add-on.",
+    walkthrough: { title: "Run the job", body: "New approvals land in Needs Review. Mark them reviewed, schedule them, then use the Trade scope, Documents, Photos and Internal costs tabs on the project." },
+    release: "4.3.0",
+    status: "released",
+  },
+  // V4.6 Customer Communications (20261121001000). Unreleased until the owner approves sending
+  // (COMM_EMAIL_MODE) and reply monitoring is verified: marketing must not claim it before then.
+  customer_communications: {
+    name: "Customer communications",
+    entitlement: "pm",
+    route: "/dashboard/customers/communications",
+    target: "customer_communications",
+    description: "Optional six-month follow-ups for past customers and weekly or milestone progress emails for active projects, with review before sending.",
+    pitch: "Stay in touch with past customers and keep active clients updated, with review first, automatic pause on replies and one-click opt-out. Part of Project Command Center.",
+    walkthrough: { title: "Keep customers in the loop", body: "In Customers → Communications, review who's eligible for follow-ups, edit the template, and choose weekly or milestone project updates. Nothing sends without your say-so." },
+    // Gets its own release entry when it ships.
+    release: "4.3.0",
+    status: "unreleased",
+  },
+  proposal_style: {
+    name: "Company proposal style",
+    entitlement: "free",
+    route: "/company/proposal-style",
+    description: "One proposal look for the whole company, with locks and an owner-controlled switch for team customization.",
+    walkthrough: { title: "One look for every bid", body: "In Company → Proposal & Bid Style, choose the template, colors and details every bid uses, and decide what your team may change." },
+    release: "4.3.0",
+    // Enterprise only. The registry has no Enterprise entitlement, so it isn't announced to every
+    // account; company owners and managers find it in the Company menu.
     status: "unreleased",
   },
 } as const satisfies Record<string, FeatureInput>;

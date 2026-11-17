@@ -1,5 +1,6 @@
 import { openGraphFor } from "@/lib/seo/open-graph";
 import type { Metadata } from "next";
+import { pmMarketedLive } from "@/lib/marketing/catalog";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Calculator, Check, EyeOff, Percent } from "lucide-react";
@@ -117,7 +118,7 @@ export default async function TradePage({ params }: PageProps<"/bids/[trade]">) 
               <div>
                 <h2 className="text-2xl font-extrabold">See Built2Bid in action</h2>
                 <p className="mt-2 text-ink-soft">A short walkthrough of building an estimate and sending the proposal. Captions are on.</p>
-                <video className="mt-5 aspect-video w-full rounded-lg border border-line bg-black" controls preload="none" playsInline poster="/media/meet-built2bid-poster.jpg" data-testid="demo-video">
+                <video className="mt-5 aspect-video w-full rounded-lg border border-line bg-black" controls preload="none" playsInline poster="/media/meet-built2bid-poster.webp" data-testid="demo-video">
                   <source src="/media/meet-built2bid-v1.mp4" type="video/mp4" />
                 </video>
 
@@ -212,6 +213,8 @@ export default async function TradePage({ params }: PageProps<"/bids/[trade]">) 
                 <li key={r.slug}><Link href={`/bids/${r.slug}`} className="inline-block rounded-full border border-line bg-surface px-3 py-1.5 text-sm font-medium hover:border-brand/40">{r.seoTitle}</Link></li>
               ))}
               <li><Link href="/learn/markup-vs-margin" className="inline-block rounded-full border border-line bg-surface px-3 py-1.5 text-sm font-medium hover:border-brand/40">Markup vs. margin guide</Link></li>
+              {pmMarketedLive() && <li><Link href="/#run-the-job" className="inline-block rounded-full border border-line bg-surface px-3 py-1.5 text-sm font-medium hover:border-brand/40">Contractor project scheduling</Link></li>}
+              <li><Link href="/pricing" className="inline-block rounded-full border border-line bg-surface px-3 py-1.5 text-sm font-medium hover:border-brand/40">Compare plans</Link></li>
             </ul>
           </>
         )}

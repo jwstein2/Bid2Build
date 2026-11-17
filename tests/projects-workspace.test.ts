@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  DEFAULT_FILTERS, bucketOf, cleanFilters, filterWorkspace, findResourceConflicts, mapWorkspace, monthGrid, myTasks, nextAction, overviewMetrics,
+  DEFAULT_FILTERS, bucketOf, cleanFilters, filterWorkspace, findResourceConflicts, isOverviewFocus, mapWorkspace, matchesFocus, monthGrid, myTasks, nextAction, overviewMetrics,
   projectHue, projectWarning, sortProjects, workloadRows, type Workspace, type WsProject, type WsTask,
 } from "@/lib/projects/workspace";
 
@@ -135,5 +135,19 @@ describe("my work", () => {
   it("types line up", () => {
     const p: WsProject = ws([proj("a")]).projects[0];
     expect(p.calendar.workdays).toEqual([1, 2, 3, 4, 5]);
+  });
+});
+
+describe("overview KPI drilldowns", () => {
+  it("each card's filter lists exactly the projects it counts", () => {
+    const w = ws([proj("a", { tasks_delayed: 1 }), proj("b", { start_date: "2026-11-25" }), proj("c", { status: "completed", actual_finish: "2026-11-12" }), proj("d", { last_update_at: "2026-11-16T00:00:00Z" }), proj("e", { status: "completed", actual_finish: "2026-10-01" })]);
+    const m = overviewMetrics(w.projects, "2026-11-20", "2026-11-01");
+    const n = (f: Parameters<typeof matchesFocus>[1]) => w.projects.filter((p) => matchesFocus(p, f, "2026-11-20", "2026-11-01")).length;
+    expect({ active: n("active"), startingSoon: n("starting"), delayed: n("delayed"), needsUpdate: n("update"), completed: n("completed") }).toEqual(m);
+  });
+  it("validates the ?focus= value", () => {
+    expect(isOverviewFocus("delayed")).toBe(true);
+    expect(isOverviewFocus("toString")).toBe(false);
+    expect(isOverviewFocus(null)).toBe(false);
   });
 });

@@ -25,7 +25,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ report: 
   const scopeTag = r.view.includeTest ? "-incl-test" : "";
   let body: string;
   if (report === "customers") {
-    const rows = filterCustomers(r.facts, parseCustomerFilters(sp));
+    const rows = filterCustomers(r.facts, parseCustomerFilters(sp), windowOf(r.view.range, r.now));
     body = csv(["business", "email", "email_verified", "account_type", "plan", "segment", "signed_up", "last_bid_activity", "bids_started", "bids_finalized", "proposals_signed", "first_finalized", "channel"],
       rows.map((f) => [f.business ?? "", f.email ?? "", f.confirmed ? "yes" : "no", f.cls, planText(f), SEGMENT_LABEL[f.segment], f.createdAt.slice(0, 10), f.lastActivityAt?.slice(0, 10) ?? "", f.estimates, f.finalized, f.signed, f.firstFinalizedAt?.slice(0, 10) ?? "", CHANNEL_LABEL[f.channel]]));
   } else if (report === "states") {

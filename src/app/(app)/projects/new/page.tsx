@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PmLockNotice } from "@/components/billing/pm-lock";
+import { getAccountStatus } from "@/lib/account/server";
 import { notFound, redirect } from "next/navigation";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { isPmBillingConfigured, isPmEnabled } from "@/lib/env";
@@ -26,7 +28,7 @@ export default async function NewSchedulePage({ searchParams }: { searchParams: 
   const { data: existing } = await supabase.from("project_schedules").select("id").eq("estimate_id", id).neq("status", "archived").maybeSingle();
   if (existing?.id) redirect(`/projects/${existing.id}`);
 
-  const [pm, can, groupsRes, itemsRes, versionRes, profileRes, acc, team, peopleRes] = await Promise.all([
+  const [pm, can, groupsRes, itemsRes, versionRes, profileRes, acc, team, peopleRes, reviewRes] = await Promise.all([
     loadPmAccess(supabase),
     supabase.rpc("can_schedule_estimate", { p_estimate_id: id }),
     supabase.from("estimate_groups").select("id, name, sort_order").eq("estimate_id", id).order("sort_order"),
@@ -36,15 +38,16 @@ export default async function NewSchedulePage({ searchParams }: { searchParams: 
     estimateAccepted(supabase, id, est.pipeline_stage as string | null),
     loadTeam(supabase),
     supabase.rpc("pm_people"),
+    supabase.from("project_reviews").select("status").eq("estimate_id", id).maybeSingle(),
   ]);
 
   if (!pm?.canEdit || can.data !== true) {
     return (
       <div className="mx-auto max-w-2xl space-y-4">
         <h1 className="text-2xl font-extrabold text-navy">Schedule Now</h1>
-        <Notice tone="warn" title="You can't create schedules yet">
-          {pm?.scope === "company" ? "Ask your company admin to assign you a scheduling editor seat." : !isPmBillingConfigured("addon") ? "Project Command Center for Unlimited is coming soon as a $4.99/month add-on." : <>Project Command Center is a $4.99/month add-on for Unlimited. <Link className="font-semibold underline" href="/settings/billing">Unlock Project Command Center</Link>.</>}
-        </Notice>
+        {pm?.scope === "company" || isPmBillingConfigured("addon")
+          ? <PmLockNotice tone="warn" title="You can't create schedules yet" kind={pm?.scope === "company" ? "company" : (await getAccountStatus()).kind === "unlimited" ? "unlimited" : "free"} />
+          : <Notice tone="warn" title="You can't create schedules yet">Project Command Center for Unlimited is coming soon as an add-on.</Notice>}
         <Link href="/projects" className="font-semibold text-accent-ink underline">Back to Projects</Link>
       </div>
     );
@@ -68,6 +71,7 @@ export default async function NewSchedulePage({ searchParams }: { searchParams: 
       timezone={tz && validTimeZone(tz) ? tz : "America/Chicago"}
       tradeLabels={Object.fromEntries(trades.map((t) => [t, tradeName(t)]))}
       team={team} people={peopleRes.error ? [] : ((peopleRes.data as { id: string; name: string }[]) ?? [])} me={user.id}
+      needsReview={!reviewRes.error && (reviewRes.data as { status?: string } | null)?.status === "needs_review"}
     />
   );
 }

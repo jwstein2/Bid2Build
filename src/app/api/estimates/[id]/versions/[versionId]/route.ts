@@ -13,7 +13,9 @@ export async function GET(_req: Request, ctx: RouteContext<"/api/estimates/[id]/
   const supabase = await createClient();
   const { data: v } = await supabase.from("estimate_versions").select("id, version_number, proposal, snapshot").eq("id", versionId).eq("estimate_id", id).maybeSingle();
   if (!v) return fail(404, "not_found", "Version not found.");
-  const doc = v.proposal as ProposalDocument;
+  const doc = v.proposal as ProposalDocument | null;
+  // Very old or incomplete versions may not have a saved proposal. Say so instead of crashing.
+  if (!doc?.brand || !doc.meta) return fail(409, "no_proposal", "This version has no saved proposal to print. Open the bid and download the latest version instead.");
   const filename = pdfFilename(doc, v.version_number);
   const { data: gd } = await supabase.from("generated_documents").select("storage_path").eq("version_id", versionId).maybeSingle();
   const admin = createAdminClient();

@@ -28,6 +28,12 @@ export interface Access {
 export const META_KEY = "b2b_features";
 /** Window event that starts the feature walkthrough; detail = feature ids (optional). */
 export const START_TOUR_EVENT = "b2b:features:tour";
+/**
+ * Window event the walkthrough sends when it moves to a step; detail = the feature id, or null when
+ * the walkthrough ends. The bids dashboard switches to the step's `view` and the mobile menu opens
+ * for sidebar links, so the step's control is on screen before the walkthrough looks for it.
+ */
+export const REVEAL_FEATURE_EVENT = "b2b:features:reveal";
 /** sessionStorage key: ids to walk through after navigating to the dashboard. */
 export const PENDING_TOUR_KEY = "b2b:features:pending-tour";
 
