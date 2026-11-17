@@ -34,7 +34,7 @@ export default async function ReferralsPage() {
     return (
       <div className="space-y-3">
         <h1 className="text-3xl font-extrabold">Referrals</h1>
-        <p className="text-ink-soft">The referral tables are not installed yet. Run <code>supabase/migrations/20261115003000_referrals.sql</code> in the Supabase SQL Editor, then reload.</p>
+        <p className="text-ink-soft">The referral tables are not installed yet. Run <code className="break-all">supabase/migrations/20261115003000_referrals.sql</code> in the Supabase SQL Editor, then reload.</p>
       </div>
     );
   }

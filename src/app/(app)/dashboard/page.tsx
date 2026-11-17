@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { WhatsNewNotice } from "@/components/features/whats-new-notice";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -84,7 +85,9 @@ export const metadata: Metadata = { title: "Dashboard", robots: { index: false }
 export default async function Dashboard({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const sp = await searchParams;
   const initialView = (["pipeline", "table", "analytics"] as const).find((v) => v === sp.view) as BidsView | undefined;
-  const user = (await getUser())!;
+  const user = await getUser();
+  // The layout redirects too, but pages render in parallel with it: never assume a session here.
+  if (!user) redirect("/login?next=/dashboard");
   const supabase = await createClient();
   const [{ rows: estimates, migrated }, { data: versions }, credits, { data: biz }, libraryAccess, company, { data: referralData }] = await Promise.all([
     // "My bids" stays personal: Enterprise owners/managers can also read teammates' company bids (RLS),

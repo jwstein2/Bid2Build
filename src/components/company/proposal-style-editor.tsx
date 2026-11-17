@@ -151,7 +151,7 @@ export function ProposalStyleEditor({ initial, ownerBusiness, people }: { initia
         <p className="text-xs text-muted">Locked elements: {locked.length ? locked.map((k) => STYLE_KEY_LABELS[k as StyleKey] ?? k).join(", ") : "none"}. ({STYLE_KEYS.length} elements can be locked.)</p>
       </div>
       <div className="min-w-0">
-        <div className="sticky top-[7.5rem] max-h-[calc(100vh-9rem)] overflow-y-auto rounded-xl bg-stage p-3 sm:p-6">
+        <div tabIndex={0} role="region" aria-label="Proposal preview (scrollable)" className="sticky top-[7.5rem] max-h-[calc(100vh-9rem)] overflow-y-auto rounded-xl bg-stage p-3 sm:p-6">
           <p className="mb-3 text-center text-xs font-semibold uppercase tracking-wider text-muted">Preview with sample items</p>
           <ProposalView doc={doc} />
         </div>

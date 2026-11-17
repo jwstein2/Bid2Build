@@ -64,14 +64,14 @@ export default async function SignedProposalPage({ params }: PageProps<"/signed/
 
       <Card className="p-4 sm:p-6" aria-labelledby="sig-h">
         <h2 id="sig-h" className="font-display text-lg font-extrabold text-navy">Signature details</h2>
-        <div className="mt-3 grid gap-4 md:grid-cols-[minmax(0,260px)_1fr]">
-          <div className="flex min-h-24 items-center justify-center rounded-lg border border-line bg-white p-3">
+        <div className="mt-3 grid gap-4 md:grid-cols-[minmax(0,260px)_minmax(0,1fr)]">
+          <div className="theme-light flex min-h-24 items-center justify-center rounded-lg border border-line bg-white p-3 text-ink">
             {s.method === "drawn" && sig?.signature_image
               // eslint-disable-next-line @next/next/no-img-element
               ? <img src={sig.signature_image} alt={`Drawn signature of ${s.signerName}`} className="max-h-24 max-w-full object-contain" />
               : <span className="font-serif text-3xl italic">{s.typedSignature ?? s.signerName}</span>}
           </div>
-          <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
+          <dl className="grid min-w-0 gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
             <D k="Signer" v={s.signerName} />
             <D k="Signer email" v={s.signerEmail} />
             <D k="Signed" v={<LocalTime iso={s.signedAtUtc} />} />
@@ -93,7 +93,7 @@ export default async function SignedProposalPage({ params }: PageProps<"/signed/
         </details>
       </Card>
 
-      <section aria-label="Signed proposal" className="rounded-xl bg-[#e4eaf1] p-2 sm:p-5">
+      <section aria-label="Signed proposal" className="theme-light min-w-0 overflow-x-auto rounded-xl bg-[#e4eaf1] p-2 sm:p-5">
         <p className="mb-3 text-center text-xs font-semibold uppercase tracking-wider text-muted">The exact version the customer signed</p>
         <ProposalView doc={doc} />
       </section>
@@ -102,5 +102,5 @@ export default async function SignedProposalPage({ params }: PageProps<"/signed/
 }
 
 function D({ k, v }: { k: string; v: React.ReactNode }) {
-  return <div><dt className="text-muted">{k}</dt><dd className="font-semibold">{v}</dd></div>;
+  return <div className="min-w-0"><dt className="text-muted">{k}</dt><dd className="font-semibold [overflow-wrap:anywhere]">{v}</dd></div>;
 }
