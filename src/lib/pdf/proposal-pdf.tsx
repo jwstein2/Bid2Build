@@ -2,6 +2,7 @@ import { Document, Image, Page, StyleSheet, Text, View } from "@react-pdf/render
 import type { ReactNode } from "react";
 import type { ProposalDocument, ProposalSection } from "../proposal/types";
 import { onColor, templateStyle } from "../proposal/templates";
+import { accessibleOnWhite } from "@/lib/onboarding/brand-review";
 
 /**
  * PDF rendering of the canonical ProposalDocument (the same object the HTML preview renders).
@@ -34,6 +35,8 @@ export function ProposalPdf({ doc, logo, acceptance, appendix }: {
   const st = templateStyle(doc.template);
   const brand = doc.brand.primaryColor;
   const accent = doc.brand.secondaryColor;
+  // Small text in the brand's accent color is darkened only as much as needed to stay readable on white.
+  const accentText = /^#[0-9a-f]{6}$/i.test(accent) ? accessibleOnWhite(accent) : accent;
   const fs = st.baseSize;
   const headerBg = st.header === "dark" ? "#16202e" : st.header === "band" ? brand : "#ffffff";
   const headerFg = st.header === "dark" || st.header === "band" ? onColor(headerBg) : "#16202e";
@@ -83,7 +86,7 @@ export function ProposalPdf({ doc, logo, acceptance, appendix }: {
           {/* Title block */}
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", borderBottomWidth: 0.75, borderBottomColor: "#e4e0d8", paddingBottom: 8 }}>
             <View style={{ flex: 1, paddingRight: 12 }}>
-              <Text style={{ fontFamily: "Helvetica-Bold", color: accent, fontSize: fs * 0.82, letterSpacing: 1 }}>PROPOSAL</Text>
+              <Text style={{ fontFamily: "Helvetica-Bold", color: accentText, fontSize: fs * 0.82, letterSpacing: 1 }}>PROPOSAL</Text>
               <Text style={{ fontFamily: "Helvetica-Bold", fontSize: st.titleSize, color: brand }}>{T(doc.meta.title)}</Text>
             </View>
             <View style={{ fontSize: fs * 0.9 }}>

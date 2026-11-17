@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient, getUser } from "@/lib/supabase/server";
@@ -7,7 +8,9 @@ import { CompanyEditor } from "./editor";
 export const metadata: Metadata = { title: "Company profile", robots: { index: false } };
 
 export default async function CompanyPage() {
-  const user = (await getUser())!;
+  const user = await getUser();
+  // The layout redirects too, but pages render in parallel with it: never assume a session here.
+  if (!user) redirect("/login?next=/settings/company");
   const { business } = await loadBusiness(await createClient(), user.id);
   return (
     <>

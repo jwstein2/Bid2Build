@@ -52,7 +52,7 @@ export function Overview({ projects: filteredProjects, allProjects, nameOf, toda
       <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5" aria-label="Key numbers">
         {metrics.map((x) => (
           <li key={x.label} data-testid="metric">
-            <MetricCard size="sm" title={x.label} value={x.value} hint={x.hint} tone={x.warn ? "warn" : "default"} empty={x.value === 0}
+            <MetricCard size="sm" className="h-full w-full" title={x.label} value={x.value} hint={x.hint} tone={x.warn ? "warn" : "default"} empty={x.value === 0}
               onSelect={onFocus ? () => onFocus(focus === x.key ? null : x.key) : undefined} pressed={focus === x.key} testId={`metric-${x.key}`}
               action={focus === x.key ? "Showing · tap to clear" : x.action} />
           </li>

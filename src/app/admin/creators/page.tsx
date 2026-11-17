@@ -24,7 +24,7 @@ export default async function CreatorPartnerships({ searchParams }: { searchPara
     return (
       <div className="space-y-3">
         <h1 className="text-3xl font-extrabold">Creator Partnerships</h1>
-        <p className="text-ink-soft">The Creator Partnerships tables aren&apos;t installed yet. Apply <code>supabase/migrations/20261117001000_creator_partner_program.sql</code> and <code>20261117002000_creator_outreach_crm.sql</code> (after owner approval), then reload.</p>
+        <p className="text-ink-soft">The Creator Partnerships tables aren&apos;t installed yet. Apply <code className="break-all">supabase/migrations/20261117001000_creator_partner_program.sql</code> and <code className="break-all">20261117002000_creator_outreach_crm.sql</code> (after owner approval), then reload.</p>
       </div>
     );
   }

@@ -19,7 +19,7 @@ function TestDataToggle({ path }: { path: string }) {
   next.delete("page");
   const q = next.toString();
   return (
-    <Link href={q ? `${path}?${q}` : path} aria-pressed={on} title="Business metrics count genuine accounts only. Turn on to include internal, test and demo accounts (diagnostics)."
+    <Link href={q ? `${path}?${q}` : path} aria-label={on ? "Including test data. Switch to genuine accounts only" : "Genuine accounts only. Switch to include test data"} title="Business metrics count genuine accounts only. Turn on to include internal, test and demo accounts (diagnostics)."
       className={cn("cc-mono rounded-md border px-2 py-1 text-[11px]", on ? "border-[var(--cc-amber)] text-[var(--cc-amber)]" : "border-[var(--cc-line)] text-[#8fa6b4] hover:text-white")}>
       {on ? "Including test data ✕" : "Genuine accounts only"}
     </Link>

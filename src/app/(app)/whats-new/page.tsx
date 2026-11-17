@@ -47,7 +47,7 @@ export default async function WhatsNewPage() {
                       ) : can ? (
                         <span className="inline-flex items-center gap-1 rounded-full bg-teal/15 px-2 py-0.5 text-[11px] font-semibold text-ink"><Check className="h-3 w-3" aria-hidden /> Included in your plan</span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-accent/15 px-2 py-0.5 text-[11px] font-semibold text-accent-ink"><PremiumDiamond /> Unlimited</span>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-[11px] font-semibold text-accent-ink"><PremiumDiamond /> Unlimited</span>
                       )}
                     </p>
                     <p className="mt-0.5 text-sm text-ink-soft">{f.description}</p>

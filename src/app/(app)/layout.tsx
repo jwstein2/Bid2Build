@@ -45,7 +45,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <AccountThemeScript pref={user.theme} />
     {/* app-theme: marks a customer app screen, so the Dark Mode tokens (globals.css) apply. */}
     <div className="app-theme flex min-h-screen flex-col md:flex-row">
-      <aside className="on-dark bg-navy text-white md:sticky md:top-0 md:flex md:h-screen md:w-64 md:shrink-0 md:flex-col no-print">
+      <aside className="on-dark bg-navy text-white md:sticky md:top-0 md:flex md:h-screen md:w-64 md:shrink-0 md:flex-col md:overflow-y-auto md:overscroll-contain no-print">
         <AppSidebar isAdmin={Boolean(isAdmin)} projects={isPmEnabled()} company={companyNav(company)} learning={learning} email={user.email ?? (user.phone ? formatPhone(user.phone) : null)} theme={user.theme ?? null} />
       </aside>
       <main id="main" className="min-w-0 flex-1 px-4 py-6 sm:px-8 md:pt-2">

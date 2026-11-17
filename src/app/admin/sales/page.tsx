@@ -33,7 +33,7 @@ export default async function SalesDashboard({ searchParams }: { searchParams: P
     return (
       <div className="space-y-3">
         <h1 className="text-3xl font-extrabold">Sales</h1>
-        <p className="text-ink-soft">The sales funnel tables are not installed yet. Apply <code>supabase/migrations/20261112001000_growth_funnel.sql</code> in the Supabase SQL Editor, then reload.</p>
+        <p className="text-ink-soft">The sales funnel tables are not installed yet. Apply <code className="break-all">supabase/migrations/20261112001000_growth_funnel.sql</code> in the Supabase SQL Editor, then reload.</p>
       </div>
     );
   }

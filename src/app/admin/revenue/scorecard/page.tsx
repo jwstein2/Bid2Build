@@ -145,21 +145,21 @@ export default async function Scorecard({ searchParams }: { searchParams: Promis
 
       <SectionTitle kicker="Supporting unit economics" title="Secondary metrics" />
       <Panel>
-        <dl className="grid gap-x-8 md:grid-cols-2">
-          <div>
+        <div className="grid gap-x-8 md:grid-cols-2">
+          <dl>
             <Row k="Revenue per paying account (list MRR)">{s.unit.arpaCents != null ? usd(s.unit.arpaCents) : "–"}</Row>
             <Row k="Gross margin">{s.unit.grossMarginPct != null ? `${s.unit.grossMarginPct}%` : <span className="text-muted">Needs revenue and complete costs</span>}</Row>
             <Row k="Customer lifetime value">{s.unit.ltvCents != null ? usd(s.unit.ltvCents) : <span className="text-muted">Insufficient history</span>}</Row>
             <Row k="LTV ÷ CAC">{s.unit.ltvToCac != null ? `${s.unit.ltvToCac}×` : <span className="text-muted">–</span>}</Row>
             <Row k="CAC payback">{s.unit.paybackMonths != null ? `${s.unit.paybackMonths} months` : <span className="text-muted">–</span>}</Row>
-          </div>
-          <div>
+          </dl>
+          <dl>
             <Row k="Infrastructure per active business (30 days)">{s.unit.infraPerActiveCents != null ? usd(s.unit.infraPerActiveCents) : "–"}</Row>
             <Row k={`Infrastructure per finalized bid (${range.label})`}>{s.unit.infraPerFinalizedCents != null ? usd(s.unit.infraPerFinalizedCents) : "–"}</Row>
             <Row k="Total cost per signed proposal">{s.unit.costPerSignedCents != null ? usd(s.unit.costPerSignedCents) : "–"}</Row>
             <Row k="Net revenue retention"><span className="text-muted">Not enough history</span></Row>
-          </div>
-        </dl>
+          </dl>
+        </div>
         <p className="mt-3 text-xs text-muted">{s.unit.ltvReason} {s.unit.nrrReason} Infrastructure here means hosting, database, domain, email, monitoring and AI.</p>
       </Panel>
     </div>

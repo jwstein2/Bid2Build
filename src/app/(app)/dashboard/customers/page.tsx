@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { revalidatePath } from "next/cache";
 import { createClient, getUser } from "@/lib/supabase/server";
@@ -17,7 +18,9 @@ async function remove(formData: FormData) {
 }
 
 export default async function CustomersPage() {
-  const user = (await getUser())!;
+  const user = await getUser();
+  // The layout redirects too, but pages render in parallel with it: never assume a session here.
+  if (!user) redirect("/login?next=/dashboard/customers");
   // Own customers only (company managers can also read teammates' company customers through RLS).
   const { data } = await (await createClient()).from("customers").select("id, name, email, phone, project_address").eq("user_id", user.id).order("name");
   return (

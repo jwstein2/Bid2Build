@@ -113,16 +113,16 @@ export function ProjectsWorkspace({ initial, today, myName, extras = {} }: { ini
   const primary = VIEWS.slice(0, 2), overflow = VIEWS.slice(2);
   return (
     <div className="space-y-4">
-      {/* Views: segmented control; on small screens the last views move into a "More" menu. */}
+      {/* Views: segmented control; below lg (where the sidebar leaves little room) the last views move into a "More" menu. */}
       <nav aria-label="Project views" className="flex items-center gap-1 border-b border-line pb-px">
         {VIEWS.map((x, i) => (
           <button key={x.v} type="button" onClick={() => setView(x.v)} aria-current={view === x.v ? "page" : undefined} title={x.tip} data-testid={`tab-${x.v}`}
-            className={cn("-mb-px flex min-h-11 shrink-0 items-center gap-1.5 border-b-2 px-2.5 text-sm font-semibold sm:px-3", i >= 2 && "hidden sm:flex",
+            className={cn("-mb-px flex min-h-11 shrink-0 items-center gap-1.5 border-b-2 px-2.5 text-sm font-semibold sm:px-3", i >= 2 && "hidden lg:flex",
               view === x.v ? "border-accent-ink text-navy" : "border-transparent text-ink-soft hover:text-navy")}>
             <x.icon className="hidden h-4 w-4 min-[380px]:block" aria-hidden />{x.label}
           </button>
         ))}
-        <div className="relative sm:hidden">
+        <div className="relative lg:hidden">
           <button type="button" onClick={() => setMoreOpen(!moreOpen)} aria-expanded={moreOpen} data-testid="tab-more"
             className={cn("-mb-px flex min-h-11 items-center gap-1 whitespace-nowrap border-b-2 px-2.5 text-sm font-semibold", overflow.some((x) => x.v === view) ? "border-accent-ink text-navy" : "border-transparent text-ink-soft")}>
             {overflow.find((x) => x.v === view)?.label ?? "More"} <ChevronDown className="h-4 w-4" aria-hidden />

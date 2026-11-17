@@ -28,7 +28,7 @@ export default async function ComplimentaryAccess({ searchParams }: { searchPara
     return (
       <div className="space-y-3">
         <h1 className="text-3xl font-extrabold">Complimentary Access</h1>
-        <p className="text-ink-soft">The complimentary access tables are not installed yet. Run <code>supabase/migrations/20261114004000_complimentary_access.sql</code> in the Supabase SQL Editor, then reload.</p>
+        <p className="text-ink-soft">The complimentary access tables are not installed yet. Run <code className="break-all">supabase/migrations/20261114004000_complimentary_access.sql</code> in the Supabase SQL Editor, then reload.</p>
       </div>
     );
   }
@@ -91,7 +91,7 @@ export default async function ComplimentaryAccess({ searchParams }: { searchPara
           <label className="text-sm"><span className="mb-1 block font-medium text-ink-soft">Granted to</span>
             <input type="date" name="to" defaultValue={filters.to} className="w-full rounded-md border border-line-strong px-2.5 py-2" /></label>
           <div className="flex items-end gap-2">
-            <button className="min-h-10 rounded-md bg-ink px-3 py-2 text-sm font-semibold text-white">Apply</button>
+            <button className="min-h-10 rounded-md bg-[var(--cc-green)] px-3 py-2 text-sm font-bold text-[#03140c]">Apply</button>
             {filtered && <Link href="/admin/complimentary" className="min-h-10 rounded-md px-2 py-2 text-sm font-medium text-ink-soft underline">Clear</Link>}
           </div>
         </form>
