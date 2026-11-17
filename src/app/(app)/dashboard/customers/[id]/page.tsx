@@ -14,7 +14,7 @@ import { loadCustomerHub, mapCustomer } from "@/lib/customers/server";
 import { PROJECT_STATUS_LABELS, RELATIONSHIP_LABELS, RELATIONSHIP_TONES, possibleDuplicates } from "@/lib/customers/hub";
 import { COLUMN_LABELS, columnOf, nextAction } from "@/lib/pipeline/board";
 import { STAGE_LABELS } from "@/lib/enterprise/pipeline";
-import { isPmEnabled } from "@/lib/env";
+import { isFinancialsEnabled, isPmEnabled } from "@/lib/env";
 import { isEsignEnabled } from "@/lib/esign/config";
 import { CONTACT_STATUS_LABEL, MESSAGE_STATUS_LABEL, type ContactStatus, type MessageStatus } from "@/lib/comms/types";
 
@@ -120,7 +120,10 @@ export default async function CustomerDetail({ params, searchParams }: { params:
           {c.companyName && <p className="font-semibold text-ink-soft">{c.companyName}</p>}
           <p className="text-ink-soft">{[c.email, c.phone, c.address].filter(Boolean).join(" · ") || "No contact details yet"}</p>
         </div>
-        <NewBidForCustomer guide="customer.new-bid" customer={{ id: c.id, name: c.name, email: c.email, phone: c.phone, address: c.address }} />
+        <div className="flex flex-wrap items-center gap-2">
+          {isFinancialsEnabled() && <Link href={`/financials/customers/${c.id}`} className="inline-flex min-h-10 items-center rounded-lg border border-line px-3 text-sm font-semibold hover:bg-black/5" data-testid="customer-ledger-link">Financial ledger</Link>}
+          <NewBidForCustomer guide="customer.new-bid" customer={{ id: c.id, name: c.name, email: c.email, phone: c.phone, address: c.address }} />
+        </div>
       </div>
 
       <nav aria-label="Customer sections" className="flex gap-1 overflow-x-auto border-b border-line" data-testid="customer-detail-tabs" data-guide="customer.tabs">

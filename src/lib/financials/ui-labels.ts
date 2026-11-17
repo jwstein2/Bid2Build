@@ -24,7 +24,7 @@ export const REPORT_LABELS: Record<ReportKey, string> = {
   sales_tax_placeholder: "Sales tax (coming later)", vendor_spend: "Vendor spend", material_spend: "Material spend", tm_billing: "Time & materials billing",
 };
 export const REPORT_HREF: Partial<Record<ReportKey, string>> = {
-  ar_aging: "/financials/records?view=invoices&filter=open", job_profitability: "/financials/records?view=jobs", budget_vs_actual: "/financials/records?view=jobs",
+  ar_aging: "/financials/receivables", job_profitability: "/financials/records?view=jobs", budget_vs_actual: "/financials/records?view=jobs",
   cost_by_code: "/financials/records?view=costs", commitments: "/financials/records?view=commitments", payments_received: "/financials/records?view=payments",
   vendor_spend: "/financials/records?view=costs", material_spend: "/financials/records?view=costs&filter=material",
 };

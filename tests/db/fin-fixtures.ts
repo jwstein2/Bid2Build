@@ -45,7 +45,7 @@ export async function setStage(pool: Pool, id: string, stage: string) {
 export const SCHEDULE = [{ label: "Deposit", percent: "30" }, { label: "Framing", percent: "20" }, { label: "Completion", percent: "50" }];
 
 /** An accepted (Won) bid with one proposal version: total 40,000 = 37,000 + 3,000 tax; schedule 30/20/50. */
-export async function wonBid(pool: Pool, u: string, companyId: string | null, opts: { title?: string; total?: string; schedule?: unknown[]; trades?: string[]; won?: boolean } = {}) {
+export async function wonBid(pool: Pool, u: string, companyId: string | null, opts: { title?: string; total?: string; tax?: string; schedule?: unknown[]; trades?: string[]; won?: boolean; items?: Row[] } = {}) {
   const trades = opts.trades ?? ["decks", "electrical"];
   const customer = (await pool.query("insert into public.customers (user_id, name, email, project_address) values ($1, 'Pat Rivera', 'pat@example.test', '1 Main St') returning id", [u])).rows[0].id as string;
   if (companyId) await pool.query("update public.customers set company_id = $2 where id = $1", [customer, companyId]).catch(() => {});
@@ -60,7 +60,7 @@ export async function wonBid(pool: Pool, u: string, companyId: string | null, op
     estimate: {
       trades,
       groups: [{ id: "g1", name: "Framing", trade: "decks" }, { id: "g2", name: "Wiring", trade: "electrical" }],
-      items: [
+      items: opts.items ?? [
         { id: "i1", groupId: "g1", costType: "material", quantity: "10", unitCost: "100.555" },
         { id: "i2", groupId: "g1", costType: "labor", quantity: "8", unitCost: "50" },
         { id: "i3", groupId: "g2", costType: "subcontractor", quantity: "1", unitCost: "2000" },
@@ -69,10 +69,11 @@ export async function wonBid(pool: Pool, u: string, companyId: string | null, op
     },
   };
   const proposal = { paymentSchedule: opts.schedule ?? SCHEDULE.map((s) => ({ ...s, amount: "$0.00" })) };
-  const subtotal = (Number(total) - 3000).toFixed(2);
+  const tax = opts.tax ?? "3000.00";
+  const subtotal = (Number(total) - Number(tax)).toFixed(2);
   const v1 = (await pool.query(
     `insert into public.estimate_versions (estimate_id, user_id, version_number, content_hash, snapshot, proposal, total_cost, subtotal, tax, total)
-     values ($1, $2, 1, $3, $4, $5, 3405.55, $6, 3000, $7) returning id`, [id, u, h(id + "v1"), snapshot, proposal, subtotal, total])).rows[0].id as string;
+     values ($1, $2, 1, $3, $4, $5, 3405.55, $6, $8, $7) returning id`, [id, u, h(id + "v1"), snapshot, proposal, subtotal, total, tax])).rows[0].id as string;
   if (opts.won !== false) await setStage(pool, id, "won");
   return { id, v1, customer: cust };
 }

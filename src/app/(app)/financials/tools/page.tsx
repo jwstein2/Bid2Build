@@ -17,7 +17,7 @@ const GROUPS: { title: string; tools: Tool[] }[] = [
     { label: "Payment schedule milestones", href: "/financials/records?view=milestones", needs: "view_project_financials" },
     { label: "Invoices", href: "/financials/records?view=invoices", needs: "view_project_financials" },
     { label: "Draft invoices", href: "/financials/records?view=invoices&filter=draft", needs: "create_invoices" },
-    { label: "Receivables aging", href: "/financials/records?view=invoices&filter=open", needs: "view_company_financials" },
+    { label: "Accounts receivable (aging, collections)", href: "/financials/receivables", needs: "view_project_financials" },
     { label: "Payments received", href: "/financials/records?view=payments", needs: "view_company_financials" },
     { label: "Unapplied payments", href: "/financials/records?view=payments&filter=unapplied", needs: "view_company_financials" },
   ] },
@@ -36,7 +36,7 @@ const GROUPS: { title: string; tools: Tool[] }[] = [
     { label: "AI & Automation", href: "/company/ai-automation", needs: "manage_financial_config" },
   ] },
   { title: "Coming later", tools: [
-    { label: "Invoice PDFs", note: "Next Phase 1 update" }, { label: "Sending invoice & receipt emails", note: "Turns on after approval" },
+    { label: "Sending invoice & receipt emails", note: "Turns on after approval" },
     { label: "Accountant CSV export", note: "Next Phase 1 update" }, { label: "Audit log viewer", note: "Next Phase 1 update" },
     { label: "Progress billing (schedule of values)", note: "Phase 1b" }, { label: "Retainage", note: "Phase 1b" },
     { label: "Time & materials billing", note: "Later" }, { label: "Bank import & reconciliation", note: "Phase 2" }, { label: "Online card / ACH payments", note: "Phase 3" },

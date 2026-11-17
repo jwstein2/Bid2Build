@@ -352,12 +352,14 @@ export function CreditDialog({ open, onOpenChange, jobId, invoices, onDone }: { 
 }
 
 /** Void with a reason (issued invoice or payment). The record and its number stay; it just stops counting. */
-export function VoidDialog({ target, onOpenChange, onDone }: { target: { kind: "invoice" | "payment"; id: string; label: string } | null; onOpenChange: (o: boolean) => void; onDone: () => void }) {
+export function VoidDialog({ target, onOpenChange, onDone }: { target: { kind: "invoice" | "payment" | "bill_payment"; id: string; label: string } | null; onOpenChange: (o: boolean) => void; onDone: () => void }) {
   const [reason, setReason] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const save = async () => {
     if (!target) return;
-    const r = await finAction(target.kind === "invoice" ? { action: "void_invoice", invoiceId: target.id, reason: reason.trim() } : { action: "void_payment", paymentId: target.id, reason: reason.trim() });
+    const r = await finAction(target.kind === "invoice" ? { action: "void_invoice", invoiceId: target.id, reason: reason.trim() }
+      : target.kind === "bill_payment" ? { action: "void_bill_payment", billPaymentId: target.id, reason: reason.trim() }
+      : { action: "void_payment", paymentId: target.id, reason: reason.trim() });
     if (!r.ok) return setErr(r.message);
     setReason(""); onDone(); onOpenChange(false);
   };
