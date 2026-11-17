@@ -79,10 +79,8 @@ export async function PUT(req: Request) {
     if (b.timezone !== undefined) patch.timezone = safeTz(b.timezone);
   }
   if (b.updatesMode !== undefined) {
-    if (b.updatesMode === "automatic" && cur.updatesMode !== "automatic") {
-      if (!has("enable_auto_project_updates")) return fail(403, "forbidden", "Only someone your owner allowed can turn on automatic sending.");
-      if (!b.confirmAutomatic) return fail(400, "confirm_required", "Confirm that project updates may send without review.");
-    }
+    // Automatic project updates are confirmed per project (with the disclaimer), never as a company default.
+    if (b.updatesMode === "automatic") return fail(400, "per_project", "Automatic sending is turned on for each project in its Customer updates panel.");
     if (!has("configure_project_updates")) return fail(403, "forbidden", "You can't change project update settings.");
     patch.updates_mode = b.updatesMode;
   }

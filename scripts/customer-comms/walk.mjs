@@ -170,7 +170,18 @@ for (const [tab, file, test] of [
 // 4. Settings: audience review, template preview, automatic mode guarded
 {
   const { ctx, page } = await open(`${C}?tab=settings`);
-  check("automatic nurture disabled without reply monitoring", await page.locator("#n-mode option[value=automatic]").isDisabled().catch(() => false));
+  check("V6.1: follow-up sending mode is a fixed Review first setting (no dead dropdown)", (await page.locator("#n-mode").count()) === 0 && (await page.getByTestId("nurture-mode-fixed").innerText()).includes("Review first"));
+  check("V6.1: explains when automatic becomes available", (await page.getByTestId("nurture-mode-fixed").innerText()).includes("reply monitoring"));
+  check("V6.1: project update default is fixed Review first (automatic is per project)", (await page.locator("#u-mode").count()) === 0 && (await page.getByTestId("updates-mode-fixed").count()) === 1);
+  // Saving a setting shows feedback that stays visible near the control.
+  await page.route("**/api/comms/settings", (r) => r.fulfill({ json: { settings } }));
+  await page.locator("#n-freq").selectOption("12"); await page.waitForTimeout(500);
+  const fb = page.getByTestId("comms-feedback");
+  check("V6.1: saving shows a visible confirmation", (await fb.count()) > 0 && (await fb.isVisible()));
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight)); await page.waitForTimeout(300);
+  const box = await fb.boundingBox();
+  check("V6.1: confirmation stays in view after scrolling down the settings", Boolean(box) && box.y >= 0 && box.y < 120);
+  await page.screenshot({ path: `${dir}/08b-settings-saved-feedback-scrolled-desktop.png` });
   await page.screenshot({ path: `${dir}/08-automation-settings-desktop.png`, fullPage: true });
   await ctx.close();
 }
