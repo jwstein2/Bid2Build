@@ -10,7 +10,8 @@ const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "DENY" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+  // geolocation=(self): the time clock asks for location once, at a punch, only when the person ticks the box.
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(self)" },
   // HTTPS-only on real deploys. No includeSubDomains/preload until the production domain is settled.
   ...(deployContext === "local" ? [] : [{ key: "Strict-Transport-Security", value: "max-age=31536000" }]),
   // Keep every non-production deploy (previews, branch deploys) out of search results.

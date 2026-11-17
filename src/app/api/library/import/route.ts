@@ -19,6 +19,7 @@ const opSchema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("apply"),
     supplierName: z.string().trim().min(1, "Enter the supplier's name").max(120),
+    supplierId: z.string().uuid().optional(),
     fileName: z.string().max(255).optional(),
     effectiveOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
     rows: z.array(row).min(1, "Pick at least one row").max(MAX_IMPORT_ROWS),
@@ -47,7 +48,7 @@ export async function GET() {
     imports: (data ?? []).map((r: any) => ({
       id: r.id, supplierName: r.supplier_name, fileName: r.file_name, effectiveOn: String(r.effective_on).slice(0, 10), createdAt: r.created_at,
       created: r.created_count, updated: r.updated_count, unchanged: r.unchanged_count, status: r.status,
-      restored: r.restored_count, kept: r.kept_count,
+      restored: r.restored_count, kept: r.kept_count, supplierId: r.supplier_id ?? null,
     })),
   });
 }
@@ -78,6 +79,12 @@ export async function POST(req: Request) {
     const code = Object.keys(MESSAGES).find((k) => error.message.includes(k));
     if (code) return fail(MESSAGES[code][0], code, MESSAGES[code][1]);
     return fail(500, "import_failed", "Could not import the price list. Nothing was changed.");
+  }
+  // Link the import to the supplier directory (the chosen supplier, or one found / added by name).
+  // Best effort: the import itself already succeeded, and before the team-records SQL this is a no-op.
+  if (o.action === "apply" && (data as { importId?: string } | null)?.importId) {
+    const link = await supabase.rpc("price_import_link_supplier", { p_import_id: (data as { importId: string }).importId, p_supplier_id: o.supplierId ?? null });
+    if (!link.error && link.data) (data as Record<string, unknown>).supplierId = link.data;
   }
   return json({ ok: true, result: data });
 }
