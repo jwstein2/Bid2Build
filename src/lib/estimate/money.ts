@@ -29,8 +29,12 @@ export function toDec(value: string | number | null | undefined): { value: Dec; 
 
 export const round2 = (d: Dec): Dec => d.toDecimalPlaces(2, D.ROUND_HALF_UP);
 
-export function formatCurrency(amount: string | Dec, opts: { cents?: boolean } = {}): string {
-  const d = typeof amount === "string" ? new D(amount || 0) : amount;
+/**
+ * Accepts a decimal string, a Decimal, or a plain number. Supabase (PostgREST) returns Postgres `numeric`
+ * columns as JSON numbers, so database rows can hand this a number even when the type says string.
+ */
+export function formatCurrency(amount: string | number | Dec | null | undefined, opts: { cents?: boolean } = {}): string {
+  const d = D.isDecimal(amount) ? (amount as Dec) : new D(typeof amount === "number" && Number.isFinite(amount) ? amount : String(amount ?? "") || 0);
   const cents = opts.cents ?? true;
   const fixed = cents ? round2(d) : d.toDecimalPlaces(0, D.ROUND_HALF_UP);
   const negative = fixed.isNegative() && !fixed.isZero();
