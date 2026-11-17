@@ -181,6 +181,7 @@ d("V5.1 Project Financials + Accounts Receivable (database)", () => {
     const { readFileSync } = await import("node:fs");
     const up = readFileSync("supabase/migrations/20261126001000_fin_v5_ar_job_summary.sql", "utf8");
     const down = readFileSync("docs/financials/rollback_20261126001000.sql", "utf8");
+    await pool.query(readFileSync("docs/financials/rollback_20261201007000.sql", "utf8"));   // newer objects that read fin_bill_payments
     expect(await fails(pool.query(down))).toBe("bill payments exist; keep this migration");
     await pool.query("rollback").catch(() => {});
     await pool.query("alter table public.fin_bill_payments disable trigger user");
