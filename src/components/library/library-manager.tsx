@@ -1,9 +1,11 @@
 "use client";
-import { ChevronRight, Layers, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { Building2, ChevronRight, Layers, Pencil, Plus, Ruler, Search, Sparkles, Star, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { formatCurrency } from "@/lib/estimate/money";
 import { COST_TYPES, UNIT_ABBR, tradeName } from "@/lib/trades/catalog";
-import { frequentItems, matchesQuery, organizeLibrary, type SavedItem, type SavedStack } from "@/lib/library/saved-items";
+import { frequentItems, matchesQuery, organizeLibrary, type SavedItem, type SavedStack, type StackScale } from "@/lib/library/saved-items";
+import { STARTER_ASSEMBLIES, perLabel, starterStack } from "@/lib/library/assemblies";
+import { ScaleFields } from "./scale-stack";
 import { useLibrary, type Library } from "../builder/library";
 import { Button } from "../ui/button";
 import { Card } from "../ui/misc";
@@ -14,6 +16,16 @@ const fmtDay = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString("en-U
 const typeLabel = (t: string) => COST_TYPES.find((c) => c.value === t)?.label ?? t;
 export const rateLabel = (s: Pick<SavedItem, "unitCost" | "unit">) =>
   s.unitCost ? `${formatCurrency(s.unitCost)} / ${UNIT_ABBR[s.unit] ?? s.unit}` : `${UNIT_ABBR[s.unit] ?? s.unit} · no rate`;
+
+/** Star toggle: favorites lead the builder's picker for quick add. */
+export function FavoriteStar({ on, name, onToggle }: { on: boolean; name: string; onToggle: () => void }) {
+  return (
+    <button type="button" onClick={onToggle} aria-pressed={on} aria-label={on ? `Remove ${name} from favorites` : `Add ${name} to favorites`} data-testid="fav-toggle"
+      className={`inline-flex min-h-11 min-w-11 items-center justify-center rounded md:min-h-9 md:min-w-9 ${on ? "text-warn" : "text-muted hover:text-warn"}`}>
+      <Star className="h-4 w-4" fill={on ? "currentColor" : "none"} aria-hidden />
+    </button>
+  );
+}
 
 /** Two-tap delete in place (same pattern as saved customers and the bid list). */
 export function ConfirmRemove({ name, onConfirm, compact }: { name: string; onConfirm: () => Promise<unknown> | void; compact?: boolean }) {
@@ -135,14 +147,38 @@ export function LibraryManager() {
 
       <section aria-labelledby="saved-stacks-h">
         <h2 id="saved-stacks-h" className="mb-1 font-display text-xl font-bold text-navy">Saved Stacks</h2>
-        <p className="mb-2 text-sm text-ink-soft">A stack is a group of rows you add together. In an estimate, select rows with their checkboxes and choose <b>Save Stack</b>.</p>
+        <p className="mb-2 text-sm text-ink-soft">A stack is a group of rows you add together. In an estimate, select rows with their checkboxes and choose <b>Save Stack</b>. Turn on scaling and its quantities follow a measurement, like roof squares or wall area.</p>
         {!lib.stacks.length ? (
           <Card className="p-6 text-center text-sm text-muted">No saved stacks yet.</Card>
         ) : !stacks.length ? (
           <Card className="p-6 text-center text-sm text-muted">No stacks match “{q}”.</Card>
         ) : (
-          <Card><ul className="divide-y divide-line">{stacks.map((s) => <StackRow key={s.id} stack={s} lib={lib} onRemoved={() => say(`Deleted stack “${s.name}”.`)} />)}</ul></Card>
+          <Card><ul className="divide-y divide-line">{stacks.map((s) => <StackRow key={s.id} stack={s} lib={lib} say={say} onRemoved={() => say(`Deleted stack “${s.name}”.`)} />)}</ul></Card>
         )}
+      </section>
+
+      <section aria-labelledby="starters-h" data-testid="starter-assemblies">
+        <h2 id="starters-h" className="mb-1 font-display text-xl font-bold text-navy">Starter assemblies</h2>
+        <p className="mb-2 text-sm text-ink-soft">Ready-made scaling stacks with common starting ratios and no prices. Save one to your stacks, then set your rates and adjust the ratios to how you build.</p>
+        <Card>
+          <ul className="divide-y divide-line">
+            {STARTER_ASSEMBLIES.map((x) => {
+              const saved = lib.stacks.some((s) => s.starterKey === x.key && s.canEdit);
+              return (
+                <li key={x.key} className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 text-sm">
+                  <div className="min-w-0 flex-1">
+                    <p className="flex items-center gap-1.5 font-medium"><Sparkles className="h-4 w-4 text-brand" aria-hidden />{x.name}<span className="text-xs font-normal text-muted">· {tradeName(x.trade ?? "")} · per {UNIT_ABBR[x.scale!.unit] ?? x.scale!.unit}</span></p>
+                    <p className="text-xs text-muted">{x.summary}</p>
+                  </div>
+                  <Button size="sm" variant={saved ? "ghost" : "secondary"} disabled={saved} data-testid="starter-save"
+                    onClick={async () => { const r = await lib.addStack(starterStack(x)); say(r.ok ? `Added “${x.name}” to your stacks. Set your rates on each row.` : r.message); }}>
+                    {saved ? "In your stacks" : "Save to my stacks"}
+                  </Button>
+                </li>
+              );
+            })}
+          </ul>
+        </Card>
       </section>
       <TargetMargin initial={lib.targetMarginPct ?? ""} onSaved={(v) => say(v ? `Target margin set to ${v}%.` : "Target margin cleared.")} />
     </div>
@@ -153,7 +189,7 @@ function ItemRow({ item: i, lib, onEdit, onRemoved }: { item: SavedItem; lib: Li
   return (
     <li className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-2 text-sm">
       <div className="min-w-0 flex-1">
-        <p className="font-medium">{i.name}</p>
+        <p className="font-medium">{i.name}{i.favorite && <Star className="ml-1 inline h-3.5 w-3.5 text-warn" fill="currentColor" aria-label="Favorite" />}</p>
         <p className="text-xs text-muted">{typeLabel(i.costType)}{i.quantity ? ` · default qty ${i.quantity}` : ""}{i.treatment === "pass_through" ? " · billed at cost" : ""}</p>
         {i.priceSource && i.priceSource !== "manual" && (
           <p className="text-xs text-muted" data-testid="item-price-source">
@@ -163,6 +199,7 @@ function ItemRow({ item: i, lib, onEdit, onRemoved }: { item: SavedItem; lib: Li
       </div>
       <span className="tabular font-semibold">{rateLabel(i)}</span>
       <span className="flex items-center">
+        <FavoriteStar on={Boolean(i.favorite)} name={i.name} onToggle={() => void lib.toggleFavorite("item", i.id, !i.favorite)} />
         <button type="button" onClick={onEdit} className="inline-flex min-h-11 items-center gap-1 rounded px-2 text-sm text-brand hover:bg-brand-tint md:min-h-9" aria-label={`Edit ${i.name}`}><Pencil className="h-4 w-4" aria-hidden />Edit</button>
         <ConfirmRemove name={i.name} onConfirm={async () => { const r = await lib.removeItem(i.id); if (r.ok) onRemoved(); }} />
       </span>
@@ -170,8 +207,10 @@ function ItemRow({ item: i, lib, onEdit, onRemoved }: { item: SavedItem; lib: Li
   );
 }
 
-function StackRow({ stack: s, lib, onRemoved }: { stack: SavedStack; lib: Library; onRemoved: () => void }) {
+function StackRow({ stack: s, lib, say, onRemoved }: { stack: SavedStack; lib: Library; say: (m: string) => void; onRemoved: () => void }) {
   const [renaming, setRenaming] = useState(false);
+  const [scaling, setScaling] = useState(false);
+  const canEdit = s.canEdit !== false;
   const [name, setName] = useState(s.name);
   const [err, setErr] = useState<string | null>(null);
   return (
@@ -184,19 +223,31 @@ function StackRow({ stack: s, lib, onRemoved }: { stack: SavedStack; lib: Librar
             <Button size="sm" variant="ghost" onClick={() => { setRenaming(false); setName(s.name); }}>Cancel</Button>
           </form>
         ) : (
-          <details className="group min-w-0 flex-1">
-            <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 font-medium [&::-webkit-details-marker]:hidden md:min-h-9">
+          <details className="group min-w-0 basis-full">
+            <summary className="flex min-h-11 cursor-pointer list-none flex-wrap items-center gap-x-2 gap-y-1 font-medium [&::-webkit-details-marker]:hidden md:min-h-9">
               <ChevronRight className="h-3.5 w-3.5 shrink-0 transition-transform group-open:rotate-90" aria-hidden />
               <Layers className="h-4 w-4 shrink-0 text-muted" aria-hidden />
-              <span className="truncate">{s.name}</span>
+              <span className="min-w-0 break-words">{s.name}</span>
+              {s.company && <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-tint px-2 py-0.5 text-[11px] font-semibold text-brand" data-testid="stack-company"><Building2 className="h-3 w-3" aria-hidden />Company</span>}
+              {s.scale && <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-paper px-2 py-0.5 text-[11px] font-semibold text-ink-soft" data-testid="stack-scales"><Ruler className="h-3 w-3" aria-hidden />Scales by {s.scale.label.toLowerCase()}</span>}
               <span className="shrink-0 text-xs font-normal text-muted">{s.items.length} items{s.trade ? ` · ${tradeName(s.trade)}` : ""}</span>
             </summary>
             <ul className="mb-2 ml-6 mt-1 space-y-0.5 text-xs text-ink-soft">
-              {s.items.map((i) => <li key={i.id} className="flex justify-between gap-3"><span>{i.name} · {i.quantity} {UNIT_ABBR[i.unit] ?? i.unit} · {typeLabel(i.costType)}</span><span className="tabular">{rateLabel(i)}</span></li>)}
+              {s.items.map((i) => <li key={i.id} className="flex flex-wrap justify-between gap-x-3"><span className="min-w-0">{i.name} · {s.scale ? perLabel(i, s.scale) : `${i.quantity} ${UNIT_ABBR[i.unit] ?? i.unit}`} · {typeLabel(i.costType)}</span><span className="tabular whitespace-nowrap">{rateLabel(i)}</span></li>)}
             </ul>
           </details>
         )}
         {!renaming && (
+          <span className="flex flex-wrap items-center">
+            <FavoriteStar on={Boolean(s.favorite)} name={s.name} onToggle={() => void lib.toggleFavorite("stack", s.id, !s.favorite)} />
+            {canEdit && <button type="button" onClick={() => setScaling(!scaling)} className="inline-flex min-h-11 items-center gap-1 rounded px-2 text-sm text-brand hover:bg-brand-tint md:min-h-9" aria-expanded={scaling} data-testid="stack-scale-edit"><Ruler className="h-4 w-4" aria-hidden />Scaling</button>}
+            {lib.canShare && canEdit && (
+              <button type="button" data-testid="stack-share-toggle" onClick={async () => { const r = await lib.shareStack(s.id, !s.company); say(r.ok ? (s.company ? `“${s.name}” is private again.` : `Shared “${s.name}” with your company.`) : r.message); }}
+                className="inline-flex min-h-11 items-center gap-1 rounded px-2 text-sm text-brand hover:bg-brand-tint md:min-h-9"><Building2 className="h-4 w-4" aria-hidden />{s.company ? "Make private" : "Share with company"}</button>
+            )}
+          </span>
+        )}
+        {!renaming && canEdit && (
           <span className="flex items-center">
             <button type="button" onClick={() => setRenaming(true)} className="inline-flex min-h-11 items-center gap-1 rounded px-2 text-sm text-brand hover:bg-brand-tint md:min-h-9" aria-label={`Rename ${s.name}`}><Pencil className="h-4 w-4" aria-hidden />Rename</button>
             <ConfirmRemove name={s.name} onConfirm={async () => { const r = await lib.removeStack(s.id); if (r.ok) onRemoved(); }} />
@@ -204,7 +255,44 @@ function StackRow({ stack: s, lib, onRemoved }: { stack: SavedStack; lib: Librar
         )}
       </div>
       {err && <p role="alert" className="mt-1 text-xs text-danger">{err}</p>}
+      {scaling && <ScaleEditor stack={s} onCancel={() => setScaling(false)} onSave={async (scale, items) => { const r = await lib.setStackScale(s.id, scale, items); if (r.ok) { setScaling(false); say(scale ? `“${s.name}” now scales by ${scale.label.toLowerCase()}.` : `“${s.name}” uses fixed quantities again.`); } else setErr(r.message); }} />}
     </li>
+  );
+}
+
+type RowScale = { id: string; per?: string; wastePct?: string; roundUp?: boolean };
+
+/** Turns scaling on or off for a stack, and sets each row's amount per unit, waste and round-up. */
+function ScaleEditor({ stack, onSave, onCancel }: { stack: SavedStack; onSave: (scale: StackScale | null, items: RowScale[]) => Promise<void>; onCancel: () => void }) {
+  const [scale, setScale] = useState<StackScale | null>(stack.scale ?? null);
+  const [rows, setRows] = useState<RowScale[]>(stack.items.map((i) => ({ id: i.id, per: i.per ?? "", wastePct: i.wastePct ?? "", roundUp: Boolean(i.roundUp) })));
+  const set = (id: string, patch: Partial<RowScale>) => setRows((r) => r.map((x) => (x.id === id ? { ...x, ...patch } : x)));
+  const bad = rows.some((r) => (r.per && !/^\d*(\.\d{0,6})?$/.test(r.per)) || (r.wastePct && !/^(\d{1,2}(\.\d{1,2})?|100)$/.test(r.wastePct)));
+  const u = scale ? UNIT_ABBR[scale.unit] ?? scale.unit : "";
+  return (
+    <form className="mt-2 rounded-lg border border-line bg-paper p-3" data-testid="scale-editor" onSubmit={(e) => { e.preventDefault(); if (!bad && (!scale || scale.label.trim())) void onSave(scale, rows.map((r) => ({ ...r, per: r.per || undefined, wastePct: r.wastePct || undefined }))); }}>
+      <ScaleFields value={scale} onChange={setScale} />
+      {scale && (
+        <div className="mt-3 space-y-2">
+          <p className="text-xs text-muted">Amount per 1 {u}. Leave it blank to keep a row&apos;s fixed quantity (a dumpster, a permit).</p>
+          {stack.items.map((i) => { const r = rows.find((x) => x.id === i.id)!; return (
+            <div key={i.id} className="flex flex-wrap items-center gap-2 text-sm">
+              <span className="min-w-0 basis-full sm:basis-0 sm:flex-1">{i.name} <span className="text-xs text-muted">({UNIT_ABBR[i.unit] ?? i.unit}{r.per ? "" : `, fixed ${i.quantity}`})</span></span>
+              <input className="field field-sm w-24 tabular" inputMode="decimal" value={r.per} onChange={(e) => set(i.id, { per: e.target.value.trim() })} aria-label={`${i.name} per ${u}`} placeholder="fixed" data-testid="scale-per" />
+              <span className="text-xs text-muted">per {u}</span>
+              <input className="field field-sm w-16 tabular" inputMode="decimal" value={r.wastePct} onChange={(e) => set(i.id, { wastePct: e.target.value.trim() })} aria-label={`${i.name} waste percent`} placeholder="0" />
+              <span className="text-xs text-muted">% waste</span>
+              <label className="flex min-h-9 items-center gap-1 text-xs"><input type="checkbox" checked={Boolean(r.roundUp)} onChange={(e) => set(i.id, { roundUp: e.target.checked })} />Round up</label>
+            </div>
+          ); })}
+        </div>
+      )}
+      {bad && <p role="alert" className="mt-2 text-xs text-danger">Use numbers only (waste 0 to 100).</p>}
+      <div className="mt-3 flex justify-end gap-2">
+        <Button size="sm" variant="ghost" onClick={onCancel}>Cancel</Button>
+        <Button size="sm" type="submit" disabled={bad} data-testid="scale-save">Save scaling</Button>
+      </div>
+    </form>
   );
 }
 

@@ -1,10 +1,11 @@
 "use client";
-import { Check, Layers, Lock, Pencil, Plus, Search } from "lucide-react";
+import { Building2, Check, Layers, Lock, Pencil, Plus, Ruler, Search, Sparkles, Star } from "lucide-react";
 import { useEffect, useRef, useState, type Dispatch, type ReactNode } from "react";
 import type { Estimate, EstimateGroup, LineItem } from "@/lib/estimate/types";
 import { UNIT_ABBR, getTrade, parseTemplateItem, type TemplateItem } from "@/lib/trades/catalog";
 import { sectionTrade } from "@/lib/estimate/trades";
-import { frequentItems, lineContext, lineFromSaved, matchesQuery, type SavedItem } from "@/lib/library/saved-items";
+import { frequentItems, lineContext, lineFromSaved, matchesQuery, type SavedItem, type SavedStack, type StackItem, type StackScale } from "@/lib/library/saved-items";
+import { startersFor, starterStack } from "@/lib/library/assemblies";
 import { cn } from "@/lib/cn";
 import { useDismiss } from "@/components/ui/use-dismiss";
 import { Button } from "../ui/button";
@@ -14,6 +15,7 @@ import type { Library } from "./library";
 import { LibraryUpgradeDialog } from "../library/premium-lock";
 import { SavedItemForm } from "../library/saved-item-form";
 import { ConfirmRemove, rateLabel } from "../library/library-manager";
+import { ScaleFields, ScaleStackForm, isValidMeasure } from "../library/scale-stack";
 
 /**
  * Builder-side Saved Items actions: Save Item (one row), Save Stack (selected rows), edit/delete from
@@ -25,6 +27,10 @@ export function useSavedItemsUi(lib: Library, estimate: Estimate) {
   const [stackName, setStackName] = useState("");
   const [stackErr, setStackErr] = useState<string | null>(null);
   const [editing, setEditing] = useState<SavedItem | null>(null);
+  const [stackScale, setStackScale] = useState<StackScale | null>(null);
+  const [stackMeasure, setStackMeasure] = useState("");
+  const [stackShare, setStackShare] = useState(false);
+  const [scaling, setScaling] = useState<{ stack: SavedStack; starter: boolean; apply: (rows: (StackItem & { quantity: string })[]) => void } | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const timer = useRef<number | undefined>(undefined);
 
@@ -50,17 +56,28 @@ export function useSavedItemsUi(lib: Library, estimate: Estimate) {
   const saveStack = (rows: LineItem[]): boolean => {
     if (!lib.access) { setUpgradeOpen(true); return false; }
     setStackRows(rows.filter((r) => !r.isExample));
-    setStackName(""); setStackErr(null);
+    setStackName(""); setStackErr(null); setStackScale(null); setStackMeasure(""); setStackShare(false);
     return true;
   };
 
   const confirmStack = async () => {
     if (!stackRows || !stackName.trim()) return;
     const tradesUsed = [...new Set(stackRows.map((r) => { const g = groupOf(r); return g ? sectionTrade(estimate, g) : estimate.trades[0]; }))];
-    const r = await lib.saveStack(stackName, stackRows, tradesUsed.length === 1 ? tradesUsed[0] || null : null);
+    if (stackScale && (!stackScale.label.trim() || !isValidMeasure(stackMeasure))) { setStackErr("Enter what these quantities were measured for, or turn scaling off."); return; }
+    const r = await lib.saveStack(stackName, stackRows, tradesUsed.length === 1 ? tradesUsed[0] || null : null, { scale: stackScale, measure: stackMeasure, company: stackShare });
     if (r.ok) { say(`Saved stack “${stackName.trim()}” (${stackRows.length} items).`); setStackRows(null); }
     else if (r.code === "premium_required") { setStackRows(null); setUpgradeOpen(true); }
     else setStackErr(r.message);
+  };
+
+  /** Adds a stack's rows to a section. A scaling stack first asks for the measure. */
+  const addStack = (stack: SavedStack, groupId: string, dispatch: Dispatch<Action>, starter = false) => {
+    const apply = (rows: (StackItem & { quantity: string })[]) => {
+      dispatch({ type: "addItems", groupId, items: rows.map((i) => ({ ...lineFromSaved(i), quantity: i.quantity || "1" })) });
+      say(`Added ${starter ? "starter assembly" : "stack"} “${stack.name}”.`);
+    };
+    if (stack.scale) setScaling({ stack, starter, apply });
+    else apply(stack.items);
   };
 
   const dialogs: ReactNode = (
@@ -76,12 +93,22 @@ export function useSavedItemsUi(lib: Library, estimate: Estimate) {
         <form onSubmit={(e) => { e.preventDefault(); void confirmStack(); }}>
           <label className="label" htmlFor="stack-name">Stack name</label>
           <input id="stack-name" className="field" value={stackName} maxLength={200} onChange={(e) => setStackName(e.target.value)} placeholder="e.g. Standard tear-off package" autoFocus autoComplete="off" />
+          <ScaleFields value={stackScale} onChange={setStackScale} measure={stackMeasure} onMeasure={setStackMeasure} />
+          {lib.canShare && (
+            <label className="mt-3 flex min-h-9 items-center gap-2 text-sm">
+              <input type="checkbox" checked={stackShare} onChange={(e) => setStackShare(e.target.checked)} data-testid="stack-share" />
+              <Building2 className="h-4 w-4 text-brand" aria-hidden /> Share with my company as a template
+            </label>
+          )}
           {stackErr && <p role="alert" className="mt-2 text-sm text-danger">{stackErr}</p>}
           <div className="mt-4 flex justify-end gap-2">
             <Button variant="ghost" onClick={() => setStackRows(null)}>Cancel</Button>
             <Button type="submit" disabled={!stackName.trim()}>Save Stack</Button>
           </div>
         </form>
+      </Modal>
+      <Modal open={scaling !== null} onOpenChange={(o) => !o && setScaling(null)} title={`Add ${scaling?.stack.name ?? "assembly"}`} description={scaling ? `Quantities scale with the ${scaling.stack.scale?.label.toLowerCase()}. Rows are copied in; you can still edit them.` : undefined} wide>
+        {scaling && <ScaleStackForm stack={scaling.stack} estimate={estimate} starter={scaling.starter} onCancel={() => setScaling(null)} onAdd={(rows) => { scaling.apply(rows); setScaling(null); }} />}
       </Modal>
       <Modal open={editing !== null} onOpenChange={(o) => !o && setEditing(null)} title="Edit Saved Item" description="Changes apply to items you add from now on. Rows already in estimates keep their values." wide>
         {editing && (
@@ -97,7 +124,7 @@ export function useSavedItemsUi(lib: Library, estimate: Estimate) {
     </>
   );
 
-  return { ...lib, saveItem, saveStack, editItem: setEditing, upgrade: () => setUpgradeOpen(true), say, dialogs };
+  return { ...lib, saveItem, saveStack, addStackTo: addStack, editItem: setEditing, upgrade: () => setUpgradeOpen(true), say, dialogs };
 }
 
 export type SavedItemsUi = ReturnType<typeof useSavedItemsUi>;
@@ -124,8 +151,27 @@ export function SavedItemsPicker({ group, estimate, suggestions, lib, dispatch }
   const trade = sectionTrade(estimate, group);
   const sug = suggestions.filter((x) => !s || x.name.toLowerCase().includes(s)).slice(0, 20);
   const frequent = s ? [] : frequentItems(lib.items.filter((x) => !x.trade || x.trade === trade), 5);
-  const saved = rankFor(lib.items.filter((x) => matchesQuery(x, q) && !frequent.includes(x)), trade, group.name).slice(0, s ? 30 : 12);
-  const stacks = lib.stacks.filter((x) => !s || x.name.toLowerCase().includes(s)).slice(0, 8);
+  const favItems = s ? [] : lib.items.filter((x) => x.favorite);
+  const favStacks = s ? [] : lib.stacks.filter((x) => x.favorite);
+  const saved = rankFor(lib.items.filter((x) => matchesQuery(x, q) && !frequent.includes(x) && !favItems.includes(x)), trade, group.name).slice(0, s ? 30 : 12);
+  const stacks = lib.stacks.filter((x) => (s ? x.name.toLowerCase().includes(s) : !x.favorite)).slice(0, 8);
+  const starters = startersFor(trade).filter((x) => (s ? x.name.toLowerCase().includes(s) : x.trade === trade)).slice(0, 3);
+  const pickStack = (a: SavedStack, starter = false) => { setOpen(false); lib.addStackTo(a, group.id, dispatch, starter); };
+  const star = (kind: "item" | "stack", id: string, name: string, on: boolean) => (
+    <button type="button" onClick={() => void lib.toggleFavorite(kind, id, !on)} aria-pressed={on} aria-label={on ? `Remove ${name} from favorites` : `Add ${name} to favorites`} data-testid="fav-toggle"
+      className={cn("grid h-10 w-9 shrink-0 place-items-center rounded hover:bg-paper md:h-8 md:w-8", on ? "text-warn" : "text-muted hover:text-warn")}>
+      <Star className="h-3.5 w-3.5" fill={on ? "currentColor" : "none"} aria-hidden />
+    </button>
+  );
+  const stackRow = (a: SavedStack) => (
+    <div key={a.id} className="flex items-center gap-1">
+      <button type="button" className="flex min-h-10 min-w-0 flex-1 items-center justify-between gap-2 rounded px-2 py-1.5 text-left hover:bg-paper md:min-h-8" onClick={() => pickStack(a)} data-testid="pick-stack">
+        <span className="flex min-w-0 items-center gap-1.5">{a.scale ? <Ruler className="h-3.5 w-3.5 shrink-0 text-brand" aria-hidden /> : <Layers className="h-3.5 w-3.5 shrink-0 text-brand" aria-hidden />}<span className="truncate">{a.name}</span>{a.company && <Building2 className="h-3.5 w-3.5 shrink-0 text-muted" aria-label="Company template" />}</span>
+        <span className="shrink-0 text-xs text-muted">{a.scale ? `per ${UNIT_ABBR[a.scale.unit] ?? a.scale.unit}` : `${a.items.length} items`}</span>
+      </button>
+      {star("stack", a.id, a.name, Boolean(a.favorite))}
+    </div>
+  );
   const custom = s && ![...sug, ...saved].some((x) => x.name.toLowerCase() === s) ? parseTemplateItem(q.trim()) : null;
   const heading = "px-2 pt-2 text-[11px] font-bold uppercase tracking-wider text-muted";
 
@@ -142,11 +188,21 @@ export function SavedItemsPicker({ group, estimate, suggestions, lib, dispatch }
           <div className="mt-1 max-h-[min(22rem,60dvh)] overflow-y-auto overscroll-contain text-sm">
             {lib.access ? (
               <>
+                {(favStacks.length > 0 || favItems.length > 0) && <p className={heading} data-testid="picker-favorites">Favorites</p>}
+                {favStacks.map(stackRow)}
+                {favItems.map((f) => (
+                  <div key={`fav-${f.id}`} className="flex items-center gap-1">
+                    <div className="min-w-0 flex-1"><PickRow name={f.name} added={has(f.name)} meta={rateLabel(f)} onPick={() => dispatch({ type: "addItem", groupId: group.id, from: lineFromSaved(f) })} /></div>
+                    {star("item", f.id, f.name, true)}
+                  </div>
+                ))}
                 {stacks.length > 0 && <p className={heading}>Saved Stacks</p>}
-                {stacks.map((a) => (
-                  <button key={a.id} type="button" className="flex min-h-10 w-full items-center justify-between gap-2 rounded px-2 py-1.5 text-left hover:bg-paper md:min-h-8" onClick={() => { dispatch({ type: "addItems", groupId: group.id, items: a.items.map((i) => ({ ...lineFromSaved(i), quantity: i.quantity || "1" })) }); setOpen(false); lib.say(`Added stack “${a.name}”.`); }}>
-                    <span className="flex min-w-0 items-center gap-1.5"><Layers className="h-3.5 w-3.5 shrink-0 text-brand" aria-hidden /><span className="truncate">{a.name}</span></span>
-                    <span className="shrink-0 text-xs text-muted">{a.items.length} items</span>
+                {stacks.map(stackRow)}
+                {starters.length > 0 && <p className={heading}>Starter assemblies</p>}
+                {starters.map((x) => (
+                  <button key={x.key} type="button" className="flex min-h-10 w-full items-center justify-between gap-2 rounded px-2 py-1.5 text-left hover:bg-paper md:min-h-8" onClick={() => pickStack(starterStack(x), true)} data-testid="pick-starter">
+                    <span className="flex min-w-0 items-center gap-1.5"><Sparkles className="h-3.5 w-3.5 shrink-0 text-brand" aria-hidden /><span className="truncate">{x.name}</span></span>
+                    <span className="shrink-0 text-xs text-muted">per {UNIT_ABBR[x.scale!.unit] ?? x.scale!.unit} · no prices</span>
                   </button>
                 ))}
                 {frequent.length > 0 && <p className={heading}>Frequently used</p>}
@@ -158,6 +214,7 @@ export function SavedItemsPicker({ group, estimate, suggestions, lib, dispatch }
                     <div className="min-w-0 flex-1">
                       <PickRow name={f.name} added={has(f.name)} meta={rateLabel(f)} onPick={() => dispatch({ type: "addItem", groupId: group.id, from: lineFromSaved(f) })} />
                     </div>
+                    {star("item", f.id, f.name, Boolean(f.favorite))}
                     <button type="button" onClick={() => { setOpen(false); lib.editItem(f); }} className="grid h-10 w-9 shrink-0 place-items-center rounded text-muted hover:bg-paper hover:text-brand md:h-8 md:w-8" aria-label={`Edit saved item ${f.name}`}><Pencil className="h-3.5 w-3.5" aria-hidden /></button>
                     <ConfirmRemove compact name={`saved item ${f.name}`} onConfirm={async () => { const r = await lib.removeItem(f.id); lib.say(r.ok ? `Deleted “${f.name}” from Saved Items.` : r.message); }} />
                   </div>

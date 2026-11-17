@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isFinancialsEnabled } from "@/lib/env";
+import { SandboxBar } from "@/components/financials/sandbox-bar";
 import { loadFinState } from "@/lib/financials/loaders";
 import { formatCurrency } from "@/lib/estimate/money";
 import { add } from "@/lib/financials/money";
@@ -80,6 +81,7 @@ export default async function Receivables({ searchParams }: { searchParams: Prom
   return (
     <div className="mx-auto max-w-7xl space-y-5" data-testid="fin-receivables" data-guide-page="financials.receivables">
       {crumbs}
+      {access.sandbox && <SandboxBar sandbox canManage={access.permissions.includes("manage_financial_config")} />}
       <header className="flex flex-wrap items-end gap-3">
         <div className="min-w-0 flex-1">
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">Accounting</p>

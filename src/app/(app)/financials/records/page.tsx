@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isFinancialsEnabled } from "@/lib/env";
+import { SandboxBar } from "@/components/financials/sandbox-bar";
 import { loadFinState } from "@/lib/financials/loaders";
 import { formatCurrency } from "@/lib/estimate/money";
 import { ALERT_LABELS, SEVERITY_LABELS, STATE_LABELS } from "@/lib/financials/ui-labels";
@@ -127,6 +128,7 @@ export default async function Records({ searchParams }: { searchParams: Promise<
   return (
     <div className="mx-auto max-w-5xl space-y-4" data-testid={`fin-records-${view}`} data-guide-page="financials.records">
       {crumbs}
+      {state.ctx.access.sandbox && <SandboxBar sandbox canManage={state.ctx.access.permissions.includes("manage_financial_config")} />}
       <h1 className="text-3xl font-extrabold">{VIEWS[view]}{filter ? <span className="ml-2 text-base font-semibold text-muted">({filter.replace(/_/g, " ")})</span> : null}</h1>
       {doAction && <p className="text-sm text-ink-soft">Pick a job to continue.</p>}
       <nav aria-label="Record types" data-guide="fin.record-tabs" className="flex gap-1 overflow-x-auto border-b border-line">
