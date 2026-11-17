@@ -94,6 +94,8 @@ export function AuthDialog({ open, onOpenChange, next, onVerified, title, copy, 
   const [phoneInput, setPhoneInput] = useState(initialPhone ? formatPhone(initialPhone) : "");
   const [phone, setPhone] = useState<string | null>(initialPhone ? normalizePhone(initialPhone) : null);
   const [linkPhone, setLinkPhone] = useState<string | null>(null);
+  // The text to confirm the phone could not be sent: say so plainly instead of asking for a code.
+  const [linkFailed, setLinkFailed] = useState(false);
   const [email, setEmail] = useState(initialEmail ?? "");
   const [marketing, setMarketing] = useState(false);
   const [code, setCode] = useState("");
@@ -207,9 +209,9 @@ export function AuthDialog({ open, onOpenChange, next, onVerified, title, copy, 
       // only attaches it to this account once that code is entered.
       const { error: e2 } = await supabase.auth.updateUser({ phone: linkPhone }).catch((e: unknown) => ({ error: e as { message?: string } }));
       setBusy(false);
-      if (e2) { go("link-code"); setErr(smsErrorMessage(e2, "link")); return; }
-      markSent(linkPhone);
-      go("link-code"); setCooldown(RESEND_COOLDOWN_S);
+      go("link-code");
+      if (e2) { setLinkFailed(isSendFailure(e2)); if (!isSendFailure(e2)) setErr(smsErrorMessage(e2, "link")); return; }
+      setLinkFailed(false); markSent(linkPhone); setCooldown(RESEND_COOLDOWN_S);
       return;
     }
     await finish();
@@ -220,9 +222,13 @@ export function AuthDialog({ open, onOpenChange, next, onVerified, title, copy, 
     setBusy(true); setErr(null); setInfo(null);
     const { error } = await supabase.auth.updateUser({ phone: linkPhone }).catch((e: unknown) => ({ error: e as { message?: string } }));
     setBusy(false);
-    if (error) { setErr(smsErrorMessage(error, "link")); return; }
-    markSent(linkPhone); setCooldown(RESEND_COOLDOWN_S);
-    setInfo(`We texted a new code to ${formatPhone(linkPhone)}.`);
+    if (error) {
+      if (isSendFailure(error)) { setLinkFailed(true); setErr(null); setInfo(null); return; }
+      setErr(smsErrorMessage(error, "link")); return;
+    }
+    const wasFailed = linkFailed;
+    setLinkFailed(false); markSent(linkPhone); setCooldown(RESEND_COOLDOWN_S);
+    setInfo(wasFailed ? null : `We texted a new code to ${formatPhone(linkPhone)}.`);
   }
 
   async function verifyLink() {
@@ -243,7 +249,7 @@ export function AuthDialog({ open, onOpenChange, next, onVerified, title, copy, 
   const defaultLead = `No password needed. Your bid is saved and will be waiting. ${plans.starterCredits} free bids to start, plus ${plans.monthlyCredits} every month.`;
   const heading = (() => {
     if (stage === "phone-new") return "Is this your first time here?";
-    if (stage === "link-code") return "Confirm your phone";
+    if (stage === "link-code") return linkFailed ? "We couldn't add your phone yet" : "Confirm your phone";
     if (copy) return copy.title;
     if (stage === "phone") return title ?? "Create your free account to download";
     if (stage === "phone-code") return "Enter the code we texted you";
@@ -257,7 +263,9 @@ export function AuthDialog({ open, onOpenChange, next, onVerified, title, copy, 
       case "phone-new": return `We don't have a Built2Bid account for ${shown} yet.`;
       case "email": return linkPhone ? `Sign in to your existing account with the email you used before. Then we'll add ${shown} to it, so next time you can sign in by text.` : copy ? copy.emailDescription : defaultLead;
       case "email-code": return copy && !linkPhone ? copy.sentDescription(email.trim()) : `We sent a ${emailLen}-digit code to ${email.trim()}.`;
-      case "link-code": return `You're signed in. We texted a code to ${shown}. Enter it to add this number to your account.`;
+      case "link-code": return linkFailed
+        ? `You're signed in. We couldn't send a text to ${shown} right now, so it wasn't added. Your account works as normal, and you can add your phone later in Account settings.`
+        : `You're signed in. We texted a code to ${shown}. Enter it to add this number to your account.`;
     }
   })();
 
@@ -387,7 +395,14 @@ export function AuthDialog({ open, onOpenChange, next, onVerified, title, copy, 
         </form>
       )}
 
-      {stage === "link-code" && (
+      {stage === "link-code" && linkFailed && (
+        <div className="space-y-3">
+          <Button type="button" className="w-full" size="lg" disabled={busy} onClick={() => { setBusy(true); void finish(); }}>{busy && <Loader2 className="h-4 w-4 animate-spin" />} Continue</Button>
+          <button type="button" className="min-h-11 w-full text-center text-sm text-brand underline" disabled={busy} onClick={() => void resendLink()}>Try texting again</button>
+        </div>
+      )}
+
+      {stage === "link-code" && !linkFailed && (
         <form onSubmit={(ev) => { ev.preventDefault(); void verifyLink(); }} className="space-y-3">
           {codeField("auth-link-code")}
           <Button type="submit" className="w-full" size="lg" disabled={busy || code.length !== codeLen}>{busy && <Loader2 className="h-4 w-4 animate-spin" />} Add phone and continue</Button>
