@@ -8,7 +8,7 @@ import { FinAddonCard } from "@/components/billing/fin-addon";
 import { site } from "@/lib/site";
 import { loadFinState, loadHome, type Figure } from "@/lib/financials/loaders";
 import { canUseAccountantMode } from "@/lib/financials/permissions";
-import { CARDS, KPI_KEYS, QUICK_ACTION_NEEDS, type CardKey } from "@/lib/financials/profiles/catalog";
+import { CARDS, KPI_KEYS, QUICK_ACTIONS, QUICK_ACTION_NEEDS, type CardKey, type QuickAction } from "@/lib/financials/profiles/catalog";
 import { PRESETS } from "@/lib/financials/profiles/presets";
 import { KPI_LABELS, QUICK_ACTION_LABELS, QUICK_ACTION_TARGET, REPORT_HREF, REPORT_LABELS } from "@/lib/financials/ui-labels";
 import { formatCurrency } from "@/lib/estimate/money";
@@ -19,6 +19,7 @@ import { BasisBadge } from "@/components/financials/basis";
 import { AlertsPanel, type AlertRow } from "@/components/financials/alerts-panel";
 import { CustomizeDashboard, ModeToggle } from "@/components/financials/customize-dashboard";
 import { FinStateNotice } from "@/components/financials/fin-state-notice";
+import { ArrangeableCards, ArrangeableQuickActions } from "@/components/financials/home-arrange";
 
 export const metadata: Metadata = { title: "Financials", robots: { index: false } };
 
@@ -27,6 +28,7 @@ const show = (f: Figure) => (f.money ? formatCurrency(f.value) : f.value);
 /**
  * Financials home (Know Your Numbers). Driven by the trade profile + the person's role: which cards, quick
  * actions and reports appear comes from src/lib/financials/profiles; the person can customize and restore.
+ * "Your cards" and the quick actions can be put in a new order by pressing and holding, then dragging.
  * Essential alerts are always shown. Every number opens the records behind it.
  */
 export default async function FinancialsHome() {
@@ -51,7 +53,14 @@ export default async function FinancialsHome() {
   const { data: jobs } = await db.from("fin_jobs").select("id, estimate_id").eq("book_id", ctx.bookId);
   const jobHref = new Map(((jobs ?? []) as { id: string; estimate_id: string }[]).map((j) => [j.id, `/financials/jobs/${j.estimate_id}`] as const));
   const alerts: AlertRow[] = (home.alerts as unknown as AlertRow[]).map((a) => ({ ...a, jobHref: a.job_id ? jobHref.get(a.job_id) ?? null : null }));
-  const quick = profile.quickActions.filter((q) => perms.includes(QUICK_ACTION_NEEDS[q]));
+  const quick = layout.quickActions;
+  const slots = layout.cards.map((c) => ({ key: c.key, visible: c.visible }));
+  const quickNode = (q: QuickAction) => {
+    const target = QUICK_ACTION_TARGET[q];
+    return target && canWrite
+      ? <ButtonLink href={`/financials/records?view=jobs&do=${target}`} variant="secondary" size="sm">{QUICK_ACTION_LABELS[q]}</ButtonLink>
+      : <span className="inline-flex min-h-9 items-center rounded-lg border border-dashed border-line px-3 text-sm text-muted" title="Coming in a later update">{QUICK_ACTION_LABELS[q]} · later</span>;
+  };
   const card = (key: CardKey, size: "md" | "sm" = "md") => {
     const f = home.cards[key];
     if (!f) return null;
@@ -78,7 +87,13 @@ export default async function FinancialsHome() {
       {soloOwner && <FinAddonCard active={Boolean(mySub?.fin_addon)} periodEnd={mySub?.current_period_end ?? null} annual={mySub?.plan === "annual"} hasPlan={Boolean(mySub)} purchasable={isFinBillingConfigured()} />}
       {access.readOnly && !soloOwner && (home.jobs > 0
         ? <Notice tone="warn" title="Read-only">The Financials add-on lapsed. Everything stays readable and exportable; nothing was deleted.</Notice>
-        : <Notice title="Financials isn't on your plan yet">You can look around and set up your trades. Recording invoices, payments and costs turns on with the Financials add-on. For early access, email <a href={`mailto:${site.supportEmail}`} className="font-semibold underline">{site.supportEmail}</a>.</Notice>)}
+        : <Notice title="Financials isn't on your plan yet">
+            <p>You can look around and set up your trades. Recording invoices, payments and costs turns on with the Financials add-on. For early access, email <a href={`mailto:${site.supportEmail}`} className="font-semibold underline">{site.supportEmail}</a>.</p>
+            {/* Company Financials checkout isn't built yet (price not final): show where it will be, not a broken flow. */}
+            <button type="button" disabled aria-disabled className="mt-2 inline-flex min-h-9 cursor-not-allowed items-center rounded-lg border border-dashed border-line px-3 text-sm font-semibold text-muted" data-testid="fin-company-addon-soon">
+              Add Financials for your company · Coming soon
+            </button>
+          </Notice>)}
       {!ctx.configSaved && perms.includes("manage_financial_config") && (
         <Notice title="Tell Financials what kind of work you do">
           Your home page adapts to your trades and how you bill. <Link href="/company/business-config" className="font-semibold underline">Set up Business &amp; Trade Configuration</Link>
@@ -105,21 +120,18 @@ export default async function FinancialsHome() {
       {quick.length > 0 && (
         <section aria-labelledby="fin-quick-h" data-guide="fin.quick">
           <h2 id="fin-quick-h" className="mb-2 font-display text-lg font-extrabold">Quick actions</h2>
-          <div className="flex flex-wrap gap-2">
-            {quick.map((q) => {
-              const target = QUICK_ACTION_TARGET[q];
-              return target && canWrite
-                ? <ButtonLink key={q} href={`/financials/records?view=jobs&do=${target}`} variant="secondary" size="sm">{QUICK_ACTION_LABELS[q]}</ButtonLink>
-                : <span key={q} className="inline-flex min-h-9 items-center rounded-lg border border-dashed border-line px-3 text-sm text-muted" title="Coming in a later update">{QUICK_ACTION_LABELS[q]} · later</span>;
-            })}
-          </div>
+          {ctx.quickActionsReady && quick.length > 1
+            ? <ArrangeableQuickActions actions={quick.map((q) => ({ key: q, title: QUICK_ACTION_LABELS[q], node: quickNode(q) }))} cards={ctx.stored.user?.cards ?? []} kpis={layout.kpis} />
+            : <div className="flex flex-wrap gap-2">{quick.map((q) => <span key={q} className="contents">{quickNode(q)}</span>)}</div>}
         </section>
       )}
 
       {regular.length > 0 && (
         <section aria-labelledby="fin-cards-h" data-guide="fin.cards">
           <h2 id="fin-cards-h" className="mb-2 font-display text-lg font-extrabold">Your cards</h2>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">{regular.map((c) => card(c.key))}</div>
+          {regular.length > 1
+            ? <ArrangeableCards cards={regular.map((c) => ({ key: c.key, title: CARDS[c.key].title, node: card(c.key) }))} all={slots} kpis={layout.kpis} locked={regular.filter((c) => c.locked).map((c) => c.key)} />
+            : <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">{regular.map((c) => card(c.key))}</div>}
         </section>
       )}
 
@@ -136,7 +148,11 @@ export default async function FinancialsHome() {
 
       <CustomizeDashboard
         cards={layout.cards.map((c) => ({ key: c.key, title: CARDS[c.key].title, visible: c.visible, locked: c.locked, essential: c.essential }))}
-        kpis={layout.kpis} allKpis={KPI_KEYS} canCompany={perms.includes("manage_financial_config")} />
+        kpis={layout.kpis} allKpis={KPI_KEYS} canCompany={perms.includes("manage_financial_config")}
+        quick={{
+          ready: ctx.quickActionsReady, selected: quick, from: layout.quickActionsFrom,
+          options: QUICK_ACTIONS.filter((q) => perms.includes(QUICK_ACTION_NEEDS[q])).map((q) => ({ key: q, label: QUICK_ACTION_LABELS[q], built: Boolean(QUICK_ACTION_TARGET[q]) })),
+        }} />
     </div>
   );
 }

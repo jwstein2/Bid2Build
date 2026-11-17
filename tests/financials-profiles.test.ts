@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  CARDS, ESSENTIAL_ALERT_KEYS, PRESETS, PRESET_KEYS, QUICK_ACTIONS, REPORTS, ONBOARDING_STEPS, TRADE_PRESET, presetForTrade,
+  CARDS, ESSENTIAL_ALERT_KEYS, PRESETS, PRESET_KEYS, QUICK_ACTIONS, QUICK_ACTION_NEEDS, REPORTS, ONBOARDING_STEPS, TRADE_PRESET, presetForTrade,
   resolveLayout, resolveProfile, resolveProjectProfile, ROLE_DEFAULT_CARDS, type PresetKey,
 } from "@/lib/financials/profiles";
 import { FIN_ROLE_PERMISSIONS } from "@/lib/financials/permissions";
@@ -126,6 +126,22 @@ describe("dashboard layout", () => {
     const reset = resolveLayout({ profile, role: "owner", permissions: ALL });
     expect(reset.cards[0].key).toBe(ESSENTIAL_ALERT_KEYS[0]);
     expect(reset.kpis).toEqual(["contract_value", "collected", "ar_outstanding", "projected_margin"]);
+  });
+
+  it("quick actions: the person's choice wins, then the company default, then the trade profile; permissions still filter", () => {
+    const base = resolveLayout({ profile, role: "owner", permissions: ALL });
+    expect(base.quickActions).toEqual(profile.quickActions.filter((q, i, a) => a.indexOf(q) === i));
+    expect(base.quickActionsFrom).toBe("profile");
+    const company = resolveLayout({ profile, role: "owner", permissions: ALL, company: { quick_actions: ["export", "record_payment"] } });
+    expect(company).toMatchObject({ quickActions: ["export", "record_payment"], quickActionsFrom: "company" });
+    const mine = resolveLayout({ profile, role: "owner", permissions: ALL, company: { quick_actions: ["export"] }, user: { quick_actions: ["record_expense", "bogus", "record_expense", "create_invoice"] } });
+    expect(mine).toMatchObject({ quickActions: ["record_expense", "create_invoice"], quickActionsFrom: "user" });
+    // An empty choice hides the row; null means "no choice here".
+    expect(resolveLayout({ profile, role: "owner", permissions: ALL, user: { quick_actions: [] } }).quickActions).toEqual([]);
+    expect(resolveLayout({ profile, role: "owner", permissions: ALL, user: { quick_actions: null } }).quickActionsFrom).toBe("profile");
+    // A stored action the role can't do never shows.
+    const rep = resolveLayout({ profile, role: "sales_rep", permissions: FIN_ROLE_PERMISSIONS.sales_rep, user: { quick_actions: ["export", "record_bill"] } });
+    expect(rep.quickActions.every((q) => FIN_ROLE_PERMISSIONS.sales_rep.includes(QUICK_ACTION_NEEDS[q]))).toBe(true);
   });
 
   it("Accountant Mode only when authorized; it adds the accounting cards", () => {

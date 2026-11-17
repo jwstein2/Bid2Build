@@ -192,6 +192,27 @@ d("Financial Command Center: foundation and costs (database)", () => {
     expect((await rows(w.bk, "select user_id from public.fin_dashboard_prefs where scope = 'user'")).length).toBe(0);
   });
 
+  it("quick actions: saved per person in order, kept when a later save leaves them out, null clears (20261129002000)", async () => {
+    const layout = async () => (await as<{ l: Row }>(w.bk, "select public.fin_dashboard_layout($1) as l", [w.book])).l;
+    await as(w.bk, "select public.fin_dashboard_save($1, 'user', null, $2)", [w.book, { cards: [], kpis: ["invoiced"], quickActions: ["record_payment", "export", "record_payment", "create_invoice"] }]);
+    let l = await layout();
+    expect(l.quickActionsReady).toBe(true);
+    expect(l.user.quick_actions).toEqual(["record_payment", "export", "create_invoice"]);
+    // Dragging cards saves without quickActions: the earlier choice stays.
+    await as(w.bk, "select public.fin_dashboard_save($1, 'user', null, $2)", [w.book, { cards: [{ key: "ar_aging" }], kpis: ["invoiced"] }]);
+    l = await layout();
+    expect(l.user.quick_actions).toEqual(["record_payment", "export", "create_invoice"]);
+    expect(l.user.cards).toEqual([{ key: "ar_aging" }]);
+    await as(w.bk, "select public.fin_dashboard_save($1, 'user', null, $2)", [w.book, { cards: [], kpis: [], quickActions: null }]);
+    expect((await layout()).user.quick_actions).toBeNull();
+    // Company default (admins only).
+    await as(w.owner, "select public.fin_dashboard_save($1, 'company', null, $2)", [w.book, { cards: [], quickActions: ["export"] }]);
+    expect((await layout()).company.quick_actions).toEqual(["export"]);
+    expect(await fails(as(w.bk, "select public.fin_dashboard_save($1, 'company', null, $2)", [w.book, { quickActions: ["export"] }]))).toBe("forbidden");
+    expect(await fails(pool.query("update public.fin_dashboard_prefs set quick_actions = array_fill('export'::text, array[21]) where book_id = $1", [w.book]))).toMatch(/quick_actions_len|check/);
+    await as(w.bk, "select public.fin_dashboard_reset($1)", [w.book]);
+  });
+
   it("Contractor Mode by default; Accountant Mode only for authorized users", async () => {
     expect(await fails(as(w.rep, "select public.fin_set_mode($1, 'accountant')", [w.book]))).toBe("forbidden_mode");
     expect(await as<{ m: string }>(w.bk, "select public.fin_set_mode($1, 'accountant') as m", [w.book]).then((r) => r.m)).toBe("accountant");
