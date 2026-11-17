@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PmLockNotice } from "@/components/billing/pm-lock";
+import { getAccountStatus } from "@/lib/account/server";
 import { notFound, redirect } from "next/navigation";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { isPmBillingConfigured, isPmEnabled } from "@/lib/env";
@@ -43,9 +45,9 @@ export default async function NewSchedulePage({ searchParams }: { searchParams: 
     return (
       <div className="mx-auto max-w-2xl space-y-4">
         <h1 className="text-2xl font-extrabold text-navy">Schedule Now</h1>
-        <Notice tone="warn" title="You can't create schedules yet">
-          {pm?.scope === "company" ? "Ask your company admin to assign you a scheduling editor seat." : !isPmBillingConfigured("addon") ? "Project Command Center for Unlimited is coming soon as a $4.99/month add-on." : <>Project Command Center is a $4.99/month add-on for Unlimited. <Link className="font-semibold underline" href="/settings/billing">Unlock Project Command Center</Link>.</>}
-        </Notice>
+        {pm?.scope === "company" || isPmBillingConfigured("addon")
+          ? <PmLockNotice tone="warn" title="You can't create schedules yet" kind={pm?.scope === "company" ? "company" : (await getAccountStatus()).kind === "unlimited" ? "unlimited" : "free"} />
+          : <Notice tone="warn" title="You can't create schedules yet">Project Command Center for Unlimited is coming soon as an add-on.</Notice>}
         <Link href="/projects" className="font-semibold text-accent-ink underline">Back to Projects</Link>
       </div>
     );

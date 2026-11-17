@@ -39,7 +39,7 @@ export function accountStatusFrom(user: { emailVerified: boolean } | null, credi
   return { kind: left > 0 ? "free" : "no_credits", signedIn: true, creditsLeft: left, nextCycleAt: credits.nextCycleAt };
 }
 
-export type CtaAction = "create" | "how" | "bids" | "plans" | "draft";
+export type CtaAction = "create" | "how" | "bids" | "plans" | "draft" | "pm";
 export interface Cta { action: CtaAction; label: string; href: string }
 
 export const CTA_LABELS = {
