@@ -10,6 +10,7 @@ import { Card } from "../ui/misc";
 import { LibraryLocked } from "./premium-lock";
 import { SavedItemForm, blankSavedItem } from "./saved-item-form";
 
+const fmtDay = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 const typeLabel = (t: string) => COST_TYPES.find((c) => c.value === t)?.label ?? t;
 export const rateLabel = (s: Pick<SavedItem, "unitCost" | "unit">) =>
   s.unitCost ? `${formatCurrency(s.unitCost)} / ${UNIT_ABBR[s.unit] ?? s.unit}` : `${UNIT_ABBR[s.unit] ?? s.unit} · no rate`;
@@ -143,6 +144,7 @@ export function LibraryManager() {
           <Card><ul className="divide-y divide-line">{stacks.map((s) => <StackRow key={s.id} stack={s} lib={lib} onRemoved={() => say(`Deleted stack “${s.name}”.`)} />)}</ul></Card>
         )}
       </section>
+      <TargetMargin initial={lib.targetMarginPct ?? ""} onSaved={(v) => say(v ? `Target margin set to ${v}%.` : "Target margin cleared.")} />
     </div>
   );
 }
@@ -153,6 +155,11 @@ function ItemRow({ item: i, lib, onEdit, onRemoved }: { item: SavedItem; lib: Li
       <div className="min-w-0 flex-1">
         <p className="font-medium">{i.name}</p>
         <p className="text-xs text-muted">{typeLabel(i.costType)}{i.quantity ? ` · default qty ${i.quantity}` : ""}{i.treatment === "pass_through" ? " · billed at cost" : ""}</p>
+        {i.priceSource && i.priceSource !== "manual" && (
+          <p className="text-xs text-muted" data-testid="item-price-source">
+            Price from {i.supplierName ?? "supplier"}{i.supplierSku ? ` #${i.supplierSku}` : ""}{i.priceEffectiveOn ? ` · ${fmtDay(i.priceEffectiveOn)}` : ""}
+          </p>
+        )}
       </div>
       <span className="tabular font-semibold">{rateLabel(i)}</span>
       <span className="flex items-center">
@@ -198,5 +205,39 @@ function StackRow({ stack: s, lib, onRemoved }: { stack: SavedStack; lib: Librar
       </div>
       {err && <p role="alert" className="mt-1 text-xs text-danger">{err}</p>}
     </li>
+  );
+}
+
+/** Company minimum gross margin. The builder warns below it (never blocks). Margin, not markup. */
+function TargetMargin({ initial, onSaved }: { initial: string; onSaved: (v: string) => void }) {
+  const [v, setV] = useState(initial);
+  const [state, setState] = useState<"idle" | "saving" | "error">("idle");
+  const save = async () => {
+    setState("saving");
+    try {
+      const r = await fetch("/api/library/import", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "target_margin", percent: v.trim() }) });
+      if (!r.ok) { setState("error"); return; }
+      setState("idle"); onSaved(v.trim());
+    } catch { setState("error"); }
+  };
+  const valid = /^(\d{1,2}(\.\d{1,2})?)?$/.test(v.trim());
+  return (
+    <section aria-labelledby="tm-h" data-testid="target-margin-setting">
+      <h2 id="tm-h" className="mb-2 text-xl font-bold">Target margin</h2>
+      <Card className="space-y-2 p-4">
+        <p className="text-sm text-ink-soft">Your minimum gross margin. The bid builder shows a warning when a bid falls below it. It never stops you sending a bid.</p>
+        <div className="flex flex-wrap items-end gap-2">
+          <div>
+            <label htmlFor="tm" className="label">Gross margin %</label>
+            <div className="relative w-32">
+              <input id="tm" inputMode="decimal" className="field tabular pr-8" value={v} onChange={(e) => setV(e.target.value)} placeholder="e.g. 25" aria-invalid={!valid} />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted">%</span>
+            </div>
+          </div>
+          <Button size="sm" variant="secondary" onClick={save} disabled={!valid || state === "saving"}>{state === "saving" ? "Saving…" : "Save"}</Button>
+        </div>
+        <p className="text-xs text-muted">Margin is profit as a percent of the price. A 25% margin takes a 33.3% markup on cost.{state === "error" ? " Couldn't save. Try again." : ""}</p>
+      </Card>
+    </section>
   );
 }

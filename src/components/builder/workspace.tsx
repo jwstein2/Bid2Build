@@ -183,7 +183,7 @@ export function Workspace({ estimate, dispatch, lib: library }: { estimate: Esti
         {selected.size > 0 && <div aria-hidden className="h-40 lg:hidden" />}
       </div>
 
-      <PricingPanel estimate={estimate} totals={totals} dispatch={dispatch} />
+      <PricingPanel estimate={estimate} totals={totals} dispatch={dispatch} lib={library} />
     </div>
   );
 }

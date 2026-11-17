@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { LibraryManager } from "@/components/library/library-manager";
 import { PremiumDiamond } from "@/components/billing/premium";
+import { ButtonLink } from "@/components/ui/button";
+import { FileSpreadsheet } from "lucide-react";
 
 export const metadata: Metadata = { title: "Saved Items & Pricing Library", robots: { index: false } };
 
@@ -13,6 +15,9 @@ export default function ItemsPage() {
           Your own items and standard rates, organized by trade. Add them to any bid from “Suggested &amp; Saved Items”. Saved rates
           fill in automatically and can still be changed on each estimate.
         </p>
+        <ButtonLink href="/dashboard/items/import" variant="secondary" size="sm" className="mt-3" data-testid="items-import-link">
+          <FileSpreadsheet className="h-4 w-4" aria-hidden /> Import supplier price list
+        </ButtonLink>
       </div>
       <LibraryManager />
     </div>

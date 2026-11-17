@@ -33,6 +33,11 @@ export interface SavedItem {
   taxable: boolean;
   /** How many of the contractor's recent estimate rows use this item's name (read-only, for ordering). */
   uses?: number;
+  /** Where the saved price came from (read-only here; set by supplier imports). */
+  supplierName?: string | null;
+  supplierSku?: string | null;
+  priceSource?: "manual" | "supplier_import" | "supplier_quote" | "api" | null;
+  priceEffectiveOn?: string | null;
 }
 
 export interface SavedStack {
@@ -49,9 +54,11 @@ export interface LibraryData {
   lockedCount: number;
   items: SavedItem[];
   stacks: SavedStack[];
+  /** Company minimum gross margin %, or null when not set. The builder warns below it. */
+  targetMarginPct?: string | null;
 }
 
-export const EMPTY_LIBRARY: LibraryData = { access: false, lockedCount: 0, items: [], stacks: [] };
+export const EMPTY_LIBRARY: LibraryData = { access: false, lockedCount: 0, items: [], stacks: [], targetMarginPct: null };
 
 export const LIBRARY_LOCKED_MESSAGE = "Premium Only — Save your preferred labor rates, material prices, and frequently used estimating items.";
 

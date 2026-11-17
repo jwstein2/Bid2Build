@@ -1,6 +1,6 @@
 "use client";
-import { Info } from "lucide-react";
-import type { Dispatch } from "react";
+import { AlertTriangle, Info, RefreshCw } from "lucide-react";
+import { useMemo, useState, type Dispatch } from "react";
 import { pricingFactor, type EstimateTotals } from "@/lib/estimate/engine";
 import { D, formatCurrency, formatPercent, toDec } from "@/lib/estimate/money";
 import type { Estimate, GroupVisibility } from "@/lib/estimate/types";
@@ -8,6 +8,9 @@ import { cn } from "@/lib/cn";
 import { tradeTotals } from "@/lib/estimate/trades";
 import { tradeName } from "@/lib/trades/catalog";
 import type { Action } from "./state";
+import type { Library } from "./library";
+import { belowTargetMargin, refreshPreview } from "@/lib/pricing/refresh";
+import { Button } from "../ui/button";
 import { VISIBILITY_LABEL } from "./workspace";
 
 function equivalent(e: Estimate): string | null {
@@ -18,7 +21,14 @@ function equivalent(e: Estimate): string | null {
   return e.pricing.mode === "markup" ? `${formatPercent(markup)} markup = ${formatPercent(margin)} gross margin` : `${formatPercent(margin)} margin = ${formatPercent(markup)} markup on cost`;
 }
 
-export function PricingPanel({ estimate: e, totals: t, dispatch }: { estimate: Estimate; totals: EstimateTotals; dispatch: Dispatch<Action> }) {
+/** Markup that produces a given gross margin: m / (1 − m). */
+function markupForMargin(target: string): string | null {
+  const m = toDec(target);
+  if (!m.valid || m.value.gte(100)) return null;
+  return formatPercent(m.value.div(new D(100).minus(m.value)).times(100));
+}
+
+export function PricingPanel({ estimate: e, totals: t, dispatch, lib }: { estimate: Estimate; totals: EstimateTotals; dispatch: Dispatch<Action>; lib?: Pick<Library, "access" | "items" | "targetMarginPct"> }) {
   const pctInvalid = t.issues.some((i) => i.field === "pricing");
   const eq = equivalent(e);
   const taxInvalid = t.issues.some((i) => i.code === "invalid_tax");
@@ -57,6 +67,15 @@ export function PricingPanel({ estimate: e, totals: t, dispatch }: { estimate: E
         <p id="pricing-help" className={cn("mt-1.5 text-xs", pctInvalid ? "text-danger" : "text-muted")}>
           {pctInvalid ? t.issues.find((i) => i.field === "pricing")?.message : eq}
         </p>
+        {lib?.targetMarginPct && belowTargetMargin(t.subtotal, t.totalCost, lib.targetMarginPct) && (
+          <p className="mt-2 flex items-start gap-1.5 rounded-lg bg-warn-tint px-2.5 py-2 text-xs text-warn" role="status" data-testid="target-margin-warning">
+            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+            <span>
+              Below your {formatPercent(lib.targetMarginPct)} target margin ({t.grossMargin ? formatPercent(t.grossMargin) : "—"} now).
+              {markupForMargin(lib.targetMarginPct) ? ` A ${formatPercent(lib.targetMarginPct)} margin takes ${markupForMargin(lib.targetMarginPct)} markup on cost.` : ""} You can still send this bid.
+            </span>
+          </p>
+        )}
         <details className="mt-2 text-xs text-muted">
           <summary className="cursor-pointer font-semibold text-ink-soft"><Info className="mr-1 inline h-3.5 w-3.5" />Markup vs. margin</summary>
           <p className="mt-1">Markup is profit as a percent of <b>cost</b>: price = cost × (1 + markup). Margin is profit as a percent of <b>price</b>: price = cost ÷ (1 − margin). Use one or the other, never both.</p>
@@ -80,6 +99,8 @@ export function PricingPanel({ estimate: e, totals: t, dispatch }: { estimate: E
           </div>
         )}
       </div>
+
+      {lib?.access && <RefreshCosts estimate={e} lib={lib} dispatch={dispatch} />}
 
       <div className="rounded-xl border border-line bg-surface p-4">
         <h2 className="font-display font-bold">Project summary</h2>
@@ -156,6 +177,55 @@ function Metric({ k, v, hint, tone }: { k: string; v: string; hint?: string; ton
     <div className="flex items-baseline justify-between gap-2">
       <dt className="text-ink-soft">{k}{hint && <span className="ml-1 text-xs text-muted">({hint})</span>}</dt>
       <dd className={cn("tabular font-semibold", tone === "ok" && "text-ok", tone === "danger" && "text-danger")}>{v}</dd>
+    </div>
+  );
+}
+
+/**
+ * "Refresh material costs": draft estimates only. Lists material rows whose Saved Item price changed
+ * (e.g. after a supplier import); nothing changes until the contractor applies the ticked rows.
+ * Finalized estimates (sent, approved or signed) never show it.
+ */
+function RefreshCosts({ estimate: e, lib, dispatch }: { estimate: Estimate; lib: Pick<Library, "items">; dispatch: Dispatch<Action> }) {
+  const changes = useMemo(() => refreshPreview(e, lib.items), [e, lib.items]);
+  const [open, setOpen] = useState(false);
+  const [skip, setSkip] = useState<Set<string>>(new Set());
+  if (!changes.length) return null;
+  const picked = changes.filter((c) => !skip.has(c.itemId));
+  const delta = picked.reduce((s, c) => s.plus(c.costDelta), new D(0));
+  return (
+    <div className="rounded-xl border border-brand/40 bg-brand-tint/40 p-4" data-testid="refresh-costs">
+      <h2 className="flex items-center gap-2 font-display font-bold"><RefreshCw className="h-4 w-4 text-brand" aria-hidden /> Material prices changed</h2>
+      <p className="mt-1 text-sm text-ink-soft">{changes.length} row{changes.length === 1 ? "" : "s"} in this draft use{changes.length === 1 ? "s" : ""} an older price than your Saved Items.</p>
+      {!open ? (
+        <Button size="sm" variant="secondary" className="mt-2" onClick={() => setOpen(true)} data-testid="refresh-costs-review">Review price updates</Button>
+      ) : (
+        <>
+          <ul className="mt-2 space-y-2 text-sm">
+            {changes.map((c) => (
+              <li key={c.itemId}>
+                <label className="flex items-start gap-2">
+                  <input type="checkbox" checked={!skip.has(c.itemId)} onChange={(ev) => { const n = new Set(skip); if (ev.target.checked) n.delete(c.itemId); else n.add(c.itemId); setSkip(n); }} className="mt-0.5 h-4 w-4 accent-[var(--color-brand)]" />
+                  <span className="min-w-0">
+                    <span className="font-medium">{c.name}</span>
+                    <span className="block text-xs text-muted">
+                      {formatCurrency(c.from || "0")} → {formatCurrency(c.to)} / {c.unit}{c.changePct ? ` (${Number(c.changePct) > 0 ? "+" : ""}${c.changePct}%)` : ""}
+                      {c.source.supplierName ? ` · ${c.source.supplierName}` : ""}{c.source.effectiveOn ? ` · ${c.source.effectiveOn}` : ""}
+                    </span>
+                  </span>
+                </label>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-xs text-muted">Cost change {delta.isNegative() ? "" : "+"}{formatCurrency(delta)} before markup. Your markup or margin stays the same.</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <Button size="sm" disabled={!picked.length} data-testid="refresh-costs-apply" onClick={() => { for (const c of picked) dispatch({ type: "updateItem", id: c.itemId, patch: { unitCost: c.to } }); setOpen(false); setSkip(new Set()); }}>
+              Update {picked.length} price{picked.length === 1 ? "" : "s"}
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setOpen(false)}>Not now</Button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
