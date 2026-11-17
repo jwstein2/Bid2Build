@@ -36,20 +36,37 @@ function remove(key: string) {
   try { window.localStorage.removeItem(key); } catch { /* ignore */ }
 }
 
-export function listLocalDrafts(): { id: string; title: string; savedAt: string }[] {
-  return read<{ id: string; title: string; savedAt: string }[]>(KEY_INDEX) ?? [];
+/**
+ * Index entry. `origin: "cloud"` = a safety copy of a bid that already lives in the account, written only
+ * while it has edits the server hasn't confirmed (`unsynced`); the builder removes it after a successful save.
+ * Entries written before 2026-11-17 carry neither field.
+ */
+export interface LocalDraftEntry { id: string; title: string; savedAt: string; origin?: "local" | "cloud"; unsynced?: boolean }
+
+export function listLocalDrafts(): LocalDraftEntry[] {
+  return read<LocalDraftEntry[]>(KEY_INDEX) ?? [];
+}
+
+/**
+ * Drafts that really exist only on this device: started signed out (or offline), or account bids with edits
+ * the server never confirmed. A plain safety copy of a bid that is already saved in the account is not one,
+ * so the dashboard doesn't warn about bids that are safely saved. `accountIds` = bids the account has.
+ */
+export function unsavedLocalDrafts(accountIds: Iterable<string>): LocalDraftEntry[] {
+  const inAccount = new Set(accountIds);
+  return listLocalDrafts().filter((d) => (d.origin === "cloud" ? d.unsynced === true : !inAccount.has(d.id)));
 }
 
 export function loadLocalDraft(id: string): LocalDraft | null {
   return read<LocalDraft>(KEY_DRAFT(id));
 }
 
-export function saveLocalDraft(d: Omit<LocalDraft, "savedAt">): boolean {
+export function saveLocalDraft(d: Omit<LocalDraft, "savedAt">, opts: { origin?: "local" | "cloud" } = {}): boolean {
   const savedAt = new Date().toISOString();
   const ok = write(KEY_DRAFT(d.estimate.id), { ...d, savedAt });
   if (ok) {
     const idx = listLocalDrafts().filter((x) => x.id !== d.estimate.id);
-    idx.unshift({ id: d.estimate.id, title: d.estimate.title, savedAt });
+    idx.unshift({ id: d.estimate.id, title: d.estimate.title, savedAt, origin: opts.origin ?? "local", ...(opts.origin === "cloud" ? { unsynced: true } : {}) });
     write(KEY_INDEX, idx.slice(0, 50));
   }
   return ok;
