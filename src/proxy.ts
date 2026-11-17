@@ -34,7 +34,11 @@ export async function proxy(request: NextRequest) {
       },
     },
   });
-  await supabase.auth.getUser();
+  // getClaims() refreshes an expired session (writing the new cookies above) and verifies the token.
+  // With Supabase asymmetric JWT signing keys it verifies locally against the cached public key, so
+  // this runs on every page and prefetch without a call to the Auth server. With the legacy shared
+  // secret it falls back to the Auth server, same as getUser(). Pages still authorize with getUser().
+  await supabase.auth.getClaims();
   return withAttribution(request, response);
 }
 
