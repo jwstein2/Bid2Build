@@ -107,6 +107,41 @@ async function waitSaved(page, id) { await page.locator(`[data-testid=${id}] + p
   await ctx.close();
 }
 
+// 2b. Edit right from the Quick actions section: library with on/off switches.
+{
+  const { ctx, page } = await open({ viewport: { width: 1440, height: 1000 } });
+  await page.getByTestId("fin-quick-edit-toggle").click();
+  const ed = page.getByTestId("fin-quick-edit");
+  check("Edit opens the quick action library", await ed.isVisible() && (await ed.getByRole("switch").count()) >= 8);
+  const sw = page.getByTestId("fin-quick-toggle-snap_receipt");
+  check("an extra action starts off", (await sw.getAttribute("aria-checked")) === "false");
+  await sw.click();
+  await page.waitForFunction(() => [...document.querySelectorAll("[data-testid=fin-quick-row] > li")].some((l) => l.dataset.sortKey === "snap_receipt"), null, { timeout: 8000 }).catch(() => {});
+  const row = await order(page, "fin-quick-row");
+  check("switching it on adds it to the end of the row and saves", row.at(-1) === "snap_receipt" && (await myPrefs())?.quick_actions?.at(-1) === "snap_receipt", row.join(","));
+  await ed.screenshot({ path: path.join(dir, "06-quick-edit.png") });
+  await page.screenshot({ path: path.join(dir, "07-quick-edit-page.png") });
+  await page.getByTestId("fin-quick-toggle-create_invoice").click();
+  await page.waitForFunction(() => ![...document.querySelectorAll("[data-testid=fin-quick-row] > li")].some((l) => l.dataset.sortKey === "create_invoice"), null, { timeout: 8000 }).catch(() => {});
+  check("switching one off removes it", !(await order(page, "fin-quick-row")).includes("create_invoice") && !(await myPrefs()).quick_actions.includes("create_invoice"));
+  const soon = page.getByTestId("fin-quick-toggle-bill_service_call");
+  await soon.click();
+  await page.waitForTimeout(1500);
+  check("a not-yet-built action can be on and shows Coming soon", (await page.getByTestId("fin-quick").innerText()).includes("Bill a service call · coming soon"));
+  await ed.getByRole("button", { name: "Use defaults" }).click();
+  await page.waitForTimeout(1500); await page.waitForLoadState("networkidle");
+  check("Use defaults goes back to the trade set", (await myPrefs()).quick_actions === null && (await order(page, "fin-quick-row")).includes("create_invoice"));
+  await ctx.close();
+}
+{
+  const { ctx, page } = await open({ ...devices["iPhone 13"] });
+  await page.getByTestId("fin-quick-edit-toggle").click();
+  await page.getByTestId("fin-quick-edit").scrollIntoViewIfNeeded();
+  check("phone: quick action editor has no horizontal scroll", await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+  await page.getByTestId("fin-quick-edit").screenshot({ path: path.join(dir, "08-quick-edit-phone.png") });
+  await ctx.close();
+}
+
 // 3. Phone (touch): press and hold, drag, let go. Page must not scroll while dragging.
 {
   const { ctx, page } = await open({ ...devices["iPhone 13"] });
