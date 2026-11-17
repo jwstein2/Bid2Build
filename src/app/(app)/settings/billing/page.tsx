@@ -13,6 +13,8 @@ import { CreditBalances } from "@/components/billing/credits";
 import { loadCreditStatus } from "@/lib/credits/server";
 import { ANNUAL, ANNUAL_MONTHLY_EQUIVALENT, MONTHLY, isPlanId, planDisplay } from "@/lib/billing/plans";
 import { ClearCheckoutIntent, ConfirmingPayment } from "@/components/billing/checkout-return";
+import { can, loadMyCompany } from "@/lib/enterprise/server";
+import Link from "next/link";
 
 export const metadata: Metadata = { title: "Subscription", robots: { index: false } };
 
@@ -32,11 +34,12 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
     try { await reconcileUser(createAdminClient(), getStripe(), user.id); } catch { /* webhook will catch up */ }
   }
   const supabase = await createClient();
-  const [{ data: subs }, credits, { data: bc }, { data: compRows }] = await Promise.all([
+  const [{ data: subs }, credits, { data: bc }, { data: compRows }, company] = await Promise.all([
     supabase.from("subscriptions").select("*").order("updated_at", { ascending: false }),
     loadCreditStatus(supabase),
     supabase.from("billing_customers").select("stripe_customer_id").maybeSingle(),
     supabase.rpc("my_comp_access"), // errors (migration not applied yet) just mean "no complimentary access"
+    loadMyCompany(supabase),
   ]);
   const q = credits ? { unlimited: credits.unlimited } : null;
   const pm = isPmEnabled() && credits?.unlimited ? await loadPmAccess(supabase) : null;
@@ -46,6 +49,9 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
   const compActive = comp?.state === "active";
   // Unlimited only because of a complimentary grant: show that, never a made-up paid plan.
   const compOnly = Boolean(q?.unlimited && compActive && !paidActive);
+  // Unlimited only because of an Enterprise seat: the company pays, so never show a personal Unlimited price.
+  const seatOnly = Boolean(q?.unlimited && company?.entitlement.active && !paidActive && !compOnly);
+  const companyBilling = company ? (can(company, "manage_billing") ? "/company/billing" : null) : null;
   const compEnded = !q?.unlimited && comp && ["expired", "revoked"].includes(comp.state) ? (comp.state === "revoked" ? null : comp.expires_at) : null;
   const ended = !q?.unlimited && current && ["canceled", "unpaid", "incomplete_expired"].includes(current.status) ? (current.ended_at ?? current.current_period_end) : null;
   const end = current?.current_period_end ? new Date(current.current_period_end).toLocaleDateString(undefined, { dateStyle: "long" }) : null;
@@ -70,16 +76,29 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-sm text-muted">Current plan</p>
-            <p className="text-2xl font-extrabold">{compOnly ? `Complimentary ${comp!.plan === "enterprise" ? "Enterprise" : "Unlimited"}` : q?.unlimited ? (current?.plan === "annual" ? ANNUAL.name : MONTHLY.name) : "Free"}</p>
+            <p className="text-2xl font-extrabold">{seatOnly ? "Enterprise" : compOnly ? `Complimentary ${comp!.plan === "enterprise" ? "Enterprise" : "Unlimited"}` : q?.unlimited ? (current?.plan === "annual" ? ANNUAL.name : MONTHLY.name) : "Free"}</p>
             {compOnly && <p className="text-sm text-ink-soft">Free until {longDate(comp!.expires_at)}. No payment details are on file and nothing is charged when it ends; you&apos;ll simply return to the Free plan unless you subscribe.</p>}
-            {q?.unlimited && !compOnly && <p className="text-sm text-ink-soft">{current?.plan === "annual" ? `${ANNUAL.price}/year, billed annually` : `${MONTHLY.price}/month, billed monthly`}</p>}
-            {q?.unlimited && !compOnly && end && <p className="text-sm text-ink-soft">{current?.cancel_at_period_end ? `Cancels on ${end}. You keep Unlimited until then.` : `Renews on ${end}.`}</p>}
+            {seatOnly && <p className="text-sm text-ink-soft" data-testid="seat-plan">Your licensed seat is part of {company!.name}&apos;s Enterprise plan. You aren&apos;t billed personally.</p>}
+            {q?.unlimited && !compOnly && !seatOnly && <p className="text-sm text-ink-soft">{current?.plan === "annual" ? `${ANNUAL.price}/year, billed annually` : `${MONTHLY.price}/month, billed monthly`}</p>}
+            {q?.unlimited && !compOnly && !seatOnly && end && <p className="text-sm text-ink-soft">{current?.cancel_at_period_end ? `Cancels on ${end}. You keep Unlimited until then.` : `Renews on ${end}.`}</p>}
             {!q?.unlimited && <p className="text-sm text-ink-soft">{plans.starterCredits} starter credits to begin, then {plans.monthlyCredits} free bid every month.</p>}
           </div>
-          {compOnly ? <Badge tone="ok">complimentary</Badge> : current && <Badge tone={q?.unlimited ? "ok" : "neutral"}>{current.status.replace("_", " ")}</Badge>}
+          {seatOnly ? <Badge tone="ok">company plan</Badge> : compOnly ? <Badge tone="ok">complimentary</Badge> : current && <Badge tone={q?.unlimited ? "ok" : "neutral"}>{current.status.replace("_", " ")}</Badge>}
         </div>
         {bc && <div className="mt-5 border-t border-line pt-4"><PortalButton label="Manage subscription, payment method & billing history" /><p className="mt-2 text-xs text-muted">Opens Stripe&apos;s secure customer portal, where you can change plans, cancel, update your card, and download invoices.</p></div>}
       </Card>
+
+      {company && (
+        <Card className="p-5" data-testid="company-billing-pointer">
+          <p className="text-sm text-muted">Company plan</p>
+          <p className="font-bold">{company.name} · Enterprise{company.entitlement.active ? "" : " (paused)"}</p>
+          <p className="mt-1 text-sm text-ink-soft">{companyBilling
+            ? "Your company plan, licensed users, schedule editors, invoices and payment method are all on Billing & Licenses."
+            : `Licensed users, schedule editors and company invoices are managed by ${company.name}'s owner.`}</p>
+          {companyBilling && <Link href={companyBilling} className="mt-3 inline-flex min-h-11 items-center font-semibold text-brand underline">Open Billing &amp; Licenses</Link>}
+          {paidActive && <p className="mt-2 text-xs text-muted">You also have a personal subscription (above). It&apos;s billed separately from your company plan.</p>}
+        </Card>
+      )}
 
       {pm && pm.scope !== "company" && (paidActive || pm.source === "complimentary") && (
         <div id="project-command-center" className="scroll-mt-20"><PmAddonCard state={pm} periodEnd={current?.current_period_end ?? null} annual={current?.plan === "annual" && !process.env.STRIPE_PRICE_PM_ADDON_ANNUAL} yearly={current?.plan === "annual" && Boolean(process.env.STRIPE_PRICE_PM_ADDON_ANNUAL)} purchasable={isPmBillingConfigured("addon")} /></div>

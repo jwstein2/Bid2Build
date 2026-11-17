@@ -37,7 +37,7 @@ export default async function BidReviewPage({ params }: PageProps<"/company/bids
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <Breadcrumbs items={[{ label: "Bids & Pipeline", href: "/company/pipeline" }, { label: "Bid details" }]} />
+      <Breadcrumbs items={[{ label: "Team bids", href: "/company/pipeline" }, { label: "Bid details" }]} />
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h1 className="break-words text-3xl font-extrabold">{r.title || "Untitled bid"}</h1>

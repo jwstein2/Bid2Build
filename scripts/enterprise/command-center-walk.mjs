@@ -40,7 +40,7 @@ for (const [label, vp] of [["desktop", { width: 1280, height: 900 }], ["m390", {
   await page.waitForTimeout(300);
   check(`${label}: approval toggle posts rule`, calls.at(-1)?.action === "approval_rule" && calls.at(-1)?.required === true);
   if (vp.width < 1024) await page.getByRole("button", { name: "Menu" }).click();
-  check(`${label}: nav has Overview + Bids & Pipeline`, (await page.getByRole("link", { name: "Overview" }).first().isVisible()) && (await page.getByRole("link", { name: "Bids & Pipeline" }).first().isVisible()));
+  check(`${label}: nav has Overview + Team bids`, (await page.getByRole("link", { name: "Overview" }).first().isVisible()) && (await page.getByRole("link", { name: /^(Team bids|My company bids)$/ }).first().isVisible()));
   check(`${label}: only Overview marked current`, (await page.locator('a[aria-current="page"]').count()) === 1);
   if (vp.width < 1024) await page.getByRole("button", { name: "Close" }).first().click();
 

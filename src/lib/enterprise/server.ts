@@ -36,7 +36,9 @@ export function companyNav(c: MyCompany | null) {
   if (!c) return null;
   const links: { href: "/company" | "/company/pipeline" | "/company/users" | "/company/billing" | "/company/proposal-style"; label: string }[] = [];
   if (can(c, "view_analytics")) links.push({ href: "/company", label: "Overview" });
-  links.push({ href: "/company/pipeline", label: "Bids & Pipeline" }, { href: "/company/users", label: "Users & Permissions" });
+  // "Team bids" only when the member can actually see teammates' bids; otherwise it's their own company bids.
+  const team = can(c, "view_team_bids") || can(c, "view_company_bids");
+  links.push({ href: "/company/pipeline", label: team ? "Team bids" : "My company bids" }, { href: "/company/users", label: "Users & Permissions" });
   if (can(c, "view_proposal_style")) links.push({ href: "/company/proposal-style", label: "Proposal & Bid Style" });
   if (can(c, "manage_billing")) links.push({ href: "/company/billing", label: "Billing & Licenses" });
   return { name: c.name, links };
