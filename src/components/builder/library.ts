@@ -1,7 +1,8 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { LineItem } from "@/lib/estimate/types";
-import { EMPTY_LIBRARY, findSameItem, savedItemFromLine, type LibraryData, type LibraryOp, type SavedItem, type SavedStack } from "@/lib/library/saved-items";
+import { EMPTY_LIBRARY, findSameItem, savedItemFromLine, type LibraryData, type LibraryOp, type SavedItem, type SavedStack, type StackScale } from "@/lib/library/saved-items";
+import { perFromQuantities } from "@/lib/library/assemblies";
 
 export type { SavedItem, SavedStack } from "@/lib/library/saved-items";
 
@@ -76,19 +77,47 @@ export function useLibrary(signedIn: boolean) {
       : addItem(s);
   };
 
-  /** "Save Stack": a reusable collection of rows (with quantities), kept in order. */
-  const saveStack = (name: string, items: LineItem[], trade: string | null) => {
+  /**
+   * "Save Stack": a reusable collection of rows (with quantities), kept in order. With `scale` and the
+   * measure these quantities were for, it becomes a scaling assembly (amount per unit = quantity ÷ measure).
+   */
+  const saveStack = (name: string, items: LineItem[], trade: string | null, opts: { scale?: StackScale | null; measure?: string; company?: boolean } = {}) => {
+    const rows = items.map((it) => ({ ...savedItemFromLine(it, { trade }, crypto.randomUUID()), quantity: it.quantity.trim() || "1" }));
+    const pers = opts.scale && opts.measure ? perFromQuantities(rows, opts.measure) : [];
     const stack: SavedStack = {
       id: crypto.randomUUID(), name: name.trim(), trade,
-      items: items.map((it) => ({ ...savedItemFromLine(it, { trade }, crypto.randomUUID()), quantity: it.quantity.trim() || "1" })),
+      scale: opts.scale && opts.measure ? opts.scale : null,
+      company: Boolean(opts.company), canEdit: true,
+      items: rows.map((r, k) => ({ ...r, per: pers[k] })),
     };
-    return run({ ...libRef.current, stacks: [stack, ...libRef.current.stacks] }, { kind: "stack", action: "add", payload: stack });
+    return addStack(stack);
   };
+  /** Saves a ready-made stack (a starter assembly, or a copy). */
+  const addStack = (stack: SavedStack) =>
+    run({ ...libRef.current, stacks: [{ ...stack, canEdit: true }, ...libRef.current.stacks] }, { kind: "stack", action: "add", payload: { ...stack, favorite: undefined, canEdit: undefined } as SavedStack });
+  const toggleFavorite = (kind: "item" | "stack", id: string, on: boolean) => {
+    const cur = libRef.current;
+    const next = kind === "item"
+      ? { ...cur, items: cur.items.map((x) => (x.id === id ? { ...x, favorite: on } : x)) }
+      : { ...cur, stacks: cur.stacks.map((x) => (x.id === id ? { ...x, favorite: on } : x)) };
+    return run(next, { kind, action: "favorite", payload: { id, on } });
+  };
+  const shareStack = (id: string, on: boolean) =>
+    run({ ...libRef.current, stacks: libRef.current.stacks.map((x) => (x.id === id ? { ...x, company: on } : x)) }, { kind: "stack", action: "share", payload: { id, on } });
+  /** Turns scaling on or off for a stack and sets each row's amount per unit, waste and round-up. */
+  const setStackScale = (id: string, scale: StackScale | null, items: { id: string; per?: string; wastePct?: string; roundUp?: boolean }[]) =>
+    run({
+      ...libRef.current,
+      stacks: libRef.current.stacks.map((x) => (x.id !== id ? x : {
+        ...x, scale,
+        items: x.items.map((i) => { const u = items.find((y) => y.id === i.id); return u ? { ...i, per: scale ? u.per : undefined, wastePct: scale ? u.wastePct : undefined, roundUp: scale ? u.roundUp : undefined } : i; }),
+      })),
+    }, { kind: "stack", action: "scale", payload: { id, scale, items } });
   const renameStack = (id: string, name: string) =>
     run({ ...libRef.current, stacks: libRef.current.stacks.map((x) => (x.id === id ? { ...x, name } : x)) }, { kind: "stack", action: "rename", payload: { id, name } });
   const removeStack = (id: string) => run({ ...libRef.current, stacks: libRef.current.stacks.filter((x) => x.id !== id) }, { kind: "stack", action: "remove", payload: { id } });
 
-  return { ...lib, signedIn, loaded, reload, addItem, updateItem, removeItem, saveLine, saveStack, renameStack, removeStack };
+  return { ...lib, signedIn, loaded, reload, addItem, updateItem, removeItem, saveLine, saveStack, addStack, renameStack, removeStack, toggleFavorite, shareStack, setStackScale };
 }
 
 export type Library = ReturnType<typeof useLibrary>;

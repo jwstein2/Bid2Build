@@ -41,6 +41,7 @@ export function InvoicePreviewDialog({ invoiceId, onOpenChange }: { invoiceId: s
       {cur?.error && <Notice tone="danger">{cur.error}</Notice>}
       {d && (
         <div className="space-y-4" data-testid="fin-invoice-preview">
+          {d.sandbox && <div data-testid="fin-preview-sandbox"><Notice tone="warn">Sandbox practice invoice. It is not real and is never sent to a customer.</Notice></div>}
           {d.invoice.status === "void" && <Notice tone="warn">This invoice is void. It no longer counts toward what the customer owes.</Notice>}
           <div className="rounded-xl border border-line bg-white p-4 text-[#16202e] sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-3 border-b-2 pb-3" style={{ borderColor: d.company.color || "#0b2d4d" }}>

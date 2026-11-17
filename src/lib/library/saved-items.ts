@@ -38,13 +38,32 @@ export interface SavedItem {
   supplierSku?: string | null;
   priceSource?: "manual" | "supplier_import" | "supplier_quote" | "api" | null;
   priceEffectiveOn?: string | null;
+  /** Starred by this user: shown first in the builder's picker (quick add). */
+  favorite?: boolean;
 }
+
+/** What a scaling stack is measured by (roof squares, wall SF…), and the calculator that measures it. */
+export const SCALE_UNITS = ["square", "square foot", "square yard", "linear foot", "cubic yard", "each"] as const;
+export type ScaleUnit = (typeof SCALE_UNITS)[number];
+export interface StackScale { unit: ScaleUnit; label: string; calc?: string | null }
+
+/** A stack row. With a scale, `per` is the amount per 1 unit of the measure; rows without `per` stay fixed. */
+export type StackItem = SavedItem & { quantity: string; per?: string; wastePct?: string; roundUp?: boolean };
 
 export interface SavedStack {
   id: string;
   name: string;
   trade?: string | null;
-  items: (SavedItem & { quantity: string })[];
+  items: StackItem[];
+  favorite?: boolean;
+  /** Set for a scaling assembly. */
+  scale?: StackScale | null;
+  /** Shared with the whole company (a company template). */
+  company?: boolean;
+  /** This user may change or delete it (own stack, or company template with pricing permission). */
+  canEdit?: boolean;
+  /** Built-in starter it was copied from. */
+  starterKey?: string | null;
 }
 
 export interface LibraryData {
@@ -56,9 +75,11 @@ export interface LibraryData {
   stacks: SavedStack[];
   /** Company minimum gross margin %, or null when not set. The builder warns below it. */
   targetMarginPct?: string | null;
+  /** May share stacks as company templates (company pricing permission). */
+  canShare?: boolean;
 }
 
-export const EMPTY_LIBRARY: LibraryData = { access: false, lockedCount: 0, items: [], stacks: [], targetMarginPct: null };
+export const EMPTY_LIBRARY: LibraryData = { access: false, lockedCount: 0, items: [], stacks: [], targetMarginPct: null, canShare: false };
 
 export const LIBRARY_LOCKED_MESSAGE = "Premium Only — Save your preferred labor rates, material prices, and frequently used estimating items.";
 
@@ -79,11 +100,24 @@ export const savedItemSchema = z.object({
   taxable: z.boolean(),
 });
 
+const per = z.string().trim().max(20).regex(/^\d*(\.\d{0,6})?$/, "Enter a number").optional();
+const waste = z.string().trim().max(6).regex(/^(\d{1,2}(\.\d{1,2})?|100)?$/, "0 to 100").optional();
+export const stackScaleSchema = z.object({
+  unit: z.enum(SCALE_UNITS),
+  label: z.string().trim().min(1).max(120),
+  calc: z.string().max(40).nullable().optional(),
+});
+const stackItemSchema = savedItemSchema.extend({ quantity: dec, per, wastePct: waste, roundUp: z.boolean().optional() });
+
 export const savedStackSchema = z.object({
   id: z.string().uuid(),
   name: z.string().trim().min(1).max(200),
   trade: z.string().max(60).nullable().optional(),
-  items: z.array(savedItemSchema.extend({ quantity: dec })).min(1).max(200),
+  items: z.array(stackItemSchema).min(1).max(200),
+  scale: stackScaleSchema.nullable().optional(),
+  starterKey: z.string().max(60).nullable().optional(),
+  /** Save straight to the company as a template. */
+  company: z.boolean().optional(),
 });
 
 export const libraryOpSchema = z.union([
@@ -92,6 +126,12 @@ export const libraryOpSchema = z.union([
   z.object({ kind: z.literal("stack"), action: z.literal("add"), payload: savedStackSchema }),
   z.object({ kind: z.literal("stack"), action: z.literal("rename"), payload: z.object({ id: z.string().uuid(), name: z.string().trim().min(1).max(200) }) }),
   z.object({ kind: z.literal("stack"), action: z.literal("remove"), payload: z.object({ id: z.string().uuid() }) }),
+  z.object({ kind: z.enum(["item", "stack"]), action: z.literal("favorite"), payload: z.object({ id: z.string().uuid(), on: z.boolean() }) }),
+  z.object({ kind: z.literal("stack"), action: z.literal("share"), payload: z.object({ id: z.string().uuid(), on: z.boolean() }) }),
+  z.object({
+    kind: z.literal("stack"), action: z.literal("scale"),
+    payload: z.object({ id: z.string().uuid(), scale: stackScaleSchema.nullable(), items: z.array(z.object({ id: z.string().uuid(), per, wastePct: waste, roundUp: z.boolean().optional() })).max(200) }),
+  }),
 ]);
 export type LibraryOp = z.infer<typeof libraryOpSchema>;
 

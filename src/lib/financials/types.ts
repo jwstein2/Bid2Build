@@ -16,6 +16,10 @@ export interface FinAccess {
   role: FinRole | null;
   accountantSeat: boolean;
   permissions: FinPermission[];
+  /** Company sandbox (20261130201000): practice books that never touch the real ones. */
+  sandbox?: boolean;
+  liveBookId?: string;
+  sandboxStartedAt?: string | null;
 }
 
 export type InvoiceKind = "deposit" | "milestone" | "progress" | "final" | "custom";

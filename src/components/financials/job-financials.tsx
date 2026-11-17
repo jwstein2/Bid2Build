@@ -11,6 +11,10 @@ import { EmailDraftDialog } from "./email-draft-dialog";
 import { finAction, fmtDate, usd } from "./fin-client";
 import { ContractCard, CreditDialog, InvoiceDialog, MilestoneCard, PaymentDialog, VoidDialog, type Perms, type R, type VoidTarget } from "./job-billing";
 import { DeleteInvoiceDialog, InvoicePreviewDialog } from "./invoice-preview";
+import { ChangeOrdersCard, MarkSentDialog, SendStatus } from "./send-and-changes";
+import { SandboxBar } from "./sandbox-bar";
+import type { CoRow } from "@/lib/financials/change-orders";
+import type { SendInfo } from "@/lib/financials/send-state";
 import { BillDialog, BillPaymentDialog, BudgetTable, CommitmentDialog, CostLists, ExpenseDialog, ProfitCard, ReviewQueue } from "./job-costs";
 import { JobSummary, type SummaryTarget } from "./job-summary";
 
@@ -24,8 +28,8 @@ type Open = { kind: "invoice"; milestone: R | null; draft: R | null } | { kind: 
 interface Payload {
   estimate: R; versions: R[]; job: R | null; contract?: R | null; milestones?: R[]; invoices?: R[]; payments?: R[]; credits?: R[];
   expenses?: R[]; bills?: R[]; billLines?: R[]; commitments?: R[]; budget?: R[]; profit?: R | null; review?: R[]; alerts?: R[];
-  costCodes?: R[]; vendors?: R[]; quotes?: R[]; summary?: R | null;
-  access: { permissions: string[]; readOnly: boolean; active: boolean; role: string | null };
+  costCodes?: R[]; vendors?: R[]; quotes?: R[]; summary?: R | null; changeOrders?: CoRow[];
+  access: { permissions: string[]; readOnly: boolean; active: boolean; role: string | null; sandbox?: boolean };
 }
 
 /**
@@ -41,6 +45,7 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
   const [voiding, setVoiding] = useState<VoidTarget | null>(null);
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<{ id: string; number: string } | null>(null);
+  const [marking, setMarking] = useState<{ id: string; number: string; issueDate: string; marked: boolean } | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [versionId, setVersionId] = useState("");
   const [busy, setBusy] = useState(false);
@@ -55,6 +60,12 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
   }, [estimateId]);
   // eslint-disable-next-line react-hooks/set-state-in-effect -- load the job's records once on mount
   useEffect(() => { void load(); }, [load]);
+  // Switching between the sandbox and the real books reloads this job from the other book.
+  useEffect(() => {
+    const again = () => { setData(null); void load(); };
+    window.addEventListener("b2b-fin-book-changed", again);
+    return () => window.removeEventListener("b2b-fin-book-changed", again);
+  }, [load]);
 
   const perms: Perms = {
     invoice: Boolean(data?.access.permissions.includes("create_invoices")), pay: Boolean(data?.access.permissions.includes("record_payments")),
@@ -88,24 +99,29 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
       if (!r.ok) return setError(r.message);
       void load();
     };
+    const sb = Boolean(data.access.sandbox);
     return (
+      <div className="space-y-3">
+      {sb && <SandboxBar sandbox canManage={perms.config} compact />}
       <section className="rounded-xl border border-line bg-surface p-4" data-testid="fin-open-job" data-guide-page="financials.job" data-guide-trade={guideTrade(data.estimate)} data-guide="fin.open-job">
         <h2 className="font-display text-lg font-extrabold">Job financials</h2>
         {!won ? <p className="mt-2 text-sm text-ink-soft">Financials start when the bid is won. Mark it won in your pipeline, then come back.</p>
           : !perms.invoice || !writable ? <p className="mt-2 text-sm text-ink-soft">Someone with invoicing access opens the job&apos;s financials. Nothing is recorded yet.</p> : (
             <div className="mt-2 space-y-3">
-              <p className="text-sm text-ink-soft">This freezes the contract amount and the signed payment schedule so invoices can be checked against them. It doesn&apos;t create an invoice or send anything.</p>
-              {data.versions.length > 0 && (
+              {sb ? <p className="text-sm text-ink-soft">Practice on a copy of this job. Its real financials have to be opened in the real books first. The copy gets its own SBX- numbers and never touches the real job.</p>
+                : <p className="text-sm text-ink-soft">This freezes the contract amount and the signed payment schedule so invoices can be checked against them. It doesn&apos;t create an invoice or send anything.</p>}
+              {!sb && data.versions.length > 0 && (
                 <Field label="Which proposal is the contract?" htmlFor="job-version" hint="If the bid was e-signed, the signed version is used automatically.">
                   <select id="job-version" className="field" value={versionId} onChange={(e) => setVersionId(e.target.value)}>
                     {data.versions.map((v) => <option key={s(v.id)} value={s(v.id)}>Version {s(v.version_number)} · {usd(v.total)} · {fmtDate(v.created_at)}</option>)}
                   </select>
                 </Field>
               )}
-              <Button onClick={openJob} disabled={busy} data-testid="fin-open-job-btn">{busy ? "Opening…" : "Open job financials"}</Button>
+              <Button onClick={openJob} disabled={busy} data-testid="fin-open-job-btn">{busy ? (sb ? "Copying…" : "Opening…") : sb ? "Copy this job into the sandbox" : "Open job financials"}</Button>
             </div>
           )}
       </section>
+      </div>
     );
   }
 
@@ -128,6 +144,7 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
 
   return (
     <div className="space-y-4" data-testid="fin-job" data-guide-page={GUIDE_PAGE[section]} data-guide-trade={guideTrade(data.estimate)}>
+      {data.access.sandbox && <SandboxBar sandbox canManage={perms.config} compact />}
       <div className="flex flex-wrap items-center gap-2">
         <div className="min-w-0 flex-1">
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">Job {s(job.job_number)}</p>
@@ -167,6 +184,9 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
               onPay={(m) => setOpen({ kind: "payment", invoice: s(invoices.find((i) => i.milestone_id === m.milestone_id && i.status === "issued")?.invoice_id) || null })} />
           </div>
 
+          <ChangeOrdersCard rows={data.changeOrders ?? []} jobId={jobId} invoices={invoices} canInvoice={perms.invoice} canApprove={perms.config} writable={writable}
+            onChanged={(m) => { if (m) setNotice(m); done(); }} />
+
           <section id="fin-invoices" tabIndex={-1} className="rounded-xl border border-line bg-surface p-4 outline-none" aria-labelledby="fin-inv-h" data-testid="fin-invoices" data-guide="fin.invoices">
             <div className="flex flex-wrap items-center gap-2">
               <h2 id="fin-inv-h" className="font-display text-lg font-extrabold">Invoices</h2>
@@ -179,14 +199,15 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
                 {invoices.map((i) => (
                   <li key={s(i.invoice_id)} className="py-2 text-sm" data-status={s(i.status)}>
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="min-w-0 flex-1">{i.status === "draft" ? <span className="font-semibold">Draft</span>
+                      <span className="min-w-0 basis-full sm:basis-0 sm:flex-1">{i.status === "draft" ? <span className="font-semibold">Draft</span>
                         : <button type="button" className="min-h-9 font-semibold text-accent-ink underline decoration-dotted underline-offset-4 hover:decoration-solid" onClick={() => setPreviewId(s(i.invoice_id))} aria-label={`Preview invoice ${s(i.number)}`} data-testid="fin-invoice-open">{s(i.number)}</button>} <span className="text-muted">· {s(i.kind)}{i.issue_date ? ` · issued ${fmtDate(i.issue_date)}` : ""}{i.due_date ? ` · due ${fmtDate(i.due_date)}` : ""}</span>
                         {s(i.exception_reason) && <span className="block text-xs text-muted">Differs from schedule: {s(i.exception_reason)}</span>}</span>
                       <span className="flex items-center gap-2 tabular">{usd(i.total)} <BasisBadge basis="Invoiced" /></span>
                       {i.status === "issued" && <span className="flex items-center gap-2 tabular">{usd(i.balance)} <BasisBadge basis="Outstanding" /></span>}
+                      {i.send ? <SendStatus send={i.send as SendInfo} daysLate={i.status === "issued" && cmp(s(i.balance) || "0", 0) > 0 ? Number(i.days_overdue) || 0 : 0} /> : (
                       <Badge tone={i.status === "void" ? "neutral" : i.status === "draft" ? "neutral" : Number(i.days_overdue) > 0 ? "danger" : cmp(s(i.balance) || "0", 0) <= 0 ? "ok" : "warn"}>
                         {i.status === "void" ? "Void" : i.status === "draft" ? "Draft" : Number(i.days_overdue) > 0 ? `${s(i.days_overdue)} days late` : cmp(s(i.balance) || "0", 0) <= 0 ? "Paid" : "Open"}
-                      </Badge>
+                      </Badge>)}
                     </div>
                     <div className="mt-1 flex flex-wrap gap-1">
                       {i.status === "draft" && perms.invoice && writable && <>
@@ -195,9 +216,13 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
                       </>}
                       {i.status === "issued" && perms.pay && writable && cmp(s(i.balance) || "0", 0) > 0 && <Button size="sm" variant="secondary" onClick={() => setOpen({ kind: "payment", invoice: s(i.invoice_id) })}>Record payment</Button>}
                       {i.status === "issued" && <a className={buttonClass("ghost", "sm")} href={`/api/financials/invoices/${s(i.invoice_id)}/pdf`} target="_blank" rel="noopener" data-testid="fin-invoice-pdf"><FileDown className="h-4 w-4" aria-hidden /> PDF</a>}
-                      {i.status === "issued" && perms.invoice && <Button size="sm" variant="ghost" onClick={() => setOpen({ kind: "email", invoiceId: s(i.invoice_id) })}><Mail className="h-4 w-4" aria-hidden /> Email draft</Button>}
+                      {i.status === "issued" && perms.invoice && !data.access.sandbox && <Button size="sm" variant="ghost" onClick={() => setOpen({ kind: "email", invoiceId: s(i.invoice_id) })}><Mail className="h-4 w-4" aria-hidden /> Email draft</Button>}
+                      {i.status === "issued" && perms.invoice && writable && Boolean(i.send) && !(i.send as SendInfo).marked && (i.send as SendInfo).state !== "sent" && (i.send as SendInfo).state !== "paid" && (
+                        <Button size="sm" variant="ghost" onClick={() => { setNotice(null); setMarking({ id: s(i.invoice_id), number: s(i.number), issueDate: s(i.issue_date), marked: false }); }} data-testid="fin-invoice-mark-sent">Mark as sent</Button>)}
+                      {i.status === "issued" && perms.invoice && writable && Boolean(i.send) && (i.send as SendInfo).marked && (
+                        <Button size="sm" variant="ghost" onClick={() => { setNotice(null); setMarking({ id: s(i.invoice_id), number: s(i.number), issueDate: s(i.issue_date), marked: true }); }} data-testid="fin-invoice-unmark-sent">Undo sent</Button>)}
                       {i.status === "issued" && perms.invoice && writable && <Button size="sm" variant="ghost" onClick={() => setVoiding({ kind: "invoice", id: s(i.invoice_id), label: `invoice ${s(i.number)}` })}>Void</Button>}
-                      {i.status === "issued" && perms.invoice && writable && cmp(s(i.paid) || "0", 0) === 0 && cmp(s(i.credited) || "0", 0) === 0 && (
+                      {i.status === "issued" && perms.invoice && writable && cmp(s(i.paid) || "0", 0) === 0 && cmp(s(i.credited) || "0", 0) === 0 && !(i.send && ((i.send as SendInfo).marked || (i.send as SendInfo).via === "built2bid")) && (
                         <Button size="sm" variant="ghost" className="text-danger" onClick={() => { setNotice(null); setDeleting({ id: s(i.invoice_id), number: s(i.number) }); }} data-testid="fin-invoice-delete">Delete</Button>)}
                     </div>
                   </li>
@@ -227,7 +252,7 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
                       <div className="mt-1 flex flex-wrap gap-1">
                         {!p.verified && perms.pay && writable && <Button size="sm" variant="ghost" onClick={() => verify(p.payment_id)}>Mark verified</Button>}
                         <a className={buttonClass("ghost", "sm")} href={`/api/financials/payments/${s(p.payment_id)}/receipt`} target="_blank" rel="noopener" data-testid="fin-payment-receipt"><FileDown className="h-4 w-4" aria-hidden /> Receipt PDF</a>
-                        {perms.pay && <Button size="sm" variant="ghost" onClick={() => setOpen({ kind: "email", paymentId: s(p.payment_id) })}><Mail className="h-4 w-4" aria-hidden /> Receipt email draft</Button>}
+                        {perms.pay && !data.access.sandbox && <Button size="sm" variant="ghost" onClick={() => setOpen({ kind: "email", paymentId: s(p.payment_id) })}><Mail className="h-4 w-4" aria-hidden /> Receipt email draft</Button>}
                         {perms.pay && writable && <Button size="sm" variant="ghost" onClick={() => setVoiding({ kind: "payment", id: s(p.payment_id), label: `payment ${s(p.number)}` })}>Void</Button>}
                       </div>
                     )}
@@ -279,6 +304,7 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
       {open?.kind === "email" && <EmailDraftDialog open onOpenChange={(o) => { if (!o) setOpen(null); }} invoiceId={open.invoiceId} paymentId={open.paymentId} />}
       <VoidDialog target={voiding} onOpenChange={(o) => { if (!o) setVoiding(null); }} onDone={done} />
       <InvoicePreviewDialog invoiceId={previewId} onOpenChange={(o) => { if (!o) setPreviewId(null); }} />
+      <MarkSentDialog target={marking} onOpenChange={(o) => { if (!o) setMarking(null); }} onDone={(m) => { setNotice(m); done(); }} />
       <DeleteInvoiceDialog target={deleting} onOpenChange={(o) => { if (!o) setDeleting(null); }}
         onDone={(m) => { setNotice(m); done(); }}
         onVoidInstead={() => { const t = deleting; if (t) setVoiding({ kind: "invoice", id: t.id, label: `invoice ${t.number}` }); }} />

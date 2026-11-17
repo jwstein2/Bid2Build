@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isFinancialsEnabled } from "@/lib/env";
+import { SandboxBar } from "@/components/financials/sandbox-bar";
 import { loadFinState } from "@/lib/financials/loaders";
 import { formatCurrency } from "@/lib/estimate/money";
 import { buildLedger } from "@/lib/financials/ledger";
@@ -61,6 +62,7 @@ export default async function CustomerLedger({ params }: { params: Promise<{ cus
   return (
     <div className="mx-auto max-w-6xl space-y-5" data-testid="fin-customer-ledger" data-guide-page="financials.customer">
       <Breadcrumbs items={[{ label: "Financials", href: "/financials" }, { label: "Accounts receivable", href: "/financials/receivables" }, { label: name }]} />
+      {state.ctx.access.sandbox && <SandboxBar sandbox canManage={state.ctx.access.permissions.includes("manage_financial_config")} />}
       <header>
         <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">Customer account</p>
         <h1 className="text-3xl font-extrabold">{name}</h1>

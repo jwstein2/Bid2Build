@@ -10,7 +10,7 @@ const PRIVATE = { "cache-control": "private, no-store, max-age=0", "x-robots-tag
 export async function receiptResponse(d: ReceiptPdfData, brand: PdfBranding, fileStem: string, download: boolean): Promise<Response> {
   let pdf: Buffer;
   try {
-    pdf = await renderToBuffer(createElement(ReceiptPdf, { d, logo: brand.logo }) as React.ReactElement<DocumentProps>);
+    pdf = await renderToBuffer(createElement(ReceiptPdf, { d: { ...d, sandbox: brand.sandbox }, logo: brand.logo }) as React.ReactElement<DocumentProps>);
   } catch (e) {
     logError("fin.receipt-pdf", e);
     return fail(500, "pdf_failed", "We couldn't create the PDF. Please try again.");
