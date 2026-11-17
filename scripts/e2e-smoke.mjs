@@ -32,7 +32,7 @@ for (const [name, viewport] of Object.entries(viewports)) {
   await page.getByRole("button", { name: /Next: customer & project/ }).click();
   check(await steps.getByRole("button", { name: /Company.*\(done\)/ }).count() === 1, "Company step marked done");
   await page.fill("#c-name", "Example Customer");
-  await page.getByRole("button", { name: /Next: build the estimate/ }).click();
+  await page.getByRole("button", { name: /Next: estimate costs/ }).click();
 
   await page.getByRole("button", { name: "Add line item" }).first().click();
   await page.keyboard.type("Composite deck boards");
@@ -44,7 +44,7 @@ for (const [name, viewport] of Object.entries(viewports)) {
 
   await page.getByRole("button", { name: /Next: scope & exclusions/ }).click();
   check(await steps.getByRole("button", { name: /Scope/ }).getAttribute("aria-current") === "step", "Next reaches Scope & exclusions step");
-  await page.getByRole("button", { name: /Next: proposal & terms/ }).click();
+  await page.getByRole("button", { name: /Next: proposal settings/ }).click();
   check(await steps.getByRole("button", { name: /Proposal/ }).getAttribute("aria-current") === "step", "Next reaches Proposal step");
   await page.getByRole("button", { name: /Back/ }).click();
   check(await steps.getByRole("button", { name: /Scope/ }).getAttribute("aria-current") === "step", "Back returns to Scope & exclusions");
@@ -56,7 +56,7 @@ for (const [name, viewport] of Object.entries(viewports)) {
   check(await page.getByText("$500.00").first().isVisible(), "draft survives a page refresh (local autosave)");
 
   await page.getByRole("button", { name: /Next: scope & exclusions/ }).click();
-  await page.getByRole("button", { name: /Next: proposal & terms/ }).click();
+  await page.getByRole("button", { name: /Next: proposal settings/ }).click();
   await page.getByRole("button", { name: /Preview & download/ }).click();
   const dialog = page.getByRole("dialog");
   check(await dialog.getByText("Smoke Test Builders").first().isVisible(), "preview shows the contractor's company");

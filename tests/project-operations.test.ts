@@ -5,7 +5,7 @@ import { buildProposal } from "@/lib/proposal/build";
 import { defaultBusinessProfile, defaultProposalConfig } from "@/lib/proposal/types";
 import { canEditStyleKey, resolveProposalStyle, sanitizeCompanyStyle, sanitizeLocks, STYLE_KEYS, type StylePolicy } from "@/lib/operations/proposal-style";
 import { contractSummary } from "@/lib/operations/contract";
-import { compareQuotes, primaryQuote, type SubQuote } from "@/lib/operations/sub-quotes";
+import { approvedSubAmount, compareQuotes, primaryQuote, type SubQuote } from "@/lib/operations/sub-quotes";
 import { filterSuggestions, normalizeLabels } from "@/lib/operations/photo-labels";
 import { jobStatus } from "@/lib/operations/project-status";
 
@@ -126,6 +126,17 @@ describe("subcontractor quote comparison", () => {
   });
 });
 
+describe("V6-15 approved subcontractor amount", () => {
+  const rev = (id: string, n: number, amount: number) => ({ id, revision: n, amount, quoteDate: null, note: null, documentPath: null, documentName: null, createdAt: "", createdBy: null });
+  const q = (p: Partial<SubQuote>): SubQuote => ({ id: "q", itemId: "i", groupId: "g", itemName: "Sub", resourceId: "r1", vendorName: "Ace", estimatedCost: 0, status: "accepted", internalNotes: null, appliedRevisionId: null, createdAt: "", revisions: [rev("a", 1, 1000), rev("b", 2, 1100)], ...p });
+  it("sums accepted quotes in the section for the named sub, preferring the applied revision", () => {
+    const quotes = [q({}), q({ id: "q2", appliedRevisionId: "a", status: "under_review" }), q({ id: "q3", resourceId: "r2" }), q({ id: "q4", status: "received" }), q({ id: "q5", groupId: "other" })];
+    expect(approvedSubAmount(quotes, "g", "r1")).toBe("2100.00");
+    expect(approvedSubAmount(quotes, "g", null)).toBe("3200.00");
+    expect(approvedSubAmount([q({ status: "rejected" })], "g", null)).toBeNull();
+  });
+});
+
 describe("photo labels and job status", () => {
   it("normalizes labels and limits AI suggestions to the vocabulary", () => {
     expect(normalizeLabels([" Before ", "before", "Roof  Leak", 3])).toEqual(["before", "roof leak"]);
@@ -183,6 +194,19 @@ describe("V4.3 amendment helpers", async () => {
     const c = shareContent(sec, ["workDescription", "technicalInstructions"], { projectTitle: "Smith", company: "Co" });
     expect(c.fields).toEqual({ workDescription: "Run wire", technicalInstructions: "14 AWG" });
     expect(JSON.stringify(c)).not.toMatch(/Margin is thin|Kids at home/);
+  });
+
+  it("V6-15: customer contact and pricing are shared only when chosen", () => {
+    const sec = { id: "s", estimate_id: "e", source_group_id: "g", trade: "roofing", title: "Roof", sort_order: 0, approved_scope: null, work_description: "Tear off",
+      technical_instructions: null, installation_notes: null, internal_notes: "Markup 35%", customer_info: null, resource_id: null, revision: 1, updated_at: "", updated_by: null };
+    const customer = { name: "Pat Example", phone: "555-0100", email: "pat@example.test" };
+    const off = shareContent(sec, ["workDescription"], { projectTitle: "P", company: "Co", customer });
+    expect(off.fields).toEqual({ workDescription: "Tear off" });
+    expect("pricing" in off).toBe(false);
+    const on = shareContent(sec, ["workDescription", "customerName", "customerPhone"], { projectTitle: "P", company: "Co", customer, pricing: { kind: "budget", amount: "4200.00" } });
+    expect(on.fields).toEqual({ workDescription: "Tear off", customerName: "Pat Example", customerPhone: "555-0100" });
+    expect(on.pricing).toEqual({ kind: "budget", amount: "4200.00" });
+    expect(JSON.stringify(on)).not.toMatch(/pat@example|Markup/);
   });
 
   it("live schedule changes list previous and proposed dates and flag downstream tasks", () => {

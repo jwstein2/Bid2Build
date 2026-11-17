@@ -42,6 +42,23 @@ export function primaryQuote(quotes: SubQuote[]): SubQuote | null {
   return live.find((q) => q.appliedRevisionId) ?? live.find((q) => q.status === "accepted") ?? live[live.length - 1] ?? null;
 }
 
+/**
+ * V6-15: the accepted amount for one scope section, to share with the subcontractor who quoted it.
+ * Counts quotes in the section's group that were accepted (or applied), for that resource when one is
+ * named; the applied revision wins, else the newest. Null when nothing is accepted.
+ */
+export function approvedSubAmount(quotes: SubQuote[], groupId: string, resourceId: string | null): string | null {
+  let sum = ZERO, n = 0;
+  for (const q of quotes) {
+    if (q.groupId !== groupId || q.status === "rejected" || !(q.status === "accepted" || q.appliedRevisionId)) continue;
+    if (resourceId && q.resourceId !== resourceId) continue;
+    const r = q.revisions.find((x) => x.id === q.appliedRevisionId) ?? latestRevision(q);
+    if (!r) continue;
+    sum = sum.plus(dec(r.amount)); n++;
+  }
+  return n ? money(sum) : null;
+}
+
 export interface LineComparison {
   itemId: string; itemName: string; groupId: string | null; vendorName: string; quoteCount: number; status: SubQuote["status"];
   originalCost: string;            // the estimate's own cost for the line (today's estimate)

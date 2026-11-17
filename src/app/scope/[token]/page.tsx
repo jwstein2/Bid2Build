@@ -8,7 +8,7 @@ import { site } from "@/lib/site";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Scope of work", robots: { index: false, follow: false, nocache: true }, referrer: "no-referrer" };
 
-type Shared = { content: { title: string; trade: string | null; project: string; company: string; assignee: string | null; fields: Record<string, string> }; photoIds: string[]; version: number; sharedAt: string; expiresAt: string };
+type Shared = { content: { title: string; trade: string | null; project: string; company: string; assignee: string | null; fields: Record<string, string>; pricing?: { kind: "approved" | "budget"; amount: string } }; photoIds: string[]; version: number; sharedAt: string; expiresAt: string };
 
 /** What a subcontractor sees: only the fields the contractor chose to share, as last updated. */
 export default async function ScopeSharePage({ params }: { params: Promise<{ token: string }> }) {
@@ -42,6 +42,11 @@ export default async function ScopeSharePage({ params }: { params: Promise<{ tok
         {SHAREABLE_FIELDS.filter((f) => c.fields[f.key]).map((f) => (
           <section key={f.key} className="rounded-2xl border border-line bg-surface p-5"><h2 className="font-bold text-navy">{f.label}</h2><p className="mt-1 whitespace-pre-line text-ink-soft">{c.fields[f.key]}</p></section>
         ))}
+        {c.pricing && (
+          <section className="rounded-2xl border border-line bg-surface p-5" data-testid="shared-pricing"><h2 className="font-bold text-navy">{c.pricing.kind === "approved" ? "Approved amount" : "Proposed budget"}</h2>
+            <p className="mt-1 font-display text-2xl font-extrabold text-ink">{new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(c.pricing.amount))}</p>
+            <p className="text-xs text-muted">{c.pricing.kind === "approved" ? "Your accepted quote for this scope." : "The contractor's budget for this scope. Confirm the final amount with them."}</p></section>
+        )}
         {photos.length > 0 && (
           <section className="rounded-2xl border border-line bg-surface p-5"><h2 className="font-bold text-navy">Photos</h2>
             {/* eslint-disable-next-line @next/next/no-img-element */}

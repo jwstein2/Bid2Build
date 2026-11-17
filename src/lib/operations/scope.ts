@@ -7,9 +7,28 @@ export const SHAREABLE_FIELDS = [
   { key: "customerInfo", label: "Customer-facing notes" },
   { key: "siteAddress", label: "Job site address" },
   { key: "schedule", label: "Scheduled dates for this section" },
+  { key: "customerName", label: "Customer name" },
+  { key: "customerPhone", label: "Customer phone" },
+  { key: "customerEmail", label: "Customer email" },
 ] as const;
 export type ShareField = (typeof SHAREABLE_FIELDS)[number]["key"];
 export const DEFAULT_SHARE_FIELDS: ShareField[] = ["workDescription", "technicalInstructions", "installationNotes"];
+/** Fields grouped for the share drawer; customer contact details and pricing are separate, default-off choices. */
+export const SCOPE_FIELDS: ShareField[] = ["approvedScope", "workDescription", "technicalInstructions", "installationNotes", "customerInfo", "schedule"];
+export const JOB_FIELDS: ShareField[] = ["siteAddress", "customerName", "customerPhone", "customerEmail"];
+
+/**
+ * V6-15 pricing disclosure. "none" is the default. "approved" shares the subcontractor's own accepted
+ * quote amount for this section; "budget" shares the estimate's cost for the section (never the
+ * customer price, markup, margin or any other section). Both need permission to see sub costs.
+ */
+export const SHARE_PRICING = [
+  { key: "none", label: "No pricing", hint: "The subcontractor sees scope only." },
+  { key: "approved", label: "Approved subcontractor amount", hint: "Their accepted quote for this section." },
+  { key: "budget", label: "Proposed budget", hint: "Your estimated cost for this section. Never your price or markup." },
+] as const;
+export type SharePricing = (typeof SHARE_PRICING)[number]["key"];
+export interface SharedPricing { kind: Exclude<SharePricing, "none">; amount: string }
 
 export interface ScopeSection {
   id: string; estimate_id: string; source_group_id: string; trade: string | null; title: string; sort_order: number;
@@ -18,7 +37,7 @@ export interface ScopeSection {
 }
 
 /** The frozen share content: only the selected fields (internal notes can never be shared). */
-export function shareContent(s: ScopeSection, fields: ShareField[], ctx: { projectTitle: string; siteAddress?: string | null; dates?: { start: string; end: string } | null; company: string; assignee?: string | null }) {
+export function shareContent(s: ScopeSection, fields: ShareField[], ctx: { projectTitle: string; siteAddress?: string | null; dates?: { start: string; end: string } | null; company: string; assignee?: string | null; customer?: { name?: string | null; phone?: string | null; email?: string | null }; pricing?: SharedPricing | null }) {
   const pick = new Set(fields);
   const f: Record<string, string> = {};
   if (pick.has("approvedScope") && s.approved_scope) f.approvedScope = s.approved_scope;
@@ -28,5 +47,9 @@ export function shareContent(s: ScopeSection, fields: ShareField[], ctx: { proje
   if (pick.has("customerInfo") && s.customer_info) f.customerInfo = s.customer_info;
   if (pick.has("siteAddress") && ctx.siteAddress) f.siteAddress = ctx.siteAddress;
   if (pick.has("schedule") && ctx.dates) f.schedule = `${ctx.dates.start} to ${ctx.dates.end}`;
-  return { title: s.title, trade: s.trade, project: ctx.projectTitle, company: ctx.company, assignee: ctx.assignee ?? null, fields: f };
+  const c = ctx.customer ?? {};
+  if (pick.has("customerName") && c.name?.trim()) f.customerName = c.name.trim();
+  if (pick.has("customerPhone") && c.phone?.trim()) f.customerPhone = c.phone.trim();
+  if (pick.has("customerEmail") && c.email?.trim()) f.customerEmail = c.email.trim();
+  return { title: s.title, trade: s.trade, project: ctx.projectTitle, company: ctx.company, assignee: ctx.assignee ?? null, fields: f, ...(ctx.pricing ? { pricing: ctx.pricing } : {}) };
 }

@@ -2,7 +2,7 @@
 import { Camera, ChevronDown, Copy, Eye, History, Loader2, Lock, Share2, Users } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { formatCurrency } from "@/lib/estimate/money";
-import { DEFAULT_SHARE_FIELDS, SHAREABLE_FIELDS, type ScopeSection, type ShareField } from "@/lib/operations/scope";
+import { DEFAULT_SHARE_FIELDS, JOB_FIELDS, SCOPE_FIELDS, SHARE_PRICING, SHAREABLE_FIELDS, type ScopeSection, type ShareField, type SharedPricing, type SharePricing } from "@/lib/operations/scope";
 import { cn } from "@/lib/cn";
 import { Button } from "../ui/button";
 import { Drawer } from "../projects/task-drawer";
@@ -202,7 +202,10 @@ function ShareDrawer({ section, data, resName, onClose, onChanged }: { section: 
   const existing = data.shares.filter((x) => x.sectionId === section.id && !x.revokedAt);
   const [resourceId, setResourceId] = useState(section.resource_id ?? "");
   const [fields, setFields] = useState<ShareField[]>(DEFAULT_SHARE_FIELDS);
-  const [preview, setPreview] = useState<{ title: string; fields: Record<string, string> } | null>(null);
+  const [pricing, setPricing] = useState<SharePricing>("none");
+  const [includePhotos, setIncludePhotos] = useState(false);
+  const photoTotal = data.photoCount[section.id] ?? 0;
+  const [preview, setPreview] = useState<{ title: string; fields: Record<string, string>; pricing?: SharedPricing; photoCount: number } | null>(null);
   const [link, setLink] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -210,7 +213,7 @@ function ShareDrawer({ section, data, resName, onClose, onChanged }: { section: 
 
   const call = async (body: Record<string, unknown>) => {
     setBusy(true); setErr(null);
-    const r = await fetch(`/api/scope/${section.id}/share`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ resourceId: resourceId || null, fields, ...body }) });
+    const r = await fetch(`/api/scope/${section.id}/share`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ resourceId: resourceId || null, fields, pricing, includePhotos, ...body }) });
     const d = await r.json().catch(() => null);
     setBusy(false);
     if (!r.ok) { setErr(d?.error?.message ?? "We couldn't share this section."); return null; }
@@ -225,24 +228,46 @@ function ShareDrawer({ section, data, resName, onClose, onChanged }: { section: 
   return (
     <Drawer open onOpenChange={(o) => { if (!o) onClose(); }} title={`Share: ${section.title}`}>
       <div className="space-y-3 text-sm" data-testid="share-drawer">
-        <p className="text-xs text-muted">The subcontractor sees only the fields you pick, through a private link. No prices, costs or internal notes are ever included.</p>
+        <p className="text-xs text-muted">The subcontractor sees only what you pick, through a private link. Customer details, the address, photos and pricing start off. Your customer price, markup, margin, other sections and internal notes are never included.</p>
         <div><label className="label" htmlFor="sh-res">Share with</label>
           <select id="sh-res" className="field field-sm" value={resourceId} onChange={(e) => setResourceId(e.target.value)}>
             <option value="">Anyone with the link</option>{subs.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
           </select>
         </div>
-        <fieldset>
-          <legend className="label">Fields to share</legend>
-          {SHAREABLE_FIELDS.map((x) => (
-            <label key={x.key} className="flex items-center gap-2 py-0.5">
+        <fieldset data-testid="share-scope-fields">
+          <legend className="label">Scope</legend>
+          {SHAREABLE_FIELDS.filter((x) => SCOPE_FIELDS.includes(x.key)).map((x) => (
+            <label key={x.key} className="flex min-h-9 items-center gap-2 py-0.5">
               <input type="checkbox" className="accent-[var(--color-brand)]" checked={fields.includes(x.key)} onChange={(e) => setFields(e.target.checked ? [...fields, x.key] : fields.filter((k) => k !== x.key))} />{x.label}
             </label>
           ))}
           <p className="mt-1 flex items-center gap-1 text-xs text-muted"><Lock className="h-3 w-3" aria-hidden />Internal notes can&apos;t be shared.</p>
         </fieldset>
+        <fieldset data-testid="share-job-fields">
+          <legend className="label">Job site and customer</legend>
+          {SHAREABLE_FIELDS.filter((x) => JOB_FIELDS.includes(x.key)).map((x) => (
+            <label key={x.key} className="flex min-h-9 items-center gap-2 py-0.5">
+              <input type="checkbox" className="accent-[var(--color-brand)]" checked={fields.includes(x.key)} onChange={(e) => setFields(e.target.checked ? [...fields, x.key] : fields.filter((k) => k !== x.key))} />{x.label}
+            </label>
+          ))}
+          <label className="flex min-h-9 items-center gap-2 py-0.5">
+            <input type="checkbox" className="accent-[var(--color-brand)]" data-testid="share-photos" checked={includePhotos} disabled={!photoTotal} onChange={(e) => setIncludePhotos(e.target.checked)} />
+            Photos attached to this section {photoTotal ? `(${photoTotal})` : "(none yet)"}
+          </label>
+        </fieldset>
+        <fieldset data-testid="share-pricing">
+          <legend className="label">Pricing</legend>
+          {SHARE_PRICING.filter((x) => x.key === "none" || data.showCosts).map((x) => (
+            <label key={x.key} className="flex items-start gap-2 py-1">
+              <input type="radio" name="sh-pricing" className="mt-0.5 accent-[var(--color-brand)]" value={x.key} checked={pricing === x.key} onChange={() => setPricing(x.key)} />
+              <span><span className="font-medium">{x.label}</span><span className="block text-xs text-muted">{x.hint}</span></span>
+            </label>
+          ))}
+          {!data.showCosts && <p className="text-xs text-muted">Sharing pricing needs permission to see subcontractor costs.</p>}
+        </fieldset>
         {err && <p className="text-danger" role="alert">{err}</p>}
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="secondary" disabled={busy || !fields.length} onClick={async () => { const d = await call({ preview: true }); if (d) setPreview(d.preview); }}><Eye className="h-4 w-4" aria-hidden /> Preview</Button>
+          <Button size="sm" variant="secondary" disabled={busy || !fields.length} onClick={async () => { const d = await call({ preview: true }); if (d) setPreview({ ...d.preview, photoCount: d.photoCount ?? 0 }); }}><Eye className="h-4 w-4" aria-hidden /> Preview</Button>
           <Button size="sm" disabled={busy || !fields.length} onClick={async () => { const d = await call({}); if (d) { setLink(d.url); onChanged(); } }}><Share2 className="h-4 w-4" aria-hidden /> Create share link</Button>
         </div>
         {preview && (
@@ -250,7 +275,9 @@ function ShareDrawer({ section, data, resName, onClose, onChanged }: { section: 
             <p className="text-xs font-semibold uppercase tracking-wider text-muted">What they&apos;ll see</p>
             <p className="mt-1 font-semibold">{preview.title}</p>
             {Object.entries(preview.fields).map(([k, v]) => <div key={k} className="mt-2"><p className="text-xs font-semibold">{SHAREABLE_FIELDS.find((x) => x.key === k)?.label ?? k}</p><p className="whitespace-pre-line">{v}</p></div>)}
-            {!Object.keys(preview.fields).length && <p className="mt-1 text-xs text-muted">The selected fields are empty.</p>}
+            {preview.pricing && <div className="mt-2"><p className="text-xs font-semibold">{preview.pricing.kind === "approved" ? "Approved amount" : "Proposed budget"}</p><p data-testid="share-preview-pricing">{formatCurrency(preview.pricing.amount)}</p></div>}
+            {preview.photoCount > 0 && <p className="mt-2 text-xs">{preview.photoCount} photo{preview.photoCount === 1 ? "" : "s"}</p>}
+            {!Object.keys(preview.fields).length && !preview.pricing && <p className="mt-1 text-xs text-muted">The selected fields are empty.</p>}
           </div>
         )}
         {link && (

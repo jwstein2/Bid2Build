@@ -53,7 +53,7 @@ async function flow(browser) {
     await page.reload(); await page.waitForSelector('nav[aria-label="Builder steps"]');
     check("A refresh resumes on Customer & project (not the trade chooser or Company)", (await currentStep(page)) === "Customer & project", await currentStep(page));
     check("A Roofing trade kept on the bid", /Roofing/.test(await page.locator("#est-title").inputValue()), await page.locator("#est-title").inputValue());
-    await page.getByRole("button", { name: /Next: build the estimate/ }).click();
+    await page.getByRole("button", { name: /Next: estimate costs/ }).click();
     check("A Next goes to Estimate", (await currentStep(page)) === "Estimate");
     // B. Same visitor (profile now saved on this device) starts another bid
     await page.goto(`${BASE}/bids`);
