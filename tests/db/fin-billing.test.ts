@@ -375,6 +375,7 @@ d("Financial Command Center: receivables, milestones and emails (database)", () 
   });
 
   it("rollbacks remove the financial objects (newest first) and the migrations re-apply", async () => {
+    await pool.query(readFileSync("docs/financials/rollback_20261201007000.sql", "utf8"));
     await pool.query(readFileSync("docs/financials/rollback_20261130001000.sql", "utf8"));
     await pool.query(readFileSync("docs/financials/rollback_20261129002000.sql", "utf8"));
     await pool.query(readFileSync("docs/project-operations/rollback_20261129001000.sql", "utf8")); // newest first

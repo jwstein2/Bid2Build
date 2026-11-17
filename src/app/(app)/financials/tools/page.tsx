@@ -27,6 +27,11 @@ const GROUPS: { title: string; tools: Tool[] }[] = [
     { label: "Commitments (subcontracts & POs)", href: "/financials/records?view=commitments", needs: "view_project_financials" },
     { label: "Budget vs actual by job", href: "/financials/records?view=jobs", needs: "view_project_financials" },
   ] },
+  { title: "Reports", tools: [
+    { label: "Profit & Loss (by period)", href: "/financials/reports", needs: "view_company_financials" },
+    { label: "Profit by project", href: "/financials/reports?view=jobs", needs: "view_company_financials" },
+    { label: "Profit by trade", href: "/financials/reports?view=trades", needs: "view_company_financials" },
+  ] },
   { title: "Keep it clean", tools: [
     { label: "Alerts", href: "/financials/records?view=alerts", needs: "view_project_financials" },
     { label: "Needs review", href: "/financials/records?view=review", needs: "view_project_financials" },

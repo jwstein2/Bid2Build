@@ -82,6 +82,7 @@ export default async function FinancialsHome() {
           <p className="text-sm text-ink-soft">{access.name} · {PRESETS[profile.presetKey].label}{profile.trades.length > 1 ? ` + ${profile.trades.length - 1} more trade${profile.trades.length > 2 ? "s" : ""}` : ""}</p>
         </div>
         {canUseAccountantMode(perms) && <ModeToggle mode={layout.mode} />}
+        {perms.includes("view_company_financials") && <ButtonLink href="/financials/reports" variant="secondary" size="sm" data-guide="fin.reports-pl">Profit &amp; Loss</ButtonLink>}
         <ButtonLink href="/financials/receivables" variant="secondary" size="sm" data-guide="fin.receivables">Accounts receivable</ButtonLink>
         <ButtonLink href="/financials/tools" variant="secondary" size="sm" data-guide="fin.tools"><LayoutGrid className="h-4 w-4" aria-hidden /> All tools</ButtonLink>
         {perms.includes("manage_financial_config") && <ButtonLink href="/company/business-config" variant="ghost" size="sm" data-guide="fin.config"><Settings2 className="h-4 w-4" aria-hidden /> Trade setup</ButtonLink>}

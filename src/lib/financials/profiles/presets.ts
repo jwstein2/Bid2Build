@@ -30,7 +30,7 @@ export interface Preset {
 
 const CORE_CARDS: readonly CardKey[] = ["ar_aging", "milestones_ready", "deposits_outstanding", "job_profitability", "budget_vs_actual"];
 const CORE_ACTIONS: readonly QuickAction[] = ["create_invoice", "invoice_milestone", "record_payment", "record_expense"];
-const CORE_REPORTS: readonly ReportKey[] = ["ar_aging", "job_profitability", "budget_vs_actual", "payments_received"];
+const CORE_REPORTS: readonly ReportKey[] = ["profit_loss", "ar_aging", "job_profitability", "budget_vs_actual", "payments_received"];
 const CORE_STEPS: readonly OnboardingStep[] = ["confirm_trades", "choose_payment_structure", "review_cost_codes", "connect_first_job"];
 
 const p = (key: PresetKey, label: string, x: Partial<Omit<Preset, "key" | "label">>): Preset => ({

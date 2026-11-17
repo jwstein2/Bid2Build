@@ -76,7 +76,7 @@ export const QUICK_ACTION_NEEDS: Record<QuickAction, FinPermission> = {
 };
 
 export const REPORTS = [
-  "ar_aging", "job_profitability", "budget_vs_actual", "cost_by_code", "commitments", "payments_received", "change_order_log",
+  "profit_loss", "ar_aging", "job_profitability", "budget_vs_actual", "cost_by_code", "commitments", "payments_received", "change_order_log",
   "wip_placeholder", "sales_tax_placeholder", "vendor_spend", "material_spend", "tm_billing",
 ] as const;
 export type ReportKey = (typeof REPORTS)[number];
