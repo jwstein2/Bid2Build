@@ -8,7 +8,9 @@ export async function finAction<T = Record<string, unknown>>(payload: Record<str
   try {
     const res = await fetch("/api/financials/actions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
     const body = await res.json().catch(() => ({}));
-    if (!res.ok) return { ok: false, code: body.error ?? "server_error", message: body.message ?? "Something went wrong. Nothing was changed.", detail: body.detail };
+    // The API answers { error: { code, message, detail? } }; older routes used a flat shape.
+    const e = body && typeof body.error === "object" && body.error ? body.error : body;
+    if (!res.ok) return { ok: false, code: (typeof e.code === "string" && e.code) || (typeof body.error === "string" && body.error) || "server_error", message: e.message ?? "Something went wrong. Nothing was changed.", detail: e.detail ?? body.detail };
     return { ok: true, data: body as T };
   } catch {
     return { ok: false, code: "network", message: "You're offline or the connection dropped. Nothing was changed." };

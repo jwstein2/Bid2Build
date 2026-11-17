@@ -44,6 +44,7 @@ const body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("issue_invoice"), invoiceId: id, issueDate: day.optional(), exceptionReason: text(500).optional() }),
   z.object({ action: z.literal("delete_invoice_draft"), invoiceId: id }),
   z.object({ action: z.literal("void_invoice"), invoiceId: id, reason: text(500).min(1) }),
+  z.object({ action: z.literal("delete_invoice"), invoiceId: id, reason: text(500).min(1) }),
   z.object({ action: z.literal("record_payment"), p: z.object({ customerId: id.optional(), jobId: id.optional(), receivedOn: day.optional(), method: z.enum(["check", "cash", "ach", "card", "wire", "other"]), reference: text(120).optional(), amount, memo: text(1000).optional(), allocations: alloc.optional() }), key }),
   z.object({ action: z.literal("allocate_payment"), paymentId: id, allocations: alloc, key }),
   z.object({ action: z.literal("verify_payment"), paymentId: id }),
@@ -99,6 +100,11 @@ export async function POST(req: Request) {
       case "save_invoice": return json(await fin.saveInvoiceDraft(db, a.jobId, { ...a.p, lines: a.p.lines ?? [] }, a.key));
       case "issue_invoice": return json(await fin.issueInvoice(db, a.invoiceId, { issueDate: a.issueDate, exceptionReason: a.exceptionReason || undefined }));
       case "delete_invoice_draft": { const { error } = await db.rpc("fin_invoice_delete_draft", { p_invoice_id: a.invoiceId }); if (error) throw new fin.FinError(error.message, error.message, error.details ?? undefined); return json({ ok: true }); }
+      case "delete_invoice": {
+        const { data, error } = await db.rpc("fin_invoice_delete_mistake", { p_invoice_id: a.invoiceId, p_reason: a.reason });
+        if (error) throw new fin.FinError(error.message, error.message, error.details ?? undefined);
+        return json(data);
+      }
       case "void_invoice": return json({ ok: await fin.voidInvoice(db, a.invoiceId, a.reason) ?? true });
       case "record_payment": return json(await fin.recordPayment(db, bookId, a.p, a.key));
       case "allocate_payment": return json({ ok: await fin.allocatePayment(db, a.paymentId, a.allocations, a.key) ?? true });

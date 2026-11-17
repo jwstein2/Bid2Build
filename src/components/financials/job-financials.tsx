@@ -10,6 +10,7 @@ import { BasisBadge } from "./basis";
 import { EmailDraftDialog } from "./email-draft-dialog";
 import { finAction, fmtDate, usd } from "./fin-client";
 import { ContractCard, CreditDialog, InvoiceDialog, MilestoneCard, PaymentDialog, VoidDialog, type Perms, type R, type VoidTarget } from "./job-billing";
+import { DeleteInvoiceDialog, InvoicePreviewDialog } from "./invoice-preview";
 import { BillDialog, BillPaymentDialog, BudgetTable, CommitmentDialog, CostLists, ExpenseDialog, ProfitCard, ReviewQueue } from "./job-costs";
 import { JobSummary, type SummaryTarget } from "./job-summary";
 
@@ -38,6 +39,9 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
   const [section, setSection] = useState<Section>(initialAction === "expense" || initialAction === "bill" || initialAction === "commitment" ? "costs" : "billing");
   const [open, setOpen] = useState<Open>(null);
   const [voiding, setVoiding] = useState<VoidTarget | null>(null);
+  const [previewId, setPreviewId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<{ id: string; number: string } | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [versionId, setVersionId] = useState("");
   const [busy, setBusy] = useState(false);
   const [actionUsed, setActionUsed] = useState(false);
@@ -169,12 +173,14 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
               {perms.invoice && writable && <Button size="sm" variant="secondary" className="ml-auto" onClick={() => setOpen({ kind: "invoice", milestone: null, draft: null })}>Custom invoice</Button>}
               {perms.invoice && writable && <Button size="sm" variant="ghost" onClick={() => setOpen({ kind: "credit" })}>Issue credit</Button>}
             </div>
+            {notice && <div className="mt-2" data-testid="fin-invoice-notice"><Notice tone="ok">{notice}</Notice></div>}
             {invoices.length === 0 ? <p className="mt-2 text-sm text-ink-soft">No invoices yet. Start from a milestone above.</p> : (
               <ul className="mt-2 divide-y divide-line">
                 {invoices.map((i) => (
                   <li key={s(i.invoice_id)} className="py-2 text-sm" data-status={s(i.status)}>
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="min-w-0 flex-1"><span className="font-semibold">{s(i.number) || "Draft"}</span> <span className="text-muted">· {s(i.kind)}{i.issue_date ? ` · issued ${fmtDate(i.issue_date)}` : ""}{i.due_date ? ` · due ${fmtDate(i.due_date)}` : ""}</span>
+                      <span className="min-w-0 flex-1">{i.status === "draft" ? <span className="font-semibold">Draft</span>
+                        : <button type="button" className="min-h-9 font-semibold text-accent-ink underline decoration-dotted underline-offset-4 hover:decoration-solid" onClick={() => setPreviewId(s(i.invoice_id))} aria-label={`Preview invoice ${s(i.number)}`} data-testid="fin-invoice-open">{s(i.number)}</button>} <span className="text-muted">· {s(i.kind)}{i.issue_date ? ` · issued ${fmtDate(i.issue_date)}` : ""}{i.due_date ? ` · due ${fmtDate(i.due_date)}` : ""}</span>
                         {s(i.exception_reason) && <span className="block text-xs text-muted">Differs from schedule: {s(i.exception_reason)}</span>}</span>
                       <span className="flex items-center gap-2 tabular">{usd(i.total)} <BasisBadge basis="Invoiced" /></span>
                       {i.status === "issued" && <span className="flex items-center gap-2 tabular">{usd(i.balance)} <BasisBadge basis="Outstanding" /></span>}
@@ -191,12 +197,14 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
                       {i.status === "issued" && <a className={buttonClass("ghost", "sm")} href={`/api/financials/invoices/${s(i.invoice_id)}/pdf`} target="_blank" rel="noopener" data-testid="fin-invoice-pdf"><FileDown className="h-4 w-4" aria-hidden /> PDF</a>}
                       {i.status === "issued" && perms.invoice && <Button size="sm" variant="ghost" onClick={() => setOpen({ kind: "email", invoiceId: s(i.invoice_id) })}><Mail className="h-4 w-4" aria-hidden /> Email draft</Button>}
                       {i.status === "issued" && perms.invoice && writable && <Button size="sm" variant="ghost" onClick={() => setVoiding({ kind: "invoice", id: s(i.invoice_id), label: `invoice ${s(i.number)}` })}>Void</Button>}
+                      {i.status === "issued" && perms.invoice && writable && cmp(s(i.paid) || "0", 0) === 0 && cmp(s(i.credited) || "0", 0) === 0 && (
+                        <Button size="sm" variant="ghost" className="text-danger" onClick={() => { setNotice(null); setDeleting({ id: s(i.invoice_id), number: s(i.number) }); }} data-testid="fin-invoice-delete">Delete</Button>)}
                     </div>
                   </li>
                 ))}
               </ul>
             )}
-            <p className="mt-2 text-xs text-muted">Issued invoices have a customer PDF (no internal costs or margin). Nothing is emailed from here.</p>
+            <p className="mt-2 text-xs text-muted">Click an invoice number to preview what your customer sees (no internal costs or margin). Nothing is emailed from here.</p>
           </section>
 
           <section id="fin-payments" tabIndex={-1} className="rounded-xl border border-line bg-surface p-4 outline-none" aria-labelledby="fin-pay-h" data-testid="fin-payments" data-guide="fin.payments">
@@ -270,6 +278,10 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
       {open?.kind === "bill_payment" && <BillPaymentDialog open onOpenChange={(o) => { if (!o) setOpen(null); }} bill={open.bill} onDone={done} />}
       {open?.kind === "email" && <EmailDraftDialog open onOpenChange={(o) => { if (!o) setOpen(null); }} invoiceId={open.invoiceId} paymentId={open.paymentId} />}
       <VoidDialog target={voiding} onOpenChange={(o) => { if (!o) setVoiding(null); }} onDone={done} />
+      <InvoicePreviewDialog invoiceId={previewId} onOpenChange={(o) => { if (!o) setPreviewId(null); }} />
+      <DeleteInvoiceDialog target={deleting} onOpenChange={(o) => { if (!o) setDeleting(null); }}
+        onDone={(m) => { setNotice(m); done(); }}
+        onVoidInstead={() => { const t = deleting; if (t) setVoiding({ kind: "invoice", id: t.id, label: `invoice ${t.number}` }); }} />
     </div>
   );
 }
