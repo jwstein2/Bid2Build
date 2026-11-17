@@ -58,3 +58,20 @@ export const codeProblem = (reason: "empty" | "too_short" | "too_long", length: 
   reason === "too_long"
     ? `That code has more than ${length} digits. Copy the ${length}-digit code from the newest email, or send a new code.`
     : `Enter all ${length} digits of the code.`;
+
+/**
+ * Seconds to wait before the next "Resend code", by how many codes this dialog has already asked for.
+ * Starts at 60 s (Supabase's own per-address minimum) and backs off, so a stuck inbox can't turn into a
+ * burst of emails that hurts sending reputation. Supabase still enforces its own server-side limits.
+ */
+export const EMAIL_RESEND_STEPS_S = [60, 120, 300, 600] as const;
+export const resendCooldownS = (sent: number) => EMAIL_RESEND_STEPS_S[Math.min(Math.max(sent, 1), EMAIL_RESEND_STEPS_S.length) - 1];
+/** After this many codes in one dialog, stop nudging "resend" and point at the address and support. */
+export const EMAIL_SENDS_BEFORE_HELP = 4;
+
+/**
+ * What the confirmation screen says after Supabase accepts a send request. Accepted is not delivered,
+ * so it never claims the email arrived.
+ */
+export const codeRequestedText = (email: string, length: number) =>
+  `Your ${length}-digit code is on its way to ${email}. It usually arrives within a minute.`;

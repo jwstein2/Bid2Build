@@ -1,4 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
+import { recordMarketingConsent } from "@/lib/email/consent";
 import { createAdminClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/env";
 import { logError } from "@/lib/http/api";
@@ -62,7 +63,7 @@ export async function POST(req: Request) {
     if (Object.keys(patch).length) await db.from("leads").update(patch).eq("id", lead.id);
     if (fx.stage) await _setStage(db, lead, fx.stage);
     // Opt-out also unsubscribes them from our own promotional email (marketing_opt_in).
-    if (fx.suppress === "unsubscribed" && lead.user_id) await db.from("profiles").update({ marketing_opt_in: false, marketing_opt_in_at: null }).eq("id", lead.user_id);
+    if (fx.suppress === "unsubscribed" && lead.user_id) await recordMarketingConsent(db, lead.user_id, { optIn: false, source: "outreach_opt_out" }).catch(() => {});
     if (fx.block && !lead.instantly_blocked_at) {
       const r = await blockEmail(email);
       if (r.ok) await db.from("leads").update({ instantly_blocked_at: new Date().toISOString() }).eq("id", lead.id);
