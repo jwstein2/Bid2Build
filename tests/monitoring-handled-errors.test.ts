@@ -55,21 +55,27 @@ describe("scheduled functions surface failures", () => {
     expect(src).not.toMatch(/status: 200 \}\);\s*\}\s*$/m);
   });
 
-  it("runCron answers 502 and logs when the route fails, and pings the heartbeat on success", async () => {
-    const { runCron } = await import("../netlify/lib/cron");
+  it.each(fs.readdirSync(dir).filter((f) => f.endsWith(".mts")))("%s has no cross-file import (Netlify bundles each function alone)", (f) => {
+    expect(fs.readFileSync(path.join(dir, f), "utf8")).not.toMatch(/^import .* from "\.\.?\//m);
+  });
+
+  it("comms cron answers 502 and logs when the route fails, and pings the heartbeat on success", async () => {
+    const fn = "../netlify/functions/comms-cron.mts"; // a variable path: tsc rejects .mts specifiers, vitest loads it fine
+    const { default: commsCron } = (await import(/* @vite-ignore */ fn)) as { default: () => Promise<Response> };
     const err = vi.spyOn(console, "error").mockImplementation(() => {});
     const calls: string[] = [];
+    Object.assign(process.env, { EMAIL_OUTBOX_SECRET: "s", URL: "https://built2bid.org", COMM_EMAIL_MODE: "test", CRON_HEARTBEAT_COMMS: "https://hb.example/comms" });
     vi.stubGlobal("fetch", vi.fn(async (u: URL | string) => { calls.push(String(u)); return new Response("nope", { status: String(u).includes("/api/") ? 500 : 200 }); }));
-    process.env.CRON_HEARTBEAT_COMMS = "https://hb.example/comms";
-    const bad = await runCron("comms", "/api/cron/comms", "s", "https://built2bid.org");
+    const bad = await commsCron();
     expect(bad.status).toBe(502);
     expect(err).toHaveBeenCalled();
     expect(calls).not.toContain("https://hb.example/comms");
     vi.stubGlobal("fetch", vi.fn(async (u: URL | string) => { calls.push(String(u)); return new Response("{}", { status: 200 }); }));
-    const good = await runCron("comms", "/api/cron/comms", "s", "https://built2bid.org");
+    const good = await commsCron();
     expect(good.status).toBe(200);
     expect(calls).toContain("https://hb.example/comms");
-    vi.unstubAllGlobals(); err.mockRestore(); delete process.env.CRON_HEARTBEAT_COMMS;
+    vi.unstubAllGlobals(); err.mockRestore();
+    for (const k of ["EMAIL_OUTBOX_SECRET", "URL", "COMM_EMAIL_MODE", "CRON_HEARTBEAT_COMMS"]) delete process.env[k];
   });
 });
 

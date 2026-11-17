@@ -2,13 +2,33 @@
  * Netlify Scheduled Function: every 15 minutes, plan and send customer communications (V4.6).
  * Does nothing unless COMM_EMAIL_MODE is test or live. The owner emergency stop is checked inside.
  */
-import { runCron } from "../lib/cron";
 export default async function commsCron(): Promise<Response> {
   const secret = process.env.EMAIL_OUTBOX_SECRET;
   const base = process.env.URL;
   const mode = process.env.COMM_EMAIL_MODE;
   if (!secret || !base || (mode !== "test" && mode !== "live")) return new Response("off", { status: 200 });
   return runCron("comms", "/api/cron/comms", secret, base);
+}
+
+/** Calls the cron route. A failed run is logged as an error and answers 502; success pings optional CRON_HEARTBEAT_<NAME>. Kept inline (not a shared module) so Netlify's function bundler needs no cross-file import. */
+async function runCron(name: string, path: string, secret: string, base: string): Promise<Response> {
+  let status = 0;
+  let detail = "";
+  try {
+    const r = await fetch(new URL(path, base), { method: "POST", headers: { authorization: `Bearer ${secret}` } });
+    status = r.status;
+    detail = (await r.text().catch(() => "")).slice(0, 300);
+  } catch (e) {
+    detail = (e as Error)?.message?.slice(0, 300) ?? "fetch failed";
+  }
+  const ok = status >= 200 && status < 300;
+  if (!ok) {
+    console.error(JSON.stringify({ level: "error", scope: `cron.${name}`, status, detail }));
+  } else {
+    const hb = process.env[`CRON_HEARTBEAT_${name.toUpperCase().replace(/[^A-Z0-9]/g, "_")}`];
+    if (hb && /^https:\/\//.test(hb)) await fetch(hb, { method: "GET", signal: AbortSignal.timeout(5000) }).catch(() => {});
+  }
+  return new Response(`${name}: ${status || "error"}`, { status: ok ? 200 : 502 });
 }
 
 export const config = { schedule: "*/15 * * * *" };
