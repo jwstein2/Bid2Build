@@ -129,7 +129,7 @@ export async function renderSignedPdf(doc: ProposalDocument, logo: { data: Buffe
       {k ? <KV k="How it was applied" v={k.applicationLabel} /> : null}
       {k ? <KV k={k.application === "auto_policy" ? "Applied by the system at" : "Signed at"} v={utc(k.appliedAt)} /> : null}
       {k && k.application === "auto_policy" && k.authorizationGivenAt ? <KV k="Prior authorization given" v={utc(k.authorizationGivenAt)} /> : null}
-      {k ? <KV k="Signature on file" v={`Version ${k.credentialVersion} (${k.method === "drawn" ? "drawn" : k.method === "uploaded" ? "uploaded image" : "typed"})`} /> : null}
+      {k ? <KV k="Signature on file" v={`Version ${k.credentialVersion} (${k.method === "drawn" ? "drawn" : k.method === "uploaded" ? "uploaded image" : k.signatureText && k.signatureText.toLowerCase() !== k.signerName.toLowerCase() ? "typed company name, signed by the person named above" : "typed"})`} /> : null}
       {k && k.policyRevision ? <KV k="Company signing policy" v={`Revision ${k.policyRevision}`} /> : null}
       {k && k.application === "interactive" && k.ipAddress ? <KV k="Signer IP address" v={k.ipAddress} /> : null}
       {k && k.application === "interactive" && k.userAgent ? <KV k="Signer browser" v={k.userAgent.slice(0, 200)} /> : null}

@@ -80,6 +80,9 @@ describe("statements, flags and validation", () => {
     expect(credentialSchema.safeParse({ ...base, adopt: false }).success).toBe(false);
     expect(credentialSchema.safeParse({ ...base, signatureText: "Someone Else" }).success).toBe(false);
     expect(credentialSchema.safeParse({ ...base, method: "drawn", signatureText: undefined }).success).toBe(false);
+    // Company-name signature: allowed in the schema (the route checks it is the signer's own company), still needs adoption.
+    expect(credentialSchema.safeParse({ ...base, typedAs: "company", signatureText: "Acme Decks" }).success).toBe(true);
+    expect(credentialSchema.safeParse({ ...base, typedAs: "company", signatureText: "Acme Decks", adopt: false }).success).toBe(false);
     expect(policySchema.safeParse({ required: true, mode: "rogue", defaultSignerId: null, autoApplyAllowed: true, autoApplyTiming: "before_send", repSignaturesAllowed: false }).success).toBe(false);
   });
   it("identity check needs a sign-in within 15 minutes", () => {
@@ -125,6 +128,7 @@ describe("PDFs", () => {
     expect(text).toContain("Dana Owner, President");
     expect(text).toContain("Date signed: 2026-11-18");
     expect(text).toContain("For Acme Decks (electronic signature)");
+    expect(text).toContain("By: Dana Owner, President");
     expect(text).toContain("2026-11-18 09:30:00 UTC");
     expect(text).toContain("198.51.100.9");
   }, 30_000);
@@ -139,6 +143,12 @@ describe("PDFs", () => {
     const { perPage } = await pdfText(await renderSignedPdf(sig(), null, customer(await png()), { contractor: auto, executed: true, executedAt: "2026-11-18T09:30:00Z" }));
     const page = perPage.find((t) => t.includes("Document integrity"));
     expect(page).toContain("Proposal PDF SHA-256");
+  }, 30_000);
+  it("a company-name signature shows the company as the signature and the person who signed under it", async () => {
+    const co = contractor({ signatureText: "Acme Decks" });
+    const { text } = await pdfText(await renderSignedPdf(sig(), null, customer(await png()), { contractor: co, executed: true, executedAt: "2026-11-18T09:30:00Z" }));
+    expect(text).toContain("By: Dana Owner, President");
+    expect(squash(text)).toContain("typedcompanyname,signedbythepersonnamedabove");
   }, 30_000);
   it("every template renders the same signature block", async () => {
     for (const template of ["classic", "modern", "premium", "detailed", "compact"] as const) {

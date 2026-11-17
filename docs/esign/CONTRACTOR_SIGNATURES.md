@@ -33,6 +33,7 @@ Contractor-side signatures on accepted proposals. This builds on the existing e-
 
 **Account Settings → My Signature** (each person):
 - Draw, upload (re-saved as a trimmed PNG; the original file isn't kept) or type a signature, with legal name and title.
+- **Default: company-name signature.** The typed option starts as the company's name (Company Profile name, or the business profile name for solo accounts), shown on contracts as the signature with "By: name, title" under it. It is still a specific person's adopted signature: the same identity check, adoption statement and authority rules apply, the server only accepts the signer's own company name, and the certificate says "typed company name, signed by the person named above". A bare company name with no responsible person is never applied.
 - **Identity check:** a signature is stored only if the person signed in within the last 15 minutes (Auth `last_sign_in_at`). Otherwise the page sends a one-time email code and verifies it first. The check used is stored with the credential. No made-up times.
 - **Affirmative authorization:** "Adopt this signature" must be checked, and its exact wording is stored. Automatic application is a separate, optional, unchecked box with its own stored wording.
 - Updating creates a new version. Contracts already signed keep the version they were signed with.

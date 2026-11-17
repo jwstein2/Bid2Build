@@ -200,7 +200,7 @@ export function ProposalPdf({ doc, logo, acceptance, contractor, appendix }: {
                 {contractor ? (
                   <View style={{ marginTop: 3 }}>
                     <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                      <Text style={[s.muted, s.small, { flexShrink: 1, marginRight: 6 }]}>{T(`${contractor.name}${contractor.title ? `, ${contractor.title}` : ""}`)}</Text>
+                      <Text style={[s.muted, s.small, { flexShrink: 1, marginRight: 6 }]}>{T(`By: ${contractor.name}${contractor.title ? `, ${contractor.title}` : ""}`)}</Text>
                       <Text style={[s.muted, s.small]}>{`Date signed: ${T(contractor.date)}`}</Text>
                     </View>
                     <Text style={[s.muted, s.small]}>{T(`For ${contractor.company} (electronic signature${contractor.auto ? ", applied under prior authorization" : ""})`)}</Text>

@@ -63,7 +63,7 @@ export function MySignature() {
           </div>
           <div className="theme-light mt-3 flex min-h-24 items-center justify-center rounded-lg border border-line bg-white p-3 text-ink">
             {c.method === "typed"
-              ? <span className="font-serif text-3xl italic">{c.signature_text}</span>
+              ? <span className="text-center"><span className="block font-serif text-3xl italic">{c.signature_text}</span>{c.signature_text && c.signature_text.toLowerCase() !== c.legal_name.toLowerCase() && <span className="mt-1 block text-xs text-ink-soft">By: {c.legal_name}{c.title ? `, ${c.title}` : ""}</span>}</span>
               // eslint-disable-next-line @next/next/no-img-element
               : c.signature_image && <img src={c.signature_image} alt={`Signature of ${c.legal_name}`} className="max-h-24 max-w-full object-contain" />}
           </div>
@@ -92,8 +92,11 @@ function SignatureForm({ data, onSaved, onCancel, onReauthed }: { data: Data; on
   const prev = data.credential;
   const [legalName, setLegalName] = useState(prev?.legal_name ?? "");
   const [title, setTitle] = useState(prev?.title ?? "");
-  const [method, setMethod] = useState<Method>("drawn");
-  const [typed, setTyped] = useState("");
+  const companyDefault = data.settings.tenant.companyName ?? "";
+  // Default: the company's name as the signature, signed by this person ("By: name, title" under it).
+  const [method, setMethod] = useState<Method>(companyDefault ? "typed" : "drawn");
+  const [typedAs, setTypedAs] = useState<"company" | "name">(companyDefault ? "company" : "name");
+  const [typed, setTyped] = useState(companyDefault);
   const [drawn, setDrawn] = useState<string | null>(null);
   const [upload, setUpload] = useState<string | null>(null);
   const [adopt, setAdopt] = useState(false);
@@ -117,7 +120,8 @@ function SignatureForm({ data, onSaved, onCancel, onReauthed }: { data: Data; on
     ev.preventDefault();
     const e: Record<string, string> = {};
     if (legalName.trim().length < 2) e.legalName = "Enter your full legal name.";
-    if (method === "typed" && typed.trim().toLowerCase() !== legalName.trim().toLowerCase()) e.signatureText = "A typed signature must match your full legal name.";
+    if (method === "typed" && typedAs === "name" && typed.trim().toLowerCase() !== legalName.trim().toLowerCase()) e.signatureText = "A typed signature must match your full legal name.";
+    if (method === "typed" && typedAs === "company" && typed.trim().toLowerCase() !== companyDefault.trim().toLowerCase()) e.signatureText = `A company signature must be your company's name: ${companyDefault}.`;
     if (method === "drawn" && !drawn) e.signatureImage = "Draw your signature in the box.";
     if (method === "uploaded" && !upload) e.signatureImage = "Choose an image of your signature.";
     if (!adopt) e.adopt = "Confirm that this is your signature to continue.";
@@ -126,7 +130,7 @@ function SignatureForm({ data, onSaved, onCancel, onReauthed }: { data: Data; on
     setBusy(true);
     const r = await fetch("/api/signing/credential", {
       method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ legalName, title, method, signatureText: method === "typed" ? typed : undefined, signatureImage: method === "drawn" ? drawn : method === "uploaded" ? upload : undefined, adopt, autoApply: auto, adoptionVersion: ADOPTION_VERSION }),
+      body: JSON.stringify({ legalName, title, method, signatureText: method === "typed" ? typed : undefined, typedAs, signatureImage: method === "drawn" ? drawn : method === "uploaded" ? upload : undefined, adopt, autoApply: auto, adoptionVersion: ADOPTION_VERSION }),
     }).catch(() => null);
     setBusy(false);
     if (!r) return setErrors({ form: "We couldn't reach the server. Nothing was saved." });
@@ -182,9 +186,19 @@ function SignatureForm({ data, onSaved, onCancel, onReauthed }: { data: Data; on
           )}
           {method === "typed" && (
             <div className="mt-3">
-              <label htmlFor="ms-signatureText" className="mb-1 block text-sm text-ink-soft">Type your full legal name</label>
-              <input id="ms-signatureText" className="field" value={typed} onChange={(e) => setTyped(e.target.value)} maxLength={200} />
-              <div className="theme-light mt-2 flex min-h-16 items-end rounded-lg border border-dashed border-line-strong bg-white px-4 pb-2 text-ink" aria-hidden><span className="truncate font-serif text-3xl italic">{typed}</span></div>
+              {companyDefault && (
+                <div role="radiogroup" aria-label="What to type" className="mb-3 flex flex-wrap gap-4 text-sm" data-testid="typed-as">
+                  <label className="flex items-center gap-2"><input type="radio" name="typedAs" checked={typedAs === "company"} onChange={() => { setTypedAs("company"); setTyped(companyDefault); }} /> Company name</label>
+                  <label className="flex items-center gap-2"><input type="radio" name="typedAs" checked={typedAs === "name"} onChange={() => { setTypedAs("name"); setTyped(legalName); }} /> My name</label>
+                </div>
+              )}
+              <label htmlFor="ms-signatureText" className="mb-1 block text-sm text-ink-soft">{typedAs === "company" ? "Your company's name" : "Type your full legal name"}</label>
+              <input id="ms-signatureText" className="field" value={typed} onChange={(e) => setTyped(e.target.value)} maxLength={200} readOnly={typedAs === "company"} />
+              <div className="theme-light mt-2 rounded-lg border border-dashed border-line-strong bg-white px-4 pb-2 pt-3 text-ink" aria-hidden>
+                <span className="block truncate font-serif text-3xl italic">{typed}</span>
+                {typedAs === "company" && <span className="mt-1 block border-t border-line pt-1 text-xs text-ink-soft">By: {legalName.trim() || "your name"}{title.trim() ? `, ${title.trim()}` : ""}</span>}
+              </div>
+              {typedAs === "company" && <p className="mt-1 text-xs text-muted">Contracts show the company name as the signature with &quot;By:&quot; and your name and title under it. It is still your signature: only you (or the system, if you authorize automatic application) can apply it.</p>}
               {err("signatureText")}
             </div>
           )}
