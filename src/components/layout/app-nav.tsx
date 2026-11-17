@@ -19,7 +19,7 @@ const NAV: NavItem[] = [
   { href: "/dashboard", label: "Bids", icon: LayoutDashboard, exact: true },
   // Directly below Bids: contractors set this up first and their proposals depend on it.
   { href: "/settings/company", label: "Company profile", icon: Building2 },
-  { href: "/dashboard/customers", label: "Saved customers", icon: Users },
+  { href: "/dashboard/customers", label: "Customers", icon: Users },
   { href: "/dashboard/items", label: "Saved Items & Pricing", icon: Library, premium: true, feature: "library" },
   { href: "/dashboard/templates", label: "Proposal Templates", icon: LayoutTemplate, premium: true, feature: "templates" },
   { href: "/settings/billing", label: "Subscription", icon: CreditCard },

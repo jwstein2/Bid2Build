@@ -10,7 +10,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  */
 pg.types.setTypeParser(1184, (v: string) => new Date(v).toISOString()); // timestamptz -> ISO string, like PostgREST
 
-type Op = { kind: "select" | "update" | "upsert"; cols: string; patch?: Record<string, unknown>; onConflict?: string; ignore?: boolean };
+type Op = { kind: "select" | "update" | "upsert" | "insert"; cols: string; patch?: Record<string, unknown>; onConflict?: string; ignore?: boolean };
 
 const ident = (s: string) => {
   if (!/^[a-z_][a-z0-9_]*$/.test(s)) throw new Error(`bad identifier ${s}`);
@@ -28,7 +28,8 @@ export function pgSupabase(pool: Pool): SupabaseClient {
     let limit = "";
     let mode: "many" | "single" | "maybe" = "many";
     let countOnly = false;
-    const p = (v: unknown) => { params.push(v); return `$${params.length}`; };
+    // Arrays of objects are json(b) values in PostgREST; node-pg would send them as Postgres arrays.
+    const p = (v: unknown) => { params.push(Array.isArray(v) && v.some((x) => x !== null && typeof x === "object") ? JSON.stringify(v) : v); return `$${params.length}`; };
     const filt = (sql: (c: string) => string) => (k: string, ...rest: unknown[]) => { void rest; where.push(sql(ident(k))); return q; };
 
     async function run() {
@@ -44,6 +45,10 @@ export function pgSupabase(pool: Pool): SupabaseClient {
         } else if (op.kind === "update") {
           const sets = Object.entries(op.patch!).map(([k, v]) => `${ident(k)} = ${p(v)}`).join(", ");
           sql = `update public.${ident(table)} set ${sets}${w} returning ${returning ? colList(returning) : "*"}`;
+        } else if (op.kind === "insert") {
+          const keys = Object.keys(op.patch!);
+          const vals = keys.map((k) => p(op.patch![k]));
+          sql = `insert into public.${ident(table)} (${keys.map(ident).join(", ")}) values (${vals.join(", ")}) returning ${returning ? colList(returning) : "*"}`;
         } else {
           const keys = Object.keys(op.patch!);
           const vals = keys.map((k) => p(op.patch![k]));
@@ -65,7 +70,21 @@ export function pgSupabase(pool: Pool): SupabaseClient {
       select: (cols = "*", o?: { count?: string; head?: boolean }) => { if (op.kind === "select") { op.cols = cols; countOnly = Boolean(o?.head); } else returning = cols; return q; },
       update: (patch: Record<string, unknown>) => { op = { kind: "update", cols: "*", patch }; return q; },
       upsert: (row: Record<string, unknown>, o: { onConflict: string; ignoreDuplicates?: boolean }) => { op = { kind: "upsert", cols: "*", patch: row, onConflict: o.onConflict, ignore: o.ignoreDuplicates }; return q; },
+      insert: (row: Record<string, unknown>) => { op = { kind: "insert", cols: "*", patch: row }; return q; },
       eq: (k: string, v: unknown) => filt((c) => `${c} = ${p(v)}`)(k),
+      neq: (k: string, v: unknown) => filt((c) => `${c} <> ${p(v)}`)(k),
+      gt: (k: string, v: unknown) => filt((c) => `${c} > ${p(v)}`)(k),
+      // Only the simple "col.is.null,col.eq.value" shape the services use.
+      or: (expr: string) => {
+        const parts = expr.split(",").map((t) => {
+          const [col, opName, ...rest] = t.split(".");
+          const val = rest.join(".");
+          if (opName === "is" && val === "null") return `${ident(col)} is null`;
+          if (opName === "eq") return `${ident(col)}::text = ${p(val)}`;
+          throw new Error(`or: unsupported ${t}`);
+        });
+        where.push(`(${parts.join(" or ")})`); return q;
+      },
       lt: (k: string, v: unknown) => filt((c) => `${c} < ${p(v)}`)(k),
       lte: (k: string, v: unknown) => filt((c) => `${c} <= ${p(v)}`)(k),
       gte: (k: string, v: unknown) => filt((c) => `${c} >= ${p(v)}`)(k),

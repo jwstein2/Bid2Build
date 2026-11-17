@@ -7,7 +7,12 @@ import { useDismiss } from "@/components/ui/use-dismiss";
 
 interface Notice {
   id: string; kind: string; scheduleId: string; taskId: string; reason: "end_date" | "progress_100" | "both"; title: string; status: string;
-  data: { projectName?: string; taskName?: string; sectionName?: string | null; assignee?: string | null; plannedEnd?: string; percentComplete?: number; customerName?: string | null };
+  data: {
+    projectName?: string; taskName?: string; sectionName?: string | null; assignee?: string | null; plannedEnd?: string; percentComplete?: number; customerName?: string | null;
+    // V4.6 customer communications notices
+    messageId?: string; scheduledFor?: string; timezone?: string; mode?: "review" | "automatic"; subject?: string; classification?: string;
+    sections?: { name: string; status: string; progress: number | null; plannedEnd: string }[];
+  };
   canConfirm: boolean; readAt: string | null; createdAt: string;
 }
 const REASON: Record<Notice["reason"], string> = { end_date: "Reached its planned finish", progress_100: "Marked 100% complete", both: "100% and past its planned finish" };
@@ -55,11 +60,12 @@ export function NotificationBell() {
       </button>
       {open && (
         <div role="dialog" aria-label="Task review notices" className="absolute right-0 z-50 mt-2 w-[min(92vw,24rem)] rounded-xl border border-line bg-surface p-2 shadow-xl">
-          <p className="px-2 py-1 text-sm font-bold">Tasks to review</p>
+          <p className="px-2 py-1 text-sm font-bold">Notices</p>
           {err && <p className="px-2 text-xs text-danger" role="alert">{err}</p>}
           {items.length === 0 && <p className="px-2 py-3 text-sm text-muted">You&apos;re all caught up. When a task you manage reaches its finish date or 100%, it shows up here for you to confirm.</p>}
           <ul className="max-h-[60vh] space-y-2 overflow-y-auto">
             {items.map((n) => (
+              n.kind !== "task_review" ? <CommNotice key={n.id} n={n} busy={busy === n.id} onLater={() => void act(n, "later")} onClose={() => setOpen(false)} /> : (
               <li key={n.id} className="rounded-lg border border-line p-2.5 text-sm" onMouseEnter={() => !n.readAt && void act(n, "read").then(() => setItems((xs) => (xs ?? []).map((x) => (x.id === n.id ? { ...x, readAt: new Date().toISOString() } : x))))}>
                 <p className="font-semibold">{n.data.taskName ?? n.title}</p>
                 <p className="text-xs text-ink-soft">{n.data.projectName}{n.data.customerName ? ` · ${n.data.customerName}` : ""}{n.data.sectionName ? ` · ${n.data.sectionName}` : ""}</p>
@@ -72,10 +78,40 @@ export function NotificationBell() {
                   <button className="inline-flex min-h-8 items-center gap-1 rounded-md px-2 text-xs font-semibold text-ink-soft hover:bg-black/5" disabled={busy === n.id} onClick={() => void act(n, "later")}><Clock className="h-3.5 w-3.5" aria-hidden /> Review Later</button>
                 </div>
               </li>
+              )
             ))}
           </ul>
         </div>
       )}
     </div>
+  );
+}
+
+/** V4.6: planned customer update reminders and customer replies (in-app only). */
+function CommNotice({ n, busy, onLater, onClose }: { n: Notice; busy: boolean; onLater: () => void; onClose: () => void }) {
+  const at = n.data.scheduledFor ? new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: n.data.timezone || undefined }).format(new Date(n.data.scheduledFor)) : null;
+  const reply = n.kind === "customer_reply";
+  const link = "inline-flex min-h-8 items-center gap-1 rounded-md border border-line px-2 text-xs font-semibold";
+  return (
+    <li className="rounded-lg border border-line p-2.5 text-sm" data-testid={`notice-${n.kind}`}>
+      <p className="font-semibold">{n.title}</p>
+      <p className="text-xs text-ink-soft">{[n.data.projectName, n.data.customerName].filter(Boolean).join(" · ")}</p>
+      {reply ? <p className="mt-0.5 text-xs text-muted">Re: {n.data.subject}</p> : (
+        <>
+          {at && <p className="mt-0.5 text-xs text-muted">Planned send: {at} · {n.data.mode === "automatic" ? "sends automatically unless you skip it" : "won't send until you approve it"}</p>}
+          {(n.data.sections ?? []).map((x) => <p key={x.name} className="text-xs text-muted">{x.name}: {x.status}{x.progress !== null ? ` · ${x.progress}% recorded` : ""} · planned finish {day(x.plannedEnd)}</p>)}
+          <p className="mt-1 text-xs">Would you like to review the schedule before this update is sent?</p>
+        </>
+      )}
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {reply ? <Link className={link} href="/dashboard/customers/communications?tab=replies" onClick={onClose}>Open conversation</Link> : <>
+          {n.scheduleId && <Link className={link} href={`/projects/${n.scheduleId}`} onClick={onClose}><CalendarClock className="h-3.5 w-3.5" aria-hidden /> Review schedule</Link>}
+          <Link className={link} href="/dashboard/customers/communications?tab=attention&type=project_update" onClick={onClose}>Preview update</Link>
+          {n.scheduleId && <Link className={link} href={`/projects/${n.scheduleId}?focus=progress`} onClick={onClose}><Gauge className="h-3.5 w-3.5" aria-hidden /> Adjust progress</Link>}
+          <Link className={link} href="/dashboard/customers/communications?tab=scheduled&type=project_update" onClick={onClose}>Skip or keep scheduled</Link>
+        </>}
+        <button className="inline-flex min-h-8 items-center gap-1 rounded-md px-2 text-xs font-semibold text-ink-soft hover:bg-black/5" disabled={busy} onClick={onLater}><Clock className="h-3.5 w-3.5" aria-hidden /> Later</button>
+      </div>
+    </li>
   );
 }
