@@ -2,7 +2,8 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { headers } from "next/headers";
 import { renderProposalPdf } from "@/lib/pdf/render";
-import { renderSignedPdf } from "@/lib/pdf/signed-pdf";
+import { renderSignedPdf, type SignedPdfOptions } from "@/lib/pdf/signed-pdf";
+import { isContractorSigningEnabled } from "./contractor/config";
 import { formatCurrency } from "@/lib/estimate/money";
 import type { ProposalDocument } from "@/lib/proposal/types";
 import { logError } from "@/lib/http/api";
@@ -15,6 +16,7 @@ export const signedPdfPath = (userId: string, estimateId: string, signatureId: s
 
 export interface PublicRequest {
   id: string;
+  versionId: string;
   estimateId: string;
   userId: string;
   status: "pending" | "signed" | "revoked";
@@ -51,7 +53,7 @@ export async function loadRequestByToken(admin: SupabaseClient, token: string): 
   const phase = r.status === "signed" ? "signed" : r.status === "revoked" || e.status === "archived" ? "revoked" : expired ? "expired" : "open";
   const row = v as unknown as { version_number: number; proposal: ProposalDocument; logoPath?: string | null };
   return {
-    id: r.id, estimateId: r.estimate_id, userId: r.user_id, status: r.status, expiresAt: r.expires_at, createdAt: r.created_at,
+    id: r.id, versionId: r.version_id, estimateId: r.estimate_id, userId: r.user_id, status: r.status, expiresAt: r.expires_at, createdAt: r.created_at,
     documentHash: r.document_hash, contentHash: r.content_hash, versionNumber: row.version_number, doc: row.proposal,
     logoPath: row.logoPath ?? null, phase, signatureId: sig?.id ?? null,
   };
@@ -67,6 +69,10 @@ export async function loadLogo(admin: SupabaseClient, logoPath: string | null): 
 export async function requestPdf(admin: SupabaseClient, req: PublicRequest): Promise<Buffer> {
   const { data: file } = await admin.storage.from("documents").download(requestPdfPath(req.userId, req.estimateId, req.id));
   if (file) return Buffer.from(await file.arrayBuffer());
+  if (isContractorSigningEnabled()) {
+    const { contractorPdfFor } = await import("./contractor/send");
+    return contractorPdfFor(admin, req);
+  }
   return renderProposalPdf(req.doc, await loadLogo(admin, req.logoPath));
 }
 
@@ -92,13 +98,22 @@ export async function ensureSignedPdf(admin: SupabaseClient, signatureId: string
     if (s.pdf_status === "ready" && s.pdf_path) return { ok: true, path: s.pdf_path, filename };
     const { data: req } = await admin.from("signing_requests").select("created_at").eq("id", s.request_id).maybeSingle();
     const image = s.method === "drawn" && s.signature_image ? Buffer.from(String(s.signature_image).split(",")[1] ?? "", "base64") : null;
+    // V5.3: a contractor signature applied BEFORE the customer signed (contractor-first) is part of what
+    // the customer signed, so it appears on their copy. A pending countersignature is stated plainly.
+    let opts: SignedPdfOptions = {};
+    if (isContractorSigningEnabled()) {
+      const { executionFor, certificateFor } = await import("./contractor/server");
+      const ex = await executionFor(admin, { request_id: s.request_id, version_id: s.version_id });
+      if (ex.contractor && ex.contractor.applied_at <= s.signed_at) opts = { contractor: certificateFor(ex.contractor) };
+      else if (ex.state === "awaiting_contractor") opts = { contractorPending: true };
+    }
     const pdf = await renderSignedPdf(doc, await loadLogo(admin, (v as unknown as { logoPath?: string | null }).logoPath ?? null), {
       signatureId: s.id, requestId: s.request_id, signerName: s.signer_name, signerEmail: s.signer_email, method: s.method,
       signatureText: s.signature_text, signatureImage: image, signedAt: s.signed_at, consentedAt: s.consented_at,
       consentVersion: s.consent_version, consentText: s.consent_text, acceptanceText: s.acceptance_text, verification: s.verification,
       documentHash: s.document_hash, contentHash: s.content_hash, versionNumber: s.version_number, total: formatCurrency(String(s.total)),
       ipAddress: s.ip_address, userAgent: s.user_agent, linkCreatedAt: req?.created_at ?? s.signed_at,
-    });
+    }, opts);
     const path = signedPdfPath(s.user_id, s.estimate_id, s.id);
     const up = await admin.storage.from("documents").upload(path, pdf, { contentType: "application/pdf", upsert: true });
     if (up.error) throw new Error(`upload: ${up.error.message}`);

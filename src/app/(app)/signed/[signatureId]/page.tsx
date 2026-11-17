@@ -14,6 +14,11 @@ import { formatCurrency } from "@/lib/estimate/money";
 import type { ProposalDocument } from "@/lib/proposal/types";
 import { LocalTime } from "@/components/esign/local-time";
 import { SignedPdfButton } from "@/components/esign/signed-pdf-button";
+import { isContractorSigningEnabled } from "@/lib/esign/contractor/config";
+import { viewSignature, type ContractorSignature } from "@/lib/esign/contractor/server";
+import { contractorState } from "@/lib/esign/contractor/state";
+import { ExecutionCard } from "@/components/esign/execution-card";
+import { getUser } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Signed proposal", robots: { index: false } };
 
@@ -38,13 +43,22 @@ export default async function SignedProposalPage({ params }: PageProps<"/signed/
   const logo = await loadLogo(admin, row.logoPath ?? null);
   const doc = { ...row.proposal, brand: { ...row.proposal.brand, logoUrl: logo ? `data:image/png;base64,${logo.data.toString("base64")}` : null } };
   const s = audit.signature;
+  // V5.3: contractor side, read through the viewer's RLS (plus the authority check for countersigning).
+  const contractorOn = isContractorSigningEnabled();
+  const user = contractorOn ? await getUser() : null;
+  const cstate = contractorOn && user ? await contractorState(supabase, admin, user.id, audit.estimateId) : null;
+  const k = contractorOn ? ((await supabase.from("contractor_signatures").select("*").eq("version_id", audit.versionId).maybeSingle()).data as ContractorSignature | null) : null;
+  const execution = audit.execution;
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <Breadcrumbs items={[{ label: "Signed proposal" }]} />
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
-          <Badge tone="ok" className="gap-1"><CheckCircle2 className="h-3.5 w-3.5" aria-hidden /> Signed</Badge>
+          <div className="flex flex-wrap gap-2">
+            <Badge tone="ok" className="gap-1"><CheckCircle2 className="h-3.5 w-3.5" aria-hidden /> Signed by customer</Badge>
+            {execution && <Badge tone={execution.state === "fully_executed" ? "ok" : execution.state === "awaiting_contractor" ? "warn" : "neutral"} className="gap-1" data-testid="execution-state">{execution.label}</Badge>}
+          </div>
           <h1 className="mt-2 text-3xl font-extrabold text-navy">{audit.acceptance.projectTitle || "Signed proposal"}</h1>
           <p className="text-ink-soft">{audit.acceptance.customerName} · Proposal #{audit.acceptance.proposalNumber} · Version {audit.acceptance.versionNumber}</p>
         </div>
@@ -63,7 +77,7 @@ export default async function SignedProposalPage({ params }: PageProps<"/signed/
       )}
 
       <Card className="p-4 sm:p-6" aria-labelledby="sig-h">
-        <h2 id="sig-h" className="font-display text-lg font-extrabold text-navy">Signature details</h2>
+        <h2 id="sig-h" className="font-display text-lg font-extrabold text-navy">{execution ? "Customer signature" : "Signature details"}</h2>
         <div className="mt-3 grid gap-4 md:grid-cols-[minmax(0,260px)_minmax(0,1fr)]">
           <div className="theme-light flex min-h-24 items-center justify-center rounded-lg border border-line bg-white p-3 text-ink">
             {s.method === "drawn" && sig?.signature_image
@@ -93,9 +107,15 @@ export default async function SignedProposalPage({ params }: PageProps<"/signed/
         </details>
       </Card>
 
+      {execution && cstate && (
+        <ExecutionCard estimateId={audit.estimateId} signatureId={signatureId} versionId={audit.versionId} requestId={audit.request?.id ?? null} execution={execution} state={cstate} />
+      )}
+
       <section aria-label="Signed proposal" className="theme-light min-w-0 overflow-x-auto rounded-xl bg-[#e4eaf1] p-2 sm:p-5">
         <p className="mb-3 text-center text-xs font-semibold uppercase tracking-wider text-muted">The exact version the customer signed</p>
-        <ProposalView doc={doc} />
+        <ProposalView doc={doc}
+          customerSignature={contractorOn ? { name: s.signerName, date: s.signedAtUtc.slice(0, 10), image: s.method === "drawn" ? sig?.signature_image ?? null : null, typed: s.method === "typed" ? s.typedSignature : null } : null}
+          contractorSignature={k ? viewSignature(k) : null} />
       </section>
     </div>
   );

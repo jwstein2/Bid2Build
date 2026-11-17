@@ -5,7 +5,7 @@
 export type SigningState = "none" | "awaiting" | "signed" | "expired" | "revoked";
 
 export interface RequestRow { id: string; estimate_id: string; version_id: string; status: "pending" | "signed" | "revoked"; expires_at: string; created_at: string; revoke_reason?: string | null; signed_at?: string | null }
-export interface SignatureRow { id: string; estimate_id: string; version_id: string; version_number: number; total: number | string; signed_at: string; signer_name: string; pdf_status: "pending" | "ready" | "failed"; customer_name?: string; project_title?: string; proposal_number?: string }
+export interface SignatureRow { id: string; request_id?: string; estimate_id: string; version_id: string; version_number: number; total: number | string; signed_at: string; signer_name: string; pdf_status: "pending" | "ready" | "failed"; customer_name?: string; project_title?: string; proposal_number?: string }
 
 export interface BidSigning {
   state: SigningState;
