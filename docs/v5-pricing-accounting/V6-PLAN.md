@@ -39,6 +39,14 @@ V6 replaces V5 and V5.1. Work that already shipped stays. Every phase is a separ
   - No live supplier. Everything goes through the same preview → apply → undo path.
 - **SQL:** `run-v6-pricing-import.sql`. Rollback: `docs/v5-pricing-accounting/rollback_20261127001000.sql`.
 
+## P1-B, first PR: receipts and corrections
+
+- **Payment receipts:** customer receipt PDF for each recorded payment, and a payment record PDF for each sub/supplier bill payment. Voided payments have no receipt. Internal payment memos are never printed.
+- **Void with a reason** on bills, credits and approved expenses (invoices, payments and bill payments already had it). Posted records are never deleted; to correct one, void it and enter it again. Drafts are still the only thing that can be deleted.
+- **Possible duplicate expenses (Scenario B):** a new expense with the same amount and vendor/payee within 3 days of a live one goes to Needs review. Nothing changes until a person picks "Void as duplicate" (keeps the original, voids the copy with "Duplicate of EXP-x", audit kept) or "Not a duplicate".
+- **SQL:** `run-v6-p1b-corrections.sql` (= `supabase/migrations/20261128001000_fin_v6_corrections.sql`). Rollback: `docs/financials/rollback_20261128001000.sql`.
+- Still to come in P1-B: invoice email draft states (Draft → Issued → Email prepared → Sent → Paid), scope-removal credit change orders, dashboard cards and quick actions.
+
 ## Next phases (recommended order)
 
 | Phase | Scope | New provider or cost? |

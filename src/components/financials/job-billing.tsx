@@ -351,24 +351,37 @@ export function CreditDialog({ open, onOpenChange, jobId, invoices, onDone }: { 
   );
 }
 
-/** Void with a reason (issued invoice or payment). The record and its number stay; it just stops counting. */
-export function VoidDialog({ target, onOpenChange, onDone }: { target: { kind: "invoice" | "payment" | "bill_payment"; id: string; label: string } | null; onOpenChange: (o: boolean) => void; onDone: () => void }) {
+export type VoidTarget = { kind: "invoice" | "payment" | "bill_payment" | "bill" | "credit" | "expense"; id: string; label: string };
+
+/**
+ * Void with a reason. Posted financial records are never deleted: the record keeps its number and history and
+ * stops counting. To correct one, void it and enter it again. Drafts are the only thing that can be deleted.
+ */
+export function VoidDialog({ target, onOpenChange, onDone }: { target: VoidTarget | null; onOpenChange: (o: boolean) => void; onDone: () => void }) {
   const [reason, setReason] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const save = async () => {
     if (!target) return;
-    const r = await finAction(target.kind === "invoice" ? { action: "void_invoice", invoiceId: target.id, reason: reason.trim() }
-      : target.kind === "bill_payment" ? { action: "void_bill_payment", billPaymentId: target.id, reason: reason.trim() }
-      : { action: "void_payment", paymentId: target.id, reason: reason.trim() });
+    const why = reason.trim();
+    const payload: Record<string, unknown> = {
+      invoice: { action: "void_invoice", invoiceId: target.id, reason: why },
+      payment: { action: "void_payment", paymentId: target.id, reason: why },
+      bill_payment: { action: "void_bill_payment", billPaymentId: target.id, reason: why },
+      bill: { action: "void_bill", billId: target.id, reason: why },
+      credit: { action: "void_credit", creditMemoId: target.id, reason: why },
+      expense: { action: "decide_expense", expenseId: target.id, decision: "void", note: why },
+    }[target.kind];
+    const r = await finAction(payload);
     if (!r.ok) return setErr(r.message);
-    setReason(""); onDone(); onOpenChange(false);
+    setReason(""); setErr(null); onDone(); onOpenChange(false);
   };
   return (
-    <FinDialog open={Boolean(target)} onOpenChange={onOpenChange} title={target ? `Void ${target.label}` : ""} description="The record keeps its number and history; it stops counting toward balances.">
+    <FinDialog open={Boolean(target)} onOpenChange={(o) => { if (!o) setErr(null); onOpenChange(o); }} title={target ? `Void ${target.label}` : ""} description="The record keeps its number and history; it stops counting toward balances and reports.">
       <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); void save(); }}>
-        <Field label="Reason" htmlFor="void-reason"><input id="void-reason" className="field" value={reason} onChange={(e) => setReason(e.target.value)} required maxLength={500} /></Field>
+        <Field label="Reason" htmlFor="void-reason"><input id="void-reason" className="field" value={reason} onChange={(e) => setReason(e.target.value)} required maxLength={500} placeholder="e.g. Entered twice, wrong amount" /></Field>
+        <p className="text-xs text-muted" data-testid="fin-void-help">Posted records are voided, never deleted, so the audit trail stays complete. To correct a mistake, void it here and enter it again with the right details.</p>
         {err && <Notice tone="danger">{err}</Notice>}
-        <Button type="submit" variant="danger" disabled={!reason.trim()}>Void</Button>
+        <Button type="submit" variant="danger" disabled={!reason.trim()} data-testid="fin-void-confirm">Void</Button>
       </form>
     </FinDialog>
   );

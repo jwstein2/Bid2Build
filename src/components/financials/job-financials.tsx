@@ -9,7 +9,7 @@ import { AlertsPanel, type AlertRow } from "./alerts-panel";
 import { BasisBadge } from "./basis";
 import { EmailDraftDialog } from "./email-draft-dialog";
 import { finAction, fmtDate, usd } from "./fin-client";
-import { ContractCard, CreditDialog, InvoiceDialog, MilestoneCard, PaymentDialog, VoidDialog, type Perms, type R } from "./job-billing";
+import { ContractCard, CreditDialog, InvoiceDialog, MilestoneCard, PaymentDialog, VoidDialog, type Perms, type R, type VoidTarget } from "./job-billing";
 import { BillDialog, BillPaymentDialog, BudgetTable, CommitmentDialog, CostLists, ExpenseDialog, ProfitCard, ReviewQueue } from "./job-costs";
 import { JobSummary, type SummaryTarget } from "./job-summary";
 
@@ -37,7 +37,7 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
   const [error, setError] = useState<string | null>(null);
   const [section, setSection] = useState<Section>(initialAction === "expense" || initialAction === "bill" || initialAction === "commitment" ? "costs" : "billing");
   const [open, setOpen] = useState<Open>(null);
-  const [voiding, setVoiding] = useState<{ kind: "invoice" | "payment" | "bill_payment"; id: string; label: string } | null>(null);
+  const [voiding, setVoiding] = useState<VoidTarget | null>(null);
   const [versionId, setVersionId] = useState("");
   const [busy, setBusy] = useState(false);
   const [actionUsed, setActionUsed] = useState(false);
@@ -218,7 +218,8 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
                     {p.status === "active" && (
                       <div className="mt-1 flex flex-wrap gap-1">
                         {!p.verified && perms.pay && writable && <Button size="sm" variant="ghost" onClick={() => verify(p.payment_id)}>Mark verified</Button>}
-                        {perms.pay && <Button size="sm" variant="ghost" onClick={() => setOpen({ kind: "email", paymentId: s(p.payment_id) })}><Mail className="h-4 w-4" aria-hidden /> Receipt draft</Button>}
+                        <a className={buttonClass("ghost", "sm")} href={`/api/financials/payments/${s(p.payment_id)}/receipt`} target="_blank" rel="noopener" data-testid="fin-payment-receipt"><FileDown className="h-4 w-4" aria-hidden /> Receipt PDF</a>
+                        {perms.pay && <Button size="sm" variant="ghost" onClick={() => setOpen({ kind: "email", paymentId: s(p.payment_id) })}><Mail className="h-4 w-4" aria-hidden /> Receipt email draft</Button>}
                         {perms.pay && writable && <Button size="sm" variant="ghost" onClick={() => setVoiding({ kind: "payment", id: s(p.payment_id), label: `payment ${s(p.number)}` })}>Void</Button>}
                       </div>
                     )}
@@ -230,7 +231,12 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
               <div className="mt-3 border-t border-line pt-2">
                 <h3 className="text-sm font-bold">Credits</h3>
                 <ul className="divide-y divide-line">
-                  {(data.credits ?? []).map((c) => <li key={s(c.credit_memo_id)} className="flex justify-between py-1.5 text-sm"><span>{s(c.number)} · {fmtDate(c.issue_date)}{c.status === "void" ? " · void" : ""}</span><span className="tabular">{usd(c.amount)} · {usd(c.available)} left</span></li>)}
+                  {(data.credits ?? []).map((c) => (
+                    <li key={s(c.credit_memo_id)} className="flex flex-wrap items-center gap-2 py-1.5 text-sm">
+                      <span className="flex-1">{s(c.number)} · {fmtDate(c.issue_date)}{c.status === "void" ? " · void" : ""}</span><span className="tabular">{usd(c.amount)} · {usd(c.available)} left</span>
+                      {c.status !== "void" && perms.invoice && writable && <Button size="sm" variant="ghost" onClick={() => setVoiding({ kind: "credit", id: s(c.credit_memo_id), label: `credit ${s(c.number)}` })}>Void</Button>}
+                    </li>
+                  ))}
                 </ul>
               </div>
             )}
@@ -245,11 +251,11 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
             {perms.bill && writable && <Button size="sm" variant="secondary" onClick={() => setOpen({ kind: "bill" })}>Enter a vendor bill</Button>}
             {perms.bill && writable && <Button size="sm" variant="secondary" onClick={() => setOpen({ kind: "commitment" })}>Commit a sub quote</Button>}
           </div>
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
             <BudgetTable budget={data.budget ?? []} />
             <ProfitCard profit={data.profit ?? null} />
           </div>
-          <CostLists onPayBill={(b) => setOpen({ kind: "bill_payment", bill: b })} onVoidBillPayment={(p) => setVoiding({ kind: "bill_payment", id: s(p.id), label: `bill payment of ${usd(p.amount)}` })} data={{ expenses: data.expenses ?? [], bills: data.bills ?? [], billLines: data.billLines ?? [], commitments: data.commitments ?? [], costCodes: data.costCodes ?? [], vendors: data.vendors ?? [] }} perms={perms} writable={writable} onChanged={done} />
+          <CostLists onPayBill={(b) => setOpen({ kind: "bill_payment", bill: b })} onVoid={setVoiding} data={{ expenses: data.expenses ?? [], bills: data.bills ?? [], billLines: data.billLines ?? [], commitments: data.commitments ?? [], costCodes: data.costCodes ?? [], vendors: data.vendors ?? [] }} perms={perms} writable={writable} onChanged={done} />
         </div>
       )}
 

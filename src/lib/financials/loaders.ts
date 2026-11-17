@@ -240,7 +240,7 @@ export async function loadJob(db: Db, estimateId: string, ctx: FinContext) {
     db.from("fin_payment_balances_v").select("*").eq("job_id", jid).order("received_on", { ascending: false }),
     db.from("fin_payment_allocations").select("id, payment_id, invoice_id, amount, reversed_at").eq("book_id", ctx.bookId).is("reversed_at", null),
     db.from("fin_credit_memo_balances_v").select("*").eq("job_id", jid),
-    db.from("fin_expenses").select("id, number, spent_on, amount, description, payee, status, cost_code_id, vendor_id, receipt_document_id").eq("job_id", jid).order("spent_on", { ascending: false }),
+    db.from("fin_expenses").select("id, number, spent_on, amount, description, payee, status, cost_code_id, vendor_id, receipt_document_id, decision_note").eq("job_id", jid).order("spent_on", { ascending: false }),
     db.from("fin_vendor_bills").select("id, number, vendor_id, vendor_invoice_number, bill_date, due_date, total, status, document_id").eq("book_id", ctx.bookId).order("bill_date", { ascending: false }),
     db.from("fin_vendor_bill_lines").select("bill_id, job_id, cost_code_id, commitment_id, description, amount").eq("job_id", jid),
     db.from("fin_commitment_balances_v").select("*").eq("job_id", jid),
