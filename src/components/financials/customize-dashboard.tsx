@@ -129,7 +129,7 @@ export function CustomizeDashboard({ cards: initial, kpis: initialKpis, allKpis,
                     return (
                       <label key={o.key} className="flex min-h-11 items-center gap-2 rounded-lg border border-line px-3 text-sm">
                         <input type="checkbox" checked={on} disabled={!on && quickSel.length >= 12} onChange={() => pickQuick(on ? quickSel.filter((x) => x !== o.key) : [...quickSel, o.key])} />
-                        <span className="min-w-0">{o.label}{!o.built && <span className="text-xs text-muted"> · coming later</span>}</span>
+                        <span className="min-w-0">{o.label}{!o.built && <span className="text-xs text-muted"> · coming soon</span>}</span>
                       </label>
                     );
                   })}

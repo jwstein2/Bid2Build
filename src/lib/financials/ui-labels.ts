@@ -12,6 +12,13 @@ export const QUICK_ACTION_LABELS: Record<QuickAction, string> = {
   snap_receipt: "Add a receipt", record_bill: "Enter a vendor bill", create_commitment: "Commit a sub quote", bill_change_order: "Bill a change order",
   log_time_materials: "Log time & materials", bill_service_call: "Bill a service call", issue_credit: "Issue a credit", export: "Export for your accountant",
 };
+/** One line under each quick action in the Edit library. */
+export const QUICK_ACTION_HINTS: Record<QuickAction, string> = {
+  create_invoice: "Start an invoice on a job", invoice_milestone: "Bill a payment milestone that's ready", record_payment: "Log a check, cash or card payment",
+  record_expense: "Log a cost on a job", snap_receipt: "Photo of a receipt, filed to a job", record_bill: "A bill from a supplier or sub",
+  create_commitment: "Lock in an accepted sub quote or PO", bill_change_order: "Invoice an approved change order", log_time_materials: "Hours and materials to bill",
+  bill_service_call: "Invoice a one-visit service job", issue_credit: "Credit a customer's balance", export: "Send your books to your accountant",
+};
 /** Quick actions that open on a job (the rest are not built yet and say so). */
 export const QUICK_ACTION_TARGET: Partial<Record<QuickAction, string>> = {
   create_invoice: "invoice", invoice_milestone: "invoice", record_payment: "payment", record_expense: "expense", snap_receipt: "expense",

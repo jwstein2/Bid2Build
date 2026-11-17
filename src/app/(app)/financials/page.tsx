@@ -10,7 +10,7 @@ import { loadFinState, loadHome, type Figure } from "@/lib/financials/loaders";
 import { canUseAccountantMode } from "@/lib/financials/permissions";
 import { CARDS, KPI_KEYS, QUICK_ACTIONS, QUICK_ACTION_NEEDS, type CardKey, type QuickAction } from "@/lib/financials/profiles/catalog";
 import { PRESETS } from "@/lib/financials/profiles/presets";
-import { KPI_LABELS, QUICK_ACTION_LABELS, QUICK_ACTION_TARGET, REPORT_HREF, REPORT_LABELS } from "@/lib/financials/ui-labels";
+import { KPI_LABELS, QUICK_ACTION_HINTS, QUICK_ACTION_LABELS, QUICK_ACTION_TARGET, REPORT_HREF, REPORT_LABELS } from "@/lib/financials/ui-labels";
 import { formatCurrency } from "@/lib/estimate/money";
 import { MetricCard } from "@/components/ui/metric-card";
 import { Notice } from "@/components/ui/misc";
@@ -20,6 +20,7 @@ import { AlertsPanel, type AlertRow } from "@/components/financials/alerts-panel
 import { CustomizeDashboard, ModeToggle } from "@/components/financials/customize-dashboard";
 import { FinStateNotice } from "@/components/financials/fin-state-notice";
 import { ArrangeableCards, ArrangeableQuickActions } from "@/components/financials/home-arrange";
+import { QuickActionsSection } from "@/components/financials/quick-actions-editor";
 
 export const metadata: Metadata = { title: "Financials", robots: { index: false } };
 
@@ -54,12 +55,14 @@ export default async function FinancialsHome() {
   const jobHref = new Map(((jobs ?? []) as { id: string; estimate_id: string }[]).map((j) => [j.id, `/financials/jobs/${j.estimate_id}`] as const));
   const alerts: AlertRow[] = (home.alerts as unknown as AlertRow[]).map((a) => ({ ...a, jobHref: a.job_id ? jobHref.get(a.job_id) ?? null : null }));
   const quick = layout.quickActions;
+  const quickLibrary = QUICK_ACTIONS.filter((q) => perms.includes(QUICK_ACTION_NEEDS[q]))
+    .map((q) => ({ key: q, label: QUICK_ACTION_LABELS[q], hint: QUICK_ACTION_HINTS[q], built: Boolean(QUICK_ACTION_TARGET[q]) }));
   const slots = layout.cards.map((c) => ({ key: c.key, visible: c.visible }));
   const quickNode = (q: QuickAction) => {
     const target = QUICK_ACTION_TARGET[q];
     return target && canWrite
       ? <ButtonLink href={`/financials/records?view=jobs&do=${target}`} variant="secondary" size="sm">{QUICK_ACTION_LABELS[q]}</ButtonLink>
-      : <span className="inline-flex min-h-9 items-center rounded-lg border border-dashed border-line px-3 text-sm text-muted" title="Coming in a later update">{QUICK_ACTION_LABELS[q]} · later</span>;
+      : <span className="inline-flex min-h-9 items-center rounded-lg border border-dashed border-line px-3 text-sm text-muted" title="Coming in a later update">{QUICK_ACTION_LABELS[q]} · coming soon</span>;
   };
   const card = (key: CardKey, size: "md" | "sm" = "md") => {
     const f = home.cards[key];
@@ -117,13 +120,12 @@ export default async function FinancialsHome() {
 
       <AlertsPanel alerts={alerts} canAct={canWrite && (perms.includes("create_invoices") || perms.includes("manage_financial_config"))} />
 
-      {quick.length > 0 && (
-        <section aria-labelledby="fin-quick-h" data-guide="fin.quick">
-          <h2 id="fin-quick-h" className="mb-2 font-display text-lg font-extrabold">Quick actions</h2>
-          {ctx.quickActionsReady && quick.length > 1
+      {(quick.length > 0 || ctx.quickActionsReady) && (
+        <QuickActionsSection ready={ctx.quickActionsReady} selected={quick} from={layout.quickActionsFrom} cards={ctx.stored.user?.cards ?? []} kpis={layout.kpis}
+          library={quickLibrary}
+          row={ctx.quickActionsReady && quick.length > 1
             ? <ArrangeableQuickActions actions={quick.map((q) => ({ key: q, title: QUICK_ACTION_LABELS[q], node: quickNode(q) }))} cards={ctx.stored.user?.cards ?? []} kpis={layout.kpis} />
-            : <div className="flex flex-wrap gap-2">{quick.map((q) => <span key={q} className="contents">{quickNode(q)}</span>)}</div>}
-        </section>
+            : <div className="flex flex-wrap gap-2">{quick.map((q) => <span key={q} className="contents">{quickNode(q)}</span>)}</div>} />
       )}
 
       {regular.length > 0 && (
@@ -151,7 +153,7 @@ export default async function FinancialsHome() {
         kpis={layout.kpis} allKpis={KPI_KEYS} canCompany={perms.includes("manage_financial_config")}
         quick={{
           ready: ctx.quickActionsReady, selected: quick, from: layout.quickActionsFrom,
-          options: QUICK_ACTIONS.filter((q) => perms.includes(QUICK_ACTION_NEEDS[q])).map((q) => ({ key: q, label: QUICK_ACTION_LABELS[q], built: Boolean(QUICK_ACTION_TARGET[q]) })),
+          options: quickLibrary,
         }} />
     </div>
   );

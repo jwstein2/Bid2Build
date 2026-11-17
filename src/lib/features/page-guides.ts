@@ -531,7 +531,7 @@ export const PAGE_GUIDES = {
       { target: "fin.kpis", title: "Headline numbers", body: "Your key money numbers for the period. Each badge says what the number is based on, like Contracted, Invoiced or Paid. Click a number for the records behind it." },
       { target: "fin.attention", title: "Needs attention", body: "Always-on cards for money that needs action, like milestones ready to invoice or overdue invoices. You can't hide these." },
       { target: "fin.alerts", title: "Alerts", body: "Problems Financials found, such as a payment that doesn't match an invoice. Each one says what to check; nothing is changed for you.", hint: "On {job}, alerts point to the exact milestone or cost." },
-      { target: "fin.quick", title: "Quick actions", body: "Shortcuts for your kind of work. They open the right job first, and nothing is recorded until you save a form. Press and hold one to move it, or pick your own under Customize this page." },
+      { target: "fin.quick", title: "Quick actions", body: "Shortcuts for your kind of work. They open the right job first, and nothing is recorded until you save a form. Press and hold one to move it, or tap Edit to turn more on or off." },
       { target: "fin.cards", title: "Your cards", body: "Cards picked for your trade and role, such as job profit or what's committed to {sub}. Click one for its records, or press and hold to drag it to a new spot." },
       { target: "fin.reports", title: "Reports for your kind of work", body: "Reports that fit how {trade} track money. Ones marked later aren't available yet." },
       { target: "fin.mode", title: "Contractor or Accountant Mode", body: "Accountant Mode uses accounting terms and shows ledger detail. It only changes what you see." },
