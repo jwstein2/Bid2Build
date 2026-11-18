@@ -108,6 +108,23 @@ export const TOURS: readonly TourDef[] = [
     ],
   },
   {
+    id: "contractors-workforce", version: 1, area: "projects",
+    title: "Contractors & Workforce walkthrough",
+    description: "Find a sub or employee, check who's free, assign them to a project and see it in PM Hub.",
+    offer: "This is your directory of subs, employees and crews. Want a quick walkthrough?",
+    requires: { pmView: true },
+    trigger: { kind: "first_visit", pages: ["projects.workforce"] },
+    completion: "steps", optional: true, replayable: true,
+    help: ["article.projects", "academy"],
+    steps: [
+      { page: "projects.workforce", href: `${PROJECTS}/workforce`, target: "workforce.search", title: "Search by trade or name", body: "Type a trade like Electrician, a company, a person or a project. Filters narrow it by availability." },
+      { page: "projects.workforce", href: `${PROJECTS}/workforce`, target: "workforce.cards", title: "Inspect a contractor", body: "Each card shows active and upcoming jobs, availability and any conflict. Open one for workers, projects and history." },
+      { page: "projects.workforce", href: `${PROJECTS}/workforce`, target: "workforce.assign", title: "Assign to a project", body: "Pick a project and a section. Built2Bid checks for double-bookings before anything is saved.", requires: { pmEdit: true } },
+      { page: "projects.workforce", href: `${PROJECTS}/workforce`, target: "workforce.assignments-tab", title: "Conflicts and assignments", body: "Every assignment in one list, with conflicts flagged. A manager can override a conflict with a reason, and nothing is moved for you." },
+      { page: "projects.workforce", href: `${PROJECTS}/workforce`, target: "workforce.add", title: "Add your people", body: "Add a subcontracting company and its workers, an individual sub, an employee or a crew. No logins or seats are created.", requires: { pmEdit: true } },
+    ],
+  },
+  {
     id: "enterprise-owner", version: 1, area: "enterprise",
     title: "Set up your company",
     description: "Licensed seats, inviting your team, roles and permissions, team projects and billing.",

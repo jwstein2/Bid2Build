@@ -15,7 +15,7 @@ const owner = buildDemoDataset({ kind: "owner_demo", namespace: NS, anchor: "202
 describe("sample company dataset", () => {
   it("has the documented size and mix", () => {
     const s = datasetSummary(owner);
-    expect(s).toMatchObject({ customers: 150, estimates: 125, employees: 8, subcontractors: 12 });
+    expect(s).toMatchObject({ customers: 150, estimates: 125, employees: 8, subcontractors: 18, crews: 2 });
     expect(s.projects).toBe(90);
     expect(s.schedules).toBe(45);
     expect(s.invoices).toBe(65);

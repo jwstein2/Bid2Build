@@ -24,14 +24,16 @@ import { RECIPES, type JobRecipe } from "./catalog";
 import { BUSINESS_NAMES, EMAIL_DOMAINS, FIRST, LAST, STAFF, STREETS, SUBS, TOWNS, fictionalPhone } from "./names";
 
 /** Bump when the dataset changes; Reset re-seeds with the current version. */
-export const DEMO_SEED_VERSION = "2026.11.18-1";
+export const DEMO_SEED_VERSION = "2026.11.18-2"; // -2: V7.3 Contractors & Workforce rows
 export type DemoKind = "owner_demo" | "practice";
 
 export type Stage = "draft" | "ready_for_review" | "approved" | "sent" | "pending" | "won" | "scheduled" | "in_progress" | "completed" | "lost";
 
 export interface DemoResource {
-  id: string; kind: "staff" | "subcontractor"; name: string; contactName?: string; trades: string[]; email: string; phone: string; notes?: string;
+  id: string; kind: "staff" | "subcontractor" | "crew"; name: string; contactName?: string; trades: string[]; email: string; phone: string; notes?: string;
   employee?: { title: string; payType: string; hourlyCost: number; hireDate: string };
+  /** V7.3 Contractors & Workforce: company / individual sub, worker's company, crew members, capacity. */
+  entity?: "company" | "individual"; parentId?: string; members?: string[]; capacity?: number; capacityDeclared?: boolean; crewSize?: number; specialties?: string[];
 }
 export interface DemoCustomer { id: string; name: string; email: string; phone: string; address: string; customerType: "person" | "business"; companyName?: string; notes?: string; createdAt: string }
 export interface DemoVersion { contentHash: string; snapshot: unknown; proposal: unknown; totalCost: string; subtotal: string; tax: string; total: string; createdAt: string }
@@ -188,7 +190,7 @@ export function buildDemoDataset(o: BuildOptions): DemoDataset {
     })),
     ...SUBS.map((s, i): DemoResource => ({
       id: id(`sub:${i}`), kind: "subcontractor", name: s.name, contactName: s.contact, trades: [...s.trades],
-      email: `office@${["example.com", "example.net", "example.org"][i % 3]}`, phone: fictionalPhone(30 + i), notes: "Sample subcontractor (fictional).",
+      email: `office@${["example.com", "example.net", "example.org"][i % 3]}`, phone: fictionalPhone(30 + i), notes: "Sample subcontractor (fictional).", entity: "company",
     })),
   ];
 
@@ -404,7 +406,65 @@ export function buildDemoDataset(o: BuildOptions): DemoDataset {
     }
   }
 
+  if (!practice) addWorkforceDemo(resources, schedules, estimates, id, today);
   return { seedVersion, kind: o.kind, anchor: o.anchor, companyName, business, resources, customers, estimates, schedules, invoices, comms };
+}
+
+/**
+ * V7.3 Contractors & Workforce demo: Red's Electric with four electricians, a painting company with a stated
+ * capacity, two concrete crews, plus assignments across active projects, including one deliberate
+ * double booking for an electrician. Added after the main plan so earlier picks stay the same.
+ * Companies come before their workers and crews come last (demo_apply inserts rows in order).
+ */
+function addWorkforceDemo(resources: DemoResource[], schedules: DemoSchedule[], estimates: DemoEstimate[], id: (k: string) => string, today: string) {
+  const reds = id("wf:reds");
+  const workers = ["Marco Diaz", "Tia Brooks", "Owen Castellano", "Lena Park"].map((name, i) => ({ id: id(`wf:reds:${i}`), name }));
+  const paint = id("wf:paint");
+  const staff = (name: string) => resources.find((x) => x.kind === "staff" && x.name === name)?.id;
+  resources.push(
+    { id: reds, kind: "subcontractor", entity: "company", name: "Red's Electric (sample)", contactName: "Red Alvarez", trades: ["electrical", "low-voltage"],
+      specialties: ["Panel upgrades", "EV chargers"], crewSize: 4, email: "reds.office@example.com", phone: fictionalPhone(60), notes: "Sample subcontracting company (fictional)." },
+    ...workers.map((w, i): DemoResource => ({ id: w.id, kind: "subcontractor", entity: "individual", parentId: reds, name: w.name, trades: i === 2 ? ["electrical", "low-voltage"] : ["electrical"],
+      email: `${w.name.split(" ")[0].toLowerCase()}.reds@example.com`, phone: fictionalPhone(61 + i) })),
+    { id: paint, kind: "subcontractor", entity: "company", name: "Fresh Coat Painting Co. (sample)", contactName: "Dee Hart", trades: ["painting", "drywall"],
+      specialties: ["Exterior repaint", "Cabinet finishing"], capacity: 2, capacityDeclared: true, crewSize: 6, email: "freshcoat.jobs@example.net", phone: fictionalPhone(66) },
+    { id: id("wf:crew:flat"), kind: "crew", name: "Flatwork Crew A (sample)", trades: ["concrete"], members: [staff("Dmitri Novak"), staff("Leo Vang")].filter((x): x is string => !!x),
+      capacity: 1, capacityDeclared: true, crewSize: 3, email: "", phone: "" },
+    { id: id("wf:crew:found"), kind: "crew", name: "Foundation Crew B (sample)", trades: ["concrete", "excavation"], capacity: 1, capacityDeclared: true, crewSize: 4, email: "", phone: "" },
+  );
+  // Sections on open (not closed-out) projects that are still ahead or underway.
+  const open = schedules.filter((s) => !s.closeout).map((s) => ({ s, trade: estimates.find((e) => e.id === s.estimateId)?.trade ?? "", secs: s.tasks.filter((t) => t.kind === "section" && t.plannedEnd >= today) }));
+  const put = (s: DemoSchedule, key: string, resourceId: string, status: "tentative" | "confirmed") => { s.assign = [...s.assign.filter((a) => a.key !== key), { key, resourceId, status }]; };
+  const used = new Set<string>();
+  const ELEC = /electric|panel|service|lighting|wiring|fixture|rough-in/i;
+  const elecJob = (o: (typeof open)[number]) => /electric/.test(o.trade) || o.secs.some((t) => ELEC.test(t.name));
+  // 1. A double booking: Marco on two projects whose sections overlap (electrical work first).
+  const double = (strict: boolean) => {
+    for (const a of open) for (const b of open) {
+      if (a.s === b.s) continue;
+      for (const x of a.secs) for (const y of b.secs) {
+        if (strict && !(ELEC.test(x.name) || ELEC.test(y.name))) continue;
+        if (x.plannedStart <= y.plannedEnd && y.plannedStart <= x.plannedEnd) {
+          put(a.s, x.key, workers[0].id, "confirmed"); put(b.s, y.key, workers[0].id, "tentative");
+          used.add(`${a.s.estimateId}:${x.key}`); used.add(`${b.s.estimateId}:${y.key}`);
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+  if (!double(true)) double(false);
+  const pick = (pred: (o: (typeof open)[number]) => boolean) => {
+    for (const o of open.filter(pred)) for (const t of o.secs) if (!used.has(`${o.s.estimateId}:${t.key}`)) { used.add(`${o.s.estimateId}:${t.key}`); return { s: o.s, t }; }
+    return null;
+  };
+  // 2. The company itself and two more workers on other jobs; painters and crews on matching trades.
+  const plan: [string, (o: (typeof open)[number]) => boolean, "tentative" | "confirmed"][] = [
+    [reds, elecJob, "confirmed"], [workers[1].id, elecJob, "confirmed"], [workers[2].id, elecJob, "tentative"],
+    [paint, (o) => /paint|kitchen|bath/.test(o.trade), "confirmed"], [paint, (o) => /paint|kitchen|bath/.test(o.trade), "tentative"],
+    [id("wf:crew:flat"), (o) => /concrete|deck/.test(o.trade), "confirmed"], [id("wf:crew:found"), (o) => /concrete|addition|general/.test(o.trade), "tentative"],
+  ];
+  for (const [rid, pred, status] of plan) { const hit = pick(pred) ?? pick(() => true); if (hit) put(hit.s, hit.t.key, rid, status); }
 }
 
 /** Counts by area, for the README, the Demo panel and tests. */
@@ -417,6 +477,7 @@ export function datasetSummary(d: DemoDataset) {
     invoices: d.invoices.length,
     employees: d.resources.filter((x) => x.kind === "staff").length,
     subcontractors: d.resources.filter((x) => x.kind === "subcontractor").length,
+    crews: d.resources.filter((x) => x.kind === "crew").length,
     communications: d.comms.length,
   };
 }

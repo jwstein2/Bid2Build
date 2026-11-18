@@ -52,7 +52,12 @@ d("Demo Mode isolation (20270102001000)", () => {
     expect(await n("select count(*) from public.project_schedules s join public.estimates e on e.id = s.estimate_id where e.user_id = $1", [demo])).toBe(45);
     expect(await n("select count(*) from public.fin_invoices i join public.fin_books b on b.id = i.book_id where b.company_id = $1 or b.owner_user_id = $2", [ws.companyId, demo])).toBe(65);
     expect(await n("select count(*) from public.pm_resources where company_id = $1 and kind = 'staff'", [ws.companyId])).toBe(8);
-    expect(await n("select count(*) from public.pm_resources where company_id = $1 and kind = 'subcontractor'", [ws.companyId])).toBe(12);
+    expect(await n("select count(*) from public.pm_resources where company_id = $1 and kind = 'subcontractor'", [ws.companyId])).toBe(18);
+    // V7.3 Contractors & Workforce: Red's Electric holds four workers; crews have members and stated capacity.
+    expect(await n("select count(*) from public.pm_resources w join public.pm_resources c on c.id = w.parent_id where c.company_id = $1 and c.name like 'Red''s Electric%'", [ws.companyId])).toBe(4);
+    expect(await n("select count(*) from public.pm_resources where company_id = $1 and kind = 'crew' and capacity_declared", [ws.companyId])).toBe(2);
+    expect(await n("select count(*) from public.pm_crew_members m join public.pm_resources c on c.id = m.crew_id where c.company_id = $1", [ws.companyId])).toBe(2);
+    expect(await n("select count(*) from public.schedule_tasks t join public.pm_resources r on r.id = t.resource_id where r.company_id = $1 and r.name = 'Marco Diaz' and not t.assignment_inherited", [ws.companyId])).toBe(2);
     expect(await n("select count(*) from public.comm_messages where account_id in ($1, $2)", [demo, ws.companyId])).toBeGreaterThanOrEqual(200);
     // Every contact is fictional: reserved example domains and 555-01xx numbers only.
     const bad = await pool.query("select email, phone from public.customers where user_id = $1 and (email !~* '@example\\.(com|net|org)$' or phone !~ '555-01[0-9]{2}')", [demo]);

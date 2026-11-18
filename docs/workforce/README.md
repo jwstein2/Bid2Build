@@ -120,12 +120,14 @@ browser (`conflictsFor`, for cards and profiles).
 
 ## 8. Onboarding walkthrough
 
-The page guide `projects.workforce` (Feature walkthrough) covers search, cards, Assign, the Assignments list and
-Add. The guided first-use tour and the demo rows plug into the Demo Mode engine (`src/lib/guide/tours.ts`,
-`src/lib/demo/dataset.ts`). That thread asked for them as a small follow-up once both PRs are on main. The page
-already carries the `data-guide` hooks the tour needs: `workforce.search`, `workforce.cards`, `workforce.assign`,
-`workforce.profile`, `workforce.schedule`, `workforce.conflicts`, `workforce.view-in-pm`. Demo data lives in a
-separate demo tenant, so it's isolated by normal RLS.
+* **Guided tour** `contractors-workforce` (`src/lib/guide/tours.ts`): offered on the first visit to the page, and
+  replayable any time from the Guide button. Steps: search by trade → inspect a card → Assign to project (editors
+  only) → conflicts and the Assignments list → Add (editors only). It uses the page's `data-guide` hooks.
+* **Page guide** `projects.workforce` (Feature walkthrough) covers the same ground as a static list.
+* **Demo rows** (`src/lib/demo/dataset.ts` + `supabase/migrations/20270102006000_workforce_demo.sql`): Red's
+  Electric (sample) with four workers, Fresh Coat Painting Co. (stated capacity 2), Flatwork Crew A with two members,
+  Foundation Crew B, several projects, and one deliberate double booking (Marco Diaz) so the conflict view has
+  something to show. Demo data lives in the separate demo tenant, so normal RLS keeps it isolated.
 
 ## 9. Tests
 
@@ -144,8 +146,9 @@ separate demo tenant, so it's isolated by normal RLS.
 
 1. Run `20270102005000_workforce_directory.sql` in the Supabase SQL Editor (a copy is in project files under
    `workforce/`). It's safe to run twice.
-2. Merge. Until the SQL runs, `/projects/workforce` shows a "being set up" notice, and everything else works as before.
-3. Check the page as an owner, a member with view-only schedule access, and a solo account.
+2. Then run `20270102006000_workforce_demo.sql` (updates the demo loader so demo accounts get the workforce rows).
+3. Merge. Until the SQL runs, `/projects/workforce` shows a "being set up" notice, and everything else works as before.
+4. Check the page as an owner, a member with view-only schedule access, and a solo account.
 
 ## 11. Known limitations
 
@@ -157,4 +160,3 @@ separate demo tenant, so it's isolated by normal RLS.
   only on a weekend can still show.
 * Team & Subcontractors (`/projects/team`) keeps its own list view of the same rows. Folding it into this page
   would change an existing PM Hub tab, so that's left for James to decide.
-* The guided tour and demo rows follow once the Demo Mode PR merges.
