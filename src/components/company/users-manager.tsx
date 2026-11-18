@@ -4,16 +4,25 @@ import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { Button, ButtonLink } from "../ui/button";
 import { Badge, Card, Notice } from "../ui/misc";
+import { AccessEditor as WorkspaceAccessEditor, type AccessLicenses, type AccessMember } from "./access-editor";
+import type { AccessPolicy } from "@/lib/access/effective";
 import { OWNER_ONLY_PERMISSIONS, PERMISSION_GROUPS, PERMISSION_KEYS, PERMISSION_LABELS, ROLE_LABELS, ROLE_PERMISSIONS, effectivePermissions, type CompanyRole, type Permission } from "@/lib/enterprise/permissions";
 
 export type Member = { user_id: string; display_name: string | null; email: string | null; role: CompanyRole; status: "active" | "deactivated"; team_ids: string[]; managed_team_ids: string[]; joined_at: string; last_active_at: string | null; permissions_granted?: string[]; permissions_revoked?: string[] };
 export type Team = { id: string; name: string; trade: string | null; member_count: number; manager_count: number };
 export type Invite = { id: string; email: string; role: CompanyRole; team_id: string | null; expires_at: string; created_at: string };
 
+/** V6.7 Team & Access: present once 20261222001000_workspace_access.sql is applied (else the older editor shows). */
+export type WorkspaceAccessData = {
+  members: Record<string, AccessMember>; licenses: AccessLicenses; policy: AccessPolicy; premium: boolean;
+  actorPerms: string[]; flags: { pm: boolean; financials: boolean };
+};
+
 type Props = {
   me: string; myPermissions: Permission[]; isOwner: boolean;
   seats: { used: number; limit: number; active: boolean }; canBuySeats: boolean;
   members: Member[]; teams: Team[]; invites: Invite[];
+  access?: WorkspaceAccessData | null;
 };
 
 async function post(url: string, body: unknown, method = "POST") {
@@ -128,9 +137,10 @@ function PendingInvites({ invites, teams }: { invites: Invite[]; teams: Team[] }
   );
 }
 
-function MemberRow({ m, me, myPermissions, isOwner, teams, manageUsers, manageTeams, seats }: Props & { m: Member; manageUsers: boolean; manageTeams: boolean }) {
+function MemberRow({ m, me, myPermissions, isOwner, teams, manageUsers, manageTeams, seats, access }: Props & { m: Member; manageUsers: boolean; manageTeams: boolean }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [accessOpen, setAccessOpen] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -152,14 +162,23 @@ function MemberRow({ m, me, myPermissions, isOwner, teams, manageUsers, manageTe
           <p className="truncate font-semibold">{name(m)}{m.user_id === me && <span className="font-normal text-ink-soft"> (you)</span>}</p>
           <p className="truncate text-xs text-ink-soft">{m.email && m.display_name ? `${m.email} · ` : ""}{teamNames.length ? teamNames.join(", ") : "No team"}{m.managed_team_ids.length > 0 && " · Team manager"}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Badge tone={m.role === "owner" ? "brand" : m.role === "manager" ? "accent" : "neutral"}>{ROLE_LABELS[m.role]}</Badge>
-          {(editable || (manageTeams && m.status === "active")) && <Button size="sm" variant="secondary" onClick={() => setOpen(!open)} aria-expanded={open}>{open ? "Close" : "Manage"}</Button>}
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge tone={m.role === "owner" ? "brand" : m.role === "manager" ? "accent" : "neutral"}>{m.role === "owner" ? "Primary account holder" : ROLE_LABELS[m.role]}</Badge>
+          {access && editable && m.status === "active" && access.members[m.user_id] && (
+            <Button size="sm" onClick={() => { setAccessOpen(!accessOpen); setOpen(false); }} aria-expanded={accessOpen} data-testid="manage-access">{accessOpen ? "Close access" : "Manage Access"}</Button>
+          )}
+          {(editable || (manageTeams && m.status === "active")) && <Button size="sm" variant="secondary" onClick={() => { setOpen(!open); setAccessOpen(false); }} aria-expanded={open}>{open ? "Close" : access ? "Teams & status" : "Manage"}</Button>}
         </div>
       </div>
+      {accessOpen && access && access.members[m.user_id] && (
+        <div className="mt-3 rounded-lg bg-paper p-3">
+          <WorkspaceAccessEditor member={access.members[m.user_id]} licenses={access.licenses} policy={access.policy} premium={access.premium}
+            actor={{ isOwner, perms: access.actorPerms }} flags={access.flags} onClose={() => setAccessOpen(false)} />
+        </div>
+      )}
       {open && (
         <div className="mt-3 space-y-4 rounded-lg bg-paper p-3">
-          {editable && m.status === "active" && <AccessEditor m={m} myPermissions={myPermissions} isOwner={isOwner} busy={busy} onSave={(b) => act({ action: "update", userId: m.user_id, ...b }, "Access updated.")} />}
+          {editable && m.status === "active" && !access && <AccessEditor m={m} myPermissions={myPermissions} isOwner={isOwner} busy={busy} onSave={(b) => act({ action: "update", userId: m.user_id, ...b }, "Access updated.")} />}
           {!editable && m.role === "owner" && (
             <p className="text-sm text-ink-soft" data-testid="owner-note">{m.user_id === me ? "You're" : `${name(m)} is`} the company owner. Owners always have every permission, so there&apos;s no access to change here.</p>
           )}

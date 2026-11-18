@@ -3,8 +3,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { isFinancialsEnabled, isPmEnabled } from "@/lib/env";
 import { missingMigration } from "@/lib/operations/server";
 import { parseQuery, type ParsedQuery } from "./query";
-import { FIN_KINDS, GROUPS, PM_KINDS, SEARCH_KINDS, isSearchKind, toResult, type GroupId, type SearchKind, type SearchResult, type SearchRow } from "./kinds";
+import { GROUPS, SEARCH_KINDS, isSearchKind, toResult, type GroupId, type SearchKind, type SearchResult, type SearchRow } from "./kinds";
 import { scoredActions, toActionResult, type ActionResult, type SearchCaps } from "./actions";
+import { accessFromRaw, loadWorkspaceRaw } from "@/lib/access/server";
+import { searchableKinds } from "./kind-access";
 
 export interface SearchParams {
   q: string;
@@ -46,26 +48,18 @@ export const dateOrNull = (v: unknown) => (typeof v === "string" && DATE.test(v)
 export const PAGE_SIZE = 25;
 const PER_TYPE_CAP = 300;
 
-/** What the caller may do, from the database (company permissions, Premium, Financials book, admin) + feature switches. */
+/**
+ * What the caller may do, from the database (company permissions, Premium, Financials book, admin, and the
+ * V6.7 workspace access profile) + feature switches. One read, shared with the layout (my_workspace_access).
+ */
 export async function loadCaps(db: SupabaseClient): Promise<SearchCaps | null> {
-  const { data, error } = await db.rpc("search_capabilities");
-  if (error) {
-    if (missingMigration(error)) return null;
-    throw error;
-  }
-  const d = (data ?? {}) as { premium?: boolean; admin?: boolean; company?: SearchCaps["company"]; fin?: SearchCaps["fin"] };
-  return {
-    premium: Boolean(d.premium), admin: Boolean(d.admin),
-    company: d.company ? { id: d.company.id, role: d.company.role, perms: d.company.perms ?? [] } : null,
-    fin: d.fin ? { book: d.fin.book, sandbox: Boolean(d.fin.sandbox), perms: d.fin.perms ?? [] } : null,
-    flags: { pm: isPmEnabled(), financials: isFinancialsEnabled() },
-  };
+  const raw = await loadWorkspaceRaw(db);
+  if (!raw) return null;
+  const flags = { pm: isPmEnabled(), financials: isFinancialsEnabled() };
+  return { premium: raw.premium, admin: raw.admin, company: raw.company, fin: raw.fin, flags, access: accessFromRaw(raw, flags) };
 }
 
-/** Kinds this account can search at all (feature switches). Row-level permissions are enforced by the database. */
-export function searchableKinds(caps: SearchCaps): SearchKind[] {
-  return SEARCH_KINDS.filter((k) => (caps.flags.financials || !FIN_KINDS.includes(k)) && (caps.flags.pm || !PM_KINDS.includes(k)));
-}
+export { KIND_FEATURE, searchableKinds } from "./kind-access";
 
 export async function runSearch(db: SupabaseClient, p: SearchParams): Promise<SearchResponse> {
   const parsed = parseQuery(p.q);
@@ -87,7 +81,8 @@ export async function runSearch(db: SupabaseClient, p: SearchParams): Promise<Se
   const page = Math.max(1, Math.min(200, p.page ?? 1));
   const { data, error } = await db.rpc("search_universal", {
     p_q: parsed.text,
-    p_types: parsed.text && types.length === allowed.length && !wanted ? null : types,
+    // null = "every kind" in the database: only when nothing is filtered out for this person.
+    p_types: parsed.text && types.length === SEARCH_KINDS.length && !wanted ? null : types,
     p_boost: parsed.boost.filter((k) => types.includes(k)),
     p_filters: { status, trade: p.trade ?? null, customer: p.customer ?? null, project: p.project ?? null, person: p.person ?? null, from: p.from ?? null, to: p.to ?? null, scope: p.scope === "project" ? "project" : null },
     p_context: { estimate_id: p.context?.estimateId ?? null, schedule_id: p.context?.scheduleId ?? null },
