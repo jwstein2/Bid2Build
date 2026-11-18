@@ -97,11 +97,15 @@ for (const vp of VIEWPORTS) {
     if (vp.id !== "m320") await page.locator(`[data-pillar=${p}]`).screenshot({ path: path.join(out, `home-pillar-${p}__${vp.id}.png`) });
   }
   if (vp.id === "desktop") await axe(page, tag);
-  // Secondary CTA scrolls to Run the Job.
+  // V8: the secondary CTA shows the sample proposal; the pillar link still reaches Run the Job.
   await page.evaluate(() => window.scrollTo(0, 0));
-  await page.locator("section").first().locator("[data-cta=pm]").click();
+  await page.locator("section").first().locator("[data-cta=sample]").click();
   await page.waitForTimeout(600);
-  check(`${tag} Explore PCC jumps to #run-the-job`, new URL(page.url()).hash === "#run-the-job" && await page.locator("#run-the-job").isVisible(), page.url());
+  check(`${tag} See a sample proposal jumps to #sample-proposal`, new URL(page.url()).hash === "#sample-proposal" && await page.locator("#sample-proposal").isVisible(), page.url());
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.getByTestId("pillar-link-run").click();
+  await page.waitForTimeout(600);
+  check(`${tag} Run the Job pillar link jumps to #run-the-job`, new URL(page.url()).hash === "#run-the-job" && await page.locator("#run-the-job").isVisible(), page.url());
   // Primary CTA opens the trade picker for a new bid.
   await page.goto(BASE + "/", { waitUntil: "networkidle" });
   await page.locator("section").first().locator("[data-cta=create]").click();

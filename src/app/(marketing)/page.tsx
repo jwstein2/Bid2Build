@@ -83,7 +83,7 @@ export default async function HomePage() {
             Desktop: copy on the left (two grid rows), picker on the right spanning both. */}
         <Container className="relative grid items-center gap-8 pb-16 pt-12 sm:pt-16 lg:grid-cols-[1.05fr_1fr] lg:gap-x-14 lg:gap-y-0 lg:pb-20">
           <div className="lg:col-start-1 lg:row-start-1 lg:self-end">
-            <p className="inline-flex flex-wrap items-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs font-semibold text-[#D5DFE9]">
+            <p className="inline-flex flex-wrap items-center gap-2 rounded-2xl border sm:rounded-full border-white/20 bg-white/5 px-3 py-1 text-xs font-semibold text-[#D5DFE9]">
               <span className="h-1.5 w-1.5 rounded-full bg-teal" aria-hidden />
               <span data-testid="hero-tagline">{visitor ? HERO_VISITOR_EYEBROW : MEMBER_TAGLINE}</span>
               {badge && <span className="whitespace-nowrap border-l border-white/20 pl-2" data-testid="hero-credits">{badge}</span>}

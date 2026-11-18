@@ -42,7 +42,6 @@ export function HeroQuickStart({ trades, totalTrades }: { trades: QuickStartTrad
           className="inline-flex min-h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-cyan px-5 font-bold sm:w-auto text-navy hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan">
           Start a {t.name.toLowerCase()} bid <ArrowRight className="h-4 w-4" aria-hidden />
         </Link>
-        <a href="#sample-proposal" className="inline-flex min-h-11 items-center justify-center text-sm font-semibold text-[#D5DFE9] underline-offset-4 hover:text-white hover:underline">See a finished sample proposal</a>
       </div>
       <p className="mt-3 text-xs text-[#B8C6D4]">No account needed to build and preview.</p>
     </div>

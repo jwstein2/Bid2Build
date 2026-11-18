@@ -81,7 +81,8 @@ for (const sc of scenarios) {
       }
       if (pg.id === "trade") {
         const label = (await page.locator("main [data-cta]").first().innerText()).trim();
-        check(`${tag} trade CTA`, label === sc.primary, label);
+        // Rich trade pages name the trade for visitors ("Create a Free Roofing Bid", src/lib/trades/landing.ts).
+        check(`${tag} trade CTA`, label === sc.primary || (sc.auth === false && /^Create a Free .+ (Bid|Estimate)$/.test(label)), label);
       }
       if (pg.id === "pricing" && sc.auth !== false) check(`${tag} marks exactly one current plan`, (await page.getByTestId("current-plan").count()) === 1);
       if (pg.id === "billing" && sc.billing) check(`${tag} subscription status`, sc.billing.test(text));

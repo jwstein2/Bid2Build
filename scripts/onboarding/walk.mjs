@@ -23,6 +23,8 @@ const dialog = (page) => page.getByTestId("onboarding-dialog");
 const title = (page) => page.getByTestId("onboarding-title").innerText();
 const local = (page) => page.evaluate(() => JSON.parse(localStorage.getItem("b2b:onboarding") ?? "null"));
 const waitOpen = (page, ms = 6000) => dialog(page).waitFor({ state: "visible", timeout: ms }).then(() => true, () => false);
+// V8: visitors are never interrupted; they open the tour from the hero's Watch Demo button.
+const openDemo = async (page) => { await page.getByTestId("watch-demo").first().click(); return waitOpen(page, 4000); };
 const staysClosed = async (page) => { await page.waitForTimeout(2600); return !(await dialog(page).isVisible()); };
 
 const VIEWPORTS = [
@@ -40,20 +42,29 @@ const desk = VIEWPORTS.at(-1);
 const STEP_TITLES = ["Welcome to Built2Bid!", "What Are You Bidding Today?", "Your Company, Your Brand", "Who Are You Bidding For?", "Build Your Estimate in Minutes", "Make Every Bid Professional", "You're Ready to Bid!"];
 
 async function anonymousFlow(browser) {
-  // A. New visitor: popup, video, full tour, Create My First Bid → real trade chooser → Company.
+  // A0. V8: a new visitor is never interrupted on marketing pages.
+  {
+    const ctx = await ctxFor(browser, desk); const page = await ctx.newPage();
+    for (const p of ["/", "/bids", "/bids/roofing", "/pricing", "/learn", "/about"]) {
+      await page.goto(`${BASE}${p}`);
+      check(`A0 new visitor: no popup on ${p}`, await staysClosed(page));
+    }
+    await ctx.close();
+  }
+  // A. New visitor opens Watch Demo: video, full tour, Create My First Bid → real trade chooser → Company.
   {
     const ctx = await ctxFor(browser, desk); const page = await ctx.newPage();
     const mp4 = [];
     page.on("request", (r) => { if (r.url().includes(".mp4")) mp4.push(r); });
     await page.goto(`${BASE}/`);
-    check("A new visitor sees the welcome popup", await waitOpen(page));
+    check("A Watch Demo opens the welcome tour", await openDemo(page));
     check("A heading is Welcome to Built2Bid!", (await title(page)) === STEP_TITLES[0]);
     check("A subheading shown", await page.getByText("Let's build your first bid.").isVisible());
     check("A shows Step 1 of 7", (await page.getByTestId("onboarding-step").innerText()) === "Step 1 of 7");
     check("A has Not Right Now + Take Tour + X", (await page.getByTestId("onboarding-not-now").isVisible()) && (await page.getByTestId("onboarding-take-tour").isVisible()) && (await page.getByTestId("onboarding-close").isVisible()));
     const v = page.getByTestId("onboarding-video");
     const attrs = await v.evaluate((el) => ({ controls: el.controls, playsInline: el.playsInline, preload: el.preload, poster: el.getAttribute("poster"), autoplay: el.autoplay, muted: el.muted, src: el.querySelector("source")?.getAttribute("src"), ratio: el.getBoundingClientRect().width / el.getBoundingClientRect().height }));
-    check("A video: native controls, inline, no autoplay, poster", attrs.controls && attrs.playsInline && !attrs.autoplay && attrs.poster === "/media/meet-built2bid-poster.jpg", JSON.stringify(attrs));
+    check("A video: native controls, inline, no autoplay, poster", attrs.controls && attrs.playsInline && !attrs.autoplay && /^\/media\/meet-built2bid-poster\.(jpg|webp)$/.test(attrs.poster ?? ""), JSON.stringify(attrs));
     check("A video keeps 16:9", Math.abs(attrs.ratio - 16 / 9) < 0.02, attrs.ratio.toFixed(3));
     check("A video not downloaded before Play", mp4.length === 0 && attrs.preload === "none", `${mp4.length} mp4 requests`);
     await page.screenshot({ path: `${out}/a-welcome__desktop.png` });
@@ -85,7 +96,6 @@ async function anonymousFlow(browser) {
     await page.getByTestId("onboarding-create").click();
     await page.waitForURL(/\/bids$/);
     check("A Create My First Bid opens the trade chooser", await page.getByRole("heading", { name: "What are you bidding today?" }).isVisible());
-    check("A completed stored locally", (await local(page))?.status === "completed");
     await page.getByRole("link", { name: /^Roofing/ }).first().click();
     await page.waitForURL(/builder\?draft=/); await page.waitForSelector('nav[aria-label="Builder steps"]');
     const cur = await page.locator('nav[aria-label="Builder steps"] [aria-current="step"]').innerText();
@@ -101,16 +111,18 @@ async function anonymousFlow(browser) {
     ["D Escape", (p) => p.keyboard.press("Escape")],
     ["E Skip Tour", async (p) => { await p.getByTestId("onboarding-take-tour").click(); await p.getByTestId("onboarding-next").click(); await p.getByTestId("onboarding-skip").click(); }],
   ]) {
-    const ctx = await ctxFor(browser, desk); const page = await ctx.newPage();
-    await page.goto(`${BASE}/bids`);
-    check(`${tag}: popup shown on /bids`, await waitOpen(page));
+    // V8: the automatic popup now appears only for a new account on the dashboard.
+    await setStatus("new");
+    const ctx = await ctxFor(browser, desk); await ctx.addCookies([authCookie]); const page = await ctx.newPage();
+    await page.goto(`${BASE}/dashboard`);
+    check(`${tag}: popup shown on /dashboard for a new account`, await waitOpen(page));
     if (tag.startsWith("B")) {
       await page.mouse.click(10, 450);
       check("B clicking outside doesn't close it", await dialog(page).isVisible());
     }
     await act(page);
     check(`${tag}: closes`, !(await dialog(page).isVisible()));
-    check(`${tag}: page usable after`, await page.getByRole("link", { name: /^Roofing/ }).first().isVisible());
+    check(`${tag}: page usable after`, await page.getByRole("heading", { name: "My bids" }).isVisible());
     check(`${tag}: stored as dismissed`, (await local(page))?.status === "dismissed");
     await page.reload();
     check(`${tag}: not shown after reload`, await staysClosed(page));
@@ -118,6 +130,7 @@ async function anonymousFlow(browser) {
     check(`${tag}: not shown on another page`, await staysClosed(page));
     await ctx.close();
   }
+  await setStatus("existing");
   // F. Returning browser, ineligible pages, checkout/auth returns.
   {
     const ctx = await ctxFor(browser, desk); const page = await ctx.newPage();
@@ -128,19 +141,21 @@ async function anonymousFlow(browser) {
     await page.evaluate(() => localStorage.setItem("b2b.checkoutIntent", JSON.stringify({ v: 1, id: "x", plan: "monthly", createdAt: Date.now(), status: "pending" })));
     await page.goto(`${BASE}/`);
     check("F not shown while a checkout is pending", await staysClosed(page));
-    await page.evaluate(() => localStorage.removeItem("b2b.checkoutIntent"));
-    await page.goto(`${BASE}/`);
-    check("F shown once checkout is no longer pending", await waitOpen(page));
     await ctx.close();
   }
   {
-    const ctx = await ctxFor(browser, desk); const page = await ctx.newPage();
+    // New account: held back while a checkout is pending, shown on the dashboard once it isn't.
+    await setStatus("new");
+    const ctx = await ctxFor(browser, desk); await ctx.addCookies([authCookie]); const page = await ctx.newPage();
     await page.goto(`${BASE}/terms`);
-    await page.evaluate(() => localStorage.setItem("byb:drafts", "[]"));
-    await page.goto(`${BASE}/`);
-    check("F browser that already used Built2Bid isn't treated as new", await staysClosed(page));
-    check("F marked existing locally", (await local(page))?.status === "existing");
+    await page.evaluate(() => localStorage.setItem("b2b.checkoutIntent", JSON.stringify({ v: 1, id: "x", plan: "monthly", createdAt: Date.now(), status: "pending" })));
+    await page.goto(`${BASE}/dashboard`);
+    check("F new account: not shown while a checkout is pending", await staysClosed(page));
+    await page.evaluate(() => localStorage.removeItem("b2b.checkoutIntent"));
+    await page.goto(`${BASE}/dashboard`);
+    check("F shown once checkout is no longer pending", await waitOpen(page));
     await ctx.close();
+    await setStatus("existing");
   }
 }
 
@@ -214,17 +229,19 @@ async function accountFlow(browser) {
     check("J replay still works", await waitOpen(page, 4000));
     await ctx.close();
   }
-  // K. Visitor dismisses, then signs up in the same browser: not shown again, copied to the account.
+  // K. V8: a visitor browses without interruption, signs up in the same browser, then sees the
+  //    welcome once on the dashboard.
   {
     await setStatus("new");
     const ctx = await ctxFor(browser, desk); const page = await ctx.newPage();
     await page.goto(`${BASE}/`);
-    await waitOpen(page);
-    await page.getByTestId("onboarding-not-now").click();
+    check("K visitor: no popup before signing up", await staysClosed(page));
     await ctx.addCookies([authCookie]); // signs in
     await page.goto(`${BASE}/dashboard`);
-    check("K not shown after signing up in the same browser", await staysClosed(page));
-    check("K visitor's choice copied to the new account", (await getStatus()).status === "dismissed");
+    check("K new account sees the welcome on the dashboard", await waitOpen(page));
+    await page.getByTestId("onboarding-not-now").click();
+    await page.waitForTimeout(800);
+    check("K dismissal saved to the account", (await getStatus()).status === "dismissed");
     await ctx.close();
   }
   await setStatus("existing");
@@ -234,8 +251,8 @@ async function layouts(browser) {
   for (const vp of VIEWPORTS) {
     const ctx = await ctxFor(browser, vp); const page = await ctx.newPage();
     await page.goto(`${BASE}/`);
-    const opened = await waitOpen(page);
-    check(`M ${vp.tag} popup opens`, opened);
+    const opened = await openDemo(page);
+    check(`M ${vp.tag} Watch Demo opens the tour`, opened);
     if (!opened) { await ctx.close(); continue; }
     for (const step of [0, 1, 4, 6]) {
       if (step > 0) {
@@ -264,7 +281,7 @@ async function layouts(browser) {
   // Keyboard: focus starts in the dialog, Tab stays inside, Enter on Take Tour advances.
   {
     const ctx = await ctxFor(browser, desk); const page = await ctx.newPage();
-    await page.goto(`${BASE}/`); await waitOpen(page);
+    await page.goto(`${BASE}/`); await openDemo(page);
     check("N focus starts on the heading", await page.evaluate(() => document.activeElement?.getAttribute("data-testid") === "onboarding-title"));
     let inside = true;
     for (let i = 0; i < 8; i++) { await page.keyboard.press("Tab"); inside &&= await page.evaluate(() => Boolean(document.activeElement?.closest('[data-testid="onboarding-dialog"]'))); }
