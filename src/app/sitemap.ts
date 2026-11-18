@@ -23,6 +23,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       { url: u(`/academy/courses/${c.slug}`), changeFrequency: "monthly" as const, priority: 0.6 },
       ...(c.lessons ?? []).filter((l) => l.access === "public").map((l) => ({ url: u(`/academy/courses/${c.slug}/${l.slug}`), changeFrequency: "yearly" as const, priority: 0.5 })),
     ]),
+    { url: u("/about"), changeFrequency: "monthly", priority: 0.4 },
     { url: u("/privacy"), priority: 0.2 },
     { url: u("/terms"), priority: 0.2 },
     { url: u("/security"), priority: 0.2 },

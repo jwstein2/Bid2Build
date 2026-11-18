@@ -21,7 +21,7 @@ import {
   type Cell, type CompareGroup,
 } from "@/lib/marketing/catalog";
 
-const pageTitle = "Pricing";
+const pageTitle = `Pricing: Free, then ${MONTHLY.price}/month`;
 const pageDescription = `Free: ${plans.starterCredits} bids to start, plus ${plans.monthlyCredits} free bid every month. Unlimited: ${MONTHLY.price}/month or ${ANNUAL.price}/year. ${PM_PRODUCT_NAME} scheduling add-on: ${PRICES.pmMonthly}/month. Enterprise: ${PRICES.enterpriseBase}/month for ${PRICES.enterpriseIncludedUsers} users.`;
 
 export const metadata: Metadata = {
@@ -188,7 +188,7 @@ function CellView({ c }: { c: Cell | string }) {
 function ComparisonTable() {
   const th = "sticky left-0 z-10 w-36 bg-surface p-3 text-left font-medium shadow-[1px_0_0_var(--color-line)] sm:w-auto";
   return (
-    <div className="mx-auto mt-14 max-w-5xl">
+    <div id="compare" className="mx-auto mt-14 max-w-5xl scroll-mt-20">
       <h2 className="text-2xl font-extrabold">Compare plans</h2>
       <p className="mt-1 text-sm text-ink-soft">Coming soon means it&apos;s in development and not part of any plan yet.</p>
       <p className="mt-1 text-xs text-muted sm:hidden" aria-hidden>Swipe the table sideways to see Unlimited and Enterprise.</p>

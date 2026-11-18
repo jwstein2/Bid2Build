@@ -14,7 +14,7 @@ import { isBuilderStep, isCompanyComplete, resolveStartStep, type BuilderStep } 
 import { tradeName } from "@/lib/trades/catalog";
 import { isDefaultTitle } from "@/lib/estimate/factory";
 import { cn } from "@/lib/cn";
-import { exportMessage, type CreditSource, type CreditStatus } from "@/lib/credits/status";
+import { exportMessage, showHeaderUpgrade, type CreditSource, type CreditStatus } from "@/lib/credits/status";
 import { CreditSummary, UpgradeLink } from "../billing/credits";
 import { Logo } from "../layout/logo";
 import { ProposalView } from "../proposal/proposal-view";
@@ -461,7 +461,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
             </div>
           </div>
           <div className="flex w-full flex-wrap items-start justify-end gap-2 lg:w-auto lg:flex-nowrap">
-            {credits && !credits.unlimited && <UpgradeLink compact className="border-transparent text-xs sm:text-sm" />}
+            {showHeaderUpgrade(credits) && <UpgradeLink compact className="border-transparent text-xs sm:text-sm" />}
             {step === "estimate" && (
               <Button size="sm" variant="ghost" onClick={() => setCustomerView(!customerView)} aria-pressed={customerView} className="hidden md:inline-flex" data-guide="builder.customer-view">
                 {customerView ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />} Customer view

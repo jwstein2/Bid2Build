@@ -209,10 +209,12 @@ for (const plan of ["monthly", "annual"]) {
   await test(`Login page path (original bug, ${plan}) → 6-digit code → automatic checkout`, async () => {
     const { ctx, page, calls } = await setup();
     await page.goto(`${BASE}/login?next=${encodeURIComponent(`/pricing?upgrade=${plan}`)}`);
-    await page.getByLabel("Business email").fill(`legacy-${plan}@example.test`);
+    // Since the two-step sign-in (PR #133) the email form sits behind "Continue with email" when SMS is on.
+    await page.getByRole("button", { name: /Continue with email/ }).click({ timeout: 3000 }).catch(() => {});
+    await page.getByLabel(/email/i).first().fill(`legacy-${plan}@example.test`);
     await page.getByRole("button", { name: /Email me a verification code/ }).click();
     await page.getByLabel("Verification code").fill("123456");
-    await page.getByRole("button", { name: /Verify and continue/ }).click();
+    await page.getByRole("button", { name: /Verify and (continue|sign in)/ }).click();
     await page.waitForURL(/checkout\.stripe\.test/, { timeout: 15000 });
     expect(calls.length === 1 && calls[0].plan === plan, `calls ${JSON.stringify(calls)}`);
     await ctx.close();
@@ -262,7 +264,7 @@ await test("Pricing copy: $19.99/month billed monthly; $149/year billed annually
   const { ctx, page } = await setup();
   await page.goto(`${BASE}/pricing`);
   const text = await page.textContent("main");
-  for (const s of ["$19.99/month", "Billed monthly. Cancel anytime.", "$149/year", "Billed annually", "Equivalent to $12.42/month. Save approximately 38% compared with monthly billing.", "include exactly the same features"]) expect(text.includes(s), `missing "${s}"`);
+  for (const s of ["$19.99/month", "Billed monthly. Cancel anytime", "$149/year", "Billed annually", "Equivalent to $12.42/month. Save approximately 38% compared with monthly billing.", "include exactly the same features"]) expect(text.includes(s), `missing "${s}"`);
   expect(!text.includes("Just $12.42"), "old copy removed");
   await ctx.close();
 });

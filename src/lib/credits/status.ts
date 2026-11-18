@@ -79,3 +79,14 @@ export function exportMessage(source: CreditSource, versionNumber: number, after
       return `Proposal version ${versionNumber} exported.`;
   }
 }
+
+/**
+ * V8: the ambient header "Upgrade" link (dashboard and builder) shows only when a verified Free
+ * account is down to its last free bid or has none left. With 2+ credits the person is still
+ * trying the product, so the header stays calm. Plan cards, /pricing, the out-of-credits dialog
+ * and premium feature panels are unchanged and always reachable.
+ */
+export function showHeaderUpgrade(c: CreditStatus | null | undefined): boolean {
+  if (!c || c.unlimited || !c.emailVerified) return false;
+  return c.starter + c.monthly <= 1;
+}

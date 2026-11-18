@@ -60,9 +60,9 @@ for (const vp of VIEWPORTS) {
   const page = await ctx.newPage();
   await page.goto(BASE + "/", { waitUntil: "networkidle" });
   const tag = `home/signed-out/${vp.id}`;
-  check(`${tag} headline`, (await page.locator("h1").innerText()).replace(/\s+/g, " ").includes("Win More Bids. Manage Every Job. Grow Your Business."));
+  check(`${tag} headline`, (await page.locator("h1").innerText()).replace(/\s+/g, " ").includes("Professional estimates for your trade, ready to send."));
   const hero = (await page.locator("section").first().locator("[data-cta]").allInnerTexts()).map((s) => s.trim());
-  check(`${tag} hero CTAs`, hero[0] === "Start Your 3 Free Bids" && hero[1] === "Explore Project Command Center", hero.join(" | "));
+  check(`${tag} hero CTAs`, hero[0] === "Start Your 3 Free Bids" && hero[1] === "See a sample proposal", hero.join(" | "));
   for (const p of ["win", "run", "grow"]) {
     check(`${tag} pillar link ${p}`, await page.getByTestId(`pillar-link-${p}`).isVisible());
     check(`${tag} pillar section ${p}`, (await page.locator(`[data-pillar=${p}]`).count()) === 1);
@@ -71,9 +71,9 @@ for (const vp of VIEWPORTS) {
   check(`${tag} pillar order`, titles.join("|") === "Win the Job|Run the Job|Grow the Business", titles.join("|"));
   const note = await page.getByTestId("pm-price-note").innerText();
   check(`${tag} PM price note`, /\$4\.99\/month/.test(note) && /\$49\.99\/year/.test(note) && /Enterprise includes 1 schedule editor/.test(note), note);
+  // V8: coming-soon items are left off the homepage (they stay on the pricing comparison).
   for (const id of ["nurture", "scheduled_updates"]) {
-    const badge = await page.locator(`[data-feature-id=${id}] [data-status]`).innerText();
-    check(`${tag} ${id} marked Coming soon`, badge.trim() === "Coming soon", badge);
+    check(`${tag} ${id} (coming soon) not listed on the homepage`, (await page.locator(`[data-pillar] [data-feature-id=${id}]`).count()) === 0);
   }
   const runBadges = await page.locator("[data-pillar=run] [data-feature-id] [data-status]").allInnerTexts();
   check(`${tag} run pillar badges say Project Command Center`, runBadges.length >= 5 && runBadges.every((b) => b.trim() === "Project Command Center"), runBadges.join(","));

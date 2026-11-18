@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 export default function LearnIndex() {
   return (
     <Container className="py-12">
-      <h1 className="text-4xl font-extrabold">Learn</h1>
+      <h1 className="text-4xl font-extrabold">Contractor pricing and estimating guides</h1>
       <p className="mt-2 max-w-2xl text-ink-soft">Straightforward guides to pricing and presenting your work.</p>
       <ul className="mt-8 grid gap-4 md:grid-cols-2">
         {articles.map((a) => (

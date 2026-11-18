@@ -12,6 +12,7 @@ import { ProfileReminder } from "./profile-reminder";
 import { PROFILE_REMINDER_COOKIE } from "./profile-reminder-cookie";
 import { cookies } from "next/headers";
 import { CreditBalances, UpgradeLink } from "@/components/billing/credits";
+import { showHeaderUpgrade } from "@/lib/credits/status";
 import { loadCreditStatus } from "@/lib/credits/server";
 import { PremiumTiles } from "./library-tile";
 import { hasPremiumAccess } from "@/lib/billing/entitlement";
@@ -189,7 +190,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
           <p className="text-ink-soft">{biz?.company_name ? biz.company_name : <Link href="/settings/company" className="text-accent-ink underline">Set up your company profile</Link>}</p>
         </div>
         <div className="flex items-center gap-2">
-          {credits && !credits.unlimited && <UpgradeLink compact />}
+          {showHeaderUpgrade(credits) && <UpgradeLink compact />}
           <ButtonLink href="/bids" variant="accent" className="hidden md:inline-flex" data-guide="bids.new-bid">Create New Bid</ButtonLink>
         </div>
       </div>

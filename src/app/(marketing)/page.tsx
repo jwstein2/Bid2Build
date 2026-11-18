@@ -15,6 +15,7 @@ import { AccountCtas } from "@/components/account/account-ctas";
 import { AcademyPromo } from "@/components/marketing/academy-promo";
 import { ReplayTourButton } from "@/components/onboarding/replay-tour-button";
 import { getAccountStatus } from "@/lib/account/server";
+import { COMPANY, PROMISES } from "@/lib/marketing/about";
 import { accountCtas, creditBadge, MEMBER_TAGLINE, type AccountStatus } from "@/lib/account/status";
 
 const faqs: { q: string; a: string; visitorOnly?: boolean; freePlanOnly?: boolean; pmOnly?: boolean }[] = [
@@ -30,6 +31,9 @@ const faqs: { q: string; a: string; visitorOnly?: boolean; freePlanOnly?: boolea
 
 const VISITOR_POINTS = ["Build and preview without an account", "No credit card", "Your costs stay private"];
 const MEMBER_POINTS = ["Every trade, one pricing engine", "Your costs stay private", "Branded PDF proposals"];
+/** V8 hero: one job (an estimate you can send), product facts only. No time or outcome claims. */
+const HERO_VISITOR_EYEBROW = "Free for every trade · No credit card · Build before you sign up";
+const HERO_SUB = "Pick your trade, price materials and labor with built-in calculators, and send a proposal your customer can sign online. Your costs stay private.";
 
 
 export default async function HomePage() {
@@ -75,24 +79,27 @@ export default async function HomePage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <section className="on-dark relative overflow-hidden bg-navy text-white">
         <div aria-hidden className="blueprint-grid-dark pointer-events-none absolute inset-0 [mask-image:linear-gradient(to_bottom,black,transparent_95%)]" />
-        <Container className="relative grid items-center gap-12 pb-16 pt-12 sm:pt-16 lg:grid-cols-[1.05fr_1fr] lg:gap-14 lg:pb-20">
-          <div>
-            <p className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs font-semibold text-[#D5DFE9]">
+        {/* Phones: headline, then the trade picker, then CTAs, so the first thing to tap is a trade.
+            Desktop: copy on the left (two grid rows), picker on the right spanning both. */}
+        <Container className="relative grid items-center gap-8 pb-16 pt-12 sm:pt-16 lg:grid-cols-[1.05fr_1fr] lg:gap-x-14 lg:gap-y-0 lg:pb-20">
+          <div className="lg:col-start-1 lg:row-start-1 lg:self-end">
+            <p className="inline-flex flex-wrap items-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs font-semibold text-[#D5DFE9]">
               <span className="h-1.5 w-1.5 rounded-full bg-teal" aria-hidden />
-              <span data-testid="hero-tagline">{visitor ? `For contractors in every trade · ${plans.starterCredits} free bids to start` : MEMBER_TAGLINE}</span>
+              <span data-testid="hero-tagline">{visitor ? HERO_VISITOR_EYEBROW : MEMBER_TAGLINE}</span>
               {badge && <span className="whitespace-nowrap border-l border-white/20 pl-2" data-testid="hero-credits">{badge}</span>}
             </p>
             <h1 className="mt-5 max-w-xl text-4xl font-extrabold leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-[3.25rem]">
-              Win More Bids. Manage Every Job. <span className="relative inline-block text-cyan">Grow Your Business.<svg aria-hidden viewBox="0 0 300 12" preserveAspectRatio="none" className="absolute -bottom-2 left-0 h-2.5 w-full"><path d="M3 9C80 3 200 2 297 6" fill="none" stroke="#14B8A6" strokeWidth="4" strokeLinecap="round" /></svg></span>
+              Professional estimates for your trade, <span className="relative inline-block text-cyan">ready to send.<svg aria-hidden viewBox="0 0 300 12" preserveAspectRatio="none" className="absolute -bottom-2 left-0 h-2.5 w-full"><path d="M3 9C80 3 200 2 297 6" fill="none" stroke="#14B8A6" strokeWidth="4" strokeLinecap="round" /></svg></span>
             </h1>
-            <p className="mt-6 max-w-xl text-lg text-[#D5DFE9]">
-              {pm
-                ? "Create professional estimates, track every bid from draft to signed, schedule won jobs, assign your crew and subs, and keep customers informed. All from one contractor platform."
-                : "Create professional estimates, send proposals customers can sign online, and track every bid from draft to signed. All from one contractor platform."}
-            </p>
+            <p className="mt-6 max-w-xl text-lg text-[#D5DFE9]" data-testid="hero-sub">{HERO_SUB}</p>
+          </div>
+          <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
+            <HeroQuickStart trades={quickStartTrades()} totalTrades={allTrades.length} />
+          </div>
+          <div className="lg:col-start-1 lg:row-start-2 lg:self-start">
             <AccountCtas status={status} tone="dark" arrow createFreeLabel={`Start Your ${plans.starterCredits} Free Bids`}
-              secondary={visitor && pm ? { action: "pm", label: `Explore ${PM_PRODUCT_NAME}`, href: `#${PILLAR_ANCHOR.run}` } : undefined}
-              howHref="#how-it-works" className="mt-8" />
+              secondary={visitor ? { action: "sample", label: "See a sample proposal", href: "#sample-proposal" } : undefined}
+              howHref="#how-it-works" className="lg:mt-8" />
             <ReplayTourButton testId="watch-demo" className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-lg px-1 text-sm font-semibold text-cyan underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan">
               Watch Demo <span className="font-normal text-[#B8C6D4]">(3 min)</span>
             </ReplayTourButton>
@@ -102,7 +109,6 @@ export default async function HomePage() {
               ))}
             </ul>
           </div>
-          <HeroQuickStart trades={quickStartTrades()} totalTrades={allTrades.length} />
         </Container>
         <nav aria-label="What Built2Bid does" className="relative border-t border-white/10">
           <Container className="grid gap-3 py-5 sm:grid-cols-3">
@@ -143,6 +149,9 @@ export default async function HomePage() {
             <p className="mt-3 text-lg text-ink-soft">Estimating, proposals and your pipeline are included on every plan. Scheduling and team tools are there when you need them. Each feature below shows the plan it needs.</p>
           </div>
           <div className="mt-10"><PillarSections /></div>
+          <p className="mt-6 text-center">
+            <Link href="/pricing#compare" className="inline-flex min-h-11 items-center font-semibold text-accent-ink underline-offset-4 hover:underline" data-cta="all-features">See every feature by plan, including what&apos;s coming next</Link>
+          </p>
         </Container>
       </section>
 
@@ -176,6 +185,25 @@ export default async function HomePage() {
         <div aria-hidden className="blueprint-grid-dark pointer-events-none absolute inset-0" />
         <Container className="relative flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
           <PlanBand status={status} />
+        </Container>
+      </section>
+
+      <section aria-labelledby="trust-h" className="border-b border-line py-16" data-testid="trust-block">
+        <Container className="max-w-5xl">
+          <h2 id="trust-h" className="text-2xl font-extrabold text-navy sm:text-3xl">Plain promises, in writing</h2>
+          <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {PROMISES.map((p) => (
+              <li key={p.title} className="rounded-xl border border-line bg-surface p-4">
+                <p className="flex items-center gap-2 font-semibold text-ink"><Check className="h-4 w-4 shrink-0 text-ok" aria-hidden />{p.title}</p>
+                <p className="mt-1.5 text-sm text-ink-soft">{p.body}</p>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-5 text-sm text-ink-soft">
+            Made by {COMPANY.legalName}, a {COMPANY.state} company.{" "}
+            <Link href="/about" className="font-semibold text-accent-ink underline">About us</Link>{" · "}
+            <Link href="/security" className="font-semibold text-accent-ink underline">Security</Link>
+          </p>
         </Container>
       </section>
 

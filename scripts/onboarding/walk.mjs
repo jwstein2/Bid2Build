@@ -48,7 +48,7 @@ async function anonymousFlow(browser) {
     await page.goto(`${BASE}/`);
     check("A new visitor sees the welcome popup", await waitOpen(page));
     check("A heading is Welcome to Built2Bid!", (await title(page)) === STEP_TITLES[0]);
-    check("A subheading shown", await page.getByText("Professional estimates. Faster bids. More jobs won.").isVisible());
+    check("A subheading shown", await page.getByText("Let's build your first bid.").isVisible());
     check("A shows Step 1 of 7", (await page.getByTestId("onboarding-step").innerText()) === "Step 1 of 7");
     check("A has Not Right Now + Take Tour + X", (await page.getByTestId("onboarding-not-now").isVisible()) && (await page.getByTestId("onboarding-take-tour").isVisible()) && (await page.getByTestId("onboarding-close").isVisible()));
     const v = page.getByTestId("onboarding-video");

@@ -26,7 +26,7 @@ export const site = {
   domain: process.env.NEXT_PUBLIC_SITE_DOMAIN || hostOf(url),
   /** Canonical public URL of this deploy (app and marketing share one origin). */
   url,
-  tagline: "Build estimates. Create bids. Win more work.",
+  tagline: "Professional estimates for your trade, ready to send.",
   // Mentions scheduling only on deploys where Project Command Center is switched on (inlined at build).
   description:
     process.env.NEXT_PUBLIC_PROJECT_SCHEDULING === "on"

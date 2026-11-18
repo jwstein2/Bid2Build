@@ -41,9 +41,11 @@ function FeatureBadge({ f }: { f: MarketingFeature }) {
 function PillarBlock({ pillar, flip }: { pillar: Pillar; flip: boolean }) {
   const p = PILLARS[pillar];
   const Icon = PILLAR_ICON[pillar];
-  const list = featuresFor(pillar, { homeOnly: true });
-  const shot = SHOTS[pillar];
   const pmLive = pmMarketedLive();
+  // V8: the homepage lists only what customers can use today. Coming-soon items stay on the pricing
+  // comparison. Exception: while Project Command Center is off, its pillar keeps the preview list.
+  const list = featuresFor(pillar, { homeOnly: true }).filter((f) => featureStatus(f) === "live" || (pillar === "run" && !pmLive));
+  const shot = SHOTS[pillar];
   return (
     <article id={PILLAR_ANCHOR[pillar]} aria-labelledby={`${PILLAR_ANCHOR[pillar]}-h`} className={cn("scroll-mt-20 rounded-2xl border p-5 sm:p-8", pillar === "run" ? "border-accent-ink/40 bg-surface shadow-card ring-1 ring-accent/30" : "border-line bg-surface")} data-pillar={pillar}>
       <div className={cn("grid items-center gap-8 lg:grid-cols-2 lg:gap-12", flip && "lg:[&>*:first-child]:order-2")}>
