@@ -14,7 +14,24 @@ export type TrackEvent = "landing_view" | "signup_started" | "sign_up" | "propos
   // Bid check questionnaire (answer keys only: trade, goal, campaign; never an email or name).
   | "bid_check_start" | "bid_check_complete" | "bid_check_result" | "bid_check_invite"
   // Sign-in code funnel (method and attempt number only; never the email or the code).
-  | "otp_requested" | "otp_resent" | "otp_verify_failed" | "otp_verified";
+  | "otp_requested" | "otp_resent" | "otp_verify_failed" | "otp_verified"
+  // V8 funnel events (GA4 only; ids and labels, never personal or bid data).
+  | "cta_clicked" | "pricing_viewed" | "onboarding_completed" | "onboarding_dismissed";
+
+/** Coarse page family for funnel reports. Paths only; no ids, tokens or query strings. */
+export function pageType(pathname: string): string {
+  const p = pathname.replace(/\/+$/, "") || "/";
+  if (p === "/") return "home";
+  if (p === "/pricing") return "pricing";
+  if (p === "/about") return "about";
+  if (p === "/bids") return "trade_index";
+  if (p.startsWith("/bids/")) return "trade";
+  if (p === "/learn" || p.startsWith("/learn/")) return "learn";
+  if (p.startsWith("/academy")) return "academy";
+  if (p === "/dashboard" || p.startsWith("/dashboard/")) return "dashboard";
+  if (p.startsWith("/builder") || p.startsWith("/start/")) return "builder";
+  return "other";
+}
 
 export function track(event: TrackEvent, params: Params = {}, eventId?: string) {
   if (typeof window === "undefined") return;

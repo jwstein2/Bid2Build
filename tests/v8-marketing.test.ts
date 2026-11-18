@@ -44,3 +44,15 @@ describe("V8 trust content makes no unsupported claims", () => {
     expect(FOUNDER).toBeNull();
   });
 });
+
+import { pageType } from "@/lib/analytics/track";
+describe("V8 funnel page types", () => {
+  it("maps paths to coarse families without ids", () => {
+    expect(pageType("/")).toBe("home");
+    expect(pageType("/pricing/")).toBe("pricing");
+    expect(pageType("/bids/roofing")).toBe("trade");
+    expect(pageType("/learn/markup-vs-margin")).toBe("learn");
+    expect(pageType("/builder/abc")).toBe("builder");
+    expect(pageType("/sign/tok_123")).toBe("other");
+  });
+});

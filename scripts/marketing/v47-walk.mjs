@@ -71,10 +71,12 @@ for (const vp of VIEWPORTS) {
   check(`${tag} pillar order`, titles.join("|") === "Win the Job|Run the Job|Grow the Business", titles.join("|"));
   const note = await page.getByTestId("pm-price-note").innerText();
   check(`${tag} PM price note`, /\$4\.99\/month/.test(note) && /\$49\.99\/year/.test(note) && /Enterprise includes 1 schedule editor/.test(note), note);
-  // V8: coming-soon items are left off the homepage (they stay on the pricing comparison).
+  // V8: customer communications are live (released 2026-11-18) and listed with the add-on badge.
   for (const id of ["nurture", "scheduled_updates"]) {
-    check(`${tag} ${id} (coming soon) not listed on the homepage`, (await page.locator(`[data-pillar] [data-feature-id=${id}]`).count()) === 0);
+    const badge = await page.locator(`[data-pillar] [data-feature-id=${id}] [data-status]`).innerText().catch(() => "");
+    check(`${tag} ${id} listed as Project Command Center`, badge.trim() === "Project Command Center", badge);
   }
+  check(`${tag} no Coming soon badges on the homepage`, (await page.locator("[data-pillar] [data-status]").allInnerTexts()).every((b) => b.trim() !== "Coming soon"));
   const runBadges = await page.locator("[data-pillar=run] [data-feature-id] [data-status]").allInnerTexts();
   check(`${tag} run pillar badges say Project Command Center`, runBadges.length >= 5 && runBadges.every((b) => b.trim() === "Project Command Center"), runBadges.join(","));
   const coreBadge = await page.locator("[data-feature-id=pipeline] [data-status]").innerText();
@@ -138,12 +140,13 @@ for (const sc of PRICING) {
     check(`${tag} PCC action ${sc.pmAction}`, await action.isVisible());
     const href = await action.getAttribute("href");
     check(`${tag} PCC action href`, sc.pmAction === "pm-unlock" ? href === "/settings/billing#project-command-center" : href === "#plans", href);
-    check(`${tag} PCC lists coming-soon items`, (await pm.locator("[data-status=soon]").count()) === 2);
+    // V8: customer communications are live, so the PCC card lists no coming-soon items.
+    check(`${tag} PCC lists no coming-soon items`, (await pm.locator("[data-status=soon]").count()) === 0);
     const groups = await page.locator("tr[data-group]").count();
     check(`${tag} comparison has 6 groups`, groups === 6, groups);
     for (const id of ["nurture", "scheduled_updates"]) {
       const cells = await page.locator(`tr[data-feature-id=${id}] td`).allInnerTexts();
-      check(`${tag} ${id} row is Coming soon in every plan`, cells.length === 3 && cells.every((c) => c.trim() === "Coming soon"), cells.join("|"));
+      check(`${tag} ${id} row is a PCC add-on (live)`, cells.length === 3 && cells[1].trim().startsWith("Add-on") && !cells.some((c) => c.trim() === "Coming soon"), cells.join("|"));
     }
     const gantt = (await page.locator("tr[data-feature-id=gantt] td").allInnerTexts()).map((s) => s.trim());
     check(`${tag} Gantt row = Not included | Add-on | Included for 1 editor`, gantt.join("|") === "Not included|Add-on, $4.99/mo|Included for 1 editor", gantt.join("|"));

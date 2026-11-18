@@ -150,7 +150,7 @@ export default async function HomePage() {
           </div>
           <div className="mt-10"><PillarSections /></div>
           <p className="mt-6 text-center">
-            <Link href="/pricing#compare" className="inline-flex min-h-11 items-center font-semibold text-accent-ink underline-offset-4 hover:underline" data-cta="all-features">See every feature by plan, including what&apos;s coming next</Link>
+            <Link href="/pricing#compare" className="inline-flex min-h-11 items-center font-semibold text-accent-ink underline-offset-4 hover:underline" data-cta="all-features">See every feature by plan</Link>
           </p>
         </Container>
       </section>
