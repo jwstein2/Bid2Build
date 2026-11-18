@@ -242,6 +242,17 @@ language sql stable set search_path = public as $$
    order by (source = 'seed'), effective_from desc, recorded_at desc limit 1
 $$;
 
+-- Upgrade in place for databases that ran the first V6.9 version of this file (before the built-in engine). Re-running
+-- this whole file is safe; these lines bring the earlier tables up to date.
+alter table public.tax_sync_runs add column if not exists state text;
+alter table public.tax_sync_runs add column if not exists rows_read integer not null default 0;
+alter table public.tax_sync_runs drop constraint if exists tax_sync_runs_provider_check;
+alter table public.tax_sync_runs add constraint tax_sync_runs_provider_check check (provider in ('none', 'mock', 'builtin', 'avalara', 'taxjar', 'stripe_tax', 'official'));
+alter table public.tax_sync_runs drop constraint if exists tax_sync_runs_kind_check;
+alter table public.tax_sync_runs add constraint tax_sync_runs_kind_check check (kind in ('rates', 'authorities', 'digest', 'import'));
+alter table public.tax_jurisdiction_rates drop constraint if exists tax_jurisdiction_rates_source_check;
+alter table public.tax_jurisdiction_rates add constraint tax_jurisdiction_rates_source_check check (source in ('provider', 'official', 'fixture', 'seed'));
+
 -- 3b. Built-in tax engine data (official state files; no paid provider) ----------------------------------------
 -- Where each state's official rate data comes from and how the last import went. Streamlined (SST) states publish
 -- rate + boundary files in one national layout; other states publish their own tables (column mapping in `format`).
