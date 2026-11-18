@@ -48,6 +48,9 @@ import { FeatureHost } from "../features/feature-host";
 import { PageGuideButton } from "../features/tour-buttons";
 import type { ThemePref } from "@/lib/theme";
 import { track } from "@/lib/analytics/track";
+import { claimOffer } from "@/lib/offers/client";
+import { CreditsLowNote, ProposalReadyNote } from "../offers/offer-note";
+import { SAVE_DRAFT_COPY, SaveDraftNote, saveDraftDismissed } from "../offers/save-draft-note";
 
 type Biz = BusinessProfile & { logoPath?: string | null };
 type Step = BuilderStep;
@@ -116,6 +119,11 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
   const [exporting, setExporting] = useState(false);
   const [exportMsg, setExportMsg] = useState<{ tone: "ok" | "danger" | "warn"; text: string } | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
+  // V8 offers after a proposal goes out: T1 (one free bid left) or T8 (celebrate + referral). One at a time.
+  const [offer, setOffer] = useState<{ id: "t1" } | { id: "t8"; link: string | null } | null>(null);
+  // BLD-2: "Save this bid to your email" for visitors with a priced line; "save" opens sign-in without exporting.
+  const [authPurpose, setAuthPurpose] = useState<"export" | "save">("export");
+  const [saveNoteHidden, setSaveNoteHidden] = useState(() => saveDraftDismissed());
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [missing, setMissing] = useState<ReadinessIssue[]>([]);
@@ -273,6 +281,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
   useEffect(() => { void refreshCredits(); }, [refreshCredits]);
 
   const readiness = useMemo(() => exportReadiness(estimate, business, totals), [estimate, business, totals]);
+  const hasPricedLine = useMemo(() => estimate.items.some((i) => !i.isExample && Number(i.unitCost) > 0), [estimate.items]);
 
   /** Jump to the step (and field) that holds a missing detail. */
   const fixIssue = useCallback((i: ReadinessIssue) => {
@@ -289,12 +298,23 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
    * the bid-credit rules (an unchanged, already-finalized proposal is never charged again), so
    * switching between the two actions never uses an extra credit. Returns null when it stopped.
    */
+  /** After a successful export or send: the low-credits note when exactly one free bid is left, otherwise the celebration. The server enforces caps. */
+  const offerAfterProposal = useCallback(async (after: { starter?: number; monthly?: number; unlimited?: boolean } | undefined) => {
+    const left = (after?.starter ?? 0) + (after?.monthly ?? 0);
+    if (after && !after.unlimited && left === 1) {
+      const r = await claimOffer("t1_credits_low");
+      if (r.show) { setOffer({ id: "t1" }); return; }
+    }
+    const r = await claimOffer("t8_first_sent");
+    if (r.show) setOffer({ id: "t8", link: r.referralLink ?? null });
+  }, []);
+
   const runExport = useCallback(async (deliver: "download" | "bytes" | "signing"): Promise<{ file?: File; message: string; link?: CreatedLink } | { error: string } | null> => {
     setExportMsg(null);
     // Missing details first, so nobody signs up only to be told the proposal isn't ready yet.
     if (readiness.length) { setMissing(readiness); fixIssue(readiness[0]); return null; }
     setMissing([]);
-    if (!user) { setAuthOpen(true); return null; }
+    if (!user) { setAuthPurpose("export"); setAuthOpen(true); return null; }
     if (!(user.verified ?? user.emailVerified)) { setExportMsg({ tone: "warn", text: "Please verify your email address before exporting." }); return null; }
     if (exportLock.current) return null;
     exportLock.current = true;
@@ -314,6 +334,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
       if (!r.ok) return { error: data?.error?.message ?? "Export failed. Please try again." };
       const message = exportMessage(data.creditSource as CreditSource, data.versionNumber, data.credits);
       setFinalizedHere(true);
+      void offerAfterProposal(data.credits);
       // A PDF was actually generated on the server (response ok): mirror it for GA4 / the Pixel.
       track("pdf_exported", { trade: primaryTrade });
       await refreshCredits();
@@ -333,7 +354,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
       exportLock.current = false;
       setExporting(false);
     }
-  }, [user, readiness, fixIssue, estimate.id, saveCloud, refreshCredits, primaryTrade, signBeforeSend]);
+  }, [user, readiness, fixIssue, estimate.id, saveCloud, refreshCredits, primaryTrade, signBeforeSend, offerAfterProposal]);
 
   const doExport = useCallback(async () => {
     const res = await runExport("download");
@@ -530,6 +551,11 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
             <span className="flex items-center justify-between gap-3">{exportMsg.text}<button onClick={() => setExportMsg(null)} className="text-xs underline">Dismiss</button></span>
           </Notice>
         )}
+        {offer?.id === "t1" && <CreditsLowNote className="mb-4" onClose={() => setOffer(null)} />}
+        {offer?.id === "t8" && <ProposalReadyNote className="mb-4" link={offer.link} onClose={() => setOffer(null)} />}
+        {!user && !saveNoteHidden && hasPricedLine && (
+          <SaveDraftNote className="mb-4" onSave={() => { setAuthPurpose("save"); setAuthOpen(true); }} onDismiss={() => setSaveNoteHidden(true)} />
+        )}
         {missingNow.length > 0 && (
           <Notice tone="warn" className="mb-4" title="A few details are needed before you download">
             <ul className="mt-1 space-y-1" data-testid="export-missing">
@@ -620,7 +646,11 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
         phase={sendPhase} emailInput={shareEmail} onRetry={() => void prepareSend()}
         mode={sendMode} onModeChange={changeSendMode} allowLink={esign && cloudMode}
         link={signingLink} onCreateLink={() => void createSigning(true)} creatingLink={creatingLink} />
-      <AuthDialog open={authOpen} onOpenChange={setAuthOpen} next={`/builder?draft=${estimate.id}&export=1`} onVerified={() => { window.location.assign(`/builder?draft=${estimate.id}&export=1`); }} />
+      {authPurpose === "save" ? (
+        <AuthDialog open={authOpen} onOpenChange={setAuthOpen} next={`/builder?draft=${estimate.id}`} copy={SAVE_DRAFT_COPY} onVerified={() => { window.location.assign(`/builder?draft=${estimate.id}`); }} />
+      ) : (
+        <AuthDialog open={authOpen} onOpenChange={setAuthOpen} next={`/builder?draft=${estimate.id}&export=1`} onVerified={() => { window.location.assign(`/builder?draft=${estimate.id}&export=1`); }} />
+      )}
       <UpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} nextCycleAt={credits?.nextCycleAt} />
       {/* The builder sits outside the signed-in layout: its own host runs the page walkthrough (no automatic popups here). */}
       <FeatureHost auto={false} />

@@ -81,6 +81,9 @@ async function ctxFor({ viewport = { width: 1280, height: 900 }, mobile = false,
 
 async function openBuilder(p, q = "") {
   await p.goto(`${BASE}/estimates/${EST}${q}`, { waitUntil: "networkidle" });
+  // Phones (V8 batch 2): Send via My Email sits behind the header's More toggle.
+  const more = p.getByTestId("builder-more");
+  if (await more.isVisible().catch(() => false)) await more.click();
   await p.waitForSelector('header button[aria-label="Send via My Email"]');
   await p.waitForTimeout(400);
 }

@@ -773,6 +773,18 @@ http.createServer((req, res) => {
       return send(res, 200, { ok: true });
     }
     if (rpc && opsRpc[rpc[1]]) { let args = {}; try { args = JSON.parse(raw || "{}"); } catch { /* ignore */ } const [st, body] = opsRpc[rpc[1]](args); return send(res, st, body); }
+    // V8 offers walk: reset the offer log; seed a monthly subscriber eligible for the annual nudge.
+    if (u.pathname === "/__offers") {
+      if (u.searchParams.get("reset")) { tables.upgrade_offers = []; delete rpcs.my_referral; }
+      if (u.searchParams.get("referral")) rpcs.my_referral = { code: "AB3DE7GH", eligible: true, signed_up: 0, paying: 0, months_earned: 0, pending_rewards: 0 };
+      if (u.searchParams.get("nudge")) {
+        tables.billing_customers = [{ user_id: USER.id, stripe_customer_id: "cus_test" }];
+        tables.analytics_events = [0, 1, 2].map((i) => ({ id: 900 + i, user_id: USER.id, event: i ? "subscription_renewed" : "subscribed", created_at: iso(30 * (3 - i)) }));
+        tables.estimate_versions = [...(tables.estimate_versions ?? []).filter((v) => !String(v.id).startsWith("nudge-")), ...Array.from({ length: 9 }, (_, i) => ({ id: `nudge-${i}`, estimate_id: `e-${i}`, user_id: USER.id, version_number: 1, total: 1000, created_at: iso(10) }))];
+      }
+      if (u.searchParams.get("nobilling")) { tables.billing_customers = []; tables.analytics_events = []; }
+      return send(res, 200, { ok: true, offers: tables.upgrade_offers ?? [] });
+    }
     if (u.pathname === "/__ws") { if (u.searchParams.get("seed")) seedWorkspace(); return send(res, 200, { ok: true, count: sched.list.size }); }
     if (u.pathname === "/__wf") { if (u.searchParams.get("seed")) workforce.seed(); if (u.searchParams.has("manage")) team.canManage = u.searchParams.get("manage") === "1"; return send(res, 200, { ok: true, count: team.list.length }); }
     if (u.pathname === "/__team") {
@@ -801,7 +813,7 @@ http.createServer((req, res) => {
       return !v.startsWith("eq.") || r[k] === undefined || String(r[k]) === v.slice(3);
     });
     // Library tables keep writes in memory so saved items can be created, edited and deleted in browser walks.
-    const LIVE = new Set(["saved_items", "assemblies", "assembly_items", "schedule_publications"]);
+    const LIVE = new Set(["saved_items", "assemblies", "assembly_items", "schedule_publications", "upgrade_offers"]);
     if (req.method !== "GET" && req.method !== "HEAD") {
       if (!LIVE.has(t[1])) return send(res, 201, []);
       const list = (tables[t[1]] ??= []);

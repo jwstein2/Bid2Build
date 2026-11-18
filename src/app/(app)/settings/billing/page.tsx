@@ -15,6 +15,8 @@ import { ANNUAL, ANNUAL_MONTHLY_EQUIVALENT, MONTHLY, isPlanId, planDisplay } fro
 import { ClearCheckoutIntent, ConfirmingPayment } from "@/components/billing/checkout-return";
 import { can, loadMyCompany } from "@/lib/enterprise/server";
 import Link from "next/link";
+import { AnnualNudge, CancelStep } from "@/components/offers/billing-offers";
+import { annualNudgeEligible, annualSavings } from "@/lib/offers/policy";
 
 export const metadata: Metadata = { title: "Subscription", robots: { index: false } };
 
@@ -54,6 +56,17 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
   const companyBilling = company ? (can(company, "manage_billing") ? "/company/billing" : null) : null;
   const compEnded = !q?.unlimited && comp && ["expired", "revoked"].includes(comp.state) ? (comp.state === "revoked" ? null : comp.expires_at) : null;
   const ended = !q?.unlimited && current && ["canceled", "unpaid", "incomplete_expired"].includes(current.status) ? (current.ended_at ?? current.current_period_end) : null;
+  // V8 T5 + RET-1: only for a personal paid subscription the person manages here.
+  const personalPaid = Boolean(paidActive && !seatOnly && !compOnly && bc);
+  const savings = annualSavings(MONTHLY.amountCents, ANNUAL.amountCents);
+  let nudge: { bids: number } | null = null;
+  if (personalPaid && current?.plan === "monthly" && current.status === "active" && !current.cancel_at_period_end && !company) {
+    const [{ count: paidMonths }, { count: finalizedBids }] = await Promise.all([
+      createAdminClient().from("analytics_events").select("id", { count: "exact", head: true }).eq("user_id", user.id).in("event", ["subscribed", "subscription_renewed"]),
+      supabase.from("estimate_versions").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("version_number", 1),
+    ]);
+    if (annualNudgeEligible({ plan: current.plan, status: current.status, cancelAtPeriodEnd: current.cancel_at_period_end, paidMonths: paidMonths ?? 0, finalizedBids: finalizedBids ?? 0 })) nudge = { bids: finalizedBids ?? 0 };
+  }
   const end = current?.current_period_end ? new Date(current.current_period_end).toLocaleDateString(undefined, { dateStyle: "long" }) : null;
 
   return (
@@ -72,6 +85,8 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
 
       {ended && <Notice tone="neutral" title="Your Unlimited plan has ended">Unlimited ended on {new Date(ended).toLocaleDateString(undefined, { dateStyle: "long" })}. All your bids are still here, and your free credits apply again. Resubscribe any time below.</Notice>}
 
+      {nudge && <AnnualNudge bids={nudge.bids} savings={savings} annualPrice={ANNUAL.price} />}
+
       <Card className="p-5" data-guide="billing.plan">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -85,7 +100,8 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
           </div>
           {seatOnly ? <Badge tone="ok">company plan</Badge> : compOnly ? <Badge tone="ok">complimentary</Badge> : current && <Badge tone={q?.unlimited ? "ok" : "neutral"}>{current.status.replace("_", " ")}</Badge>}
         </div>
-        {bc && <div className="mt-5 border-t border-line pt-4" data-guide="billing.manage"><PortalButton label="Manage subscription, payment method & billing history" /><p className="mt-2 text-xs text-muted">Opens Stripe&apos;s secure customer portal, where you can change plans, cancel, update your card, and download invoices.</p></div>}
+        {bc && <div className="mt-5 border-t border-line pt-4" data-guide="billing.manage"><PortalButton label="Manage subscription, payment method & billing history" /><p className="mt-2 text-xs text-muted">Opens Stripe&apos;s secure customer portal, where you can change plans, cancel, update your card, and download invoices.</p>
+          {personalPaid && !current?.cancel_at_period_end && <CancelStep monthly={current?.plan === "monthly"} annualSavings={savings} />}</div>}
       </Card>
 
       {company && (

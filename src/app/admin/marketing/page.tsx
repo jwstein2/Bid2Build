@@ -9,6 +9,8 @@ import { loadReport } from "@/lib/admin/load";
 import { carry, href, str } from "@/lib/admin/view";
 import { MetricFormula, MetricRecords } from "@/components/ui/metric-card";
 import { addCost, deleteCost } from "./actions";
+import { createAdminClient } from "@/lib/supabase/server";
+import { OFFER_LABEL, summarizeOffers } from "@/lib/offers/policy";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Marketing" };
@@ -24,6 +26,9 @@ export default async function Marketing({ searchParams }: { searchParams: Promis
   const w = windowOf(range, now);
   const [ga, gsc, sessions] = await Promise.all([ga4Report(range.days), searchConsoleReport(range.days), stripeCheckouts(range.days)]);
   const costs = prorateCosts(snap.costs, w.start, w.end);
+  // V8 in-app offers and cancellation reasons (table from 20270105001000; missing table = "not set up").
+  const { data: offerRows, error: offerErr } = await createAdminClient().from("upgrade_offers").select("offer_id, action, detail").gte("created_at", new Date(w.start).toISOString()).lt("created_at", new Date(w.end).toISOString()).limit(20000);
+  const offerSummary = offerErr ? null : summarizeOffers(offerRows ?? []);
 
   // Funnel drilldown filters (validated against known values).
   const fChannel = isChannel(str(sp.channel)) ? str(sp.channel) : "";
@@ -295,6 +300,28 @@ export default async function Marketing({ searchParams }: { searchParams: Promis
               <p>The GA4 tag is collecting visits on public pages, but reading reports needs the GA4 Data API: add the same service account as a <span className="text-white">Viewer</span> on the GA4 property and set <code className="text-white">GA4_PROPERTY_ID</code> in Netlify. Until then, session counts and visitor-to-signup conversion stay unavailable here (see them in Google Analytics).</p>
             </div>
           )}
+        </Panel>
+      </div>
+
+      <SectionTitle id="offers" kicker="Lifecycle · in-app" title="Upgrade offers and cancellation reasons" />
+      <div className="grid gap-6 lg:grid-cols-5" data-testid="admin-offers">
+        <Panel title="Offers in this range" className="lg:col-span-3">
+          {!offerSummary ? <p className="text-sm text-ink-soft">The offer log isn&apos;t set up yet (run the V8 batch 4 SQL). Until then no offers show to customers.</p> : (
+            <Table head={["Offer", "Shown", "Clicked", "Dismissed", "Click rate"]} align={["l", "r", "r", "r", "r"]} minWidth={440}>
+              {offerSummary.offers.map((o) => (
+                <tr key={o.offer}><td className="font-sans">{OFFER_LABEL[o.offer]}</td><td className="text-right">{fmt(o.shown)}</td><td className="text-right">{fmt(o.clicked)}</td><td className="text-right">{fmt(o.dismissed)}</td><td className="text-right">{o.shown ? `${Math.round((o.clicked / o.shown) * 100)}%` : "–"}</td></tr>
+              ))}
+            </Table>
+          )}
+          <p className="mt-3 text-xs text-muted">Caps: one free bid left at most once per 30 days, annual at most once per 90 days, the referral note once per account, nothing new within 24 hours of a dismissal, and no upgrade offers in the first 72 hours or for company members.</p>
+        </Panel>
+        <Panel title="Why subscribers cancel" className="lg:col-span-2">
+          {!offerSummary ? <p className="text-sm text-ink-soft">Not set up yet.</p> : offerSummary.reasons.length === 0 ? <p className="text-sm text-ink-soft">No reasons recorded in this range. The question is optional and never blocks cancelling.</p> : (
+            <Table head={["Reason", "Count"]} align={["l", "r"]} minWidth={260}>
+              {offerSummary.reasons.map((r) => <tr key={r.code}><td className="font-sans">{r.label}</td><td className="text-right">{fmt(r.count)}</td></tr>)}
+            </Table>
+          )}
+          {offerSummary && offerSummary.skipped > 0 && <p className="mt-2 text-xs text-muted">{fmt(offerSummary.skipped)} went on to Stripe without picking a reason.</p>}
         </Panel>
       </div>
 

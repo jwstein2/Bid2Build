@@ -28,7 +28,7 @@ export function AccountActions({ marketing, financials = false }: { marketing: b
         <p className="text-sm text-ink-soft">Sign-in codes, receipts and account notices are always sent, whatever you choose here. Marketing emails are optional.</p>
         <label className="mt-3 flex items-center gap-2 text-sm"><input type="checkbox" checked={optIn} onChange={(e) => toggle(e.target.checked)} className="accent-[var(--color-brand)]" /> Send me product tips and offers</label>
       </Card>
-      <Card className="p-5">
+      <Card className="scroll-mt-20 p-5" id="export">
         <h2 className="font-bold">Your data</h2>
         <p className="text-sm text-ink-soft">Download everything we store about your account: profile, company, customers, estimates, versions, and usage.</p>
         <a href="/api/account/export" className="mt-3 inline-block rounded-lg border border-line-strong px-4 py-2 text-sm font-semibold hover:bg-paper">Download my data (JSON)</a>

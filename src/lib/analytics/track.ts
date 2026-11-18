@@ -18,7 +18,9 @@ export type TrackEvent = "landing_view" | "signup_started" | "sign_up" | "propos
   // V8 funnel events (GA4 only; ids and labels, never personal or bid data).
   | "cta_clicked" | "pricing_viewed" | "onboarding_completed" | "onboarding_dismissed"
   // Free calculators (tool slug, trade and ?from= label only; never measurements or amounts).
-  | "calculator_used" | "calculator_bid_started";
+  | "calculator_used" | "calculator_bid_started"
+  // In-app offers (offer id and click target only).
+  | "offer_shown" | "offer_clicked";
 
 /** Coarse page family for funnel reports. Paths only; no ids, tokens or query strings. */
 export function pageType(pathname: string): string {
