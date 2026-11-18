@@ -75,6 +75,20 @@ const body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("record_expense"), p: z.object({ jobId: id.optional(), vendorId: id.optional(), payee: text(200).optional(), costCodeId: id.optional(), spentOn: day.optional(), amount, method: z.enum(["card", "cash", "check", "ach", "reimbursement", "other"]).optional(), description: text(500).min(1), receiptDocumentId: id.optional() }), key }),
   z.object({ action: z.literal("decide_expense"), expenseId: id, decision: z.enum(["approve", "reject", "void"]), note: text(500).optional() }),
   z.object({ action: z.literal("review_resolve"), itemId: id, status: z.enum(["resolved", "dismissed"]), resolution: text(500).optional() }),
+  // Accountant Mode (20261213001000): bank statements, matching, reconciliation, classification. No money moves.
+  z.object({ action: z.literal("bank_account_save"), p: z.object({ id: id.optional(), name: text(120).optional(), kind: z.enum(["checking", "savings", "credit_card", "other"]).optional(),
+    last4: z.string().regex(/^\d{4}$/).optional(), openingBalance: amount.optional(), openingDate: day.optional(), status: z.enum(["active", "archived"]).optional() }) }),
+  z.object({ action: z.literal("bank_import"), accountId: id, p: z.object({ fileName: text(200).min(1), fileHash: z.string().regex(/^[0-9a-f]{64}$/), statementStart: day.optional(), statementEnd: day.optional(),
+    openingBalance: amount.optional(), endingBalance: amount.optional(),
+    rows: z.array(z.object({ date: day, description: text(300).min(1), amount, checkNumber: text(20).optional(), ref: text(80).optional() })).min(1).max(5000) }) }),
+  z.object({ action: z.literal("bank_match"), txnId: id, p: z.object({ targetType: z.enum(["payment", "refund", "bill_payment", "expense", "excluded"]), targetId: id.optional(),
+    excludeReason: z.enum(["transfer", "duplicate", "owner", "not_business", "other"]).optional(), note: text(500).optional() }) }),
+  z.object({ action: z.literal("bank_unmatch"), matchId: id, reason: text(500).min(1) }),
+  z.object({ action: z.literal("bank_create_expense"), txnId: id, p: z.object({ jobId: id.optional(), costCodeId: id.optional(), vendorId: id.optional(), description: text(500).optional(), payee: text(200).optional() }) }),
+  z.object({ action: z.literal("bank_reconcile"), accountId: id, p: z.object({ periodEnd: day, statementBalance: amount, note: text(1000).optional() }) }),
+  z.object({ action: z.literal("bank_reconcile_reopen"), reconciliationId: id, reason: text(500).min(1) }),
+  z.object({ action: z.literal("cost_fill"), entityType: z.enum(["expense", "bill_line"]), entityId: id,
+    p: z.object({ jobId: id.optional(), vendorId: id.optional(), costCodeId: id.optional(), scopeSectionId: id.optional() }).refine((x) => Object.values(x).some(Boolean)) }),
   z.object({ action: z.literal("email_draft_save"), p: z.object({ templateKind: z.enum(["deposit", "progress", "final", "time_materials", "change_order", "balance_reminder", "overdue_reminder", "receipt", "partial_payment", "final_thanks", "credit_refund"]),
     tone: z.enum(["friendly", "professional", "brief"]), toEmail: z.string().trim().email().max(320), toName: text(200).optional(), subject: text(300).min(1), body: text(20000).min(1),
     invoiceId: id.optional(), paymentId: id.optional(), fieldsHash: z.string().regex(/^[0-9a-f]{64}$/), idempotencyKey: z.string().min(8).max(100) }) }),
@@ -160,12 +174,25 @@ export async function POST(req: Request) {
       case "approve_bill": return json({ ok: await fin.approveBill(db, a.billId) ?? true });
       case "pay_bill": return json(await fin.payBill(db, bookId, a.p, a.key));
       case "void_bill_payment": return json({ ok: await fin.voidBillPayment(db, a.billPaymentId, a.reason) ?? true });
-      case "void_bill": return rpcOk(db, "fin_bill_void", { p_bill_id: a.billId, p_reason: a.reason });
-      case "void_credit": return rpcOk(db, "fin_credit_memo_void", { p_credit_memo_id: a.creditMemoId, p_reason: a.reason });
-      case "mark_duplicate": return rpcOk(db, "fin_expense_mark_duplicate", { p_expense_id: a.expenseId, p_keep_id: a.keepId });
+      case "void_bill": return await rpcOk(db, "fin_bill_void", { p_bill_id: a.billId, p_reason: a.reason });
+      case "void_credit": return await rpcOk(db, "fin_credit_memo_void", { p_credit_memo_id: a.creditMemoId, p_reason: a.reason });
+      case "mark_duplicate": return await rpcOk(db, "fin_expense_mark_duplicate", { p_expense_id: a.expenseId, p_keep_id: a.keepId });
       case "record_expense": return json(await fin.recordExpense(db, bookId, a.p, a.key));
       case "decide_expense": return json({ status: await fin.decideExpense(db, a.expenseId, a.decision, a.note) });
       case "review_resolve": { const { error } = await db.rpc("fin_review_resolve", { p_item_id: a.itemId, p_status: a.status, p_resolution: a.resolution ?? null }); if (error) throw new fin.FinError(error.message, error.message); return json({ ok: true }); }
+      case "bank_account_save": return json({ accountId: await rpcData(db, "fin_bank_account_save", { p_book_id: bookId, p: a.p }) });
+      case "bank_import": {
+        // The account must be in the caller's book (the RPC re-checks "reconcile" on the account's own book).
+        const { data: acct } = await db.from("fin_bank_accounts").select("book_id").eq("id", a.accountId).maybeSingle();
+        if (!acct || acct.book_id !== bookId) throw new fin.FinError("not_found");
+        return json((await rpcData(db, "fin_bank_import", { p_account_id: a.accountId, p: a.p })) as Record<string, unknown>);
+      }
+      case "bank_match": return json({ matchId: await rpcData(db, "fin_bank_match", { p_txn_id: a.txnId, p: a.p }) });
+      case "bank_unmatch": return await rpcOk(db, "fin_bank_unmatch", { p_match_id: a.matchId, p_reason: a.reason });
+      case "bank_create_expense": return json((await rpcData(db, "fin_bank_create_expense", { p_txn_id: a.txnId, p: a.p })) as Record<string, unknown>);
+      case "bank_reconcile": return json((await rpcData(db, "fin_bank_reconcile", { p_account_id: a.accountId, p: a.p })) as Record<string, unknown>);
+      case "bank_reconcile_reopen": return await rpcOk(db, "fin_bank_reconcile_reopen", { p_id: a.reconciliationId, p_reason: a.reason });
+      case "cost_fill": return await rpcOk(db, "fin_cost_fill", { p_entity_type: a.entityType, p_entity_id: a.entityId, p: a.p });
       // Drafts only: saving a draft stores it for review. There is no send or queue action here.
       case "email_draft_save": return json({ messageId: await fin.saveEmailDraft(db, bookId, a.p) });
       case "email_template_save": {

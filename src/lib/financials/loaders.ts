@@ -111,6 +111,11 @@ export async function loadHome(db: Db, ctx: FinContext) {
     db.from("fin_commitment_balances_v").select("commitment_id, current_amount, billed, open_committed, status").eq("book_id", b),
     db.from("fin_job_budget_v").select("cost_type, estimated, committed, actual, cost_code_id").eq("book_id", b),
   ]);
+  // Accountant Mode cards: audit activity this week (RLS: company-financials viewers only).
+  const accountantCards = ctx.layout.cards.some((c) => c.key === "audit_trail" && c.visible);
+  const auditWeek = accountantCards
+    ? (await db.from("fin_audit_log").select("id", { count: "exact", head: true }).eq("book_id", b).gte("created_at", new Date(Date.now() - 7 * 864e5).toISOString())).count ?? 0
+    : 0;
   const P = (prof.data ?? []) as Row[], I = (inv.data ?? []) as Row[], Y = (pay.data ?? []) as Row[], M = (ms.data ?? []) as Row[];
   const A = (alerts.data ?? []) as Row[], R = (review.data ?? []) as Row[], B = (bills.data ?? []) as Row[], X = (exps.data ?? []) as Row[];
   const C = (comm.data ?? []) as Row[], K = (costs.data ?? []) as Row[];
@@ -188,8 +193,8 @@ export async function loadHome(db: Db, ctx: FinContext) {
     my_jobs: count(P.filter((r) => r.status === "open").length, "/financials/records?view=jobs", { sub: "Open jobs you can see" }),
     my_expenses: count(X.filter((r) => r.status === "pending").length, "/financials/records?view=costs&filter=expenses_pending", { sub: "Expenses waiting for approval" }),
     my_jobs_billing: money(sumOf(P, "invoiced_revenue"), "Invoiced", "/financials/records?view=jobs", { sub: `of ${$(contract)} contracted` }),
-    export_center: soon("Accountant CSV export ships in a later Phase 1 update"),
-    audit_trail: soon("The audit log viewer ships in a later Phase 1 update"),
+    export_center: { value: "CSV + PDF", money: false, basis: "Count", href: "/financials/accounting/reports", sub: "Ledger, aging, job costing, audit trail and more", note: "Every export is recorded in the audit trail" },
+    audit_trail: count(auditWeek, "/financials/accounting/audit", { sub: "Financial actions recorded in the last 7 days" }),
   };
   return { kpis, cards, alerts: A, jobs: P.length };
 }
