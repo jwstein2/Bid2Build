@@ -18,6 +18,8 @@ export type TrackEvent = "landing_view" | "signup_started" | "sign_up" | "propos
 
 export function track(event: TrackEvent, params: Params = {}, eventId?: string) {
   if (typeof window === "undefined") return;
+  // Demo / Practice Mode sessions never send ad or analytics events (set on <html> by the app layout).
+  if (document.documentElement.dataset.b2bDemo) return;
   const w = window as W;
   const clean: Params = {};
   for (const [k, v] of Object.entries(params)) if (v !== undefined && (typeof v === "number" || /^[\w\-/ .]{0,100}$/.test(v))) clean[k] = v;
