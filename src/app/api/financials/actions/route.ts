@@ -37,6 +37,10 @@ const body = z.discriminatedUnion("action", [
     quickActions: z.array(text(40)).max(20).nullable().optional(),
   }) }),
   z.object({ action: z.literal("reset_dashboard") }),
+  z.object({ action: z.literal("save_reminders"), reminders: z.array(z.object({
+    kind: z.enum(["balance_reminder", "overdue_reminder"]), enabled: z.boolean(), offsetDays: z.number().int().min(0).max(90),
+    repeatEveryDays: z.number().int().min(1).max(60).nullable(), maxReminders: z.number().int().min(1).max(10),
+  })).min(1).max(2) }),
   z.object({ action: z.literal("set_mode"), mode: z.enum(["contractor", "accountant"]) }),
   z.object({ action: z.literal("open_job"), estimateId: id, versionId: id.optional() }),
   z.object({ action: z.literal("sandbox_enter") }),
@@ -202,6 +206,12 @@ export async function POST(req: Request) {
       case "cost_fill": return await rpcOk(db, "fin_cost_fill", { p_entity_type: a.entityType, p_entity_id: a.entityId, p: a.p });
       // Drafts only: saving a draft stores it for review. There is no send or queue action here.
       case "email_draft_save": return json({ messageId: await fin.saveEmailDraft(db, bookId, a.p) });
+      // Automatic payment reminder rules. The hourly customer-email job sends them (src/lib/financials/reminder-run.ts).
+      case "save_reminders": {
+        const { error } = await db.rpc("fin_email_config_save", { p_book_id: bookId, p: { reminders: a.reminders } });
+        if (error) throw new fin.FinError(error.message, error.message);
+        return json({ ok: true });
+      }
       case "email_template_save": {
         const { error } = await db.rpc("fin_email_config_save", { p_book_id: bookId, p: { templates: [{ templateKind: a.templateKind, tone: a.tone, subject: a.subject, body: a.body }] } });
         if (error) throw new fin.FinError(error.message, error.message);

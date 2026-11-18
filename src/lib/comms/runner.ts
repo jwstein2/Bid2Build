@@ -20,6 +20,7 @@ import { TERMS_MESSAGE, termsCurrent } from "./rollout";
 import { localDate, safeTz } from "./time";
 import { newReplyToken, replyAddress, unsubUrls } from "./tokens";
 import { mapSettings, type CommSettings, type UpdateFrequency } from "./types";
+import { planFinancialReminders, prepareFinancialReminder } from "@/lib/financials/reminder-run";
 
 type Row = Record<string, unknown>;
 type Db = SupabaseClient;
@@ -226,6 +227,7 @@ export async function deliverDue(admin: Db, now: Date, cfg: CommConfig, monitori
       const to = String(m.to_email ?? "").toLowerCase();
       const g = await admin.from("comm_global").select("paused").eq("id", 1).maybeSingle();
       if ((g.data as Row | null)?.paused) { await back(prior, "Built2Bid paused all automated email"); break; }
+      if (m.kind === "financial" && settings.disabledAt) { await back("canceled", "Customer emails were turned off by the account owner"); continue; }
       if (m.kind === "nurture" || m.kind === "project_update") {
         if (settings.disabledAt) { await back("canceled", "Customer emails were turned off by the account owner"); continue; }
         if (!termsCurrent(settings)) { await back("awaiting_review", TERMS_MESSAGE); continue; }
@@ -234,7 +236,10 @@ export async function deliverDue(admin: Db, now: Date, cfg: CommConfig, monitori
       if (!to) { await back("failed", "No customer email address", { attempts: 5 }); continue; }
       if (cfg.mode === "test" && !cfg.testRecipients.includes(to)) { await back("skipped", "Test mode: only test addresses receive email"); continue; }
       const supp = await loadSuppressions(admin, accountId, [to]);
-      if (isSuppressed(supp, accountId, to, m.kind === "nurture" ? "marketing" : "project_updates")) { await back("canceled", "Address is suppressed"); continue; }
+      // Payment reminders are transactional: only an "all email" suppression (bounce, complaint) stops them.
+      const suppressed = m.kind === "financial" ? supp.find((x) => x.email === to && (x.accountId === null || x.accountId === accountId) && x.scope === "all")
+        : isSuppressed(supp, accountId, to, m.kind === "nurture" ? "marketing" : "project_updates");
+      if (suppressed) { await back("canceled", "Address is suppressed"); continue; }
       if ((await sentToday(admin, now, accountId)) >= cfg.accountDailyCap) { await back(prior, "Daily sending limit reached; will continue tomorrow"); continue; }
       const brand = await accountBranding(admin, accountId);
       let subject = String(m.subject), body = String(m.body_text), content = m.content as Row, publicationId: string | null = null;
@@ -246,6 +251,12 @@ export async function deliverDue(admin: Db, now: Date, cfg: CommConfig, monitori
         if ((c as Row | null)?.status !== "eligible") { await back("canceled", `Contact is ${(c as Row | null)?.status ?? "no longer enrolled"}`); continue; }
         if (!settings.postalAddress) { await back(prior === "scheduled" ? "awaiting_review" : prior, "Add your business postal address before follow-ups can send"); continue; }
         if (prior === "scheduled" && !(settings.nurtureMode === "automatic" && monitoringActive)) { await back("awaiting_review", "Reply monitoring isn't active, so this follow-up waits for approval."); continue; }
+      } else if (m.kind === "financial") {
+        const r = await prepareFinancialReminder(admin, m, now);
+        if (!r.ok) { await back("canceled", r.reason); continue; }
+        if (r.mail.toEmail !== to) { await back(prior, "The customer's email address changed; sending to the new address next run", { to_email: r.mail.toEmail }); continue; }
+        subject = r.mail.subject; body = r.mail.body;
+        await admin.from("comm_messages").update({ fin_fields_hash: r.mail.fieldsHash }).eq("id", id);
       } else {
         const sid = String(m.schedule_id ?? "");
         const { data: pc } = await admin.from("project_comm_settings").select("*").eq("schedule_id", sid).maybeSingle();
@@ -314,6 +325,7 @@ export async function runComms(admin: Db, opts: { now?: Date; config?: CommConfi
   await planProjectUpdates(admin, now, out);
   await sendReminders(admin, now, out);
   await planNurture(admin, now, cfg, monitoring.active, out);
+  await planFinancialReminders(admin, now, out);
   await deliverDue(admin, now, cfg, monitoring.active, out);
   return { ok: true, ...out };
 }
