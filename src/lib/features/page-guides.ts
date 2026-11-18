@@ -534,10 +534,67 @@ export const PAGE_GUIDES = {
       { target: "fin.quick", title: "Quick actions", body: "Shortcuts for your kind of work. They open the right job first, and nothing is recorded until you save a form. Press and hold one to move it, or tap Edit to turn more on or off." },
       { target: "fin.cards", title: "Your cards", body: "Cards picked for your trade and role, such as job profit or what's committed to {sub}. Click one for its records, or press and hold to drag it to a new spot." },
       { target: "fin.reports", title: "Reports for your kind of work", body: "Reports that fit how {trade} track money. Ones marked later aren't available yet." },
-      { target: "fin.mode", title: "Contractor or Accountant Mode", body: "Accountant Mode uses accounting terms and shows ledger detail. It only changes what you see." },
+      { target: "fin.mode", title: "Contractor or Accountant Mode", body: "Accountant Mode adds the bank balance, receivables, payables, the review queue and accounting pages. It only changes what you see, never what you're allowed to do." },
+      { target: "fin.contractor-nav", title: "Your shortcuts", body: "Projects, estimates, invoices, customer balances, job profit and cash received, one tap away." },
+      { target: "fin.acct-kpis", title: "Accountant numbers", body: "The bank-reported balance comes only from a statement you imported, with its file and import time. Click any number for the records behind it." },
+      { target: "fin.acct-queue-summary", title: "In the review queue", body: "How many items need a person in each group. Click a group to work through it." },
+      { target: "fin.acct-quick", title: "Accountant quick actions", body: "Reconcile, review, export and audit shortcuts. You only see the ones your role allows." },
       { target: "fin.customize", title: "Customize this page", body: "Show, hide or reorder cards and pick your headline numbers. Restore puts the trade defaults back." },
       { target: "fin.tools", title: "All tools", body: "Every Financials tool in one list, whatever your home page shows." },
       { target: "fin.config", title: "Trade setup", body: "Tell Financials your trades and how you bill. The home page, quick actions and starter cost codes follow it." },
+    ],
+  },
+  "financials.accounting": {
+    route: "/financials/accounting",
+    label: "Accounting · Review queue",
+    steps: [
+      { target: "fin.acct-nav", title: "Accounting pages", body: "Review queue, transactions, reconciliation, receivables and payables, accounts, reports and the audit trail." },
+      { target: "fin.acct-queue-groups", title: "What needs review", body: "Items are grouped by what's wrong: uncategorized costs, unmatched bank lines, duplicates, unapplied payments, bills and more." },
+      { target: "fin.acct-queue", title: "Fix one item", body: "Each item says the next step and opens its record. Missing project or cost code fields can be filled in right here. Nothing is changed for you." },
+    ],
+  },
+  "financials.accounting.transactions": {
+    route: "/financials/accounting/transactions",
+    label: "Accounting · Transactions",
+    steps: [
+      { target: "fin.acct-txn-filters", title: "Find a transaction", body: "Search and filter by type, posting status, bank status, project, money in or out, and dates. The CSV download uses the same filters." },
+      { target: "fin.acct-txn-table", title: "The transaction list", body: "Every invoice, payment, refund, credit, bill, bill payment and expense, from the same records your team enters. Click a number to open its record." },
+    ],
+  },
+  "financials.accounting.bank": {
+    route: "/financials/accounting/bank",
+    label: "Accounting · Reconciliation",
+    steps: [
+      { target: "fin.bank-accounts", title: "Bank accounts", body: "Each account shows the balance of its imported lines and how many lines still need matching." },
+      { target: "fin.bank-add", title: "Add a bank account", body: "Just a name, a type and the last 4 digits. Built2Bid never asks for your bank login and can't move money." },
+      { target: "fin.bank-import", title: "Import a statement", body: "Upload the CSV, OFX or QFX file from your bank. Check the preview, then import. Lines already imported are skipped." },
+      { target: "fin.bank-lines", title: "Match each line", body: "Confirm a suggested match, pick another record with the same amount, exclude it with a reason, or record it as an expense." },
+      { target: "fin.bank-reconcile", title: "Confirm a period", body: "Type the statement's ending balance. Differences can only be confirmed with a note, and confirmed lines lock until the period is reopened." },
+      { target: "fin.bank-history", title: "History", body: "Confirmed periods and every import, with who did it and when. Reopening needs a reason that stays in the audit trail." },
+    ],
+  },
+  "financials.accounting.reports": {
+    route: "/financials/accounting/reports",
+    label: "Accounting · Reports",
+    steps: [
+      { target: "fin.acct-catalog", title: "Search reports", body: "Type a word like aging, labor or 1099. Reports that need the general ledger are listed with what they need and show no numbers." },
+      { target: "fin.acct-report", title: "The report", body: "Built from recorded records. Download it as CSV, or print it or save it as a PDF." },
+    ],
+  },
+  "financials.accounting.audit": {
+    route: "/financials/accounting/audit",
+    label: "Accounting · Audit trail",
+    steps: [
+      { target: "fin.acct-audit-filters", title: "Filter the trail", body: "Search any value, or narrow to invoices, payments, bank work or exports between two dates." },
+      { target: "fin.acct-audit-list", title: "Who did what", body: "Each entry shows the person, the action, the record and the before and after values. Entries can't be edited, and tax IDs and account numbers are hidden." },
+    ],
+  },
+  "financials.accounting.accounts": {
+    route: "/financials/accounting/accounts",
+    label: "Accounting · Chart of accounts",
+    steps: [
+      { target: "fin.acct-groups", title: "Balance groups", body: "Receivables, payables, your bank accounts and income. A full double-entry chart of accounts comes with the general ledger." },
+      { target: "fin.acct-codes", title: "Cost codes", body: "Every bill line and expense is classified with one of these codes, grouped by trade." },
     ],
   },
   "financials.records": {

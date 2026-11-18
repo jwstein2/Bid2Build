@@ -23,6 +23,10 @@ import { FinStateNotice } from "@/components/financials/fin-state-notice";
 import { ArrangeableCards, ArrangeableQuickActions } from "@/components/financials/home-arrange";
 import { QuickActionsSection } from "@/components/financials/quick-actions-editor";
 import { HomeOverview } from "@/components/financials/home-overview";
+import { AccountantHome } from "@/components/financials/accounting/home";
+import { ContractorNav } from "@/components/financials/accounting/contractor-nav";
+import { loadAccountantMetrics, loadBank, loadLookups, loadQueue, queueTotal } from "@/lib/financials/accounting-load";
+import { accountantActionsFor, QUEUE_KINDS, type QueueKind } from "@/lib/financials/accounting";
 
 export const metadata: Metadata = { title: "Financials", robots: { index: false } };
 
@@ -56,6 +60,16 @@ export default async function FinancialsHome() {
   const { data: jobs } = await db.from("fin_jobs").select("id, estimate_id").eq("book_id", ctx.bookId);
   const jobHref = new Map(((jobs ?? []) as { id: string; estimate_id: string }[]).map((j) => [j.id, `/financials/jobs/${j.estimate_id}`] as const));
   const alerts: AlertRow[] = (home.alerts as unknown as AlertRow[]).map((a) => ({ ...a, jobHref: a.job_id ? jobHref.get(a.job_id) ?? null : null }));
+  // Accountant Mode (saved per person; only offered to accounting roles, and it grants nothing): the accountant
+  // numbers, review queue and accountant quick actions, from the same records as Contractor Mode.
+  const accountant = layout.mode === "accountant" && perms.includes("view_company_financials");
+  const acct = accountant ? await (async () => {
+    const L = await loadLookups(db, ctx.bookId);
+    const bank = await loadBank(db, ctx.bookId, L);
+    const q = await loadQueue(db, ctx.bookId, L, bank);
+    const m = await loadAccountantMetrics(db, ctx.bookId, bank, queueTotal(q));
+    return { m, counts: Object.fromEntries(QUEUE_KINDS.map((k) => [k, q[k].length])) as Record<QueueKind, number> };
+  })() : null;
   const quick = layout.quickActions;
   const quickLibrary = QUICK_ACTIONS.filter((q) => perms.includes(QUICK_ACTION_NEEDS[q]))
     .map((q) => ({ key: q, label: QUICK_ACTION_LABELS[q], hint: QUICK_ACTION_HINTS[q], built: Boolean(QUICK_ACTION_TARGET[q]) }));
@@ -85,12 +99,14 @@ export default async function FinancialsHome() {
           <p className="text-sm text-ink-soft">{access.name} · {PRESETS[profile.presetKey].label}{profile.trades.length > 1 ? ` + ${profile.trades.length - 1} more trade${profile.trades.length > 2 ? "s" : ""}` : ""}</p>
         </div>
         {canUseAccountantMode(perms) && <ModeToggle mode={layout.mode} />}
-        {perms.includes("view_company_financials") && <ButtonLink href="/financials/reports" variant="secondary" size="sm" data-guide="fin.reports-pl">Profit &amp; Loss</ButtonLink>}
-        <ButtonLink href="/financials/receivables" variant="secondary" size="sm" data-guide="fin.receivables">Accounts receivable</ButtonLink>
+        {!accountant && perms.includes("view_company_financials") && <ButtonLink href="/financials/reports" variant="secondary" size="sm" data-guide="fin.reports-pl">Profit &amp; Loss</ButtonLink>}
+        {!accountant && <ButtonLink href="/financials/receivables" variant="secondary" size="sm" data-guide="fin.receivables">Accounts receivable</ButtonLink>}
         {!access.sandbox && canWrite && <SandboxBar sandbox={false} canManage={perms.includes("manage_financial_config")} />}
         <ButtonLink href="/financials/tools" variant="secondary" size="sm" data-guide="fin.tools"><LayoutGrid className="h-4 w-4" aria-hidden /> All tools</ButtonLink>
         {perms.includes("manage_financial_config") && <ButtonLink href="/company/business-config" variant="ghost" size="sm" data-guide="fin.config"><Settings2 className="h-4 w-4" aria-hidden /> Trade setup</ButtonLink>}
       </header>
+
+      {acct ? <AccountantHome m={acct.m} counts={acct.counts} actions={accountantActionsFor(perms)} /> : <ContractorNav company={perms.includes("view_company_financials")} />}
 
       {soloOwner && <FinAddonCard active={Boolean(mySub?.fin_addon)} periodEnd={mySub?.current_period_end ?? null} annual={mySub?.plan === "annual"} hasPlan={Boolean(mySub)} purchasable={isFinBillingConfigured()} />}
       {access.readOnly && !soloOwner && (home.jobs > 0

@@ -21,6 +21,8 @@ export async function GET(req: Request) {
   const { db, bookId } = g;
   const { data: allowed } = await db.rpc("fin_has_permission", { p_book_id: bookId, p_key: "export_financials", p_write: false });
   if (!allowed) return fail(403, "forbidden", "Your financial role can't export reports.");
+  // Audited when the Accountant Mode SQL (20261213001000) is installed; before that the export still works.
+  await db.rpc("fin_export_log", { p_book_id: bookId, p_kind: "profit_loss", p_filters: { basis, from, to } });
   const res = await loadPl(db, bookId, basis, from, to);
   if (!res.ok) return res.reason === "forbidden" ? fail(403, "forbidden", "Company reports need a company financial role.") : fail(503, res.reason, "Reports aren't available yet.");
   const { rows, jobs, trades } = res.data;
