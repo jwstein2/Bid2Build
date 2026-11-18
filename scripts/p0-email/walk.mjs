@@ -52,7 +52,9 @@ async function ctxFor({ signedIn = false, viewport = { width: 1280, height: 900 
     await p.waitForTimeout(250);
     const m = await p.evaluate(() => {
       const r = (el) => el?.getBoundingClientRect();
-      const btns = ["Download PDF", "Send via My Email"].map((l) => r(document.querySelector(`header button[aria-label="${l}"]`)));
+      // Phones (V8 batch 2): Send via My Email is behind the More toggle, so only Download PDF must show there.
+      const phone = Boolean(document.querySelector('[data-testid="builder-more"]')?.offsetParent);
+      const btns = (phone ? ["Download PDF"] : ["Download PDF", "Send via My Email"]).map((l) => r(document.querySelector(`header button[aria-label="${l}"]`)));
       const prev = [...document.querySelectorAll("header button")].find((b) => /Preview/.test(b.textContent ?? ""));
       return {
         overflow: document.documentElement.scrollWidth - window.innerWidth,
@@ -190,13 +192,13 @@ for (const vp of [{ name: "desktop", viewport: { width: 1280, height: 900 } }, {
   await p.screenshot({ path: path.join(OUT, `home-hero-${vp.name}.png`) });
   await ctx.close();
 }
-// Automatic popup still opens for a brand-new visitor
+// V8 batch 1: the welcome popup no longer opens by itself on public pages (only on /dashboard, once)
 {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   const p = await ctx.newPage();
   await p.goto(BASE, { waitUntil: "load" });
-  const auto = await p.locator('[role="dialog"]').first().waitFor({ timeout: 8000 }).then(() => true).catch(() => false);
-  check("new visitors still get the onboarding popup automatically", auto);
+  const auto = await p.locator('[role="dialog"]').first().waitFor({ timeout: 4000 }).then(() => true).catch(() => false);
+  check("new visitors are not interrupted by an automatic popup on the homepage", !auto);
   await ctx.close();
 }
 
