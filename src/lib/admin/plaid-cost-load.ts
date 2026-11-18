@@ -14,7 +14,7 @@ export async function loadPlaidUsage(now = new Date()): Promise<PlaidUsage | nul
       const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
       for (let i = 0; i < conns.length; i += 200) {
         const { count } = await admin.from("fin_audit_log").select("id", { count: "exact", head: true })
-          .eq("action", "bank.synced").eq("entity_type", "bank_connection").gte("created_at", monthStart).in("entity_id", conns.slice(i, i + 200).map((c) => c.id));
+          .eq("action", "bank.balance_live").eq("entity_type", "bank_connection").gte("created_at", monthStart).in("entity_id", conns.slice(i, i + 200).map((c) => c.id));
         calls += count ?? 0;
       }
     }

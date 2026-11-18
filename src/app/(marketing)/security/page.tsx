@@ -33,6 +33,7 @@ export default function Security() {
         <h2 className="pt-2 text-xl font-bold text-ink">Sign-in and access</h2>
         <ul className="list-disc space-y-1 pl-5">
           <li>Passwordless sign-in with one-time codes sent to your email, so there is no Built2Bid password to steal or reuse.</li>
+          <li>Optional two-step sign-in with an authenticator app. It is required before anyone can connect a bank account.</li>
           <li>Team members get only the workspaces and features their role allows, and you can remove access at any time.</li>
           <li>Our own administrative access is limited to the founder, protected by multi-factor authentication, and recorded in an audit log.</li>
         </ul>

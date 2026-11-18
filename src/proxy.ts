@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { ATTRIBUTION_COOKIE, ATTRIBUTION_MAX_AGE, captureAttribution, encodeAttribution } from "@/lib/growth/attribution";
 import { normalizeReferralCode, REFERRAL_COOKIE, REFERRAL_MAX_AGE } from "@/lib/growth/referral";
+import { TWO_STEP_REQUIRED, needsStepUp, stepUpExempt } from "@/lib/auth/mfa";
 
 /** First-touch attribution: set once from UTM/ic/ref parameters, an ad click id or an outside referrer host; never overwritten. */
 function withAttribution(request: NextRequest, response: NextResponse): NextResponse {
@@ -38,7 +39,24 @@ export async function proxy(request: NextRequest) {
   // With Supabase asymmetric JWT signing keys it verifies locally against the cached public key, so
   // this runs on every page and prefetch without a call to the Auth server. With the legacy shared
   // secret it falls back to the Auth server, same as getUser(). Pages still authorize with getUser().
-  await supabase.auth.getClaims();
+  const { data: claims } = await supabase.auth.getClaims();
+  // Two-step sign-in: a session that passed only the email code (aal1) on an account with an authenticator
+  // must enter the authenticator code before using the app. Only checked for signed-in aal1 sessions; reads
+  // the session cookie, no network call.
+  if (claims?.claims?.aal === "aal1" && !stepUpExempt(request.nextUrl.pathname)) {
+    const { data: level } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (needsStepUp(level)) {
+      if (request.nextUrl.pathname.startsWith("/api/")) {
+        return Response.json({ error: { code: TWO_STEP_REQUIRED, message: "Enter the code from your authenticator app to continue." } }, { status: 401 }) as unknown as NextResponse;
+      }
+      const to = request.nextUrl.clone();
+      to.pathname = "/auth/mfa";
+      to.search = `?next=${encodeURIComponent(request.nextUrl.pathname + request.nextUrl.search)}`;
+      const redirect = NextResponse.redirect(to);
+      response.cookies.getAll().forEach((c) => redirect.cookies.set(c));
+      return redirect;
+    }
+  }
   return withAttribution(request, response);
 }
 
