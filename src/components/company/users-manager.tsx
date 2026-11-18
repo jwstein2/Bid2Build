@@ -46,7 +46,7 @@ export function UsersManager(p: Props) {
         <p className="text-sm"><b>{p.seats.used}</b> of <b>{p.seats.limit}</b> licensed seats in use{p.invites.length > 0 && <> (including {p.invites.length} pending invitation{p.invites.length === 1 ? "" : "s"})</>}. <span className="text-ink-soft">{free} free.</span></p>
         {p.canBuySeats && <ButtonLink href="/company/billing" variant="secondary" size="sm">Add licenses</ButtonLink>}
       </Card>
-      {!p.seats.active && <Notice tone="warn" title="Enterprise isn't active">You can review your team, but invitations and reactivations are paused until the subscription is active.</Notice>}
+      {!p.seats.active && <Notice tone="warn" title="Team plan isn't active">You can review your team, but invitations and reactivations are paused until the subscription is active.</Notice>}
       {manageUsers && <InviteForm teams={p.teams} free={free} canBuySeats={p.canBuySeats} disabled={!p.seats.active} />}
       {manageUsers && p.invites.length > 0 && <PendingInvites invites={p.invites} teams={p.teams} />}
       <Card className="p-0" data-guide="company.members">

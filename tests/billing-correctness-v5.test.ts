@@ -66,7 +66,7 @@ describe("Enterprise graduated seats (code vs live Stripe tiers)", () => {
 
   it("quote lines itemize the tiers the customer sees", () => {
     expect(enterpriseQuote(20).lines.map((l) => [l.label, l.users, l.totalCents])).toEqual([
-      ["Enterprise base (includes 3 users)", 3, 4999],
+      ["Team base (includes 3 users)", 3, 4999],
       ["Users 4-5", 2, 3998],
       ["Users 6-10", 5, 8995],
       ["Users 11-20", 10, 15990],

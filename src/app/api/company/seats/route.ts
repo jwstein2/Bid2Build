@@ -29,7 +29,7 @@ const Body = z.object({
  */
 export async function POST(req: Request) {
   if (!(await sameOrigin())) return fail(403, "bad_origin", "Cross-site request refused.");
-  if (!isEnterpriseConfigured()) return fail(503, "enterprise_unavailable", "Enterprise billing isn't available yet.");
+  if (!isEnterpriseConfigured()) return fail(503, "enterprise_unavailable", "Team billing isn't available yet.");
   if (!(await rateLimit("company-seats", 30, 10 * 60_000))) return fail(429, "rate_limited", "Please wait a moment and try again.");
   const user = await getUser();
   if (!user) return fail(401, "not_authenticated", "Sign in required.");
@@ -45,8 +45,8 @@ export async function POST(req: Request) {
     const env = serverEnv();
     const row = await companySubscription(admin, company.id);
     if (!row) return fail(409, "no_subscription", company.entitlement.source === "complimentary"
-      ? "Your company is on complimentary Enterprise access. Additional seats are arranged with Built2Bid."
-      : "Your company doesn't have an active Enterprise subscription.");
+      ? "Your company is on complimentary Team access. Additional seats are arranged with Built2Bid."
+      : "Your company doesn't have an active Team subscription.");
     if (row.status !== "active" && row.status !== "trialing") return fail(409, "subscription_not_active", "Update your payment method before changing licenses.");
 
     const sub = await stripe.subscriptions.retrieve(row.stripe_subscription_id);

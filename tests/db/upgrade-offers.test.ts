@@ -7,7 +7,7 @@ import { applyMigration, dbAvailable, freshDb } from "./harness";
 /** V8 batch 4 offer log: constraints, no browser access, idempotent, reversible. */
 const available = await dbAvailable();
 const d = available ? describe : describe.skip;
-const ROLLBACK = readFileSync(path.resolve(import.meta.dirname, "../../docs/v8-marketing/rollback_20270105001000.sql"), "utf8");
+const ROLLBACK = readFileSync(path.resolve(import.meta.dirname, "../../docs/v8-marketing/rollback_20270105002000.sql"), "utf8");
 const U = "00000000-0000-4000-8000-0000000000a1";
 
 d("upgrade_offers", () => {
@@ -33,11 +33,11 @@ d("upgrade_offers", () => {
   });
 
   it("runs twice safely and rolls back cleanly", async () => {
-    await applyMigration(pool, "20270105001000_upgrade_offers.sql");
+    await applyMigration(pool, "20270105002000_upgrade_offers.sql");
     expect(Number((await pool.query("select count(*) n from public.upgrade_offers")).rows[0].n)).toBe(2);
     await pool.query(ROLLBACK);
     expect((await pool.query("select to_regclass('public.upgrade_offers') t")).rows[0].t).toBeNull();
-    await applyMigration(pool, "20270105001000_upgrade_offers.sql");
+    await applyMigration(pool, "20270105002000_upgrade_offers.sql");
     expect((await pool.query("select to_regclass('public.upgrade_offers') t")).rows[0].t).not.toBeNull();
   });
 });

@@ -8,7 +8,7 @@
 --     in src/lib/offers/policy.ts, and the owner reads it on /admin/marketing.
 --
 -- Nothing here sends email, changes billing or touches existing data. Safe to run more than once.
--- Rollback: docs/v8-marketing/rollback_20270105001000.sql
+-- Rollback: docs/v8-marketing/rollback_20270105002000.sql
 create table if not exists public.upgrade_offers (
   id bigint generated always as identity primary key,
   user_id uuid not null references auth.users (id) on delete cascade,

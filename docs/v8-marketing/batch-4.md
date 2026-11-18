@@ -1,6 +1,6 @@
 # V8 batch 4: contextual upgrade offers, save draft, "Before you go"
 
-Date 2026-11-18. **One SQL file** (additive, idempotent): `supabase/migrations/20270105001000_upgrade_offers.sql`. Rollback: `docs/v8-marketing/rollback_20270105001000.sql`. No new environment variables, no new dependencies, no email sending, no Stripe price or entitlement changes.
+Date 2026-11-18. **One SQL file** (additive, idempotent): `supabase/migrations/20270105002000_upgrade_offers.sql`. Rollback: `docs/v8-marketing/rollback_20270105002000.sql`. No new environment variables, no new dependencies, no email sending, no Stripe price or entitlement changes.
 
 Safe before the SQL runs: if `public.upgrade_offers` is missing, no offers show and everything else works as today.
 

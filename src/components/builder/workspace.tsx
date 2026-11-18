@@ -131,7 +131,7 @@ export function Workspace({ estimate, dispatch, lib: library }: { estimate: Esti
               const rows = estimate.items.filter((i) => selected.has(i.id));
               // One row: Save Item (no name prompt). Several rows: Save Stack. Both go through the same
               // premium check (free accounts get the Unlimited upgrade dialog instead).
-              if (rows.length === 1) { void lib.saveItem(rows[0]); if (lib.access && rows[0].name.trim()) setSelected(new Set()); }
+              if (rows.length === 1) { void lib.saveItem(rows[0]); if ((lib.access || lib.itemsAccess) && rows[0].name.trim()) setSelected(new Set()); }
               else if (lib.saveStack(rows)) setSelected(new Set());
             }}
           />
@@ -723,7 +723,7 @@ function ItemRow({ item: it, isLast, totals, estimate, dispatch, selected, toggl
                     </Dropdown.Portal>
                   </Dropdown.Sub>
                   <MenuItem onSelect={() => setEditPricing(true)}>% Override pricing</MenuItem>
-                  <MenuItem onSelect={() => void lib.saveItem(it)}><BookmarkPlus className="h-4 w-4" /> Save Item{!lib.access && <Lock className="ml-auto h-3.5 w-3.5 text-muted" aria-label="Premium" />}</MenuItem>
+                  <MenuItem onSelect={() => void lib.saveItem(it)}><BookmarkPlus className="h-4 w-4" /> Save Item{!lib.access && !lib.itemsAccess && <Lock className="ml-auto h-3.5 w-3.5 text-muted" aria-label="Premium" />}</MenuItem>
                   <Dropdown.Separator className="my-1 h-px bg-line" />
                   <MenuItem onSelect={() => dispatch({ type: "deleteItem", id: it.id })} danger><Trash2 className="h-4 w-4" /> Delete</MenuItem>
                 </Dropdown.Content>

@@ -30,7 +30,7 @@ export const DEFAULT_FOLLOW_UP_BODY = `Hi [First Name],
 
 Just wanted to follow up and make sure you saw my previous email!
 
-We're currently selecting a small group of construction educators to receive a complimentary year of Built2Bid Enterprise, along with [5/10] one-year subscriptions they can gift to their subscribers.
+We're currently selecting a small group of construction educators to receive a complimentary year of Built2Bid Team, along with [5/10] one-year subscriptions they can gift to their subscribers.
 
 I think there's a great opportunity to use the platform to teach your community about estimating, project pricing, margins, and managing their bids.
 

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type Dispatch, type ReactNode } from "reac
 import type { Estimate, EstimateGroup, LineItem } from "@/lib/estimate/types";
 import { UNIT_ABBR, getTrade, parseTemplateItem, type TemplateItem } from "@/lib/trades/catalog";
 import { sectionTrade } from "@/lib/estimate/trades";
-import { frequentItems, lineContext, lineFromSaved, matchesQuery, type SavedItem, type SavedStack, type StackItem, type StackScale } from "@/lib/library/saved-items";
+import { FREE_ITEMS_KEPT_NOTE, frequentItems, lineContext, lineFromSaved, matchesQuery, type SavedItem, type SavedStack, type StackItem, type StackScale } from "@/lib/library/saved-items";
 import { startersFor, starterStack } from "@/lib/library/assemblies";
 import { cn } from "@/lib/cn";
 import { useDismiss } from "@/components/ui/use-dismiss";
@@ -44,10 +44,12 @@ export function useSavedItemsUi(lib: Library, estimate: Estimate) {
   const groupOf = (it: LineItem) => estimate.groups.find((g) => g.id === it.groupId);
 
   const saveItem = async (it: LineItem) => {
-    if (!lib.access) { setUpgradeOpen(true); return; }
+    if (!lib.access && !lib.itemsAccess) { setUpgradeOpen(true); return; }
     if (!it.name.trim()) { say("Give the item a name before saving it."); return; }
     const r = await lib.saveLine(it, lineContext(estimate, groupOf(it)));
-    if (r.ok) say(r.updated ? `Updated “${it.name.trim()}” in Saved Items.` : `Saved “${it.name.trim()}” to Saved Items.`);
+    // Free plan: say once per save that the item comes along on an upgrade (James, V8 batch 5).
+    const kept = lib.access ? "" : ` ${FREE_ITEMS_KEPT_NOTE}`;
+    if (r.ok) say(r.updated ? `Updated “${it.name.trim()}” in Saved Items.${kept}` : `Saved “${it.name.trim()}” to Saved Items.${kept}`);
     else if (r.code === "premium_required") setUpgradeOpen(true);
     else say(r.message);
   };
@@ -88,7 +90,7 @@ export function useSavedItemsUi(lib: Library, estimate: Estimate) {
           {notice}
         </div>
       )}
-      <LibraryUpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} signedIn={lib.signedIn} lockedCount={lib.lockedCount} />
+      <LibraryUpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} signedIn={lib.signedIn} lockedCount={lib.lockedCount} itemsFree={Boolean(lib.itemsAccess) && !lib.access} />
       <Modal open={stackRows !== null} onOpenChange={(o) => !o && setStackRows(null)} title="Save Stack" description={`Save these ${stackRows?.length ?? 0} rows, with their quantities and rates, to reuse together on future bids.`}>
         <form onSubmit={(e) => { e.preventDefault(); void confirmStack(); }}>
           <label className="label" htmlFor="stack-name">Stack name</label>
@@ -157,7 +159,8 @@ export function SavedItemsPicker({ group, estimate, suggestions, lib, dispatch }
   const stacks = lib.stacks.filter((x) => (s ? x.name.toLowerCase().includes(s) : !x.favorite)).slice(0, 8);
   const starters = startersFor(trade).filter((x) => (s ? x.name.toLowerCase().includes(s) : x.trade === trade)).slice(0, 3);
   const pickStack = (a: SavedStack, starter = false) => { setOpen(false); lib.addStackTo(a, group.id, dispatch, starter); };
-  const star = (kind: "item" | "stack", id: string, name: string, on: boolean) => (
+  // Favorites and stacks are Unlimited; free accounts see their Saved Items without stars.
+  const star = (kind: "item" | "stack", id: string, name: string, on: boolean) => !lib.access ? null : (
     <button type="button" onClick={() => void lib.toggleFavorite(kind, id, !on)} aria-pressed={on} aria-label={on ? `Remove ${name} from favorites` : `Add ${name} to favorites`} data-testid="fav-toggle"
       className={cn("grid h-10 w-9 shrink-0 place-items-center rounded hover:bg-paper md:h-8 md:w-8", on ? "text-warn" : "text-muted hover:text-warn")}>
       <Star className="h-3.5 w-3.5" fill={on ? "currentColor" : "none"} aria-hidden />
@@ -186,7 +189,7 @@ export function SavedItemsPicker({ group, estimate, suggestions, lib, dispatch }
           </div>
           <p className="mt-1 px-1 text-[11px] text-muted">Pick as many as you need. Added items show a check.</p>
           <div className="mt-1 max-h-[min(22rem,60dvh)] overflow-y-auto overscroll-contain text-sm">
-            {lib.access ? (
+            {lib.access || lib.itemsAccess ? (
               <>
                 {(favStacks.length > 0 || favItems.length > 0) && <p className={heading} data-testid="picker-favorites">Favorites</p>}
                 {favStacks.map(stackRow)}
@@ -198,8 +201,8 @@ export function SavedItemsPicker({ group, estimate, suggestions, lib, dispatch }
                 ))}
                 {stacks.length > 0 && <p className={heading}>Saved Stacks</p>}
                 {stacks.map(stackRow)}
-                {starters.length > 0 && <p className={heading}>Starter assemblies</p>}
-                {starters.map((x) => (
+                {lib.access && starters.length > 0 && <p className={heading}>Starter assemblies</p>}
+                {lib.access && starters.map((x) => (
                   <button key={x.key} type="button" className="flex min-h-10 w-full items-center justify-between gap-2 rounded px-2 py-1.5 text-left hover:bg-paper md:min-h-8" onClick={() => pickStack(starterStack(x), true)} data-testid="pick-starter">
                     <span className="flex min-w-0 items-center gap-1.5"><Sparkles className="h-3.5 w-3.5 shrink-0 text-brand" aria-hidden /><span className="truncate">{x.name}</span></span>
                     <span className="shrink-0 text-xs text-muted">per {UNIT_ABBR[x.scale!.unit] ?? x.scale!.unit} · no prices</span>
@@ -219,6 +222,12 @@ export function SavedItemsPicker({ group, estimate, suggestions, lib, dispatch }
                     <ConfirmRemove compact name={`saved item ${f.name}`} onConfirm={async () => { const r = await lib.removeItem(f.id); lib.say(r.ok ? `Deleted “${f.name}” from Saved Items.` : r.message); }} />
                   </div>
                 ))}
+                {!lib.access && (
+                  <button type="button" onClick={() => { setOpen(false); lib.upgrade(); }} className="mt-2 flex w-full items-start gap-2 rounded-md border border-dashed border-line-strong px-2 py-2 text-left hover:bg-paper" data-testid="picker-stacks-locked">
+                    <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-navy" aria-hidden />
+                    <span><span className="block text-xs font-bold uppercase tracking-wider text-muted">Saved Stacks and favorites · Unlimited</span><span className="block text-xs text-ink-soft">{FREE_ITEMS_KEPT_NOTE} <span className="font-semibold text-navy underline">See Unlimited</span></span></span>
+                  </button>
+                )}
               </>
             ) : (
               <button type="button" onClick={() => { setOpen(false); lib.upgrade(); }} className="mt-1 flex w-full items-start gap-2 rounded-md border border-dashed border-line-strong px-2 py-2 text-left hover:bg-paper">

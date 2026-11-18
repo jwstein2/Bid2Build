@@ -73,7 +73,7 @@ export function PmEditorsCard({ seats, members, extra, canManage, canBuy, comp, 
         <div>
           <h2 className="font-display text-lg font-bold">Project Command Center editors</h2>
           <p className="text-sm text-ink-soft">
-            {PM_INCLUDED_ENTERPRISE_EDITORS} schedule editor is included with Enterprise. Extra editors are {formatCents(PM_EDITOR_CENTS)}/month each and don&apos;t change your licensed users.
+            {PM_INCLUDED_ENTERPRISE_EDITORS} schedule editor is included with Team. Extra editors are {formatCents(PM_EDITOR_CENTS)}/month each and don&apos;t change your licensed users.
             Everyone else in your company can view schedules.
           </p>
         </div>

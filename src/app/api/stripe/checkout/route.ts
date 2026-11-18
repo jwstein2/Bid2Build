@@ -58,7 +58,7 @@ export async function POST(req: Request) {
     // A licensed member of an Enterprise company already has everything Unlimited includes through the
     // company seat. Selling them a personal plan would bill them twice for the same access.
     if (await holdsCompanySeat(admin, user.id)) {
-      return fail(409, "company_seat", "Your company's Enterprise license already includes Unlimited, so there's nothing to buy. Ask your company owner about add-ons.");
+      return fail(409, "company_seat", "Your company's Team license already includes Unlimited, so there's nothing to buy. Ask your company owner about add-ons.");
     }
 
     let { data: bc } = await admin.from("billing_customers").select("stripe_customer_id").eq("user_id", user.id).maybeSingle();

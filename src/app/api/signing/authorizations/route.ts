@@ -18,7 +18,7 @@ export async function POST(req: Request) {
   if (!parsed.success) return fail(422, "invalid", parsed.error.issues[0]?.message ?? "Check the authorization.");
   const admin = createAdminClient();
   const tenant = await signingTenant(admin, user.id);
-  if (!tenant.companyId) return fail(409, "no_company", "Signing authorizations are for Enterprise companies.");
+  if (!tenant.companyId) return fail(409, "no_company", "Signing authorizations are for companies on the Team plan.");
   const { error } = await admin.rpc("contractor_grant_authorization", { p_actor: user.id, p_company: tenant.companyId, p_user: parsed.data.userId, p_scope: parsed.data.scope, p_auto: parsed.data.autoApplyAllowed, p_title: parsed.data.title });
   if (error) { const e = contractorError(error.message); return fail(e.status, e.code, e.text); }
   return json(await loadSigningSettings(admin, user.id));
@@ -34,7 +34,7 @@ export async function DELETE(req: Request) {
   if (!/^[0-9a-f-]{36}$/i.test(userId)) return fail(422, "invalid", "Choose a member.");
   const admin = createAdminClient();
   const tenant = await signingTenant(admin, user.id);
-  if (!tenant.companyId) return fail(409, "no_company", "Signing authorizations are for Enterprise companies.");
+  if (!tenant.companyId) return fail(409, "no_company", "Signing authorizations are for companies on the Team plan.");
   const { error } = await admin.rpc("contractor_revoke_authorization", { p_actor: user.id, p_company: tenant.companyId, p_user: userId });
   if (error) { const e = contractorError(error.message); return fail(e.status, e.code, e.text); }
   return json(await loadSigningSettings(admin, user.id));

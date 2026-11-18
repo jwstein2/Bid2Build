@@ -38,7 +38,7 @@ export function enterpriseQuote(totalUsers: number): EnterpriseQuote {
   const extraSeats = Math.max(0, totalUsers - ENTERPRISE_INCLUDED_USERS);
   const lines: EnterpriseLine[] = [
     {
-      label: `Enterprise base (includes ${ENTERPRISE_INCLUDED_USERS} users)`,
+      label: `Team base (includes ${ENTERPRISE_INCLUDED_USERS} users)`,
       users: Math.min(totalUsers, ENTERPRISE_INCLUDED_USERS),
       unitCents: ENTERPRISE_BASE_CENTS,
       totalCents: ENTERPRISE_BASE_CENTS,

@@ -117,7 +117,7 @@ await rpc("company_pm_assign", { p_user_id: M3, p_assign: true });
 {
   const { ctx, page } = await open("/company/users");
   check("seat card on Users & Permissions", await page.getByTestId("pm-seats").isVisible());
-  check("seat types and billing status shown", (await page.getByText("Included with Enterprise", { exact: true }).count()) === 1 && (await page.getByText("Paid editor seat", { exact: true }).count()) === 1 && (await page.getByText("Billed monthly on your Enterprise subscription").count()) === 1);
+  check("seat types and billing status shown", (await page.getByText("Included with Team", { exact: true }).count()) === 1 && (await page.getByText("Paid editor seat", { exact: true }).count()) === 1 && (await page.getByText("Billed monthly on your Enterprise subscription").count()) === 1);
   check("effective date and last change shown", (await page.getByText(/Effective .* Last change by/).count()) === 2);
   await page.getByRole("button", { name: "Manage" }).nth(1).click();
   check("permissions grouped with scheduling and internal reports", await page.getByTestId("permission-groups").getByText("Project Command Center", { exact: true }).isVisible() && await page.getByTestId("perm-publish_customer_updates").isVisible() && await page.getByTestId("perm-send_internal_reports").isVisible());

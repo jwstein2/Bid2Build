@@ -148,7 +148,7 @@ export const FEATURES = [
   // ---- Company administration -------------------------------------------------------------------------------
   { id: "manage_users", section: "admin", label: "Manage users & access", description: "Invite people and manage their access.", routes: ["/company/users"], ownerOnly: true, options: [o("manage", "Allowed", ["manage_users"])] },
   { id: "manage_teams", section: "admin", label: "Manage teams", description: "Create teams and assign members.", options: [o("manage", "Allowed", ["manage_teams"])] },
-  { id: "manage_billing", section: "admin", label: "Billing & licenses", description: "Enterprise billing and seat purchases.", routes: ["/company/billing"], ownerOnly: true, options: [o("manage", "Allowed", ["manage_billing"])] },
+  { id: "manage_billing", section: "admin", label: "Billing & licenses", description: "Team billing and seat purchases.", routes: ["/company/billing"], ownerOnly: true, options: [o("manage", "Allowed", ["manage_billing"])] },
   { id: "manage_pm_seats", section: "admin", label: "Scheduling editor seats", description: "Assign scheduling editor seats.", ownerOnly: true, options: [o("manage", "Allowed", ["manage_pm_seats"])] },
   { id: "manage_pm_addons", section: "admin", label: "Project Command Center add-ons", description: "Manage paid add-ons.", ownerOnly: true, options: [o("manage", "Allowed", ["manage_pm_addons"])] },
   { id: "manage_financial_seats", section: "admin", label: "Financial seats", description: "Assign financial seats.", ownerOnly: true, options: [o("manage", "Allowed", ["manage_financial_seats"])] },

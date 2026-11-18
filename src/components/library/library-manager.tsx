@@ -3,7 +3,8 @@ import { Building2, ChevronRight, Layers, Pencil, Plus, Ruler, Search, Sparkles,
 import { useState } from "react";
 import { formatCurrency } from "@/lib/estimate/money";
 import { COST_TYPES, UNIT_ABBR, tradeName } from "@/lib/trades/catalog";
-import { frequentItems, matchesQuery, organizeLibrary, type SavedItem, type SavedStack, type StackScale } from "@/lib/library/saved-items";
+import Link from "next/link";
+import { FREE_ITEMS_KEPT_NOTE, FREE_SAVED_ITEMS_LIMIT, frequentItems, matchesQuery, organizeLibrary, type SavedItem, type SavedStack, type StackScale } from "@/lib/library/saved-items";
 import { STARTER_ASSEMBLIES, perLabel, starterStack } from "@/lib/library/assemblies";
 import { ScaleFields } from "./scale-stack";
 import { useLibrary, type Library } from "../builder/library";
@@ -54,7 +55,8 @@ export function LibraryManager() {
   const [notice, setNotice] = useState<string | null>(null);
 
   if (!lib.loaded) return <Card className="p-6 text-center text-muted">Loading your Saved Items…</Card>;
-  if (!lib.access) return <div data-guide="items.locked"><LibraryLocked signedIn lockedCount={lib.lockedCount} /></div>;
+  if (!lib.access && !lib.itemsAccess) return <div data-guide="items.locked"><LibraryLocked signedIn lockedCount={lib.lockedCount} /></div>;
+  const full = lib.access;
 
   const filtered = lib.items.filter((i) => matchesQuery(i, q));
   const organized = organizeLibrary(filtered);
@@ -72,6 +74,12 @@ export function LibraryManager() {
       </div>
       <p aria-live="polite" className="sr-only">{notice}</p>
       {notice && <p className="rounded-lg border border-ok/30 bg-ok-tint px-3 py-2 text-sm text-ok">{notice}</p>}
+      {!full && (
+        <Card className="p-4 text-sm" data-testid="free-items-note">
+          <p className="font-semibold text-ink">Saved Items are free: keep up to {FREE_SAVED_ITEMS_LIMIT} of your own rates and items.</p>
+          <p className="mt-1 text-ink-soft">{FREE_ITEMS_KEPT_NOTE} Unlimited adds Saved Stacks, favorites, supplier price lists and no item limit. <Link href="/pricing#plans" className="font-semibold text-navy underline">See Unlimited</Link></p>
+        </Card>
+      )}
 
       {editing === "new" && (
         <Card className="p-4 sm:p-5">
@@ -145,6 +153,7 @@ export function LibraryManager() {
         )}
       </section>
 
+      {!full ? <LibraryLocked signedIn itemsFree lockedCount={lib.lockedCount} /> : <>
       <section aria-labelledby="saved-stacks-h">
         <h2 id="saved-stacks-h" className="mb-1 font-display text-xl font-bold text-navy">Saved Stacks</h2>
         <p className="mb-2 text-sm text-ink-soft">A stack is a group of rows you add together. In an estimate, select rows with their checkboxes and choose <b>Save Stack</b>. Turn on scaling and its quantities follow a measurement, like roof squares or wall area.</p>
@@ -181,6 +190,7 @@ export function LibraryManager() {
         </Card>
       </section>
       <TargetMargin initial={lib.targetMarginPct ?? ""} onSaved={(v) => say(v ? `Target margin set to ${v}%.` : "Target margin cleared.")} />
+      </>}
     </div>
   );
 }
@@ -199,7 +209,7 @@ function ItemRow({ item: i, lib, onEdit, onRemoved }: { item: SavedItem; lib: Li
       </div>
       <span className="tabular font-semibold">{rateLabel(i)}</span>
       <span className="flex items-center">
-        <FavoriteStar on={Boolean(i.favorite)} name={i.name} onToggle={() => void lib.toggleFavorite("item", i.id, !i.favorite)} />
+        {lib.access && <FavoriteStar on={Boolean(i.favorite)} name={i.name} onToggle={() => void lib.toggleFavorite("item", i.id, !i.favorite)} />}
         <button type="button" onClick={onEdit} className="inline-flex min-h-11 items-center gap-1 rounded px-2 text-sm text-brand hover:bg-brand-tint md:min-h-9" aria-label={`Edit ${i.name}`}><Pencil className="h-4 w-4" aria-hidden />Edit</button>
         <ConfirmRemove name={i.name} onConfirm={async () => { const r = await lib.removeItem(i.id); if (r.ok) onRemoved(); }} />
       </span>

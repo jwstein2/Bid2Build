@@ -258,7 +258,7 @@ export const PAGE_GUIDES = {
       { target: "builder.payment-schedule", title: "Payment schedule", body: "Set the deposit and progress payments the proposal shows, such as a deposit up front and the balance on completion." },
       { target: "builder.preview", title: "Proposal preview", body: "Preview customer proposal shows the finished proposal before you download or send it." },
       { target: "builder.send", title: "Send or download", body: "Send via My Email opens a message for you to review first, and Download PDF saves the proposal. Neither happens until you click." },
-      { target: "builder.internal-report", title: "Internal report", body: "A private PDF of costs, markup, margin and profit by section. Never shown to customers.", feature: "internal_report", locked: "The Internal Estimate Report is included with Unlimited and Enterprise." },
+      { target: "builder.internal-report", title: "Internal report", body: "A private PDF of costs, markup, margin and profit by section. Never shown to customers.", feature: "internal_report", locked: "The Internal Estimate Report is included with Unlimited and Team." },
     ],
   },
 

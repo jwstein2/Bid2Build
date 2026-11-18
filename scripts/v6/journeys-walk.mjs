@@ -45,12 +45,12 @@ await scenario("starter");
   await card.getByRole("button", { name: "More users" }).click();
   await card.getByRole("button", { name: "More users" }).click();
   const total = await card.getByTestId("enterprise-total").innerText();
-  await card.getByRole("button", { name: /Get Started with Enterprise/ }).click();
+  await card.getByRole("button", { name: /Get Started with Team/ }).click();
   await page.waitForTimeout(1200);
   const dlg = page.getByRole("dialog");
   const text = (await dlg.count()) ? await dlg.innerText() : "";
   check("Enterprise: verification stays on the pricing page", new URL(page.url()).pathname === "/pricing");
-  check("Enterprise: dialog names Enterprise, not a saved bid or free bids", /Enterprise/.test(text) && !/bid is saved/i.test(text) && !/free bids/i.test(text));
+  check("Enterprise: dialog names Team, not a saved bid or free bids", /Team/.test(text) && !/bid is saved/i.test(text) && !/free bids/i.test(text));
   check(`Enterprise: dialog shows the 5-user estimate (${total})`, text.includes("5 licensed users") && text.includes(total.replace("/month", "")));
   await page.screenshot({ path: `${dir}/${tag}-01-enterprise-verify.png` });
   if (await dlg.count()) {
@@ -73,7 +73,7 @@ await scenario("starter");
 // Phone: the Enterprise verification dialog fits.
 {
   const { ctx, page } = await open("/pricing#enterprise", { signedIn: false, vp: PHONE });
-  await page.getByTestId("enterprise-plan").getByRole("button", { name: /Get Started with Enterprise/ }).click();
+  await page.getByTestId("enterprise-plan").getByRole("button", { name: /Get Started with Team/ }).click();
   await page.waitForTimeout(1200);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - 390);
   check(`Enterprise phone 390: no sideways scroll (overflow ${overflow}px)`, overflow <= 0 && new URL(page.url()).pathname === "/pricing");
@@ -106,7 +106,7 @@ await scenario("enterprise_estimator");
   const { ctx, page } = await open("/settings/billing");
   const main = await page.locator("main").innerText();
   check("estimator billing: not shown as a personal $19.99 Unlimited plan", !main.includes("$19.99/month, billed monthly"));
-  check("estimator billing: says the seat is the company's Enterprise plan", /Enterprise/.test(main) && /Summit Exteriors/.test(main));
+  check("estimator billing: says the seat is the company's Team plan", /Team plan/.test(main) && /Summit Exteriors/.test(main));
   await page.screenshot({ path: `${dir}/${tag}-05-estimator-billing.png`, fullPage: true });
   const nav = page.getByRole("navigation", { name: "Account" });
   check("estimator nav: My bids", (await nav.getByRole("link", { name: "My bids", exact: true }).count()) === 1);

@@ -11,8 +11,9 @@ export type LibraryResult = { ok: true } | { ok: false; code: string; message: s
 const PREMIUM: LibraryResult = { ok: false, code: "premium_required", message: "Saved Items are part of Unlimited." };
 
 /**
- * Premium Saved Items & Pricing Library for the signed-in contractor. Signed-out visitors and free
- * accounts get `access: false` (the server decides); every write is re-checked by the API and RLS.
+ * Saved Items & Pricing Library for the signed-in contractor. Every signed-in plan gets `itemsAccess`
+ * (save and edit its own items); Unlimited also gets `access` (stacks, favorites, price imports). The
+ * server decides both; every write is re-checked by the API and RLS.
  */
 export function useLibrary(signedIn: boolean) {
   const [lib, setLib] = useState<LibraryData>(EMPTY_LIBRARY);
@@ -45,14 +46,17 @@ export function useLibrary(signedIn: boolean) {
   /** Optimistic update, rolled back if the server refuses. */
   const run = useCallback(async (next: LibraryData, op: LibraryOp): Promise<LibraryResult> => {
     const prev = libRef.current;
-    if (!prev.access && op.action !== "remove") return PREMIUM;
+    const itemWrite = op.kind === "item" && (op.action === "add" || op.action === "update");
+    if (!prev.access && op.action !== "remove" && !(itemWrite && prev.itemsAccess)) return PREMIUM;
     libRef.current = next;
     setLib(next);
     try {
       const r = await fetch("/api/library", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(op) });
       if (r.ok) return { ok: true };
       const d = (await r.json().catch(() => null)) as { error?: { code?: string; message?: string } } | null;
-      const back = r.status === 402 ? { ...prev, access: false } : prev;
+      const code = d?.error?.code;
+      // A plan that lapsed mid-session locks the library; the free-plan item cap changes nothing else.
+      const back = r.status === 402 && code !== "free_item_limit" ? { ...prev, access: false, itemsAccess: itemWrite ? false : prev.itemsAccess } : prev;
       libRef.current = back;
       setLib(back);
       return { ok: false, code: d?.error?.code ?? "save_failed", message: d?.error?.message ?? "Could not update your Saved Items." };

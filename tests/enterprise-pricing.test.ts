@@ -27,7 +27,7 @@ describe("Enterprise seat pricing", () => {
   it("itemizes the bill", () => {
     const q = enterpriseQuote(25);
     expect(q.lines.map((l) => [l.label, l.users, l.totalCents])).toEqual([
-      ["Enterprise base (includes 3 users)", 3, 4999],
+      ["Team base (includes 3 users)", 3, 4999],
       ["Users 4-5", 2, 3998],
       ["Users 6-10", 5, 8995],
       ["Users 11-25", 15, 23985],

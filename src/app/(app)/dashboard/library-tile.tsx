@@ -14,9 +14,24 @@ const TILES: Record<TileFeature, { href: string; icon: typeof Library; unlockedT
  * Dashboard tile for an Unlimited feature. Free accounts see what it does and that it is included
  * with Unlimited; the tile still opens the feature page, which shows the upgrade options.
  */
-export function PremiumTile({ feature, unlocked }: { feature: TileFeature; unlocked: boolean }) {
+export function PremiumTile({ feature, unlocked, itemsFree }: { feature: TileFeature; unlocked: boolean; itemsFree?: boolean }) {
   const t = TILES[feature];
   const f = PREMIUM_FEATURES[feature];
+  // Saved Items are free (V8 batch 5): the tile opens like a feature the account has, with the Unlimited extras named.
+  if (feature === "library" && itemsFree) {
+    return (
+      <Link href={t.href} className="group block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)]" data-testid="items-free-tile">
+        <Card className="flex h-full items-center gap-3 p-4 transition-colors group-hover:border-brand/40">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-brand-tint text-brand"><t.icon className="h-5 w-5" aria-hidden /></span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-display font-bold text-navy">Saved Items</span>
+            <span className="block text-sm text-ink-soft">Save your own rates and items free. They stay with you when you upgrade to Unlimited.</span>
+          </span>
+          <ChevronRight className="h-5 w-5 shrink-0 text-muted" aria-hidden />
+        </Card>
+      </Link>
+    );
+  }
   const Icon = unlocked ? t.icon : Lock;
   return (
     <Link
@@ -39,10 +54,10 @@ export function PremiumTile({ feature, unlocked }: { feature: TileFeature; unloc
   );
 }
 
-export function PremiumTiles({ unlocked }: { unlocked: boolean }) {
+export function PremiumTiles({ unlocked, itemsFree }: { unlocked: boolean; itemsFree?: boolean }) {
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      <PremiumTile feature="library" unlocked={unlocked} />
+      <PremiumTile feature="library" unlocked={unlocked} itemsFree={itemsFree} />
       <PremiumTile feature="templates" unlocked={unlocked} />
     </div>
   );

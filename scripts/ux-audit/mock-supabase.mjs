@@ -343,6 +343,8 @@ const rpcs = {
   save_estimate: { id: EST }, market_log_view: null,
   // Saved Items & Pricing Library entitlement (Unlimited or admin).
   library_access: Boolean(process.env.MOCK_UNLIMITED) || process.env.MOCK_ADMIN === "1",
+  // V8 batch 5: Saved Items for every plan (SQL 20270106001000 run). /__freeitems?off=1 simulates "not run yet".
+  saved_items_free_ok: true,
 };
 
 // Admin command center screenshots: synthetic platform-wide data (scripts/admin-cc/seed.mjs).
@@ -774,6 +776,10 @@ http.createServer((req, res) => {
     }
     if (rpc && opsRpc[rpc[1]]) { let args = {}; try { args = JSON.parse(raw || "{}"); } catch { /* ignore */ } const [st, body] = opsRpc[rpc[1]](args); return send(res, st, body); }
     // V8 offers walk: reset the offer log; seed a monthly subscriber eligible for the annual nudge.
+    if (u.pathname === "/__freeitems") {
+      if (u.searchParams.has("off")) delete rpcs.saved_items_free_ok; else rpcs.saved_items_free_ok = true;
+      return send(res, 200, { ok: true });
+    }
     if (u.pathname === "/__offers") {
       if (u.searchParams.get("reset")) { tables.upgrade_offers = []; delete rpcs.my_referral; }
       if (u.searchParams.get("referral")) rpcs.my_referral = { code: "AB3DE7GH", eligible: true, signed_up: 0, paying: 0, months_earned: 0, pending_rewards: 0 };
@@ -820,12 +826,13 @@ http.createServer((req, res) => {
       let body = null; try { body = JSON.parse(raw || "null"); } catch { /* ignore */ }
       if (req.method === "POST") {
         const add = (Array.isArray(body) ? body : [body]).filter(Boolean).map((r) => ({ id: r.id ?? crypto.randomUUID(), created_at: iso(0), ...r }));
-        if (t[1] === "saved_items" && !rpcs.library_access) return send(res, 403, { code: "42501", message: 'new row violates row-level security policy for table "saved_items"' });
+        // saved_items: own rows on every plan once SQL 20270106001000 ran (saved_items_free_ok), else Unlimited only.
+        if (t[1] === "saved_items" && !rpcs.library_access && !rpcs.saved_items_free_ok) return send(res, 403, { code: "42501", message: 'new row violates row-level security policy for table "saved_items"' });
         list.push(...add);
         return send(res, 201, add);
       }
       if (req.method === "PATCH") {
-        const hit = rpcs.library_access ? list.filter(matches) : [];
+        const hit = rpcs.library_access || (t[1] === "saved_items" && rpcs.saved_items_free_ok) ? list.filter(matches) : [];
         for (const r of hit) Object.assign(r, body);
         return send(res, 200, hit);
       }

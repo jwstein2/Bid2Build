@@ -44,8 +44,8 @@ export async function POST(req: Request) {
     const admin = createAdminClient();
     const row = await companySubscription(admin, company.id);
     if (!row) return fail(409, "no_subscription", company.entitlement.source === "complimentary"
-      ? "Your company is on complimentary Enterprise access. Additional scheduling editors are arranged with Built2Bid."
-      : "Your company doesn't have an active Enterprise subscription.");
+      ? "Your company is on complimentary Team access. Additional scheduling editors are arranged with Built2Bid."
+      : "Your company doesn't have an active Team subscription.");
     if (row.status !== "active" && row.status !== "trialing") return fail(409, "subscription_not_active", "Update your payment method before changing editors.");
 
     const stripe = getStripe();

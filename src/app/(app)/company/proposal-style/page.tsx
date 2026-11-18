@@ -17,7 +17,7 @@ export default async function ProposalStylePage() {
     return (
       <div className="mx-auto max-w-4xl space-y-4">{crumbs}
         <h1 className="text-3xl font-extrabold">Proposal &amp; Bid Style</h1>
-        <Notice title="Not part of your access">{company ? "Ask your company owner for “View company proposal style”." : <>Company proposal style is part of Enterprise. <Link href="/pricing#enterprise" className="underline">See Enterprise</Link>.</>}</Notice>
+        <Notice title="Not part of your access">{company ? "Ask your company owner for “View company proposal style”." : <>Company proposal style is part of the Team plan. <Link href="/pricing#enterprise" className="underline">See Team</Link>.</>}</Notice>
       </div>
     );
   }

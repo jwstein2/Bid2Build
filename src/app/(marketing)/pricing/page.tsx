@@ -10,6 +10,7 @@ import { getAccountContext } from "@/lib/account/server";
 import { CTA_LABELS, creditBadge, type AccountStatus } from "@/lib/account/status";
 import { formatCycleDate } from "@/lib/credits/status";
 import { plans } from "@/lib/site";
+import { FREE_SAVED_ITEMS_LIMIT } from "@/lib/library/saved-items";
 import { ANNUAL, ANNUAL_MONTHLY_EQUIVALENT, ANNUAL_SAVINGS_PERCENT, MONTHLY, formatUsd } from "@/lib/billing/plans";
 import { UnlimitedCard } from "@/components/marketing/pricing/unlimited-card";
 import { PlanHelper } from "@/components/marketing/pricing/plan-helper";
@@ -24,7 +25,7 @@ import {
 } from "@/lib/marketing/catalog";
 
 const pageTitle = `Pricing: Free, then ${MONTHLY.price}/month`;
-const pageDescription = `Free: ${plans.starterCredits} bids to start, plus ${plans.monthlyCredits} free bid every month. Unlimited: ${MONTHLY.price}/month or ${ANNUAL.price}/year. ${PM_PRODUCT_NAME} scheduling add-on: ${PRICES.pmMonthly}/month. Enterprise: ${PRICES.enterpriseBase}/month for ${PRICES.enterpriseIncludedUsers} users.`;
+const pageDescription = `Free: ${plans.starterCredits} bids to start, plus ${plans.monthlyCredits} free bid every month. Unlimited: ${MONTHLY.price}/month or ${ANNUAL.price}/year. ${PM_PRODUCT_NAME} scheduling add-on: ${PRICES.pmMonthly}/month. Team: ${PRICES.enterpriseBase}/month for ${PRICES.enterpriseIncludedUsers} users.`;
 
 export const metadata: Metadata = {
   title: pageTitle,
@@ -53,7 +54,7 @@ const ENTERPRISE_CARD_FEATURES = (pcc: boolean) => [
 
 const ANNUAL_SAVINGS_DOLLARS = formatUsd(MONTHLY.amountCents * 12 - ANNUAL.amountCents);
 
-const UNLIMITED_FEATURES = ["Unlimited estimates and bids", "Everything in Free", "Saved Items & Pricing", "Proposal Templates", "Internal Estimate Reports", "Full proposal customization"];
+const UNLIMITED_FEATURES = ["Unlimited estimates and bids", "Everything in Free", "Saved Items & Pricing: stacks, favorites, price lists", "Proposal Templates", "Internal Estimate Reports", "Full proposal customization"];
 
 /** Free card list: only what every account really gets on this deploy. */
 function freeFeatures(): string[] {
@@ -64,6 +65,7 @@ function freeFeatures(): string[] {
     "Every trade, with calculators",
     esign && featureStatus(esign) === "live" ? "Sales pipeline and e-signatures" : "Sales pipeline",
     "Customer directory",
+    `Save up to ${FREE_SAVED_ITEMS_LIMIT} of your own items, kept when you upgrade`,
     "Branding and PDF exports",
   ];
 }
@@ -101,9 +103,9 @@ export default async function PricingPage() {
               addon={<><b className="font-semibold">Add-on:</b> {PM_PRODUCT_NAME}{pmMarketedLive() ? <>, +{PRICES.pmMonthly}/month or +{PRICES.pmAnnual}/year.</> : <> (coming soon).</>} <Link href="#project-command-center" className="font-semibold text-navy underline">What it adds</Link></>}
             />
           </Suspense>
-          <Plan name="Enterprise" current={entMode === "owner" || entMode === "member"} price={PRICES.enterpriseBase} per="/month" billing={`${PRICES.enterpriseIncludedUsers} users included. More at volume pricing.`}
+          <Plan name="Team" current={entMode === "owner" || entMode === "member"} price={PRICES.enterpriseBase} per="/month" billing={`${PRICES.enterpriseIncludedUsers} users included. More at volume pricing.`}
             features={ENTERPRISE_CARD_FEATURES(pmMarketedLive())}>
-            <ButtonLink href="#enterprise" variant="secondary" size="lg" className="w-full" data-cta="enterprise">{entMode === "owner" ? "Manage your company" : entMode === "member" ? "See your company plan" : "See Enterprise"}</ButtonLink>
+            <ButtonLink href="#enterprise" variant="secondary" size="lg" className="w-full" data-cta="enterprise">{entMode === "owner" ? "Manage your company" : entMode === "member" ? "See your company plan" : "See Team"}</ButtonLink>
           </Plan>
         </div>
         <p className="mx-auto mt-5 max-w-2xl text-center text-sm text-ink-soft">Unlimited Monthly and Unlimited Annual include exactly the same features. Only the billing schedule is different.{subscribed && " You're on Unlimited."}</p>
@@ -117,7 +119,7 @@ export default async function PricingPage() {
       <div className="mx-auto mt-8 max-w-3xl space-y-3 text-sm text-ink-soft">
         <p><b>What counts as a bid?</b> One credit is used when you finalize a new bid. Editing, re-finalizing, or re-downloading a bid you already finalized is free, and drafts and previews never use credits.</p>
         <p><b>How do free credits work?</b> Every verified account gets {plans.starterCredits} starter credits that never expire. From your second month, you also get {plans.monthlyCredits} free monthly bid on your signup anniversary each month. Monthly credits don&apos;t roll over, and they&apos;re always used before starter credits.</p>
-        <p><b>Is {PM_PRODUCT_NAME} a separate plan?</b> No. It&apos;s an add-on to Unlimited ({PRICES.pmMonthly}/month, or {PRICES.pmAnnual}/year on annual plans) and includes one schedule editor: you. Enterprise includes one editor for a licensed user; each extra editor is {PRICES.pmEditor}/month and doesn&apos;t include a user license.</p>
+        <p><b>Is {PM_PRODUCT_NAME} a separate plan?</b> No. It&apos;s an add-on to Unlimited ({PRICES.pmMonthly}/month, or {PRICES.pmAnnual}/year on annual plans) and includes one schedule editor: you. Team includes one editor for a licensed user; each extra editor is {PRICES.pmEditor}/month and doesn&apos;t include a user license.</p>
         <p data-testid="pricing-no-contracts"><b>Can I cancel?</b> Yes, any time. There are no long-term contracts, and you can export everything in your account whenever you like. Subscriptions are non-refundable: when you cancel, your plan stays active until the end of the period you&apos;ve paid for, and there&apos;s no refund or credit for that period. See the <Link href="/terms" className="font-semibold text-accent-ink underline">Terms</Link>.</p>
         <p>*Unlimited archived bids are subject to reasonable storage and fair-use policies. Prices in USD; applicable taxes may be added at checkout.</p>
       </div>
@@ -187,7 +189,7 @@ function PmAddonSection({ status, entMode }: { status: AccountStatus; entMode: "
             {included.map((f) => <li key={f.id} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-ok" aria-hidden /><span><b className="font-semibold">{f.name}.</b> <span className="text-ink-soft">{f.description}</span></span></li>)}
             {soon.map((f) => <li key={f.id} className="flex gap-2 text-ink-soft" data-status="soon"><Clock className="mt-0.5 h-4 w-4 shrink-0 text-muted" aria-hidden /><span><b className="font-semibold">{f.name}</b> <span className="ml-1 rounded-full border border-dashed border-line px-1.5 py-0.5 text-[11px] font-semibold text-muted">Coming soon</span></span></li>)}
           </ul>
-          <p className="mt-4 text-xs text-ink-soft">On Enterprise: {PRICES.pmIncludedEnterpriseEditors} editor included; extra editors are {PRICES.pmEditor}/month each and need a licensed user. <Link href="#enterprise" className="font-semibold text-accent-ink underline">See Enterprise</Link></p>
+          <p className="mt-4 text-xs text-ink-soft">On Team: {PRICES.pmIncludedEnterpriseEditors} editor included; extra editors are {PRICES.pmEditor}/month each and need a licensed user. <Link href="#enterprise" className="font-semibold text-accent-ink underline">See Team</Link></p>
         </div>
       </div>
     </section>
@@ -212,11 +214,11 @@ function ComparisonTable() {
     <div id="compare" className="mx-auto mt-14 max-w-5xl scroll-mt-20">
       <h2 className="text-2xl font-extrabold">Compare plans</h2>
       {MARKETING_FEATURES.some((f) => featureStatus(f) === "coming_soon") && <p className="mt-1 text-sm text-ink-soft">Coming soon means it&apos;s in development and not part of any plan yet.</p>}
-      <p className="mt-1 text-xs text-muted sm:hidden" aria-hidden>Swipe the table sideways to see Unlimited and Enterprise.</p>
+      <p className="mt-1 text-xs text-muted sm:hidden" aria-hidden>Swipe the table sideways to see Unlimited and Team.</p>
       <div className="mt-4 overflow-x-auto rounded-xl border border-line bg-surface" role="region" aria-label="Plan comparison" tabIndex={0}>
         <table className="w-full min-w-[600px] text-sm">
           <caption className="sr-only">Plan comparison</caption>
-          <thead><tr className="border-b border-line text-left"><th scope="col" className={`${th} font-bold`}>Feature</th><th scope="col" className="p-3">Free</th><th scope="col" className="p-3">Unlimited<span className="block text-xs font-normal text-muted">monthly or annual</span></th><th scope="col" className="p-3">Enterprise</th></tr></thead>
+          <thead><tr className="border-b border-line text-left"><th scope="col" className={`${th} font-bold`}>Feature</th><th scope="col" className="p-3">Free</th><th scope="col" className="p-3">Unlimited<span className="block text-xs font-normal text-muted">monthly or annual</span></th><th scope="col" className="p-3">Team</th></tr></thead>
           <tbody>
             <tr className="border-b border-line bg-paper"><th scope="colgroup" colSpan={4} className="p-3 text-left text-xs font-bold uppercase tracking-wide text-accent-ink">Plan basics</th></tr>
             {BASICS.map(([f, a, b, c]) => (
