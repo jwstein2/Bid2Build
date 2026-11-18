@@ -42,6 +42,7 @@ export async function loadInvoiceDoc(db: Db, bookId: string, id: string): Promis
     paid: s((bal as Row | null)?.paid) || "0", credited: s((bal as Row | null)?.credited) || "0", balance: s((bal as Row | null)?.balance) || "0",
     payments: ((allocs ?? []) as Row[]).map((a) => { const p = ((pays ?? []) as Row[]).find((x) => x.id === a.payment_id); return { date: s(p?.received_on), method: s(p?.method), amount: s(a.amount) }; }),
     contract: c ? { current: s(c.contract_value), invoicedToDate: s(c.invoiced), paidToDate: s(c.collected) } : null,
+    sandbox: brand.sandbox,
   };
   return { status: "ok", d, logo: brand.logo, number: s(i.number) };
 }

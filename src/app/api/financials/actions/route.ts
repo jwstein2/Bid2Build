@@ -38,6 +38,9 @@ const body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("reset_dashboard") }),
   z.object({ action: z.literal("set_mode"), mode: z.enum(["contractor", "accountant"]) }),
   z.object({ action: z.literal("open_job"), estimateId: id, versionId: id.optional() }),
+  z.object({ action: z.literal("sandbox_enter") }),
+  z.object({ action: z.literal("sandbox_leave") }),
+  z.object({ action: z.literal("sandbox_reset") }),
   z.object({ action: z.literal("save_project_profile"), estimateId: id, p: z.object({ primaryTradeSlug: text(60).nullable(), market: text(20).nullable(), projectModel: text(30).nullable(), paymentStructure: text(30).nullable(), workflow: text(20).nullable() }).partial() }),
   z.object({ action: z.literal("add_deduction"), jobId: id, amount, description: text(300).min(1), key }),
   z.object({ action: z.literal("save_invoice"), jobId: id, p: z.object({ id: id.optional(), kind: z.enum(["deposit", "milestone", "progress", "final", "custom"]).optional(), milestoneId: id.optional(), dueDate: day.optional(), memo: text(1000).optional(), lines: z.array(line).max(100).optional() }), key }),
@@ -45,6 +48,12 @@ const body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("delete_invoice_draft"), invoiceId: id }),
   z.object({ action: z.literal("void_invoice"), invoiceId: id, reason: text(500).min(1) }),
   z.object({ action: z.literal("delete_invoice"), invoiceId: id, reason: text(500).min(1) }),
+  z.object({ action: z.literal("mark_sent"), invoiceId: id, method: z.enum(["own_email", "printed", "in_person", "text", "other"]), sentOn: day.optional(), note: text(500).optional() }),
+  z.object({ action: z.literal("unmark_sent"), invoiceId: id, reason: text(500).min(1) }),
+  z.object({ action: z.literal("co_credit"), jobId: id, changeOrderId: id, applyTo: alloc.optional(), key }),
+  z.object({ action: z.literal("co_milestone"), jobId: id, changeOrderId: id, amount, description: text(300).optional() }),
+  z.object({ action: z.literal("co_amend"), milestoneId: id, changeOrderId: id, delta: amount, reason: text(500).min(1) }),
+  z.object({ action: z.literal("amendment_decide"), amendmentId: id, approve: z.boolean() }),
   z.object({ action: z.literal("record_payment"), p: z.object({ customerId: id.optional(), jobId: id.optional(), receivedOn: day.optional(), method: z.enum(["check", "cash", "ach", "card", "wire", "other"]), reference: text(120).optional(), amount, memo: text(1000).optional(), allocations: alloc.optional() }), key }),
   z.object({ action: z.literal("allocate_payment"), paymentId: id, allocations: alloc, key }),
   z.object({ action: z.literal("verify_payment"), paymentId: id }),
@@ -79,6 +88,12 @@ async function rpcOk(db: RpcDb, fn: string, args: Record<string, unknown>) {
   if (error) throw new fin.FinError(error.message, error.message, error.details ?? undefined);
   return json({ ok: true });
 }
+type RpcDataDb = { rpc: (fn: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: { message: string; details?: string | null } | null }> };
+async function rpcData(db: RpcDataDb, fn: string, args: Record<string, unknown>) {
+  const { data, error } = await db.rpc(fn, args);
+  if (error) throw new fin.FinError(error.message, error.message, error.details ?? undefined);
+  return data;
+}
 
 export async function POST(req: Request) {
   const g = await finGuard({ write: true, limitKey: "fin-action" });
@@ -94,7 +109,18 @@ export async function POST(req: Request) {
       case "save_dashboard": return json({ ok: await fin.saveDashboard(db, bookId, a.scope, a.role ?? null, a.p) ?? true });
       case "reset_dashboard": return json({ ok: await fin.resetDashboard(db, bookId) ?? true });
       case "set_mode": return json({ mode: await fin.setMode(db, bookId, a.mode) });
-      case "open_job": return json(await fin.openJob(db, a.estimateId, a.versionId));
+      case "open_job": {
+        // In the sandbox a job is never opened for real: it is copied in from the real books.
+        const { data: sbx } = await db.rpc("fin_is_sandbox", { p_book_id: bookId });
+        if (sbx === true) return json((await rpcData(db, "fin_sandbox_copy_job", { p_sandbox: bookId, p_estimate_id: a.estimateId })) as Record<string, unknown>);
+        return json(await fin.openJob(db, a.estimateId, a.versionId));
+      }
+      case "sandbox_enter": case "sandbox_reset": {
+        const { data: live, error } = await db.rpc("fin_book_live", { p_book_id: bookId });
+        if (error) throw new fin.FinError(error.message, error.message);
+        return json((await rpcData(db, a.action === "sandbox_enter" ? "fin_sandbox_enter" : "fin_sandbox_reset", { p_live_book: live })) as Record<string, unknown>);
+      }
+      case "sandbox_leave": await rpcData(db, "fin_sandbox_leave", {}); return json({ ok: true });
       case "save_project_profile": return json({ ok: await fin.saveProjectProfile(db, a.estimateId, a.p) ?? true });
       case "add_deduction": return json({ ok: await fin.addDeduction(db, a.jobId, a.amount, a.description, a.key) ?? true });
       case "save_invoice": return json(await fin.saveInvoiceDraft(db, a.jobId, { ...a.p, lines: a.p.lines ?? [] }, a.key));
@@ -105,6 +131,12 @@ export async function POST(req: Request) {
         if (error) throw new fin.FinError(error.message, error.message, error.details ?? undefined);
         return json(data);
       }
+      case "mark_sent": return json({ id: await rpcData(db, "fin_invoice_mark_sent", { p_invoice_id: a.invoiceId, p: { method: a.method, sentOn: a.sentOn, note: a.note } }) });
+      case "unmark_sent": await rpcData(db, "fin_invoice_unmark_sent", { p_invoice_id: a.invoiceId, p_reason: a.reason }); return json({ ok: true });
+      case "co_credit": return json((await rpcData(db, "fin_change_order_credit", { p_job_id: a.jobId, p: { changeOrderId: a.changeOrderId, applyTo: a.applyTo ?? [] }, p_idempotency_key: a.key ?? null })) as Record<string, unknown>);
+      case "co_milestone": return json((await rpcData(db, "fin_change_order_milestones_add", { p_job_id: a.jobId, p: { changeOrderId: a.changeOrderId, milestones: [{ description: a.description || undefined, amount: a.amount }] } })) as Record<string, unknown>);
+      case "co_amend": return json({ amendmentId: await rpcData(db, "fin_milestone_amendment_request", { p_milestone_id: a.milestoneId, p: { changeOrderId: a.changeOrderId, delta: a.delta, reason: a.reason } }) });
+      case "amendment_decide": return json({ status: await rpcData(db, "fin_milestone_amendment_decide", { p_amendment_id: a.amendmentId, p_approve: a.approve }) });
       case "void_invoice": return json({ ok: await fin.voidInvoice(db, a.invoiceId, a.reason) ?? true });
       case "record_payment": return json(await fin.recordPayment(db, bookId, a.p, a.key));
       case "allocate_payment": return json({ ok: await fin.allocatePayment(db, a.paymentId, a.allocations, a.key) ?? true });

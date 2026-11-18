@@ -18,6 +18,8 @@ export interface ReceiptPdfData {
   project?: { name: string; jobNumber?: string; address?: string | null } | null;
   appliedTo: { label: string; amount: string; balanceNow?: string | null }[];
   unapplied?: string | null;
+  /** Practice sandbox: the receipt carries a watermark. */
+  sandbox?: boolean;
 }
 
 const T = (v?: string | null) => pdfSafe(v);
@@ -50,6 +52,7 @@ export function ReceiptPdf({ d, logo }: { d: ReceiptPdfData; logo?: { data: Buff
   return (
     <Document title={T(`${title} ${d.receipt.number}`)} author={T(d.company.name)} creator={T(d.company.name)} producer="Built2Bid">
       <Page size="LETTER" style={s.page}>
+        {d.sandbox && <View fixed style={{ backgroundColor: "#fff4d6", borderWidth: 1, borderColor: "#b7791f", borderStyle: "dashed", borderRadius: 4, padding: 6, marginBottom: 10 }}><Text style={{ fontFamily: "Helvetica-Bold", color: "#7a4a00", textAlign: "center" }}>SANDBOX  |  Practice only. This is not a real receipt.</Text></View>}
         <View style={s.head}>
           <View style={{ flexDirection: "row", gap: 10, alignItems: "center", maxWidth: "55%" }}>
             {logo && <Image src={{ data: logo.data, format: logo.format }} style={{ maxHeight: 44, maxWidth: 130, objectFit: "contain" }} />}

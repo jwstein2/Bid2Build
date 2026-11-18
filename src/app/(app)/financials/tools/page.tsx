@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isFinancialsEnabled } from "@/lib/env";
+import { SandboxBar } from "@/components/financials/sandbox-bar";
 import { loadFinState } from "@/lib/financials/loaders";
 import type { FinPermission } from "@/lib/financials/permissions";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
@@ -53,6 +54,7 @@ export default async function AllTools() {
   return (
     <div className="mx-auto max-w-5xl space-y-5" data-testid="fin-tools" data-guide-page="financials.tools">
       {crumbs}
+      {state.ctx.access.sandbox && <SandboxBar sandbox canManage={perms.includes("manage_financial_config")} />}
       <h1 className="text-3xl font-extrabold">All financial tools</h1>
       <p className="text-ink-soft">Your home page shows what fits your trade. Everything is always here too.</p>
       <div className="grid gap-4 md:grid-cols-2" data-guide="fin.tool-groups">

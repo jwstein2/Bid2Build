@@ -15,5 +15,5 @@ export async function GET(_req: Request, ctx: { params: Promise<{ estimateId: st
   const data = await loadJob(g.db, estimateId, state.ctx);
   if (!data) return fail(404, "not_found", "Project not found.");
   const { access, ai } = state.ctx;
-  return json({ ...data, access: { permissions: access.permissions, readOnly: access.readOnly, active: access.active, role: access.role }, ai, bookName: access.name });
+  return json({ ...data, access: { permissions: access.permissions, readOnly: access.readOnly, active: access.active, role: access.role, sandbox: Boolean(access.sandbox) }, ai, bookName: access.name });
 }
