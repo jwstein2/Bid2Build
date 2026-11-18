@@ -10,7 +10,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { TAX_AUTHORITIES } from "@/lib/tax-banking/authorities";
 import { assertTestIsolation, taxProviderMode } from "@/lib/tax-banking/isolation";
 import { CONSTRUCTION_RULES, constructionTreatment } from "@/lib/tax-banking/tax/construction-rules";
-import { aggregateSstBoundaries, fileText, findOfficialFiles, FormatChanged, parseSstRates, parseStateTable, splitCsv, unzipOne } from "@/lib/tax-banking/tax/official-files";
+import { aggregateSstBoundaries, fileText, describeListing, findOfficialFiles, FormatChanged, parseSstRates, parseStateTable, splitCsv, unzipOne } from "@/lib/tax-banking/tax/official-files";
 import { builtinProvider, pickLocation, pickRates } from "@/lib/tax-banking/tax/builtin";
 import { censusGeocode, geocodeKey } from "@/lib/tax-banking/tax/geocode";
 import { SEED_RATES, STATE_ONLY } from "@/lib/tax-banking/tax/seed-rates";
@@ -154,6 +154,20 @@ describe("official file readers", () => {
       <a href="/files/WIR2026Q4OCT01.zip">wi</a><a href="http://insecure.example/MNR2027Q1JAN01.zip">http</a>`;
     expect(findOfficialFiles(html, "MN", "https://www.example.org/r-b-files")).toEqual({ rateUrl: "https://www.example.org/files/MNR2026Q4OCT01.zip", boundaryUrl: "https://x.gov/files/MNB2026Q4OCT01.zip" });
     expect(findOfficialFiles("<p>nothing</p>", "MN", "https://www.example.org/")).toEqual({ rateUrl: null, boundaryUrl: null });
+  });
+  it("finds SST files behind download handlers, in link text, without a day or extension", () => {
+    const base = "https://www.example.org/r-b-files";
+    expect(findOfficialFiles(`<a href="/download.aspx?file=MNR2026Q4OCT01.zip&amp;v=2">Rates</a><a href="/media/88">MN B 2026 Q4 OCT</a>`, "MN", base))
+      .toEqual({ rateUrl: "https://www.example.org/download.aspx?file=MNR2026Q4OCT01.zip&v=2", boundaryUrl: "https://www.example.org/media/88" });
+    expect(findOfficialFiles(`<a href="/f/mnr2026q3.zip">q3</a><a href="/f/mnr2026q4.zip">q4</a>`, "MN", base).rateUrl).toBe("https://www.example.org/f/mnr2026q4.zip");
+    expect(findOfficialFiles(`<a href="/f/Minnesota_MN_rates_2026.csv">x</a>`, "MN", base).rateUrl).toBe("https://www.example.org/f/Minnesota_MN_rates_2026.csv");
+    // Another state's file, or "MN" inside a longer word, doesn't count.
+    expect(findOfficialFiles(`<a href="/f/WIR2026Q4OCT01.zip">wi</a><a href="/f/ADMNR2026Q4.zip">x</a>`, "MN", base)).toEqual({ rateUrl: null, boundaryUrl: null });
+  });
+  it("describes a listing page when no file is found", () => {
+    const d = describeListing(`<a href="/a">Home</a><a href="/docs/file.zip">All states</a><a href="/states/mn">MN</a>`, "MN", "https://www.example.org/");
+    expect(d).toContain("Page had 3 links, 1 file links, 1 mention MN");
+    expect(d).toContain("www.example.org/docs/file.zip [All states]");
   });
   it("reads a state's own rate table with an owner-set column mapping", () => {
     const t = "Level,FIPS,Name,Rate\nState,,Texas,6.25\nCity,4805000,Austin,1.0\nCounty,453,Travis,0.5";
@@ -304,6 +318,20 @@ describe("importer (mocked downloads)", () => {
     expect(r.status).toBe("format_changed");
     expect(rpcCalled).toBe(false);
     expect(tables.tax_rate_sources[0]).toMatchObject({ status: "format_changed", rates_loaded: 4 });
+  });
+  it("follows a per-state page from the listing, and records what the page offered when nothing matches", async () => {
+    const { resolveFiles } = await import("@/lib/tax-banking/tax/importer");
+    const pages: Record<string, string> = {
+      "https://www.example.org/r-b": `<a href="/states/minnesota">Minnesota</a><a href="/states/wi">Wisconsin</a>`,
+      "https://www.example.org/states/minnesota": `<a href="/dl/MNR2026Q4OCT01.zip">Rate file</a><a href="/dl/MNB2026Q4OCT01.zip">Boundary file</a>`,
+    };
+    const f = (async (u: string) => pages[u] !== undefined ? new Response(pages[u]) : new Response("nope", { status: 404 })) as unknown as typeof fetch;
+    const src = { state: "MN", kind: "sst", listing_url: "https://www.example.org/r-b", rate_url: null, boundary_url: null, format: null, status: "needs_link",
+      last_rate_file: null, last_boundary_file: null, zips_loaded: 0, last_success_at: null } as const;
+    expect(await resolveFiles({ ...src }, f)).toMatchObject({ rateUrl: "https://www.example.org/dl/MNR2026Q4OCT01.zip", boundaryUrl: "https://www.example.org/dl/MNB2026Q4OCT01.zip" });
+    const miss = await resolveFiles({ ...src, state: "IA" }, f);
+    expect(miss.rateUrl).toBeNull();
+    expect(miss.listing).toContain("Page had 2 links");
   });
   it("a state with no link yet is skipped quickly, without a download", async () => {
     const { importState } = await import("@/lib/tax-banking/tax/importer");
