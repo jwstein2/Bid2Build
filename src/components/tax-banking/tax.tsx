@@ -116,3 +116,53 @@ export function RevokeExemption({ id }: { id: string }) {
   const { busy, msg, run } = useTb();
   return <span className="inline-flex items-center gap-2"><Button size="sm" variant="ghost" disabled={busy} onClick={() => void run({ action: "tax_exemption_save", p: { id, status: "revoked" } }, "Revoked.")}>Revoke</Button><Status msg={msg} busy={busy} /></span>;
 }
+
+/**
+ * Ask a customer to fill in and sign their exemption certificate online (no uploads). Makes a secret link the
+ * contractor sends however they like (copy, or open their own email app). Built2Bid itself sends nothing.
+ */
+export function RequestExemption({ customers, states, defaultStates }: { customers: { id: string; label: string }[]; states: StateOpt[]; defaultStates: string[] }) {
+  const { busy, msg, run } = useTb();
+  const [customerId, setCustomerId] = useState("");
+  const [picked, setPicked] = useState<string[]>(defaultStates);
+  const [url, setUrl] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const name = customers.find((c) => c.id === customerId)?.label ?? "";
+  const mail = url ? `mailto:?subject=${encodeURIComponent("Sales tax exemption certificate")}&body=${encodeURIComponent(`Hi${name ? ` ${name}` : ""},\n\nPlease fill in and sign your sales tax exemption certificate online here (about two minutes, nothing to print or upload):\n${url}\n\nThank you!`)}` : "";
+  return (
+    <div className="space-y-3 rounded-xl border border-line bg-surface p-4" data-testid="tax-exemption-request">
+      <div>
+        <h3 className="font-semibold">Ask a customer to sign their certificate online</h3>
+        <p className="text-sm text-ink-soft">They get a secure link, fill in the uniform exemption certificate and sign by typing their name. It&apos;s saved here automatically. No uploads.</p>
+      </div>
+      <form className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6" onSubmit={async (e) => {
+        e.preventDefault(); setCopied(false);
+        const d = await run<{ url: string }>({ action: "tax_exemption_request", customerId, states: picked }, "Link ready. Send it to your customer.");
+        if (d?.url) setUrl(d.url);
+      }}>
+        <label className="label lg:col-span-2" htmlFor="exr-c">Customer<select id="exr-c" required className="field mt-1" value={customerId} onChange={(e) => { setCustomerId(e.target.value); setUrl(null); }}><option value="">Choose…</option>{customers.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</select></label>
+        <fieldset className="lg:col-span-4">
+          <legend className="label">States (the customer can change these)</legend>
+          <div className="mt-1 flex max-h-24 flex-wrap gap-1 overflow-y-auto rounded-lg border border-line p-2">
+            {states.map((s) => (
+              <label key={s.code} className="inline-flex min-h-9 cursor-pointer items-center gap-1 rounded-md border border-line px-2 text-xs has-[:checked]:border-brand has-[:checked]:bg-brand-tint">
+                <input type="checkbox" checked={picked.includes(s.code)} onChange={() => setPicked(picked.includes(s.code) ? picked.filter((x) => x !== s.code) : [...picked, s.code].sort())} aria-label={s.name} />{s.code}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+        <div className="flex flex-wrap items-center gap-2 sm:col-span-2 lg:col-span-6">
+          <Button type="submit" size="sm" disabled={busy || !customerId || !picked.length}>Create signing link</Button><Status msg={msg} busy={busy} />
+        </div>
+      </form>
+      {url && (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-line bg-paper p-2 text-sm" data-testid="tax-exemption-link">
+          <input readOnly value={url} aria-label="Signing link" className="field min-w-0 flex-1 text-xs" onFocus={(e) => e.currentTarget.select()} />
+          <Button size="sm" variant="secondary" type="button" onClick={() => { void navigator.clipboard?.writeText(url).then(() => setCopied(true)); }}>{copied ? "Copied" : "Copy link"}</Button>
+          <a href={mail} className="inline-flex min-h-9 items-center text-sm font-semibold text-accent-ink underline">Open in my email</a>
+          <span className="w-full text-xs text-muted">The link works for 30 days. Creating a new link for this customer replaces the old one.</span>
+        </div>
+      )}
+    </div>
+  );
+}

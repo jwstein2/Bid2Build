@@ -82,7 +82,7 @@ d("V6.9 tax + banking (database)", () => {
     expect((await change({ state: "TX", jurisdictionCode: "TX", jurisdictionName: "Texas", kind: "taxability", summary: "Repair labor treatment clarified", effectiveDate: "2026-12-01" })).status).toBe("needs_review");
     expect((await change({ state: "WI", jurisdictionCode: "WI", jurisdictionName: "Wisconsin", kind: "rate", summary: "Unverified rate", newRate: "5.1", effectiveDate: "2026-12-01", verified: false })).status).toBe("needs_review");
     expect((await change({ state: "WI", jurisdictionCode: "WI", jurisdictionName: "Wisconsin", kind: "rate", summary: "Disputed rate", newRate: "5.2", effectiveDate: "2026-12-01", sourcesAgree: false })).status).toBe("needs_review");
-    expect(Number((await pool.query("select count(*) n from public.tax_jurisdiction_rates where state in ('TX', 'WI')")).rows[0].n)).toBe(0);
+    expect(Number((await pool.query("select count(*) n from public.tax_jurisdiction_rates where state in ('TX', 'WI') and source <> 'seed'")).rows[0].n)).toBe(0);
     expect(await fails(pool.query("update public.tax_change_events set status = 'active' where state = 'TX'"))).toMatch(/tax_change_events_auto/);
   });
 
@@ -241,6 +241,62 @@ d("V6.9 tax + banking (database)", () => {
     expect(Number((await pool.query("select count(*) n from public.fin_bank_transactions where account_id = $1", [chk])).rows[0].n)).toBe(3);
     expect(await fails(pool.query("select public.fin_bank_feed_ingest($1, $2)", [conn, feed]))).toMatch(/disconnected/);
     expect((await rows(w.owner, "select status from public.fin_bank_connections where id = $1", [conn]))[0].status).toBe("disconnected");
+  });
+
+  it("built-in engine: official imports version rates, baselines don't alert, corrections go to review, official beats seed", async () => {
+    const imp = (rows: Row[]) => pool.query("select public.tax_official_import('IA', null, 'https://example.gov/IAR.csv', $1) r", [JSON.stringify(rows)]).then((x) => x.rows[0].r as Row);
+    expect(Number((await pool.query("select public.tax_rate_on('IA', 'IA', '2026-11-18') r")).rows[0].r)).toBe(6);            // seed until the official import
+    const first = await imp([{ code: "IA", name: "IA", level: "state", rate: "6", effectiveFrom: "2008-07-01" }, { code: "IA-CO-153", name: "County 153", level: "county", rate: "1", effectiveFrom: "2020-01-01" }]);
+    expect(first).toMatchObject({ found: 2, applied: 2, alertIds: [] });
+    expect(Number((await pool.query("select count(*) n from public.tax_change_events where state = 'IA' and fanned_out_at is null")).rows[0].n)).toBe(0);   // baselines never alert
+    expect((await imp([{ code: "IA", name: "IA", level: "state", rate: "6", effectiveFrom: "2008-07-01" }])).found).toBe(0);                            // unchanged = nothing
+    const change = await imp([{ code: "IA-CO-153", name: "County 153", level: "county", rate: "1.5", effectiveFrom: "2027-01-01" }]);
+    expect(change).toMatchObject({ found: 1, applied: 1 });
+    expect((change.alertIds as string[]).length).toBe(1);
+    expect(Number((await pool.query("select public.tax_rate_on('IA', 'IA-CO-153', '2026-12-31') a, 1 b")).rows[0].a)).toBe(1);
+    expect(Number((await pool.query("select public.tax_rate_on('IA', 'IA-CO-153', '2027-01-02') a")).rows[0].a)).toBe(1.5);
+    const corr = await imp([{ code: "IA-CO-153", name: "County 153", level: "county", rate: "1.25", effectiveFrom: "2027-01-01" }]);
+    expect(corr).toMatchObject({ found: 1, review: 1 });
+    expect(Number((await pool.query("select public.tax_rate_on('IA', 'IA-CO-153', '2027-01-02') a")).rows[0].a)).toBe(1.5);        // history not overwritten
+    expect(await fails(as(w.owner, "select public.tax_official_import('IA', null, null, '[]'::jsonb)"))).toMatch(/permission denied/);
+  });
+
+  it("built-in engine: boundaries switch live per state; geocode cache is service-role only", async () => {
+    const run1 = "11111111-1111-4111-8111-111111111111", run2 = "22222222-2222-4222-8222-222222222222";
+    await pool.query("select public.tax_zip_areas_load('IA', $1, $2)", [run1, JSON.stringify([{ zip5: "52240", countyFips: "103", placeFips: "38595", specials: [], weight: 3 }])]);
+    expect((await rows(w.owner, "select * from public.tax_zip_areas where state = 'IA'")).length).toBe(0);                          // not live yet
+    await pool.query("select public.tax_zip_areas_commit('IA', $1)", [run1]);
+    expect((await rows(w.owner, "select zip5 from public.tax_zip_areas where state = 'IA'")).map((r) => r.zip5)).toEqual(["52240"]);
+    await pool.query("select public.tax_zip_areas_load('IA', $1, $2)", [run2, JSON.stringify([{ zip5: "52241", countyFips: "103", specials: ["9"], weight: 1 }])]);
+    await pool.query("select public.tax_zip_areas_commit('IA', $1)", [run2]);
+    expect((await rows(w.owner, "select zip5, specials from public.tax_zip_areas where state = 'IA'"))).toEqual([{ zip5: "52241", specials: ["9"] }]);
+    expect(await fails(pool.query("select public.tax_zip_areas_commit('IA', gen_random_uuid())"))).toMatch(/empty_boundary_load/);
+    await pool.query("insert into public.tax_geocode_cache (key, matched, state) values (repeat('a', 64), true, 'IA')");
+    expect(await fails(rows(w.owner, "select * from public.tax_geocode_cache"))).toMatch(/permission denied/);
+    expect((await rows(w.owner, "select state, kind, status from public.tax_rate_sources where state in ('CT', 'MN', 'OR', 'TX') order by state"))).toEqual([
+      { state: "CT", kind: "state_only", status: "not_needed" }, { state: "MN", kind: "sst", status: "needs_link" }, { state: "OR", kind: "none", status: "not_needed" }, { state: "TX", kind: "state_table", status: "needs_link" }]);
+  });
+
+  it("online exemption certificate: link by config managers, signed by the customer, saved as exemptions", async () => {
+    const cust = (await pool.query("select customer_id from public.estimates where id = $1", [estId])).rows[0].customer_id;
+    const hash = "c".repeat(64);
+    expect(await fails(as(w.bk, "select public.fin_tax_exemption_request_create($1, $2)", [w.book, { customerId: cust, states: ["MN"], tokenHash: hash }]))).toMatch(/forbidden/);
+    expect(await fails(as(w.rival, "select public.fin_tax_exemption_request_create($1, $2)", [w.rivalBook, { customerId: cust, states: ["MN"], tokenHash: hash }]))).toMatch(/not_found/);
+    await as(w.owner, "select public.fin_tax_exemption_request_create($1, $2)", [w.book, { customerId: cust, states: ["MN", "WI"], tokenHash: hash }]);
+    expect(await fails(rows(w.owner, "select token_hash from public.fin_tax_exemption_requests"))).toMatch(/permission denied/);
+    const view = (await pool.query("select public.tax_exemption_request_view($1) v", [hash])).rows[0].v;
+    expect(view).toMatchObject({ status: "open", states: ["MN", "WI"] });
+    expect(Object.keys(view).sort()).toEqual(["company", "customer", "expiresAt", "signedAt", "states", "status"]);
+    const sign = { states: ["MN", "WI"], reasonCode: "G", purchaser: { name: "Pat Buyer", line1: "1 Main", city: "Rochester", state: "MN", zip: "55901", businessType: "Construction" },
+      idType: "state_permit", idNumber: "MN-1234567", signerName: "Pat Buyer", statement: "I certify…", ip: "203.0.113.9", userAgent: "test" };
+    expect((await pool.query("select public.tax_exemption_sign($1, $2) r", [hash, sign])).rows[0].r).toMatchObject({ states: 2 });
+    expect(await fails(pool.query("select public.tax_exemption_sign($1, $2)", [hash, sign]))).toMatch(/link_used/);
+    const ex = await rows(w.owner, "select state, reason, certificate_id is not null as online, status from public.fin_tax_exemptions where customer_id = $1 and certificate_id is not null order by state", [cust]);
+    expect(ex).toEqual([{ state: "MN", reason: "resale", online: true, status: "active" }, { state: "WI", reason: "resale", online: true, status: "active" }]);
+    expect((await rows(w.owner, "select id_number from public.fin_tax_exemption_certificates where customer_id = $1", [cust]))[0].id_number).toBe("MN-1234567");
+    expect(await rows(w.rep, "select * from public.fin_tax_exemption_certificates")).toEqual([]);
+    expect(await fails(pool.query("update public.fin_tax_exemption_certificates set id_number = 'x'"))).toMatch(/immutable/);
+    expect(await fails(as(w.owner, "select public.tax_exemption_sign($1, '{}'::jsonb)", [hash]))).toMatch(/permission denied/);
   });
 
   it("owner monitoring is aggregate only (no balances, names or transactions)", async () => {

@@ -22,6 +22,8 @@ export interface TaxRequest {
   lines: TaxLineInput[];
   contract?: ContractType | null;
   workMix?: "residential" | "commercial" | null;
+  /** New construction / capital improvement vs repair and remodeling (construction rules depend on it). */
+  work?: "new_construction" | "repair" | null;
   customerId?: string | null;
 }
 
@@ -49,6 +51,12 @@ export interface ProviderResult {
   lines: ProviderLine[];
   addressValid: boolean;
   dataAsOf: string;                       // ISO time the provider's rate data is current to
+  /** Review reasons the provider itself raises (e.g. local rates not loaded yet). */
+  reviewReasons?: ReviewReason[];
+  /** Plain-language guidance shown with the calculation (construction rule notes). */
+  notes?: string[];
+  /** Override the engine's staleness window for this data (days). */
+  staleAfterDays?: number;
 }
 
 export interface TaxProvider {
@@ -58,12 +66,13 @@ export interface TaxProvider {
   ratesFor(address: TaxAddress, date: string): Promise<ProviderJurisdiction[]>;
 }
 
-export interface CustomerExemption { state: string; reason: string; certificateOnFile: boolean; expiresOn: string | null; certificateRef?: string | null }
+export interface CustomerExemption { state: string; reason: string; certificateOnFile: boolean; expiresOn: string | null; certificateRef?: string | null; onlineForm?: boolean }
 
 export type ReviewReason =
   | "invalid_address" | "provider_unavailable" | "stale_rate" | "no_verified_rate" | "conflicting_sources"
   | "construction_treatment_review" | "exemption_missing_certificate" | "exemption_expired" | "exemption_other_state"
-  | "unverified_company_rate" | "no_general_sales_tax" | "rule_change_pending";
+  | "unverified_company_rate" | "no_general_sales_tax" | "rule_change_pending"
+  | "local_rate_unverified" | "address_approximate" | "zip_spans_jurisdictions" | "exemption_state_form";
 
 export const REVIEW_TEXT: Record<ReviewReason, string> = {
   invalid_address: "The project address couldn't be validated, so the local tax jurisdiction isn't known.",
@@ -78,6 +87,10 @@ export const REVIEW_TEXT: Record<ReviewReason, string> = {
   unverified_company_rate: "This uses the rate you entered. It hasn't been checked by a tax service.",
   no_general_sales_tax: "This state has no general statewide sales tax. Check whether a local tax applies before using a rate.",
   rule_change_pending: "A tax rule change in this state is waiting for review.",
+  local_rate_unverified: "Local (city, county or district) rates for this address aren't loaded yet, so only the state rate is included. Check the local rate with the official source before sending.",
+  address_approximate: "The street address couldn't be matched exactly, so local taxes were found from the ZIP code. Check that the address is complete.",
+  zip_spans_jurisdictions: "This ZIP code crosses city or district lines. Built2Bid used the most common area for it; confirm the job address is right.",
+  exemption_state_form: "This state may require its own exemption form. The customer's signed Built2Bid certificate is on file; confirm the state accepts it.",
 };
 
 export interface TaxJurisdictionResult extends ProviderJurisdiction { taxable: string; tax: string }
@@ -99,4 +112,7 @@ export interface TaxResult {
   reviewReasons: ReviewReason[];
   dataAsOf: string | null;
   calculatedAt: string;
+  /** Guidance from the construction rules (not legal advice). */
+  notes?: string[];
+  rulesVersion?: string | null;
 }

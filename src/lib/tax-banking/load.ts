@@ -15,7 +15,7 @@ const s = (v: unknown) => (v === null || v === undefined ? null : String(v));
 /** A date column as YYYY-MM-DD (PostgREST sends that; a timestamp-shaped value is cut to its date). */
 const d10 = (v: unknown) => (v === null || v === undefined || v === "" ? null : String(v).slice(0, 10));
 
-export interface Freshness { lastSuccessAt: string | null; lastAttemptAt: string | null; lastStatus: string | null; provider: string | null; authoritiesReachable: number; authoritiesTotal: number }
+export interface Freshness { lastSuccessAt: string | null; lastAttemptAt: string | null; lastStatus: string | null; provider: string | null; authoritiesReachable: number; authoritiesTotal: number; statesLoaded?: number; statesNeedingSource?: number }
 
 export async function loadTaxPage(db: Db, bookId: string, perms: readonly string[]) {
   const [profile, alerts, fresh, auths, changes, exemptions] = await Promise.all([
@@ -23,13 +23,14 @@ export async function loadTaxPage(db: Db, bookId: string, perms: readonly string
     can(perms, "tax.review_alerts") ? db.from("fin_tax_alerts").select("*").eq("book_id", bookId).order("created_at", { ascending: false }).limit(100) : Promise.resolve({ data: [], error: null }),
     db.rpc("tax_freshness"),
     db.from("tax_authorities").select("state, state_name, authority, website, tax_system, sst_member, note, source_status, last_verified_at, last_checked_at, next_check_at, machine_feed").order("state"),
-    db.from("tax_change_events").select("id, state, jurisdiction_name, level, kind, summary, old_rate, new_rate, effective_date, status, source_url, detected_at").order("effective_date", { ascending: false }).limit(200),
-    db.from("fin_tax_exemptions").select("id, customer_id, state, reason, certificate_ref, document_id, expires_on, status, created_at").eq("book_id", bookId).order("created_at", { ascending: false }),
+    db.from("tax_change_events").select("id, state, jurisdiction_name, level, kind, summary, old_rate, new_rate, effective_date, status, source_url, detected_at").order("effective_date", { ascending: false }).limit(600),
+    db.from("fin_tax_exemptions").select("id, customer_id, state, reason, certificate_ref, document_id, certificate_id, expires_on, status, created_at").eq("book_id", bookId).order("created_at", { ascending: false }),
   ]);
   if (profile.error && isMissing(profile.error)) return { installed: false as const };
   const p = profile.data as Row | null;
   const states: string[] = (p?.service_states as string[] | undefined) ?? [];
-  const allChanges = (changes.data ?? []) as Row[];
+  // First recordings of a rate (baselines from the initial official import) aren't news; show real changes only.
+  const allChanges = ((changes.data ?? []) as Row[]).filter((c) => c.kind !== "rate" || c.old_rate !== null || c.status === "needs_review");
   return {
     installed: true as const,
     profile: p,

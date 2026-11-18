@@ -62,6 +62,22 @@ if (EST) await visit(`/estimates/${EST}`, "bid-tax-details", { act: async (p) =>
   const b = p.getByTestId("tax-details-open"); if (await b.count()) { await b.scrollIntoViewIfNeeded(); await b.click(); await p.getByTestId("tax-details").waitFor({ timeout: 8000 }).catch(() => {}); await p.waitForTimeout(1500); await p.getByTestId("tax-details").scrollIntoViewIfNeeded().catch(() => {}); }
   check("tax details panel opens", (await p.getByTestId("tax-details").count()) > 0);
 } });
+const TOKEN = process.argv[4];
+if (TOKEN) {
+  await visit(`/exempt/${TOKEN}`, "exempt-form", { act: async (p) => { await has("Sales tax exemption certificate")(p); await has("Nothing to print or upload")(p); } });
+  await visit(`/exempt/${TOKEN}`, "exempt-form", { phone: true });
+  await visit(`/exempt/${TOKEN}`, "exempt-signed", { act: async (p) => {
+    await p.getByLabel("Reason for exemption").selectOption("G");
+    await p.getByLabel("Street address").fill("1 Main St"); await p.getByLabel("City").fill("Rochester"); await p.getByLabel("ZIP").fill("55901");
+    await p.getByLabel("Type of business").selectOption("Construction"); await p.getByLabel("ID number type").selectOption("state_permit"); await p.getByLabel("ID number", { exact: true }).fill("MN-1234567");
+    await p.getByLabel("I confirm this statement").check(); await p.getByLabel("Type your full name to sign").fill("Pat Buyer");
+    await p.getByRole("button", { name: "Sign certificate" }).click();
+    await p.getByText("Certificate signed").first().waitFor({ timeout: 8000 }).catch(() => {});
+    check("customer signs the certificate online", (await p.getByText("Certificate signed").count()) > 0);
+  } });
+  await visit("/financials/tax?view=setup", "tax-exemptions-after", { act: async (p) => { await has("signed online")(p); await has("Ask a customer to sign their certificate online")(p); } });
+}
+await visit("/financials/tax", "tax-builtin-banner", { act: async (p) => { await has("official rate files")(p); } });
 await browser.close();
 fs.writeFileSync(path.join(dir, "walk-results.txt"), [...out, "", "Errors:", ...(errors.length ? errors : ["none"])].join("\n"));
 console.log([...out, "", "Errors:", ...(errors.length ? errors : ["none"])].join("\n"));

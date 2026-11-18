@@ -1,7 +1,11 @@
 /**
  * Provider modes + fail-closed isolation (V6.2 rules applied to V6.9).
  *
- * Nothing paid is ever switched on by code. A real provider runs only when ALL of these hold:
+ * Tax: Built2Bid's own engine ("builtin") is the default. It costs nothing per call (official state files + the free
+ * Census geocoder), so it needs no approval switch; set TAX_PROVIDER=none to turn it off. It never runs inside a
+ * test run (tests inject their own fetch and data).
+ *
+ * Nothing paid is ever switched on by code. A paid provider runs only when ALL of these hold:
  *   - the mode env var names it (TAX_PROVIDER=avalara|taxjar|stripe_tax, BANK_PROVIDER=plaid)
  *   - its live switch is set by the owner (TAX_PROVIDER_LIVE=true / BANK_PROVIDER_LIVE=true)
  *   - its credentials are present
@@ -9,7 +13,7 @@
  * Mock providers run only outside production (or inside a Financials practice/sandbox book). Tests call
  * assertTestIsolation(), which throws if any real banking, tax or payment credential is present.
  */
-export type TaxProviderName = "none" | "mock" | "avalara" | "taxjar" | "stripe_tax";
+export type TaxProviderName = "none" | "mock" | "builtin" | "avalara" | "taxjar" | "stripe_tax";
 export type BankProviderName = "none" | "mock" | "plaid";
 
 type Env = Record<string, string | undefined>;
@@ -18,8 +22,14 @@ export const isProductionDeploy = (env: Env = process.env) => env.CONTEXT === "p
 const inTests = (env: Env) => env.VITEST === "true" || env.NODE_ENV === "test";
 
 export function taxProviderMode(env: Env = process.env, opts: { sandbox?: boolean } = {}): TaxProviderName {
-  const want = (env.TAX_PROVIDER ?? "none").toLowerCase();
+  const want = (env.TAX_PROVIDER || "builtin").toLowerCase();
+  if (want === "none") return opts.sandbox && !isProductionDeploy(env) ? "mock" : "none";
   if (want === "mock") return !isProductionDeploy(env) || opts.sandbox ? "mock" : "none";
+  if (want === "builtin") {
+    if (inTests(env)) return opts.sandbox && !isProductionDeploy(env) ? "mock" : "none";
+    // Practice books on preview/local deploys keep the made-up fixture data so tests and demos are repeatable.
+    return opts.sandbox && !isProductionDeploy(env) ? "mock" : "builtin";
+  }
   if (want === "avalara" || want === "taxjar" || want === "stripe_tax") {
     if (inTests(env) || env.TAX_PROVIDER_LIVE !== "true") return opts.sandbox && !isProductionDeploy(env) ? "mock" : "none";
     const creds = want === "avalara" ? env.AVALARA_ACCOUNT_ID && env.AVALARA_LICENSE_KEY : want === "taxjar" ? env.TAXJAR_API_KEY : env.STRIPE_TAX_CALC_KEY;

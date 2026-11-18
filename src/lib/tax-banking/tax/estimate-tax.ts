@@ -5,6 +5,7 @@ import "server-only";
  * bid's tax rate, a signed proposal, or an issued invoice.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { createAdminClient } from "@/lib/supabase/server";
 import { loadEstimate } from "@/lib/data/server";
 import { computeEstimate } from "@/lib/estimate/engine";
 import { calculateTax, explainDifference, type StoredRate } from "./engine";
@@ -40,16 +41,19 @@ export function addressFrom(e: { customer?: { projectAddress?: string }; project
 
 async function exemptionFor(db: Db, customerId: string | null): Promise<CustomerExemption | null> {
   if (!customerId) return null;
-  const { data } = await db.from("fin_tax_exemptions").select("state, reason, certificate_ref, document_id, expires_on").eq("customer_id", customerId).eq("status", "active").limit(1).maybeSingle();
+  const { data } = await db.from("fin_tax_exemptions").select("state, reason, certificate_ref, document_id, certificate_id, expires_on").eq("customer_id", customerId).eq("status", "active")
+    .order("created_at", { ascending: false }).limit(1).maybeSingle();
   if (!data) return null;
   const r = data as Row;
-  // A certificate counts as "on file" when its reference or uploaded document was recorded.
-  return { state: String(r.state), reason: String(r.reason), certificateOnFile: Boolean(r.document_id || r.certificate_ref), expiresOn: (r.expires_on as string | null) ?? null, certificateRef: (r.certificate_ref as string | null) ?? null };
+  // A certificate counts as "on file" when the customer signed one online, or a reference or document was recorded.
+  return { state: String(r.state), reason: String(r.reason), certificateOnFile: Boolean(r.certificate_id || r.document_id || r.certificate_ref), expiresOn: (r.expires_on as string | null) ?? null,
+    certificateRef: (r.certificate_ref as string | null) ?? null, onlineForm: Boolean(r.certificate_id) };
 }
 
 async function storedRatesFor(db: Db, state: string | null): Promise<StoredRate[]> {
   if (!state) return [];
-  const { data } = await db.from("tax_jurisdiction_rates").select("jurisdiction_code, jurisdiction_name, level, rate, effective_from, source, recorded_at").eq("state", state).limit(200);
+  // Statewide rates only (the fallback can't know the county/city); seed rates aren't "verified" history.
+  const { data } = await db.from("tax_jurisdiction_rates").select("jurisdiction_code, jurisdiction_name, level, rate, effective_from, source, recorded_at").eq("state", state).eq("level", "state").neq("source", "seed").limit(50);
   return ((data ?? []) as Row[]).map((r) => ({ jurisdiction: { code: String(r.jurisdiction_code), name: String(r.jurisdiction_name), level: r.level as StoredRate["jurisdiction"]["level"], rate: String(r.rate), taxType: "sales" },
     effectiveFrom: String(r.effective_from), recordedAt: String(r.recorded_at), source: r.source as StoredRate["source"] }));
 }
@@ -57,6 +61,22 @@ async function storedRatesFor(db: Db, state: string | null): Promise<StoredRate[
 async function pendingRuleStates(db: Db): Promise<string[]> {
   const { data } = await db.from("tax_change_events").select("state").eq("status", "needs_review").neq("kind", "rate").limit(200);
   return [...new Set(((data ?? []) as Row[]).map((r) => String(r.state)))];
+}
+
+/** The built-in engine reads public rate tables with the caller's client and caches geocodes with the service role. */
+export function taxProviderFor(db: Db, opts: { sandbox?: boolean } = {}) {
+  let cache: Db | null = null;
+  try { cache = createAdminClient(); } catch { cache = null; }
+  return resolveTaxProvider(process.env, { sandbox: opts.sandbox, builtin: { db, cache } });
+}
+
+async function profileFor(db: Db) {
+  // The caller's tax setup (RLS shows only books they belong to): work mix + usual contract feed the construction rules.
+  const { data } = await db.from("fin_tax_profiles").select("work_mix, default_contract").limit(1).maybeSingle();
+  const r = (data ?? null) as Row | null;
+  const mix = r?.work_mix === "residential" || r?.work_mix === "commercial" ? (r.work_mix as "residential" | "commercial") : null;
+  const contract = (r?.default_contract as "lump_sum" | "time_and_materials" | "cost_plus" | "mixed" | null) ?? null;
+  return { workMix: mix, contract };
 }
 
 export async function estimateTax(db: Db, estimateId: string, opts: { work?: WorkKind; date?: string; sandbox?: boolean } = {}) {
@@ -69,9 +89,10 @@ export async function estimateTax(db: Db, estimateId: string, opts: { work?: Wor
   const lines = estimate.items.filter((i) => totals.items[i.id]?.valid !== false).map((i) => ({
     ref: i.id, amount: totals.items[i.id]?.extendedPrice.toFixed(2) ?? "0.00", classification: classify(i.costType, work), taxableHint: i.taxable,
   }));
-  const provider = resolveTaxProvider(process.env, { sandbox: opts.sandbox });
+  const provider = taxProviderFor(db, { sandbox: opts.sandbox });
+  const prof = await profileFor(db).catch(() => ({ workMix: null, contract: null }));
   const result = await calculateTax({
-    request: { address, transactionDate: opts.date ?? new Date().toISOString().slice(0, 10), lines, contract: "lump_sum", customerId },
+    request: { address, transactionDate: opts.date ?? new Date().toISOString().slice(0, 10), lines, contract: prof.contract ?? "lump_sum", workMix: prof.workMix, work, customerId },
     provider, companyRate: estimate.taxRate ?? "0", exemption: await exemptionFor(db, customerId).catch(() => null),
     storedRates: await storedRatesFor(db, address.state).catch(() => []), pendingRuleStates: await pendingRuleStates(db).catch(() => []),
   });
@@ -111,7 +132,7 @@ export async function snapshotIssuedInvoice(db: Db, invoiceId: string, opts: { s
   const nontaxable = L.filter((l) => !l.taxable).reduce((s, l) => s + Math.round(Number(l.amount) * 100), 0) / 100;
   const reasons: string[] = [];
   let note: string | null = null;
-  const provider = resolveTaxProvider(process.env, { sandbox: opts.sandbox });
+  const provider = taxProviderFor(db, { sandbox: opts.sandbox });
   if (provider && Number(i.tax) > 0) {
     // Compare the contract rate with the rate in force on the invoice date for the job's address.
     const { data: job } = await db.from("fin_jobs").select("estimate_id").eq("id", String(i.job_id)).maybeSingle();

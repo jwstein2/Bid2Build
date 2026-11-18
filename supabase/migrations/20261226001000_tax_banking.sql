@@ -1,8 +1,10 @@
 -- V6.9 Tax intelligence + connected banking (read-only). Requires 20261124001000 .. 20261220001000.
 --
--- PART A, TAX. Rates come from a licensed tax provider (Avalara AvaTax, TaxJar or Stripe Tax, none activated yet) or,
--- until one is approved, from the rate the company typed (labelled "your rate, not verified"). Nothing here is a
--- homemade national tax engine:
+-- PART A, TAX. Rates come from Built2Bid's own engine: each state's official rate (and boundary) files, imported
+-- hourly and versioned here, plus statewide seed rates until a state's official file is in. With no rate on file the
+-- calculation uses the rate the company typed (labelled "your rate, not verified"). Paid providers (Avalara, TaxJar,
+-- Stripe Tax) remain optional and off. Sections 3b and 14 hold the built-in engine's tables and functions and the
+-- online exemption certificates customers sign (no uploads).
 --   1. tax_authorities: the official agency for each of the 50 states + DC (names + homepages only; no invented feeds).
 --   2. tax_change_events + tax_jurisdiction_rates: a versioned, append-only record of every rate or rule change the
 --      provider reports, with its effective date and source. Only VERIFIED NUMERIC RATE changes whose sources agree
@@ -140,8 +142,9 @@ on conflict (state) do update set state_name = excluded.state_name, authority = 
 -- 2. Sync runs (freshness) --------------------------------------------------------------------------------------
 create table if not exists public.tax_sync_runs (
   id            uuid primary key default gen_random_uuid(),
-  provider      text not null check (provider in ('none', 'mock', 'avalara', 'taxjar', 'stripe_tax', 'official')),
-  kind          text not null default 'rates' check (kind in ('rates', 'authorities', 'digest')),
+  provider      text not null check (provider in ('none', 'mock', 'builtin', 'avalara', 'taxjar', 'stripe_tax', 'official')),
+  kind          text not null default 'rates' check (kind in ('rates', 'authorities', 'digest', 'import')),
+  state         text,                     -- official file imports: the state imported
   started_at    timestamptz not null default now(),
   finished_at   timestamptz,
   status        text not null default 'running' check (status in ('running', 'ok', 'failed', 'skipped')),
@@ -149,7 +152,8 @@ create table if not exists public.tax_sync_runs (
   changes_found integer not null default 0,
   changes_applied integer not null default 0,
   changes_review integer not null default 0,
-  api_calls     integer not null default 0
+  api_calls     integer not null default 0,
+  rows_read     integer not null default 0
 );
 create index if not exists tax_sync_runs_recent on public.tax_sync_runs (kind, started_at desc);
 alter table public.tax_sync_runs enable row level security;
@@ -215,7 +219,7 @@ create table if not exists public.tax_jurisdiction_rates (
   level              text not null check (level in ('state', 'county', 'city', 'special', 'other')),
   rate               numeric(8, 5) not null check (rate between 0 and 100),
   effective_from     date not null,
-  source             text not null check (source in ('provider', 'official', 'fixture')),
+  source             text not null check (source in ('provider', 'official', 'fixture', 'seed')),   -- seed = statewide rate bundled with the app; official always wins
   provider           text,
   source_url         text,
   change_event_id    uuid references public.tax_change_events (id) on delete restrict,
@@ -235,8 +239,82 @@ grant select on public.tax_jurisdiction_rates to authenticated;
 create or replace function public.tax_rate_on(p_state text, p_code text, p_date date) returns numeric
 language sql stable set search_path = public as $$
   select rate from public.tax_jurisdiction_rates where state = p_state and jurisdiction_code = p_code and effective_from <= p_date
-   order by effective_from desc, recorded_at desc limit 1
+   order by (source = 'seed'), effective_from desc, recorded_at desc limit 1
 $$;
+
+-- 3b. Built-in tax engine data (official state files; no paid provider) ----------------------------------------
+-- Where each state's official rate data comes from and how the last import went. Streamlined (SST) states publish
+-- rate + boundary files in one national layout; other states publish their own tables (column mapping in `format`).
+-- The hourly import (/api/cron/tax-rates) reads these rows; a failed or changed file keeps the last good rates.
+create table if not exists public.tax_rate_sources (
+  state               text primary key references public.tax_authorities (state),
+  kind                text not null check (kind in ('sst', 'state_table', 'state_only', 'none')),
+  listing_url         text check (listing_url ~ '^https://'),      -- official page listing the current files (newest picked automatically)
+  rate_url            text check (rate_url ~ '^https://'),         -- direct file link (overrides the listing)
+  boundary_url        text check (boundary_url ~ '^https://'),
+  format              jsonb,                                      -- state_table only: column mapping
+  status              text not null default 'needs_link' check (status in ('needs_link', 'ok', 'failed', 'format_changed', 'not_needed')),
+  last_attempt_at     timestamptz,
+  last_success_at     timestamptz,
+  last_rate_file      text check (char_length(last_rate_file) <= 300),
+  last_boundary_file  text check (char_length(last_boundary_file) <= 300),
+  last_error          text check (char_length(last_error) <= 500),
+  rates_loaded        integer not null default 0,
+  zips_loaded         integer not null default 0,
+  updated_at          timestamptz not null default now()
+);
+alter table public.tax_rate_sources enable row level security;
+drop policy if exists tax_rate_sources_read on public.tax_rate_sources;
+create policy tax_rate_sources_read on public.tax_rate_sources for select to authenticated using (true);   -- public facts: which states are loaded
+revoke insert, update, delete on public.tax_rate_sources from anon, authenticated;
+grant select on public.tax_rate_sources to authenticated;
+
+insert into public.tax_rate_sources (state, kind, listing_url, status)
+select a.state,
+       case when a.tax_system = 'none' then 'none'
+            when a.state in ('CT', 'DC', 'ME', 'MD', 'MA') then 'state_only'
+            when a.sst_member then 'sst' else 'state_table' end,
+       case when a.sst_member then 'https://www.streamlinedsalestax.org/quick-links/r-b-files' end,
+       case when a.tax_system = 'none' or a.state in ('CT', 'DC', 'ME', 'MD', 'MA') then 'not_needed' else 'needs_link' end
+  from public.tax_authorities a
+on conflict (state) do nothing;
+
+-- Per five-digit ZIP: each distinct county / city / special-district combination in the state's boundary file and how
+-- many boundary records point at it. Loaded in chunks (live = false), then switched live in one step per state.
+create table if not exists public.tax_zip_areas (
+  id           bigint generated always as identity primary key,
+  state        text not null references public.tax_authorities (state),
+  zip5         text not null check (zip5 ~ '^\d{5}$'),
+  county_fips  text not null check (county_fips ~ '^\d{3}$'),
+  place_fips   text check (place_fips ~ '^\d{5}$'),
+  specials     text[] not null default '{}',
+  weight       integer not null default 1 check (weight > 0),
+  run_id       uuid not null,
+  live         boolean not null default false
+);
+create index if not exists tax_zip_areas_lookup on public.tax_zip_areas (state, zip5) where live;
+create index if not exists tax_zip_areas_run on public.tax_zip_areas (state, run_id);
+alter table public.tax_zip_areas enable row level security;
+drop policy if exists tax_zip_areas_read on public.tax_zip_areas;
+create policy tax_zip_areas_read on public.tax_zip_areas for select to authenticated using (live);
+revoke insert, update, delete on public.tax_zip_areas from anon, authenticated;
+grant select on public.tax_zip_areas to authenticated;
+
+-- Census geocoder results. Keyed by a SHA-256 of the normalized address: no address text is stored, only public
+-- county / place codes and names. Service role only.
+create table if not exists public.tax_geocode_cache (
+  key          text primary key check (key ~ '^[0-9a-f]{64}$'),
+  matched      boolean not null,
+  state        text,
+  zip5         text,
+  county_fips  text,
+  county_name  text check (char_length(county_name) <= 200),
+  place_fips   text,
+  place_name   text check (char_length(place_name) <= 200),
+  fetched_at   timestamptz not null default now()
+);
+alter table public.tax_geocode_cache enable row level security;
+revoke all on public.tax_geocode_cache from anon, authenticated;
 
 -- 4. Per-book tax profile + exemptions --------------------------------------------------------------------------
 create table if not exists public.fin_tax_profiles (
@@ -272,6 +350,62 @@ create table if not exists public.fin_tax_exemptions (
   created_at      timestamptz not null default now()
 );
 create index if not exists fin_tax_exemptions_customer on public.fin_tax_exemptions (book_id, customer_id);
+
+-- Exemption certificates customers fill in and sign online (no uploads). The contractor creates a secret link; the
+-- customer opens it, completes the uniform exemption certificate (the Streamlined Sales Tax form's fields) and signs
+-- by typing their name. One certificate covers the states the customer picks; each becomes an exemption row.
+create table if not exists public.fin_tax_exemption_requests (
+  id            uuid primary key default gen_random_uuid(),
+  book_id       uuid not null references public.fin_books (id) on delete restrict,
+  customer_id   uuid not null references public.customers (id) on delete restrict,
+  token_hash    text not null unique check (token_hash ~ '^[0-9a-f]{64}$'),
+  states        text[] not null default '{}',
+  status        text not null default 'open' check (status in ('open', 'signed', 'revoked')),
+  expires_at    timestamptz not null,
+  created_by    uuid references auth.users (id) on delete set null,
+  created_at    timestamptz not null default now(),
+  signed_at     timestamptz
+);
+create index if not exists fin_tax_exemption_requests_book on public.fin_tax_exemption_requests (book_id, customer_id, created_at desc);
+alter table public.fin_tax_exemption_requests enable row level security;
+drop policy if exists fin_tax_exemption_requests_read on public.fin_tax_exemption_requests;
+create policy fin_tax_exemption_requests_read on public.fin_tax_exemption_requests for select to authenticated
+  using (public.tb_can(book_id, 'tax.manage_settings'));
+revoke insert, update, delete on public.fin_tax_exemption_requests from anon, authenticated;
+revoke select (token_hash) on public.fin_tax_exemption_requests from authenticated;   -- secret-derived: never shown
+grant select (id, book_id, customer_id, states, status, expires_at, created_by, created_at, signed_at) on public.fin_tax_exemption_requests to authenticated;
+
+create table if not exists public.fin_tax_exemption_certificates (
+  id              uuid primary key default gen_random_uuid(),
+  book_id         uuid not null references public.fin_books (id) on delete restrict,
+  customer_id     uuid not null references public.customers (id) on delete restrict,
+  request_id      uuid references public.fin_tax_exemption_requests (id) on delete restrict,
+  form            text not null default 'uniform_v1',
+  states          text[] not null check (cardinality(states) between 1 and 51),
+  reason_code     text not null check (reason_code in ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M')),
+  reason_other    text check (char_length(reason_other) <= 200),
+  purchaser       jsonb not null,                       -- {name, business, line1, city, state, zip, businessType}
+  id_type         text not null check (id_type in ('state_permit', 'fein', 'drivers_license', 'foreign_diplomat', 'other')),
+  id_number       text not null check (char_length(id_number) between 2 and 40),
+  id_state        text check (id_state ~ '^[A-Z]{2}$'),
+  signer_name     text not null check (char_length(signer_name) between 2 and 120),
+  signer_title    text check (char_length(signer_title) <= 120),
+  statement       text not null check (char_length(statement) <= 2000),
+  signed_at       timestamptz not null default now(),
+  ip              text check (char_length(ip) <= 64),
+  user_agent      text check (char_length(user_agent) <= 500)
+);
+create index if not exists fin_tax_exemption_certificates_customer on public.fin_tax_exemption_certificates (book_id, customer_id);
+drop trigger if exists fin_tax_exemption_certificates_immutable on public.fin_tax_exemption_certificates;
+create trigger fin_tax_exemption_certificates_immutable before update or delete on public.fin_tax_exemption_certificates for each row execute function public.fin_guard_immutable();
+alter table public.fin_tax_exemption_certificates enable row level security;
+drop policy if exists fin_tax_exemption_certificates_read on public.fin_tax_exemption_certificates;
+create policy fin_tax_exemption_certificates_read on public.fin_tax_exemption_certificates for select to authenticated
+  using (public.tb_can(book_id, 'tax.manage_settings'));
+revoke insert, update, delete on public.fin_tax_exemption_certificates from anon, authenticated;
+grant select on public.fin_tax_exemption_certificates to authenticated;
+
+alter table public.fin_tax_exemptions add column if not exists certificate_id uuid references public.fin_tax_exemption_certificates (id) on delete restrict;
 
 -- 5. Calculations (snapshots) -----------------------------------------------------------------------------------
 create table if not exists public.tax_calculations (
@@ -583,11 +717,13 @@ declare v_id uuid; v_status text; v_auto boolean; e public.tax_change_events;
 begin
   v_auto := v_kind = 'rate' and v_verified and v_new is not null and coalesce(v_agree, true);
   v_status := case when not v_auto then 'needs_review' when v_eff <= current_date then 'active' else 'scheduled' end;
+  -- A first recording of a jurisdiction's rate (no old rate) is a baseline, not news: it never becomes an alert.
   insert into public.tax_change_events (state, jurisdiction_code, jurisdiction_name, level, kind, summary, old_rate, new_rate, effective_date, source, provider,
-                                        provider_ref, source_url, verified, sources_agree, status, activated_at, sync_run_id)
+                                        provider_ref, source_url, verified, sources_agree, status, activated_at, sync_run_id, fanned_out_at)
   values (upper(p ->> 'state'), p ->> 'jurisdictionCode', p ->> 'jurisdictionName', coalesce(p ->> 'level', 'state'), v_kind, left(p ->> 'summary', 500),
           nullif(p ->> 'oldRate', '')::numeric, v_new, v_eff, p ->> 'source', nullif(p ->> 'provider', ''), nullif(p ->> 'providerRef', ''), nullif(p ->> 'sourceUrl', ''),
-          v_verified, v_agree, v_status, case when v_status = 'active' then now() end, nullif(p ->> 'syncRunId', '')::uuid)
+          v_verified, v_agree, v_status, case when v_status = 'active' then now() end, nullif(p ->> 'syncRunId', '')::uuid,
+          case when v_kind = 'rate' and nullif(p ->> 'oldRate', '') is null then now() end)
   on conflict do nothing returning id into v_id;
   if v_id is null then
     select * into e from public.tax_change_events where state = upper(p ->> 'state') and jurisdiction_code = p ->> 'jurisdictionCode' and kind = v_kind
@@ -661,10 +797,12 @@ end $$;
 create or replace function public.tax_freshness() returns jsonb
 language sql stable security definer set search_path = public as $$
   select jsonb_build_object(
-    'lastSuccessAt', (select max(finished_at) from public.tax_sync_runs where kind = 'rates' and status = 'ok'),
-    'lastAttemptAt', (select max(started_at) from public.tax_sync_runs where kind = 'rates'),
-    'lastStatus', (select status from public.tax_sync_runs where kind = 'rates' order by started_at desc limit 1),
-    'provider', (select provider from public.tax_sync_runs where kind = 'rates' order by started_at desc limit 1),
+    'lastSuccessAt', (select max(finished_at) from public.tax_sync_runs where kind in ('rates', 'import') and status = 'ok'),
+    'lastAttemptAt', (select max(started_at) from public.tax_sync_runs where kind in ('rates', 'import')),
+    'lastStatus', (select status from public.tax_sync_runs where kind in ('rates', 'import') order by started_at desc limit 1),
+    'provider', (select provider from public.tax_sync_runs where kind in ('rates', 'import') order by started_at desc limit 1),
+    'statesLoaded', (select count(*) from public.tax_rate_sources where rates_loaded > 0),
+    'statesNeedingSource', (select count(*) from public.tax_rate_sources where kind in ('sst', 'state_table') and status in ('needs_link', 'failed', 'format_changed')),
     'authoritiesReachable', (select count(*) from public.tax_authorities where source_status = 'reachable'),
     'authoritiesTotal', (select count(*) from public.tax_authorities))
 $$;
@@ -876,6 +1014,153 @@ revoke execute on function public.tax_change_record(jsonb), public.tax_activate_
   public.fin_bank_feed_ingest(uuid, jsonb), public.admin_tax_banking_health() from public, anon, authenticated;
 grant execute on function public.tax_change_record(jsonb), public.tax_activate_due(date), public.tax_fanout_alerts(uuid), public.tax_quarterly_digest(date),
   public.fin_bank_feed_ingest(uuid, jsonb), public.admin_tax_banking_health() to service_role;
+
+-- 14. Built-in tax engine: official imports, boundaries, statewide seed, online exemption certificates ----------
+-- Import one state's official rates (service role; called by the hourly import). Each row: {code, name, level, rate,
+-- effectiveFrom}. Unchanged rates are skipped; a new or changed rate becomes a verified official change event (which
+-- versions the rate and activates it on its effective date). A different rate for an effective date already on file
+-- is a correction: it goes to review instead of overwriting history. First recordings are baselines (no alerts).
+create or replace function public.tax_official_import(p_state text, p_run uuid, p_source_url text, p_rows jsonb) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare x jsonb; v_code text; v_eff date; v_new numeric; v_cur numeric; v_same numeric; r jsonb;
+        v_found int := 0; v_applied int := 0; v_review int := 0; v_alert uuid[] := '{}'; v_state text := upper(p_state);
+begin
+  if p_source_url is not null and p_source_url !~ '^https://' then p_source_url := null; end if;
+  for x in select * from jsonb_array_elements(coalesce(p_rows, '[]'::jsonb)) loop
+    v_code := x ->> 'code'; v_eff := (x ->> 'effectiveFrom')::date; v_new := round((x ->> 'rate')::numeric, 5);
+    if v_code is null or v_eff is null or v_new is null or v_new < 0 or v_new > 100 then continue; end if;
+    select rate into v_same from public.tax_jurisdiction_rates where state = v_state and jurisdiction_code = v_code and effective_from = v_eff and source <> 'seed' limit 1;
+    if found and v_same = v_new then continue; end if;
+    select rate into v_cur from public.tax_jurisdiction_rates where state = v_state and jurisdiction_code = v_code and effective_from <= v_eff and source <> 'seed'
+     order by effective_from desc, recorded_at desc limit 1;
+    if v_same is null and v_cur is not null and v_cur = v_new then continue; end if;
+    r := public.tax_change_record(jsonb_build_object(
+      'state', v_state, 'jurisdictionCode', v_code, 'jurisdictionName', left(coalesce(x ->> 'name', v_code), 200), 'level', coalesce(x ->> 'level', 'other'),
+      'kind', 'rate', 'oldRate', v_cur, 'newRate', v_new, 'effectiveDate', v_eff, 'source', 'official', 'provider', 'builtin', 'sourceUrl', p_source_url,
+      'verified', v_same is null, 'sourcesAgree', true, 'syncRunId', p_run,
+      'summary', left(coalesce(x ->> 'name', v_code) || case when v_same is not null then ' rate corrected in the official file to '
+                                                         when v_cur is null then ' rate recorded at ' else ' rate changes to ' end
+                      || rtrim(rtrim(v_new::text, '0'), '.') || '%', 500)));
+    if (r ->> 'duplicate')::boolean then continue; end if;
+    v_found := v_found + 1;
+    if r ->> 'status' = 'needs_review' then v_review := v_review + 1; else v_applied := v_applied + 1; end if;
+    if v_cur is not null or v_same is not null then v_alert := v_alert || (r ->> 'id')::uuid; end if;
+    v_same := null; v_cur := null;
+  end loop;
+  return jsonb_build_object('found', v_found, 'applied', v_applied, 'review', v_review, 'alertIds', to_jsonb(v_alert));
+end $$;
+
+-- Boundary rows for one state, loaded in chunks under one run id, then switched live together.
+create or replace function public.tax_zip_areas_load(p_state text, p_run uuid, p_rows jsonb) returns integer
+language plpgsql security definer set search_path = public as $$
+declare n integer;
+begin
+  insert into public.tax_zip_areas (state, zip5, county_fips, place_fips, specials, weight, run_id, live)
+  select upper(p_state), x ->> 'zip5', x ->> 'countyFips', nullif(x ->> 'placeFips', ''),
+         coalesce(array(select jsonb_array_elements_text(coalesce(x -> 'specials', '[]'::jsonb))), '{}'), greatest(coalesce((x ->> 'weight')::int, 1), 1), p_run, false
+    from jsonb_array_elements(coalesce(p_rows, '[]'::jsonb)) x;
+  get diagnostics n = row_count;
+  return n;
+end $$;
+
+create or replace function public.tax_zip_areas_commit(p_state text, p_run uuid) returns integer
+language plpgsql security definer set search_path = public as $$
+declare n integer;
+begin
+  select count(*) into n from public.tax_zip_areas where state = upper(p_state) and run_id = p_run;
+  if n = 0 then raise exception 'empty_boundary_load' using errcode = '22023'; end if;
+  delete from public.tax_zip_areas where state = upper(p_state) and run_id <> p_run;
+  update public.tax_zip_areas set live = true where state = upper(p_state) and run_id = p_run;
+  return n;
+end $$;
+
+-- Statewide seed rates bundled with the app (src/lib/tax-banking/tax/seed-rates.ts; a test keeps them in sync).
+-- Official imported rates always take precedence (tax_rate_on orders seed last).
+insert into public.tax_jurisdiction_rates (state, jurisdiction_code, jurisdiction_name, level, rate, effective_from, source, provider)
+select v.state, v.code, v.name, v.level, v.rate, date '2026-11-01', 'seed', 'builtin'
+  from (values
+    ('AL', 'AL', 'Alabama', 'state', 4), ('AZ', 'AZ', 'Arizona', 'state', 5.6), ('AR', 'AR', 'Arkansas', 'state', 6.5), ('CA', 'CA', 'California', 'state', 7.25),
+    ('CO', 'CO', 'Colorado', 'state', 2.9), ('CT', 'CT', 'Connecticut', 'state', 6.35), ('FL', 'FL', 'Florida', 'state', 6), ('GA', 'GA', 'Georgia', 'state', 4),
+    ('HI', 'HI', 'Hawaii', 'state', 4), ('ID', 'ID', 'Idaho', 'state', 6), ('IL', 'IL', 'Illinois', 'state', 6.25), ('IN', 'IN', 'Indiana', 'state', 7),
+    ('IA', 'IA', 'Iowa', 'state', 6), ('KS', 'KS', 'Kansas', 'state', 6.5), ('KY', 'KY', 'Kentucky', 'state', 6), ('LA', 'LA', 'Louisiana', 'state', 5),
+    ('ME', 'ME', 'Maine', 'state', 5.5), ('MD', 'MD', 'Maryland', 'state', 6), ('MA', 'MA', 'Massachusetts', 'state', 6.25), ('MI', 'MI', 'Michigan', 'state', 6),
+    ('MN', 'MN', 'Minnesota', 'state', 6.875), ('MS', 'MS', 'Mississippi', 'state', 7), ('MO', 'MO', 'Missouri', 'state', 4.225), ('NE', 'NE', 'Nebraska', 'state', 5.5),
+    ('NV', 'NV', 'Nevada', 'state', 6.85), ('NJ', 'NJ', 'New Jersey', 'state', 6.625), ('NM', 'NM', 'New Mexico', 'state', 4.875), ('NY', 'NY', 'New York', 'state', 4),
+    ('NC', 'NC', 'North Carolina', 'state', 4.75), ('ND', 'ND', 'North Dakota', 'state', 5), ('OH', 'OH', 'Ohio', 'state', 5.75), ('OK', 'OK', 'Oklahoma', 'state', 4.5),
+    ('PA', 'PA', 'Pennsylvania', 'state', 6), ('RI', 'RI', 'Rhode Island', 'state', 7), ('SC', 'SC', 'South Carolina', 'state', 6), ('SD', 'SD', 'South Dakota', 'state', 4.2),
+    ('TN', 'TN', 'Tennessee', 'state', 7), ('TX', 'TX', 'Texas', 'state', 6.25), ('VT', 'VT', 'Vermont', 'state', 6), ('VA', 'VA', 'Virginia', 'state', 4.3),
+    ('WA', 'WA', 'Washington', 'state', 6.5), ('WV', 'WV', 'West Virginia', 'state', 6), ('WI', 'WI', 'Wisconsin', 'state', 5), ('WY', 'WY', 'Wyoming', 'state', 4),
+    ('VA', 'VA-LO', 'Virginia local option (all localities)', 'other', 1)
+  ) as v(state, code, name, level, rate)
+on conflict (state, jurisdiction_code, effective_from, source) do nothing;
+
+-- Online exemption certificate: the contractor creates the link (the server makes the token and passes its hash).
+create or replace function public.fin_tax_exemption_request_create(p_book_id uuid, p jsonb) returns uuid
+language plpgsql security definer set search_path = public as $$
+declare v_id uuid; v_cust uuid := nullif(p ->> 'customerId', '')::uuid;
+        v_states text[] := coalesce(array(select upper(s) from jsonb_array_elements_text(coalesce(p -> 'states', '[]'::jsonb)) s), '{}');
+begin
+  perform public.fin_require(p_book_id, public.tb_capability_key('tax.manage_settings'), true);
+  if not exists (select 1 from public.customers c join public.fin_books b on b.id = p_book_id
+                  where c.id = v_cust and (c.company_id = b.company_id or (b.company_id is null and c.user_id = b.owner_user_id))) then
+    raise exception 'not_found' using errcode = 'P0002';
+  end if;
+  if exists (select 1 from unnest(v_states) s where not exists (select 1 from public.tax_authorities a where a.state = s)) then raise exception 'bad_state' using errcode = '22023'; end if;
+  if coalesce(p ->> 'tokenHash', '') !~ '^[0-9a-f]{64}$' then raise exception 'bad_token' using errcode = '22023'; end if;
+  update public.fin_tax_exemption_requests set status = 'revoked' where book_id = p_book_id and customer_id = v_cust and status = 'open';
+  insert into public.fin_tax_exemption_requests (book_id, customer_id, token_hash, states, expires_at, created_by)
+  values (p_book_id, v_cust, p ->> 'tokenHash', v_states, now() + interval '30 days', auth.uid()) returning id into v_id;
+  perform public.fin_audit(p_book_id, 'tax.exemption_requested', 'tax_exemption_request', v_id, jsonb_build_object('states', v_states));
+  return v_id;
+end $$;
+
+-- What the customer's page shows (service role; no ids or other customers' data).
+create or replace function public.tax_exemption_request_view(p_token_hash text) returns jsonb
+language sql stable security definer set search_path = public as $$
+  select jsonb_build_object('status', case when r.status = 'open' and r.expires_at < now() then 'expired' else r.status end,
+                            'company', b.name, 'customer', c.name, 'states', to_jsonb(r.states), 'expiresAt', r.expires_at, 'signedAt', r.signed_at)
+    from public.fin_tax_exemption_requests r join public.fin_books b on b.id = r.book_id join public.customers c on c.id = r.customer_id
+   where r.token_hash = p_token_hash
+$$;
+
+-- The customer signs (service role, from the public page). Creates the certificate + one active exemption per state.
+create or replace function public.tax_exemption_sign(p_token_hash text, p jsonb) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare r public.fin_tax_exemption_requests; v_cert uuid; v_states text[]; s text; v_code text := upper(p ->> 'reasonCode');
+        v_reason text; v_n int := 0;
+begin
+  select * into r from public.fin_tax_exemption_requests where token_hash = p_token_hash for update;
+  if not found then raise exception 'link_invalid' using errcode = 'P0002'; end if;
+  if r.status <> 'open' then raise exception 'link_used' using errcode = '22023'; end if;
+  if r.expires_at < now() then raise exception 'link_expired' using errcode = '22023'; end if;
+  v_states := coalesce(array(select distinct upper(x) from jsonb_array_elements_text(coalesce(p -> 'states', '[]'::jsonb)) x), '{}');
+  if cardinality(v_states) = 0 or exists (select 1 from unnest(v_states) x where not exists (select 1 from public.tax_authorities a where a.state = x)) then
+    raise exception 'bad_state' using errcode = '22023';
+  end if;
+  v_reason := case when v_code in ('A', 'B', 'C') then 'government' when v_code in ('E', 'M') then 'nonprofit' when v_code = 'F' then 'religious'
+                   when v_code = 'G' then 'resale' when v_code = 'H' then 'agricultural' when v_code = 'I' then 'manufacturing' when v_code = 'J' then 'direct_pay' else 'other' end;
+  insert into public.fin_tax_exemption_certificates (book_id, customer_id, request_id, states, reason_code, reason_other, purchaser, id_type, id_number, id_state,
+                                                     signer_name, signer_title, statement, ip, user_agent)
+  values (r.book_id, r.customer_id, r.id, v_states, v_code, nullif(left(p ->> 'reasonOther', 200), ''), p -> 'purchaser', p ->> 'idType', p ->> 'idNumber',
+          nullif(upper(p ->> 'idState'), ''), p ->> 'signerName', nullif(p ->> 'signerTitle', ''), p ->> 'statement', left(p ->> 'ip', 64), left(p ->> 'userAgent', 500))
+  returning id into v_cert;
+  foreach s in array v_states loop
+    update public.fin_tax_exemptions set status = 'revoked' where book_id = r.book_id and customer_id = r.customer_id and state = s and status = 'active';
+    insert into public.fin_tax_exemptions (book_id, customer_id, state, reason, certificate_ref, certificate_id, created_by)
+    values (r.book_id, r.customer_id, s, v_reason, 'Signed online ' || to_char(now() at time zone 'utc', 'YYYY-MM-DD'), v_cert, r.created_by);
+    v_n := v_n + 1;
+  end loop;
+  update public.fin_tax_exemption_requests set status = 'signed', signed_at = now() where id = r.id;
+  perform public.fin_audit(r.book_id, 'tax.exemption_signed', 'tax_exemption_certificate', v_cert, jsonb_build_object('states', v_states, 'reason', v_code));
+  return jsonb_build_object('certificateId', v_cert, 'states', v_n);
+end $$;
+
+revoke execute on function public.fin_tax_exemption_request_create(uuid, jsonb) from public, anon;
+grant execute on function public.fin_tax_exemption_request_create(uuid, jsonb) to authenticated;
+revoke execute on function public.tax_official_import(text, uuid, text, jsonb), public.tax_zip_areas_load(text, uuid, jsonb), public.tax_zip_areas_commit(text, uuid),
+  public.tax_exemption_request_view(text), public.tax_exemption_sign(text, jsonb) from public, anon, authenticated;
+grant execute on function public.tax_official_import(text, uuid, text, jsonb), public.tax_zip_areas_load(text, uuid, jsonb), public.tax_zip_areas_commit(text, uuid),
+  public.tax_exemption_request_view(text), public.tax_exemption_sign(text, jsonb) to service_role;
 
 -- Books with provider connections or tax snapshots hold records (retention + purge rules).
 create or replace function public.fin_book_has_records(p_book_id uuid) returns boolean

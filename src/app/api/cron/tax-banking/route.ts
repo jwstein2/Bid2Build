@@ -19,7 +19,7 @@ export async function POST(req: Request) {
   const a = Buffer.from(got), b = Buffer.from(secret);
   if (!secret || a.length !== b.length || !timingSafeEqual(a, b)) return fail(401, "unauthorized", "Not allowed.");
   const db = createAdminClient();
-  const tax = await runTaxSync(db, resolveTaxProvider(process.env), { checkAuthorities: true });
+  const tax = await runTaxSync(db, resolveTaxProvider(process.env, { builtin: { db, cache: db } }), { checkAuthorities: true });
   const bank = await syncAll();
   return json({ tax: { status: tax.status, found: tax.found, applied: tax.applied, review: tax.review, activated: tax.activated, alerts: tax.alerts, digests: tax.digests }, bank });
 }

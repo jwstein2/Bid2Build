@@ -4,6 +4,8 @@ import { finFail, finGuard } from "@/lib/financials/api";
 import { FinError, finAccess } from "@/lib/financials/server";
 import { BankError, disconnect, finishLink, reconnect, reconnectLink, refresh, startLink } from "@/lib/tax-banking/bank/service";
 import { STATE_CODES } from "@/lib/tax-banking/authorities";
+import { hashSigningToken, newSigningToken } from "@/lib/esign/token";
+import { site } from "@/lib/site";
 
 export const runtime = "nodejs";
 
@@ -31,6 +33,7 @@ const body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("tax_exemption_save"), p: z.object({ id: id.optional(), status: z.literal("revoked").optional(), customerId: id.optional(), state: state.optional(),
     reason: z.enum(["resale", "government", "nonprofit", "religious", "agricultural", "manufacturing", "direct_pay", "other"]).optional(), certificateRef: z.string().regex(/^[A-Za-z0-9 .#…-]{0,40}$/).optional(),
     documentId: id.optional(), expiresOn: day.optional() }) }),
+  z.object({ action: z.literal("tax_exemption_request"), customerId: id, states: z.array(state).min(1).max(51) }),
   z.object({ action: z.literal("tax_alert_act"), alertId: id, status: z.enum(["reviewed", "dismissed"]) }),
   z.object({ action: z.literal("bank_link_start") }),
   z.object({ action: z.literal("bank_link_finish"), publicToken: z.string().min(8).max(300) }),
@@ -63,6 +66,12 @@ export async function POST(req: Request) {
     switch (a.action) {
       case "tax_profile_save": await rpc("fin_tax_profile_save", { p_book_id: bookId, p: a.p }); return json({ ok: true });
       case "tax_exemption_save": return json({ id: await rpc("fin_tax_exemption_save", { p_book_id: bookId, p: a.p }) });
+      case "tax_exemption_request": {
+        // A secret link the customer opens to fill in and sign their exemption certificate. Only its hash is stored.
+        const token = newSigningToken();
+        await rpc("fin_tax_exemption_request_create", { p_book_id: bookId, p: { customerId: a.customerId, states: a.states, tokenHash: hashSigningToken(token) } });
+        return json({ url: `${site.url}/exempt/${token}` });
+      }
       case "tax_alert_act": await rpc("fin_tax_alert_act", { p_alert_id: a.alertId, p_status: a.status }); return json({ ok: true });
       case "bank_link_start": return json(await startLink(db, bookId, user.id, sandbox));
       case "bank_link_finish": return json(await finishLink(db, bookId, sandbox, a.publicToken));

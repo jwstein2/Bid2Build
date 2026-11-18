@@ -44,7 +44,10 @@ export async function runTaxSync(db: Db, provider: TaxProvider | null, opts: { n
   const out = { runId, status: "ok" as "ok" | "failed" | "skipped", found: 0, applied: 0, review: 0, apiCalls: 0, activated: 0, alerts: 0, digests: 0, error: null as string | null };
   try {
     if (!provider) {
-      out.status = "skipped"; out.error = "No tax provider approved yet. Rates come from what each company enters.";
+      out.status = "skipped"; out.error = "Tax rates are switched off (TAX_PROVIDER=none). Rates come from what each company enters.";
+    } else if (provider.name === "builtin") {
+      // The built-in engine's rates arrive through the hourly official-file import (importer.ts), not by polling.
+      out.status = "skipped"; out.error = "Rates arrive through the hourly official-file import.";
     } else {
       const areas = await watchedAreas(db);
       for (const area of areas) {

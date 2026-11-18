@@ -1,6 +1,6 @@
-# Turning on TaxJar and Plaid (owner steps)
+# Turning on tax rates and Plaid (owner steps)
 
-Approved by James on 2026-11-18. Each step is something only the account owner can do. **Never paste a key or secret into chat.** Put keys only into Netlify's environment variables.
+Tax rates use Built2Bid's own engine (James, 2026-11-18): official state files, no TaxJar, no sign-up, no monthly cost. Plaid was approved on 2026-11-18. Each step below is something only the account owner can do. **Never paste a key or secret into chat.** Put keys only into Netlify's environment variables.
 
 Before any of this, run the V6.9 SQL (`run-tax-banking.sql`) in the [Supabase SQL editor](https://supabase.com/dashboard/project/asiiqmegvajtuspeumio/sql/new).
 
@@ -11,27 +11,23 @@ All variables go in [Netlify → built2bid → Environment variables](https://ap
 
 After adding variables, click **Trigger deploy** in [Netlify Deploys](https://app.netlify.com/projects/built2bid/deploys) so the site picks them up.
 
-## A. Nightly job (do this once)
+## A. Scheduled jobs (do this once)
 
 | Variable | Value |
 |---|---|
-| `TAX_BANKING_CRON_SECRET` | Any long random text. On a Mac, open Terminal, run `openssl rand -hex 32`, and paste the result into Netlify. |
+| `TAX_BANKING_CRON_SECRET` | Any long random text. It switches on the hourly official tax-rate import and the nightly job. On a Mac, open Terminal, run `openssl rand -hex 32`, and paste the result into Netlify. |
 
-## B. TaxJar (sales tax rates)
+## B. Tax rates (built in, nothing to buy)
 
-1. Sign up for **TaxJar Professional** at [taxjar.com/pricing](https://www.taxjar.com/pricing). The API is only on Professional, about $99/mo. TaxJar counts 10 API calls as 1 order.
-2. In the TaxJar app, open the **account menu (top right) → TaxJar API**. Under **Live token**, click **Generate API Token** ([TaxJar's guide](https://support.taxjar.com/article/160-how-do-i-get-a-sales-tax-api-token)).
-3. Add these Netlify variables (Production):
+1. After the SQL is run and the secret above is set, the hourly job starts importing each state's official rate file. It works through all states in about a day.
+2. Open [Admin → Tax & banking health](https://built2bid.org/admin/tax-banking). The **Official rate files** table shows each state:
+   - **ok**: official rates loaded. Bids there show state + county + city + district rates.
+   - **needs link**: Built2Bid couldn't find the file. Click **Edit**, paste the state's official page that lists the rate files (or a direct file link), **Save links**, then **Import now**.
+   - **format changed / failed**: the state changed its file. The last good rates stay in use; tell Claude in the project chat and it will update the reader.
+   - **not needed**: states with no local taxes or no sales tax.
+3. States without official local rates yet still work: bids use the statewide rate and say "check the local rate".
 
-| Variable | Value |
-|---|---|
-| `TAX_PROVIDER` | `taxjar` |
-| `TAXJAR_API_KEY` | the Live token (secret) |
-| `TAX_PROVIDER_LIVE` | `true` |
-
-4. Trigger a deploy. Then open any bid that has a project address and click **View tax details**. It should say "Licensed tax service". On **Financials → Tax & regulatory updates**, the "coming soon" banner disappears after the first nightly run (09:17 UTC).
-
-To turn it off, delete `TAX_PROVIDER_LIVE`. Bids go back to the rate you type, clearly labelled.
+To turn the engine off, set `TAX_PROVIDER` = `none` in Netlify. Bids go back to the rate you type, clearly labelled.
 
 ## C. Plaid (read-only bank connections)
 
@@ -69,4 +65,4 @@ To turn it off, delete `TAX_PROVIDER_LIVE`. Bids go back to the rate you type, c
 
 To turn it off, delete `BANK_PROVIDER_LIVE`. Existing bank lines and reconciliations stay, and updates stop.
 
-Sources: [TaxJar API token](https://support.taxjar.com/article/160-how-do-i-get-a-sales-tax-api-token), [TaxJar API FAQ](https://developers.taxjar.com/integrations/faq), [Plaid API docs](https://plaid.com/docs/api/), [Plaid glossary](https://plaid.com/docs/quickstart/glossary/).
+Sources: [Census Geocoder API](https://geocoding.geo.census.gov/geocoder/Geocoding_Services_API.html), [Streamlined rate and boundary files](https://streamlinedsalestax.org/quick-links/r-b-files), [Plaid API docs](https://plaid.com/docs/api/), [Plaid glossary](https://plaid.com/docs/quickstart/glossary/).

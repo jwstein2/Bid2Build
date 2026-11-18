@@ -1,18 +1,19 @@
 /**
- * Tax provider adapters (V6.9). Only the mock runs today. The Avalara, TaxJar and Stripe Tax adapters are written
- * against their public REST APIs so switching one on is configuration, not a rewrite, but they are unreachable until
- * the owner approves a provider (TAX_PROVIDER + TAX_PROVIDER_LIVE=true + credentials; see isolation.ts). Every
- * adapter maps its answer into the same ProviderResult, and tests exercise each mapping with a mocked fetch.
+ * Tax provider adapters (V6.9). The default is Built2Bid's own engine (builtin.ts: official state rate files + Census
+ * address lookup + construction rules, no per-call cost). The Avalara, TaxJar and Stripe Tax adapters stay written
+ * against their public REST APIs as optional alternatives, unreachable unless the owner sets TAX_PROVIDER to one of
+ * them with TAX_PROVIDER_LIVE=true and credentials (see isolation.ts). Every adapter maps its answer into the same
+ * ProviderResult, and tests exercise each mapping with a mocked fetch.
  */
 import { fixtureArea, fixtureRates, fixtureTaxable, FIXTURE_VERSION } from "./fixtures";
 import type { LineClass, ProviderJurisdiction, ProviderResult, TaxAddress, TaxProvider, TaxRequest } from "./types";
 import { taxProviderMode, type TaxProviderName } from "../isolation";
+import { ProviderUnavailable } from "./errors";
+import { builtinProvider, type BuiltinDeps } from "./builtin";
 
 type Fetch = typeof fetch;
 
-export class ProviderUnavailable extends Error {
-  constructor(public provider: string, public status?: number) { super(`${provider}_unavailable${status ? `_${status}` : ""}`); }
-}
+export { ProviderUnavailable };
 
 // --- Mock ------------------------------------------------------------------------------------------------------
 export function mockProvider(opts: { failing?: boolean; asOf?: string } = {}): TaxProvider {
@@ -147,11 +148,15 @@ export function stripeTaxProvider(cfg: { secretKey: string; baseUrl?: string }, 
   };
 }
 
-/** The provider for this deploy, or null when none is approved (the engine then uses the contractor's own rate). */
-export function resolveTaxProvider(env: Record<string, string | undefined> = process.env, opts: { sandbox?: boolean } = {}): TaxProvider | null {
+/**
+ * The provider for this deploy. The default is Built2Bid's own engine ("builtin", free), which needs database access
+ * (`opts.builtin`); without it, or when nothing applies, null (the engine then uses the contractor's own rate).
+ */
+export function resolveTaxProvider(env: Record<string, string | undefined> = process.env, opts: { sandbox?: boolean; builtin?: BuiltinDeps | null } = {}): TaxProvider | null {
   const mode: TaxProviderName = taxProviderMode(env, opts);
   switch (mode) {
     case "mock": return mockProvider();
+    case "builtin": return opts.builtin ? builtinProvider(opts.builtin) : null;
     case "avalara": return avalaraProvider({ accountId: env.AVALARA_ACCOUNT_ID!, licenseKey: env.AVALARA_LICENSE_KEY!, companyCode: env.AVALARA_COMPANY_CODE ?? "DEFAULT" });
     case "taxjar": return taxjarProvider({ apiKey: env.TAXJAR_API_KEY!, from: { state: env.TAXJAR_FROM_STATE, zip: env.TAXJAR_FROM_ZIP } });
     case "stripe_tax": return stripeTaxProvider({ secretKey: env.STRIPE_TAX_CALC_KEY! });

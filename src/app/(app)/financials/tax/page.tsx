@@ -7,7 +7,7 @@ import { isFinancialsEnabled } from "@/lib/env";
 import { loadFinState } from "@/lib/financials/loaders";
 import { Badge, Notice } from "@/components/ui/misc";
 import { TbShell } from "@/components/tax-banking/shell";
-import { AlertActions, ExemptionForm, RevokeExemption, TaxProfileForm } from "@/components/tax-banking/tax";
+import { AlertActions, ExemptionForm, RequestExemption, RevokeExemption, TaxProfileForm } from "@/components/tax-banking/tax";
 import { TAX_AUTHORITIES } from "@/lib/tax-banking/authorities";
 import { can } from "@/lib/tax-banking/capabilities";
 import { loadTaxPage } from "@/lib/tax-banking/load";
@@ -19,8 +19,8 @@ const STALE_DAYS = 8;
 const olderThanDays = (d: Date | null, n: number) => !d || Date.now() - d.getTime() > n * 864e5;
 
 /**
- * Tax & Regulatory Updates. Rates come from a licensed tax service; Built2Bid keeps the last verified rate when the
- * service is down and says so. Rule (taxability) changes are never applied automatically. Nothing here files a
+ * Tax & Regulatory Updates. Rates come from Built2Bid's own engine (official state rate files); Built2Bid keeps the
+ * last verified rate when an update fails and says so. Rule (taxability) changes are never applied automatically. Nothing here files a
  * return, emails anyone, or guarantees compliance.
  */
 export default async function TaxPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
@@ -55,9 +55,15 @@ export default async function TaxPage({ searchParams }: { searchParams: Promise<
   const authMap = new Map(t.authorities.map((a) => [String(a.state), a]));
 
   return (
-    <TbShell {...shell} intro="Rate and rule changes for the states you work in, from a licensed tax service and the official state tax agencies. Rates update on their effective date; anything about what is taxable waits for your review. Built2Bid helps you stay current but doesn't guarantee compliance; check with your tax professional.">
+    <TbShell {...shell} intro="Rate and rule changes for the states you work in, from the official state tax agencies. Rates update on their effective date; anything about what is taxable waits for your review. Built2Bid helps you stay current but doesn't guarantee compliance; check with your tax professional.">
       {t.providerMode === "none" ? (
-        <Notice tone="warn" title="Live tax rates are coming soon">No tax service is switched on yet, so tax uses the rate you type on each bid and says so. Turning one on needs the owner&apos;s approval (it has a cost).</Notice>
+        <Notice tone="warn" title="Tax rates are switched off">Tax uses the rate you type on each bid and says so.</Notice>
+      ) : t.providerMode === "builtin" ? (
+        <p className="text-sm text-muted" data-testid="tax-fresh">
+          Rates come from each state&apos;s official rate files and update automatically.{" "}
+          {f?.statesLoaded ? `Official local rates are loaded for ${f.statesLoaded} state${f.statesLoaded === 1 ? "" : "s"}; ` : "Official local rates are loading; "}
+          other states use the statewide rate and flag the local part for a quick check.{lastOk ? ` Last update ${fmtWhen(lastOk.toISOString())}.` : ""}
+        </p>
       ) : stale ? (
         <Notice tone="warn" title="Tax data may be out of date">The last successful rate update was {lastOk ? fmtWhen(lastOk.toISOString()) : "never"}. Built2Bid keeps using the last verified rates and flags calculations for review. It never guesses a rate.</Notice>
       ) : (
@@ -111,15 +117,22 @@ export default async function TaxPage({ searchParams }: { searchParams: Promise<
           <TaxProfileForm initial={profile} states={states} canEdit={canEdit} />
           <section aria-labelledby="tax-ex-h" className="space-y-2">
             <h2 id="tax-ex-h" className="font-display text-lg font-extrabold">Exemption certificates</h2>
-            {canEdit && <ExemptionForm customers={((customers ?? []) as Row[]).map((c) => ({ id: String(c.id), label: String(c.name) }))} states={states} />}
+            {canEdit && <RequestExemption customers={((customers ?? []) as Row[]).map((c) => ({ id: String(c.id), label: String(c.name) }))} states={states}
+              defaultStates={[...new Set([...(profile.primaryState ? [profile.primaryState] : []), ...profile.serviceStates])]} />}
+            {canEdit && (
+              <details className="rounded-xl border border-line p-3">
+                <summary className="cursor-pointer text-sm font-semibold">Already have a certificate from the customer? Record it</summary>
+                <div className="mt-2"><ExemptionForm customers={((customers ?? []) as Row[]).map((c) => ({ id: String(c.id), label: String(c.name) }))} states={states} /></div>
+              </details>
+            )}
             {t.exemptions.length ? (
               <ul className="divide-y divide-line rounded-xl border border-line bg-surface">
                 {t.exemptions.map((x) => {
                   const expired = x.expires_on && String(x.expires_on) < new Date().toISOString().slice(0, 10);
                   return (
                     <li key={String(x.id)} className="flex flex-wrap items-center gap-2 p-3 text-sm">
-                      <span className="font-semibold">{custName.get(String(x.customer_id)) ?? "Customer"}</span><span className="text-muted">{String(x.state)} · {String(x.reason).replace(/_/g, " ")}{x.certificate_ref ? ` · ref ${x.certificate_ref}` : ""}</span>
-                      {x.status !== "active" ? <Badge>Revoked</Badge> : expired ? <Badge tone="danger">Expired {fmtDateServer(String(x.expires_on))}</Badge> : !x.certificate_ref && !x.document_id ? <Badge tone="warn">No certificate on file</Badge> : <Badge tone="ok">{x.expires_on ? `Valid to ${fmtDateServer(String(x.expires_on))}` : "On file"}</Badge>}
+                      <span className="font-semibold">{custName.get(String(x.customer_id)) ?? "Customer"}</span><span className="text-muted">{String(x.state)} · {String(x.reason).replace(/_/g, " ")}{x.certificate_id ? " · signed online" : x.certificate_ref ? ` · ref ${x.certificate_ref}` : ""}</span>
+                      {x.status !== "active" ? <Badge>Revoked</Badge> : expired ? <Badge tone="danger">Expired {fmtDateServer(String(x.expires_on))}</Badge> : !x.certificate_ref && !x.document_id && !x.certificate_id ? <Badge tone="warn">No certificate on file</Badge> : <Badge tone="ok">{x.expires_on ? `Valid to ${fmtDateServer(String(x.expires_on))}` : "On file"}</Badge>}
                       {canEdit && x.status === "active" && <RevokeExemption id={String(x.id)} />}
                     </li>
                   );

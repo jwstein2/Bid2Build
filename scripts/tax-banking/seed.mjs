@@ -41,5 +41,22 @@ for (const p of [
   { kind: "sub_payment", label: "Bright Line Electric draw", amount: "3000.00", expectedOn: day(16), certainty: "scheduled" },
   { kind: "recurring_expense", label: "Shop rent", amount: "1800.00", expectedOn: day(9), recurrence: "monthly", certainty: "scheduled" },
 ]) await as(ME, "select public.fin_cash_event_save($1, $2)", [book, p]);
-console.log(JSON.stringify({ book, connection: r.connectionId }));
+// Built-in tax engine: an official Minnesota import (as the hourly job would record it) + one ZIP area.
+await c.query("select public.tax_official_import('MN', null, 'https://www.example.org/MNR2026Q4OCT01.zip', $1)", [JSON.stringify([
+  { code: "MN", name: "MN", level: "state", rate: "6.875", effectiveFrom: "2009-07-01" }, { code: "MN-CO-109", name: "County 109", level: "county", rate: "0.5", effectiveFrom: "2020-01-01" },
+  { code: "MN-CI-54880", name: "City 54880", level: "city", rate: "0.75", effectiveFrom: "2024-01-01" }])]);
+const zrun = "33333333-3333-4333-8333-333333333333";
+await c.query("select public.tax_zip_areas_load('MN', $1, $2)", [zrun, JSON.stringify([{ zip5: "55901", countyFips: "109", placeFips: "54880", specials: [], weight: 4 }])]);
+await c.query("select public.tax_zip_areas_commit('MN', $1)", [zrun]);
+await c.query("update public.tax_rate_sources set status = 'ok', rates_loaded = 3, zips_loaded = 1, last_success_at = now() - interval '2 hours', last_rate_file = 'MNR2026Q4OCT01.zip' where state = 'MN'");
+// Give the walk's bids a Rochester, MN job address so View tax details shows the built-in rates.
+await c.query("update public.estimates set project_address = '120 Main St, Rochester, MN 55901', location_zip = '55901', location_city = 'Rochester', location_state = 'MN'");
+// An online exemption request with a known test token (walk only).
+const { createHash } = await import("node:crypto");
+const TOKEN = "walkWalkWalkWalkWalkWalkWalkWalkWalkWalk123";
+const cust = (await c.query("select id from public.customers order by created_at limit 1")).rows[0]?.id;
+if (cust) await as(ME, "select public.fin_tax_exemption_request_create($1, $2)", [book, { customerId: cust, states: ["MN"], tokenHash: createHash("sha256").update(TOKEN).digest("hex") }]);
+// The walk's mock API runs every call as the signed-in test user, so let it reach the customer-page functions (throwaway DB only).
+await c.query("grant execute on function public.tax_exemption_request_view(text), public.tax_exemption_sign(text, jsonb) to authenticated");
+console.log(JSON.stringify({ book, connection: r.connectionId, exemptToken: cust ? TOKEN : null }));
 await c.end();

@@ -2,8 +2,9 @@
  * Provider-neutral tax calculation (V6.9).
  *
  * The engine never invents a rate or a taxability rule. In order of preference:
- *   1. A licensed provider (Avalara / TaxJar / Stripe Tax, or the mock outside production) decides jurisdictions,
- *      rates and per-line taxability for the address and date.
+ *   1. A provider decides jurisdictions, rates and per-line taxability for the address and date: Built2Bid's own
+ *      engine (official state rate files + construction rules, builtin.ts) by default, an optional paid service
+ *      (Avalara / TaxJar / Stripe Tax) if the owner switches one on, or the mock outside production.
  *   2. If the provider fails, the last VERIFIED rate on file for that jurisdiction (tax_jurisdiction_rates), marked
  *      stale for review.
  *   3. Otherwise the rate the contractor typed, applied to the lines they marked taxable (today's behavior),
@@ -13,6 +14,7 @@
  */
 import { D, round2, type Dec } from "@/lib/estimate/money";
 import { authorityFor } from "../authorities";
+import { STATE_ONLY } from "./seed-rates";
 import type { CustomerExemption, ProviderJurisdiction, ReviewReason, TaxProvider, TaxRequest, TaxResult } from "./types";
 
 export interface StoredRate { jurisdiction: ProviderJurisdiction; effectiveFrom: string; recordedAt: string; source: "provider" | "official" | "fixture" }
@@ -55,6 +57,8 @@ export async function calculateTax(input: EngineInput): Promise<TaxResult> {
   let dataAsOf: string | null = null;
   let jurisdictions: ProviderJurisdiction[] | null = null;
   let lineTaxable = new Map<string, { taxable: boolean; needsReview?: boolean }>();
+  let notes: string[] = [];
+  let staleAfter: number | undefined;
 
   if (addressOk && input.provider) {
     try {
@@ -67,30 +71,36 @@ export async function calculateTax(input: EngineInput): Promise<TaxResult> {
         source = r.provider === "mock" ? "mock" : "provider";
         lineTaxable = new Map(r.lines.map((l) => [l.ref, { taxable: l.taxable, needsReview: l.needsReview }]));
         if (r.lines.some((l) => l.needsReview)) reasons.add("construction_treatment_review");
-        // A stored official/fixture rate for the same jurisdiction that disagrees = conflicting sources.
-        for (const j of r.jurisdictions) {
+        for (const x of r.reviewReasons ?? []) reasons.add(x);
+        notes = r.notes ?? []; staleAfter = r.staleAfterDays;
+        // A stored official/fixture rate for the same jurisdiction that disagrees = conflicting sources. (The built-in
+        // engine reads those same stored rates, so the check only applies to outside providers.)
+        if (r.provider !== "builtin") for (const j of r.jurisdictions) {
           const s = latestStored(input.storedRates, j.code, req.transactionDate);
           if (s && s.source !== "provider" && !dec(s.jurisdiction.rate).eq(dec(j.rate))) reasons.add("conflicting_sources");
         }
       }
-    } catch {
-      reasons.add("provider_unavailable");
+    } catch (e) {
+      // The built-in engine has no rate on file yet for this state: say so plainly (it's not an outage).
+      reasons.add(e instanceof Error && e.message.startsWith("no_rate_data") ? "no_verified_rate" : "provider_unavailable");
     }
   }
 
   // Fallback 2: last verified stored rates (never fabricated).
   if (!jurisdictions && addressOk && input.provider && input.storedRates?.length) {
-    const codes = [...new Set(input.storedRates.map((s) => s.jurisdiction.code))];
+    // Only the statewide rate is safe to reuse without knowing which county/city the job is in.
+    const codes = [...new Set(input.storedRates.filter((s) => s.jurisdiction.level === "state").map((s) => s.jurisdiction.code))];
     const picked = codes.map((c) => latestStored(input.storedRates, c, req.transactionDate)).filter((s): s is StoredRate => Boolean(s));
     if (picked.length) {
       jurisdictions = picked.map((p) => p.jurisdiction);
       source = "provider"; providerName = "last_verified"; dataAsOf = picked.map((p) => p.recordedAt).sort()[0];
       reasons.add("stale_rate");
+      if (!STATE_ONLY.has(state) && auth?.system !== "none") reasons.add("local_rate_unverified");
     }
   }
 
   // Staleness of provider data (cached data from a provider sync).
-  if (dataAsOf && (now.getTime() - new Date(dataAsOf).getTime()) / 864e5 > (input.staleDays ?? 35)) reasons.add("stale_rate");
+  if (dataAsOf && (now.getTime() - new Date(dataAsOf).getTime()) / 864e5 > (staleAfter ?? input.staleDays ?? 35)) reasons.add("stale_rate");
 
   // Fallback 3: the contractor's own rate.
   if (!jurisdictions) {
@@ -110,7 +120,11 @@ export async function calculateTax(input: EngineInput): Promise<TaxResult> {
     if (ex.state.toUpperCase() !== state) reasons.add("exemption_other_state");
     else if (!ex.certificateOnFile) reasons.add("exemption_missing_certificate");
     else if (ex.expiresOn && ex.expiresOn < req.transactionDate) reasons.add("exemption_expired");
-    else exempt = true;
+    else {
+      exempt = true;
+      // The online certificate follows the Streamlined uniform form; non-member states may want their own form.
+      if (ex.onlineForm && !auth?.sst) reasons.add("exemption_state_form");
+    }
   }
 
   // Per-jurisdiction tax on the taxable base; total rounded once to the cent (same rule as the bid engine).
@@ -138,6 +152,7 @@ export async function calculateTax(input: EngineInput): Promise<TaxResult> {
     jurisdictions: jr, lines,
     exemptions: ex ? [{ state: ex.state, reason: ex.reason, certificateRef: ex.certificateRef ?? null, applied: exempt }] : [],
     reviewReasons, dataAsOf, calculatedAt: now.toISOString(),
+    notes, rulesVersion: providerName === "builtin" && providerRef ? providerRef.replace(/^builtin:/, "") : null,
   };
 }
 
