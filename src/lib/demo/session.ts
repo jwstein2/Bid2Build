@@ -13,6 +13,16 @@ export const DEMO_META_KEY = "b2b_demo";
 /** httpOnly cookie that holds the real session's refresh token while a demo session is active. */
 export const DEMO_RETURN_COOKIE = "b2b-demo-return";
 export const DEMO_RETURN_MAX_AGE = 60 * 60 * 12;
+/**
+ * Readable display hint ("owner_demo" | "practice") so pages outside the signed-in layout (the estimate
+ * builder, trade picker, start pages) can show the DEMO MODE bar too. Display only: the client confirms
+ * it with the server before showing anything, and no permission ever depends on it.
+ */
+export const DEMO_HINT_COOKIE = "b2b-demo-hint";
+export function readDemoHint(cookie: string | null | undefined): DemoSessionKind | null {
+  const v = (cookie ?? "").split(/;\s*/).find((c) => c.startsWith(`${DEMO_HINT_COOKIE}=`))?.slice(DEMO_HINT_COOKIE.length + 1);
+  return v === "owner_demo" || v === "practice" ? v : null;
+}
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

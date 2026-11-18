@@ -5,7 +5,7 @@ import type { User } from "@supabase/supabase-js";
 import { createAdminClient, createClient, getAuthUser } from "@/lib/supabase/server";
 import { applyDemoDataset } from "./apply";
 import { buildDemoDataset } from "./dataset";
-import { DEMO_META_KEY, DEMO_RETURN_COOKIE, DEMO_RETURN_MAX_AGE, parseDemoClaim, type DemoClaim, type DemoSessionKind } from "./session";
+import { DEMO_HINT_COOKIE, DEMO_META_KEY, DEMO_RETURN_COOKIE, DEMO_RETURN_MAX_AGE, parseDemoClaim, type DemoClaim, type DemoSessionKind } from "./session";
 
 type Admin = ReturnType<typeof createAdminClient>;
 
@@ -144,6 +144,7 @@ export async function switchToDemo(admin: Admin, ws: DemoWorkspaceRow, real: { i
   if (error || !link.properties?.hashed_token) throw new Error(`demo_link_failed: ${error?.message ?? "no token"}`);
   const { error: vErr } = await supabase.auth.verifyOtp({ type: "magiclink", token_hash: link.properties.hashed_token });
   if (vErr) throw new Error(`demo_session_failed: ${vErr.message}`);
+  jar.set(DEMO_HINT_COOKIE, ws.kind, { httpOnly: false, secure: true, sameSite: "lax", path: "/", maxAge: DEMO_RETURN_MAX_AGE });
 }
 
 /** Leave Demo / Practice Mode: end the demo session and restore the real one. */
@@ -152,6 +153,7 @@ export async function switchToReal(claim: DemoClaim): Promise<{ restored: boolea
   const jar = await cookies();
   const stash = decodeStash(jar.get(DEMO_RETURN_COOKIE)?.value);
   jar.delete(DEMO_RETURN_COOKIE);
+  jar.delete(DEMO_HINT_COOKIE);
   await supabase.auth.signOut({ scope: "local" });
   if (!stash || stash.uid !== claim.owner) return { restored: false };
   const { data, error } = await supabase.auth.refreshSession({ refresh_token: stash.rt });
