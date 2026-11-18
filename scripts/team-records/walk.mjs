@@ -46,7 +46,7 @@ const shot = (page, name) => page.screenshot({ path: `${dir}/${name}.png`, fullP
 {
   const { ctx, page } = await open("/projects/team");
   await page.getByTestId("team-directory").waitFor();
-  check("Team sections nav shows 5 tabs", (await page.getByTestId("team-nav").getByRole("link").count()) === 5);
+  check("Team sections nav shows 6 tabs", (await page.getByTestId("team-nav").getByRole("link").count()) === 6);
   const stone = page.getByTestId("team-card").filter({ hasText: "Stone Works" });
   check("Stone Works shows expired insurance + W-9 on file", /1 expired/.test(await stone.textContent()) && /W-9 on file/.test(await stone.textContent()));
   check("Bright Electric shows expiring within 30 days", /expiring within 30 days/.test(await page.getByTestId("team-card").filter({ hasText: "Bright Electric" }).textContent()));

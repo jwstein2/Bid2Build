@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { Building2, Clock, FileCheck2, HardHat, Users } from "lucide-react";
+import { Building2, Clock, FileCheck2, HardHat, Scale, Users } from "lucide-react";
 
 const TABS = [
   { key: "people", href: "/projects/team", label: "People & subs", Icon: Users },
   { key: "time", href: "/projects/team/time", label: "Employees & time", Icon: Clock },
   { key: "suppliers", href: "/projects/team/suppliers", label: "Suppliers", Icon: Building2 },
+  { key: "pricing", href: "/projects/team/pricing", label: "Supplier pricing", Icon: Scale },
   { key: "subs", href: "/projects/team/subs", label: "Sub records", Icon: HardHat },
   { key: "1099", href: "/projects/team/1099", label: "1099 totals", Icon: FileCheck2 },
 ] as const;
