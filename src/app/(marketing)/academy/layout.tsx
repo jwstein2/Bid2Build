@@ -1,14 +1,15 @@
 import Link from "next/link";
-import { after } from "next/server";
 import { GraduationCap } from "lucide-react";
 import { AcademyTabs } from "@/components/academy/academy-tabs";
+import { AcademyPresence } from "@/components/academy/presence";
 import { Container } from "@/components/ui/misc";
-import { loadMe, touchPresence } from "@/lib/academy/server";
+import { loadMe } from "@/lib/academy/server";
 
 export default async function AcademyLayout({ children }: { children: React.ReactNode }) {
   const { me } = await loadMe();
-  // Presence: one throttled write per minute, after the response is sent.
-  if (me.member) after(() => touchPresence().catch(() => {}));
+  // Presence runs in the browser (AcademyPresence): a heartbeat while the member is active, live stats for everyone.
+  // It used to be an after() callback here, but cookies() can't be read inside after() in a Server Component, so the
+  // write always failed silently and last_seen_at was never set.
   const secondary = [
     ...(me.member ? [{ href: "/academy/saved", label: "Saved" }, { href: "/academy/settings", label: "My profile" }] : []),
     { href: "/academy/about", label: "About" },
@@ -16,6 +17,7 @@ export default async function AcademyLayout({ children }: { children: React.Reac
   ];
   return (
     <div className="bg-paper">
+      <AcademyPresence member={Boolean(me.member)} />
       <div className="border-b border-line bg-surface">
         <Container className="pt-4 pb-3">
           <Link href="/academy" className="inline-flex items-center gap-2 font-display text-lg font-extrabold text-ink">

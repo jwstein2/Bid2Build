@@ -20,6 +20,12 @@ const body = z.object({
   capacity: z.number().int().min(1).max(50).default(1),
   unavailable: z.array(day).max(400).default([]),
   members: z.array(z.string().uuid()).max(100).optional(),
+  // V7.3 Contractors & Workforce (optional: the V4.2 form doesn't send them, and SQL keeps the saved values).
+  entity: z.enum(["company", "individual"]).nullish(),
+  parentId: z.string().uuid().nullish(),
+  crewSize: z.number().int().min(1).max(500).nullish(),
+  capacityDeclared: z.boolean().optional(),
+  specialties: z.array(z.string().trim().max(60)).max(20).optional(),
 });
 
 /** The caller's Team & Subcontractors directory (company or solo account). */

@@ -165,10 +165,10 @@ const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "
  * /download?file=MNR2026Q4OCT01.zip or /media/1234 with the name as text are found too. Links with "rate"/"boundary"
  * and the state in the name are accepted as a fallback. Returns absolute https URLs, or nulls when nothing matches.
  */
-export function findOfficialFiles(html: string, state: string, baseUrl: string): { rateUrl: string | null; boundaryUrl: string | null } {
+export function findOfficialFiles(html: string, state: string, baseUrl: string, stateName?: string): { rateUrl: string | null; boundaryUrl: string | null } {
   const ST = state.toUpperCase();
   const sst = new RegExp(`(?:^|[^A-Z0-9])${ST}[ _-]?([RB])[ _-]?(\\d{4})[ _-]?Q(\\d)[ _-]?([A-Z]{3})?[ _-]?(\\d{2})?(?![0-9])`, "i");
-  const fallback = new RegExp(`(?:^|[^A-Z0-9])${ST}(?:[^A-Z0-9]|$)`, "i");
+  const fallback = new RegExp(`(?:^|[^A-Z0-9])(?:${ST}${stateName ? `|${stateName.replace(/\s+/g, "[-_\\s]*")}` : ""})(?:[^A-Z0-9]|$)`, "i");
   const best: Record<"R" | "B", { url: string; key: string } | null> = { R: null, B: null };
   for (const { url, text } of linksOf(html, baseUrl)) {
     let decoded = url; try { decoded = decodeURIComponent(url); } catch { /* keep raw */ }

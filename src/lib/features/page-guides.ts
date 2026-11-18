@@ -418,6 +418,19 @@ export const PAGE_GUIDES = {
     ],
   },
 
+  "projects.workforce": {
+    route: "/projects/workforce",
+    label: "Projects · Contractors & Workforce",
+    requires: { pmView: true },
+    steps: [
+      { target: "workforce.search", title: "Find who you need", body: "Search by name, company, trade (try \"electrician\"), project or customer." },
+      { target: "workforce.cards", title: "Who's booked where", body: "Each card shows active and upcoming jobs, the next scheduled work and availability. Click a card for the full profile." },
+      { target: "workforce.assign", title: "Assign to another job", body: "Pick a project and section, set times, review conflicts and confirm. The project schedule updates right away.", requires: { pmEdit: true } },
+      { target: "workforce.assignments-tab", title: "Every assignment", body: "All assignments in one list, from planned to completed. It's the same list your project schedules use." },
+      { target: "workforce.add", title: "Add companies, workers and crews", body: "Subcontracting companies, their workers, individual subs, employees and crews. Subs don't need a Built2Bid account.", requires: { pmEdit: true } },
+    ],
+  },
+
   // ── Libraries ───────────────────────────────────────────────────────────────────────────────────
   "library.items": {
     route: "/dashboard/items",
@@ -465,13 +478,6 @@ export const PAGE_GUIDES = {
       { target: "account.signin", title: "How you sign in", body: "The email (and phone, where offered) you use to sign in, and whether each is verified." },
       { target: "account.sharing", title: "Pricing data sharing", body: "Choose whether anonymous price data from your bids helps improve local pricing. It's off unless you turn it on." },
       { target: "account.actions", title: "Emails, export and deletion", body: "Choose marketing emails, download all your data any time, or delete your account. Deleting always asks you to confirm first." },
-    ],
-  },
-  "settings.pricing": {
-    route: "/settings/pricing",
-    label: "Pricing data",
-    steps: [
-      { target: "pricing.data", title: "Pricing data", body: "Connect local pricing sources so suggested costs for {materials} are closer to what you pay." },
     ],
   },
   "company.overview": {

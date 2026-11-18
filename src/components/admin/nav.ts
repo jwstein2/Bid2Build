@@ -21,6 +21,7 @@ export const TOOLS = [
   { href: "/admin/marketing/radar", label: "Opportunity Radar" },
   { href: "/admin/sales", label: "Outreach funnel (Sales)" },
   { href: "/admin/referrals", label: "Referrals" },
+  { href: "/admin/onboarding", label: "Onboarding & Guide" },
   { href: "/admin/market", label: "Market intelligence" },
   { href: "/admin/news", label: "Industry news sources" },
   { href: "/admin/templates", label: "Trade templates" },
@@ -28,5 +29,4 @@ export const TOOLS = [
   { href: "/admin/flags", label: "Feature flags" },
   { href: "/admin/logs", label: "Import & PDF errors" },
   { href: "/admin/audit", label: "Audit log" },
-  { href: "/settings/pricing", label: "Pricing integrations" },
 ];
