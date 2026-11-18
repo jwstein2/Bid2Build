@@ -308,6 +308,23 @@ describe("importer (mocked downloads)", () => {
     expect(committed).toBe(true);
     expect(tables.tax_rate_sources[0]).toMatchObject({ status: "ok", rates_loaded: 4, zips_loaded: 1, last_rate_file: "MNR2026Q4OCT01.csv", last_boundary_file: "MNB2026Q4OCT01.csv" });
   });
+  it("loads rates but skips a boundary file too large for the hourly job, and records the attempt first", async () => {
+    const { importState } = await import("@/lib/tax-banking/tax/importer");
+    const imported: Row[] = []; let zipLoads = 0;
+    const { db, tables } = fakeDb({ tax_rate_sources: [{ state: "MN" }], tax_sync_runs: [] }, {
+      tax_official_import: (a) => { imported.push(...(a.p_rows as Row[])); return { found: (a.p_rows as Row[]).length, alertIds: [] }; },
+      tax_zip_areas_load: () => { zipLoads++; return 0; },
+      tax_zip_areas_commit: () => 1,
+    });
+    const f = (async (u: string) => u.endsWith("R.csv") ? new Response(RATE_FILE)
+      : new Response("x", { headers: { "content-length": String(40 * 1024 * 1024) } })) as unknown as typeof fetch;
+    const r = await importState(db, { state: "MN", kind: "sst", listing_url: null, rate_url: "https://x.example.org/MNR.csv", boundary_url: "https://x.example.org/MNB.zip", format: null, status: "needs_link",
+      last_rate_file: null, last_boundary_file: null, zips_loaded: 0, last_success_at: null }, { fetchImpl: f, now: new Date("2026-11-18T10:00:00Z") });
+    expect(r).toMatchObject({ status: "ok", rates: 4, zips: 0 });
+    expect(zipLoads).toBe(0);
+    expect(tables.tax_rate_sources[0]).toMatchObject({ status: "ok", rates_loaded: 4, last_rate_file: "MNR.csv", last_attempt_at: "2026-11-18T10:00:00.000Z" });
+    expect(String(tables.tax_rate_sources[0].last_error)).toContain("too large");
+  });
   it("a changed file format keeps the last good rates and marks the source", async () => {
     const { importState } = await import("@/lib/tax-banking/tax/importer");
     let rpcCalled = false;
