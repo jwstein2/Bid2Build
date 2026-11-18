@@ -76,9 +76,9 @@ export async function resolveFiles(src: SourceRow, f: Fetch, timeoutMs = 8000, o
     const found = findOfficialFiles(html, src.state, url, name);
     if (found.rateUrl) return { rateUrl: found.rateUrl, boundaryUrl: src.boundary_url ?? found.boundaryUrl };
     notes.push(`${hop ? `${url}: ` : ""}${describeListing(html, src.state, url)}`);
-    const links = linksOf(html, url).filter((l) => { try { return new URL(l.url).host === host && !visited.has(l.url) && !FILE_EXT.test(l.url); } catch { return false; } });
-    const statePage = links.find((l) => (name && new RegExp(`\\b${name}\\b`, "i").test(l.text)) || new RegExp(`^${src.state}$`, "i").test(l.text.trim()));
-    const rbPage = links.filter((l) => RB_PAGE.test(`${l.url} ${l.text}`) && !/update|change|archive/i.test(`${l.url} ${l.text}`))
+    const links: { url: string; text: string }[] = linksOf(html, url).filter((l) => { try { return new URL(l.url).host === host && !visited.has(l.url) && !FILE_EXT.test(l.url); } catch { return false; } });
+    const statePage: { url: string; text: string } | undefined = links.find((l) => (name && new RegExp(`\\b${name}\\b`, "i").test(l.text)) || new RegExp(`^${src.state}$`, "i").test(l.text.trim()));
+    const rbPage: { url: string; text: string } | undefined = links.filter((l) => RB_PAGE.test(`${l.url} ${l.text}`) && !/update|change|archive/i.test(`${l.url} ${l.text}`))
       .sort((x, y) => Number(Boolean(y.text)) - Number(Boolean(x.text)))[0];
     url = statePage?.url ?? rbPage?.url ?? null;
   }
