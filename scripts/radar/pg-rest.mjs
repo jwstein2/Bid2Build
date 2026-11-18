@@ -41,10 +41,36 @@ async function exec(sql, params) {
 
 const fail = (send, res, e) => send(res, 400, { code: e.code ?? "P0001", message: e.message, details: null, hint: null });
 
+// PostgREST logic trees: or=(trades.ov.{x,y},states.cs.{MN},and(authority.eq.official,geo_level.eq.national)).
+function splitTop(s) {
+  const out = []; let depth = 0; let cur = "";
+  for (const ch of s) {
+    if (ch === "(" || ch === "{") depth++;
+    if (ch === ")" || ch === "}") depth--;
+    if (ch === "," && depth === 0) { out.push(cur); cur = ""; } else cur += ch;
+  }
+  if (cur) out.push(cur);
+  return out;
+}
+function logic(expr, joiner, params, tableTypes) {
+  const parts = splitTop(expr.replace(/^\(|\)$/g, "")).map((t) => {
+    const nested = t.match(/^(and|or)\((.*)\)$/s);
+    if (nested) return logic(nested[2], nested[1], params, tableTypes);
+    const m = t.match(/^([a-z_][a-z0-9_]*)\.(eq|neq|ov|cs|is)\.(.*)$/s);
+    if (!m || !(m[1] in tableTypes)) throw Object.assign(new Error(`unsupported filter ${t}`), { code: "42703" });
+    const [, col, op, val] = m;
+    if (op === "is") return `${col} is ${val === "null" ? "null" : val === "true" ? "true" : "false"}`;
+    if (op === "ov" || op === "cs") { params.push(val.replace(/^\{|\}$/g, "").split(",").filter(Boolean)); return `${col} ${op === "ov" ? "&&" : "@>"} $${params.length}::text[]`; }
+    params.push(val); return `${col}::text ${op === "eq" ? "=" : "<>"} $${params.length}::text`;
+  });
+  return `(${parts.join(` ${joiner} `)})`;
+}
+
 function filters(u, params, tableTypes) {
   const where = [];
   for (const [k, v] of u.searchParams) {
     if (["select", "order", "limit", "offset", "on_conflict", "columns"].includes(k)) continue;
+    if (k === "or" || k === "and") { where.push(logic(v, k, params, tableTypes)); continue; }
     if (!ID.test(k) || !(k in tableTypes)) throw Object.assign(new Error(`unknown column ${k}`), { code: "42703" });
     const m = v.match(/^(eq|neq|gte|lte|gt|lt|is|in)\.(.*)$/s);
     if (!m) continue;

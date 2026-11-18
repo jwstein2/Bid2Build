@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { REVEAL_FEATURE_EVENT, START_TOUR_EVENT } from "@/lib/features/state";
-import { Sparkles, CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, Plug, LayoutTemplate, LogOut, X, UserCog, Receipt, Gauge, SquareKanban, CalendarRange, GraduationCap, Palette, Landmark, Shapes, Bot, House } from "lucide-react";
+import { Sparkles, CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, Plug, LayoutTemplate, LogOut, X, UserCog, Receipt, Gauge, SquareKanban, CalendarRange, GraduationCap, Palette, Landmark, Shapes, Bot, House, Newspaper } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ButtonLink } from "@/components/ui/button";
 import { Logo } from "./logo";
@@ -60,6 +60,8 @@ const FIN_SETTINGS: NavItem[] = [
 /** Projects (schedules) sit right below Bids when project scheduling is switched on. */
 const PROJECTS: NavItem = { href: "/projects", label: "Projects", icon: CalendarRange };
 const HOME: NavItem = { href: "/home", label: "Home", icon: House, exact: true };
+/** V6.8 Industry Intelligence: free for every plan. */
+const INDUSTRY: NavItem = { href: "/industry", label: "Industry News", icon: Newspaper };
 
 /** V6.7 workspace access: links this company member can't use, and features kept from a workspace that is off. */
 export type SidebarAccess = { hidden: string[]; other: { href: string; label: string }[] };
@@ -73,7 +75,7 @@ export function AppSidebar({ isAdmin, email, company, access = null, projects = 
   const finSettings = financials ? FIN_SETTINGS.filter((n) => shown(n.href)) : [];
   const companyLinks = company?.links.filter((l) => shown(l.href)) ?? [];
   const other: NavItem[] = (access?.other ?? []).map((o) => ({ href: o.href, label: o.label, icon: Shapes, exact: o.href === "/dashboard" || o.href === "/company" }));
-  const nav: NavItem[] = [...work, ...(finLinks ? [FINANCIALS] : []), ...finSettings, ...other, ...ACCOUNT_NAV.map(own)];
+  const nav: NavItem[] = [...work, INDUSTRY, ...(finLinks ? [FINANCIALS] : []), ...finSettings, ...other, ...ACCOUNT_NAV.map(own)];
   const path = usePathname();
   const [open, setOpen] = useState(false);
   // eslint-disable-next-line react-hooks/set-state-in-effect -- close the mobile menu after navigating
