@@ -6,6 +6,8 @@ import { BankError, disconnect, finishLink, reconnect, reconnectLink, refresh, s
 import { STATE_CODES } from "@/lib/tax-banking/authorities";
 import { hashSigningToken, newSigningToken } from "@/lib/esign/token";
 import { site } from "@/lib/site";
+import { TWO_STEP_BANK_MESSAGE, TWO_STEP_REQUIRED } from "@/lib/auth/mfa";
+import { bankProviderMode } from "@/lib/tax-banking/isolation";
 
 export const runtime = "nodejs";
 
@@ -63,6 +65,11 @@ export async function POST(req: Request) {
   };
   try {
     const sandbox = Boolean((await finAccess(db, bookId))?.sandbox);
+    // Connecting or reconnecting a real bank needs a two-step (aal2) session. The token was verified by finGuard.
+    if (!sandbox && ["bank_link_start", "bank_link_finish", "bank_reconnect_start", "bank_reconnect"].includes(a.action) && bankProviderMode(process.env) !== "none") {
+      const { data: level } = await db.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (level?.currentLevel !== "aal2") return Response.json({ error: { code: TWO_STEP_REQUIRED, message: TWO_STEP_BANK_MESSAGE } }, { status: 403 });
+    }
     switch (a.action) {
       case "tax_profile_save": await rpc("fin_tax_profile_save", { p_book_id: bookId, p: a.p }); return json({ ok: true });
       case "tax_exemption_save": return json({ id: await rpc("fin_tax_exemption_save", { p_book_id: bookId, p: a.p }) });

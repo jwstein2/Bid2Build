@@ -64,10 +64,18 @@ async function readToken(connectionId: string, provider: string) {
   return openToken(String((data as { token_ciphertext: string }).token_ciphertext), keyFor(provider));
 }
 
-async function syncConnection(connectionId: string, p: BankProvider, accessToken: string) {
-  const r = await p.sync(accessToken);
-  const { data, error } = await createAdminClient().rpc("fin_bank_feed_ingest", { p_connection_id: connectionId, p: r });
+async function syncConnection(connectionId: string, p: BankProvider, accessToken: string, liveBalance = false) {
+  const r = await p.sync(accessToken, null, { liveBalance });
+  const admin = createAdminClient();
+  const { data, error } = await admin.rpc("fin_bank_feed_ingest", { p_connection_id: connectionId, p: r });
   if (error) throw new BankError(error.message.split(/\s/)[0]);
+  // Count billed real-time balance calls for the owner's Plaid cost estimate (best effort, never blocks the refresh).
+  if (liveBalance && p.name === "plaid" && r.status === "active") {
+    try {
+      const { data: c } = await admin.from("fin_bank_connections").select("book_id").eq("id", connectionId).maybeSingle();
+      if (c) await admin.from("fin_audit_log").insert({ book_id: (c as { book_id: string }).book_id, action: "bank.balance_live", entity_type: "bank_connection", entity_id: connectionId });
+    } catch { /* metering only */ }
+  }
   return data as { status: string; inserted: number; balances: number };
 }
 
@@ -76,7 +84,7 @@ export async function refresh(db: Db, connectionId: string, sandboxBook: boolean
   const gate = await rpc<{ provider: string }>(db, "fin_bank_refresh_allowed", { p_connection_id: connectionId });
   const p = providerByName(gate.provider, sandboxBook);
   if (!p) throw new BankError("provider_not_approved");
-  return syncConnection(connectionId, p, await readToken(connectionId, gate.provider));
+  return syncConnection(connectionId, p, await readToken(connectionId, gate.provider), true);
 }
 
 /** Reconnect, step 1 (real providers): a link token in update mode for this connection's existing access. */

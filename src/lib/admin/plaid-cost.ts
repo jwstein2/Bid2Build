@@ -4,7 +4,8 @@
  * Plaid has no billing API, so the cost is estimated from Built2Bid's own records:
  *  - Transactions is billed per connected Item (one bank login) per month: every real (non-practice) Plaid
  *    connection that was live at any point this calendar month counts once.
- *  - Balance is billed per call: every successful sync calls /accounts/balance/get once ("bank.synced" audit row).
+ *  - Balance is billed per call. Only a customer's manual Refresh calls /accounts/balance/get ("bank.balance_live"
+ *    audit row); the daily sync uses the balance cached with Transactions, which is not billed separately.
  * Prices come from the owner's Plaid plan (Dashboard → Billing) via PLAID_PRICE_TRANSACTIONS_USD and
  * PLAID_PRICE_BALANCE_USD. An unset price stays unknown: it is never counted as $0. The Plaid invoice is the
  * source of truth; import it on Tech Stack & Costs.

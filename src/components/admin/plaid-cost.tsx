@@ -15,7 +15,7 @@ export function PlaidCostPanel({ u, className }: { u: PlaidUsage | null; classNa
         <dl>
           <Row k="Connected banks (billable this month)">{fmt(u.billableItems)}</Row>
           <Row k="Live now">{fmt(u.activeItems)}{u.needsAttention ? <span className="text-[var(--cc-amber)]"> · {fmt(u.needsAttention)} need attention</span> : null}</Row>
-          <Row k="Balance refreshes this month">{fmt(u.balanceCallsMtd)} <span className="text-muted">(≈{fmt(u.projectedBalanceCalls)} by month end)</span></Row>
+          <Row k="Real-time balance refreshes this month">{fmt(u.balanceCallsMtd)} <span className="text-muted">(≈{fmt(u.projectedBalanceCalls)} by month end)</span></Row>
           <Row k="Price per connected bank / month">{price(u.prices.transactionsCents)}</Row>
           <Row k="Price per balance refresh">{price(u.prices.balanceCents)}</Row>
           <Row k="Estimated cost so far">{money(u.mtdCents)}</Row>
@@ -23,7 +23,7 @@ export function PlaidCostPanel({ u, className }: { u: PlaidUsage | null; classNa
         </dl>
       )}
       <p className="mt-2 text-xs text-muted">
-        Estimated from Built2Bid&apos;s own records (practice connections excluded). Plaid bills Transactions per connected bank each month and Balance per refresh.
+        Estimated from Built2Bid&apos;s own records (practice connections excluded). Plaid bills Transactions per connected bank each month. Daily updates use the free cached balance; only a customer clicking Refresh is a billed Balance call.
         {u && (u.prices.transactionsCents == null || u.prices.balanceCents == null) ? " Set PLAID_PRICE_TRANSACTIONS_USD and PLAID_PRICE_BALANCE_USD from Plaid Dashboard → Billing to see dollars." : ""}{" "}
         The Plaid invoice is the source of truth: <a className="underline" href="https://dashboard.plaid.com/settings/team/billing" target="_blank" rel="noopener noreferrer">Plaid billing</a>.
       </p>

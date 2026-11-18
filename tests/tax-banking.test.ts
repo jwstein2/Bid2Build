@@ -253,13 +253,18 @@ describe("bank providers + token sealing", () => {
     const calls: string[] = [];
     const f = (async (u: string) => {
       calls.push(new URL(u).pathname);
-      if (u.endsWith("/accounts/balance/get")) return new Response(JSON.stringify({ accounts: [{ account_id: "A", balances: { current: 100.5, available: 90, iso_currency_code: "USD" } }] }), { status: 200 });
+      if (u.endsWith("/accounts/balance/get") || u.endsWith("/accounts/get")) return new Response(JSON.stringify({ accounts: [{ account_id: "A", balances: { current: 100.5, available: 90, iso_currency_code: "USD" } }] }), { status: 200 });
       return new Response(JSON.stringify({ added: [{ account_id: "A", transaction_id: "t1", date: "2026-11-10", name: "Home Depot", amount: 50.25, pending: false }, { account_id: "A", transaction_id: "t2", date: "2026-11-11", name: "Pending", amount: 9, pending: true }], has_more: false, next_cursor: "c1" }), { status: 200 });
     }) as unknown as typeof fetch;
     const r = await plaidProvider({ clientId: "c", secret: "s", env: "sandbox" }, f).sync("access-sandbox-x");
     expect(r.transactions).toEqual([{ ref: "A", txnRef: "t1", date: "2026-11-10", description: "Home Depot", amount: "-50.25", checkNumber: null }]);
     expect(r.balances[0]).toMatchObject({ current: "100.50", available: "90.00" });
     expect(calls).not.toContain("/auth/get");   // never requests account + routing numbers
+    expect(calls).toContain("/accounts/get");          // daily sync: cached balance, no Balance charge
+    expect(calls).not.toContain("/accounts/balance/get");
+    calls.length = 0;
+    await plaidProvider({ clientId: "c", secret: "s", env: "sandbox" }, f).sync("access-sandbox-x", null, { liveBalance: true });
+    expect(calls).toContain("/accounts/balance/get");  // manual refresh: real-time, billed
     const err = (async () => new Response(JSON.stringify({ error_code: "ITEM_LOGIN_REQUIRED" }), { status: 400 })) as unknown as typeof fetch;
     expect((await plaidProvider({ clientId: "c", secret: "s", env: "sandbox" }, err).sync("x")).status).toBe("needs_reauth");
   });

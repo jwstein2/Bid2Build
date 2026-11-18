@@ -31,7 +31,11 @@ export interface BankProvider {
   createLinkToken(userRef: string, opts?: { accessToken?: string }): Promise<{ linkToken: string; expiresAt: string }>;
   /** Exchange the one-time public token from the provider window for a long-lived access token (stored encrypted, server only). */
   exchange(publicToken: string): Promise<{ accessToken: string; itemRef: string; institutionName: string; institutionRef: string | null; accounts: FeedAccount[] }>;
-  sync(accessToken: string, cursor?: string | null): Promise<SyncResult>;
+  /**
+   * Pull new transactions and balances. `liveBalance` asks the bank for a real-time balance (Plaid's paid Balance
+   * product, one billed call); otherwise the balance Plaid already refreshed with Transactions is used at no extra cost.
+   */
+  sync(accessToken: string, cursor?: string | null, opts?: { liveBalance?: boolean }): Promise<SyncResult>;
   remove(accessToken: string): Promise<void>;
 }
 
@@ -113,9 +117,11 @@ export function plaidProvider(cfg: { clientId: string; secret: string; env: "san
       return { accessToken: ex.access_token, itemRef: ex.item_id, institutionName, institutionRef: acc.item.institution_id ?? null,
         accounts: acc.accounts.map((a) => ({ ref: a.account_id, name: a.official_name || a.name, mask: a.mask && /^\d{4}$/.test(a.mask) ? a.mask : null, kind: kind(a.type, a.subtype), subtype: a.subtype, currency: a.balances.iso_currency_code ?? "USD" })) };
     },
-    async sync(accessToken, cursor) {
+    async sync(accessToken, cursor, opts) {
       try {
-        const bal = await call<{ accounts: { account_id: string; balances: { current: number | null; available: number | null; iso_currency_code?: string; last_updated_datetime?: string | null } }[] }>("/accounts/balance/get", { access_token: accessToken });
+        // Daily sync: /accounts/get returns the balance cached with Transactions (no Balance charge).
+        // Manual refresh: /accounts/balance/get asks the bank in real time (billed per call).
+        const bal = await call<{ accounts: { account_id: string; balances: { current: number | null; available: number | null; iso_currency_code?: string; last_updated_datetime?: string | null } }[] }>(opts?.liveBalance ? "/accounts/balance/get" : "/accounts/get", { access_token: accessToken });
         const txns: FeedTxn[] = [];
         let next = cursor ?? null; let more = true; let pages = 0;
         while (more && pages < 10) {

@@ -5,6 +5,7 @@ import { createClient, getUser } from "@/lib/supabase/server";
 import { AccountActions } from "./actions-client";
 import { MarketSharing } from "./market-sharing";
 import { SignInMethods } from "./sign-in-methods";
+import { TwoStepSignIn } from "./two-step";
 import { isSmsSignInEnabled } from "@/lib/auth/phone";
 import Link from "next/link";
 import { Card } from "@/components/ui/misc";
@@ -25,6 +26,7 @@ export default async function AccountPage() {
     <div className="mx-auto max-w-3xl space-y-6" data-guide-page="settings.account">
       <h1 className="text-3xl font-extrabold">Account settings</h1>
       <div data-guide="account.signin"><SignInMethods email={user.email} emailVerified={user.emailVerified} phone={user.phone} phoneVerified={user.phoneVerified} smsEnabled={isSmsSignInEnabled()} /></div>
+      <TwoStepSignIn />
       {isContractorSigningEnabled() && (
         <Card className="p-5" data-testid="my-signature-link">
           <h2 className="font-bold">My signature</h2>
