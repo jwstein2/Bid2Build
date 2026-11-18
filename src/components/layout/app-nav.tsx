@@ -183,7 +183,7 @@ export function AppSidebar({ isAdmin, email, company, access = null, projects = 
           <>
             {learning.creator && (
               <Link href="/learning" aria-current={active("/learning") ? "page" : undefined} className={cn(item, active("/learning") ? "bg-white/10 text-white shadow-[inset_3px_0_0_var(--color-cyan)]" : "text-[#C9D6E3] hover:bg-white/5 hover:text-white")}>
-                <GraduationCap className={cn("h-4 w-4", active("/learning") ? "text-cyan" : "")} aria-hidden /> Learning Enterprise
+                <GraduationCap className={cn("h-4 w-4", active("/learning") ? "text-cyan" : "")} aria-hidden /> Learning Team
               </Link>
             )}
             {learning.participant && (

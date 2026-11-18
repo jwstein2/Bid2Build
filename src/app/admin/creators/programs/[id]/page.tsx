@@ -23,7 +23,7 @@ export default async function ProgramDetail({ params, searchParams }: { params: 
   const p = data as Detail;
   return (
     <div className="space-y-6">
-      <p className="text-sm"><Link href="/admin/creators/programs" className="text-ink-soft underline">Learning Enterprise grants</Link> <span className="text-muted">/</span></p>
+      <p className="text-sm"><Link href="/admin/creators/programs" className="text-ink-soft underline">Learning Team grants</Link> <span className="text-muted">/</span></p>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div><h1 className="text-3xl font-extrabold">{p.workspace_name}</h1><p className="break-all text-ink-soft">{p.creator_email}{p.channel_name ? ` · ${p.channel_name}` : ""}</p></div>
         <Badge tone={p.state === "active" ? "ok" : "neutral"} className="text-sm">{PROGRAM_STATE_LABELS[p.state]}</Badge>
@@ -32,7 +32,7 @@ export default async function ProgramDetail({ params, searchParams }: { params: 
 
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[["Gift seats in use", `${p.seats_used} / ${p.gift_allowance}`], ["Active gifted members", p.gifts_active], ["Pending invitations", p.gifts_pending], ["Shared estimates", p.shares_open],
-          ["Program starts", fmtDate(p.starts_at)], ["Program ends", fmtDate(p.expires_at)], ["Creator's Enterprise grant", p.creator_grant_state ?? "Not issued"], ["Gifted users now paying", p.gift_conversions]].map(([k, v]) => (
+          ["Program starts", fmtDate(p.starts_at)], ["Program ends", fmtDate(p.expires_at)], ["Creator's Team grant", p.creator_grant_state ?? "Not issued"], ["Gifted users now paying", p.gift_conversions]].map(([k, v]) => (
           <Card key={String(k)} className="p-4"><p className="text-sm text-ink-soft">{k}</p><p className="mt-1 text-xl font-extrabold">{String(v)}</p></Card>
         ))}
       </section>
@@ -53,7 +53,7 @@ export default async function ProgramDetail({ params, searchParams }: { params: 
           </Card>
           <Card className="p-4">
             <h2 className="font-display text-lg font-bold">2. Provision</h2>
-            <p className="mt-1 text-sm text-ink-soft">Issues a 12-month complimentary Enterprise grant for {p.creator_email} through Complimentary Access (no Stripe, no billing details). If they already have a verified account it starts now; otherwise you get a private link to send them. No email is sent automatically.</p>
+            <p className="mt-1 text-sm text-ink-soft">Issues a 12-month complimentary Team grant for {p.creator_email} through Complimentary Access (no Stripe, no billing details). If they already have a verified account it starts now; otherwise you get a private link to send them. No email is sent automatically.</p>
             <form action={provisionProgram} className="mt-3 space-y-2">
               <input type="hidden" name="id" value={p.id} />
               <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="confirm" className="mt-1" disabled={!p.terms_accepted_at} /> Issue the real complimentary account now.</label>
@@ -76,7 +76,7 @@ export default async function ProgramDetail({ params, searchParams }: { params: 
             <form action={endProgram} className="mt-2 space-y-2"><input type="hidden" name="id" value={p.id} />
               <input name="reason" placeholder="Reason" maxLength={500} className={input} />
               <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="end_gifts" className="mt-1" /> Also end the gifted Unlimited memberships now</label>
-              <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="end_creator_grant" className="mt-1" /> Also end the creator&apos;s complimentary Enterprise now</label>
+              <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="end_creator_grant" className="mt-1" /> Also end the creator&apos;s complimentary Team now</label>
               <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="confirm" className="mt-1" /> End this program. Mentorship access stops immediately; nobody loses business data.</label>
               <button className="min-h-10 rounded-md bg-danger px-3 py-2 text-sm font-semibold text-white">End program</button></form>
           </Card>

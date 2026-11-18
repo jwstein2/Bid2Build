@@ -26,7 +26,7 @@ export default async function Revenue({ searchParams }: { searchParams: Promise<
   const mix = [
     { label: "Monthly ($19.99)", n: rev.monthly, mrr: rev.monthly * 1999 },
     { label: "Annual ($149 ÷ 12)", n: rev.annual, mrr: rev.annual * Math.round(14900 / 12) },
-    { label: "Enterprise (by seats)", n: rev.enterprise, mrr: facts.filter((f) => f.paying && f.sub?.plan === "enterprise").reduce((n, f) => n + mrrParts(f.sub!).core, 0) },
+    { label: "Team (by seats)", n: rev.enterprise, mrr: facts.filter((f) => f.paying && f.sub?.plan === "enterprise").reduce((n, f) => n + mrrParts(f.sub!).core, 0) },
   ];
   const split = revenueSplit(facts, range, now);
   const reconOk = stripe ? stripe.active + stripe.pastDue === rev.paying : null;
@@ -86,7 +86,7 @@ export default async function Revenue({ searchParams }: { searchParams: Promise<
           <Table head={["Plan", "Subs", "MRR"]} align={["l", "r", "r"]} minWidth={260}>
             {mix.map((m) => <tr key={m.label}><td className="font-sans">{m.label}</td><td className="text-right text-white">{fmt(m.n)}</td><td className="text-right">{usd(m.mrr)}</td></tr>)}
           </Table>
-          <p className="mt-3 text-xs text-muted">Annual plans count once, at $149 ÷ 12 per month. Complimentary (not revenue): {rev.comp.active} active ({rev.comp.unlimited} Unlimited, {rev.comp.enterprise} Enterprise).</p>
+          <p className="mt-3 text-xs text-muted">Annual plans count once, at $149 ÷ 12 per month. Complimentary (not revenue): {rev.comp.active} active ({rev.comp.unlimited} Unlimited, {rev.comp.enterprise} Team).</p>
         </Panel>
       </div>
 
@@ -94,9 +94,9 @@ export default async function Revenue({ searchParams }: { searchParams: Promise<
         <div id="by-product" className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <Table head={["Revenue stream", "Subscriptions", "MRR"]} align={["l", "r", "r"]} minWidth={320}>
-              <tr><td className="font-sans">Core subscriptions (Unlimited + Enterprise licenses)</td><td className="text-right text-white">{fmt(rev.paying)}</td><td className="text-right">{usd(split.coreCents)}</td></tr>
+              <tr><td className="font-sans">Core subscriptions (Unlimited + Team licenses)</td><td className="text-right text-white">{fmt(rev.paying)}</td><td className="text-right">{usd(split.coreCents)}</td></tr>
               <tr><td className="font-sans">Project Command Center add-on ($4.99/mo or $49.99/yr)</td><td className="text-right text-white">{fmt(split.pmAddonSubs)}</td><td className="text-right">{usd(split.pmAddonCents)}</td></tr>
-              <tr><td className="font-sans">Enterprise scheduling editors ($1.99/mo each beyond the included one)</td><td className="text-right text-white">{fmt(split.pmEditorSeats)} seats · {fmt(split.pmEditorCompanies)} co.</td><td className="text-right">{usd(split.pmEditorCents)}</td></tr>
+              <tr><td className="font-sans">Team scheduling editors ($1.99/mo each beyond the included one)</td><td className="text-right text-white">{fmt(split.pmEditorSeats)} seats · {fmt(split.pmEditorCompanies)} co.</td><td className="text-right">{usd(split.pmEditorCents)}</td></tr>
               <tr><td className="font-sans font-bold text-white">Total recurring revenue</td><td /><td className="text-right font-bold text-white" data-testid="total-mrr">{usd(split.totalCents)}</td></tr>
             </Table>
           </div>

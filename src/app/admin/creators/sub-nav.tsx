@@ -2,7 +2,7 @@ import Link from "next/link";
 
 const LINKS = [
   { href: "/admin/creators", label: "Creators & outreach" },
-  { href: "/admin/creators/programs", label: "Learning Enterprise grants" },
+  { href: "/admin/creators/programs", label: "Learning Team grants" },
   { href: "/admin/creators/settings", label: "Outreach settings" },
 ] as const;
 

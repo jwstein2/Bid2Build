@@ -41,7 +41,7 @@ export default async function ComplimentaryAccess({ searchParams }: { searchPara
   const current = converted ? "converted" : filters.state || (filters.plan && !filters.q ? `plan:${filters.plan}` : "");
   const EMPTY: Record<string, string> = {
     active: "No active complimentary grants.", pending: "No pending invitations.", expiring_soon: "No grants expire within 7 days.", expired: "No expired grants.",
-    converted: "No one has converted to paid after a grant yet.", "plan:unlimited": "No Standard Unlimited grants.", "plan:enterprise": "No Enterprise grants.",
+    converted: "No one has converted to paid after a grant yet.", "plan:unlimited": "No Standard Unlimited grants.", "plan:enterprise": "No Team grants.",
     invite_expired: "No expired invitations.", paused: "No paused grants.", revoked: "No revoked grants.",
   };
   const emptyText = filters.q || filters.from || filters.to ? undefined : EMPTY[current];
@@ -52,7 +52,7 @@ export default async function ComplimentaryAccess({ searchParams }: { searchPara
         <p className="text-sm"><Link href="/admin/customers" className="text-ink-soft underline">Customers</Link> <span className="text-muted">/</span></p>
         <h1 className="text-3xl font-extrabold">Complimentary Access</h1>
         <p className="mt-1 max-w-3xl text-sm text-ink-soft">
-          Give a prospect or customer free, time-limited Unlimited or Enterprise access. Grants never create Stripe customers,
+          Give a prospect or customer free, time-limited Unlimited or Team access. Grants never create Stripe customers,
           subscriptions or charges, and never change a paid plan. Access ends automatically on the expiry date; their bids and
           account stay. Every action is recorded in the audit log.
         </p>
@@ -64,7 +64,7 @@ export default async function ComplimentaryAccess({ searchParams }: { searchPara
         <Stat k="Expiring within 7 days" v={metrics.expiring_soon} href={drill({ state: "expiring_soon" })} action="View expiring grants" on={current === "expiring_soon"} warn={metrics.expiring_soon > 0} />
         <Stat k="Expired" v={metrics.expired} sub={`${metrics.revoked} revoked`} href={drill({ state: "expired" })} action="View expired grants" on={current === "expired"} />
         <Stat k="Unlimited grants" v={metrics.unlimited} href={drill({ plan: "unlimited" })} action="Filter: Standard Unlimited" on={current === "plan:unlimited"} />
-        <Stat k="Enterprise grants" v={metrics.enterprise} href={drill({ plan: "enterprise" })} action="Filter: Enterprise" on={current === "plan:enterprise"} />
+        <Stat k="Team grants" v={metrics.enterprise} href={drill({ plan: "enterprise" })} action="Filter: Team" on={current === "plan:enterprise"} />
         <Stat k="Converted to paid" v={metrics.converted} sub="Subscribed after a grant (excludes people who were already paying)" href={drill({ state: "converted" })} action="View converted customers" on={current === "converted"} />
         <Stat k="All grants" v={metrics.total} sub={filters.plan || filters.from || filters.to ? "Matching plan/date filters" : undefined} href={drill({})} action="Open the grants directory" on={!filtered} />
       </section>
@@ -78,7 +78,7 @@ export default async function ComplimentaryAccess({ searchParams }: { searchPara
             <input name="q" defaultValue={filters.q} placeholder="Email or company" className="w-full rounded-md border border-line-strong px-2.5 py-2" /></label>
           <label className="text-sm"><span className="mb-1 block font-medium text-ink-soft">Plan</span>
             <select name="plan" defaultValue={filters.plan} className="w-full rounded-md border border-line-strong px-2.5 py-2">
-              <option value="">All plans</option><option value="unlimited">Unlimited</option><option value="enterprise">Enterprise</option>
+              <option value="">All plans</option><option value="unlimited">Unlimited</option><option value="enterprise">Team</option>
             </select></label>
           <label className="text-sm"><span className="mb-1 block font-medium text-ink-soft">Status</span>
             <select name="state" defaultValue={converted ? "converted" : filters.state} className="w-full rounded-md border border-line-strong px-2.5 py-2">

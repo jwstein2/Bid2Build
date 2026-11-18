@@ -1,6 +1,6 @@
 "use server";
 /**
- * Creator (Learning Enterprise) actions. Every call runs as the signed-in creator through their own
+ * Creator (Learning Team) actions. Every call runs as the signed-in creator through their own
  * RLS client; ownership, seat capacity, consent and redaction are all enforced in Postgres.
  */
 import { revalidatePath } from "next/cache";
@@ -29,7 +29,7 @@ export async function confirmTerms(form: FormData) {
   const { error } = await db.rpc("creator_confirm_terms", { p_program_id: programId });
   if (error) redirect(back(programId, { err: creatorErrorMessage(error.message) }));
   revalidatePath("/learning");
-  redirect(back(programId, { msg: "Thanks. Your Learning Enterprise workspace is ready." }));
+  redirect(back(programId, { msg: "Thanks. Your Learning Team workspace is ready." }));
 }
 
 /** Creates a single-use invitation and returns the private link once. Nothing is emailed. */

@@ -16,7 +16,7 @@ function LocalDate({ iso, time }: { iso: string | null; time?: boolean }) {
   return <time dateTime={iso} suppressHydrationWarning>{time ? d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }) : d.toLocaleDateString(undefined, { dateStyle: "medium" })}</time>;
 }
 
-const PLAN_SHORT = { unlimited: "Unlimited", enterprise: "Enterprise" } as const;
+const PLAN_SHORT = { unlimited: "Unlimited", enterprise: "Team" } as const;
 
 function actionsFor(r: CompRow): Exclude<Dialog, null>["kind"][] {
   const a: Exclude<Dialog, null>["kind"][] = [];
@@ -145,7 +145,7 @@ function ActionDialog({ dialog, onClose }: { dialog: Exclude<Dialog, null>; onCl
   const done = result?.ok;
   const titles = {
     extend: "Extend complimentary access", pause: "Pause complimentary access", resume: "Resume complimentary access",
-    resend: "Resend invitation", seats: "Complimentary Enterprise seats", pm: "Project scheduling editors", revoke: "Revoke complimentary access", details: "Grant details",
+    resend: "Resend invitation", seats: "Complimentary Team seats", pm: "Project scheduling editors", revoke: "Revoke complimentary access", details: "Grant details",
   } as const;
 
   const footer = (confirmLabel: string, onConfirm: () => void, danger = false, disabled = false) => (
@@ -204,7 +204,7 @@ function ActionDialog({ dialog, onClose }: { dialog: Exclude<Dialog, null>; onCl
         const n = pmEd.trim() === "" ? null : Number(pmEd);
         const ok = approve && (n === null || (Number.isInteger(n) && n >= 0 && n <= 50)) && n !== (row.pm_editors ?? null);
         return (<>
-          <p className="text-sm text-ink-soft">Plan default: {row.plan === "enterprise" ? "Enterprise grants include 1 schedule editor." : "Unlimited grants don't include project scheduling."} Leave blank to use the default ({def}). Complimentary editors are never charged.</p>
+          <p className="text-sm text-ink-soft">Plan default: {row.plan === "enterprise" ? "Team grants include 1 schedule editor." : "Unlimited grants don't include project scheduling."} Leave blank to use the default ({def}). Complimentary editors are never charged.</p>
           <label className="mt-3 flex items-center gap-2 text-sm font-medium">Schedule editors
             <input type="number" min={0} max={50} placeholder={String(def)} value={pmEd} onChange={(e) => { setPmEd(e.target.value); setApprove(false); }} className="min-h-10 w-24 rounded-md border border-line-strong px-2" />
           </label>

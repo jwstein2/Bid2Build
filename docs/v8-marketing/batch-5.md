@@ -32,3 +32,7 @@ Also renamed the batch 4 SQL file from 20270105001000 to 20270105002000 (it shar
 - DB test `tests/db/free-saved-items.test.ts` 5/5 (free writes own rows only, stacks still locked, 250 cap vs Unlimited no cap, idempotent, rollback keeps items).
 - Vitest 1,773 passed. Type check and lint pass. Marketing walk 319/321 (known mock-only Academy 404s); Team billing walk 22/22; V6 journeys walk 20/20.
 - Pre-existing, unrelated: `scripts/saved-items/walk.mjs` (old "Default rate" label) and `scripts/enterprise/pricing-walk.mjs` (expects the pre-V6 /login redirect) were already stale.
+
+## Follow-up: Team continuity (2026-11-18, no SQL)
+James asked for the rename to hold across the platform and admin side. Admin labels (revenue, usage, states, complimentary grants, customer list, activity feed, metric definitions, creator programs) now say Team. The creator program is now "Learning Team" (was "Learning Enterprise"). Kept: "Enterprise value" on the revenue scorecard (the finance term for a company's valuation, not the plan) and all internal ids.
+Stripe: the connector is read-only, so the live product "Built2Bid Enterprise" (prod_Vdx86xJaXgDkiR) is renamed by the owner in the Stripe dashboard. The editor-seat product description also mentions Enterprise.

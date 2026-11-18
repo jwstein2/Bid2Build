@@ -1,5 +1,5 @@
 /**
- * Creator Partner Program (invitation-only Learning Enterprise). Pure definitions shared by the owner
+ * Creator Partner Program (invitation-only Learning Team). Pure definitions shared by the owner
  * admin, the creator dashboard, the participant pages and tests. Entitlement and every permission
  * check live in Postgres (20261117001000_creator_partner_program.sql).
  *
@@ -7,7 +7,7 @@
  */
 import { z } from "zod";
 
-export const PROGRAM_NAME = "Built2Bid Learning Enterprise";
+export const PROGRAM_NAME = "Built2Bid Learning Team";
 /** Recommended gift allowances (owner may override 0..50). */
 export const GIFT_TIERS = [5, 10] as const;
 export const MAX_GIFT_ALLOWANCE = 50;
@@ -110,7 +110,7 @@ export const CONSENT_PERMISSIONS = [
 
 const ERRORS: Record<string, string> = {
   forbidden: "You don't have access to that.",
-  program_inactive: "This Learning Enterprise program isn't active.",
+  program_inactive: "This Learning Team program isn't active.",
   confirm_terms_first: "Review and confirm the program terms first.",
   invalid_email: "Enter a valid email address.",
   invalid_token: "Could not create a secure invitation. Try again.",
