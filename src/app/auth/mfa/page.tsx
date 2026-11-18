@@ -6,6 +6,12 @@ import { Card, Notice } from "@/components/ui/misc";
 import { safeNext } from "@/lib/http/redirect";
 import { getBrowserClient } from "@/lib/supabase/client";
 
+/** Where to go after this step: same-site path only (safeNext, then an explicit same-origin check). */
+function nextPath(): string {
+  const u = new URL(safeNext(new URLSearchParams(window.location.search).get("next")), window.location.origin);
+  return u.origin === window.location.origin ? `${u.pathname}${u.search}${u.hash}` : "/dashboard";
+}
+
 /** Second sign-in step for people who turned on two-step sign-in: the 6-digit code from their authenticator app. */
 export default function TwoStepChallenge() {
   const [factorId, setFactorId] = useState<string | null>(null);
@@ -18,7 +24,7 @@ export default function TwoStepChallenge() {
     const supabase = getBrowserClient();
     if (!supabase) { setState("none"); return; }
     void (async () => {
-      const next = safeNext(new URLSearchParams(window.location.search).get("next"));
+      const next = nextPath();
       const { data: lvl } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
       if (!lvl?.currentLevel) { window.location.replace(`/login?next=${encodeURIComponent(next)}`); return; }
       if (lvl.currentLevel === "aal2" || lvl.nextLevel !== "aal2") { window.location.replace(next); return; }
@@ -35,7 +41,7 @@ export default function TwoStepChallenge() {
     setBusy(true); setErr(null);
     const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId, code });
     if (error) { setBusy(false); setErr("That code didn't match. Enter the newest 6-digit code from your authenticator app."); setCode(""); return; }
-    window.location.replace(safeNext(new URLSearchParams(window.location.search).get("next")));
+    window.location.replace(nextPath());
   }
 
   return (
