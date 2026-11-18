@@ -15,6 +15,7 @@ export const TOOLS = [
   { href: "/admin/revenue/scorecard", label: "Business Scorecard" },
   { href: "/admin/complimentary", label: "Complimentary access" },
   { href: "/admin/creators", label: "Creator Partnerships" },
+  { href: "/academy/manage", label: "Contractor Academy" },
   { href: "/admin/states", label: "Bids by state" },
   { href: "/admin/definitions", label: "Metric definitions" },
   { href: "/admin/marketing/radar", label: "Opportunity Radar" },

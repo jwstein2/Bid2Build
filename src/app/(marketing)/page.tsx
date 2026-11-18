@@ -12,6 +12,7 @@ import { PILLARS, PM_PRODUCT_NAME, PRICES, pmMarketedLive } from "@/lib/marketin
 import { pickerTrades } from "@/lib/trades/picker";
 import { plans, site } from "@/lib/site";
 import { AccountCtas } from "@/components/account/account-ctas";
+import { AcademyPromo } from "@/components/marketing/academy-promo";
 import { ReplayTourButton } from "@/components/onboarding/replay-tour-button";
 import { getAccountStatus } from "@/lib/account/server";
 import { accountCtas, creditBadge, MEMBER_TAGLINE, type AccountStatus } from "@/lib/account/status";
@@ -168,6 +169,8 @@ export default async function HomePage() {
           <div id="sample-proposal" className="scroll-mt-24"><ProposalSample /></div>
         </Container>
       </section>
+
+      <AcademyPromo />
 
       <section className="on-dark relative overflow-hidden bg-navy py-16 text-white">
         <div aria-hidden className="blueprint-grid-dark pointer-events-none absolute inset-0" />
