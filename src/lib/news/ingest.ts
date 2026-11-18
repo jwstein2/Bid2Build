@@ -185,6 +185,8 @@ export type SummaryWriter = (opts: { system: string; user: string; schema: typeo
  * Write "What happened" summaries for pending items (eligible sources only), within the monthly budget
  * and the per-run cap. Each output is checked against its source; failures store no summary.
  */
+const SUMMARY_CONCURRENCY = 5;
+
 export async function runSummaries(store: NewsStore, writer: SummaryWriter | null, now = new Date(), model?: string) {
   const s = newsAiSettings();
   const started = new Date().toISOString();
@@ -198,13 +200,14 @@ export async function runSummaries(store: NewsStore, writer: SummaryWriter | nul
     return report;
   }
   const pending = await store.pendingSummaries(s.maxPerRun);
-  for (const p of pending) {
-    if (spent + report.costUsd >= s.monthlyBudgetUsd) break;
+  // A few at a time: the scheduled function that calls this waits only about 15 seconds, and one by one
+  // 15 summaries took about 25 seconds, so Netlify retried the whole job.
+  const one = async (p: PendingSummary) => {
     const source = NEWS_SOURCES.find((x) => x.key === p.source_key);
     const text = p.snippet ?? "";
     if (!source || summaryEligibility(source, text) !== "eligible") {
       await store.saveSummary(p.id, { summary: null, summary_status: source ? (summaryEligibility(source, text) as SummaryStatus) : "not_permitted", summary_model: null });
-      continue;
+      return;
     }
     const docType = p.article_type === "final_rule" ? "Rule" : p.article_type === "proposed_rule" ? "Proposed Rule" : p.article_type === "notice" ? "Notice" : null;
     try {
@@ -224,6 +227,10 @@ export async function runSummaries(store: NewsStore, writer: SummaryWriter | nul
       // Leave it pending once more would loop forever on a bad item: mark rejected, the snippet still shows.
       await store.saveSummary(p.id, { summary: null, summary_status: "rejected", summary_model: null });
     }
+  };
+  for (let i = 0; i < pending.length; i += SUMMARY_CONCURRENCY) {
+    if (spent + report.costUsd >= s.monthlyBudgetUsd) break;
+    await Promise.all(pending.slice(i, i + SUMMARY_CONCURRENCY).map(one));
   }
   await store.recordRun({ source_key: "all", phase: "summarize", started_at: started, finished_at: new Date().toISOString(), status: "ok", ai_summaries: report.written, ai_rejected: report.rejected, ai_cost_usd: Math.round(report.costUsd * 1e6) / 1e6 });
   return report;

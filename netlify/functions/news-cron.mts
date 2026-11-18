@@ -7,8 +7,10 @@ export default async function newsCron(): Promise<Response> {
   const secret = process.env.EMAIL_OUTBOX_SECRET;
   const base = process.env.URL;
   if (!secret || !base || process.env.NEWS_INGEST_ENABLED !== "true") return new Response("off", { status: 200 });
-  const results: Response[] = [];
-  for (const phase of ["fetch", "summarize", "purge"]) results.push(await runCron(`news_${phase}`, `/api/cron/news?phase=${phase}`, secret, base));
+  // Netlify waits only about 15 seconds for a scheduled function and retries it on timeout, so keep the
+  // whole run short: fetch first, then summaries and the retention purge side by side.
+  const results: Response[] = [await runCron("news_fetch", "/api/cron/news?phase=fetch", secret, base)];
+  results.push(...(await Promise.all(["summarize", "purge"].map((phase) => runCron(`news_${phase}`, `/api/cron/news?phase=${phase}`, secret, base)))));
   const failed = results.some((r) => !r.ok);
   return new Response(results.map((r) => r.status).join(" "), { status: failed ? 502 : 200 });
 }
