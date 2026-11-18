@@ -35,13 +35,13 @@ export function unzipOne(buf: Buffer, want?: RegExp): { name: string; data: Buff
   if (eocd < 0) throw new FormatChanged("not a zip archive");
   const count = buf.readUInt16LE(eocd + 10);
   let p = buf.readUInt32LE(eocd + 16);
-  const entries: { name: string; method: number; size: number; local: number }[] = [];
+  const entries: { name: string; method: number; size: number; csize: number; local: number }[] = [];
   for (let n = 0; n < count; n++) {
     if (buf.readUInt32LE(p) !== 0x02014b50) throw new FormatChanged("bad zip directory");
     const method = buf.readUInt16LE(p + 10), size = buf.readUInt32LE(p + 20), nameLen = buf.readUInt16LE(p + 28), extra = buf.readUInt16LE(p + 30), comment = buf.readUInt16LE(p + 32);
     const local = buf.readUInt32LE(p + 42);
     const name = buf.subarray(p + 46, p + 46 + nameLen).toString("utf8");
-    if (!name.endsWith("/")) entries.push({ name, method, size: buf.readUInt32LE(p + 24) || size, local });
+    if (!name.endsWith("/")) entries.push({ name, method, size: buf.readUInt32LE(p + 24) || size, csize: size, local });
     p += 46 + nameLen + extra + comment;
   }
   if (!entries.length) throw new FormatChanged("empty zip archive");
@@ -49,7 +49,8 @@ export function unzipOne(buf: Buffer, want?: RegExp): { name: string; data: Buff
   const lh = e.local;
   if (buf.readUInt32LE(lh) !== 0x04034b50) throw new FormatChanged("bad zip entry");
   const start = lh + 30 + buf.readUInt16LE(lh + 26) + buf.readUInt16LE(lh + 28);
-  const csize = buf.readUInt32LE(lh + 18) || (entries.length === 1 ? buf.length - start : 0);
+  // Files written with a data descriptor (flag bit 3) leave the local sizes at 0; the central directory has the real one.
+  const csize = buf.readUInt32LE(lh + 18) || e.csize || (entries.length === 1 ? buf.length - start : 0);
   const raw = buf.subarray(start, start + (csize || buf.length - start));
   if (e.method === 0) return { name: e.name, data: Buffer.from(raw) };
   if (e.method === 8) return { name: e.name, data: inflateRawSync(raw) };
@@ -58,9 +59,12 @@ export function unzipOne(buf: Buffer, want?: RegExp): { name: string; data: Buff
 
 /** File bytes → text, unzipping when needed. */
 export function fileText(buf: Buffer, want?: RegExp): { name: string | null; text: string } {
-  if (buf.length >= 4 && buf.readUInt32LE(0) === 0x04034b50) { const f = unzipOne(buf, want); return { name: f.name, text: f.data.toString("latin1") }; }
-  return { name: null, text: buf.toString("latin1") };
+  if (buf.length >= 4 && buf.readUInt32LE(0) === 0x04034b50) { const f = unzipOne(buf, want); return { name: f.name, text: stripBom(f.data.toString("latin1")) }; }
+  return { name: null, text: stripBom(buf.toString("latin1")) };
 }
+
+/** Some states (NE, IA) save their files with a UTF-8 byte order mark, which would hide the first (statewide) row. */
+export const stripBom = (s: string) => s.replace(/^(\uFEFF|\u00EF\u00BB\u00BF)/, "");
 
 // --- CSV ----------------------------------------------------------------------------------------------------------
 /** Minimal CSV line splitter (quoted fields, doubled quotes). Official files are plain, but be safe. */
@@ -92,7 +96,7 @@ export const jurisdictionCode = (state: string, level: OfficialRate["level"], fi
 export function parseSstRates(text: string, state: string, today: string): OfficialRate[] {
   const fips = STATE_FIPS[state];
   if (!fips) throw new FormatChanged(`unknown state ${state}`);
-  const lines = text.split(/\r?\n/).filter((l) => l.trim());
+  const lines = stripBom(text).split(/\r?\n/).filter((l) => l.trim());
   const out: OfficialRate[] = [];
   let bad = 0, data = 0, sawState = false;
   for (const line of lines) {
@@ -100,7 +104,9 @@ export function parseSstRates(text: string, state: string, today: string): Offic
     const first = (f[0] ?? "").toUpperCase();
     if (!/^\d{1,2}$/.test(first) && first !== state) continue;   // header / notes (state given as FIPS or abbreviation)
     data++;
-    const [, type, code, general, , , , begin, end] = f;
+    const [, rawType, code, general, , , , begin, end] = f;
+    const type = /^\d{1,2}$/.test(rawType ?? "") ? rawType.padStart(2, "0") : rawType;   // VT, TN, NC, NV write "0" / "1"
+
     const st = first === state ? fips : first;
     const from = ymd(begin ?? ""), to = end ? ymd(end) : null;
     const rate = toPct(general ?? "");
@@ -136,13 +142,18 @@ export function aggregateSstBoundaries(text: string, state: string, today: strin
     const f = splitCsv(line);
     const begin = ymd(f[B.begin] ?? ""), end = ymd(f[B.end] ?? "");
     const county = (f[B.countyFips] ?? "").padStart(3, "0"), place = (f[B.placeFips] ?? "").trim();
-    const low = (f[B.zipLow] || f[B.zip] || "").slice(0, 5), high = (f[B.zipHigh] || low).slice(0, 5);
+    // RI and NJ drop the leading zero ("2801" for 02801).
+    const z5 = (s: string) => (/^\d{3,4}$/.test(s) ? s.padStart(5, "0") : s.slice(0, 5));
+    const low = z5(f[B.zipLow] || f[B.zip] || ""), high = z5(f[B.zipHigh] || low);
     if ((f[B.stateFips] ?? "").padStart(2, "0") !== fips || !begin || !/^\d{3}$/.test(county) || !/^\d{5}$/.test(low) || !/^\d{5}$/.test(high) || high < low) { bad++; continue; }
     if (begin > today || (end && end < today)) continue;
     const specials: string[] = [];
     for (let i = B.special0; i + 1 < f.length && specials.length < 20; i += 3) { const code = (f[i + 1] ?? "").trim(); if (code) specials.push(code); }
     specials.sort();
-    const lo = Number(low), hi = Math.min(Number(high), lo + 99);    // a Z range never spans more than a few ZIPs; cap defensively
+    // A Z range rarely spans more than a few ZIPs; cap defensively. State-only states (RI, NJ) list the whole state as
+    // one range with no county or place, so allow that one shape to cover every ZIP in it.
+    const statewide = county === "000" && !place && !specials.length;
+    const lo = Number(low), hi = Math.min(Number(high), lo + (statewide ? 2999 : 99));
     for (let z = lo; z <= hi; z++) {
       const zip5 = String(z).padStart(5, "0");
       const key = `${zip5}|${county}|${place}|${specials.join(",")}`;

@@ -404,6 +404,51 @@ describe("importer (mocked downloads)", () => {
   });
 });
 
+describe("state file quirks seen in the 18:23Z run (2026-11-18)", () => {
+  it("VT: real zip with a data descriptor and one-digit type codes", () => {
+    const { name, text } = fileText(readFileSync("tests/fixtures/sst/VTR2026Q4AUG20.zip"));
+    expect(name).toMatch(/VTR2026Q4AUG20/i);
+    const rates = parseSstRates(text, "VT", "2026-11-18");
+    expect(rates.find((r) => r.level === "state")?.rate).toBe("6");
+    expect(rates.some((r) => r.level === "city")).toBe(true);
+  });
+  it("NE / IA: a UTF-8 byte order mark before the statewide row", () => {
+    const bom = "\u00EF\u00BB\u00BF31,45,31,0.055,0.055,0.055,0.055,20061001,29991231\r\n31,00,043,0.005,0.005,0.005,0.005,20150401,29991231\r\n";
+    const zip = makeZip("NER.csv", Buffer.from(bom, "latin1"), true);
+    const rates = parseSstRates(fileText(zip).text, "NE", "2026-11-18");
+    expect(rates.map((r) => [r.level, r.rate])).toEqual([["state", "5.5"], ["county", "0.5"]]);
+  });
+  it("TN / NC / NV: types 0, 1 and other special codes", () => {
+    const t = "37,45,37,0.0475,0.0475,0,0,20061001,29991231\n37,0,001,0.0225,0.0225,0,0,20061001,29991231\n37,79,123,0.005,0.005,0,0,20061001,29991231\n37,1,00100,0.01,0.01,0,0,20061001,29991231\n";
+    expect(parseSstRates(t, "NC", "2026-11-18").map((r) => r.level)).toEqual(["state", "county", "special", "city"]);
+  });
+  it("RI / NJ: the tiny statewide boundary file without leading zeros", () => {
+    const pad = ",".repeat(40);
+    const t = `4,20070101,29991231,,,,,,,,,,,,,,,2801,0,2940,9999,,44,44${pad}\r\nZ,20070101,29991231,,,,,,,,,,,,,,,2801,,2940,,,44,44${pad}\r\n`;
+    const areas = aggregateSstBoundaries(t, "RI", "2026-11-18");
+    const zips = new Set(areas.map((a) => a.zip5));
+    expect(zips.has("02801")).toBe(true);
+    expect(zips.has("02940")).toBe(true);
+    expect(zips.size).toBe(140);
+  });
+});
+
+/** A one-entry zip; `descriptor` mimics IA/VT (sizes only in the central directory). */
+function makeZip(name: string, data: Buffer, descriptor: boolean): Buffer {
+  const comp = deflateRawSync(data), nm = Buffer.from(name);
+  const lh = Buffer.alloc(30); lh.writeUInt32LE(0x04034b50, 0); lh.writeUInt16LE(descriptor ? 8 : 0, 6); lh.writeUInt16LE(8, 8);
+  if (!descriptor) { lh.writeUInt32LE(comp.length, 18); lh.writeUInt32LE(data.length, 22); }
+  lh.writeUInt16LE(nm.length, 26);
+  const dd = descriptor ? Buffer.alloc(16) : Buffer.alloc(0);
+  if (descriptor) { dd.writeUInt32LE(0x08074b50, 0); dd.writeUInt32LE(comp.length, 8); dd.writeUInt32LE(data.length, 12); }
+  const cd = Buffer.alloc(46); cd.writeUInt32LE(0x02014b50, 0); cd.writeUInt16LE(descriptor ? 8 : 0, 8); cd.writeUInt16LE(8, 10);
+  cd.writeUInt32LE(comp.length, 20); cd.writeUInt32LE(data.length, 24); cd.writeUInt16LE(nm.length, 28); cd.writeUInt32LE(0, 42);
+  const body = Buffer.concat([lh, nm, comp, dd]);
+  const eocd = Buffer.alloc(22); eocd.writeUInt32LE(0x06054b50, 0); eocd.writeUInt16LE(1, 8); eocd.writeUInt16LE(1, 10);
+  eocd.writeUInt32LE(46 + nm.length, 12); eocd.writeUInt32LE(body.length, 16);
+  return Buffer.concat([body, cd, nm, eocd]);
+}
+
 describe("seed rates + online exemption form", () => {
   it("every seed rate is in the migration, and the state-only list has no local taxes in the seed", () => {
     for (const s of SEED_RATES) expect(MIG).toContain(`('${s.state}', '${s.code}', '${s.name}', '${s.level}', ${s.rate})`);
