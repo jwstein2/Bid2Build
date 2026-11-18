@@ -22,8 +22,8 @@ export default function TwoStepChallenge() {
 
   useEffect(() => {
     const supabase = getBrowserClient();
-    if (!supabase) { setState("none"); return; }
     void (async () => {
+      if (!supabase) { setState("none"); return; }
       const next = nextPath();
       const { data: lvl } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
       if (!lvl?.currentLevel) { window.location.replace(`/login?next=${encodeURIComponent(next)}`); return; }

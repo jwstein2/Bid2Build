@@ -29,12 +29,17 @@ export function TwoStepSignIn() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ tone: "ok" | "danger"; text: string } | null>(null);
 
-  const load = useCallback(async () => {
-    if (!supabase) return;
+  const fetchFactors = useCallback(async () => {
+    if (!supabase) return [] as Factor[];
     const { data } = await supabase.auth.mfa.listFactors();
-    setFactors(((data?.all ?? []) as Factor[]).filter((f) => f.factor_type === "totp"));
+    return ((data?.all ?? []) as Factor[]).filter((f) => f.factor_type === "totp");
   }, [supabase]);
-  useEffect(() => { void load(); }, [load]);
+  const load = useCallback(async () => { setFactors(await fetchFactors()); }, [fetchFactors]);
+  useEffect(() => {
+    let live = true;
+    fetchFactors().then((f) => { if (live) setFactors(f); }).catch(() => { if (live) setFactors([]); });
+    return () => { live = false; };
+  }, [fetchFactors]);
 
   const verified = (factors ?? []).filter((f) => f.status === "verified");
 
