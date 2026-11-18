@@ -6,7 +6,8 @@ import { computeEstimate } from "@/lib/estimate/engine";
 import { contentHash, versionSnapshot } from "@/lib/export/snapshot";
 import { renderProposalPdf, pdfFilename } from "@/lib/pdf/render";
 import { loadBusiness, loadEstimate } from "@/lib/data/server";
-import { createAdminClient, createClient } from "@/lib/supabase/server";
+import { createAdminClient, createClient, getAuthUser } from "@/lib/supabase/server";
+import { parseDemoClaim } from "@/lib/demo/session";
 import { fail, logError } from "@/lib/http/api";
 import { captureObservation } from "@/lib/market/server";
 import type { CreditSource } from "@/lib/credits/status";
@@ -44,6 +45,11 @@ export const sha256 = (b: Buffer | string) => createHash("sha256").update(b).dig
  *  4. store the PDF privately
  * Returns a Response on refusal so routes can return it as-is.
  */
+/** Whether this request is a Demo / Practice Mode login (server-written claim; request-cached Auth lookup). */
+async function isDemoSession(): Promise<boolean> {
+  try { return Boolean(parseDemoClaim((await getAuthUser())?.app_metadata)); } catch { return false; }
+}
+
 export async function finalizeProposal(userId: string, id: string, userCreatedAt?: string | null): Promise<FinalizeResult | Response> {
   const supabase = await createClient();
   const data = await loadEstimate(supabase, id);
@@ -114,8 +120,10 @@ export async function finalizeProposal(userId: string, id: string, userCreatedAt
   // Market intelligence: one de-identified observation per finalized version, only with opt-in consent.
   // Bids saved before address parsing existed may only have a typed address: derive the location for it.
   const located = { ...estimate, location: fillLocationFromAddress(estimate.location, estimate.customer.projectAddress) };
-  await captureObservation(admin, userId, r.version_id, located, totals);
-  if (r.new_version) {
+  // Demo / Practice Mode: sample bids never feed market data or business metrics.
+  const demo = await isDemoSession();
+  if (!demo) await captureObservation(admin, userId, r.version_id, located, totals);
+  if (r.new_version && !demo) {
     // One event per finalized version (a re-download of the same version is not a new export).
     await recordEvent(admin, { userId, event: "export_succeeded", eventId: `export_succeeded:${r.version_id}`, trade: estimate.trades[0] ?? null, estimateId: id });
     await maybeActivate(admin, { id: userId, createdAt: userCreatedAt }, estimate.trades[0] ?? null);
