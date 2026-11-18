@@ -105,12 +105,15 @@ These figures come from public pages and third-party write-ups. Avalara and Plai
 
 ## 7. Owner checklist
 
-1. Paste `run-tax-banking.sql` into the Supabase SQL editor and run it.
-2. Netlify (Production): set `TAX_BANKING_CRON_SECRET` to a long random value. Leave `TAX_PROVIDER`, `TAX_PROVIDER_LIVE`, `BANK_PROVIDER` and `BANK_PROVIDER_LIVE` unset until you approve providers.
-3. When you approve providers:
-   - Tax: set `TAX_PROVIDER=taxjar` (or `avalara`), the provider's API keys, and `TAX_PROVIDER_LIVE=true`.
-   - Banking: set `BANK_PROVIDER=plaid`, `PLAID_CLIENT_ID`, `PLAID_SECRET`, `PLAID_ENV=production`, `BANK_TOKEN_KEY` (32 random bytes, base64) and `BANK_PROVIDER_LIVE=true`. The Plaid Link script also needs adding to the CSP at that point; it is the one remaining build step.
-4. Optional: verify the 51 agency links (the nightly check marks reachable ones automatically).
+James approved TaxJar and Plaid on 2026-11-18. Step-by-step signup is in `docs/tax-banking/provider-setup.md`. In short:
+
+1. Run the SQL. In Netlify Production, set `TAX_BANKING_CRON_SECRET`.
+2. TaxJar Professional: set `TAX_PROVIDER=taxjar`, `TAXJAR_API_KEY` and `TAX_PROVIDER_LIVE=true` (Production).
+3. Plaid:
+   - Test keys (`PLAID_ENV=sandbox`) work only inside a Practice (sandbox) book.
+   - After Plaid grants production access, set `PLAID_ENV=production` and the production secret.
+   - Also required: `BANK_PROVIDER=plaid`, `PLAID_CLIENT_ID`, `PLAID_SECRET`, `BANK_TOKEN_KEY` and `BANK_PROVIDER_LIVE=true`.
+4. Until those variables exist, the pages keep showing "Coming soon".
 
 ## 8. Tests (all 40 spec scenarios)
 

@@ -5,6 +5,29 @@ import { Button } from "@/components/ui/button";
 import { Status } from "@/components/financials/accounting/controls";
 import { useTb } from "./client";
 
+type PlaidHandler = { open: () => void; destroy: () => void };
+declare global { interface Window { Plaid?: { create: (cfg: { token: string; onSuccess: (publicToken: string) => void; onExit: (err: { error_message?: string } | null) => void }) => PlaidHandler } } }
+const PLAID_SRC = "https://cdn.plaid.com/link/v2/stable/link-initialize.js";
+
+/** Load Plaid's own Link script (Plaid hosts the bank sign-in; Built2Bid never sees the login) and open it. */
+async function openPlaid(linkToken: string): Promise<{ publicToken: string } | { exit: string | null }> {
+  if (!window.Plaid) {
+    await new Promise<void>((resolve, reject) => {
+      const el = document.createElement("script");
+      el.src = PLAID_SRC; el.async = true; el.onload = () => resolve(); el.onerror = () => reject(new Error("plaid_script"));
+      document.head.appendChild(el);
+    });
+  }
+  return new Promise((resolve) => {
+    const h = window.Plaid!.create({
+      token: linkToken,
+      onSuccess: (publicToken) => { h.destroy(); resolve({ publicToken }); },
+      onExit: (err) => { h.destroy(); resolve({ exit: err?.error_message ?? null }); },
+    });
+    h.open();
+  });
+}
+
 const SCENARIOS = { ok: "One checking account", two_accounts: "Checking + savings", partial: "Only 30 days of history", institution_down: "Bank temporarily down", expired: "Login expired (needs reconnect)", no_balance: "Bank doesn't report a balance" } as const;
 
 /**
@@ -26,10 +49,18 @@ export function ConnectBank({ mode, canConnect, laterHref }: { mode: "none" | "m
     );
   }
   if (mode === "plaid") {
+    const connect = async () => {
+      const start = await run<{ linkToken: string }>({ action: "bank_link_start" }, "Opening your bank's secure window…");
+      if (!start) return;
+      let res: Awaited<ReturnType<typeof openPlaid>>;
+      try { res = await openPlaid(start.linkToken); } catch { setMsg({ tone: "danger", text: "The secure bank window couldn't load. Check your connection or ad blocker and try again." }); return; }
+      if ("exit" in res) { setMsg(res.exit ? { tone: "danger", text: `${res.exit} Nothing was connected.` } : null); return; }
+      const r = await run<{ sync: { status: string; inserted: number } }>({ action: "bank_link_finish", publicToken: res.publicToken }, "Connected.");
+      if (r) setMsg({ tone: "ok", text: `Connected. ${r.sync.inserted} transactions imported.` });
+    };
     return (
       <div className="flex flex-wrap items-center gap-2">
-        <Button size="sm" disabled={busy} onClick={async () => { const r = await run<{ linkToken: string }>({ action: "bank_link_start" }, "Opening your bank's secure window…"); if (r) setMsg({ tone: "ok", text: "The secure bank window opens here once the provider script is approved for production." }); }}>
-          <Landmark className="h-4 w-4" aria-hidden /> Connect Business Bank Account</Button>
+        <Button size="sm" disabled={busy} onClick={() => void connect()} data-testid="bank-connect"><Landmark className="h-4 w-4" aria-hidden /> Connect Business Bank Account</Button>
         {laterHref && <a href={laterHref} className="text-sm font-semibold text-accent-ink underline">I&apos;ll do this later</a>}
         <Status msg={msg} busy={busy} />
       </div>
@@ -64,14 +95,23 @@ export function ConnectBank({ mode, canConnect, laterHref }: { mode: "none" | "m
 }
 
 export function ConnectionActions({ id, status, canWrite, canManage }: { id: string; status: string; canWrite: boolean; canManage: boolean }) {
-  const { busy, msg, run } = useTb();
+  const { busy, msg, run, setMsg } = useTb();
   const [confirm, setConfirm] = useState(false);
   const [reason, setReason] = useState("");
   if (status === "disconnected") return null;
   return (
     <div className="flex flex-wrap items-center gap-2">
       {canWrite && ["active", "institution_down", "error"].includes(status) && <Button size="sm" variant="secondary" disabled={busy} onClick={() => void run({ action: "bank_refresh", connectionId: id }, "Bank balance refreshed.")} data-testid="bank-refresh"><RefreshCw className="h-4 w-4" aria-hidden /> Refresh bank balance</Button>}
-      {canManage && ["needs_reauth", "revoked", "error"].includes(status) && <Button size="sm" disabled={busy} onClick={() => void run({ action: "bank_reconnect", connectionId: id }, "Reconnected.")}>Reconnect</Button>}
+      {canManage && ["needs_reauth", "revoked", "error"].includes(status) && <Button size="sm" disabled={busy} onClick={async () => {
+        const start = await run<{ provider: string; linkToken: string | null }>({ action: "bank_reconnect_start", connectionId: id }, "Opening your bank's secure window…");
+        if (!start) return;
+        if (start.linkToken) {
+          let res: Awaited<ReturnType<typeof openPlaid>>;
+          try { res = await openPlaid(start.linkToken); } catch { setMsg({ tone: "danger", text: "The secure bank window couldn't load. Try again." }); return; }
+          if ("exit" in res) { setMsg(res.exit ? { tone: "danger", text: res.exit } : null); return; }
+        }
+        await run({ action: "bank_reconnect", connectionId: id }, "Reconnected.");
+      }}>Reconnect</Button>}
       {canManage && !confirm && <Button size="sm" variant="ghost" onClick={() => setConfirm(true)}>Disconnect</Button>}
       {canManage && confirm && (
         <span className="flex flex-wrap items-center gap-2">

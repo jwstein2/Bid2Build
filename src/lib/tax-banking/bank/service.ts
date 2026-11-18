@@ -6,7 +6,7 @@ import "server-only";
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/server";
-import { isProductionDeploy } from "../isolation";
+import { bankProviderMode, isProductionDeploy } from "../isolation";
 import { resolveBankProvider, type BankProvider, mockBankProvider } from "./providers";
 import { MOCK_TOKEN_KEY, openToken, sealToken } from "./token-crypto";
 
@@ -16,8 +16,17 @@ export class BankError extends Error { constructor(public code: string) { super(
 const keyFor = (provider: string) => (provider === "mock" ? MOCK_TOKEN_KEY : process.env.BANK_TOKEN_KEY);
 export const practiceMode = (sandboxBook: boolean) => sandboxBook || !isProductionDeploy();
 
+/** Plaid's test environment (PLAID_ENV other than "production") only ever serves practice books: previews share the real database. */
+const plaidTestOnly = (name: string | undefined, sandboxBook: boolean) => name === "plaid" && process.env.PLAID_ENV !== "production" && !sandboxBook;
+
 export function providerFor(sandboxBook: boolean): BankProvider | null {
-  return resolveBankProvider(process.env, { sandbox: practiceMode(sandboxBook) });
+  const p = resolveBankProvider(process.env, { sandbox: practiceMode(sandboxBook) });
+  return p && plaidTestOnly(p.name, sandboxBook) ? null : p;
+}
+/** What the Connected banks page offers: "none" (Coming soon), "mock" (practice bank) or "plaid". */
+export function bankModeFor(sandboxBook: boolean): "none" | "mock" | "plaid" {
+  const m = bankProviderMode(process.env, { sandbox: practiceMode(sandboxBook) });
+  return plaidTestOnly(m, sandboxBook) ? "none" : m;
 }
 const providerByName = (name: string, sandboxBook: boolean) => (name === "mock" ? mockBankProvider() : providerFor(sandboxBook));
 
@@ -68,6 +77,17 @@ export async function refresh(db: Db, connectionId: string, sandboxBook: boolean
   const p = providerByName(gate.provider, sandboxBook);
   if (!p) throw new BankError("provider_not_approved");
   return syncConnection(connectionId, p, await readToken(connectionId, gate.provider));
+}
+
+/** Reconnect, step 1 (real providers): a link token in update mode for this connection's existing access. */
+export async function reconnectLink(db: Db, connectionId: string, userId: string, sandboxBook: boolean) {
+  const gate = await rpc<{ provider: string; bookId: string }>(db, "fin_bank_refresh_allowed", { p_connection_id: connectionId });
+  if (!(await rpc<boolean>(db, "tb_can", { p_book_id: gate.bookId, p_cap: "bank.connect", p_write: true }))) throw new BankError("forbidden");
+  if (gate.provider === "mock") return { provider: "mock", linkToken: null };
+  const p = providerByName(gate.provider, sandboxBook);
+  if (!p) throw new BankError("provider_not_approved");
+  const t = await p.createLinkToken(userId, { accessToken: await readToken(connectionId, gate.provider) });
+  return { provider: p.name, linkToken: t.linkToken };
 }
 
 /** After the user re-authenticates in the provider window (update mode). The mock simply issues a healthy token. */

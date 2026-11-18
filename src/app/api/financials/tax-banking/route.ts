@@ -2,7 +2,7 @@ import { z } from "zod";
 import { json } from "@/lib/http/api";
 import { finFail, finGuard } from "@/lib/financials/api";
 import { FinError, finAccess } from "@/lib/financials/server";
-import { BankError, disconnect, finishLink, reconnect, refresh, startLink } from "@/lib/tax-banking/bank/service";
+import { BankError, disconnect, finishLink, reconnect, reconnectLink, refresh, startLink } from "@/lib/tax-banking/bank/service";
 import { STATE_CODES } from "@/lib/tax-banking/authorities";
 
 export const runtime = "nodejs";
@@ -35,6 +35,7 @@ const body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("bank_link_start") }),
   z.object({ action: z.literal("bank_link_finish"), publicToken: z.string().min(8).max(300) }),
   z.object({ action: z.literal("bank_refresh"), connectionId: id }),
+  z.object({ action: z.literal("bank_reconnect_start"), connectionId: id }),
   z.object({ action: z.literal("bank_reconnect"), connectionId: id }),
   z.object({ action: z.literal("bank_set_primary"), accountId: id }),
   z.object({ action: z.literal("bank_disconnect"), connectionId: id, reason: text(300).optional() }),
@@ -66,6 +67,7 @@ export async function POST(req: Request) {
       case "bank_link_start": return json(await startLink(db, bookId, user.id, sandbox));
       case "bank_link_finish": return json(await finishLink(db, bookId, sandbox, a.publicToken));
       case "bank_refresh": return json(await refresh(db, a.connectionId, sandbox));
+      case "bank_reconnect_start": return json(await reconnectLink(db, a.connectionId, user.id, sandbox));
       case "bank_reconnect": return json(await reconnect(db, a.connectionId, sandbox));
       case "bank_set_primary": await rpc("fin_bank_set_primary", { p_account_id: a.accountId }); return json({ ok: true });
       case "bank_disconnect": await disconnect(db, a.connectionId, a.reason ?? null, sandbox); return json({ ok: true });

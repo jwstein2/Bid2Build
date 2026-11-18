@@ -9,8 +9,7 @@ import { TbShell } from "@/components/tax-banking/shell";
 import { ConnectBank, ConnectionActions, SetPrimary } from "@/components/tax-banking/banks";
 import { can } from "@/lib/tax-banking/capabilities";
 import { loadBanks } from "@/lib/tax-banking/load";
-import { bankProviderMode } from "@/lib/tax-banking/isolation";
-import { practiceMode } from "@/lib/tax-banking/bank/service";
+import { bankModeFor } from "@/lib/tax-banking/bank/service";
 import { fmtWhen } from "@/lib/financials/accounting-format";
 
 export const metadata: Metadata = { title: "Connected banks", robots: { index: false } };
@@ -43,7 +42,7 @@ export default async function BanksPage({ searchParams }: { searchParams: Promis
   const canRefresh = writable && can(perms, "bank.view_balances");
   const b = await loadBanks(db, ctx.bookId);
   if (!b.installed) return <TbShell {...shell}><Notice title="Connected banks turn on after the database update">The V6.9 SQL (20261226001000) hasn&apos;t been installed on this database yet. Statement import still works.</Notice></TbShell>;
-  const mode = bankProviderMode(process.env, { sandbox: practiceMode(Boolean(ctx.access.sandbox)) });
+  const mode = bankModeFor(Boolean(ctx.access.sandbox));
   const live = b.connections.filter((c) => c.status !== "disconnected");
   const past = b.connections.filter((c) => c.status === "disconnected");
   const manual = b.accounts.filter((a) => a.source !== "provider_feed" && a.status === "active");
@@ -52,6 +51,7 @@ export default async function BanksPage({ searchParams }: { searchParams: Promis
     <TbShell {...shell}
       intro="Connect your business bank to see bank-reported balances and bring transactions into reconciliation automatically. Read-only: Built2Bid can't move money, never asks for your bank login, and stores only the last 4 digits of an account."
       actions={<ConnectBank mode={mode} canConnect={canManage} laterHref={sp.onboarding ? "/financials" : undefined} />}>
+      {mode === "plaid" && ctx.access.sandbox && process.env.PLAID_ENV !== "production" && <Notice title="Plaid test mode">This practice book uses Plaid&apos;s test banks. Sign in with user_good / pass_good. No real bank is contacted.</Notice>}
       {mode === "mock" && <Notice title="Practice mode">Bank connections here use a practice bank with made-up data. Real banks connect only in your real books after the owner approves a provider.</Notice>}
       {!live.length && (
         <div className="rounded-xl border border-dashed border-line p-6 text-center">

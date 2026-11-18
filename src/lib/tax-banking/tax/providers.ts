@@ -92,8 +92,12 @@ export function taxjarProvider(cfg: { apiKey: string; from: TaxAddress; baseUrl?
       const amount = req.lines.reduce((s, l) => s + Number(l.amount), 0);
       const r = await f(`${base}/v2/taxes`, {
         method: "POST", headers: { authorization: `Bearer ${cfg.apiKey}`, "content-type": "application/json" },
-        body: JSON.stringify({ from_country: "US", from_state: cfg.from.state, from_zip: cfg.from.zip, to_country: "US", to_state: req.address.state, to_zip: req.address.zip,
+        // Construction is taxed where the job is. Built2Bid calculates for many contractors from one TaxJar account, so the
+        // job site is sent as the nexus address (otherwise TaxJar uses the account's own nexus list and returns $0 elsewhere).
+        // Whether the contractor is actually registered there is their tax setup's question, not TaxJar's.
+        body: JSON.stringify({ from_country: "US", from_state: cfg.from.state || req.address.state, from_zip: cfg.from.zip || req.address.zip, to_country: "US", to_state: req.address.state, to_zip: req.address.zip,
           to_city: req.address.city, to_street: req.address.line1, amount, shipping: 0,
+          nexus_addresses: [{ id: "job-site", country: "US", state: req.address.state, zip: req.address.zip, city: req.address.city, street: req.address.line1 }],
           line_items: req.lines.map((l) => ({ id: l.ref, quantity: 1, unit_price: Number(l.amount), product_tax_code: l.classification === "materials" ? undefined : "19000" })) }),
         signal: AbortSignal.timeout(10_000),
       });

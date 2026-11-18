@@ -196,6 +196,13 @@ describe("provider adapters (mocked fetch, never called live)", () => {
     expect(r.lines.find((l) => l.ref === "lab")?.taxable).toBe(false);
     expect((await taxjarProvider({ apiKey: "k", from: {} }, fake(400, {})).calculate(req("55901", "MN"))).addressValid).toBe(false);
   });
+  it("TaxJar is told the job site is the nexus (one platform account calculates for many contractors)", async () => {
+    let sent: { nexus_addresses?: { state?: string; zip?: string }[]; from_state?: string; to_zip?: string } = {};
+    const f = (async (_u: string, init: RequestInit) => { sent = JSON.parse(String(init.body)); return new Response(JSON.stringify({ tax: { breakdown: { state_tax_rate: 0.07 } } }), { status: 200 }); }) as unknown as typeof fetch;
+    await taxjarProvider({ apiKey: "k", from: {} }, f).calculate(req("37203", "TN"));
+    expect(sent.nexus_addresses?.[0]).toMatchObject({ state: "TN", zip: "37203" });
+    expect(sent.from_state).toBe("TN");
+  });
   it("Stripe Tax maps tax_breakdown", async () => {
     const r = await stripeTaxProvider({ secretKey: "sk_test_x" }, fake(200, { id: "taxcalc_1", tax_breakdown: [{ amount: 100, tax_rate_details: { display_name: "Sales Tax", percentage_decimal: "6.875", state: "MN", jurisdiction_level: "state" } }],
       line_items: { data: [{ reference: "mat", amount_tax: 41250 }, { reference: "lab", amount_tax: 0 }] } })).calculate(req("55901", "MN"));
