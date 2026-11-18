@@ -24,14 +24,16 @@ export const COMPANY = {
   state: "Minnesota",
 } as const;
 
-/** Owner-supplied (James, 2026-11-18). Photo optional, not added yet. */
+/** Owner-supplied (James, 2026-11-18). No photo for now (James's choice). */
 export const FOUNDER: FounderStory | null = {
   name: "James Stein",
   role: "Founder",
   story: [
-    "I'm James Stein, the founder of Built2Bid. I spent twelve years as a sales rep before moving into construction, and I've now spent five years working for a general contractor that does mostly remodeling.",
-    "Those two jobs taught me that a lot of a contractor's work is selling the job: pricing it right and getting a clear, professional proposal in front of the customer. Built2Bid is the tool I wanted for that part of the work.",
-    "I read the feedback myself. I check the Academy community once a day, so if something on the site isn't working for you, tell me.",
+    "I'm James Stein, founder of Built2Bid. I was born in Minnesota and still live here. I spent twelve years as a sales rep, and for almost five years now I've worked with AOS Home Solutions, a general contractor, where I helped grow their remodel work from decks alone into a full remodel portfolio.",
+    "My first bidding system was one I built myself in Google Sheets, like a lot of you did in Sheets or Excel. Customers would ask for more detail, or tell me it looked like a spreadsheet. It did. I took the dashed lines out, but it still wasn't good enough, and I lost jobs to well-established companies running systems that cost tens of thousands of dollars.",
+    "As we grew, I set up Google Workspace for our CRM and project folders. This past year we tried several of the well-known contractor platforms. The one we chose still doesn't do everything we need, so I work across it and QuickBooks, and they don't always talk to each other. I wanted one place where it all works together. That's what Built2Bid is for.",
+    "I didn't build it alone. My network is more than 30 people: subcontractors, suppliers, my painter, my electrician, asphalt crews and the general contractor I work with. I asked all of them what they hate about the systems they use now and what they wish one would do. Their answers are why Built2Bid covers 37 trades, plus custom. It's made by trades and contractors, for trades and contractors.",
+    "At the end of the day, I'm the one putting the tool stack together, so we all have the right tools in the kit to do our real job: building things. I read the feedback myself and check the Academy community once a day, so if something isn't working for you, tell me.",
   ],
 };
 
