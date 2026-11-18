@@ -85,7 +85,7 @@ export default async function CompanyBillingPage({ searchParams }: PageProps<"/c
         <h1 className="text-3xl font-extrabold">Billing & Licenses</h1>
         <p className="text-ink-soft">{company.name}</p>
       </div>
-      {sp.checkout === "success" && company.entitlement.active && <Notice tone="ok" title="Enterprise is active">Payment confirmed by Stripe. Your company has {licensed} licensed users. Invite your team from Users & Permissions.</Notice>}
+      {sp.checkout === "success" && company.entitlement.active && <Notice tone="ok" title="Enterprise is active">Payment confirmed by Stripe. Your company has {licensed} licensed users. Invite your team from Team & Access.</Notice>}
       {row?.status === "past_due" && <Notice tone="danger" title="Payment failed">Your last Enterprise payment didn&apos;t go through. Stripe retries automatically and your team keeps access meanwhile. Update your payment method to avoid losing access.</Notice>}
       {!company.entitlement.active && <Notice tone="warn" title="Enterprise isn't active">Your team&apos;s bids and customers are safe, but licensed access is paused until the subscription is active again.</Notice>}
 

@@ -21,6 +21,8 @@ import { NotificationBell } from "@/components/operations/notification-bell";
 import { Suspense } from "react";
 import { GlobalSearchHost, SearchField } from "@/components/search/global-search";
 import { SearchFocus } from "@/components/search/search-focus";
+import { loadEffectiveAccess } from "@/lib/access/server";
+import { sidebarAccess } from "@/lib/access/nav";
 
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -34,7 +36,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const user = await getUser();
   if (!user) redirect("/login?next=/dashboard");
   const supabase = await createClient();
-  const [{ data: isAdmin }, company, premium, learning] = await Promise.all([supabase.rpc("is_admin", { p_user_id: user.id }), loadMyCompany(supabase), hasPremiumAccess(supabase), loadLearningNav(supabase)]);
+  const [{ data: isAdmin }, company, premium, learning, access] = await Promise.all([
+    supabase.rpc("is_admin", { p_user_id: user.id }), loadMyCompany(supabase), hasPremiumAccess(supabase), loadLearningNav(supabase),
+    // V6.7: which workspace links this person sees (company members only; solo accounts and owners see everything).
+    loadEffectiveAccess(supabase).catch(() => null),
+  ]);
   // Link the account to its lead + first-touch attribution (best effort, one indexed lookup when already linked).
   // Runs after the page is sent (next/server after()), so this bookkeeping never delays a signed-in page.
   if (serverEnv().supabaseServiceKey) {
@@ -54,7 +60,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     {/* app-theme: marks a customer app screen, so the Dark Mode tokens (globals.css) apply. */}
     <div className="app-theme flex min-h-screen flex-col md:flex-row">
       <aside className="on-dark bg-navy text-white md:sticky md:top-0 md:flex md:h-screen md:w-64 md:shrink-0 md:flex-col md:overflow-y-auto md:overscroll-contain no-print">
-        <AppSidebar isAdmin={Boolean(isAdmin)} projects={isPmEnabled()} financials={isFinancialsEnabled()} home={isUnifiedHomeEnabled()} company={companyNav(company)} learning={learning} email={user.email ?? (user.phone ? formatPhone(user.phone) : null)} theme={user.theme ?? null} />
+        <AppSidebar isAdmin={Boolean(isAdmin)} projects={isPmEnabled()} financials={isFinancialsEnabled()} home={isUnifiedHomeEnabled()} company={companyNav(company)} access={sidebarAccess(access)} learning={learning} email={user.email ?? (user.phone ? formatPhone(user.phone) : null)} theme={user.theme ?? null} />
       </aside>
       <main id="main" className="min-w-0 flex-1 px-4 py-6 sm:px-8 md:pt-2">
         {/* Desktop header row: Light/Dark switch, top right. On phones it sits in the top bar. */}

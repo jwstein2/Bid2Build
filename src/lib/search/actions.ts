@@ -11,13 +11,27 @@
  *   - In the practice (sandbox) book, Financials actions are labelled "Practice book".
  */
 
+import { featureForPath, type FeatureId } from "@/lib/access/capabilities";
+import { restrictedFor, type EffectiveAccess } from "@/lib/access/effective";
+
 export interface SearchCaps {
   premium: boolean;
   admin: boolean;
   company: { id: string; role: string; perms: string[] } | null;
   fin: { book: string; sandbox: boolean; perms: string[] } | null;
   flags: { pm: boolean; financials: boolean };
+  /** V6.7 workspace access: an action is offered only when the feature its page belongs to is on. */
+  access?: EffectiveAccess | null;
 }
+
+/** Feature switches from Team & Access (V6.7): hide actions whose page is turned off for this person. */
+function workspaceAllows(c: SearchCaps, href: string): boolean {
+  if (!c.access) return true;
+  const f = featureForPath(href.split("?")[0].split("#")[0]);
+  return !f || !restrictedFor(c.access, { feature: f.id as FeatureId });
+}
+/** Every action check goes through here. */
+export const actionAllowed = (a: CommandAction, c: SearchCaps) => a.allowed(c) && workspaceAllows(c, a.href);
 
 export interface CommandAction {
   id: string;
@@ -103,7 +117,7 @@ export function findActions(raw: string, caps: SearchCaps, limit = 5): ActionRes
 
 /** Allowed actions matching the query, best first, with their match score (80+ = the query reads as a command). */
 export function scoredActions(raw: string, caps: SearchCaps, limit = 5): { a: CommandAction; s: number }[] {
-  return ACTIONS.filter((a) => a.allowed(caps))
+  return ACTIONS.filter((a) => actionAllowed(a, caps))
     .map((a) => ({ a, s: matchAction(a, raw) }))
     .filter((x) => x.s > 0)
     .sort((x, y) => y.s - x.s || ACTIONS.indexOf(x.a) - ACTIONS.indexOf(y.a))
@@ -116,7 +130,7 @@ export function toActionResult(a: CommandAction, caps: SearchCaps): ActionResult
 
 /** Suggested actions for an empty search box (favorites first, then the common ones the user may use). */
 export function defaultActions(caps: SearchCaps, favorites: string[] = []): ActionResult[] {
-  const allowed = ACTIONS.filter((a) => a.allowed(caps) && !a.comingSoon);
+  const allowed = ACTIONS.filter((a) => actionAllowed(a, caps) && !a.comingSoon);
   const fav = favorites.map((id) => allowed.find((a) => a.id === id)).filter((a): a is CommandAction => Boolean(a));
   const common = ["new-bid", "add-customer", "create-invoice", "open-projects", "open-pl"].map((id) => allowed.find((a) => a.id === id)).filter((a): a is CommandAction => Boolean(a));
   return [...new Map([...fav, ...common].map((a) => [a.id, a])).values()].slice(0, 6).map((a) => toActionResult(a, caps));

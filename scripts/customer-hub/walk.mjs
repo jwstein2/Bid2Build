@@ -88,7 +88,7 @@ if (PART === "empty") {
     const iCustomers = texts.findIndex((t) => t.trim() === "Customers");
     check(`N1 ${label}: Company section shows Company profile as its first entry`, (await heading.isVisible()) && (await profile.isVisible()) && iProfile === iHead + 1, texts.slice(iHead, iHead + 7).join(" | "));
     check(`N2 ${label}: Company profile no longer in the general list (after Customers)`, iProfile > iCustomers && (await nav.getByRole("link", { name: "Company profile" }).count()) === 1);
-    const ent = ["Overview", "Users & Permissions", "Proposal & Bid Style", "Billing & Licenses"];
+    const ent = ["Overview", "Team & Access", "Proposal & Bid Style", "Billing & Licenses"];
     const shown = [];
     for (const e of ent) if (await nav.getByRole("link", { name: e, exact: true }).count()) shown.push(e);
     if (sc === "starter" || sc === "unlimited") check(`N3 ${label}: no Enterprise controls rendered`, shown.length === 0, shown.join(", "));

@@ -34,7 +34,7 @@ for (const [label, vp] of [["desktop", { width: 1280, height: 900 }], ["m390", {
   check(`${label}: roster lists 3 active + deactivated section`, (await page.getByTestId("member-row").count()) === 4 && body.includes("Deactivated (1)"));
   check(`${label}: pending invite listed`, body.includes("newhire@summit.test"));
   if (vp.width < 1024) await page.getByRole("button", { name: "Menu" }).click();
-  check(`${label}: company nav shows Users & Permissions + Billing`, (await page.getByRole("link", { name: "Users & Permissions" }).first().isVisible()) && (await page.getByRole("link", { name: "Billing & Licenses" }).first().isVisible()));
+  check(`${label}: company nav shows Team & Access + Billing`, (await page.getByRole("link", { name: "Team & Access" }).first().isVisible()) && (await page.getByRole("link", { name: "Billing & Licenses" }).first().isVisible()));
   if (vp.width < 1024) await page.screenshot({ path: `${dir}/company-nav-${label}.png` });
   if (vp.width < 1024) await page.getByRole("button", { name: "Close" }).first().click();
   let sw = await page.evaluate(() => document.documentElement.scrollWidth);
@@ -52,15 +52,24 @@ for (const [label, vp] of [["desktop", { width: 1280, height: 900 }], ["m390", {
   await page.waitForTimeout(300);
   check(`${label}: revoke sends DELETE with id`, calls.at(-1)?.method === "DELETE" && calls.at(-1)?.id === "55555555-5555-4555-8555-0000000000b1");
 
-  // Casey (estimator with a custom analytics grant): editor starts from real permissions.
+  // Casey (estimator with a custom analytics grant): V6.7 Manage Access starts from real permissions.
+  await ctx.route("**/api/company/access", async (r) => {
+    if (r.request().method() !== "POST") return r.continue();
+    calls.push({ via: "access", ...JSON.parse(r.request().postData() ?? "{}") });
+    return r.fulfill({ status: 200, contentType: "application/json", body: '{"ok":true}' });
+  });
   const casey = page.getByTestId("member-row").filter({ hasText: "Casey Estimator" });
-  await casey.getByRole("button", { name: "Manage" }).click();
-  check(`${label}: custom grant pre-checked`, await casey.getByLabel(/analytics/i).isChecked());
-  await casey.getByLabel(/margin/i).check();
-  await casey.getByRole("button", { name: "Save access" }).click();
-  await page.waitForTimeout(300);
+  await casey.getByTestId("manage-access").click();
+  await casey.getByRole("button", { name: /Grow the Business/ }).first().click();
+  check(`${label}: custom grant shows (Sales analytics: View)`, (await casey.getByTestId("access-level-analytics").inputValue()) === "view");
+  await casey.getByTestId("access-level-costs").selectOption("margin");
+  await casey.getByTestId("access-review-btn").click();
+  await casey.getByTestId("access-save").click();
+  await casey.getByTestId("access-msg").waitFor();
   const upd = calls.at(-1);
-  check(`${label}: save keeps existing grant and adds new`, upd?.action === "update" && upd.granted.includes("view_analytics") && upd.granted.includes("view_margin") && upd.role === "estimator");
+  check(`${label}: save keeps existing grant and adds new`, upd?.action === "save" && upd.granted.includes("view_analytics") && upd.granted.includes("view_margin") && upd.role === "estimator");
+  await casey.getByTestId("manage-access").click();
+  await casey.getByRole("button", { name: "Teams & status" }).click();
   await casey.getByRole("button", { name: "Deactivate…" }).click();
   check(`${label}: deactivate asks for confirmation`, await casey.getByRole("alertdialog").isVisible());
   sw = await page.evaluate(() => document.documentElement.scrollWidth);
@@ -71,7 +80,7 @@ for (const [label, vp] of [["desktop", { width: 1280, height: 900 }], ["m390", {
   check(`${label}: deactivate sent`, calls.at(-1)?.action === "status" && calls.at(-1)?.status === "deactivated");
 
   const riley = page.getByTestId("member-row").filter({ hasText: "Riley Manager" });
-  await riley.getByRole("button", { name: "Manage" }).click();
+  await riley.getByRole("button", { name: "Teams & status" }).click();
   await riley.getByRole("button", { name: "Send secure sign-in link" }).click();
   await riley.getByRole("status").waitFor();
   check(`${label}: recovery confirms masked address`, (await riley.getByRole("status").textContent()).includes("c•••@summit.test"));

@@ -384,6 +384,9 @@ export const SCENARIOS = {
   // Enterprise: owner with 5 licensed users (4 in use), a member without billing rights, a complimentary company.
   enterprise_owner: { credit: credit({ unlimited: true }), subs: sub({ plan: "enterprise", company_id: COMPANY, seat_quantity: 5, price_id: "price_ent_base" }), company: company("owner", { seatsUsed: 4, entitlement: { active: true, source: "stripe", seatLimit: 5, expiresAt: iso(-20) } }) },
   enterprise_estimator: { credit: credit({ unlimited: true }), subs: [], company: company("estimator", {}) },
+  // V6.7: a sales rep whose Run the Job workspace is off except Project photos (+ Projects view it needs), Financials off.
+  enterprise_limited: { credit: credit({ unlimited: true }), subs: [], company: company("estimator", { permissions: ["view_own_bids", "create_estimates", "view_costs", "view_proposal_style", "customize_proposal_style", "view_communications", "view_customer_replies", "view_schedules", "download_schedule_pdf", "upload_photos"] }),
+    access: { profile: { v: 1, template: "sales_rep", workspaces: { win: true, run: false, grow: true, financials: false } }, revoked: ["create_schedules", "edit_assigned_schedules", "manage_dependencies", "update_progress", "review_approved_jobs", "edit_live_schedules", "confirm_task_completion", "create_change_orders"] } },
   enterprise_comp: { credit: credit({ unlimited: true }), subs: [], company: company("owner", { entitlement: { active: true, source: "complimentary", seatLimit: 3, expiresAt: iso(-30) } }) },
   enterprise_past_due: { credit: credit({ unlimited: true }), subs: sub({ status: "past_due", plan: "enterprise", company_id: COMPANY, seat_quantity: 5 }), company: company("owner", { seatsUsed: 4, entitlement: { active: true, source: "stripe", seatLimit: 5, expiresAt: iso(-20) } }) },
 };
@@ -413,6 +416,26 @@ function applyScenario(name) {
     ...(owner ? [{ user_id: M4, display_name: "Pat Former", email: "pat@summit.test", role: "viewer", status: "deactivated", team_ids: [], managed_team_ids: [], joined_at: iso(90), last_active_at: iso(30) }] : []),
   ] : null;
   rpcs.company_member_access = owner ? [{ user_id: M3, permissions_granted: ["view_analytics"], permissions_revoked: [] }] : null;
+  // V6.7 workspace access: the signed-in person's access, and the Team & Access overview for the owner.
+  rpcs.my_workspace_access = {
+    premium: Boolean(sc.credit[0].unlimited), admin: false,
+    company: sc.company ? { id: COMPANY, role: sc.company.role, perms: sc.company.permissions } : null,
+    fin: null,
+    member: sc.company ? { companyId: COMPANY, companyName: sc.company.name, role: sc.company.role, isOwner: owner, profile: sc.access?.profile ?? null, policy: { denied: [], locked: [] }, revoked: sc.access?.revoked ?? [] } : null,
+    pm: { scope: sc.company ? "company" : "none", canEdit: owner },
+  };
+  rpcs.company_access_overview = owner ? {
+    policy: { denied: [], locked: [] },
+    licenses: { pm: true, pmEditorLimit: 2, pmEditorsAssigned: 1, financials: true, finBook: "99999999-9999-4999-8999-000000000001" },
+    members: [
+      { userId: USER.id, role: "owner", status: "active", granted: [], revoked: [], policyRevoked: [], profile: null, pmEditor: true, pmEditorAssigned: true, finRole: "owner", finAccountantSeat: false, finCovered: true },
+      { userId: M2, role: "manager", status: "active", granted: [], revoked: [], policyRevoked: [], profile: null, pmEditor: false, pmEditorAssigned: false, finRole: "project_manager", finAccountantSeat: false, finCovered: true },
+      { userId: M3, role: "estimator", status: "active", granted: ["view_analytics"], revoked: [], policyRevoked: [], profile: null, pmEditor: false, pmEditorAssigned: false, finRole: null, finAccountantSeat: false, finCovered: false },
+    ],
+  } : null;
+  rpcs.company_access_history = owner ? [
+    { id: 2, created_at: iso(1), action: "member.access_updated", actor_id: USER.id, actor_name: "Jordan Owner", target_id: M3, target_name: "Casey Estimator", details: { reason: "Moved to sales" } },
+  ] : null;
   rpcs.company_teams_overview = sc.company ? [{ id: TEAM, name: "Siding Crew", trade: "siding", member_count: 2, manager_count: 1 }] : null;
   rpcs.list_company_invitations = owner ? [{ id: "55555555-5555-4555-8555-0000000000b1", email: "newhire@summit.test", role: "estimator", team_id: null, expires_at: iso(-6), created_at: iso(1) }] : null;
   // Command Center (Overview, Bids & Pipeline, bid review).
