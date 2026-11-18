@@ -13,7 +13,7 @@ import { cn } from "@/lib/cn";
  * Motion is CSS only (tokens in globals.css), so the public site ships no animation JavaScript. The
  * panel stays mounted and is `invisible` when closed, which also takes it out of the tab order.
  */
-export function MobileNav({ items, signedIn, primary, badge }: { items: { href: string; label: string }[]; signedIn: boolean; primary: Cta; badge: string | null }) {
+export function MobileNav({ items, groups = [], signedIn, primary, badge }: { items: { href: string; label: string }[]; groups?: { label: string; links: readonly { href: string; label: string }[] }[]; signedIn: boolean; primary: Cta; badge: string | null }) {
   const [open, setOpen] = useState(false);
   const toggle = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLElement>(null);
@@ -81,6 +81,14 @@ export function MobileNav({ items, signedIn, primary, badge }: { items: { href: 
       >
         {items.map((n) => (
           <Link key={n.href} href={n.href} prefetch={prefetch} onClick={close} className="flex min-h-12 items-center border-b border-line font-medium active:bg-brand-tint">{n.label}</Link>
+        ))}
+        {groups.map((g) => (
+          <div key={g.label} role="group" aria-label={g.label} className="border-b border-line">
+            <p className="pt-3 text-xs font-bold uppercase tracking-wider text-muted" aria-hidden>{g.label}</p>
+            {g.links.map((l) => (
+              <Link key={l.href} href={l.href} prefetch={prefetch} onClick={close} className="flex min-h-12 items-center pl-3 font-medium active:bg-brand-tint">{l.label}</Link>
+            ))}
+          </div>
         ))}
         <Link href={signedIn ? "/dashboard" : "/login"} prefetch={prefetch} onClick={close} className="flex min-h-12 items-center border-b border-line font-medium active:bg-brand-tint">
           {signedIn ? "My Bids" : "Log in"}
