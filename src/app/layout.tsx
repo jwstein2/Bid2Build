@@ -26,6 +26,8 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
   // Optional: Search Console "HTML tag" verification. Not needed when the domain is verified by DNS.
   ...(googleVerification ? { verification: { google: googleVerification } } : {}),
+  // impact.com publisher site verification (Home Depot affiliate application). Public, not a secret.
+  other: { "impact-site-verification": "7d246bfc-cc5e-4068-8536-071c794657f8" },
   // Belt and braces with robots.txt and the X-Robots-Tag header: non-production deploys are noindex.
   ...(deploy.allowIndexing ? {} : { robots: { index: false, follow: false } }),
 };
