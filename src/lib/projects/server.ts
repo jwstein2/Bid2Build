@@ -41,6 +41,10 @@ export function teamDbError(e: { message?: string } | null): { status: number; c
   const m = e?.message ?? "";
   if (m.includes("name_required")) return { status: 400, code: "name_required", message: "Add a name." };
   if (m.includes("not_member")) return { status: 400, code: "not_member", message: "Staff can only be linked to an active member of your company." };
+  if (m.includes("bad_parent")) return { status: 400, code: "bad_parent", message: "A worker can only belong to a subcontracting company on your list." };
+  if (m.includes("has_workers")) return { status: 400, code: "has_workers", message: "This company has workers listed. Move them first, then change it to an individual." };
+  if (m.includes("override_forbidden")) return { status: 403, code: "override_forbidden", message: "Only a manager who can edit all schedules can override a scheduling conflict." };
+  if (m.includes("bad_times")) return { status: 400, code: "bad_times", message: "The end time must be after the start time." };
   if (m.includes("bad_member")) return { status: 400, code: "bad_member", message: "A crew can only include active staff and subcontractors from your list." };
   if (m.includes("bad_resource")) return { status: 400, code: "bad_resource", message: "Pick someone from your Team & Subcontractors list." };
   if (m.includes("stale_revision")) return { status: 409, code: "stale_revision", message: "Someone else changed this schedule. Reload to see the latest version." };

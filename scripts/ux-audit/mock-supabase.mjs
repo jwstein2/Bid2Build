@@ -3,6 +3,7 @@
 import http from "node:http";
 import { handleRadarRest, pgRestPath, radarRestEnabled } from "../radar/pg-rest.mjs";
 import { ops, opsRpc, opsStorage, opsTables, seedOps } from "./mock-ops.mjs";
+import { installWorkforce } from "../workforce/mock-workforce.mjs";
 
 const PORT = Number(process.env.MOCK_PORT ?? 54321);
 const NOW = Date.now();
@@ -286,6 +287,8 @@ Object.assign(scheduleRpc, {
   pm_task_assignments: ({ p_from, p_to }) => [200, [...sched.list.values()].flatMap((x) => x.tasks.filter((t) => t.resource_id && t.planned_end >= p_from && t.planned_start <= p_to)
     .map((t) => ({ id: t.id, resourceId: t.resource_id, status: t.assignment_status ?? null, inherited: !!t.assignment_inherited })))],
 });
+// Contractors & Workforce V7.3 (scripts/workforce/walk.mjs): /__wf?seed=1.
+const workforce = installWorkforce({ scheduleRpc, team, sched, schedPerms, taskRow: (t) => taskRow(t), iso, USER, tables });
 function seedTeam() {
   team.list = [];
   const add = (o) => { const r = { id: crypto.randomUUID(), status: "active", contactName: null, linkedUserId: null, trades: [], email: null, phone: null, notes: null, capacity: 1, unavailable: [], members: [], ...o }; team.list.push(r); return r; };
@@ -771,6 +774,7 @@ http.createServer((req, res) => {
     }
     if (rpc && opsRpc[rpc[1]]) { let args = {}; try { args = JSON.parse(raw || "{}"); } catch { /* ignore */ } const [st, body] = opsRpc[rpc[1]](args); return send(res, st, body); }
     if (u.pathname === "/__ws") { if (u.searchParams.get("seed")) seedWorkspace(); return send(res, 200, { ok: true, count: sched.list.size }); }
+    if (u.pathname === "/__wf") { if (u.searchParams.get("seed")) workforce.seed(); if (u.searchParams.has("manage")) team.canManage = u.searchParams.get("manage") === "1"; return send(res, 200, { ok: true, count: team.list.length }); }
     if (u.pathname === "/__team") {
       if (u.searchParams.get("reset")) team.list = [];
       if (u.searchParams.get("seed")) seedTeam();

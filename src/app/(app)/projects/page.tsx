@@ -3,7 +3,7 @@ import Link from "next/link";
 import { PmLockNotice } from "@/components/billing/pm-lock";
 import { getAccountStatus } from "@/lib/account/server";
 import { notFound } from "next/navigation";
-import { CalendarRange, ChevronRight, Users } from "lucide-react";
+import { CalendarRange, ChevronRight, HardHat, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { isPmEnabled } from "@/lib/env";
 import { formatDay, formatRange } from "@/lib/schedule/calendar";
@@ -46,7 +46,10 @@ export default async function ProjectsPage() {
       <div>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h1 className="flex items-center gap-2 text-3xl font-extrabold text-navy"><CalendarRange className="h-7 w-7 text-accent-ink" aria-hidden /> Projects</h1>
-          {team && <ButtonLink href="/projects/team" variant="secondary" size="sm" data-testid="team-link"><Users className="h-4 w-4" aria-hidden /> Team &amp; Subcontractors</ButtonLink>}
+          {team && <span className="flex flex-wrap gap-2">
+            <ButtonLink href="/projects/workforce" variant="secondary" size="sm" data-testid="workforce-link"><HardHat className="h-4 w-4" aria-hidden /> Contractors &amp; Workforce</ButtonLink>
+            <ButtonLink href="/projects/team" variant="secondary" size="sm" data-testid="team-link"><Users className="h-4 w-4" aria-hidden /> Team &amp; Subcontractors</ButtonLink>
+          </span>}
         </div>
         <p className="mt-1 text-ink-soft">{ws ? "Every job in one place: who sold it, who runs it, what's happening this week and what the customer should hear." : "Turn won bids into job schedules built from the estimate, then track progress."}</p>
       </div>

@@ -166,6 +166,7 @@ d("Team & Subcontractors + assignments (database)", () => {
   it("rollback removes V4.2 and the migration re-applies", async () => {
     // Later migrations depend on the directory: roll them back first (newest first).
     // The Financial Command Center points at change orders / quotes / the directory: roll it back first (newest first).
+    await pool.query(readFileSync("docs/workforce/rollback_20270102005000.sql", "utf8"));     // V7.3 Contractors & Workforce (newest)
     await pool.query(readFileSync("docs/tax-banking/rollback_20261226001000.sql", "utf8"));   // V6.9 tax + banking (newer)
     await pool.query(readFileSync("docs/financials/rollback_20261213001000.sql", "utf8"));
     await pool.query(readFileSync("docs/financials/rollback_20261211001000.sql", "utf8"));
