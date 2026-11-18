@@ -7,6 +7,8 @@ import { Badge, Notice } from "@/components/ui/misc";
 import { api } from "@/components/schedule/client";
 import { KIND_LABEL, tradeLabel, type ResourceKind, type Team, type TeamResource } from "@/lib/projects/team";
 import { ResourceForm } from "./resource-form";
+import Link from "next/link";
+import { complianceBadges, type ComplianceSummary } from "@/lib/team/records";
 
 const ICON = { staff: User, subcontractor: HardHat, crew: Users } as const;
 
@@ -15,8 +17,10 @@ const ICON = { staff: User, subcontractor: HardHat, crew: Users } as const;
  * Subcontractors never get a login. Contact buttons copy or open the user's own email/phone app;
  * Built2Bid sends nothing.
  */
-export function TeamDirectory({ team, people, me, usage }: {
+export function TeamDirectory({ team, people, me, usage, compliance = null }: {
   team: Team; people: { id: string; name: string }[]; me: string | null;
+  /** Subcontractor W-9 / insurance status at a glance (null until the team-records SQL is applied). */
+  compliance?: { canManage: boolean; subs: Record<string, ComplianceSummary> } | null;
   /** Open (not complete) task count per resource id, for "currently booked" hints. */
   usage: Record<string, number>;
 }) {
@@ -99,6 +103,12 @@ export function TeamDirectory({ team, people, me, usage }: {
                   {r.kind === "crew" && <p className="mt-1 text-sm text-ink-soft">{members.length ? `Members: ${members.join(", ")}` : "No members listed"}{r.capacity > 1 ? ` · Can run ${r.capacity} jobs at once` : ""}</p>}
                   {usage[r.id] ? <p className="mt-1 text-xs text-muted">{usage[r.id]} open task{usage[r.id] === 1 ? "" : "s"} assigned</p> : null}
                   {r.unavailable.length > 0 && <p className="mt-1 text-xs text-muted">{r.unavailable.length} day{r.unavailable.length === 1 ? "" : "s"} marked unavailable</p>}
+                  {r.kind === "subcontractor" && compliance && (
+                    <p className="mt-1.5 flex flex-wrap items-center gap-1" data-testid="sub-compliance">
+                      {complianceBadges(compliance.subs[r.id]).map((b) => <Badge key={b.text} tone={b.tone}>{b.text}</Badge>)}
+                      {compliance.canManage && <Link href={`/projects/team/subs/${r.id}`} className="ml-1 text-xs font-semibold text-accent-ink underline" data-testid="sub-records-link">W-9, insurance &amp; agreements</Link>}
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="mt-3 flex flex-wrap gap-2 border-t border-line pt-3 text-sm">

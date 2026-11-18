@@ -712,6 +712,20 @@ http.createServer((req, res) => {
       if (!b) return send(res, 400, { statusCode: "404", error: "not_found", message: "Object not found" });
       res.writeHead(200, { "content-type": "application/octet-stream" }); return void res.end(b);
     }
+    // Team records walk (scripts/team-records/walk.mjs): sub W-9 / certificate files in an in-memory sub-records bucket.
+    if (u.pathname.startsWith("/storage/v1/object/sign/sub-records/")) {
+      const key = decodeURIComponent(u.pathname.replace(/^\/storage\/v1\/object\/sign\//, ""));
+      return send(res, 200, { signedURL: `/object/sub-records-file/${key}?token=mock` });
+    }
+    if (u.pathname.startsWith("/storage/v1/object/sub-records-file/")) {
+      const b = finStorage.get(decodeURIComponent(u.pathname.replace(/^\/storage\/v1\/object\/sub-records-file\//, "")));
+      if (!b) return send(res, 400, { statusCode: "404", error: "not_found", message: "Object not found" });
+      res.writeHead(200, { "content-type": "application/pdf" }); return void res.end(b);
+    }
+    if (u.pathname.startsWith("/storage/v1/object/sub-records/")) {
+      const key = decodeURIComponent(u.pathname.replace(/^\/storage\/v1\/object\//, ""));
+      if (req.method === "POST" || req.method === "PUT") { finStorage.set(key, bodyBuf); return send(res, 200, { Key: key }); }
+    }
     // Financials walk: switch the database user the real-SQL bridge runs as (owner / bookkeeper / PM / view only).
     if (u.pathname === "/__as") { process.env.PG_REST_AS_USER = u.searchParams.get("user") ?? ""; return send(res, 200, { as: process.env.PG_REST_AS_USER }); }
     if (u.pathname.startsWith("/storage/v1/")) return send(res, 400, { error: "not available in mock" });

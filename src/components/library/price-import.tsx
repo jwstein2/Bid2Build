@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { AlertTriangle, FileSpreadsheet, RotateCcw, Upload } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { formatCurrency } from "@/lib/estimate/money";
@@ -50,6 +51,16 @@ export function PriceImport() {
   const [done, setDone] = useState<string | null>(null);
   const [history, setHistory] = useState<ImportRecord[]>([]);
   const [ready, setReady] = useState(true);
+  // Supplier directory (Projects → Team → Suppliers). Optional: empty when the feature is off or not set up.
+  const [suppliers, setSuppliers] = useState<{ id: string; name: string }[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/team/suppliers", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((d) => {
+      if (!cancelled && d?.suppliers) setSuppliers((d.suppliers as { id: string; name: string; status: string }[]).filter((x) => x.status === "active").map((x) => ({ id: x.id, name: x.name })));
+    }).catch(() => { /* offline or not available */ });
+    return () => { cancelled = true; };
+  }, []);
+  const supplierMatch = suppliers.find((x) => x.name.trim().toLowerCase() === supplier.trim().toLowerCase()) ?? null;
 
   const loadHistory = useCallback(async () => {
     try {
@@ -106,7 +117,7 @@ export function PriceImport() {
     try {
       const r = await fetch("/api/library/import", {
         method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ action: "apply", supplierName: supplier.trim(), fileName, effectiveOn, rows: applyRows(picked, { trade: trade || null }) }),
+        body: JSON.stringify({ action: "apply", supplierName: supplier.trim(), ...(supplierMatch ? { supplierId: supplierMatch.id } : {}), fileName, effectiveOn, rows: applyRows(picked, { trade: trade || null }) }),
       });
       const d = await r.json().catch(() => null);
       if (!r.ok) { setError(d?.error?.message ?? "Couldn't import. Nothing was changed."); return; }
@@ -154,7 +165,9 @@ export function PriceImport() {
         <div className="grid gap-3 sm:grid-cols-3">
           <div>
             <label htmlFor="pi-supplier" className="label">Supplier</label>
-            <input id="pi-supplier" className="field" value={supplier} maxLength={120} onChange={(e) => setSupplier(e.target.value)} placeholder="e.g. ABC Supply – Springfield" />
+            <input id="pi-supplier" className="field" list="pi-supplier-list" value={supplier} maxLength={120} onChange={(e) => setSupplier(e.target.value)} placeholder="e.g. ABC Supply – Springfield" data-testid="price-import-supplier" />
+            <datalist id="pi-supplier-list">{suppliers.map((x) => <option key={x.id} value={x.name} />)}</datalist>
+            {suppliers.length > 0 && supplier.trim() && <span className="mt-1 block text-xs text-muted" data-testid="price-import-supplier-hint">{supplierMatch ? "From your supplier list." : "New supplier: it's added to your supplier list when you import."}</span>}
           </div>
           <div>
             <label htmlFor="pi-date" className="label">Prices effective</label>
@@ -248,7 +261,10 @@ export function PriceImport() {
       )}
 
       <Card className="p-4 md:p-5" data-testid="price-import-history">
-        <h2 className="font-display text-lg font-bold">Import history</h2>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-display text-lg font-bold">Import history</h2>
+          {suppliers.length > 0 && <Link href="/projects/team/suppliers" className="text-sm font-semibold text-accent-ink underline" data-testid="price-import-suppliers-link">Your suppliers</Link>}
+        </div>
         {history.length === 0 ? <p className="mt-2 text-sm text-muted">No supplier imports yet.</p> : (
           <ul className="mt-2 divide-y divide-line text-sm">
             {history.map((h) => (
