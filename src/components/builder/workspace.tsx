@@ -22,6 +22,7 @@ import { orderedSections, sectionTrade, tradeBlocks, tradeTotals, type TradeBloc
 import { TradeIcon } from "../trade-icon";
 import { AddTradeSelect, useTradeRemoval } from "./trade-controls";
 import { SubQuoteBadge, SubQuotePanel } from "./sub-quote-panel";
+import { AiDraftButton } from "./ai-draft";
 
 type Lib = SavedItemsUi;
 
@@ -63,6 +64,7 @@ export function Workspace({ estimate, dispatch, lib: library }: { estimate: Esti
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [focusId, setFocusId] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  const [drafted, setDrafted] = useState<{ msg: string; ids: string[] } | null>(null);
   const multiTrade = estimate.trades.length > 1;
   // Trade by trade, in the project's trade order. A single-trade estimate is one block (no trade header).
   const blocks = tradeBlocks(estimate);
@@ -97,6 +99,17 @@ export function Workspace({ estimate, dispatch, lib: library }: { estimate: Esti
           <div role="alert" className="rounded-lg border border-danger/30 bg-danger-tint px-4 py-3 text-sm">
             <p className="font-semibold text-danger">Please fix {totals.issues.length === 1 ? "this entry" : `these ${totals.issues.length} entries`} (they are counted as $0 until fixed):</p>
             <ul className="mt-1 list-disc pl-5 text-ink-soft">{totals.issues.slice(0, 6).map((i, k) => <li key={k}>{i.message}</li>)}</ul>
+          </div>
+        )}
+
+        <AiDraftButton estimate={estimate} dispatch={dispatch} lib={library} onApplied={(msg, ids) => setDrafted({ msg, ids })} />
+        {drafted && (
+          <div role="status" className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-ok/30 bg-ok-tint px-4 py-2 text-sm">
+            <span>{drafted.msg}</span>
+            <span className="flex gap-1">
+              <Button size="sm" variant="ghost" onClick={() => { dispatch({ type: "deleteItems", ids: drafted.ids }); setDrafted(null); }}>Undo</Button>
+              <Button size="sm" variant="ghost" onClick={() => setDrafted(null)} aria-label="Dismiss"><X className="h-4 w-4" aria-hidden /></Button>
+            </span>
           </div>
         )}
 
