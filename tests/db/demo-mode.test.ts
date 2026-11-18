@@ -74,6 +74,24 @@ d("Demo Mode isolation (20270102001000)", () => {
     await expect(asUser(pool, owner, (q) => q("select * from public.demo_workspaces"))).rejects.toThrow(/permission denied/);
   });
 
+  it("a new estimate created in Demo Mode is saved to the demo account, never the real one", async () => {
+    const data = buildDemoDataset({ kind: "owner_demo", namespace: ws.workspaceId, anchor: ANCHOR });
+    const fresh = "aaaaaaaa-0000-4000-8000-00000000d0d0";
+    // Like the builder would: a brand-new estimate with its own section and line ids.
+    const src = data.estimates[0].payload as { groups?: { id: string }[]; items?: { id: string }[] } & Record<string, unknown>;
+    let text = JSON.stringify({ ...src, id: fresh, title: "New bid made during a demo" });
+    [...(src.groups ?? []), ...(src.items ?? [])].forEach((x, i) => { text = text.split(x.id).join(`bbbbbbbb-0000-4000-8000-${String(i).padStart(12, "0")}`); });
+    const payload = JSON.parse(text) as Record<string, unknown>;
+    await asUser(pool, demo, (q) => q("select public.save_estimate($1::jsonb)", [JSON.stringify(payload)]));
+    const row = (await pool.query("select user_id, company_id from public.estimates where id = $1", [fresh])).rows[0];
+    expect(row.user_id).toBe(demo);
+    expect([null, ws.companyId]).toContain(row.company_id);
+    const ownerSees = await asUser(pool, owner, (q) => q("select count(*) from public.estimates where id = $1", [fresh]));
+    expect(Number(ownerSees.rows[0].count)).toBe(0);
+    // A real account can't write into the demo estimate either.
+    await expect(asUser(pool, owner, (q) => q("select public.save_estimate($1::jsonb)", [JSON.stringify({ ...payload, title: "hijack" })]))).rejects.toThrow();
+  });
+
   it("blocks sending, signing and billing from a demo tenant at the database", async () => {
     await expect(pool.query("insert into public.comm_messages (account_id, status) values ($1, 'scheduled')", [demo])).rejects.toThrow(/demo_mode_no_send/);
     await expect(pool.query("insert into public.email_outbox (user_id) values ($1)", [demo])).rejects.toThrow(/demo_mode_no_send/);

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { analyticsAllowedOn } from "@/lib/seo/analytics";
 import { gaOptedOut } from "@/lib/seo/ga-optout";
+import { readDemoHint } from "@/lib/demo/session";
 
 /**
  * Google Analytics 4 tag. Rendered from the root layout only on indexable production deploys with a
@@ -22,7 +23,7 @@ export function GoogleAnalytics({ measurementId }: { measurementId: string }) {
   // demo session always starts and ends with a full page load).
   const [optedOut, setOptedOut] = useState<boolean | null>(null);
   // eslint-disable-next-line react-hooks/set-state-in-effect -- cookies are only readable after hydration
-  useEffect(() => { setOptedOut(gaOptedOut(document.cookie) || Boolean(document.querySelector("[data-testid='demo-banner']"))); }, []);
+  useEffect(() => { setOptedOut(gaOptedOut(document.cookie) || Boolean(readDemoHint(document.cookie)) || Boolean(document.querySelector("[data-testid='demo-banner']"))); }, []);
   if (!allowed || optedOut !== false) return null;
   return (
     <>

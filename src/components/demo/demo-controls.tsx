@@ -1,10 +1,12 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { FlaskConical, LogOut, RotateCcw, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import type { DemoSessionKind } from "@/lib/demo/session";
 import { useDemoSwitch } from "./use-demo-switch";
+import { DEMO_HINT_COOKIE, readDemoHint } from "@/lib/demo/session";
 
 /** Small status line under a demo button while the sample company is prepared or the session switches. */
 function SwitchStatus({ phase, progress, error }: { phase: string; progress: number; error: string | null }) {
@@ -51,7 +53,7 @@ export function DemoNavItem({ className }: { className: string }) {
  * Persistent DEMO MODE / PRACTICE MODE bar at the top of every signed-in page of a demo session. Exit
  * returns to the real account; Reset (with confirmation) re-seeds only this demo workspace.
  */
-export function DemoBanner({ kind, company }: { kind: DemoSessionKind; company: string | null }) {
+export function DemoBanner({ kind, company, sticky = true, anywhere = false }: { kind: DemoSessionKind; company: string | null; sticky?: boolean; anywhere?: boolean }) {
   const s = useDemoSwitch();
   const [confirming, setConfirming] = useState(false);
   const cancel = useRef<HTMLButtonElement>(null);
@@ -60,8 +62,8 @@ export function DemoBanner({ kind, company }: { kind: DemoSessionKind; company: 
   useEffect(() => { if (confirming) cancel.current?.focus(); }, [confirming]);
   const busy = s.phase === "preparing" || s.phase === "switching";
   return (
-    <div role="region" aria-label={practice ? "Practice Mode" : "Demo Mode"} data-testid="demo-banner" data-kind={kind}
-      className={cn("sticky top-0 z-40 flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 text-sm no-print", practice ? "bg-[#14B8A6] text-[#06231F]" : "bg-[#F59E0B] text-[#2B1600]")}>
+    <div role="region" aria-label={practice ? "Practice Mode" : "Demo Mode"} data-testid="demo-banner" data-kind={kind} data-anywhere={anywhere ? "" : undefined}
+      className={cn(sticky ? "sticky top-0 z-40" : "relative z-40", "flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 text-sm no-print", practice ? "bg-[#14B8A6] text-[#06231F]" : "bg-[#F59E0B] text-[#2B1600]")}>
       <span className="rounded bg-black/15 px-2 py-0.5 text-xs font-extrabold tracking-[0.12em]">{practice ? "PRACTICE MODE" : "DEMO MODE"}</span>
       <span className="min-w-0 flex-1 truncate font-semibold">
         {company ?? (practice ? "Sample data" : "Sample company")}
@@ -86,4 +88,38 @@ export function DemoBanner({ kind, company }: { kind: DemoSessionKind; company: 
       {s.phase !== "idle" && <div className="w-full"><SwitchStatus phase={s.phase} progress={s.progress} error={s.error} /></div>}
     </div>
   );
+}
+
+/**
+ * DEMO MODE bar for pages outside the signed-in layout (estimate builder, trade picker, start pages),
+ * mounted once in the root layout. Shown only when the display-hint cookie is set AND the server confirms
+ * this session is a demo login; a stale hint (e.g. after signing out) is cleared. The signed-in layout
+ * renders its own server-side bar, so this one stays out of the way there.
+ */
+export function DemoBannerAnywhere() {
+  const pathname = usePathname();
+  const [confirmed, setConfirmed] = useState<DemoSessionKind | null>(null);
+  const [here, setHere] = useState(false);
+  const checked = useRef(false);
+  useEffect(() => {
+    // Re-evaluated on every route change: client navigation can move between the signed-in layout (own bar) and the builder.
+    const t = setTimeout(() => {
+      const hint = readDemoHint(document.cookie);
+      const serverBar = Array.from(document.querySelectorAll("[data-testid='demo-banner']")).some((el) => !el.hasAttribute("data-anywhere"));
+      setHere(Boolean(hint) && !serverBar);
+      if (!hint || checked.current) return;
+      checked.current = true;
+      void fetch("/api/guide", { cache: "no-store", credentials: "same-origin" })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((j: { workspace?: string } | null) => {
+          const ws = j?.workspace;
+          if (ws === "demo" || ws === "practice") setConfirmed(ws === "practice" ? "practice" : "owner_demo");
+          else if (j) document.cookie = `${DEMO_HINT_COOKIE}=; path=/; max-age=0; secure; samesite=lax`;
+        })
+        .catch(() => {});
+    }, 0);
+    return () => clearTimeout(t);
+  }, [pathname]);
+  if (!confirmed || !here) return null;
+  return <DemoBanner kind={confirmed} company={null} sticky={false} anywhere />;
 }
