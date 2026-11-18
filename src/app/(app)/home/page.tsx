@@ -34,7 +34,7 @@ export default async function HomePage() {
     try { return [w.id, await WidgetBody({ inst: w, data, viewer })]; }
     catch (e) {
       console.error(JSON.stringify({ level: "error", scope: "dashboard.widget", type: w.type, message: (e as Error).message }));
-      return [w.id, <Frame key={w.id} title={widgetDef(w.type)?.title ?? "Widget"}><p className="text-sm text-ink-soft">This widget couldn&apos;t load. Refresh to try again.</p></Frame>];
+      return [w.id, <Frame key={w.id} title={widgetDef(w.type)?.title ?? "Widget"}><p className="text-sm text-ink-soft">Nothing to show here yet.</p></Frame>];
     }
   }));
 

@@ -199,7 +199,7 @@ export async function WidgetBody({ inst, data, viewer }: { inst: WidgetInstance;
         chart = invoiceChart(rows.filter((r) => r.issue_date >= from && r.issue_date <= to && r.status !== "void"));
       } else {
         const pl = await data.pl(cs.period, cs.basis);
-        if (!pl || !pl.ok) return <Unavailable title={title} why={pl && !pl.ok && pl.reason === "not_installed" ? "Charts turn on after the Reports update is installed." : "This chart couldn't load. Refresh to try again."} />;
+        if (!pl || !pl.ok) return <Unavailable title={title} why={pl && !pl.ok && pl.reason === "not_installed" ? "Charts turn on after the Reports update is installed." : "Nothing to chart yet."} />;
         chart = plChart(pl.data.rows, settings, pl.range);
       }
       const reportLink = info.source === "ar" ? "/financials/receivables" : `/financials/reports?period=${cs.period}&basis=${cs.basis}`;
@@ -359,7 +359,7 @@ export async function WidgetBody({ inst, data, viewer }: { inst: WidgetInstance;
     }
     case "company_pipeline": {
       const sum = await data.companySummary();
-      if (!sum) return <Unavailable title="Company pipeline" why="Company analytics aren't available right now." />;
+      if (!sum) return <Unavailable title="Company pipeline" why="Company totals show up as your team adds bids." />;
       return (
         <div className="grid h-full grid-cols-2 gap-3" data-testid={tid}>
           <MetricCard className="h-full" title="Company win rate" value={sum.winRate === null ? "None yet" : `${Math.round(sum.winRate)}%`} empty={sum.winRate === null} href="/company" action="Company overview" />
@@ -428,6 +428,6 @@ export async function WidgetBody({ inst, data, viewer }: { inst: WidgetInstance;
       );
     }
   }
-  return <Unavailable title="Unavailable widget" why="This widget is no longer available." />;
+  return <Unavailable title="Retired card" why="This card was retired. You can remove it with Edit dashboard." />;
 }
 
