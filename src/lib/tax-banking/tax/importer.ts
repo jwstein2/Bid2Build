@@ -29,15 +29,24 @@ class NeedsLink extends Error {}
 const MAX_BYTES = 80 * 1024 * 1024;
 const UA = "Built2Bid-tax-rates/1.0 (+https://built2bid.org)";
 
-async function download(url: string, f: Fetch, timeoutMs: number): Promise<Buffer> {
+class TooLarge extends Error {}
+
+async function download(url: string, f: Fetch, timeoutMs: number, maxBytes = MAX_BYTES): Promise<Buffer> {
   const r = await f(url, { headers: { "user-agent": UA }, redirect: "follow", signal: AbortSignal.timeout(timeoutMs) });
   if (!r.ok) throw new Error(`download ${r.status} ${fileNameOf(url)}`);
   const len = Number(r.headers.get("content-length") ?? 0);
-  if (len > MAX_BYTES) throw new Error(`file too large (${len} bytes)`);
+  if (len > maxBytes) { await r.body?.cancel().catch(() => {}); throw new TooLarge(`file too large (${len} bytes)`); }
   const buf = Buffer.from(await r.arrayBuffer());
-  if (buf.length > MAX_BYTES) throw new Error("file too large");
+  if (buf.length > maxBytes) throw new TooLarge("file too large");
   return buf;
 }
+
+/**
+ * Boundary files above this size are skipped by the hourly job: several states publish 15–90 MB files that unpack to
+ * hundreds of MB, more than a short web function can read. Those states still get official rates; the address lookup
+ * places county and city, and only special districts are left flagged "check local rate".
+ */
+export const BOUNDARY_MAX_BYTES = 3 * 1024 * 1024;
 
 // Listing pages fetched in this run, shared by all states (one hourly run reads the same official pages many times).
 const pageCache = new Map<string, { at: number; html: string }>();
@@ -118,6 +127,8 @@ export async function importState(db: Db, src: SourceRow, deps: { fetchImpl?: Fe
   const { data: run } = await db.from("tax_sync_runs").insert({ provider: "official", kind: "import", state: src.state, status: "running" }).select("id").single();
   const runId = (run as { id: string } | null)?.id ?? null;
   const patch: Record<string, unknown> = { last_attempt_at: now.toISOString(), updated_at: now.toISOString() };
+  // Record the attempt first, so a run that is cut off mid-state moves on to the next state next hour.
+  await db.from("tax_rate_sources").update({ last_attempt_at: now.toISOString() }).eq("state", src.state);
   try {
     const files = await resolveFiles(src, f, Math.min(8000, left()), { cache: !deps.fetchImpl });
     if (!files.rateUrl) { throw new NeedsLink(`Couldn't find this state's current rate file on the official page.${files.listing ? ` ${files.listing}` : ""}`); }
@@ -140,10 +151,18 @@ export async function importState(db: Db, src: SourceRow, deps: { fetchImpl?: Fe
     }
     patch.last_rate_file = fileNameOf(files.rateUrl).slice(0, 300);
     patch.rates_loaded = rows.length;
+    // Save the rate result now; the boundary step below is slower and may not finish.
+    await db.from("tax_rate_sources").update({ last_rate_file: patch.last_rate_file, rates_loaded: rows.length, status: "ok", last_success_at: new Date().toISOString(), last_error: null }).eq("state", src.state);
+    let note: string | null = null;
 
     // Boundaries (SST only), when the state published a new file or none is loaded yet.
     if (src.kind === "sst" && files.boundaryUrl && (fileNameOf(files.boundaryUrl) !== src.last_boundary_file || !src.zips_loaded) && left() > 6000) {
-      const bBuf = await download(files.boundaryUrl, f, left());
+      const bBuf = await download(files.boundaryUrl, f, left(), BOUNDARY_MAX_BYTES).catch((e) => { if (e instanceof TooLarge) return null; throw e; });
+      if (!bBuf) note = "Rates loaded. This state's ZIP boundary file is too large for the hourly job, so special districts are flagged \"check local rate\".";
+      else await loadBoundaries(bBuf);
+    }
+    async function loadBoundaries(bBuf: Buffer) {
+      if (!files.boundaryUrl) return;
       const areas = aggregateSstBoundaries(fileText(bBuf, /bound|\.csv$/i).text, src.state, today);
       const bRun = runId ?? crypto.randomUUID();
       for (let i = 0; i < areas.length; i += 2000) {
@@ -156,7 +175,7 @@ export async function importState(db: Db, src: SourceRow, deps: { fetchImpl?: Fe
       patch.zips_loaded = out.zips;
       patch.last_boundary_file = fileNameOf(files.boundaryUrl).slice(0, 300);
     }
-    patch.status = "ok"; patch.last_success_at = new Date().toISOString(); patch.last_error = null;
+    patch.status = "ok"; patch.last_success_at = new Date().toISOString(); patch.last_error = note;
   } catch (e) {
     if (e instanceof NeedsLink) { out.status = "needs_link"; out.error = e.message; }
     else if (e instanceof FormatChanged) { out.status = "format_changed"; out.error = e.message; }
