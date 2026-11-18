@@ -23,7 +23,7 @@ export default async function CompanyUsersPage() {
     return (
       <div className="mx-auto max-w-4xl space-y-6">
         <h1 className="text-3xl font-extrabold">Team & Access</h1>
-        <Notice title="No company account">Team & Access is part of Enterprise.</Notice>
+        <Notice title="No company account">Team & Access is part of the Team plan.</Notice>
       </div>
     );
   }

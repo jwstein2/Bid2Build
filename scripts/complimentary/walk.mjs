@@ -37,7 +37,7 @@ const shot = (name) => page.screenshot({ path: `${out}/${name}.png`, fullPage: t
 
 async function grant({ email, plan = "unlimited", days = "30", custom, extra = 0, approve = true, send = true }) {
   await page.getByLabel("Email address").fill(email);
-  await page.getByRole("radio", { name: plan === "unlimited" ? /Unlimited \(individual\)/ : /Enterprise \(company\)/ }).check();
+  await page.getByRole("radio", { name: plan === "unlimited" ? /Unlimited \(individual\)/ : /Team \(company\)/ }).check();
   await page.locator(`label:has(input[name=duration][value="${days}"])`).click();
   if (custom) await page.getByLabel("Custom number of days").fill(String(custom));
   if (plan === "enterprise") await page.getByLabel("Additional complimentary seats").fill(String(extra));
@@ -73,7 +73,7 @@ check("A no Stripe rows created (only the seeded payer)", stripeRows.s === 1 && 
 
 // B. new recipient, Enterprise, custom 45 days, 2 extra seats (needs explicit approval)
 await page.getByLabel("Email address").fill("newco@demo.test");
-await page.getByRole("radio", { name: /Enterprise \(company\)/ }).check();
+await page.getByRole("radio", { name: /Team \(company\)/ }).check();
 await page.locator('label:has(input[name=duration][value="custom"])').click();
 await page.getByLabel("Custom number of days").fill("45");
 await page.getByLabel("Additional complimentary seats").fill("2");

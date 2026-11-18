@@ -2,7 +2,7 @@ import type { z } from "zod";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { fail, json, sameOrigin } from "@/lib/http/api";
 import { hasPremiumAccess } from "@/lib/billing/entitlement";
-import { libraryOpSchema, savedItemSchema, usageCounts, usesFor, type LibraryData, type SavedItem, type StackScale } from "@/lib/library/saved-items";
+import { FREE_SAVED_ITEMS_LIMIT, libraryOpSchema, savedItemSchema, usageCounts, usesFor, type LibraryData, type SavedItem, type StackScale } from "@/lib/library/saved-items";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const num = (v: unknown) => (v === null || v === undefined ? "" : String(Number(v)));
@@ -10,6 +10,9 @@ type Supa = Awaited<ReturnType<typeof createClient>>;
 
 /** Server-side entitlement (Unlimited or admin). RLS enforces the same rule on every write. */
 const hasAccess = (supabase: Supa) => hasPremiumAccess(supabase);
+/** Saved Items for every plan (V8 batch 5): true once SQL 20270106001000 has been run. */
+const freeItemsOk = async (supabase: Supa) => (await supabase.rpc("saved_items_free_ok")).data === true;
+const FREE_LIMIT_MESSAGE = `Free accounts can keep up to ${FREE_SAVED_ITEMS_LIMIT} saved items. Unlimited has no limit, and everything you've saved comes with you.`;
 
 const mapItem = (r: any): SavedItem => ({
   id: r.id, name: r.name, description: r.description ?? undefined, trade: r.trade ?? null, category: r.category ?? undefined,
@@ -21,20 +24,29 @@ const mapItem = (r: any): SavedItem => ({
 });
 
 /**
- * The signed-in contractor's Saved Items and Saved Stacks. Without an active Unlimited subscription
- * the entries stay in the database (nothing is deleted) but are not returned for reuse: the response
- * only says how many are kept.
+ * The signed-in contractor's Saved Items and Saved Stacks. Without Unlimited, Saved Items are still
+ * returned and editable (V8 batch 5, once its SQL ran); Saved Stacks stay in the database (nothing is
+ * deleted) but are not returned for reuse: the response only says how many are kept.
  */
 export async function GET() {
   const user = await getUser();
   if (!user) return fail(401, "not_authenticated", "Sign in required.");
   const supabase = await createClient();
   if (!(await hasAccess(supabase))) {
+    if (await freeItemsOk(supabase)) {
+      const [{ data: items }, { count: stacks }, { data: recent }] = await Promise.all([
+        supabase.from("saved_items").select("*").order("name").limit(2000),
+        supabase.from("assemblies").select("id", { count: "exact", head: true }),
+        supabase.from("estimate_items").select("name").eq("user_id", user.id).order("id").limit(5000),
+      ]);
+      const counts = usageCounts((recent ?? []).map((r: any) => r.name));
+      return json({ access: false, itemsAccess: true, lockedCount: stacks ?? 0, items: (items ?? []).map((r: any) => ({ ...mapItem(r), uses: usesFor(counts, r.name) })), stacks: [] } satisfies LibraryData);
+    }
     const [{ count: a }, { count: b }] = await Promise.all([
       supabase.from("saved_items").select("id", { count: "exact", head: true }),
       supabase.from("assemblies").select("id", { count: "exact", head: true }),
     ]);
-    return json({ access: false, lockedCount: (a ?? 0) + (b ?? 0), items: [], stacks: [] } satisfies LibraryData);
+    return json({ access: false, itemsAccess: false, lockedCount: (a ?? 0) + (b ?? 0), items: [], stacks: [] } satisfies LibraryData);
   }
   const [{ data: items }, { data: asm }, { data: asmItems }, { data: recent }, { data: profile }, { data: favs }, { data: companyId }] = await Promise.all([
     supabase.from("saved_items").select("*").order("name").limit(2000),
@@ -54,6 +66,7 @@ export async function GET() {
   const counts = usageCounts((recent ?? []).map((r: any) => r.name));
   return json({
     access: true,
+    itemsAccess: true,
     lockedCount: 0,
     targetMarginPct: (profile as any)?.target_margin_pct === null || (profile as any)?.target_margin_pct === undefined ? null : num((profile as any).target_margin_pct),
     canShare,
@@ -87,9 +100,13 @@ export async function POST(req: Request) {
   if (!parsed.success) return fail(400, "invalid", "Check the highlighted fields.", { issues: parsed.error.issues.slice(0, 5).map((i) => ({ path: i.path.join("."), message: i.message })) });
   const supabase = await createClient();
   const o = parsed.data;
-  // Removing your own entries is always allowed (your data, any plan). Creating or changing needs Unlimited.
-  if (o.action !== "remove" && !(await hasAccess(supabase))) {
-    return fail(402, "premium_required", "Saved Items are part of Unlimited. Upgrade to save and reuse your pricing.");
+  // Removing your own entries is always allowed (your data, any plan). Saving and editing your own
+  // Saved Items is allowed on every plan (V8 batch 5); everything else needs Unlimited.
+  const freeItemOp = o.kind === "item" && (o.action === "add" || o.action === "update");
+  if (o.action !== "remove" && !(await hasAccess(supabase)) && !(freeItemOp && (await freeItemsOk(supabase)))) {
+    return fail(402, "premium_required", freeItemOp
+      ? "Saved Items are part of Unlimited. Upgrade to save and reuse your pricing."
+      : "Saved Stacks and favorites are part of Unlimited. Your saved items stay with you when you upgrade.");
   }
 
   let error: { message: string } | null = null;
@@ -115,7 +132,7 @@ export async function POST(req: Request) {
     }
   } else if (o.kind === "stack" && o.action === "share") {
     const { data: companyId } = await supabase.rpc("my_company_id");
-    if (!companyId) return fail(403, "no_company", "Company templates need an Enterprise workspace.");
+    if (!companyId) return fail(403, "no_company", "Company templates need a Team workspace.");
     const r = await supabase.from("assemblies").update({ company_id: o.payload.on ? companyId : null }).eq("id", o.payload.id).select("id");
     error = r.error; affected = r.data?.length ?? 0;
   } else if (o.kind === "stack" && o.action === "scale") {
@@ -129,7 +146,7 @@ export async function POST(req: Request) {
   } else if (o.kind === "stack" && o.action === "add") {
     const s = o.payload;
     const { data: companyId } = s.company ? await supabase.rpc("my_company_id") : { data: null };
-    if (s.company && !companyId) return fail(403, "no_company", "Company templates need an Enterprise workspace.");
+    if (s.company && !companyId) return fail(403, "no_company", "Company templates need a Team workspace.");
     ({ error } = await supabase.from("assemblies").insert({
       id: s.id, user_id: user.id, name: s.name, trade: s.trade || null,
       scale_unit: s.scale?.unit ?? null, scale_label: s.scale ? s.scale.label : null, scale_calc: s.scale?.calc ?? null,
@@ -151,6 +168,7 @@ export async function POST(req: Request) {
     ({ error } = await supabase.from("assemblies").delete().eq("id", o.payload.id));
   }
   if (error) {
+    if (/free_item_limit/i.test(error.message)) return fail(402, "free_item_limit", FREE_LIMIT_MESSAGE);
     if (/company_template_locked/i.test(error.message)) return fail(403, "company_template_locked", "Only people who manage company pricing can change company templates.");
     if (/row-level security/i.test(error.message)) return fail(402, "premium_required", "Saved Items are part of Unlimited. Upgrade to save and reuse your pricing.");
     return fail(500, "save_failed", "Could not update your Saved Items. Please try again.");

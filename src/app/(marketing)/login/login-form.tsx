@@ -12,14 +12,14 @@ import { codeRequestedText, emailOtpLength } from "@/lib/auth/config";
  */
 export function loginCopy(next: string): AuthDialogCopy {
   const enterprise = /[?&]plan=enterprise\b/.test(next);
-  const goal = enterprise ? "continue with Enterprise" : "sign in";
+  const goal = enterprise ? "continue with Team" : "sign in";
   return {
-    title: enterprise ? "Verify your email to continue with Enterprise" : "Log in or sign up",
+    title: enterprise ? "Verify your email to continue with Team" : "Log in or sign up",
     emailDescription: enterprise
-      ? "No password needed. Your Enterprise selection stays selected, and nothing is charged until you review checkout."
+      ? "No password needed. Your Team selection stays selected, and nothing is charged until you review checkout."
       : "No password needed. New here? Entering your email creates your free account.",
     sentDescription: (email) => `${codeRequestedText(email, emailOtpLength())} Enter it here to ${goal}.`,
-    phoneDescription: enterprise ? "Verify your mobile number to continue with Enterprise." : "No password needed. We'll text you a 6-digit code.",
+    phoneDescription: enterprise ? "Verify your mobile number to continue with Team." : "No password needed. We'll text you a 6-digit code.",
     phoneSentDescription: (phone) => `We texted a 6-digit code to ${phone}. Enter it here to ${goal}.`,
     submitLabel: enterprise ? "Verify and continue" : "Verify and sign in",
   };

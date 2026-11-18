@@ -19,7 +19,7 @@ export default async function PipelinePage({ searchParams }: PageProps<"/company
     return (
       <div className="mx-auto max-w-4xl space-y-6">
         <h1 className="text-3xl font-extrabold">Team bids</h1>
-        <Notice title="No company account">Team bids are part of Enterprise.</Notice>
+        <Notice title="No company account">Company bids are part of the Team plan.</Notice>
       </div>
     );
   }

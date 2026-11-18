@@ -74,7 +74,7 @@ export function EnterprisePlan({ signedIn, mode, supportEmail, extraFeatures = [
       <div className="grid gap-8 md:grid-cols-2">
         <div className="min-w-0">
           <p className="text-sm font-bold uppercase tracking-wide text-accent-ink">For contracting teams</p>
-          <h2 id={`${id}-h`} className="mt-1 font-display text-2xl font-extrabold">Enterprise</h2>
+          <h2 id={`${id}-h`} className="mt-1 font-display text-2xl font-extrabold">Team</h2>
           <p className="mt-3 whitespace-nowrap"><span className="font-display text-4xl font-extrabold">$49.99</span><span className="font-semibold text-muted">/month</span></p>
           <p className="mt-1 text-sm font-semibold text-ink">Built for growing contracting teams.</p>
           <p className="mt-2 text-sm text-ink-soft">Includes your primary administrator account plus two additional team members at no extra charge. All three accounts include full access to unlimited bidding.</p>
@@ -84,7 +84,7 @@ export function EnterprisePlan({ signedIn, mode, supportEmail, extraFeatures = [
         <div className="min-w-0 rounded-xl bg-paper p-4 sm:p-5">
           <h3 className="font-display font-bold">Additional users</h3>
           <table className="mt-2 w-full text-sm">
-            <caption className="sr-only">Enterprise price per additional user</caption>
+            <caption className="sr-only">Team price per additional user</caption>
             <tbody>
               <tr className="border-b border-line"><td className="py-1.5">Users 1–3</td><td className="py-1.5 text-right font-semibold">Included</td></tr>
               <tr className="border-b border-line"><td className="py-1.5">Users 4–5</td><td className="py-1.5 text-right font-semibold">$19.99/user/month</td></tr>
@@ -120,10 +120,10 @@ export function EnterprisePlan({ signedIn, mode, supportEmail, extraFeatures = [
             </div>
           )}
           <div className="mt-5">
-            {mode === "owner" ? <ButtonLink href="/company/billing" variant="secondary" size="lg" className="w-full">Manage Enterprise</ButtonLink>
+            {mode === "owner" ? <ButtonLink href="/company/billing" variant="secondary" size="lg" className="w-full">Manage Team</ButtonLink>
               : mode === "member" ? <p className="text-sm text-ink-soft">You&apos;re part of a company account. Ask your company owner about seats.</p>
-              : mode === "contact" ? <ButtonLink href={`mailto:${supportEmail}?subject=${encodeURIComponent("Built2Bid Enterprise")}`} size="lg" className="w-full">Contact us about Enterprise</ButtonLink>
-              : <Button size="lg" className="h-auto min-h-12 w-full whitespace-normal py-3" onClick={start} disabled={busy}>{busy && <Loader2 className="h-4 w-4 animate-spin" />}{open ? `Continue to checkout · ${formatCents(q.monthlyCents)}/month` : "Get Started with Enterprise"}</Button>}
+              : mode === "contact" ? <ButtonLink href={`mailto:${supportEmail}?subject=${encodeURIComponent("Built2Bid Team")}`} size="lg" className="w-full">Contact us about Team</ButtonLink>
+              : <Button size="lg" className="h-auto min-h-12 w-full whitespace-normal py-3" onClick={start} disabled={busy}>{busy && <Loader2 className="h-4 w-4 animate-spin" />}{open ? `Continue to checkout · ${formatCents(q.monthlyCents)}/month` : "Get Started with Team"}</Button>}
             {err && <p role="alert" className="mt-2 text-sm text-danger">{err}</p>}
             <p className="mt-2 text-xs text-ink-soft">Billed monthly, no long-term contract. Added users are prorated; removed users lower your price from the next invoice, with no refund for the current month. Prices in USD; taxes may apply.</p>
           </div>
@@ -135,11 +135,11 @@ export function EnterprisePlan({ signedIn, mode, supportEmail, extraFeatures = [
           onOpenChange={setAuthOpen}
           next={enterpriseReturnPath(users)}
           copy={{
-            title: "Verify your email to continue with Enterprise",
-            emailDescription: "No password needed. Your Enterprise selection and team size stay selected. Nothing is charged until you review checkout.",
-            sentDescription: (email) => `${codeRequestedText(email, emailOtpLength())} Enter it to continue with Enterprise.`,
-            phoneDescription: "Verify your mobile number to continue with Enterprise. Your team size stays selected.",
-            phoneSentDescription: (phone) => `We texted a 6-digit code to ${phone}. Enter it here to continue with Enterprise.`,
+            title: "Verify your email to continue with Team",
+            emailDescription: "No password needed. Your Team selection and team size stay selected. Nothing is charged until you review checkout.",
+            sentDescription: (email) => `${codeRequestedText(email, emailOtpLength())} Enter it to continue with Team.`,
+            phoneDescription: "Verify your mobile number to continue with Team. Your team size stays selected.",
+            phoneSentDescription: (phone) => `We texted a 6-digit code to ${phone}. Enter it here to continue with Team.`,
             submitLabel: "Verify and continue",
           }}
           summary={
@@ -147,7 +147,7 @@ export function EnterprisePlan({ signedIn, mode, supportEmail, extraFeatures = [
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-xs font-bold uppercase tracking-wider text-muted">Your plan</p>
-                  <p className="mt-0.5 font-display text-lg font-extrabold leading-tight">Enterprise</p>
+                  <p className="mt-0.5 font-display text-lg font-extrabold leading-tight">Team</p>
                 </div>
                 <p className="shrink-0 text-right"><span className="font-display text-xl font-extrabold">{formatCents(q.monthlyCents)}</span><span className="text-sm font-semibold text-muted">/month</span></p>
               </div>

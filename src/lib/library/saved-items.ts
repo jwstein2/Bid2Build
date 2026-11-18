@@ -67,8 +67,10 @@ export interface SavedStack {
 }
 
 export interface LibraryData {
-  /** True while the account may use the library (Unlimited or admin). */
+  /** True while the account may use the whole library (Unlimited or admin): stacks, favorites, price imports. */
   access: boolean;
+  /** True when the account may save and edit its own Saved Items (every plan once SQL 20270106001000 ran). */
+  itemsAccess?: boolean;
   /** Entries kept for an account without access (shown as "kept for you", never deleted). */
   lockedCount: number;
   items: SavedItem[];
@@ -79,7 +81,12 @@ export interface LibraryData {
   canShare?: boolean;
 }
 
-export const EMPTY_LIBRARY: LibraryData = { access: false, lockedCount: 0, items: [], stacks: [], targetMarginPct: null, canShare: false };
+export const EMPTY_LIBRARY: LibraryData = { access: false, itemsAccess: false, lockedCount: 0, items: [], stacks: [], targetMarginPct: null, canShare: false };
+
+/** Free accounts may keep this many saved items (enforced in the database). Unlimited has no cap. */
+export const FREE_SAVED_ITEMS_LIMIT = 250;
+/** Shown wherever a free account saves an item. */
+export const FREE_ITEMS_KEPT_NOTE = "Your saved items stay with you when you upgrade to Unlimited.";
 
 export const LIBRARY_LOCKED_MESSAGE = "Premium Only — Save your preferred labor rates, material prices, and frequently used estimating items.";
 

@@ -32,11 +32,11 @@ for (const [label, vp, signed] of [["desktop", { width: 1280, height: 900 }, fal
   check(`${label}: no horizontal scroll (${sw} <= ${vp.width})`, sw <= vp.width);
   await ent.screenshot({ path: `${process.argv[2] ?? "enterprise-shots"}/enterprise-card-${label}.png` });
   if (!signed) {
-    await ent.getByRole("button", { name: "Get Started with Enterprise" }).click();
+    await ent.getByRole("button", { name: "Get Started with Team" }).click();
     await page.waitForURL(/login/);
     check(`${label}: signed-out goes to sign in and returns to Enterprise`, decodeURIComponent(page.url()).includes("/pricing?plan=enterprise"));
   } else {
-    await ent.getByRole("button", { name: "Get Started with Enterprise" }).click();
+    await ent.getByRole("button", { name: "Get Started with Team" }).click();
     await ent.getByRole("button", { name: /Continue to checkout/ }).click();
     check(`${label}: company name required`, (await ent.getByRole("alert").textContent()).includes("company name"));
     await ent.getByLabel("Company name").fill("Summit Exteriors");

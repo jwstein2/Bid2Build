@@ -21,7 +21,7 @@ export async function internalReportAccess(supabase: SupabaseClient, userId: str
   const { data: est } = await supabase.from("estimates").select("id, user_id, company_id").eq("id", estimateId).maybeSingle();
   if (!est) return { ok: false, status: 404, code: "not_found", message: "Estimate not found." };
   if (!(await hasPremiumAccess(supabase)))
-    return { ok: false, status: 402, code: "upgrade_required", message: "The Internal Estimate Report is included with Unlimited and Enterprise." };
+    return { ok: false, status: 402, code: "upgrade_required", message: "The Internal Estimate Report is included with Unlimited and Team." };
   if (est.company_id) {
     const company = await loadMyCompany(supabase);
     if (!company || company.id !== est.company_id || !can(company, "view_costs") || !can(company, "view_margin") || !can(company, "view_internal_reports"))

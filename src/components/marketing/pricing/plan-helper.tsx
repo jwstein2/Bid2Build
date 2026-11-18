@@ -2,7 +2,7 @@
 import { useId, useState } from "react";
 import { recommendPlan, type BidsPerMonth, type People } from "@/lib/marketing/plan-helper";
 
-const PLAN_NAME = { free: "Free", unlimited: "Unlimited", enterprise: "Enterprise" } as const;
+const PLAN_NAME = { free: "Free", unlimited: "Unlimited", enterprise: "Team" } as const;
 
 /** Three questions, one suggestion. Only links to a card on this page; never opens checkout. */
 export function PlanHelper({ pccLive, pccName }: { pccLive: boolean; pccName: string }) {

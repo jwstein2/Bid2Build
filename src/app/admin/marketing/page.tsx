@@ -26,7 +26,7 @@ export default async function Marketing({ searchParams }: { searchParams: Promis
   const w = windowOf(range, now);
   const [ga, gsc, sessions] = await Promise.all([ga4Report(range.days), searchConsoleReport(range.days), stripeCheckouts(range.days)]);
   const costs = prorateCosts(snap.costs, w.start, w.end);
-  // V8 in-app offers and cancellation reasons (table from 20270105001000; missing table = "not set up").
+  // V8 in-app offers and cancellation reasons (table from 20270105002000; missing table = "not set up").
   const { data: offerRows, error: offerErr } = await createAdminClient().from("upgrade_offers").select("offer_id, action, detail").gte("created_at", new Date(w.start).toISOString()).lt("created_at", new Date(w.end).toISOString()).limit(20000);
   const offerSummary = offerErr ? null : summarizeOffers(offerRows ?? []);
 

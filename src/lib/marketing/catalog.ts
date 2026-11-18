@@ -13,6 +13,7 @@
  * Nothing in this file is generated; marketing claims are written and reviewed by people.
  */
 import { MONTHLY, ANNUAL, formatUsd } from "@/lib/billing/plans";
+import { FREE_SAVED_ITEMS_LIMIT } from "@/lib/library/saved-items";
 import { PM_ADDON_ANNUAL_CENTS, PM_ADDON_CENTS, PM_EDITOR_CENTS, PM_INCLUDED_ENTERPRISE_EDITORS } from "@/lib/pm/billing";
 import { ENTERPRISE_BASE_CENTS, ENTERPRISE_INCLUDED_USERS } from "@/lib/enterprise/pricing";
 import { isEsignEnabled } from "@/lib/esign/config";
@@ -88,7 +89,7 @@ export const GROUP_TITLES: Record<CompareGroup, string> = {
   customers: "Customer Management",
   projects: "Project Management",
   communications: "Customer Communications",
-  team: "Team & Enterprise Controls",
+  team: "Team & Company Controls",
 };
 
 const pmUpgrade = "/pricing#project-command-center";
@@ -99,7 +100,7 @@ export const MARKETING_FEATURES: readonly MarketingFeature[] = [
   { id: "calculators", name: "Quantity calculators", description: "Work out squares, boards, gallons, yards and labor hours right inside the line item.", pillar: "win", group: "estimating", tier: "core", release: "live", destination: "/bids", upgrade: "/bids", home: true },
   { id: "pricing_tools", name: "Materials, labor, markup and margin", description: "Enter your own costs and price with markup or target margin while price, tax and profit update live.", pillar: "win", group: "estimating", tier: "core", release: "live", destination: "/bids", upgrade: "/bids" },
   { id: "scope_exclusions", name: "Professional scopes and exclusions", description: "Spell out what is and isn't included so the customer knows exactly what they are buying.", pillar: "win", group: "estimating", tier: "core", release: "live", destination: "/bids", upgrade: "/bids" },
-  { id: "saved_items", name: "Saved Items & Pricing", description: "Save your labor rates, material costs and common items, then add them to any bid in a tap.", pillar: "win", group: "estimating", tier: "unlimited", release: "live", registry: "library", destination: "/dashboard/items", upgrade: "/pricing", home: true },
+  { id: "saved_items", name: "Saved Items & Pricing", description: "Save your labor rates, material costs and common items, then add them to any bid in a tap.", pillar: "win", group: "estimating", tier: "unlimited", release: "live", registry: "library", destination: "/dashboard/items", upgrade: "/pricing", home: true, cells: { free: { text: `Up to ${FREE_SAVED_ITEMS_LIMIT} items, kept when you upgrade` } } },
   { id: "sub_quotes", name: "Subcontractor quotes", description: "Record sub quotes on any line and see the effect on your margin. Never shown to customers.", pillar: "win", group: "estimating", tier: "core", release: "live", registry: "sub_quotes", destination: "/dashboard?view=table", upgrade: "/bids", hint: "Compare original and revised sub bids per line item." },
 
   // Win the Job: sales & proposals
@@ -134,7 +135,7 @@ export const MARKETING_FEATURES: readonly MarketingFeature[] = [
   { id: "company_dashboard", name: "Company dashboard and team pipeline", description: "Company-wide bids, pipeline and performance, filtered by person, with permission controls.", pillar: "grow", group: "team", tier: "enterprise", release: "live", destination: "/company", upgrade: "/pricing#enterprise" },
   { id: "bid_style", name: "Company-wide bid style", description: "One proposal look for the whole company, with locks on what your team may change.", pillar: "grow", group: "team", tier: "enterprise", release: "live", destination: "/company/proposal-style", upgrade: "/pricing#enterprise" },
   { id: "shared_company", name: "Shared customers, saved pricing and billing", description: "Company customers, saved pricing and one bill for every licensed user.", pillar: "grow", group: "team", tier: "enterprise", release: "live", destination: "/company", upgrade: "/pricing#enterprise" },
-  { id: "pm_editors", name: `${PM_PRODUCT_NAME} editors`, description: `Enterprise includes ${PRICES.pmIncludedEnterpriseEditors} schedule editor for one licensed user. Each extra editor is ${PRICES.pmEditor}/month and needs a licensed user.`, pillar: "run", group: "team", tier: "enterprise", release: "live", gate: "pm", destination: "/company/billing", upgrade: "/pricing#enterprise", hint: "An editor seat is not a user license. It lets a licensed user edit schedules.",
+  { id: "pm_editors", name: `${PM_PRODUCT_NAME} editors`, description: `Team includes ${PRICES.pmIncludedEnterpriseEditors} schedule editor for one licensed user. Each extra editor is ${PRICES.pmEditor}/month and needs a licensed user.`, pillar: "run", group: "team", tier: "enterprise", release: "live", gate: "pm", destination: "/company/billing", upgrade: "/pricing#enterprise", hint: "An editor seat is not a user license. It lets a licensed user edit schedules.",
     cells: { free: "no", unlimited: { text: `You, with the add-on` }, enterprise: { text: `1 included, extra ${PRICES.pmEditor}/mo each` } } },
 ] as const;
 
@@ -181,7 +182,7 @@ export function tierBadge(f: MarketingFeature, env?: Record<string, string | und
     case "core": return { label: "Included free", tone: "core" };
     case "unlimited": return { label: "Unlimited", tone: "premium" };
     case "pm": return { label: PM_PRODUCT_NAME, tone: "premium" };
-    case "enterprise": return { label: "Enterprise", tone: "premium" };
+    case "enterprise": return { label: "Team", tone: "premium" };
   }
 }
 

@@ -60,7 +60,7 @@ export function CreditBalances({ credits, className, showUpgrade = true, enterpr
     return (
       <Card className={cn("p-4", className)} data-testid="plan-enterprise">
         <p className="text-sm text-muted">Plan</p>
-        <p className="flex flex-wrap items-center gap-2 text-2xl font-extrabold text-ok"><Building2 className="h-6 w-6" aria-hidden /> Enterprise{enterprise.complimentary && <span className="rounded-full bg-ok-tint px-2 py-0.5 text-xs font-bold text-ok">complimentary</span>}</p>
+        <p className="flex flex-wrap items-center gap-2 text-2xl font-extrabold text-ok"><Building2 className="h-6 w-6" aria-hidden /> Team{enterprise.complimentary && <span className="rounded-full bg-ok-tint px-2 py-0.5 text-xs font-bold text-ok">complimentary</span>}</p>
         <p className="mt-1 text-sm text-ink-soft">{enterprise.companyName} · {enterprise.role}{enterprise.complimentary && enterprise.expiresAt ? ` · free until ${new Date(enterprise.expiresAt).toLocaleDateString(undefined, { dateStyle: "long" })}` : ""}</p>
         <p className="mt-1 text-xs text-muted">Unlimited bids and every premium feature, provided by your company.</p>
         <Link href={enterprise.manageHref} className="mt-2 inline-block text-sm font-semibold text-accent-ink underline">{enterprise.manageHref === "/company/billing" ? "Manage team & licenses" : "View your team"}</Link>

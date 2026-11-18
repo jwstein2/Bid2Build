@@ -58,7 +58,7 @@ function PillarBlock({ pillar, flip }: { pillar: Pillar; flip: boolean }) {
           {pillar === "run" && (
             <p className="mt-3 rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink" data-testid="pm-price-note">
               {pmLive
-                ? <>Add-on for Unlimited: <b>{PRICES.pmMonthly}/month</b> or <b>{PRICES.pmAnnual}/year</b>. Enterprise includes {PRICES.pmIncludedEnterpriseEditors} schedule editor.</>
+                ? <>Add-on for Unlimited: <b>{PRICES.pmMonthly}/month</b> or <b>{PRICES.pmAnnual}/year</b>. Team includes {PRICES.pmIncludedEnterpriseEditors} schedule editor.</>
                 : <>{PM_PRODUCT_NAME} is coming soon as an add-on for Unlimited.</>}
             </p>
           )}

@@ -38,12 +38,12 @@ export function PremiumDiamond({ tone = "light", className }: { tone?: "light" |
  * plans through the existing Stripe checkout, and a way out that keeps free estimating available.
  */
 export function PremiumUpgrade({
-  feature, signedIn, note, notNowHref, onNotNow, className,
-}: { feature: PremiumFeature; signedIn: boolean; note?: string; notNowHref?: string; onNotNow?: () => void; className?: string }) {
-  const f = PREMIUM_FEATURES[feature];
+  feature, signedIn, note, notNowHref, onNotNow, className, title,
+}: { feature: PremiumFeature; signedIn: boolean; note?: string; notNowHref?: string; onNotNow?: () => void; className?: string; title?: string }) {
+  const f = { ...PREMIUM_FEATURES[feature], ...(title ? { title } : {}) };
   return (
     <div className={cn("rounded-xl border border-line bg-paper p-4 sm:p-5", className)}>
-      <p className="flex items-center gap-2 font-display font-bold text-navy"><Gem className="h-4 w-4 text-accent-ink" aria-hidden /> {f.title} is an Unlimited feature</p>
+      <p className="flex items-center gap-2 font-display font-bold text-navy"><Gem className="h-4 w-4 text-accent-ink" aria-hidden /> {f.title} {title ? "are" : "is"} an Unlimited feature</p>
       <p className="mt-1 text-sm text-ink-soft">{f.pitch}</p>
       {note && <p className="mt-2 text-sm text-ink-soft">{note}</p>}
       <div className="mt-4 grid gap-2 sm:grid-cols-2">

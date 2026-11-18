@@ -46,7 +46,7 @@ export default async function LearningPage({ searchParams }: PageProps<"/learnin
       <div className="mx-auto max-w-2xl">
         <h1 className="text-2xl font-extrabold">{program.workspace_name}</h1>
         <Notice className="mt-4" tone="warn" title={PROGRAM_STATE_LABELS[program.state]}>
-          {program.state === "awaiting_activation" ? "Accept your complimentary Enterprise invitation (sent with your private link) to start the 12-month program." : `This program ended ${fmtDate(program.expires_at)}. Your own account and bids are unaffected.`}
+          {program.state === "awaiting_activation" ? "Accept your complimentary Team invitation (sent with your private link) to start the 12-month program." : `This program ended ${fmtDate(program.expires_at)}. Your own account and bids are unaffected.`}
         </Notice>
       </div>
     );
@@ -60,7 +60,7 @@ export default async function LearningPage({ searchParams }: PageProps<"/learnin
         <Card className="mt-4 p-5 text-sm leading-relaxed">
           <p className="font-semibold">Before you invite anyone, please confirm the program terms ({program.terms_version ?? "pilot"}):</p>
           <ul className="mt-3 list-disc space-y-1.5 pl-5">
-            <li>Your Enterprise access is complimentary for 12 months, through {fmtDate(program.expires_at)}. No payment details are needed and nothing renews automatically.</li>
+            <li>Your Team access is complimentary for 12 months, through {fmtDate(program.expires_at)}. No payment details are needed and nothing renews automatically.</li>
             <li>You can gift up to {program.gift_allowance} complimentary Unlimited memberships. Gifts end no later than your program.</li>
             <li>Each person you invite gets their own independent account and company profile. They are not part of your company, and you never own or access their data.</li>
             <li>You only see a bid when the participant chooses to share it, with the details they choose. Customer names and contact details are never shared.</li>

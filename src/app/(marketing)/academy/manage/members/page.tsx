@@ -35,7 +35,7 @@ export default async function ManageMembers({ searchParams }: PageProps<"/academ
         <select name="role" defaultValue={q("role")} className={`${field} w-36`}><option value="">Any role</option><option value="admin">Admins</option><option value="moderator">Moderators</option><option value="instructor">Instructors</option></select>
         <button className={buttonClass("secondary", "sm", "mb-0.5")}>Filter</button>
       </form>
-      <p className="mt-3 text-xs text-muted">Moderators can suspend and restore members. Only Academy admins can ban or change roles and premium access. Enterprise company admins have no Academy role unless granted here; platform super-admins are always Academy admins.</p>
+      <p className="mt-3 text-xs text-muted">Moderators can suspend and restore members. Only Academy admins can ban or change roles and premium access. Company admins on the Team plan have no Academy role unless granted here; platform super-admins are always Academy admins.</p>
       <ul className="mt-3 space-y-2" data-testid="manage-members">
         {rows.length === 0 && <li className="text-sm text-muted">No members match.</li>}
         {rows.map((m) => (

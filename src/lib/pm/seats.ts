@@ -25,7 +25,7 @@ export interface PmSeats {
 }
 
 export const SEAT_TYPE_LABEL: Record<SeatType, string> = {
-  included: "Included with Enterprise",
+  included: "Included with Team",
   paid: "Paid editor seat",
   complimentary: "Complimentary",
   uncovered: "Not covered by your plan",
@@ -34,7 +34,7 @@ export const SEAT_TYPE_LABEL: Record<SeatType, string> = {
 /** What a seat costs, in plain words (no prices: those live on the billing page). */
 export function seatBilling(s: PmSeat): string {
   if (s.seatType === "included") return "No extra charge";
-  if (s.seatType === "paid") return "Billed monthly on your Enterprise subscription";
+  if (s.seatType === "paid") return "Billed monthly on your Team subscription";
   if (s.seatType === "complimentary") return "No charge (complimentary access)";
   return "View only until a seat is added";
 }

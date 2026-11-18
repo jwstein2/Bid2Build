@@ -40,8 +40,8 @@ export default async function CompanyBillingPage({ searchParams }: PageProps<"/c
       <div className="mx-auto max-w-3xl space-y-6">
         <h1 className="text-3xl font-extrabold">Billing & Licenses</h1>
         {sp.checkout === "success"
-          ? <Notice tone="neutral" title="Confirming your payment…">Stripe is confirming your Enterprise subscription. This page updates within a minute; refresh if it doesn&apos;t.</Notice>
-          : <Notice tone="neutral" title="No company account">Enterprise gives your team a shared company account. <Link className="underline" href="/pricing#enterprise">See Enterprise pricing</Link>.</Notice>}
+          ? <Notice tone="neutral" title="Confirming your payment…">Stripe is confirming your Team subscription. This page updates within a minute; refresh if it doesn&apos;t.</Notice>
+          : <Notice tone="neutral" title="No company account">The Team plan gives your crew a shared company account. <Link className="underline" href="/pricing#enterprise">See Team pricing</Link>.</Notice>}
       </div>
     );
   }
@@ -85,15 +85,15 @@ export default async function CompanyBillingPage({ searchParams }: PageProps<"/c
         <h1 className="text-3xl font-extrabold">Billing & Licenses</h1>
         <p className="text-ink-soft">{company.name}</p>
       </div>
-      {sp.checkout === "success" && company.entitlement.active && <Notice tone="ok" title="Enterprise is active">Payment confirmed by Stripe. Your company has {licensed} licensed users. Invite your team from Team & Access.</Notice>}
-      {row?.status === "past_due" && <Notice tone="danger" title="Payment failed">Your last Enterprise payment didn&apos;t go through. Stripe retries automatically and your team keeps access meanwhile. Update your payment method to avoid losing access.</Notice>}
-      {!company.entitlement.active && <Notice tone="warn" title="Enterprise isn't active">Your team&apos;s bids and customers are safe, but licensed access is paused until the subscription is active again.</Notice>}
+      {sp.checkout === "success" && company.entitlement.active && <Notice tone="ok" title="Team plan is active">Payment confirmed by Stripe. Your company has {licensed} licensed users. Invite your team from Team & Access.</Notice>}
+      {row?.status === "past_due" && <Notice tone="danger" title="Payment failed">Your last Team payment didn&apos;t go through. Stripe retries automatically and your team keeps access meanwhile. Update your payment method to avoid losing access.</Notice>}
+      {!company.entitlement.active && <Notice tone="warn" title="Team plan isn't active">Your team&apos;s bids and customers are safe, but licensed access is paused until the subscription is active again.</Notice>}
 
       <Card className="p-5" data-guide="company.licenses">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-sm text-muted">Plan</p>
-            <p className="text-2xl font-extrabold">Enterprise{comp && " (complimentary)"}</p>
+            <p className="text-2xl font-extrabold">Team{comp && " (complimentary)"}</p>
             {!comp && <p className="text-sm text-ink-soft">{formatCents(quote.monthlyCents)}/month for {quote.totalUsers} licensed users</p>}
             {end && !comp && <p className="text-sm text-ink-soft">{row?.cancel_at_period_end ? `Cancels on ${end}. Your team keeps access until then.` : `Renews on ${end}.`}</p>}
             {comp && company.entitlement.expiresAt && <p className="text-sm text-ink-soft">Complimentary access until {new Date(company.entitlement.expiresAt).toLocaleDateString(undefined, { dateStyle: "long" })}. Nothing is charged.</p>}
@@ -131,7 +131,7 @@ export default async function CompanyBillingPage({ searchParams }: PageProps<"/c
           {invoices.length > 0 && (
             <div className="mt-4 overflow-x-auto">
               <table className="w-full text-sm">
-                <caption className="sr-only">Recent Enterprise invoices</caption>
+                <caption className="sr-only">Recent Team invoices</caption>
                 <thead><tr className="border-b border-line text-left"><th className="py-2">Date</th><th className="py-2">Invoice</th><th className="py-2">Status</th><th className="py-2 text-right">Amount</th></tr></thead>
                 <tbody>{invoices.map((i) => (
                   <tr key={i.id} className="border-b border-line last:border-0">
@@ -146,7 +146,7 @@ export default async function CompanyBillingPage({ searchParams }: PageProps<"/c
           )}
         </Card>
       )}
-      <ButtonLink href="/pricing#enterprise" variant="secondary">See Enterprise pricing</ButtonLink>
+      <ButtonLink href="/pricing#enterprise" variant="secondary">See Team pricing</ButtonLink>
     </div>
   );
 }

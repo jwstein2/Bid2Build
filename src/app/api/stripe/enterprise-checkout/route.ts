@@ -25,7 +25,7 @@ async function verifyPrices(stripe: Stripe, baseId: string, seatId: string) {
   if (fresh(baseId) && fresh(seatId)) return;
   const [base, seat] = await Promise.all([stripe.prices.retrieve(baseId), stripe.prices.retrieve(seatId, { expand: ["tiers"] })]);
   const why = enterpriseBaseMismatch(base) ?? enterpriseSeatMismatch(seat as Parameters<typeof enterpriseSeatMismatch>[0]);
-  if (why) throw Object.assign(new Error(`Enterprise Stripe prices do not match the advertised pricing: ${why}`), { code: "pricing_mismatch" });
+  if (why) throw Object.assign(new Error(`Team Stripe prices do not match the advertised pricing: ${why}`), { code: "pricing_mismatch" });
   verifiedAt.set(baseId, Date.now());
   verifiedAt.set(seatId, Date.now());
 }
@@ -37,10 +37,10 @@ async function verifyPrices(stripe: Stripe, baseId: string, seatId: string) {
  */
 export async function POST(req: Request) {
   if (!(await sameOrigin())) return fail(403, "bad_origin", "Cross-site request refused.");
-  if (!isEnterpriseConfigured()) return fail(503, "enterprise_unavailable", "Enterprise checkout isn't open yet. Contact us to get started.");
+  if (!isEnterpriseConfigured()) return fail(503, "enterprise_unavailable", "Team checkout isn't open yet. Contact us to get started.");
   if (!(await rateLimit("enterprise-checkout", 10, 10 * 60_000))) return fail(429, "rate_limited", "Please wait a moment and try again.");
   const user = await getUser();
-  if (!user) return fail(401, "not_authenticated", "Sign in to start Enterprise.");
+  if (!user) return fail(401, "not_authenticated", "Sign in to start the Team plan.");
   if (!user.verified) return fail(403, "email_not_verified", "Verify your phone or email before upgrading.");
   const p = Body.safeParse(await req.json().catch(() => null));
   if (!p.success) return fail(400, "invalid", "Enter your company name and number of users.");
@@ -69,7 +69,7 @@ export async function POST(req: Request) {
     const existing = subs.data.find((s) => BLOCKING_SUBSCRIPTION_STATUSES.has(s.status));
     if (existing) {
       await applySubscription(admin, existing, Math.floor(Date.now() / 1000)).catch(() => null);
-      return fail(409, "already_subscribed", "You already have a paid subscription. Manage or cancel it from Subscription settings before switching to Enterprise.");
+      return fail(409, "already_subscribed", "You already have a paid subscription. Manage or cancel it from Subscription settings before switching to the Team plan.");
     }
 
     const env = serverEnv();
@@ -105,7 +105,7 @@ export async function POST(req: Request) {
   } catch (e) {
     const code = (e as { code?: string }).code;
     logError("stripe.enterprise_checkout", e, { user: user.id, users });
-    if (code === "pricing_mismatch") return fail(500, "pricing_mismatch", "Enterprise checkout is temporarily unavailable while we update pricing.");
+    if (code === "pricing_mismatch") return fail(500, "pricing_mismatch", "Team checkout is temporarily unavailable while we update pricing.");
     return fail(500, "checkout_failed", "We couldn't start checkout. Please try again.");
   }
 }

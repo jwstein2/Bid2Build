@@ -128,7 +128,7 @@ export const TOURS: readonly TourDef[] = [
     id: "enterprise-owner", version: 1, area: "enterprise",
     title: "Set up your company",
     description: "Licensed seats, inviting your team, roles and permissions, team projects and billing.",
-    offer: "Your Enterprise workspace is ready. Want a short tour of company setup?",
+    offer: "Your Team workspace is ready. Want a short tour of company setup?",
     roles: ["owner"], requires: { company: true, owner: true },
     trigger: { kind: "first_visit", pages: ["company.overview", "company.users"] },
     completion: "steps", optional: true, replayable: true,

@@ -105,7 +105,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   const pmOn = isPmEnabled();
   // Every independent read goes out at once: one database round trip of waiting instead of six in a row.
   const [{ rows: estimates, migrated }, { data: versions }, credits, { data: biz }, libraryAccess, company, { data: referralData },
-    { data: gifts }, { data: trialRows }, history, { data: payRow }, [{ data: reqRows }, { data: sigRows }], [reviewQueue, pmAccess]] = await Promise.all([
+    { data: gifts }, { data: trialRows }, history, { data: payRow }, [{ data: reqRows }, { data: sigRows }], [reviewQueue, pmAccess], { data: freeItemsOk }] = await Promise.all([
     // "My bids" stays personal: Enterprise owners/managers can also read teammates' company bids (RLS),
     // which belong in the company Command Center, not here.
     loadBids(supabase, user.id),
@@ -131,6 +131,8 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     ]) : Promise.resolve([{ data: null }, { data: null }] as const),
     // V4.3 "Newly approved — needs review" (same queue as Projects; null before the SQL runs).
     pmOn ? Promise.all([loadReviewQueue(supabase), loadPmAccess(supabase)]) : Promise.resolve([null, null] as const),
+    // V8 batch 5: Saved Items are free once SQL 20270106001000 ran (missing function = false).
+    supabase.rpc("saved_items_free_ok"),
   ]);
   const gift = ((gifts ?? []) as { state: string; program_state: string; channel_name: string | null; workspace_name: string; expires_at: string | null }[])
     .find((g) => g.state === "active" && g.program_state === "active") ?? null;
@@ -228,7 +230,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
           )}
         </div>
       </div>
-      <PremiumTiles unlocked={libraryAccess} />
+      <PremiumTiles unlocked={libraryAccess} itemsFree={!libraryAccess && freeItemsOk === true} />
       {referral && <ReferCard link={referralLink(referral.code)} signedUp={referral.signed_up} paying={referral.paying} monthsEarned={referral.months_earned} eligible={referral.eligible} />}
     </div>
   );

@@ -9,7 +9,7 @@ export type CompPlan = (typeof COMP_PLANS)[number];
 
 export const COMP_PLAN_LABELS: Record<CompPlan, string> = {
   unlimited: "Unlimited (individual)",
-  enterprise: "Enterprise (company)",
+  enterprise: "Team (company)",
 };
 
 /** Licensed users a grant includes before any extra complimentary seats. */
@@ -56,7 +56,7 @@ export const GrantInput = z.object({
   sendInvite: z.boolean().default(true),
   note: z.string().trim().max(500).optional(),
 }).superRefine((v, ctx) => {
-  if (v.plan === "unlimited" && v.extraSeats > 0) ctx.addIssue({ code: "custom", path: ["extraSeats"], message: "Extra seats only apply to Enterprise." });
+  if (v.plan === "unlimited" && v.extraSeats > 0) ctx.addIssue({ code: "custom", path: ["extraSeats"], message: "Extra seats only apply to Team." });
   if (v.extraSeats > 0 && !v.approveExtraSeats) ctx.addIssue({ code: "custom", path: ["approveExtraSeats"], message: "Confirm you are authorizing the extra free seats." });
 });
 export type GrantInput = z.infer<typeof GrantInput>;
@@ -70,9 +70,9 @@ export const SeatsInput = z.object({ id: z.string().uuid(), extraSeats: z.coerce
 const ERRORS: Record<string, string> = {
   forbidden: "Only Built2Bid platform admins can do this.",
   invalid_email: "Enter a valid email address.",
-  invalid_plan: "Choose Unlimited or Enterprise.",
+  invalid_plan: "Choose Unlimited or Team.",
   invalid_duration: `Choose between 1 and ${MAX_GRANT_DAYS} days.`,
-  invalid_seats: `Extra seats must be 0 to ${MAX_EXTRA_SEATS}, and only on Enterprise grants.`,
+  invalid_seats: `Extra seats must be 0 to ${MAX_EXTRA_SEATS}, and only on Team grants.`,
   grant_exists: "This email already has an open complimentary grant. Extend that one instead.",
   rate_limited: "You've created 50 grants in the last 24 hours. Try again later.",
   not_found: "That grant no longer exists.",

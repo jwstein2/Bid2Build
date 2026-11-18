@@ -70,7 +70,7 @@ for (const vp of VIEWPORTS) {
   const titles = await page.locator("[data-pillar] h3").allInnerTexts();
   check(`${tag} pillar order`, titles.join("|") === "Win the Job|Run the Job|Grow the Business", titles.join("|"));
   const note = await page.getByTestId("pm-price-note").innerText();
-  check(`${tag} PM price note`, /\$4\.99\/month/.test(note) && /\$49\.99\/year/.test(note) && /Enterprise includes 1 schedule editor/.test(note), note);
+  check(`${tag} PM price note`, /\$4\.99\/month/.test(note) && /\$49\.99\/year/.test(note) && /Team includes 1 schedule editor/.test(note), note);
   // V8: customer communications are live (released 2026-11-18) and listed with the add-on badge.
   for (const id of ["nurture", "scheduled_updates"]) {
     const badge = await page.locator(`[data-pillar] [data-feature-id=${id}] [data-status]`).innerText().catch(() => "");
@@ -134,7 +134,7 @@ for (const sc of PRICING) {
     // Monthly and Annual share one Unlimited card with a switch (V8 MKT-4): the other schedule's price is one tap away.
     const text = await page.locator("main").textContent();
     for (const price of ["$19.99", "$149", "+$4.99", "+$49.99/year", "$49.99", "$1.99/month"]) check(`${tag} shows ${price}`, text.includes(price));
-    check(`${tag} Enterprise still Contact us`, await page.getByRole("link", { name: "Contact us about Enterprise" }).isVisible());
+    check(`${tag} Enterprise still Contact us`, await page.getByRole("link", { name: "Contact us about Team" }).isVisible());
     const pm = page.getByTestId("pm-addon-plan");
     check(`${tag} PCC section`, (await pm.locator("h2").innerText()) === "Project Command Center");
     const action = pm.locator(`[data-cta=${sc.pmAction}]`);
@@ -240,7 +240,7 @@ for (const p of ["/", "/pricing", "/bids/roofing"]) {
   const ld = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map((m) => { try { JSON.parse(m[1]); return true; } catch { return false; } });
   check(`${p} JSON-LD parses`, ld.every(Boolean), ld.join(","));
   if (p === "/") check("/ description mentions scheduling", /schedul/i.test(meta("description")), meta("description"));
-  if (p === "/pricing") check("/pricing description has PCC + Enterprise", /Project Command Center/.test(meta("description")) && /Enterprise: \$49\.99/.test(meta("description")), meta("description"));
+  if (p === "/pricing") check("/pricing description has PCC + Enterprise", /Project Command Center/.test(meta("description")) && /Team: \$49\.99/.test(meta("description")), meta("description"));
 }
 
 await browser.close();

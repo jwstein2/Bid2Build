@@ -80,8 +80,8 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
       {!stripeReady && <Notice tone="warn" title="Billing not configured">Stripe keys are not set on this server. See docs/SETUP.md.</Notice>}
       {current?.status === "past_due" && <Notice tone="danger" title="Payment failed">Your last payment didn&apos;t go through. Stripe will retry automatically; update your payment method to keep Unlimited.</Notice>}
 
-      {compEnded && <Notice tone="neutral" title="Your complimentary access has ended">Complimentary {comp!.plan === "enterprise" ? "Enterprise" : "Unlimited"} access ended on {longDate(compEnded)}. All your bids and customers are still here, and your free credits apply again. Nothing was charged. Subscribe below to keep unlimited bidding.</Notice>}
-      {compActive && paidActive && <Notice tone="neutral" title="Complimentary access">You also have complimentary {comp!.plan === "enterprise" ? "Enterprise" : "Unlimited"} access until {longDate(comp!.expires_at)}. Your paid plan below continues exactly as before.</Notice>}
+      {compEnded && <Notice tone="neutral" title="Your complimentary access has ended">Complimentary {comp!.plan === "enterprise" ? "Team" : "Unlimited"} access ended on {longDate(compEnded)}. All your bids and customers are still here, and your free credits apply again. Nothing was charged. Subscribe below to keep unlimited bidding.</Notice>}
+      {compActive && paidActive && <Notice tone="neutral" title="Complimentary access">You also have complimentary {comp!.plan === "enterprise" ? "Team" : "Unlimited"} access until {longDate(comp!.expires_at)}. Your paid plan below continues exactly as before.</Notice>}
 
       {ended && <Notice tone="neutral" title="Your Unlimited plan has ended">Unlimited ended on {new Date(ended).toLocaleDateString(undefined, { dateStyle: "long" })}. All your bids are still here, and your free credits apply again. Resubscribe any time below.</Notice>}
 
@@ -91,9 +91,9 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-sm text-muted">Current plan</p>
-            <p className="text-2xl font-extrabold">{seatOnly ? "Enterprise" : compOnly ? `Complimentary ${comp!.plan === "enterprise" ? "Enterprise" : "Unlimited"}` : q?.unlimited ? (current?.plan === "annual" ? ANNUAL.name : MONTHLY.name) : "Free"}</p>
+            <p className="text-2xl font-extrabold">{seatOnly ? "Team" : compOnly ? `Complimentary ${comp!.plan === "enterprise" ? "Team" : "Unlimited"}` : q?.unlimited ? (current?.plan === "annual" ? ANNUAL.name : MONTHLY.name) : "Free"}</p>
             {compOnly && <p className="text-sm text-ink-soft">Free until {longDate(comp!.expires_at)}. No payment details are on file and nothing is charged when it ends; you&apos;ll simply return to the Free plan unless you subscribe.</p>}
-            {seatOnly && <p className="text-sm text-ink-soft" data-testid="seat-plan">Your licensed seat is part of {company!.name}&apos;s Enterprise plan. You aren&apos;t billed personally.</p>}
+            {seatOnly && <p className="text-sm text-ink-soft" data-testid="seat-plan">Your licensed seat is part of {company!.name}&apos;s Team plan. You aren&apos;t billed personally.</p>}
             {q?.unlimited && !compOnly && !seatOnly && <p className="text-sm text-ink-soft">{current?.plan === "annual" ? `${ANNUAL.price}/year, billed annually` : `${MONTHLY.price}/month, billed monthly`}</p>}
             {q?.unlimited && !compOnly && !seatOnly && end && <p className="text-sm text-ink-soft">{current?.cancel_at_period_end ? `Cancels on ${end}. You keep Unlimited until then.` : `Renews on ${end}.`}</p>}
             {!q?.unlimited && <p className="text-sm text-ink-soft">{plans.starterCredits} starter credits to begin, then {plans.monthlyCredits} free bid every month.</p>}
@@ -107,7 +107,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
       {company && (
         <Card className="p-5" data-testid="company-billing-pointer">
           <p className="text-sm text-muted">Company plan</p>
-          <p className="font-bold">{company.name} · Enterprise{company.entitlement.active ? "" : " (paused)"}</p>
+          <p className="font-bold">{company.name} · Team{company.entitlement.active ? "" : " (paused)"}</p>
           <p className="mt-1 text-sm text-ink-soft">{companyBilling
             ? "Your company plan, licensed users, schedule editors, invoices and payment method are all on Billing & Licenses."
             : `Licensed users, schedule editors and company invoices are managed by ${company.name}'s owner.`}</p>

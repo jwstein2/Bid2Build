@@ -47,7 +47,7 @@ const LICENSE_WHY: Record<License, string> = {
   pm: "Needs Project Command Center on your plan.",
   pm_editor: "Needs a scheduling editor seat. Assign one under Scheduling editor seats below; turning this on never buys one.",
   financials: "Needs the Financial Command Center and a financial seat for this person (Financials → Team).",
-  premium: "Needs Premium (included with Enterprise).",
+  premium: "Needs Premium (included with Team).",
 };
 
 /** The access this draft gives the employee (same resolver the app uses for the real person). */
