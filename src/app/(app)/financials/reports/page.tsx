@@ -18,6 +18,8 @@ import { MetricCard } from "@/components/ui/metric-card";
 import { Notice } from "@/components/ui/misc";
 import { FinStateNotice } from "@/components/financials/fin-state-notice";
 import { MoneyChart } from "@/components/financials/money-chart";
+import { DonutCard } from "@/components/financials/donut";
+import { costSlices, revenueSlices } from "@/lib/financials/donuts";
 
 export const metadata: Metadata = { title: "Reports · Profit & Loss", robots: { index: false } };
 
@@ -154,6 +156,20 @@ export default async function Reports({ searchParams }: { searchParams: Promise<
         <MetricCard size="sm" title="Projects with activity" value={String(new Set(rows.filter((r) => r.job).map((r) => r.job)).size)} sub={`${jobs.length} project${jobs.length === 1 ? "" : "s"} in Financials`} href={link({ view: "jobs" })} action="Profit by project" testId="pl-card-projects" />
         </div>
       </section>
+
+      {!noData && (() => {
+        const costs = costSlices(rows, (c) => records({ dir: "cost", cat: c }), records({ dir: "cost" }));
+        const rev = revenueSlices(t, { jobCosts: records({ dir: "cost", oh: "0" }), overhead: records({ dir: "cost", oh: "1" }), profit: link({ view: "jobs" }) });
+        return (
+          <section aria-label="Overview" className="grid gap-3 md:grid-cols-2" data-testid="pl-donuts">
+            <DonutCard testId="pl-donut-costs" title="Where the money goes" slices={costs.slices} total={costs.total} centerSub="total costs"
+              empty="No costs recorded in this period." footer="Job costs and overhead by type. Select a slice to see its records." />
+            <DonutCard testId="pl-donut-revenue" title="Where each revenue dollar went" slices={rev?.slices ?? []} total={rev?.total ?? "0"} center={t.netMarginPct ? `${t.netMarginPct}%` : undefined} centerSub="net margin"
+              empty="No revenue in this period yet."
+              footer={rev?.loss ? <span className="font-semibold text-danger">Costs were {$(rev.loss)} more than revenue: a net loss for this period.</span> : "Revenue split into job costs, overhead and the profit you kept."} />
+          </section>
+        );
+      })()}
 
       {noData ? (
         <Notice title="Nothing recorded in this period">
