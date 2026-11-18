@@ -364,7 +364,7 @@ await scenario("starter");
 await scenario("enterprise_owner");
 {
   const { ctx, page } = await open("desktop", "/company/users");
-  const t = await walk("enterprise-owner-users", page, { expectLabel: "Company · Users & Permissions" });
+  const t = await walk("enterprise-owner-users", page, { expectLabel: "Company · Team & Access" });
   check("enterprise owner: invite people is explained", t.includes("Invite people"), t.join(" | "));
   await ctx.close();
 }

@@ -3,8 +3,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { isFinancialsEnabled, isPmEnabled } from "@/lib/env";
 import { missingMigration } from "@/lib/operations/server";
 import { parseQuery, type ParsedQuery } from "./query";
-import { FIN_KINDS, GROUPS, PM_KINDS, SEARCH_KINDS, isSearchKind, toResult, type GroupId, type SearchKind, type SearchResult, type SearchRow } from "./kinds";
+import { GROUPS, SEARCH_KINDS, isSearchKind, toResult, type GroupId, type SearchKind, type SearchResult, type SearchRow } from "./kinds";
 import { scoredActions, toActionResult, type ActionResult, type SearchCaps } from "./actions";
+import { searchNews, type NewsHit } from "@/lib/news/search";
+import { accessFromRaw, loadWorkspaceRaw } from "@/lib/access/server";
+import { searchableKinds } from "./kind-access";
 
 export interface SearchParams {
   q: string;
@@ -37,6 +40,8 @@ export interface SearchResponse {
   actionsFirst: boolean;
   admin: { userId: string; email: string; company: string | null }[];
   workspace: "live" | "sandbox" | null;
+  /** V6.8: public industry articles, shown in their own group, never mixed with company records. */
+  news: NewsHit[];
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -46,30 +51,22 @@ export const dateOrNull = (v: unknown) => (typeof v === "string" && DATE.test(v)
 export const PAGE_SIZE = 25;
 const PER_TYPE_CAP = 300;
 
-/** What the caller may do, from the database (company permissions, Premium, Financials book, admin) + feature switches. */
+/**
+ * What the caller may do, from the database (company permissions, Premium, Financials book, admin, and the
+ * V6.7 workspace access profile) + feature switches. One read, shared with the layout (my_workspace_access).
+ */
 export async function loadCaps(db: SupabaseClient): Promise<SearchCaps | null> {
-  const { data, error } = await db.rpc("search_capabilities");
-  if (error) {
-    if (missingMigration(error)) return null;
-    throw error;
-  }
-  const d = (data ?? {}) as { premium?: boolean; admin?: boolean; company?: SearchCaps["company"]; fin?: SearchCaps["fin"] };
-  return {
-    premium: Boolean(d.premium), admin: Boolean(d.admin),
-    company: d.company ? { id: d.company.id, role: d.company.role, perms: d.company.perms ?? [] } : null,
-    fin: d.fin ? { book: d.fin.book, sandbox: Boolean(d.fin.sandbox), perms: d.fin.perms ?? [] } : null,
-    flags: { pm: isPmEnabled(), financials: isFinancialsEnabled() },
-  };
+  const raw = await loadWorkspaceRaw(db);
+  if (!raw) return null;
+  const flags = { pm: isPmEnabled(), financials: isFinancialsEnabled() };
+  return { premium: raw.premium, admin: raw.admin, company: raw.company, fin: raw.fin, flags, access: accessFromRaw(raw, flags) };
 }
 
-/** Kinds this account can search at all (feature switches). Row-level permissions are enforced by the database. */
-export function searchableKinds(caps: SearchCaps): SearchKind[] {
-  return SEARCH_KINDS.filter((k) => (caps.flags.financials || !FIN_KINDS.includes(k)) && (caps.flags.pm || !PM_KINDS.includes(k)));
-}
+export { KIND_FEATURE, searchableKinds } from "./kind-access";
 
 export async function runSearch(db: SupabaseClient, p: SearchParams): Promise<SearchResponse> {
   const parsed = parseQuery(p.q);
-  const empty: SearchResponse = { available: true, query: { text: parsed.text, understood: parsed.understood, status: parsed.status, types: parsed.types }, groups: [], results: [], total: 0, page: 1, pageSize: PAGE_SIZE, actions: [], actionsFirst: false, admin: [], workspace: null };
+  const empty: SearchResponse = { available: true, query: { text: parsed.text, understood: parsed.understood, status: parsed.status, types: parsed.types }, groups: [], results: [], total: 0, page: 1, pageSize: PAGE_SIZE, actions: [], actionsFirst: false, admin: [], workspace: null, news: [] };
   const caps = await loadCaps(db);
   if (!caps) return { ...empty, available: false };
   const allowed = searchableKinds(caps);
@@ -82,12 +79,14 @@ export async function runSearch(db: SupabaseClient, p: SearchParams): Promise<Se
   const actionsFirst = (scored[0]?.s ?? 0) >= 80;
   const workspace = caps.fin ? (caps.fin.sandbox ? "sandbox" : "live") : null;
   const hasFilters = Boolean(status || p.trade || p.customer || p.project || p.person || p.from || p.to || p.scope === "project");
-  if ((!parsed.text && !wanted && !hasFilters) || !types.length) return { ...empty, actions, actionsFirst, workspace };
+  const newsP = p.mode === "quick" && !wanted && !hasFilters ? searchNews(db, parsed.raw) : Promise.resolve([] as NewsHit[]);
+  if ((!parsed.text && !wanted && !hasFilters) || !types.length) return { ...empty, actions, actionsFirst, workspace, news: await newsP };
 
   const page = Math.max(1, Math.min(200, p.page ?? 1));
   const { data, error } = await db.rpc("search_universal", {
     p_q: parsed.text,
-    p_types: parsed.text && types.length === allowed.length && !wanted ? null : types,
+    // null = "every kind" in the database: only when nothing is filtered out for this person.
+    p_types: parsed.text && types.length === SEARCH_KINDS.length && !wanted ? null : types,
     p_boost: parsed.boost.filter((k) => types.includes(k)),
     p_filters: { status, trade: p.trade ?? null, customer: p.customer ?? null, project: p.project ?? null, person: p.person ?? null, from: p.from ?? null, to: p.to ?? null, scope: p.scope === "project" ? "project" : null },
     p_context: { estimate_id: p.context?.estimateId ?? null, schedule_id: p.context?.scheduleId ?? null },
@@ -119,7 +118,7 @@ export async function runSearch(db: SupabaseClient, p: SearchParams): Promise<Se
     admin = ((acc ?? []) as { user_id: string; email: string; company_name: string | null }[]).map((a) => ({ userId: a.user_id, email: a.email, company: a.company_name }));
   }
   return {
-    ...empty, groups, results: p.mode === "page" ? results : [], total: rows[0]?.total_all ?? 0, page, actions, actionsFirst, admin, workspace,
+    ...empty, groups, results: p.mode === "page" ? results : [], total: rows[0]?.total_all ?? 0, page, actions, actionsFirst, admin, workspace, news: await newsP,
   };
 }
 

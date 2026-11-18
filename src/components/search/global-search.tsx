@@ -1,6 +1,6 @@
 "use client";
 import * as Dialog from "@radix-ui/react-dialog";
-import { ArrowRight, Clock, CornerDownLeft, FlaskConical, History, LoaderCircle, Search, Shield, X, Zap } from "lucide-react";
+import { ArrowRight, Clock, CornerDownLeft, FlaskConical, History, LoaderCircle, Newspaper, Search, Shield, X, Zap } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
@@ -17,7 +17,7 @@ export const openSearch = (q?: string) => window.dispatchEvent(new CustomEvent(O
 
 type Group = { id: GroupId; label: string; total: number; capped: boolean; results: SearchResult[] };
 type Response = { available: boolean; groups: Group[]; actions: ActionResult[]; actionsFirst: boolean; admin: { userId: string; email: string; company: string | null }[];
-  workspace: "live" | "sandbox" | null; query: { text: string; understood: string[] } };
+  workspace: "live" | "sandbox" | null; query: { text: string; understood: string[] }; news?: { id: string; title: string; subtitle: string; href: string }[] };
 type Recent = { available: boolean; historyEnabled: boolean; queries: string[]; records: { kind: SearchKind; id: string; title: string; subtitle: string | null; kindLabel: string; href: string }[]; actions: ActionResult[] };
 
 /** The project the user is looking at (results from it rank first and are labelled "This project"). */
@@ -58,7 +58,7 @@ export function SearchIconButton({ tone = "light", className }: { tone?: "light"
   );
 }
 
-type Option = { key: string; href: string; kind: "record" | "action" | "query" | "recent" | "all" | "admin"; record?: SearchResult; action?: ActionResult; query?: string };
+type Option = { key: string; href: string; kind: "record" | "action" | "query" | "recent" | "all" | "admin" | "news"; record?: SearchResult; action?: ActionResult; query?: string; newsSubtitle?: string };
 
 /** The search dialog + Ctrl/Cmd+K. Mount once per layout. */
 export function GlobalSearchHost() {
@@ -165,6 +165,8 @@ export function GlobalSearchHost() {
         options: rest.map((r) => ({ key: `r:${r.kind}:${r.id}`, href: r.href, kind: "record", record: r })) });
     }
     if (data.admin.length) out.push({ id: "admin", label: "Owner admin · Accounts", icon: Shield, options: data.admin.map((a) => ({ key: `ad:${a.userId}`, href: `/admin/customers/${a.userId}`, kind: "admin", query: `${a.email}${a.company ? ` · ${a.company}` : ""}` })) });
+    // Public industry articles: their own group, labelled so they can't be mistaken for company records.
+    if (data.news?.length) out.push({ id: "news", label: "Industry News · public articles", icon: Newspaper, options: data.news.map((n) => ({ key: `n:${n.id}`, href: n.href, kind: "news", query: n.title, newsSubtitle: n.subtitle })) });
     if (actions && !data.actionsFirst) out.push(actions);
     out.push({ id: "all", label: "", options: [{ key: "all", href: allHref, kind: "all" }] });
     return out;
@@ -204,7 +206,7 @@ export function GlobalSearchHost() {
   };
 
   const total = data?.groups.reduce((n, g) => n + g.total, 0) ?? 0;
-  const empty = hasQuery && data && !loading && !data.groups.length && !data.actions.length && !data.admin.length;
+  const empty = hasQuery && data && !loading && !data.groups.length && !data.actions.length && !data.admin.length && !data.news?.length;
   let n = -1;
 
   return (
@@ -299,6 +301,12 @@ export function GlobalSearchHost() {
                       </div>
                     );
                   }
+                  if (o.kind === "news") return (
+                    <div key={o.key} id={optId(i)} role="option" aria-selected={on} onMouseEnter={() => setActive(i)} onClick={() => choose(o)} data-testid="search-result-news" data-href={o.href} className={cn(base, "items-center")}>
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-black/5 text-ink-soft" aria-hidden><Newspaper className="h-4 w-4" /></span>
+                      <span className="min-w-0 flex-1"><span className="block font-semibold">{o.query}</span><span className="block text-xs text-ink-soft">Industry news · public article · {o.newsSubtitle}</span></span>
+                    </div>
+                  );
                   if (o.kind === "admin") return (
                     <div key={o.key} id={optId(i)} role="option" aria-selected={on} onMouseEnter={() => setActive(i)} onClick={() => choose(o)} className={cn(base, "items-center")}>
                       <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-hold-tint text-hold-ink" aria-hidden><Shield className="h-4 w-4" /></span>

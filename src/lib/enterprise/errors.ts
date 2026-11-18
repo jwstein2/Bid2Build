@@ -24,11 +24,17 @@ const MESSAGES: Record<string, [number, string]> = {
   not_won: [409, "Mark the bid Approved / Won before scheduling the job."],
   invalid_date: [400, "Choose a date that isn't in the future."],
   no_verified_email: [409, "This person has no verified email address on their account."],
+  // V6.7 workspace access
+  locked_by_owner: [403, "The primary account holder locked part of this access. Only they can change it."],
+  owner_only: [403, "Only the primary account holder can change company-wide access policies."],
+  invalid_profile: [400, "That access setup isn't valid. Reload the page and try again."],
+  member_inactive: [409, "Reactivate this person before changing their access."],
 };
 
 export function companyRpcError(error: { message?: string; code?: string } | null): { status: number; code: string; message: string } {
   const msg = error?.message ?? "";
-  const key = Object.keys(MESSAGES).find((k) => msg === k || msg.includes(k));
+  // Exact name first ("forbidden_permission" must not read as "forbidden"), then the longest contained name.
+  const key = Object.keys(MESSAGES).find((k) => msg === k) ?? Object.keys(MESSAGES).filter((k) => msg.includes(k)).sort((a, b) => b.length - a.length)[0];
   if (key) return { status: MESSAGES[key][0], code: key, message: MESSAGES[key][1] };
   if (error?.code === "23505") return { status: 409, code: "duplicate", message: "That already exists." };
   return { status: 500, code: "company_error", message: "Something went wrong. Please try again." };

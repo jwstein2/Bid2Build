@@ -496,7 +496,7 @@ export const PAGE_GUIDES = {
   },
   "company.users": {
     route: "/company/users",
-    label: "Company · Users & Permissions",
+    label: "Company · Team & Access",
     requires: { company: true },
     steps: [
       { target: "company.members", title: "Your team", body: "Everyone in the company with their role. Roles and permission changes set what each person can see and do; they apply only when you save them." },
