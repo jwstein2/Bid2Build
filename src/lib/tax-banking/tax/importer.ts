@@ -82,7 +82,7 @@ export async function resolveFiles(src: SourceRow, f: Fetch, timeoutMs = 8000, o
       .sort((x, y) => Number(Boolean(y.text)) - Number(Boolean(x.text)))[0];
     url = statePage?.url ?? rbPage?.url ?? null;
   }
-  return { rateUrl: null, boundaryUrl: src.boundary_url, listing: notes.join(". ").slice(0, 420) };
+  return { rateUrl: null, boundaryUrl: src.boundary_url, listing: notes.slice().reverse().join(" || ").slice(0, 420) };
 }
 
 export async function importState(db: Db, src: SourceRow, deps: { fetchImpl?: Fetch; now?: Date; deadline?: number } = {}): Promise<StateImportResult> {
