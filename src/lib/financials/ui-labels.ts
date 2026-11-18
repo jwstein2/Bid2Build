@@ -26,12 +26,12 @@ export const QUICK_ACTION_TARGET: Partial<Record<QuickAction, string>> = {
 };
 
 export const REPORT_LABELS: Record<ReportKey, string> = {
-  ar_aging: "Receivables aging", job_profitability: "Job profitability", budget_vs_actual: "Budget vs actual", cost_by_code: "Cost by cost code",
+  profit_loss: "Profit & Loss", ar_aging: "Receivables aging", job_profitability: "Job profitability", budget_vs_actual: "Budget vs actual", cost_by_code: "Cost by cost code",
   commitments: "Commitments", payments_received: "Payments received", change_order_log: "Change order log", wip_placeholder: "Work in progress (coming later)",
   sales_tax_placeholder: "Sales tax (coming later)", vendor_spend: "Vendor spend", material_spend: "Material spend", tm_billing: "Time & materials billing",
 };
 export const REPORT_HREF: Partial<Record<ReportKey, string>> = {
-  ar_aging: "/financials/receivables", job_profitability: "/financials/records?view=jobs", budget_vs_actual: "/financials/records?view=jobs",
+  profit_loss: "/financials/reports", ar_aging: "/financials/receivables", job_profitability: "/financials/records?view=jobs", budget_vs_actual: "/financials/records?view=jobs",
   cost_by_code: "/financials/records?view=costs", commitments: "/financials/records?view=commitments", payments_received: "/financials/records?view=payments",
   vendor_spend: "/financials/records?view=costs", material_spend: "/financials/records?view=costs&filter=material",
 };
