@@ -28,5 +28,4 @@ export const TOOLS = [
   { href: "/admin/flags", label: "Feature flags" },
   { href: "/admin/logs", label: "Import & PDF errors" },
   { href: "/admin/audit", label: "Audit log" },
-  { href: "/settings/pricing", label: "Pricing integrations" },
 ];

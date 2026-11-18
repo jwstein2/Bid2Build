@@ -84,7 +84,7 @@ export const FEATURES = [
     options: [o("view", "View", ["view_internal_reports"]), o("download", "Download", ["download_internal_reports"]), o("send", "Send", ["send_internal_reports"])] },
   { id: "customers", section: "win", label: "Customers & leads", description: "Customer list, customer records and new leads.", routes: ["/dashboard/customers"], appGated: true,
     options: [o("use", "Use")], scopeNote: "They see the customers of the bids they can see." },
-  { id: "pricing_library", section: "win", label: "Saved items & pricing library", description: "Saved items, assemblies and supplier price imports.", routes: ["/dashboard/items", "/settings/pricing"], appGated: true, license: "premium",
+  { id: "pricing_library", section: "win", label: "Saved items & pricing library", description: "Saved items, assemblies and supplier price imports.", routes: ["/dashboard/items"], appGated: true, license: "premium",
     options: [o("use", "Use")] },
   { id: "company_pricing", requires: { feature: "pricing_library" }, section: "win", label: "Company pricing", description: "Edit the saved pricing everyone in the company uses.", noneLabel: "Use only",
     options: [o("manage", "Manage", ["manage_company_pricing"])] },
@@ -112,7 +112,7 @@ export const FEATURES = [
     options: [o("create", "Upload", ["upload_photos"])] },
   { id: "customer_updates", requires: { feature: "schedule" }, section: "run", label: "Customer progress updates", description: "Schedule updates and project update emails to customers.", license: "pm",
     options: [o("create", "Publish schedule updates", ["publish_customer_updates"]), o("edit", "Set update frequency", ["configure_project_updates"]), o("approve", "Approve & send emails", ["approve_customer_updates"])] },
-  { id: "team_directory", section: "run", label: "Team, subs & suppliers", description: "Staff, subcontractors, suppliers, time clock and sub records.", routes: ["/projects/team"], appGated: true, license: "pm",
+  { id: "team_directory", section: "run", label: "Team, subs & suppliers", description: "Staff, subcontractors, crews, suppliers, time clock and sub records.", routes: ["/projects/team", "/projects/workforce"], appGated: true, license: "pm",
     options: [o("use", "Use")] },
 
   // ---- Grow the Business ------------------------------------------------------------------------------------

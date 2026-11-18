@@ -34,6 +34,10 @@ const nextConfig: NextConfig = {
       },
     },
   },
+  // V7.3: the retired "Pricing data" page. Old bookmarks go to Saved Items & Pricing before anything renders.
+  async redirects() {
+    return [{ source: "/settings/pricing", destination: "/dashboard/items", permanent: true }];
+  },
   async headers() {
     // Signing links carry a secret token in the path: never send it as a referrer, never cache or index.
     const signingHeaders = [

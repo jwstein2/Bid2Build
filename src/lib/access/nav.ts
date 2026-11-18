@@ -21,6 +21,7 @@ export const NAV_FEATURES: { href: string; label: string; feature: FeatureId; ws
   { href: "/company/proposal-style", label: "Proposal & Bid Style", feature: "proposal_style", ws: "win" },
   { href: "/projects", label: "Projects", feature: "schedule", ws: "run" },
   { href: "/projects/team", label: "Team, subs & suppliers", feature: "team_directory", ws: "run" },
+  { href: "/projects/workforce", label: "Contractors & Workforce", feature: "team_directory", ws: "run" },
   { href: "/company", label: "Company overview", feature: "analytics", ws: "grow" },
   { href: "/dashboard/customers/communications", label: "Customer follow-ups", feature: "communications", ws: "grow" },
   { href: "/financials", label: "Financials", feature: "fin_visibility", ws: "financials" },

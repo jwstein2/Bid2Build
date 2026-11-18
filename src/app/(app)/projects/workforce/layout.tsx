@@ -1,8 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireCapability } from "@/lib/access/server";
 
-/** V6.7: direct-URL guard. A company member whose access settings turn this off is sent to /no-access (records untouched). */
+/** Same access as Team & Subcontractors (V6.7 "Team, subs & suppliers"). */
 export default async function Layout({ children }: { children: React.ReactNode }) {
-  await requireCapability(await createClient(), "pricing_library");
+  await requireCapability(await createClient(), "team_directory");
   return children;
 }

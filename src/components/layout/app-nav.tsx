@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { REVEAL_FEATURE_EVENT, START_TOUR_EVENT } from "@/lib/features/state";
-import { Sparkles, CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, Plug, LayoutTemplate, LogOut, X, UserCog, Receipt, Gauge, SquareKanban, CalendarRange, GraduationCap, Palette, Landmark, Shapes, Bot, House, Newspaper } from "lucide-react";
+import { Sparkles, CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, HardHat, LayoutTemplate, LogOut, X, UserCog, Receipt, Gauge, SquareKanban, CalendarRange, GraduationCap, Palette, Landmark, Shapes, Bot, House, Newspaper } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ButtonLink } from "@/components/ui/button";
 import { Logo } from "./logo";
@@ -25,7 +25,6 @@ const NAV: NavItem[] = [
 /** Personal account links, listed after the Company section. */
 const ACCOUNT_NAV: NavItem[] = [
   { href: "/settings/billing", label: "Subscription", icon: CreditCard },
-  { href: "/settings/pricing", label: "Pricing data", icon: Plug },
   { href: "/settings/account", label: "Account settings", icon: Settings },
 ];
 
@@ -59,6 +58,8 @@ const FIN_SETTINGS: NavItem[] = [
 
 /** Projects (schedules) sit right below Bids when project scheduling is switched on. */
 const PROJECTS: NavItem = { href: "/projects", label: "Projects", icon: CalendarRange };
+/** V7.3: Contractors & Workforce sits right under Projects (PM Hub). It replaced the retired "Pricing data" link. */
+const WORKFORCE: NavItem = { href: "/projects/workforce", label: "Contractors & Workforce", icon: HardHat };
 const HOME: NavItem = { href: "/home", label: "Home", icon: House, exact: true };
 /** V6.8 Industry Intelligence: free for every plan. */
 const INDUSTRY: NavItem = { href: "/industry", label: "Industry News", icon: Newspaper };
@@ -70,7 +71,7 @@ export function AppSidebar({ isAdmin, email, company, access = null, projects = 
   // In a company, say whose bids and whose subscription each link is ("Team bids" is in the Company section).
   const own = (n: NavItem): NavItem => (!company ? n : n.href === "/dashboard" ? { ...n, label: "My bids" } : n.href === "/settings/billing" ? { ...n, label: "My subscription" } : n);
   const shown = (href: string) => !access?.hidden.includes(href);
-  const work: NavItem[] = [...(home ? [HOME] : []), ...(projects ? [NAV[0], PROJECTS, ...NAV.slice(1)] : NAV)].map(own).filter((n) => shown(n.href));
+  const work: NavItem[] = [...(home ? [HOME] : []), ...(projects ? [NAV[0], PROJECTS, WORKFORCE, ...NAV.slice(1)] : NAV)].map(own).filter((n) => shown(n.href));
   const finLinks = financials && shown(FINANCIALS.href);
   const finSettings = financials ? FIN_SETTINGS.filter((n) => shown(n.href)) : [];
   const companyLinks = company?.links.filter((l) => shown(l.href)) ?? [];
