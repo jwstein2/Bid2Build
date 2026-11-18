@@ -301,7 +301,7 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
       {open?.kind === "expense" && <ExpenseDialog open onOpenChange={(o) => { if (!o) setOpen(null); }} jobId={jobId} codes={data.costCodes ?? []} vendors={data.vendors ?? []} onDone={done} />}
       {open?.kind === "bill" && <BillDialog open onOpenChange={(o) => { if (!o) setOpen(null); }} jobId={jobId} codes={data.costCodes ?? []} vendors={data.vendors ?? []} commitments={data.commitments ?? []} onDone={done} />}
       {open?.kind === "commitment" && <CommitmentDialog open onOpenChange={(o) => { if (!o) setOpen(null); }} jobId={jobId} codes={data.costCodes ?? []} vendors={data.vendors ?? []} quotes={data.quotes ?? []} onDone={done} />}
-      {open?.kind === "bill_payment" && <BillPaymentDialog open onOpenChange={(o) => { if (!o) setOpen(null); }} bill={open.bill} onDone={done} />}
+      {open?.kind === "bill_payment" && <BillPaymentDialog open onOpenChange={(o) => { if (!o) setOpen(null); }} bill={open.bill} vendors={data.vendors} onDone={done} />}
       {open?.kind === "email" && <EmailDraftDialog open onOpenChange={(o) => { if (!o) setOpen(null); }} invoiceId={open.invoiceId} paymentId={open.paymentId} />}
       <VoidDialog target={voiding} onOpenChange={(o) => { if (!o) setVoiding(null); }} onDone={done} />
       <InvoicePreviewDialog invoiceId={previewId} onOpenChange={(o) => { if (!o) setPreviewId(null); }} />

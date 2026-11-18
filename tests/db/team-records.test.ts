@@ -242,6 +242,7 @@ d("Team records: suppliers, time clock, subcontractor records (database)", () =>
   });
 
   it("rollback removes everything and leaves Team & Subcontractors intact", async () => {
+    await pool.query(readFileSync("docs/team-records/rollback_20270104001000.sql", "utf8"));
     await pool.query(readFileSync("docs/financials/rollback_20270103001000.sql", "utf8"));   // newest first: timesheet labor reads fin_books / pm_time_entries
     await pool.query(readFileSync("docs/supplier-pricing/rollback_20261211001000.sql", "utf8"));
     await pool.query(readFileSync("docs/team-records/rollback_20261210001000.sql", "utf8"));

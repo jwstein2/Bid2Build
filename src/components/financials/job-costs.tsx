@@ -214,12 +214,25 @@ export function BillDialog({ open, onOpenChange, jobId, codes, vendors, commitme
           <Field label="Due date" optional htmlFor="bl-due"><input id="bl-due" type="date" className="field" value={due} onChange={(e) => setDue(e.target.value)} /></Field>
         </div>
         <Field label="Description" optional htmlFor="bl-desc"><input id="bl-desc" className="field" value={desc} onChange={(e) => setDesc(e.target.value)} maxLength={500} /></Field>
+        <ComplianceNotice vendor={vendors.find((v) => s(v.id) === vendor)} />
         {!commitment && <Field label="Cost code" optional htmlFor="bl-code"><CostCodeSelect id="bl-code" codes={codes} value={code} onChange={setCode} /></Field>}
         <Field label="Bill file" optional htmlFor="bl-file"><input id="bl-file" type="file" accept="application/pdf,image/jpeg,image/png,image/webp" className="block w-full text-sm" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></Field>
         {err && <Notice tone="danger">{err}</Notice>}
         <Button type="submit" disabled={busy}>{busy ? "Saving…" : "Save bill"}</Button>
       </form>
     </FinDialog>
+  );
+}
+
+/** Missing paperwork for a subcontractor vendor (W-9 / current insurance). A warning only; payments are never blocked. */
+export function ComplianceNotice({ vendor }: { vendor: R | undefined }) {
+  const c = vendor?.compliance as R | null | undefined;
+  if (!c) return null;
+  const expired = Array.isArray(c.expired) ? (c.expired as R[]) : [];
+  const missing = [!c.w9OnFile && "no W-9", !c.insuranceOnFile && "no current insurance certificate", expired.length > 0 && `${expired.length} expired document${expired.length === 1 ? "" : "s"}`].filter(Boolean) as string[];
+  if (!missing.length) return null;
+  return (
+    <Notice tone="warn">{s(vendor?.name)} has {missing.join(", ")} on file. You can still save this.{c.resourceId ? <> <Link href={`/projects/team/subs/${s(c.resourceId)}`} className="font-semibold underline">Open their records</Link> to request documents.</> : null}</Notice>
   );
 }
 
@@ -286,7 +299,7 @@ export function CommitmentDialog({ open, onOpenChange, jobId, codes, vendors, qu
 }
 
 /** Record a payment made to a vendor/sub outside Built2Bid. Never more than the bill's open balance. */
-export function BillPaymentDialog({ open, onOpenChange, bill, onDone }: { open: boolean; onOpenChange: (o: boolean) => void; bill: R; onDone: () => void }) {
+export function BillPaymentDialog({ open, onOpenChange, bill, vendors = [], onDone }: { open: boolean; onOpenChange: (o: boolean) => void; bill: R; vendors?: R[]; onDone: () => void }) {
   const [amount, setAmount] = useState(s(bill.balance));
   const [date, setDate] = useState(today());
   const [method, setMethod] = useState("check");
@@ -317,6 +330,7 @@ export function BillPaymentDialog({ open, onOpenChange, bill, onDone }: { open: 
           </Field>
           <Field label="Check # or reference" optional htmlFor="bp-ref"><input id="bp-ref" className="field" value={ref} onChange={(e) => setRef(e.target.value)} maxLength={120} /></Field>
         </div>
+        <ComplianceNotice vendor={vendors.find((v) => v.id === bill.vendor_id)} />
         {err && <Notice tone="danger">{err}</Notice>}
         <Button type="submit" disabled={busy}>{busy ? "Saving…" : "Record payment"}</Button>
       </form>
