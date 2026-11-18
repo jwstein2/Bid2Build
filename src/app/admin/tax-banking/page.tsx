@@ -4,6 +4,8 @@ import { requireAdmin } from "@/lib/admin/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { bankProviderMode, taxProviderMode } from "@/lib/tax-banking/isolation";
 import { importStateNow, saveSourceLinks } from "./actions";
+import { PlaidCostPanel } from "@/components/admin/plaid-cost";
+import { loadPlaidUsage } from "@/lib/admin/plaid-cost-load";
 
 type Source = { state: string; kind: string; status: string; listing_url: string | null; rate_url: string | null; boundary_url: string | null; last_success_at: string | null;
   last_error: string | null; last_rate_file: string | null; rates_loaded: number; zips_loaded: number };
@@ -21,9 +23,10 @@ type Health = { tax: Record<string, unknown>; bank: { connectionsByStatus: Recor
 export default async function TaxBankingHealth() {
   await requireAdmin();
   const admin = createAdminClient();
-  const [{ data, error }, { data: srcData }] = await Promise.all([
+  const [{ data, error }, { data: srcData }, plaid] = await Promise.all([
     admin.rpc("admin_tax_banking_health"),
     admin.from("tax_rate_sources").select("state, kind, status, listing_url, rate_url, boundary_url, last_success_at, last_error, last_rate_file, rates_loaded, zips_loaded").order("state"),
+    loadPlaidUsage(),
   ]);
   const h = (data ?? null) as Health | null;
   const sources = (srcData ?? []) as Source[];
@@ -92,6 +95,7 @@ export default async function TaxBankingHealth() {
               {Object.entries(h.bank.connectionsByProvider).map(([k, v]) => <Fragment key={k}>{row(`Provider: ${k}`, v)}</Fragment>)}
             </dl>
           </Panel>
+          <PlaidCostPanel u={plaid} />
         </div>
       )}
     </div>
