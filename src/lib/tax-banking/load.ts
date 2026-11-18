@@ -6,7 +6,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { isMissing } from "@/lib/financials/loaders";
 import { can } from "./capabilities";
-import { buildForecast, customerLateness, type ForecastAccount, type ForecastInput, type PlannedEvent } from "./forecast";
+import { buildForecast, customerLateness, statementBalance, type ForecastAccount, type ForecastInput, type PlannedEvent, type RecordedOutflow } from "./forecast";
 import { bankProviderMode, taxProviderMode } from "./isolation";
 
 type Db = SupabaseClient;
@@ -70,6 +70,39 @@ export async function loadBanks(db: Db, bookId: string) {
   return { installed: true as const, connections, accounts };
 }
 
+/** Starting balances from imported bank statements (see statementBalance), per account. */
+async function statementBalances(db: Db, bookId: string, accountIds: string[]) {
+  const out = new Map<string, { amount: string; asOf: string }>();
+  if (!accountIds.length) return out;
+  const [accts, imps, lines] = await Promise.all([
+    db.from("fin_bank_accounts").select("id, opening_balance, opening_date").eq("book_id", bookId).in("id", accountIds),
+    db.from("fin_bank_imports").select("account_id, statement_end, ending_balance").eq("book_id", bookId).in("account_id", accountIds).limit(2000),
+    db.from("fin_bank_transactions").select("account_id, posted_on, amount").eq("book_id", bookId).in("account_id", accountIds).limit(50000),
+  ]);
+  if (accts.error || imps.error || lines.error) return out;
+  for (const a of (accts.data ?? []) as Row[]) {
+    const id = String(a.id);
+    const b = statementBalance({ opening_balance: a.opening_balance as string, opening_date: d10(a.opening_date) },
+      ((imps.data ?? []) as Row[]).filter((i) => i.account_id === id).map((i) => ({ statement_end: d10(i.statement_end), ending_balance: (i.ending_balance as string | null) ?? null })),
+      ((lines.data ?? []) as Row[]).filter((l) => l.account_id === id).map((l) => ({ posted_on: d10(l.posted_on)!, amount: l.amount as string })));
+    if (b) out.set(id, b);
+  }
+  return out;
+}
+
+/** Non-check bill payments and expenses from the last 60 days (checks are handled as outstanding checks). */
+async function recordedOutflows(db: Db, bookId: string): Promise<RecordedOutflow[]> {
+  const since = new Date(Date.now() - 60 * 864e5).toISOString().slice(0, 10);
+  const [pays, exps] = await Promise.all([
+    db.from("fin_bill_payments").select("id, amount, paid_on, reference, method").eq("book_id", bookId).eq("status", "active").gte("paid_on", since).limit(2000),
+    db.from("fin_expenses").select("id, number, amount, spent_on, payee, method").eq("book_id", bookId).in("status", ["pending", "approved"]).gte("spent_on", since).limit(2000),
+  ]);
+  return [
+    ...((pays.data ?? []) as Row[]).filter((p) => p.method !== "check").map((p): RecordedOutflow => ({ id: String(p.id), kind: "bill_payment", label: `Bill payment${p.reference ? ` #${p.reference}` : ""}`, amount: String(p.amount), date: d10(p.paid_on)! })),
+    ...((exps.data ?? []) as Row[]).filter((x) => x.method !== "check").map((x): RecordedOutflow => ({ id: String(x.id), kind: "expense", label: `Expense ${x.number ?? ""}${x.payee ? ` · ${x.payee}` : ""}`, amount: String(x.amount), date: d10(x.spent_on)! })),
+  ];
+}
+
 export interface CashQuery { horizon: number; end?: string; accounts?: string[] }
 
 export async function loadForecast(db: Db, bookId: string, perms: readonly string[], q: CashQuery, today = new Date().toISOString().slice(0, 10)) {
@@ -101,10 +134,19 @@ export async function loadForecast(db: Db, bookId: string, perms: readonly strin
   const lateness = customerLateness(((paidInv.data ?? []) as Row[]).map((r) => ({ customerId: s(r.customer_id), dueDate: d10(r.due_date), paidOn: lastPaid.get(String(r.invoice_id)) ?? null })));
 
   const active = banks.accounts.filter((a) => a.status !== "archived" && a.status !== "disconnected" && (a.source === "provider_feed" ? a.connectionId : true));
-  const feedAccounts = active.filter((a) => a.source === "provider_feed");
+  // Imported statements (CSV/OFX) give a starting balance too, so the forecast works before any bank is connected.
+  const stmt = withBank ? await statementBalances(db, bookId, active.map((a) => a.id)) : new Map<string, { amount: string; asOf: string }>();
   const chosen = q.accounts?.length ? new Set(q.accounts) : null;
-  const accounts: ForecastAccount[] = feedAccounts.map((a) => ({ id: a.id, name: `${a.name}${a.last4 ? ` ••${a.last4}` : ""}`, current: a.current, available: a.available, asOf: a.asOf, status: a.status,
-    included: chosen ? chosen.has(a.id) : a.kind !== "credit_card" }));
+  const accounts: ForecastAccount[] = active.flatMap((a): ForecastAccount[] => {
+    const st = stmt.get(a.id);
+    const live = a.source === "provider_feed" && (a.current !== null || a.available !== null) ? a : null;
+    // Prefer the connected balance unless an imported statement is newer.
+    const useStatement = st && (!live || !live.asOf || live.asOf.slice(0, 10) < st.asOf);
+    if (!live && !st && a.source !== "provider_feed") return [];
+    const base = { id: a.id, name: `${a.name}${a.last4 ? ` ••${a.last4}` : ""}`, status: useStatement ? "active" : a.status, included: chosen ? chosen.has(a.id) : a.kind !== "credit_card" };
+    return [useStatement ? { ...base, current: st!.amount, available: null, asOf: st!.asOf, basis: "statement" } : { ...base, current: a.current, available: a.available, asOf: a.asOf, basis: "connected" }];
+  });
+  const outs = withBank && accounts.some((a) => a.basis === "statement") ? await recordedOutflows(db, bookId) : [];
   const input: ForecastInput = {
     today, horizonDays: q.horizon, endDate: q.end, accounts, includeBankBalance: withBank,
     invoices: ((inv.data ?? []) as Row[]).map((r) => ({ id: String(r.invoice_id), number: String(r.number ?? "Draft"), balance: String(r.balance), dueDate: d10(r.due_date), customerId: s(r.customer_id), customerName: r.customer_id ? cust.get(String(r.customer_id)) ?? null : null, jobId: s(r.job_id) })),
@@ -115,7 +157,8 @@ export async function loadForecast(db: Db, bookId: string, perms: readonly strin
       ...((checkPays.data ?? []) as Row[]).filter((p) => !matched.has(`bill_payment:${p.id}`)).map((p) => ({ id: String(p.id), label: `Bill payment${p.reference ? ` #${p.reference}` : ""}`, amount: String(p.amount), date: d10(p.paid_on)!, kind: "bill_payment" as const })),
       ...((checkExps.data ?? []) as Row[]).filter((x) => !matched.has(`expense:${x.id}`)).map((x) => ({ id: String(x.id), label: `Expense ${x.number} · ${x.payee ?? ""}`, amount: String(x.amount), date: d10(x.spent_on)!, kind: "expense" as const })),
     ],
-    depositsInTransit: withBank && feedAccounts.length ? ((payments.data ?? []) as Row[]).filter((p) => !matched.has(`payment:${p.id}`)).map((p) => ({ id: String(p.id), label: `${p.number}${p.customer_id ? ` · ${cust.get(String(p.customer_id)) ?? ""}` : ""}`, amount: String(p.amount), receivedOn: d10(p.received_on)! })) : [],
+    recordedOutflows: outs.filter((o) => !matched.has(`${o.kind}:${o.id}`)),
+    depositsInTransit: withBank && accounts.length ? ((payments.data ?? []) as Row[]).filter((p) => !matched.has(`payment:${p.id}`)).map((p) => ({ id: String(p.id), label: `${p.number}${p.customer_id ? ` · ${cust.get(String(p.customer_id)) ?? ""}` : ""}`, amount: String(p.amount), receivedOn: d10(p.received_on)! })) : [],
     planned: ((planned.data ?? []) as Row[]).map((p) => ({ id: String(p.id), kind: String(p.kind), label: String(p.label), amount: String(p.amount), direction: p.direction as "in" | "out", expectedOn: d10(p.expected_on)!,
       recurrence: p.recurrence as PlannedEvent["recurrence"], recurUntil: d10(p.recur_until), certainty: p.certainty as "scheduled" | "expected", accountId: s(p.account_id), toAccountId: s(p.to_account_id), invoiceId: s(p.invoice_id), settlement: s(p.settlement) })),
     customerLateness: lateness,

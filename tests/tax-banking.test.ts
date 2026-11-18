@@ -14,7 +14,7 @@ import { detectChanges, upcomingCheckDates } from "@/lib/tax-banking/tax/sync";
 import type { TaxRequest } from "@/lib/tax-banking/tax/types";
 import { mockBankProvider, plaidProvider, resolveBankProvider } from "@/lib/tax-banking/bank/providers";
 import { openToken, sealToken, MOCK_TOKEN_KEY } from "@/lib/tax-banking/bank/token-crypto";
-import { buildForecast, customerLateness, detectTransfers, type ForecastInput } from "@/lib/tax-banking/forecast";
+import { buildForecast, customerLateness, detectTransfers, statementBalance, type ForecastInput } from "@/lib/tax-banking/forecast";
 
 beforeAll(() => assertTestIsolation());   // scenario 40: fail closed if real credentials are present
 
@@ -358,6 +358,45 @@ describe("cash-flow forecast", () => {
     const f = buildForecast({ ...base, milestones: [{ id: "m", label: "Framing", amount: "8000.00", expectedOn: "2026-12-05" }] });
     expect(f.end.scheduled).toBe("42500.00");
     expect(f.end.expected).toBe("50500.00");
+  });
+});
+
+describe("cash-flow forecast from imported statements", () => {
+  const base: ForecastInput = {
+    today: "2026-11-18", horizonDays: 30, includeBankBalance: true,
+    accounts: [{ id: "chk", name: "Checking", current: "10000.00", available: null, asOf: "2026-10-31", status: "active", included: true, basis: "statement" }],
+    invoices: [], milestones: [], bills: [], checks: [], depositsInTransit: [], planned: [],
+  };
+  it("statement balance: newest ending balance, else opening + lines", () => {
+    expect(statementBalance({ opening_balance: "100", opening_date: "2026-01-01" }, [{ statement_end: "2026-09-30", ending_balance: "500" }, { statement_end: "2026-10-31", ending_balance: "750.5" }], [{ posted_on: "2026-10-15", amount: "1" }]))
+      .toEqual({ amount: "750.50", asOf: "2026-10-31" });
+    // CSV without balances: opening + every line, as of the newest line.
+    expect(statementBalance({ opening_balance: "100", opening_date: "2026-01-01" }, [{ statement_end: "2026-10-31", ending_balance: null }], [{ posted_on: "2026-10-02", amount: "250" }, { posted_on: "2026-10-20", amount: "-75.25" }]))
+      .toEqual({ amount: "274.75", asOf: "2026-10-20" });
+    // A newer line than the statement's end means the statement balance is out of date.
+    expect(statementBalance({ opening_balance: "0", opening_date: "2026-01-01" }, [{ statement_end: "2026-10-31", ending_balance: "900" }], [{ posted_on: "2026-11-05", amount: "50" }])?.asOf).toBe("2026-11-05");
+    expect(statementBalance({ opening_balance: "0", opening_date: "2026-01-01" }, [], [])).toBeNull();
+  });
+  it("starts from the statement, isn't 'stale' like a feed, and subtracts payments recorded after the statement", () => {
+    const f = buildForecast({ ...base, recordedOutflows: [
+      { id: "a", kind: "bill_payment", label: "Bill payment #1", amount: "1200.00", date: "2026-11-05" },
+      { id: "b", kind: "expense", label: "Expense E-1", amount: "300.00", date: "2026-10-20" },   // already on the statement
+    ] });
+    expect(f).toMatchObject({ opening: "10000.00", basis: "statement", stale: false, statementOld: false, startsFromBank: true });
+    expect(f.events.map((e) => e.key)).toEqual(["out:bill_payment:a"]);
+    expect(f.end.scheduled).toBe("8800.00");
+  });
+  it("flags a statement older than 35 days", () => {
+    const f = buildForecast({ ...base, accounts: [{ ...base.accounts[0], asOf: "2026-09-30" }] });
+    expect(f.statementOld).toBe(true);
+  });
+  it("mixed connected + statement accounts", () => {
+    const f = buildForecast({ ...base, accounts: [...base.accounts, { id: "sav", name: "Savings", current: "500.00", available: "500.00", asOf: new Date().toISOString(), status: "active", included: true, basis: "connected" }] });
+    expect(f).toMatchObject({ opening: "10500.00", basis: "mixed" });
+  });
+  it("feed accounts ignore recorded outflows (the bank already has them)", () => {
+    const f = buildForecast({ ...base, accounts: [{ ...base.accounts[0], basis: "connected", asOf: new Date().toISOString() }], recordedOutflows: [{ id: "a", kind: "expense", label: "x", amount: "5", date: "2026-11-17" }] });
+    expect(f.events).toHaveLength(0);
   });
 });
 

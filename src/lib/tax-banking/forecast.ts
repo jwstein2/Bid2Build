@@ -17,7 +17,13 @@ import { dec, money2 } from "./num";
 export type Certainty = "confirmed" | "scheduled" | "expected";
 export type FlowCategory = "customer_payment" | "deposit" | "milestone" | "payroll" | "supplier" | "subcontractor" | "recurring" | "check" | "transfer" | "other";
 
-export interface ForecastAccount { id: string; name: string; current: string | null; available: string | null; asOf: string | null; status: string; included: boolean }
+export interface ForecastAccount {
+  id: string; name: string; current: string | null; available: string | null; asOf: string | null; status: string; included: boolean;
+  /** Where the starting balance came from: a connected bank (default) or an imported bank statement. */
+  basis?: "connected" | "statement";
+}
+/** Money recorded as paid out (bill payments, expenses) that may not be on the latest imported statement yet. */
+export interface RecordedOutflow { id: string; label: string; amount: string; date: string; kind: "bill_payment" | "expense"; accountId?: string | null }
 export interface OpenInvoice { id: string; number: string; balance: string; dueDate: string | null; customerId: string | null; customerName?: string | null; jobId?: string | null }
 export interface UpcomingMilestone { id: string; label: string; amount: string; expectedOn: string | null; jobId?: string | null }
 export interface OpenBill { id: string; label: string; balance: string; dueDate: string | null; vendorKind?: "subcontractor" | "supplier" | "other" }
@@ -39,6 +45,8 @@ export interface ForecastInput {
   bills: OpenBill[];
   checks: PendingCheck[];
   depositsInTransit: DepositInTransit[];
+  /** Used only for statement-based balances: unmatched payments out dated after the statement. */
+  recordedOutflows?: RecordedOutflow[];
   planned: PlannedEvent[];
   /** Average days customers pay after the due date, from their payment history. */
   customerLateness?: Record<string, number>;
@@ -54,7 +62,11 @@ export interface Forecast {
   openingAsOf: string | null;
   openingAvailable: string | null;
   startsFromBank: boolean;
+  /** "statement" when every included balance comes from an imported statement, "mixed" when some do. */
+  basis: "connected" | "statement" | "mixed" | null;
   stale: boolean;
+  /** An imported statement balance is more than STATEMENT_STALE_DAYS old. */
+  statementOld: boolean;
   missingBalances: string[];
   events: CashEvent[];             // expected-view dates (each event lists its own certainty)
   scheduledEvents: CashEvent[];    // scheduled-view dates
@@ -62,6 +74,25 @@ export interface Forecast {
   totals: { scheduledIn: string; scheduledOut: string; expectedIn: string; expectedOut: string };
   end: { confirmed: string; scheduled: string; expected: string };
   lowPoint: { date: string; value: string; view: "scheduled" | "expected" } | null;
+}
+
+/** Days after which an imported statement balance is flagged as old (import a newer one). */
+export const STATEMENT_STALE_DAYS = 35;
+
+/**
+ * Balance from imported statements for one account: the newest statement's ending balance when it gave one
+ * and covers the newest imported line; otherwise the account's opening balance plus every imported line.
+ */
+export function statementBalance(
+  account: { opening_balance: string | number | null; opening_date: string | null },
+  imports: { statement_end: string | null; ending_balance: string | number | null }[],
+  lines: { posted_on: string; amount: string | number }[],
+): { amount: string; asOf: string } | null {
+  const lastLine = lines.reduce<string | null>((m, l) => (!m || l.posted_on > m ? l.posted_on : m), null);
+  const st = imports.filter((i) => i.ending_balance !== null && i.ending_balance !== undefined && i.statement_end).sort((a, b) => String(b.statement_end).localeCompare(String(a.statement_end)))[0];
+  if (st && (!lastLine || String(st.statement_end) >= lastLine)) return { amount: money2(dec(st.ending_balance)), asOf: String(st.statement_end).slice(0, 10) };
+  if (!lastLine) return null;
+  return { amount: money2(lines.reduce((s, l) => s.plus(dec(l.amount)), dec(account.opening_balance ?? 0))), asOf: lastLine };
 }
 
 const addDays = (d: string, n: number) => new Date(new Date(`${d}T12:00:00Z`).getTime() + n * 864e5).toISOString().slice(0, 10);
@@ -96,7 +127,10 @@ export function buildForecast(input: ForecastInput): Forecast {
   const staleMs = (input.staleHours ?? 36) * 3600_000;
   const asOfs = included.map((a) => a.asOf).filter((x): x is string => Boolean(x)).sort();
   const openingAsOf = asOfs[0] ?? null;
-  const stale = included.some((a) => a.status !== "active") || (openingAsOf !== null && Date.now() - new Date(openingAsOf).getTime() > staleMs);
+  const connected = included.filter((a) => a.basis !== "statement"), fromStatement = included.filter((a) => a.basis === "statement");
+  const nowMs = new Date(`${today}T12:00:00Z`).getTime();
+  const stale = connected.some((a) => a.status !== "active" || (a.asOf !== null && Date.now() - new Date(a.asOf).getTime() > staleMs));
+  const statementOld = fromStatement.some((a) => a.asOf !== null && nowMs - new Date(`${a.asOf.slice(0, 10)}T12:00:00Z`).getTime() > STATEMENT_STALE_DAYS * 864e5);
   const startsFromBank = input.includeBankBalance && included.length > 0 && missing.length < included.length;
   const opening = startsFromBank ? money2(included.reduce((s, a) => s.plus(dec(a.current ?? a.available)), dec(0))) : null;
   const openingAvailable = startsFromBank && included.every((a) => a.available !== null) ? money2(included.reduce((s, a) => s.plus(dec(a.available)), dec(0))) : null;
@@ -132,6 +166,14 @@ export function buildForecast(input: ForecastInput): Forecast {
     if (d.receivedOn <= balanceDay && startsFromBank) continue;   // already in the bank-reported balance
     push({ key: `dit:${d.id}`, label: `Deposit in transit · ${d.label}`, amount: money2(dec(d.amount)), category: "deposit", href: `/financials/records?view=payments&payment=${d.id}`,
       scheduledOn: today, expectedOn: today, note: "Recorded payment not yet on a bank line" });
+  }
+  // Statement-based balances don't include money paid out after the statement date; subtract it until it shows up on a statement.
+  for (const o of input.recordedOutflows ?? []) {
+    if (!startsFromBank) break;
+    const acct = o.accountId ? included.find((a) => a.id === o.accountId) : fromStatement[0];
+    if (!acct || acct.basis !== "statement" || !acct.asOf || o.date <= acct.asOf.slice(0, 10)) continue;
+    push({ key: `out:${o.kind}:${o.id}`, label: o.label, amount: money2(dec(o.amount).abs().neg()), category: o.kind === "bill_payment" ? "supplier" : "other",
+      href: "/financials/records?view=costs", scheduledOn: today, expectedOn: today, note: "Paid after your last imported statement" });
   }
   for (const b of input.bills) {
     if (dec(b.balance).lte(0)) continue;
@@ -178,7 +220,8 @@ export function buildForecast(input: ForecastInput): Forecast {
   const sumIf = (f: (e: Ev) => boolean) => money2(evs.filter(f).reduce((s, e) => s.plus(dec(e.amount)), dec(0)));
   const clean = ({ scheduledOn: _s, expectedOn: _e, ...rest }: Ev): CashEvent => rest;   // eslint-disable-line @typescript-eslint/no-unused-vars
   return {
-    opening, openingAsOf, openingAvailable, startsFromBank, stale, missingBalances: missing,
+    opening, openingAsOf, openingAvailable, startsFromBank, stale, statementOld, missingBalances: missing,
+    basis: !startsFromBank ? null : fromStatement.length === 0 ? "connected" : connected.length === 0 ? "statement" : "mixed",
     events: [...evs].sort((a, b) => a.expectedOn.localeCompare(b.expectedOn)).map(clean),
     scheduledEvents: evs.filter((e) => e.scheduledOn).sort((a, b) => a.scheduledOn!.localeCompare(b.scheduledOn!)).map((e) => ({ ...clean(e), date: e.scheduledOn! })),
     series,
