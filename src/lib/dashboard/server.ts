@@ -17,7 +17,8 @@ import { listSchedules, type ScheduleListRow } from "@/lib/schedule/server";
 import { loadReviewQueue, type QueueItem } from "@/lib/operations/queue-server";
 import type { ArRow } from "@/lib/financials/receivables";
 import type { ReportBasis } from "@/lib/financials/reports";
-import { accessFromFacts, allowed, type DashboardAccess } from "./access";
+import { loadEffectiveAccess } from "@/lib/access/server";
+import { accessFromFacts, allowed, withEffectiveAccess, type DashboardAccess } from "./access";
 import { chartRange, type ChartPeriod } from "./charts";
 import { widgetDef, type Source } from "./registry";
 import { LAYOUT_VERSION, parseLayout, type DashboardMode, type Layout, type WidgetInstance } from "./schema";
@@ -37,16 +38,21 @@ export interface DashboardViewer {
 /** One pass over today's permission sources. V6.7 replaces the facts with loadEffectiveAccess(). */
 export async function loadViewer(db: Db, userId: string): Promise<DashboardViewer> {
   const finOn = isFinancialsEnabled();
-  const [company, fin] = await Promise.all([loadMyCompany(db), finOn ? loadFinState(db) : Promise.resolve(null)]);
+  const [company, fin, effective] = await Promise.all([
+    loadMyCompany(db), finOn ? loadFinState(db) : Promise.resolve(null),
+    loadEffectiveAccess(db).catch((e: Error) => { console.error(JSON.stringify({ level: "error", scope: "dashboard.effective_access", message: e.message })); return null; }),
+  ]);
   const ctx = fin && fin.kind === "ready" ? fin.ctx : null;
   const perms = ctx?.access.permissions ?? [];
   const accountantModeAllowed = Boolean(ctx && canUseAccountantMode(perms) && perms.includes("view_company_financials"));
-  const access = accessFromFacts({
+  // V6.7 effective access decides which widgets show (per-employee settings included); the raw facts supply the
+  // company and Financials context, and stand in if effective access can't be computed.
+  const access = withEffectiveAccess(accessFromFacts({
     pmEnabled: isPmEnabled(), financialsEnabled: finOn,
     company: company ? { id: company.id, role: company.role, isOwner: company.isOwner, permissions: company.permissions } : null,
     fin: ctx ? { role: ctx.access.role ?? "view_only", permissions: perms, active: ctx.access.active, readOnly: ctx.access.readOnly, sandbox: Boolean(ctx.access.sandbox) } : null,
     accountantModeAllowed,
-  });
+  }), effective);
   // The mode is the Financials view preference (fin_user_preferences). It only picks which saved layout shows;
   // without accounting authority it is always Contractor Mode.
   const mode: DashboardMode = accountantModeAllowed && ctx?.layout.mode === "accountant" ? "accountant" : "contractor";

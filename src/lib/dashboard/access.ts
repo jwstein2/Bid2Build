@@ -1,17 +1,22 @@
 /**
- * What the viewer may see on the dashboard, as the same contract the V6.7 workspace-access work uses
- * (src/lib/access: CapabilityRequirement = { feature, level? }, hasCapability(access, req)). Until that lands,
- * `accessFromFacts` builds it from today's permission sources (company role permissions, PM access, the
- * Financials seat), so each widget can already declare what it needs in V6.7's vocabulary.
+ * What the viewer may see on the dashboard, in the V6.7 workspace-access vocabulary (src/lib/access:
+ * CapabilityRequirement = { feature, level? }). On the server the features come from V6.7's
+ * loadEffectiveAccess (per-employee access settings included) via `withEffectiveAccess`; `accessFromFacts`
+ * builds the same shape from the raw permission sources and is the fallback when that can't be computed.
  *
  * Pure and client-safe. Hiding a widget is presentation only: every widget's data is still read through
  * row-level security on the server, so a widget left in a saved layout never shows data its viewer can't open.
  */
 
-/** Feature ids shared with V6.7 (src/lib/access/capabilities.ts). Only the ones dashboard widgets use. */
-export type FeatureId =
-  | "bids" | "bid_visibility" | "costs" | "customers" | "analytics" | "schedule" | "job_review" | "change_orders"
-  | "team_directory" | "project_costs" | "fin_visibility" | "invoices" | "payments" | "expenses" | "bills" | "bank" | "ledger" | "exports";
+import type { FeatureId as AccessFeatureId } from "@/lib/access/capabilities";
+import type { EffectiveAccess } from "@/lib/access/effective";
+
+/** The V6.7 feature ids (src/lib/access/capabilities.ts) that dashboard widgets use. */
+export const DASHBOARD_FEATURES = [
+  "bids", "bid_visibility", "costs", "customers", "analytics", "schedule", "job_review", "change_orders",
+  "team_directory", "project_costs", "fin_visibility", "invoices", "payments", "expenses", "bills", "bank", "ledger", "exports",
+] as const satisfies readonly AccessFeatureId[];
+export type FeatureId = (typeof DASHBOARD_FEATURES)[number];
 
 export interface CapabilityRequirement { feature: FeatureId; level?: string }
 /** Shorthand for a requirement: need("fin_visibility", "company"). */
@@ -99,4 +104,19 @@ export function accessFromFacts(f: AccessFacts): DashboardAccess {
     company: c ? { id: c.id, role: c.role, isOwner: c.isOwner } : null,
     fin: fin && features.fin_visibility ? { role: fin.role, canWrite: fin.active && !fin.readOnly, sandbox: fin.sandbox, accountantMode: f.accountantModeAllowed } : null,
   };
+}
+
+/**
+ * Replace the feature levels with V6.7's effective access (company access settings, workspace switches,
+ * licenses), keeping the Financials context. Level keys are the same in both (tested). With no effective
+ * access (it couldn't be computed) the base is returned unchanged.
+ */
+export function withEffectiveAccess(base: DashboardAccess, eff: EffectiveAccess | null | undefined): DashboardAccess {
+  if (!eff) return base;
+  const features: Partial<Record<FeatureId, string>> = {};
+  for (const id of DASHBOARD_FEATURES) {
+    const level = eff.features[id]?.level;
+    if (level && level !== "none") features[id] = level;
+  }
+  return { features, company: base.company, fin: features.fin_visibility ? base.fin : null };
 }
