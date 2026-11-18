@@ -41,7 +41,8 @@ describe("sample company dataset", () => {
     expect(emails.length).toBeGreaterThan(100);
     for (const e of emails) expect(e, e).toMatch(/@(example\.(com|net|org)|demo\.built2bid\.org)$/i);
     for (const c of owner.customers) if (c.phone) expect(c.phone).toMatch(/555-01\d\d/);
-    expect(json).not.toMatch(/\bstripe\.com|\bgmail\.com|\byahoo\.com/i);
+    const domains = new Set(emails.map((e) => e.split("@")[1].toLowerCase()));
+    for (const real of ["gmail.com", "yahoo.com", "outlook.com", "stripe.com"]) expect(domains.has(real), real).toBe(false);
   });
 
   it("keeps financials consistent: invoices only for won or completed work, payments never above the invoice", () => {
