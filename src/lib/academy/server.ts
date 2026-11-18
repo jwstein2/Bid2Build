@@ -66,13 +66,7 @@ export const loadStats = cache(async (): Promise<AcademyStats | null> => {
   return error ? null : (data as AcademyStats);
 });
 
-/** Presence heartbeat for members (throttled in SQL to one write a minute). */
-export async function touchPresence() {
-  const { me } = await loadMe();
-  if (!me.member) return;
-  const db = await createClient();
-  await db.rpc("academy_touch");
-}
+// Presence heartbeats come from the browser: see src/lib/academy/presence.ts and /api/academy/presence.
 
 // ---------------------------------------------------------------------------------------------------------
 // Static fallback (before the migration is applied)
