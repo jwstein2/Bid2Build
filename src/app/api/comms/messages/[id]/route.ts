@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { fail, json, sameOrigin } from "@/lib/http/api";
 import { messageAction } from "@/lib/comms/actions";
-import { requireComm } from "@/lib/comms/server";
+import { commGate, requireComm } from "@/lib/comms/server";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -16,6 +16,11 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   if (!g.ok) return g.res;
   const p = Body.safeParse(await req.json().catch(() => null));
   if (!p.success) return fail(400, "invalid", "That request isn't valid.");
+  // Skipping or canceling is always allowed; approving, sending or refreshing needs the switch on and the terms accepted.
+  if (!["skip", "cancel"].includes(p.data.action)) {
+    const gate = await commGate(g.admin, g.access.accountId, { terms: p.data.action !== "refresh" });
+    if (gate) return gate;
+  }
   const r = await messageAction(g.admin, g.access, g.userId, id, p.data.action);
   return r.ok ? json(r) : fail(r.status, r.code, r.message);
 }

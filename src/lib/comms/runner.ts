@@ -16,6 +16,7 @@ import { fromHeader, newRfcMessageId, sendCommEmail } from "./send";
 import {
   accountBranding, accountOwner, loadContactFacts, loadEstimateFacts, loadOffers, loadScheduleAdmin, loadSettings, loadSuppressions, logEvent, notify, projectReviewer,
 } from "./server";
+import { TERMS_MESSAGE, termsCurrent } from "./rollout";
 import { localDate, safeTz } from "./time";
 import { newReplyToken, replyAddress, unsubUrls } from "./tokens";
 import { mapSettings, type CommSettings, type UpdateFrequency } from "./types";
@@ -79,7 +80,7 @@ export async function planProjectUpdates(admin: Db, now: Date, out: Record<strin
       const accountId = String(pc.account_id);
       const settings = settingsCache.get(accountId) ?? (await loadSettings(admin, accountId));
       settingsCache.set(accountId, settings);
-      if (settings.pausedAt) continue;
+      if (settings.pausedAt || settings.disabledAt || !termsCurrent(settings)) continue;
       const sid = String(pc.schedule_id);
       const { data: s } = await admin.from("project_schedules").select("id, status, calendar").eq("id", sid).maybeSingle();
       if (!s || (s as Row).status !== "active") continue;
@@ -147,6 +148,7 @@ export async function planNurture(admin: Db, now: Date, cfg: CommConfig, monitor
     const accountId = String(r.account_id);
     try {
       const settings = mapSettings(r);
+      if (settings.disabledAt || !termsCurrent(settings)) continue;
       if (!settings.postalAddress) { out.noPostal = (out.noPostal ?? 0) + 1; continue; }
       const kind = r.account_kind === "company" ? "company" : "user";
       const [estimates, contacts, suppressions, offers, brand] = await Promise.all([
@@ -224,6 +226,10 @@ export async function deliverDue(admin: Db, now: Date, cfg: CommConfig, monitori
       const to = String(m.to_email ?? "").toLowerCase();
       const g = await admin.from("comm_global").select("paused").eq("id", 1).maybeSingle();
       if ((g.data as Row | null)?.paused) { await back(prior, "Built2Bid paused all automated email"); break; }
+      if (m.kind === "nurture" || m.kind === "project_update") {
+        if (settings.disabledAt) { await back("canceled", "Customer emails were turned off by the account owner"); continue; }
+        if (!termsCurrent(settings)) { await back("awaiting_review", TERMS_MESSAGE); continue; }
+      }
       if (settings.pausedAt) { await back("paused", "Your team paused all customer emails"); continue; }
       if (!to) { await back("failed", "No customer email address", { attempts: 5 }); continue; }
       if (cfg.mode === "test" && !cfg.testRecipients.includes(to)) { await back("skipped", "Test mode: only test addresses receive email"); continue; }

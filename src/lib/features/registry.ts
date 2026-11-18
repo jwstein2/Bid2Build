@@ -167,19 +167,19 @@ const DEFS = {
     release: "4.3.0",
     status: "released",
   },
-  // V4.6 Customer Communications (20261121001000). Unreleased until the owner approves sending
-  // (COMM_EMAIL_MODE) and reply monitoring is verified: marketing must not claim it before then.
+  // V4.6 Customer Communications (20261121001000 + 20261231001000). Released 2026-11-18 when the owner
+  // switched sending on (COMM_EMAIL_MODE=live). Reply monitoring isn't verified yet, so the copy must not
+  // claim replies pause follow-ups automatically.
   customer_communications: {
     name: "Customer communications",
     entitlement: "pm",
     route: "/dashboard/customers/communications",
     target: "customer_communications",
     description: "Optional six-month follow-ups for past customers and weekly or milestone progress emails for active projects, with review before sending.",
-    pitch: "Stay in touch with past customers and keep active clients updated, with review first, automatic pause on replies and one-click opt-out. Part of Project Command Center.",
-    walkthrough: { title: "Keep customers in the loop", body: "In Customers → Communications, review who's eligible for follow-ups, edit the template, and choose weekly or milestone project updates. Nothing sends without your say-so." },
-    // Gets its own release entry when it ships.
+    pitch: "Stay in touch with past customers and keep active clients updated, with review first, one-click opt-out and an owner switch to turn it all off. Part of Project Command Center.",
+    walkthrough: { title: "Keep customers in the loop", body: "In Customers → Communications, accept the customer email terms, apply the recommended settings, then review who's eligible for follow-ups. Turn on progress emails per project. Nothing sends without your say-so." },
     release: "4.3.0",
-    status: "unreleased",
+    status: "released",
   },
   proposal_style: {
     name: "Company proposal style",

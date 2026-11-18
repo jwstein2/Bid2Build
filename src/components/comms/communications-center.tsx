@@ -2,13 +2,14 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CalendarClock, CheckCircle2, Loader2, Mail, MailX, PauseCircle, PlayCircle, RefreshCw, Send, SkipForward } from "lucide-react";
+import { CalendarClock, CheckCircle2, Loader2, Mail, MailX, PauseCircle, PlayCircle, Power, RefreshCw, Send, ShieldCheck, SkipForward } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge, Card, Field, Notice } from "@/components/ui/misc";
 import { MetricCard } from "@/components/ui/metric-card";
 import { cn } from "@/lib/cn";
 import { AUDIENCE_GROUPS, CONTACT_STATUS_LABEL, FREQUENCY_LABEL, MESSAGE_STATUS_LABEL, OFFER_TYPE_LABEL, type AudienceGroup, type CommAccess, type CommSettings, type ContactStatus, type MessageStatus, type Offer, type OfferType, type UpdateFrequency } from "@/lib/comms/types";
 import { DEFAULT_BODY, DEFAULT_SUBJECT, PLACEHOLDERS, PLACEHOLDER_HELP } from "@/lib/comms/template";
+import { COMM_TERMS, COMM_TERMS_VERSION, RECOMMENDED, RECOMMENDED_NOTES, termsCurrent } from "@/lib/comms/rollout";
 
 interface Msg {
   id: string; kind: "nurture" | "project_update"; trigger: string; contact_id: string | null; schedule_id: string | null; to_email: string | null; to_name: string | null;
@@ -19,7 +20,8 @@ interface Evt { id: string; kind: string; message_id: string | null; from_email:
 interface Contact { id: string; email: string; name: string | null; customer_id?: string | null; status: ContactStatus; status_reason: string | null; basis: string; last_nurture_at: string | null; last_reply_at: string | null }
 interface Proj { schedule_id: string; name: string; frequency: UpdateFrequency; mode: string; paused_at: string | null; scheduleStatus: string | null }
 interface Data {
-  available: boolean; locked?: boolean; access?: CommAccess; settings: CommSettings; offers: Offer[]; messages: Msg[]; events: Evt[]; contacts: Contact[]; projects: Proj[];
+  available: boolean; locked?: boolean; access?: CommAccess; settings: CommSettings; owner?: boolean;
+  suggested?: { senderName: string | null; postalAddress: string | null; replyTo: string | null }; offers: Offer[]; messages: Msg[]; events: Evt[]; contacts: Contact[]; projects: Proj[];
   platform: { sending: string; sendingReason: string | null; paused: boolean; monitoring: { configured: boolean; active: boolean; reason: string | null; verifiedAt: string | null } };
 }
 interface Entry { email: string; name: string; groups: AudienceGroup[]; basis: string | null; estimate: { title: string; estimateDate: string }; estimateCount: number; nextDueAt: string; due: boolean; contactId: string | null; contactStatus: ContactStatus | null; excluded: string | null }
@@ -102,6 +104,11 @@ export function CommunicationsCenter() {
   const unsub = data.contacts.filter((c) => ["unsubscribed", "bounced", "suppressed"].includes(c.status));
   const sent30 = sent.filter((m) => Date.parse(m.sent_at ?? m.created_at) > now - 30 * 86_400_000).length;
   const show = (list: Msg[]) => filtered.filter((m) => list.includes(m));
+  const off = Boolean(s.disabledAt);
+  // While the owner has customer emails off, only history, replies and opt-outs stay (nothing else could do anything).
+  const tabs = off ? TABS.filter((t) => ["sent", "replies", "contacts"].includes(t.id)) : TABS;
+  const activeTab: Tab = tabs.some((t) => t.id === tab) ? tab : tabs[0].id;
+  const canAcceptTerms = perms.has("enable_customer_nurture") || perms.has("configure_project_updates");
 
   return (
     <div className="space-y-5" data-testid="communications-center">
@@ -110,37 +117,38 @@ export function CommunicationsCenter() {
           <h2 className="text-xl font-extrabold">Communications</h2>
           <p className="text-sm text-ink-soft">Follow-ups for past customers and progress emails for active projects. Everything is off until you turn it on.</p>
         </div>
-        {s.pausedAt
+        {off ? null : s.pausedAt
           ? <Button variant="secondary" disabled={busy === "pause"} onClick={() => run("pause", () => call("/api/comms/pause-all", "POST", { paused: false }), "Customer emails resumed.")} data-testid="resume-all"><PlayCircle className="h-4 w-4" aria-hidden /> Resume all</Button>
           : <Button variant="secondary" disabled={busy === "pause"} onClick={() => run("pause", () => call("/api/comms/pause-all", "POST", { paused: true }), "All customer emails are paused.")} data-testid="pause-all"><PauseCircle className="h-4 w-4" aria-hidden /> Pause all</Button>}
       </div>
 
-      <StatusBanner data={data} />
+      {off ? <DisabledNotice settings={s} owner={Boolean(data.owner)} busy={busy} run={run} /> : <StatusBanner data={data} />}
+      {!off && !termsCurrent(s) && <TermsCard canAccept={canAcceptTerms} busy={busy} run={run} />}
       {(flash || err) && (
         <div className="sticky top-2 z-20 rounded-lg bg-paper shadow-md" role={err ? "alert" : "status"} aria-live="polite" data-testid="comms-feedback">
           {err ? <Notice tone="danger">{err}</Notice> : <Notice tone="ok">{flash}</Notice>}
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
-        <MetricCard size="sm" title="Needs review" value={review.length} tone={review.length ? "warn" : "default"} empty={!review.length} onSelect={() => setParam({ tab: "attention", status: null })} pressed={tab === "attention"} action="Review" testId="kpi-review" />
-        <MetricCard size="sm" title="Replies to read" value={unread.length} tone={unread.length ? "danger" : "default"} empty={!unread.length} onSelect={() => setParam({ tab: "replies" })} pressed={tab === "replies"} action="Open replies" testId="kpi-replies" />
-        <MetricCard size="sm" title="Scheduled" value={scheduled.length} empty={!scheduled.length} onSelect={() => setParam({ tab: "scheduled", status: null })} pressed={tab === "scheduled"} action="See schedule" testId="kpi-scheduled" />
-        <MetricCard size="sm" title="Paused contacts" value={paused.length} empty={!paused.length} onSelect={() => setParam({ tab: "contacts", status: "paused" })} pressed={tab === "contacts" && status === "paused"} action="View paused" testId="kpi-paused" />
-        <MetricCard size="sm" title="Unsubscribed" value={unsub.length} empty={!unsub.length} onSelect={() => setParam({ tab: "contacts", status: "unsubscribed" })} pressed={tab === "contacts" && status === "unsubscribed"} action="View opt-outs" testId="kpi-unsub" />
-        <MetricCard size="sm" title="Sent (30 days)" value={sent30} empty={!sent30} onSelect={() => setParam({ tab: "sent", status: null, range: "30" })} pressed={tab === "sent"} action="Sent history" testId="kpi-sent" />
-      </div>
+      {!off && <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+        <MetricCard size="sm" title="Needs review" value={review.length} tone={review.length ? "warn" : "default"} empty={!review.length} onSelect={() => setParam({ tab: "attention", status: null })} pressed={activeTab === "attention"} action="Review" testId="kpi-review" />
+        <MetricCard size="sm" title="Replies to read" value={unread.length} tone={unread.length ? "danger" : "default"} empty={!unread.length} onSelect={() => setParam({ tab: "replies" })} pressed={activeTab === "replies"} action="Open replies" testId="kpi-replies" />
+        <MetricCard size="sm" title="Scheduled" value={scheduled.length} empty={!scheduled.length} onSelect={() => setParam({ tab: "scheduled", status: null })} pressed={activeTab === "scheduled"} action="See schedule" testId="kpi-scheduled" />
+        <MetricCard size="sm" title="Paused contacts" value={paused.length} empty={!paused.length} onSelect={() => setParam({ tab: "contacts", status: "paused" })} pressed={activeTab === "contacts" && status === "paused"} action="View paused" testId="kpi-paused" />
+        <MetricCard size="sm" title="Unsubscribed" value={unsub.length} empty={!unsub.length} onSelect={() => setParam({ tab: "contacts", status: "unsubscribed" })} pressed={activeTab === "contacts" && status === "unsubscribed"} action="View opt-outs" testId="kpi-unsub" />
+        <MetricCard size="sm" title="Sent (30 days)" value={sent30} empty={!sent30} onSelect={() => setParam({ tab: "sent", status: null, range: "30" })} pressed={activeTab === "sent"} action="Sent history" testId="kpi-sent" />
+      </div>}
 
       <div role="tablist" aria-label="Communications sections" className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1">
-        {TABS.map((t) => (
-          <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => setParam({ tab: t.id, status: null })}
-            className={cn("min-h-10 shrink-0 rounded-lg px-3 text-sm font-semibold", tab === t.id ? "bg-navy text-white" : "text-ink-soft hover:bg-black/5")} data-testid={`tab-${t.id}`}>
+        {tabs.map((t) => (
+          <button key={t.id} role="tab" aria-selected={activeTab === t.id} onClick={() => setParam({ tab: t.id, status: null })}
+            className={cn("min-h-10 shrink-0 rounded-lg px-3 text-sm font-semibold", activeTab === t.id ? "bg-navy text-white" : "text-ink-soft hover:bg-black/5")} data-testid={`tab-${t.id}`}>
             {t.label}{t.id === "attention" && review.length ? ` (${review.length})` : t.id === "replies" && unread.length ? ` (${unread.length})` : ""}
           </button>
         ))}
       </div>
 
-      {["attention", "scheduled", "sent"].includes(tab) && (
+      {["attention", "scheduled", "sent"].includes(activeTab) && (
         <div className="grid gap-2 sm:grid-cols-4">
           <label className="sr-only" htmlFor="f-q">Customer or project</label>
           <input id="f-q" className="field" placeholder="Customer, email or subject" defaultValue={q} onChange={(e) => setParam({ q: e.target.value })} />
@@ -157,18 +165,131 @@ export function CommunicationsCenter() {
         </div>
       )}
 
-      {tab === "attention" && (
+      {activeTab === "attention" && (
         <div className="space-y-3">
           {unread.length > 0 && <Notice tone="warn" title={`${unread.length} customer ${unread.length === 1 ? "reply needs" : "replies need"} a personal response`}><button className="font-semibold underline" onClick={() => setParam({ tab: "replies" })}>Open replies</button></Notice>}
           <MessageList list={show(review)} empty="Nothing waiting for review. Follow-ups for past customers and progress emails for active projects land here as drafts. Nothing sends until someone approves it." open={open} setOpen={setOpen} busy={busy} run={run} perms={perms} />
         </div>
       )}
-      {tab === "scheduled" && <MessageList list={show(scheduled)} empty="No emails are scheduled. Approved follow-ups and project updates wait here until their send time." open={open} setOpen={setOpen} busy={busy} run={run} perms={perms} />}
-      {tab === "sent" && <MessageList list={filtered.filter((m) => !["awaiting_review", "scheduled", "approved"].includes(m.status))} empty="No emails in this period. Try a longer date range, or check Needs attention for drafts waiting on approval." open={open} setOpen={setOpen} busy={busy} run={run} perms={perms} />}
-      {tab === "replies" && <Replies events={replies} messages={data.messages} busy={busy} run={run} canRead={perms.has("view_customer_replies")} />}
-      {tab === "contacts" && <Contacts contacts={data.contacts} filter={status} busy={busy} run={run} canManage={perms.has("manage_opt_outs")} />}
-      {tab === "settings" && <Settings data={data} perms={perms} busy={busy} run={run} reload={load} />}
+      {activeTab === "scheduled" && <MessageList list={show(scheduled)} empty="No emails are scheduled. Approved follow-ups and project updates wait here until their send time." open={open} setOpen={setOpen} busy={busy} run={run} perms={perms} />}
+      {activeTab === "sent" && <MessageList list={filtered.filter((m) => !["awaiting_review", "scheduled", "approved"].includes(m.status))} empty="No emails in this period. Try a longer date range, or check Needs attention for drafts waiting on approval." open={open} setOpen={setOpen} busy={busy} run={run} perms={perms} />}
+      {activeTab === "replies" && <Replies events={replies} messages={data.messages} busy={busy} run={run} canRead={perms.has("view_customer_replies")} />}
+      {activeTab === "contacts" && <Contacts contacts={data.contacts} filter={status} busy={busy} run={run} canManage={perms.has("manage_opt_outs")} />}
+      {activeTab === "settings" && <Settings key={`${s.senderName}|${s.postalAddress}|${s.replyTo}`} data={data} perms={perms} busy={busy} run={run} reload={load} />}
     </div>
+  );
+}
+
+type Run = (k: string, fn: () => Promise<unknown>, ok?: string) => Promise<void>;
+
+/** Shown instead of the status cards while the account owner has customer emails turned off. */
+function DisabledNotice({ settings, owner, busy, run }: { settings: CommSettings; owner: boolean; busy: string | null; run: Run }) {
+  return (
+    <div className="space-y-3 rounded-lg border border-line bg-surface p-4" data-testid="comms-disabled">
+      <p className="flex items-center gap-2 font-semibold"><Power className="h-4 w-4" aria-hidden /> Customer emails are off for your company</p>
+      <p className="text-sm text-ink-soft">
+        {owner ? "You" : "Your account owner"} turned off customer follow-ups and project update emails on {day(settings.disabledAt)}. Nothing is drafted, approved or sent, and it stays off until {owner ? "you turn" : "the owner turns"} it back on.
+        {settings.disabledReason ? ` Reason: ${settings.disabledReason}` : ""}
+      </p>
+      <p className="text-sm text-ink-soft">Past emails, replies and opt-outs are still here. Unsubscribes keep being honored.</p>
+      {owner && <CompanySwitch off busy={busy} run={run} />}
+    </div>
+  );
+}
+
+/** The account owner's switch. Off cancels everything queued; on restarts nothing by itself. */
+function CompanySwitch({ off, busy, run }: { off: boolean; busy: string | null; run: Run }) {
+  const [open, setOpen] = useState(false);
+  const [ok, setOk] = useState(false);
+  const [reason, setReason] = useState("");
+  if (!open) return off
+    ? <Button variant="secondary" onClick={() => setOpen(true)} data-testid="company-on">Turn customer emails back on</Button>
+    : <Button variant="secondary" onClick={() => setOpen(true)} data-testid="company-off"><Power className="h-4 w-4" aria-hidden /> Turn off customer emails for the company</Button>;
+  return (
+    <div className="space-y-2 rounded-lg border border-warn/40 bg-warn-tint p-3 text-sm" role="group" aria-label={off ? "Turn customer emails back on" : "Turn off customer emails"} data-testid="company-switch-confirm">
+      {off ? (
+        <p>Your team can set up follow-ups and project updates again. Nothing restarts by itself: follow-ups stay off until someone reviews the audience and activates them, and every project stays on review first.</p>
+      ) : (<>
+        <p>This stops all customer follow-ups and project update emails for everyone in your company. Everything waiting to send is canceled, follow-ups are deactivated and every project goes back to review first. It stays off until you turn it back on, and only you can.</p>
+        <Field label="Reason" htmlFor="cs-reason" optional hint="Shown to your team."><input id="cs-reason" className="field" maxLength={300} value={reason} onChange={(e) => setReason(e.target.value)} /></Field>
+      </>)}
+      <label className="flex items-center gap-2 font-semibold"><input type="checkbox" className="h-4 w-4" checked={ok} onChange={(e) => setOk(e.target.checked)} /> {off ? "Turn customer emails back on" : "I want customer emails off for the whole company"}</label>
+      <div className="flex gap-2">
+        <Button size="sm" disabled={!ok || busy !== null} data-testid="company-switch-submit"
+          onClick={() => run("switch", () => call("/api/comms/company-switch", "POST", { off: !off, confirm: true, ...(off ? {} : { reason: reason || undefined }) }), off ? "Customer emails are available again. Nothing was restarted." : "Customer emails are off for your company. Nothing will send.").then(() => setOpen(false))}>
+          {off ? "Turn back on" : "Turn off"}
+        </Button>
+        <Button size="sm" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+      </div>
+    </div>
+  );
+}
+
+function TermsList() {
+  return (
+    <ul className="space-y-2 text-sm">
+      {COMM_TERMS.map((t) => <li key={t.title}><span className="font-semibold">{t.title}.</span> <span className="text-ink-soft">{t.body}</span></li>)}
+    </ul>
+  );
+}
+
+/** Customer email terms: accepted once per account (per version) before anything can be approved or sent. */
+function TermsCard({ canAccept, busy, run }: { canAccept: boolean; busy: string | null; run: Run }) {
+  const [ok, setOk] = useState(false);
+  return (
+    <Card className="space-y-3 p-4 sm:p-5" data-testid="comms-terms">
+      <div className="flex items-start gap-2">
+        <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-brand" aria-hidden />
+        <div>
+          <h3 className="font-bold">Before your first customer email</h3>
+          <p className="text-sm text-ink-soft">Please read how customer emails work. Nothing can be approved or sent until someone on your team accepts this.</p>
+        </div>
+      </div>
+      <TermsList />
+      {canAccept ? (<>
+        <label className="flex items-start gap-2 text-sm font-semibold"><input type="checkbox" className="mt-0.5 h-4 w-4" checked={ok} onChange={(e) => setOk(e.target.checked)} data-testid="terms-check" /> I&apos;ve read this, I&apos;ll only email people we have a real relationship with, and I accept the customer email terms for our company.</label>
+        <Button disabled={!ok || busy !== null} onClick={() => run("terms", () => call("/api/comms/terms", "POST", { accept: true, version: COMM_TERMS_VERSION }), "Thanks. You can now set up follow-ups and project updates.")} data-testid="terms-accept">Accept and continue</Button>
+      </>) : <p className="text-xs text-muted">Someone allowed to turn on customer emails (usually your company owner) needs to accept this first.</p>}
+    </Card>
+  );
+}
+
+/** One click to the recommended starting point. Never turns follow-ups or a project's updates on. */
+function Recommended({ data, perms, busy, run }: { data: Data; perms: Set<string>; busy: string | null; run: Run }) {
+  const s = data.settings, sug = data.suggested;
+  const canApply = perms.has("enable_customer_nurture") && perms.has("edit_nurture_templates") && perms.has("configure_project_updates");
+  const apply = () => {
+    const tz = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { return undefined; } })();
+    const patch: Record<string, unknown> = { ...RECOMMENDED, ...(tz ? { timezone: tz } : {}) };
+    if (!s.senderName && sug?.senderName) patch.senderName = sug.senderName;
+    if (!s.postalAddress && sug?.postalAddress) patch.postalAddress = sug.postalAddress;
+    if (!s.replyTo && sug?.replyTo) patch.replyTo = sug.replyTo;
+    return run("recommended", () => call("/api/comms/settings", "PUT", patch), "Recommended settings applied. Nothing was turned on or sent.");
+  };
+  return (
+    <Card className="space-y-2 p-4 sm:p-5 lg:col-span-2" data-testid="recommended">
+      <h3 className="font-bold">Recommended settings</h3>
+      <ul className="list-disc space-y-0.5 pl-5 text-sm text-ink-soft">{RECOMMENDED_NOTES.map((n) => <li key={n}>{n}</li>)}</ul>
+      {canApply
+        ? <Button size="sm" variant="secondary" disabled={busy !== null} onClick={apply} data-testid="apply-recommended">Use recommended settings</Button>
+        : <p className="text-xs text-muted">Someone allowed to change follow-ups and project updates can apply these.</p>}
+      <p className="text-xs text-muted">This changes defaults only. Follow-ups stay off until you review who gets them, and each project&apos;s updates are turned on in that project.</p>
+    </Card>
+  );
+}
+
+function OwnerControls({ data, busy, run }: { data: Data; busy: string | null; run: Run }) {
+  const s = data.settings;
+  return (
+    <Card className="space-y-3 p-4 sm:p-5 lg:col-span-2" data-testid="owner-controls">
+      <h3 className="font-bold">Company controls</h3>
+      {s.termsAcceptedAt && (
+        <details className="text-sm"><summary className="cursor-pointer text-ink-soft">Customer email terms accepted {day(s.termsAcceptedAt)}</summary><div className="mt-2"><TermsList /></div></details>
+      )}
+      {data.owner
+        ? (<><p className="text-sm text-ink-soft">As the account owner you can turn customer emails off for everyone in your company. It stays off until you turn it back on.</p><CompanySwitch off={false} busy={busy} run={run} /></>)
+        : <p className="text-sm text-ink-soft">Only the account owner can turn customer emails off for the whole company. Use Pause all to stop sending for now.</p>}
+    </Card>
   );
 }
 
@@ -179,7 +300,7 @@ function LockedCard() {
       <p className="mt-1 text-ink-soft">Part of Project Command Center: optional six-month follow-ups for past customers, and weekly or milestone progress emails for active projects, with review before anything sends.</p>
       <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-ink-soft">
         <li>Off by default. You choose who gets follow-ups.</li>
-        <li>Replies and unsubscribes stop follow-ups automatically.</li>
+        <li>Unsubscribes and bounces stop follow-ups automatically. Replies come straight to you.</li>
         <li>Progress emails only say work is complete when your PM confirmed it.</li>
       </ul>
       <Link href="/settings/billing#pm" className="mt-4 inline-flex min-h-11 items-center rounded-lg bg-navy px-4 font-semibold text-white">Unlock Project Command Center</Link>
@@ -340,6 +461,7 @@ function Settings({ data, perms, busy, run, reload }: { data: Data; perms: Set<s
   const active = s.nurtureEnabled && s.nurtureActivatedAt;
   return (
     <div className="grid gap-4 lg:grid-cols-2">
+      {termsCurrent(s) && <Recommended data={data} perms={perms} busy={busy} run={run} />}
       <Card className="space-y-4 p-4 sm:p-5" data-testid="nurture-settings">
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -467,6 +589,7 @@ function Settings({ data, perms, busy, run, reload }: { data: Data; perms: Set<s
         </Card>
         <Offers offers={data.offers} canEdit={perms.has("edit_nurture_templates")} busy={busy} run={run} reload={reload} />
       </div>
+      <OwnerControls data={data} busy={busy} run={run} />
     </div>
   );
 }

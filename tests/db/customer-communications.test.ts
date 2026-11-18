@@ -80,7 +80,8 @@ d("Customer communications V4.6 (database)", () => {
     await pool.query("update public.project_schedules set status = 'active' where id = $1", [sid]);
     return sid;
   }
-  const settings = (account: string, patch: Row) =>
+  // Terms accepted unless a test says otherwise (V6.10: nothing is planned or sent before acceptance).
+  const settings = (account: string, over: Row, patch: Row = { terms_accepted_at: new Date().toISOString(), terms_version: 1, ...over }) =>
     pool.query(`insert into public.comm_settings (account_id, account_kind, ${Object.keys(patch).join(", ")}) values ($1, 'user', ${Object.keys(patch).map((_, i) => `$${i + 2}`).join(", ")})
       on conflict (account_id) do update set ${Object.keys(patch).map((k) => `${k} = excluded.${k}`).join(", ")}`, [account, ...Object.values(patch)]);
   const access = (u: string) => ({ accountId: u, kind: "user" as const, pm: true, perms: COMM_PERMISSIONS as never });

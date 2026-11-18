@@ -20,6 +20,8 @@ export default function Terms() {
         <p>You own your bids and business information. You give us permission to store and process it only to provide the service. Only upload logos and content you have the right to use.</p>
         <h2 className="pt-2 text-xl font-bold text-ink">Acceptable use</h2>
         <p>Do not misuse the service, attempt to access other accounts, or use the website importer on sites you are not authorized to represent.</p>
+        <h2 className="pt-2 text-xl font-bold text-ink">Customer emails you send</h2>
+        <p>If you use Project Command Center to send follow-ups or project updates to your customers, you are the sender and we send them on your behalf. You agree to email only people you have a real business relationship with or who asked you for a quote, never to upload purchased or scraped lists, to keep your business name and postal address accurate, and to follow the email laws that apply to you (such as CAN-SPAM and CASL). Every follow-up includes an unsubscribe link, and opt-outs, bounces and complaints are honored across your account. Nothing sends until someone on your team approves it unless you deliberately turn on automatic sending for a project. We may limit or pause sending to protect deliverability or recipients, and your account owner can turn customer emails off for your whole company at any time.</p>
         <h2 className="pt-2 text-xl font-bold text-ink">Contact</h2>
         <p><a className="underline" href={`mailto:${site.supportEmail}`}>{site.supportEmail}</a></p>
       </div>

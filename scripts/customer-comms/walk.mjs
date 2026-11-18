@@ -30,7 +30,8 @@ await fetch(`${M}/__comms?on=1`);
 // ---- Fixtures ---------------------------------------------------------------------------------
 const PERMS = ["view_communications", "edit_nurture_templates", "enable_customer_nurture", "approve_marketing_outreach", "configure_project_updates", "approve_customer_updates", "enable_auto_project_updates", "view_customer_replies", "manage_opt_outs"];
 const settings = { nurtureEnabled: true, nurtureMonths: 6, nurtureIncludeOffers: true, nurtureMode: "review", nurtureSubject: null, nurtureBody: null, templateVersion: 2, nurtureActivatedAt: iso(-20 * D),
-  updatesFrequency: "both", updatesMode: "review", updatesWeekday: 5, updatesHour: 16, timezone: "America/Chicago", postalAddress: "120 Main St, Springfield, IL 62701", senderName: "Alex at Summit Exteriors", replyTo: "office@summit.test", pausedAt: null };
+  updatesFrequency: "both", updatesMode: "review", updatesWeekday: 5, updatesHour: 16, timezone: "America/Chicago", postalAddress: "120 Main St, Springfield, IL 62701", senderName: "Alex at Summit Exteriors", replyTo: "office@summit.test", pausedAt: null,
+  disabledAt: null, disabledReason: null, termsAcceptedAt: iso(-30 * D), termsVersion: 1 };
 const msg = (o) => ({ contact_id: null, schedule_id: null, to_email: "pat@example.test", to_name: "Pat Johnson", body_text: "", status_reason: null, scheduled_for: null, sent_at: null, delivered_at: null, replied_at: null, approved_at: null, automation: true, created_at: iso(-H), trigger: "six_month", ...o });
 const updateBody = `Hi Sam,
 
@@ -93,7 +94,8 @@ const projects = [
   { schedule_id: "s2", name: "Siding – Chen", frequency: "milestone", mode: "review", paused_at: null, scheduleStatus: "active" },
   { schedule_id: "s3", name: "Roof – Patel", frequency: "both", mode: "automatic", paused_at: null, scheduleStatus: "active" },
 ];
-const overview = (o = {}) => ({ available: true, locked: false, access: { accountId: user.id, kind: "user", pm: true, perms: PERMS }, settings, offers, messages, events, contacts, projects,
+const overview = (o = {}) => ({ available: true, locked: false, owner: true, suggested: { senderName: "Summit Exteriors LLC", postalAddress: "120 Main St, Springfield, IL 62701", replyTo: "office@summit.test" },
+  access: { accountId: user.id, kind: "user", pm: true, perms: PERMS }, settings, offers, messages, events, contacts, projects,
   platform: { sending: "off", sendingReason: "Customer email sending is switched off (COMM_EMAIL_MODE).", paused: false, monitoring: { configured: false, active: false, reason: "Replies aren't routed to Built2Bid yet (no receiving domain).", verifiedAt: null } }, ...o });
 const audience = { entries: [
   { email: "morgan@example.test", name: "Morgan Lee", groups: ["lost"], basis: "inquiry", estimate: { title: "Deck rebuild", estimateDate: iso(-220 * D).slice(0, 10) }, estimateCount: 2, nextDueAt: iso(-5 * D), due: true, contactId: "c1", contactStatus: "eligible", excluded: null },
@@ -109,7 +111,7 @@ const notices = [
   { id: "n2", kind: "customer_reply", scheduleId: "", taskId: null, reason: "end_date", title: "Casey Brooks replied", status: "open", canConfirm: false, readAt: null, createdAt: iso(-3 * D), data: { projectName: "Window replacement", customerName: "Casey Brooks", subject: "Checking in on your window project" } },
   { id: "n3", kind: "task_review", scheduleId: "s2", taskId: "t1", reason: "both", title: "Tear-off", status: "open", canConfirm: true, readAt: iso(-H), createdAt: iso(-2 * H), data: { projectName: "Siding – Chen", taskName: "Tear-off", plannedEnd: iso(-D).slice(0, 10), percentComplete: 100, customerName: "Riley Chen" } },
 ];
-const projState = { settings: { frequency: "weekly", mode: "review", recipientEmail: "pat@example.test", recipientName: "Pat Johnson", pausedAt: null, autoConfirmedAt: null }, defaults: { frequency: "both", mode: "review", timezone: "America/Chicago" },
+const projState = { gate: { disabled: false, termsAccepted: true }, settings: { frequency: "weekly", mode: "review", recipientEmail: "pat@example.test", recipientName: "Pat Johnson", pausedAt: null, autoConfirmedAt: null }, defaults: { frequency: "both", mode: "review", timezone: "America/Chicago" },
   next: { id: "m1", status: "awaiting_review", scheduled_for: iso(22 * H), status_reason: null, trigger: "weekly" }, nextWeeklyAt: iso(22 * H), last: { sent_at: iso(-7 * D), subject: "Siding replacement: weekly update" }, scheduleStatus: "active", preview: null };
 
 const browser = await chromium.launch();
@@ -124,7 +126,8 @@ async function open(path, vp = DESK, opts = {}) {
   await page.route("**/api/comms", (r) => r.fulfill({ json: overview(opts.overview) }));
   await page.route("**/api/comms/audience", (r) => r.fulfill({ json: audience }));
   await page.route("**/api/comms/preview", (r) => r.fulfill({ json: { preview: { subject: "Checking in on your deck project", body: nurtureBody }, errors: [] } }));
-  await page.route("**/api/comms/projects/**", (r) => r.fulfill({ json: r.request().url().includes("preview=1") ? { ...projState, preview: { subject: "Siding replacement: weekly update", body: updateBody, recipient: { email: "pat@example.test", name: "Pat Johnson" } } } : projState }));
+  const ps = { ...projState, ...(opts.projState ?? {}) };
+  await page.route("**/api/comms/projects/**", (r) => r.fulfill({ json: r.request().url().includes("preview=1") ? { ...ps, preview: { subject: "Siding replacement: weekly update", body: updateBody, recipient: { email: "pat@example.test", name: "Pat Johnson" } } } : ps }));
   await page.route("**/api/notifications", (r) => r.fulfill({ json: { available: true, items: notices } }));
   await page.goto(`${A}${path}`, { waitUntil: "load" });
   const later = page.getByRole("button", { name: "Maybe Later" });
@@ -257,6 +260,65 @@ if (sid) {
   const { ctx, page } = await open(`${C}?tab=settings`, PHONE, { theme: "dark" });
   await page.screenshot({ path: `${dir}/17-settings-dark-phone.png`, fullPage: true });
   await ctx.close();
+}
+// 9. V6.10 rollout: customer email terms, recommended settings, owner switch (company off), project notices
+const fresh = { ...settings, nurtureEnabled: false, nurtureActivatedAt: null, updatesFrequency: "off", senderName: null, postalAddress: null, replyTo: null, termsAcceptedAt: null, termsVersion: null };
+{
+  const { ctx, page } = await open(`${C}?tab=attention`, DESK, { overview: { settings: fresh, messages: [], events: [], projects: [] } });
+  const terms = page.getByTestId("comms-terms");
+  check("V6.10: terms card shows before the first email", (await terms.count()) === 1 && (await terms.innerText()).includes("You're the sender"));
+  check("V6.10: accept is disabled until the box is ticked", await page.getByTestId("terms-accept").isDisabled());
+  await page.route("**/api/comms/terms", (r) => r.fulfill({ json: { settings: { ...fresh, termsAcceptedAt: iso(0), termsVersion: 1 } } }));
+  await page.getByTestId("terms-check").check();
+  check("V6.10: accept enabled after ticking", await page.getByTestId("terms-accept").isEnabled());
+  await page.screenshot({ path: `${dir}/19-terms-before-first-email-desktop.png`, fullPage: true });
+  await ctx.close();
+}
+{
+  const { ctx, page } = await open(`${C}?tab=settings`, DESK, { overview: { settings: { ...fresh, termsAcceptedAt: iso(0), termsVersion: 1 } } });
+  check("V6.10: recommended settings card with one-click apply", (await page.getByTestId("apply-recommended").count()) === 1);
+  let sent = null;
+  await page.route("**/api/comms/settings", async (r) => { sent = JSON.parse(r.request().postData() ?? "{}"); await r.fulfill({ json: { settings } }); });
+  await page.getByTestId("apply-recommended").click(); await page.waitForTimeout(500);
+  check("V6.10: recommended = review first, 6 months, milestone updates, sender details from profile, never turns follow-ups on",
+    sent && sent.nurtureMode === "review" && sent.nurtureMonths === 6 && sent.updatesFrequency === "milestone" && sent.postalAddress === "120 Main St, Springfield, IL 62701" && sent.nurtureEnabled === undefined);
+  check("V6.10: owner sees the company off switch", (await page.getByTestId("company-off").count()) === 1);
+  await page.getByTestId("company-off").click(); await page.waitForTimeout(200);
+  check("V6.10: turning off needs an explicit confirmation", await page.getByTestId("company-switch-submit").isDisabled());
+  await page.getByTestId("company-switch-confirm").scrollIntoViewIfNeeded();
+  await page.screenshot({ path: `${dir}/20-recommended-and-owner-switch-desktop.png`, fullPage: true });
+  await ctx.close();
+}
+{
+  const { ctx, page } = await open(`${C}?tab=settings`, DESK, { overview: { owner: false } });
+  check("V6.10: non-owners can't switch the company off (explained, no button)", (await page.getByTestId("company-off").count()) === 0 && (await page.getByTestId("owner-controls").innerText()).includes("Only the account owner"));
+  await ctx.close();
+}
+const off = { ...settings, nurtureEnabled: false, nurtureActivatedAt: null, disabledAt: iso(-2 * H), disabledReason: "Reviewing our email policy" };
+{
+  const { ctx, page } = await open(`${C}?tab=attention`, DESK, { overview: { settings: off } });
+  check("V6.10: company off view replaces the controls", (await page.getByTestId("comms-disabled").count()) === 1 && (await page.getByTestId("pause-all").count()) === 0 && (await page.getByTestId("tab-settings").count()) === 0);
+  check("V6.10: history, replies and opt-outs stay available", (await page.getByTestId("tab-sent").count()) === 1 && (await page.getByTestId("tab-contacts").count()) === 1);
+  check("V6.10: owner can turn it back on", (await page.getByTestId("company-on").count()) === 1);
+  await page.screenshot({ path: `${dir}/21-company-off-owner-desktop.png`, fullPage: true });
+  await ctx.close();
+}
+{
+  const { ctx, page } = await open(`${C}?tab=attention`, PHONE, { overview: { settings: off, owner: false } });
+  check("V6.10: team members see it's off with no way to turn it on", (await page.getByTestId("company-on").count()) === 0 && (await page.getByTestId("comms-disabled").innerText()).includes("account owner"));
+  check("V6.10 company off (phone): no horizontal scroll", await noHScroll(page));
+  await page.screenshot({ path: `${dir}/22-company-off-team-phone.png`, fullPage: true });
+  await ctx.close();
+}
+if (sid) {
+  for (const [name, gate, file] of [["terms not accepted", { disabled: false, termsAccepted: false }, "23-project-updates-terms-desktop.png"], ["company off", { disabled: true, termsAccepted: true }, "24-project-updates-company-off-desktop.png"]]) {
+    const { ctx, page } = await open(`/projects/${sid}`, DESK, { projState: { gate } });
+    const panel = page.getByTestId("project-updates-panel");
+    await panel.scrollIntoViewIfNeeded().catch(() => {}); await page.waitForTimeout(300);
+    check(`V6.10: project panel explains (${name}) instead of showing controls`, (await page.locator("#pu-freq").count()) === 0 && (await page.getByTestId(gate.disabled ? "pu-disabled" : "pu-terms").count()) === 1);
+    await page.screenshot({ path: `${dir}/${file}` });
+    await ctx.close();
+  }
 }
 // 8. Emergency stop banner
 {

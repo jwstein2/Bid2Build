@@ -318,7 +318,7 @@ export const PAGE_GUIDES = {
     requires: { permission: "view_communications" },
     steps: [
       { target: "customers.tabs", title: "Customers and communications", body: "You're on Communications. The directory is one tap away." },
-      { target: "customers.comms-center", title: "Follow-ups and project updates", body: "Review who's eligible for follow-ups about {recurring}, edit the templates, and choose project update settings. Nothing sends without your say-so.", feature: "customer_communications" },
+      { target: "customers.comms-center", title: "Follow-ups and project updates", body: "Accept the customer email terms once, apply the recommended settings, then review who's eligible for follow-ups about {recurring}. Nothing sends without your say-so.", feature: "customer_communications" },
     ],
   },
 

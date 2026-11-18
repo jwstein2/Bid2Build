@@ -23,13 +23,15 @@ export default function Privacy() {
         <p>To run the service, generate your proposals, enforce plan limits, provide support, and keep the service secure. We do not sell your data. Your internal costs and margins are never shown on customer-facing proposals.</p>
         <h2 className="pt-2 text-xl font-bold text-ink">Marketing email</h2>
         <p>We only send product news if you opt in, separately from creating an account. You can opt out at any time in Account settings.</p>
+        <h2 className="pt-2 text-xl font-bold text-ink">Your customers&apos; information</h2>
+        <p>When a contractor uses {site.name} to email their customers (follow-ups and project updates), we process those customers&apos; names, email addresses and project details on the contractor&apos;s behalf, only to send the emails they approve. We keep a record of each email, delivery result, reply and opt-out so unsubscribes are always honored. Recipients can unsubscribe from any follow-up with one click, and we never sell or reuse this information for our own marketing.</p>
         <h2 className="pt-2 text-xl font-bold text-ink">Website import</h2>
         <p>If you ask us to import branding from a website, we fetch that public page once, extract details for you to review, and record only the host name and outcome.</p>
         <h2 className="pt-2 text-xl font-bold text-ink">Your choices</h2>
         <p>You can export your data or delete your account from Account settings. Deleting your account removes your bids, customers, logos, and generated documents. To prevent repeat free-credit signups, we keep a one-way hash of your email address (not the address itself).</p>
         {isFinancialsEnabled() && <p>If you used Financials to issue invoices, record payments or track job costs, we keep those financial records read-only for 7 years after your last financial activity, because tax and business-record rules require them. In that case deleting your account closes it instead: you can&apos;t sign in, your subscription is canceled, and the records are deleted when the 7 years end. You can ask for a copy at any time.</p>}
         <h2 className="pt-2 text-xl font-bold text-ink">Service providers</h2>
-        <p>Supabase (database, authentication, file storage), Stripe (payments), Google Analytics (website analytics), and our hosting provider process data on our behalf.</p>
+        <p>Supabase (database, authentication, file storage), Stripe (payments), Resend (email delivery), Google Analytics (website analytics), and our hosting provider process data on our behalf.</p>
         <h2 className="pt-2 text-xl font-bold text-ink">Contact</h2>
         <p>Questions: <a className="underline" href={`mailto:${site.supportEmail}`}>{site.supportEmail}</a></p>
       </div>

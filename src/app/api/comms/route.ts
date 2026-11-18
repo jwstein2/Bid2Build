@@ -1,7 +1,7 @@
 import { createAdminClient, createClient, getUser } from "@/lib/supabase/server";
 import { fail, json } from "@/lib/http/api";
 import { commConfig, replyMonitoring } from "@/lib/comms/config";
-import { loadCommAccess, loadOffers, loadSettings } from "@/lib/comms/server";
+import { accountBranding, isAccountOwner, loadCommAccess, loadOffers, loadSettings } from "@/lib/comms/server";
 
 export const runtime = "nodejs";
 
@@ -27,12 +27,16 @@ export async function GET() {
   ]);
   const cfg = commConfig();
   // Global switch + reply verification are platform facts (no customer data): read with the service role.
-  const { data: global } = await createAdminClient().from("comm_global").select("paused, inbound_verified_at").eq("id", 1).maybeSingle();
+  const admin = createAdminClient();
+  const [owner, brand] = await Promise.all([isAccountOwner(admin, { ...access, accountId }, user.id), accountBranding(admin, accountId)]);
+  const { data: global } = await admin.from("comm_global").select("paused, inbound_verified_at").eq("id", 1).maybeSingle();
   const monitoring = replyMonitoring(cfg, (global as { inbound_verified_at?: string | null } | null)?.inbound_verified_at ?? null);
   const scheduleIds = ((projects ?? []) as { schedule_id: string }[]).map((p) => p.schedule_id);
   const { data: schedules } = scheduleIds.length ? await supabase.from("project_schedules").select("id, name, status").in("id", scheduleIds) : { data: [] };
   return json({
-    available: true, locked: false, access, settings, offers, messages: messages ?? [], events: events ?? [], contacts: contacts ?? [],
+    available: true, locked: false, access, settings, owner,
+    // Recommended sender details from the company profile (used by "Use recommended settings").
+    suggested: { senderName: brand.companyName, postalAddress: brand.address, replyTo: brand.email }, offers, messages: messages ?? [], events: events ?? [], contacts: contacts ?? [],
     projects: ((projects ?? []) as Record<string, unknown>[]).map((p) => ({ ...p, name: ((schedules ?? []) as { id: string; name: string; status: string }[]).find((s) => s.id === p.schedule_id)?.name ?? "Project", scheduleStatus: ((schedules ?? []) as { id: string; status: string }[]).find((s) => s.id === p.schedule_id)?.status ?? null })),
     platform: { sending: cfg.enabled ? cfg.mode : "off", sendingReason: cfg.reason, paused: Boolean((global as { paused?: boolean } | null)?.paused), monitoring },
   });

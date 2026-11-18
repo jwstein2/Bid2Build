@@ -1,9 +1,10 @@
 import { z } from "zod";
 import { fail, json, sameOrigin } from "@/lib/http/api";
 import { renderUpdate } from "@/lib/comms/runner";
-import { loadSettings, logEvent, requireComm } from "@/lib/comms/server";
+import { commGate, loadSettings, logEvent, requireComm } from "@/lib/comms/server";
 import { upcomingWeekly, wantsWeekly } from "@/lib/comms/project-updates";
 import { normalizeEmail } from "@/lib/comms/types";
+import { termsCurrent } from "@/lib/comms/rollout";
 
 export const runtime = "nodejs";
 
@@ -20,7 +21,8 @@ async function state(g: Extract<Awaited<ReturnType<typeof requireComm>>, { ok: t
   const next = (msgs ?? []).find((m) => ["awaiting_review", "scheduled", "approved"].includes(String(m.status)));
   const last = (msgs ?? []).find((m) => m.sent_at);
   const weeklyAt = wantsWeekly(frequency as never) && !p?.paused_at ? upcomingWeekly(new Date(), settings.timezone, settings.updatesWeekday, settings.updatesHour).slot.toISOString() : null;
-  return { settings: p ? { frequency, mode: p.mode, recipientEmail: p.recipient_email, recipientName: p.recipient_name, pausedAt: p.paused_at, autoConfirmedAt: p.auto_confirmed_at } : null,
+  return { gate: { disabled: Boolean(settings.disabledAt), termsAccepted: termsCurrent(settings) },
+    settings: p ? { frequency, mode: p.mode, recipientEmail: p.recipient_email, recipientName: p.recipient_name, pausedAt: p.paused_at, autoConfirmedAt: p.auto_confirmed_at } : null,
     defaults: { frequency: settings.updatesFrequency, mode: "review" as const, weekday: settings.updatesWeekday, hour: settings.updatesHour, timezone: settings.timezone },
     next: next ?? null, nextWeeklyAt: weeklyAt, last: last ?? null, history: msgs ?? [] };
 }
@@ -57,6 +59,10 @@ export async function PUT(req: Request, ctx: { params: Promise<{ id: string }> }
   if (!g.ok) return g.res;
   const p = Body.safeParse(await req.json().catch(() => null));
   if (!p.success) return fail(400, "invalid", "Those settings aren't valid.");
+  // Turning updates off or pausing is always allowed; anything that could lead to an email needs the switch on and the terms accepted.
+  const winding = p.data.frequency === "off" || p.data.paused === true;
+  const gate = winding ? null : await commGate(g.admin, g.access.accountId, { terms: true });
+  if (gate) return gate;
   const { data: s } = await g.supabase.from("project_schedules").select("id, company_id, user_id").eq("id", id).maybeSingle();
   if (!s) return fail(404, "not_found", "Project not found.");
   const sc = s as Row;

@@ -8,6 +8,7 @@ import { normalizeCalendar } from "@/lib/schedule/calendar";
 import type { Dep, ScheduleData, Snapshot } from "@/lib/schedule/types";
 import { NO_PERMISSIONS } from "@/lib/schedule/types";
 import type { EstimateFact, ContactFact, SuppressionFact } from "./eligibility";
+import { DISABLED_MESSAGE, TERMS_MESSAGE, termsCurrent } from "./rollout";
 import { mapOffer, mapSettings, type CommAccess, type CommPermission, type CommSettings, type Offer, QUEUED_STATUSES } from "./types";
 
 export const PENDING_REASON = "Relationship confirmed; not enrolled yet";
@@ -36,6 +37,24 @@ export async function requireComm(perm: CommPermission): Promise<{ ok: true; use
   if (!access.pm || !access.accountId) return { ok: false, res: fail(402, "pm_required", "Customer communications are part of Project Command Center.") };
   if (!access.perms.includes(perm)) return { ok: false, res: fail(403, "forbidden", "You don't have permission to do that. Ask your company owner.") };
   return { ok: true, userId: user.id, access: access as CommAccess & { accountId: string }, supabase, admin: createAdminClient() };
+}
+
+/** The account owner: the company owner, or the solo user themselves. Only they flip the company switch. */
+export async function isAccountOwner(admin: Db, access: CommAccess & { accountId: string }, userId: string): Promise<boolean> {
+  if (access.kind === "user") return access.accountId === userId;
+  const { data } = await admin.from("companies").select("owner_user_id").eq("id", access.accountId).maybeSingle();
+  return Boolean(data) && String((data as Row).owner_user_id) === userId;
+}
+
+/**
+ * Write guard for customer emails: refused while the owner has them turned off (423), and, with
+ * `terms`, until the customer email terms are accepted (409). Returns null when the write may go ahead.
+ */
+export async function commGate(admin: Db, accountId: string, opts: { terms?: boolean } = {}): Promise<Response | null> {
+  const s = await loadSettings(admin, accountId);
+  if (s.disabledAt) return fail(423, "comms_disabled", DISABLED_MESSAGE);
+  if (opts.terms && !termsCurrent(s)) return fail(409, "terms_required", TERMS_MESSAGE);
+  return null;
 }
 
 export async function loadSettings(db: Db, accountId: string): Promise<CommSettings> {

@@ -2,7 +2,7 @@ import { z } from "zod";
 import { fail, json, sameOrigin } from "@/lib/http/api";
 import { commConfig, replyMonitoring } from "@/lib/comms/config";
 import { validateTemplate } from "@/lib/comms/nurture";
-import { ensureSettings, loadSettings, logEvent, requireComm } from "@/lib/comms/server";
+import { commGate, ensureSettings, loadSettings, logEvent, requireComm } from "@/lib/comms/server";
 import { safeTz } from "@/lib/comms/time";
 
 export const runtime = "nodejs";
@@ -36,6 +36,12 @@ export async function PUT(req: Request) {
   const p = Body.safeParse(await req.json().catch(() => null));
   if (!p.success) return fail(400, "invalid", "Those settings aren't valid.");
   const b = p.data;
+  const off = await commGate(g.admin, g.access.accountId);
+  if (off) return off;
+  if (b.nurtureEnabled === true) {
+    const t = await commGate(g.admin, g.access.accountId, { terms: true });
+    if (t) return t;
+  }
   const has = (k: Parameters<typeof g.access.perms.includes>[0]) => g.access.perms.includes(k);
   const cur = await loadSettings(g.admin, g.access.accountId);
   const patch: Record<string, unknown> = {};

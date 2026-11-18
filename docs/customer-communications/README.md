@@ -14,6 +14,25 @@ Six-month customer follow-ups ("nurture") and project progress emails, part of t
 | Owner emergency stop, reply-monitoring test, sending status | Admin → Operations → Customer communications |
 | SQL | `supabase/migrations/20261121001000_customer_communications.sql` (rollback in this folder) |
 
+## V6.10 rollout (customer email terms, recommended settings, company off switch)
+
+SQL: `supabase/migrations/20261231001000_comm_rollout.sql` (rollback `rollback_20261231001000.sql`).
+
+- **Customer email terms** (`src/lib/comms/rollout.ts`, `COMM_TERMS_VERSION`). Someone with `enable_customer_nurture`
+  or `configure_project_updates` accepts once per account. Until then activation, approval, Send now and turning on a
+  project's updates are refused (409 `terms_required`), the runner plans nothing, and anything due goes back to review.
+  Bumping the version makes everyone accept again before the next send.
+- **Recommended settings**: one click sets review first, every 6 months, no offers, project updates on verified section
+  completion, Friday 4 PM local, and fills sender name / postal address / reply-to from the company profile. It never
+  turns follow-ups or a project's updates on.
+- **Company off switch** (`POST /api/comms/company-switch`, account owner only: company owner or the solo user).
+  Off cancels everything queued (follow-ups and project updates only, never Financials email), deactivates follow-ups,
+  sets every project back to review first, and refuses every write that could send (423 `comms_disabled`). Skip,
+  cancel, opt-outs and replies keep working. It has no expiry; only the owner turns it back on, and nothing restarts.
+- **Recipient disclosures**: every email footer says who it's from, why the person gets it, "Sent for … by Built2Bid",
+  plus the postal address and unsubscribe link. Terms and Privacy pages describe customer emails and list Resend.
+- The platform-wide emergency stop (Admin → Operations) still stops everything for every account.
+
 ## How sending works
 
 * **Provider:** the existing Resend account. Nothing new is bought. Customer email can use its own Resend key (`COMM_RESEND_API_KEY`), so contractor campaigns stay separate from sign-in codes and account email. If that key isn't set, it falls back to `RESEND_API_KEY`.

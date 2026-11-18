@@ -51,11 +51,15 @@ export interface CommSettings {
   nurtureSubject: string | null; nurtureBody: string | null; templateVersion: number; nurtureActivatedAt: string | null;
   updatesFrequency: UpdateFrequency; updatesMode: SendMode; updatesWeekday: number; updatesHour: number; timezone: string;
   postalAddress: string | null; senderName: string | null; replyTo: string | null; pausedAt: string | null;
+  /** The account owner turned customer emails off for the whole account (stays off until the owner turns it on). */
+  disabledAt: string | null; disabledReason: string | null;
+  termsAcceptedAt: string | null; termsVersion: number | null;
 }
 export const DEFAULT_SETTINGS: CommSettings = {
   nurtureEnabled: false, nurtureMonths: 6, nurtureIncludeOffers: false, nurtureMode: "review", nurtureSubject: null, nurtureBody: null, templateVersion: 1,
   nurtureActivatedAt: null, updatesFrequency: "off", updatesMode: "review", updatesWeekday: 5, updatesHour: 16, timezone: "America/Chicago",
   postalAddress: null, senderName: null, replyTo: null, pausedAt: null,
+  disabledAt: null, disabledReason: null, termsAcceptedAt: null, termsVersion: null,
 };
 
 type Row = Record<string, unknown>;
@@ -69,6 +73,8 @@ export function mapSettings(r: Row | null | undefined): CommSettings {
     updatesFrequency: (r.updates_frequency as UpdateFrequency) ?? "off", updatesMode: r.updates_mode === "automatic" ? "automatic" : "review",
     updatesWeekday: Number(r.updates_weekday ?? 5), updatesHour: Number(r.updates_hour ?? 16), timezone: str(r.timezone) ?? "America/Chicago",
     postalAddress: str(r.postal_address), senderName: str(r.sender_name), replyTo: str(r.reply_to), pausedAt: str(r.paused_at),
+    disabledAt: str(r.disabled_at), disabledReason: str(r.disabled_reason),
+    termsAcceptedAt: str(r.terms_accepted_at), termsVersion: r.terms_version === null || r.terms_version === undefined ? null : Number(r.terms_version),
   };
 }
 export function mapOffer(r: Row): Offer {
