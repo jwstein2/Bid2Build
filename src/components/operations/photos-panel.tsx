@@ -91,7 +91,7 @@ export function PhotosPanel({ estimateId, customerId, sections }: { estimateId?:
       ) : (
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {data.photos.map((p) => (
-            <li key={p.id}>
+            <li key={p.id} data-search-id={p.id}>
               <button className="group block w-full overflow-hidden rounded-xl border border-line bg-surface text-left" onClick={() => setOpen(p)} aria-label={`Open photo ${p.caption ?? ""}`.trim()}>
                 {/* eslint-disable-next-line @next/next/no-img-element -- private signed URLs, already resized */}
                 {p.thumbUrl ? <img src={p.thumbUrl} alt={p.caption ?? "Project photo"} className="aspect-[4/3] w-full object-cover" loading="lazy" /> : <div className="aspect-[4/3] bg-paper" />}

@@ -134,7 +134,7 @@ function ChangeOrderRow({ c, perms, onEdit, onChanged }: { c: ChangeOrder; perms
   };
   const tone = c.status === "approved" || c.status === "signed" ? "bg-ok-tint text-ok" : c.status === "sent" ? "bg-brand-tint text-navy" : c.status === "draft" ? "bg-black/5 text-ink-soft" : "bg-black/5 text-muted";
   return (
-    <li className="rounded-lg border border-line p-3 text-sm" data-testid={`change-order-${c.number}`}>
+    <li className="rounded-lg border border-line p-3 text-sm" data-testid={`change-order-${c.number}`} data-search-id={c.id}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="font-semibold">Change order #{c.number}: {c.title} <span className={cn("ml-1 rounded px-1.5 py-0.5 text-[11px] font-semibold", tone)}>{CHANGE_ORDER_STATUS_LABELS[c.status]}{c.version ? ` · v${c.version}` : ""}</span></p>
         <span className="tabular font-semibold">{money(c.amount)}</span>

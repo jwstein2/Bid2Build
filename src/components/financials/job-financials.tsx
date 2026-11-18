@@ -197,7 +197,7 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
             {invoices.length === 0 ? <p className="mt-2 text-sm text-ink-soft">No invoices yet. Start from a milestone above.</p> : (
               <ul className="mt-2 divide-y divide-line">
                 {invoices.map((i) => (
-                  <li key={s(i.invoice_id)} className="py-2 text-sm" data-status={s(i.status)}>
+                  <li key={s(i.invoice_id)} className="py-2 text-sm" data-status={s(i.status)} data-search-id={s(i.invoice_id)}>
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="min-w-0 basis-full sm:basis-0 sm:flex-1">{i.status === "draft" ? <span className="font-semibold">Draft</span>
                         : <button type="button" className="min-h-9 font-semibold text-accent-ink underline decoration-dotted underline-offset-4 hover:decoration-solid" onClick={() => setPreviewId(s(i.invoice_id))} aria-label={`Preview invoice ${s(i.number)}`} data-testid="fin-invoice-open">{s(i.number)}</button>} <span className="text-muted">· {s(i.kind)}{i.issue_date ? ` · issued ${fmtDate(i.issue_date)}` : ""}{i.due_date ? ` · due ${fmtDate(i.due_date)}` : ""}</span>
