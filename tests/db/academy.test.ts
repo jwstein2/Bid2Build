@@ -187,4 +187,33 @@ d("contractor academy", () => {
     expect((await pool.query("select count(*) n from public.academy_badges where user_id = $1 and badge = $2", [alice, `course:${course.slug}`])).rows[0].n).toBe("1");
     await expect(asUser(pool, outsider, (q) => q("select public.academy_complete_lesson($1, true, null)", [lessons[0].id]))).rejects.toThrow(/not_member/);
   });
+  it("presence: touch stamps only the caller with the server clock, distinct members, 5-minute window, admins count", async () => {
+    const stats = async () => (await pool.query("select public.academy_stats() s")).rows[0].s;
+    await pool.query("update public.academy_members set last_seen_at = null");
+    expect((await stats()).online).toBe(0);
+    // Member opens the Academy (bob is still an active member at this point in the suite).
+    await asUser(pool, bob, (q) => q("select public.academy_touch()"));
+    expect((await stats()).online).toBe(1);
+    // Second tab / repeated beat: still one, and throttled (no rewrite inside a minute).
+    const first = (await pool.query("select last_seen_at from public.academy_members where user_id = $1", [bob])).rows[0].last_seen_at;
+    await asUser(pool, bob, (q) => q("select public.academy_touch()"));
+    expect((await pool.query("select last_seen_at from public.academy_members where user_id = $1", [bob])).rows[0].last_seen_at).toEqual(first);
+    expect((await stats()).online).toBe(1);
+    // A platform admin who joined counts as online and as an admin.
+    await asUser(pool, admin, (q) => q("select public.academy_touch()"));
+    const s = await stats();
+    expect(s.online).toBe(2);
+    expect(s.admins).toBeGreaterThanOrEqual(1);
+    // Older than the window: offline. Inside it: online.
+    await pool.query("update public.academy_members set last_seen_at = now() - interval '6 minutes' where user_id = $1", [bob]);
+    expect((await stats()).online).toBe(1);
+    await asUser(pool, bob, (q) => q("select public.academy_touch()"));
+    expect((await stats()).online).toBe(2);
+    // Non-members can't register presence, and nobody can write last_seen_at directly (no forging others).
+    await asUser(pool, outsider, (q) => q("select public.academy_touch()"));
+    expect((await pool.query("select count(*) n from public.academy_members where user_id = $1", [outsider])).rows[0].n).toBe("0");
+    await expect(asUser(pool, bob, (q) => q("update public.academy_members set last_seen_at = now() where user_id = $1", [alice]))).rejects.toThrow(/permission denied/);
+    await asAnon(async (q) => { await expect(q("select public.academy_touch()")).rejects.toThrow(/permission denied/); });
+    expect((await stats()).online).toBe(2);
+  });
 });

@@ -14,6 +14,7 @@ import type { FeatureId } from "@/lib/features/registry";
 import type { ThemePref } from "@/lib/theme";
 import { ThemeToggle } from "../theme/theme-toggle";
 import { SearchIconButton } from "../search/global-search";
+import { DemoNavItem } from "../demo/demo-controls";
 
 type NavItem = { href: string; label: string; icon: typeof Library; exact?: boolean; premium?: boolean; feature?: FeatureId };
 const NAV: NavItem[] = [
@@ -197,6 +198,7 @@ export function AppSidebar({ isAdmin, email, company, access = null, projects = 
         <FeatureTourButton className={cn(item, "w-full text-left text-[#C9D6E3] hover:bg-white/5 hover:text-white")} />
         <Link href="/academy" className={cn(item, "text-[#C9D6E3] hover:bg-white/5 hover:text-white")} data-testid="nav-academy"><GraduationCap className="h-4 w-4" aria-hidden /> Contractor Academy</Link>
         <Link href="/whats-new" aria-current={active("/whats-new") ? "page" : undefined} className={cn(item, active("/whats-new") ? "bg-white/10 text-white" : "text-[#C9D6E3] hover:bg-white/5 hover:text-white")} data-testid="nav-whats-new"><Sparkles className="h-4 w-4" aria-hidden /> What&apos;s New</Link>
+        {isAdmin && <DemoNavItem className={cn(item, "w-full text-left text-[#C9D6E3] hover:bg-white/5 hover:text-white")} />}
         {isAdmin && (
           <Link href="/admin" className={cn(item, "text-[#C9D6E3] hover:bg-white/5 hover:text-white")}><Shield className="h-4 w-4" aria-hidden /> Admin</Link>
         )}

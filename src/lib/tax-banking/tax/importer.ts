@@ -39,32 +39,50 @@ async function download(url: string, f: Fetch, timeoutMs: number): Promise<Buffe
   return buf;
 }
 
-/** Which files to read for a source: owner-set direct links first, else discovered from the listing page. */
-export async function resolveFiles(src: SourceRow, f: Fetch, timeoutMs = 8000): Promise<{ rateUrl: string | null; boundaryUrl: string | null; listing?: string }> {
-  if (src.rate_url) return { rateUrl: src.rate_url, boundaryUrl: src.boundary_url };
-  if (!src.listing_url) return { rateUrl: null, boundaryUrl: src.boundary_url };
-  const r = await f(src.listing_url, { headers: { "user-agent": UA }, redirect: "follow", signal: AbortSignal.timeout(timeoutMs) });
+// Listing pages fetched in this run, shared by all states (one hourly run reads the same official pages many times).
+const pageCache = new Map<string, { at: number; html: string }>();
+const PAGE_TTL_MS = 10 * 60 * 1000;
+async function page(url: string, f: Fetch, timeoutMs: number, cache: boolean): Promise<string> {
+  const hit = cache ? pageCache.get(url) : undefined;
+  if (hit && Date.now() - hit.at < PAGE_TTL_MS) return hit.html;
+  const r = await f(url, { headers: { "user-agent": UA }, redirect: "follow", signal: AbortSignal.timeout(timeoutMs) });
   if (!r.ok) throw new Error(`listing page ${r.status}`);
   const html = await r.text();
-  let found = findOfficialFiles(html, src.state, src.listing_url);
-  if (!found.rateUrl) {
-    // Some listing pages link to a page per state; follow the first same-site link that names this state.
-    const host = new URL(src.listing_url).host;
-    const name = authorityFor(src.state)?.stateName;
-    const sub = linksOf(html, src.listing_url).find((l) => new URL(l.url).host === host && l.url !== src.listing_url
-      && !/\.(zip|csv|txt|xlsx?|pdf)(?:$|[?#])/i.test(l.url)
-      && ((name && new RegExp(`\\b${name}\\b`, "i").test(l.text)) || new RegExp(`^${src.state}$`, "i").test(l.text.trim())));
-    if (sub) {
-      const r2 = await f(sub.url, { headers: { "user-agent": UA }, redirect: "follow", signal: AbortSignal.timeout(timeoutMs) }).catch(() => null);
-      if (r2?.ok) {
-        const html2 = await r2.text();
-        const f2 = findOfficialFiles(html2, src.state, sub.url);
-        if (f2.rateUrl) found = f2;
-        else return { rateUrl: null, boundaryUrl: src.boundary_url, listing: `${describeListing(html, src.state, src.listing_url)}. State page ${sub.url}: ${describeListing(html2, src.state, sub.url)}` };
-      }
-    }
+  if (cache) pageCache.set(url, { at: Date.now(), html });
+  return html;
+}
+
+const FILE_EXT = /\.(zip|csv|txt|xlsx?|pdf)(?:$|[?#])/i;
+const RB_PAGE = /rate[-\s_]*(?:and|&|&amp;)?[-\s_]*boundar/i;
+
+/**
+ * Which files to read for a source: owner-set direct links first, else found from the listing page. When the listing
+ * doesn't link the files itself, up to two more same-site pages are followed: a page named for this state, or a
+ * "Rate and Boundary Files" page (not an "updates" page). When nothing is found, `listing` says what each page offered.
+ */
+export async function resolveFiles(src: SourceRow, f: Fetch, timeoutMs = 8000, opts: { cache?: boolean } = {}): Promise<{ rateUrl: string | null; boundaryUrl: string | null; listing?: string }> {
+  if (src.rate_url) return { rateUrl: src.rate_url, boundaryUrl: src.boundary_url };
+  if (!src.listing_url) return { rateUrl: null, boundaryUrl: src.boundary_url };
+  const host = new URL(src.listing_url).host;
+  const name = authorityFor(src.state)?.stateName;
+  const visited = new Set<string>();
+  const notes: string[] = [];
+  let url: string | null = src.listing_url;
+  for (let hop = 0; url && hop < 3; hop++) {
+    visited.add(url);
+    let html: string;
+    try { html = await page(url, f, timeoutMs, opts.cache ?? false); }
+    catch (e) { if (hop === 0) throw e; notes.push(`${url}: ${(e as Error).message}`); break; }
+    const found = findOfficialFiles(html, src.state, url, name);
+    if (found.rateUrl) return { rateUrl: found.rateUrl, boundaryUrl: src.boundary_url ?? found.boundaryUrl };
+    notes.push(`${hop ? `${url}: ` : ""}${describeListing(html, src.state, url)}`);
+    const links: { url: string; text: string }[] = linksOf(html, url).filter((l) => { try { return new URL(l.url).host === host && !visited.has(l.url) && !FILE_EXT.test(l.url); } catch { return false; } });
+    const statePage: { url: string; text: string } | undefined = links.find((l) => (name && new RegExp(`\\b${name}\\b`, "i").test(l.text)) || new RegExp(`^${src.state}$`, "i").test(l.text.trim()));
+    const rbPage: { url: string; text: string } | undefined = links.filter((l) => RB_PAGE.test(`${l.url} ${l.text}`) && !/update|change|archive/i.test(`${l.url} ${l.text}`))
+      .sort((x, y) => Number(Boolean(y.text)) - Number(Boolean(x.text)))[0];
+    url = statePage?.url ?? rbPage?.url ?? null;
   }
-  return { rateUrl: found.rateUrl, boundaryUrl: src.boundary_url ?? found.boundaryUrl, listing: found.rateUrl ? undefined : describeListing(html, src.state, src.listing_url) };
+  return { rateUrl: null, boundaryUrl: src.boundary_url, listing: notes.join(". ").slice(0, 420) };
 }
 
 export async function importState(db: Db, src: SourceRow, deps: { fetchImpl?: Fetch; now?: Date; deadline?: number } = {}): Promise<StateImportResult> {
@@ -86,7 +104,7 @@ export async function importState(db: Db, src: SourceRow, deps: { fetchImpl?: Fe
   const runId = (run as { id: string } | null)?.id ?? null;
   const patch: Record<string, unknown> = { last_attempt_at: now.toISOString(), updated_at: now.toISOString() };
   try {
-    const files = await resolveFiles(src, f, Math.min(8000, left()));
+    const files = await resolveFiles(src, f, Math.min(8000, left()), { cache: !deps.fetchImpl });
     if (!files.rateUrl) { throw new NeedsLink(`Couldn't find this state's current rate file on the official page.${files.listing ? ` ${files.listing}` : ""}`); }
 
     // Rates

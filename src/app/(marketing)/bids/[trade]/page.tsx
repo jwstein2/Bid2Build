@@ -14,6 +14,8 @@ import { getAccountStatus } from "@/lib/account/server";
 import { creditBadge, CTA_LABELS, type AccountStatus } from "@/lib/account/status";
 import { landingFor, PRICE_DISPLAYS } from "@/lib/trades/landing";
 import { TrackLandingView } from "@/components/analytics/track-view";
+import { quantityToolForTrade, toolBySlug } from "@/lib/marketing/tools";
+import { ACADEMY_TRADES } from "@/lib/academy/content/catalog";
 
 export const dynamicParams = false;
 export function generateStaticParams() {
@@ -49,6 +51,9 @@ export default async function TradePage({ params }: PageProps<"/bids/[trade]">) 
     ? { action: "draft" as const, label: CTA_LABELS.draft, href: start }
     : { action: "draft" as const, label: "Start from blank", href: `${start}?blank=1` };
   const guides = articlesForTrade(t.slug);
+  const tool = quantityToolForTrade(t.slug);
+  const markupTool = toolBySlug("markup-margin-calculator");
+  const academy = ACADEMY_TRADES.some((a) => a.slug === t.slug) ? `/academy/classroom/${t.slug}` : "/academy/classroom";
   // Priority trades get conversion copy, a real sample proposal and the calculator explainer.
   const L = landingFor(t.slug);
   const lower = t.name.toLowerCase();
@@ -191,19 +196,41 @@ export default async function TradePage({ params }: PageProps<"/bids/[trade]">) 
           ))}
         </div>
 
-        {guides.length > 0 && (
-          <>
-            <h2 className="mt-14 text-xl font-extrabold">{t.name} pricing guides</h2>
-            <ul className="mt-4 grid gap-3 md:grid-cols-2">
-              {guides.map((g) => (
-                <li key={g.slug} className="rounded-xl border border-line bg-surface p-4 hover:border-line-strong">
-                  <Link href={`/learn/${g.slug}`} className="font-bold hover:underline">{g.title}</Link>
-                  <p className="mt-1 text-sm text-ink-soft">{g.description}</p>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
+        <section className="mt-14" data-testid="trade-learn">
+          <h2 className="text-2xl font-extrabold">Learn and calculate before you bid</h2>
+          <p className="mt-2 text-ink-soft">Free tools and guides. Every calculator result can go straight into a {lower} bid.</p>
+          <ul className="mt-6 grid gap-4 md:grid-cols-3">
+            {tool && (
+              <li className="rounded-xl border border-line bg-surface p-4 hover:border-line-strong">
+                <Link href={`/tools/${tool.slug}?from=trade-${t.slug}`} className="flex items-center gap-2 font-bold hover:underline"><Calculator className="h-4 w-4 text-accent-dark" aria-hidden />Free {tool.name.toLowerCase()}</Link>
+                <p className="mt-1 text-sm text-ink-soft">{tool.intro}</p>
+              </li>
+            )}
+            {markupTool && (
+              <li className="rounded-xl border border-line bg-surface p-4 hover:border-line-strong">
+                <Link href={`/tools/${markupTool.slug}?from=trade-${t.slug}`} className="flex items-center gap-2 font-bold hover:underline"><Percent className="h-4 w-4 text-accent-dark" aria-hidden />{markupTool.name}</Link>
+                <p className="mt-1 text-sm text-ink-soft">See what 25% markup really earns, and the markup a target margin needs.</p>
+              </li>
+            )}
+            <li className="rounded-xl border border-line bg-surface p-4 hover:border-line-strong">
+              <Link href={academy} className="font-bold hover:underline">{t.name} lessons in the Contractor Academy</Link>
+              <p className="mt-1 text-sm text-ink-soft">Free courses on pricing, selling and running jobs, with a community of contractors.</p>
+            </li>
+          </ul>
+          {guides.length > 0 && (
+            <>
+              <h3 className="mt-8 text-xl font-extrabold">{t.name} pricing guides</h3>
+              <ul className="mt-4 grid gap-3 md:grid-cols-2">
+                {guides.map((g) => (
+                  <li key={g.slug} className="rounded-xl border border-line bg-surface p-4 hover:border-line-strong">
+                    <Link href={`/learn/${g.slug}`} className="font-bold hover:underline">{g.title}</Link>
+                    <p className="mt-1 text-sm text-ink-soft">{g.description}</p>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </section>
 
         {related.length > 0 && (
           <>

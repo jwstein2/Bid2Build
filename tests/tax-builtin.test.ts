@@ -333,6 +333,24 @@ describe("importer (mocked downloads)", () => {
     expect(miss.rateUrl).toBeNull();
     expect(miss.listing).toContain("Page had 2 links");
   });
+  it("follows the site's Rate and Boundary Files page (the real SST layout seen in prod), skipping the updates page", async () => {
+    const { resolveFiles } = await import("@/lib/tax-banking/tax/importer");
+    const pages: Record<string, string> = {
+      "https://www.example.org/quick-links/r-b-files": `<a href="/Shared-Pages/rate-and-boundary-files"></a>
+        <a href="/committees/certification-committee/rate-and-boundary-file-updates">Rate and Boundary File Updates</a>
+        <a href="/committees/certification-committee/rate-and-boundary-files">Rate and Boundary Files</a>`,
+      "https://www.example.org/committees/certification-committee/rate-and-boundary-files": `<a href="/docs/rb/WYR2026Q4OCT01.zip">Wyoming rates</a><a href="/docs/rb/WYB2026Q4OCT01.zip">Wyoming boundaries</a>`,
+    };
+    const seen: string[] = [];
+    const f = (async (u: string) => { seen.push(u); return pages[u] !== undefined ? new Response(pages[u]) : new Response("nope", { status: 404 }); }) as unknown as typeof fetch;
+    const src = { state: "WY", kind: "sst", listing_url: "https://www.example.org/quick-links/r-b-files", rate_url: null, boundary_url: null, format: null, status: "needs_link",
+      last_rate_file: null, last_boundary_file: null, zips_loaded: 0, last_success_at: null } as const;
+    expect(await resolveFiles({ ...src }, f)).toMatchObject({ rateUrl: "https://www.example.org/docs/rb/WYR2026Q4OCT01.zip", boundaryUrl: "https://www.example.org/docs/rb/WYB2026Q4OCT01.zip" });
+    expect(seen).not.toContain("https://www.example.org/committees/certification-committee/rate-and-boundary-file-updates");
+    const miss = await resolveFiles({ ...src, state: "VT" }, f);
+    expect(miss.rateUrl).toBeNull();
+    expect(miss.listing).toContain("certification-committee/rate-and-boundary-files:");
+  });
   it("a state with no link yet is skipped quickly, without a download", async () => {
     const { importState } = await import("@/lib/tax-banking/tax/importer");
     let fetched = false;

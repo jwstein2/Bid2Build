@@ -21,7 +21,7 @@ export function ActivationChecklist({ steps }: { steps: ChecklistStep[] }) {
     if (!r?.ok) { setHidden(false); setError(true); }
   };
   return (
-    <section aria-labelledby="checklist-title" className="rounded-xl border border-line bg-surface p-4 sm:p-5" data-testid="activation-checklist">
+    <section id="first-bid-checklist" aria-labelledby="checklist-title" className="rounded-xl border border-line bg-surface p-4 sm:p-5" data-testid="activation-checklist">
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
           <h2 id="checklist-title" className="font-bold text-navy">Get your first bid out the door</h2>

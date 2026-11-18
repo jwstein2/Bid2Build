@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/ui/misc";
 import { articles } from "@/lib/learn/articles";
+import { LearnTabs } from "@/components/marketing/learn-tabs";
 
 const pageTitle = "Learn: Estimating and Proposal Guides";
 const pageDescription = "Practical guides on markup vs. margin, writing estimates, building proposals, and handling sales tax.";
@@ -18,6 +19,7 @@ export const metadata: Metadata = {
 export default function LearnIndex() {
   return (
     <Container className="py-12">
+      <LearnTabs current="/learn" />
       <h1 className="text-4xl font-extrabold">Contractor pricing and estimating guides</h1>
       <p className="mt-2 max-w-2xl text-ink-soft">Straightforward guides to pricing and presenting your work.</p>
       <ul className="mt-8 grid gap-4 md:grid-cols-2">
