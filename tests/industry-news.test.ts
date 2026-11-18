@@ -386,6 +386,23 @@ describe("ingestion", () => {
     expect(r.written).toBe(1);
     expect(store.rows[0]).toMatchObject({ summary_status: "generated", summary_model: "claude-haiku-5-5" });
   });
+
+  it("writes summaries a few at a time so the scheduled job finishes before Netlify's timeout", async () => {
+    const store = memoryStore();
+    const many = Array.from({ length: 12 }, (_, i) => ({ ...FR_JSON.results[0], html_url: `https://www.federalregister.gov/documents/2026/11/17/2026-2340${i}/heat-${i}`, document_number: `2026-2340${i}`, title: `Heat rule part ${i}` }));
+    await runIngest(store, { fetchImpl: feedFetch({ "federalregister.gov": { status: 200, body: JSON.stringify({ results: many }) } }), now: NOW, sources: [newsSource("fr-osha")!] });
+    let active = 0, peak = 0;
+    const slow: SummaryWriter = async () => {
+      peak = Math.max(peak, ++active);
+      await new Promise((r) => setTimeout(r, 5));
+      active--;
+      return { data: { what_happened: "OSHA proposed a standard to protect construction and other workers from hazardous heat. The proposal would require employers to create a heat injury and illness prevention plan, provide water and rest breaks, and train workers. OSHA is inviting comments.", status: "proposed" }, model: "claude-haiku-5-5", inputTokens: 500, outputTokens: 80, costUsd: 0.0001 };
+    };
+    const r = await runSummaries(store, slow, NOW);
+    expect(r.written).toBe(store.rows.length);
+    expect(peak).toBeGreaterThan(1);
+    expect(peak).toBeLessThanOrEqual(5);
+  });
 });
 
 // ---- 15, 20 preferences ---------------------------------------------------------------------------------
