@@ -3,7 +3,7 @@ import { fail, json, logError } from "@/lib/http/api";
 import { missingMigration } from "@/lib/operations/server";
 import { defaultActions } from "@/lib/search/actions";
 import { hrefFor, isSearchKind, kindLabel, groupOf } from "@/lib/search/kinds";
-import { loadCaps } from "@/lib/search/server";
+import { loadCaps, searchableKinds } from "@/lib/search/server";
 
 export const runtime = "nodejs";
 
@@ -20,7 +20,9 @@ export async function GET() {
     const { data, error } = await db.rpc("search_recent");
     if (error) { if (missingMigration(error)) return json({ available: false, historyEnabled: false, queries: [], records: [], actions: [] }); throw error; }
     const d = (data ?? {}) as { history_enabled?: boolean; queries?: string[]; records?: Rec[]; favorite_actions?: string[] };
-    const records = (d.records ?? []).filter((r) => isSearchKind(r.kind)).slice(0, 6).map((r) => {
+    // Recently opened records of a kind now turned off for this person (Team & Access) are left out.
+    const kinds = new Set<string>(searchableKinds(caps));
+    const records = (d.records ?? []).filter((r) => isSearchKind(r.kind) && kinds.has(r.kind)).slice(0, 6).map((r) => {
       const kind = r.kind as Parameters<typeof hrefFor>[0]["kind"];
       // Resource status isn't stored in history; the subtitle carries its kind (staff / subcontractor / crew).
       const status = kind === "resource" ? r.subtitle : null;

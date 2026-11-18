@@ -7,6 +7,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { FEATURES, LATEST_RELEASE, RELEASES, compareVersions, type Feature } from "@/lib/features/registry";
 import { PREMIUM_FEATURES } from "@/lib/billing/premium-features";
+import { FEATURE_BY_ID as ACCESS_FEATURES } from "@/lib/access/capabilities";
 import { FEATURE_ICONS } from "@/components/features/icons";
 import { applyAction, available, initialState, newlyUnlocked, parseState, tourSteps, whatsNew, type FeatureState } from "@/lib/features/state";
 
@@ -57,6 +58,8 @@ describe("feature registry metadata (update it in the same PR as the feature)", 
     for (const { p, s } of SRC) {
       for (const m of s.matchAll(/data-feature="([a-z_]+)"|\bfeature: "([a-z_]+)"/g)) {
         const id = m[1] ?? m[2];
+        // V6.7 capability requirements ({ feature: "fin_visibility" }) name src/lib/access/capabilities.ts features, not walkthroughs.
+        if (!m[1] && !ids.has(id as Feature["id"]) && id in ACCESS_FEATURES) continue;
         used.add(id);
         expect(ids.has(id as Feature["id"]), `${path.relative(process.cwd(), p)} uses unregistered feature "${id}"`).toBe(true);
       }

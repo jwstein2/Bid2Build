@@ -37,6 +37,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { CHECKLIST_DISMISSED_KEY, checklistSteps, isMeaningfulItem, MEANINGFUL_ITEMS, showChecklist, type ChecklistStep } from "@/lib/growth/activation";
 import { ActivationChecklist } from "@/components/growth/activation-checklist";
 import { FirstBidStart } from "@/components/growth/first-bid-start";
+import { loadEffectiveAccess } from "@/lib/access/server";
+import { restrictedFor } from "@/lib/access/effective";
+import { buildNav } from "@/lib/access/nav";
 
 const EST_COLS = "id, title, customer_name, trades, status, updated_at, estimate_number, created_at";
 
@@ -92,6 +95,11 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   // The layout redirects too, but pages render in parallel with it: never assume a session here.
   if (!user) redirect("/login?next=/dashboard");
   const supabase = await createClient();
+  // V6.7: Bids is the default landing page. A company member without Win the Job goes to their first workspace.
+  const workspace = await loadEffectiveAccess(supabase).catch(() => null);
+  if (workspace && restrictedFor(workspace, { feature: "bids" })) {
+    redirect(buildNav(workspace).flatMap((g) => g.items).find((i) => i.href !== "/dashboard")?.href ?? "/no-access?feature=bids");
+  }
   const esign = isEsignEnabled();
   const pmOn = isPmEnabled();
   // Every independent read goes out at once: one database round trip of waiting instead of six in a row.
