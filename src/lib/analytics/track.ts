@@ -16,7 +16,9 @@ export type TrackEvent = "landing_view" | "signup_started" | "sign_up" | "propos
   // Sign-in code funnel (method and attempt number only; never the email or the code).
   | "otp_requested" | "otp_resent" | "otp_verify_failed" | "otp_verified"
   // V8 funnel events (GA4 only; ids and labels, never personal or bid data).
-  | "cta_clicked" | "pricing_viewed" | "onboarding_completed" | "onboarding_dismissed";
+  | "cta_clicked" | "pricing_viewed" | "onboarding_completed" | "onboarding_dismissed"
+  // Free calculators (tool slug, trade and ?from= label only; never measurements or amounts).
+  | "calculator_used" | "calculator_bid_started";
 
 /** Coarse page family for funnel reports. Paths only; no ids, tokens or query strings. */
 export function pageType(pathname: string): string {
@@ -28,6 +30,7 @@ export function pageType(pathname: string): string {
   if (p.startsWith("/bids/")) return "trade";
   if (p === "/learn" || p.startsWith("/learn/")) return "learn";
   if (p.startsWith("/academy")) return "academy";
+  if (p === "/tools" || p.startsWith("/tools/")) return "tools";
   if (p === "/dashboard" || p.startsWith("/dashboard/")) return "dashboard";
   if (p.startsWith("/builder") || p.startsWith("/start/")) return "builder";
   return "other";

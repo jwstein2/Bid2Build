@@ -6,6 +6,7 @@ import { Container } from "@/components/ui/misc";
 import { articles, getArticle } from "@/lib/learn/articles";
 import { plans, site } from "@/lib/site";
 import { getTrade } from "@/lib/trades/catalog";
+import { quantityToolForTrade, TOOLS } from "@/lib/marketing/tools";
 import { AccountCtas } from "@/components/account/account-ctas";
 import { getAccountStatus } from "@/lib/account/server";
 
@@ -23,6 +24,7 @@ export default async function ArticlePage({ params }: PageProps<"/learn/[slug]">
   if (!a) notFound();
   const status = await getAccountStatus();
   const trade = a.trade ? getTrade(a.trade) : undefined;
+  const tool = TOOLS.find((t) => t.guide === a.slug) ?? (a.trade ? quantityToolForTrade(a.trade) : undefined);
   const ld = {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -63,6 +65,11 @@ export default async function ArticlePage({ params }: PageProps<"/learn/[slug]">
         {trade && (
           <p className="mt-8 text-ink-soft">
             Building a {trade.name.toLowerCase()} bid? See the <Link href={`/bids/${trade.slug}`} className="font-semibold text-ink underline">{trade.seoTitle}</Link> for the sections and items most {trade.name.toLowerCase()} estimates include.
+          </p>
+        )}
+        {tool && (
+          <p className="mt-6 rounded-lg bg-brand-tint px-4 py-3 text-ink-soft" data-testid="article-tool">
+            Try the free <Link href={`/tools/${tool.slug}?from=guide-${a.slug.slice(0, 30)}`} className="font-semibold text-ink underline">{tool.name.toLowerCase()}</Link>, then send the result straight into a bid.
           </p>
         )}
         <div className="mt-10 rounded-xl border border-line bg-surface p-5">
