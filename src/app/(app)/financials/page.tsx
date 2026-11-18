@@ -22,6 +22,7 @@ import { CustomizeDashboard, ModeToggle } from "@/components/financials/customiz
 import { FinStateNotice } from "@/components/financials/fin-state-notice";
 import { ArrangeableCards, ArrangeableQuickActions } from "@/components/financials/home-arrange";
 import { QuickActionsSection } from "@/components/financials/quick-actions-editor";
+import { HomeOverview } from "@/components/financials/home-overview";
 
 export const metadata: Metadata = { title: "Financials", robots: { index: false } };
 
@@ -116,6 +117,8 @@ export default async function FinancialsHome() {
           })}
         </div>
       </section>
+
+      <HomeOverview bookId={ctx.bookId} company={perms.includes("view_company_financials")} />
 
       <section aria-labelledby="fin-essential-h" data-guide="fin.attention">
         <h2 id="fin-essential-h" className="mb-2 font-display text-lg font-extrabold">Needs attention</h2>
