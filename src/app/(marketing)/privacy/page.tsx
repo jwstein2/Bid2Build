@@ -1,6 +1,7 @@
 import { isFinancialsEnabled } from "@/lib/env";
 import type { Metadata } from "next";
 import { Container } from "@/components/ui/misc";
+import Link from "next/link";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Privacy Policy", alternates: { canonical: "/privacy" } };
@@ -29,7 +30,7 @@ export default function Privacy() {
         <p>You can export your data or delete your account from Account settings. Deleting your account removes your bids, customers, logos, and generated documents. To prevent repeat free-credit signups, we keep a one-way hash of your email address (not the address itself).</p>
         {isFinancialsEnabled() && <p>If you used Financials to issue invoices, record payments or track job costs, we keep those financial records read-only for 7 years after your last financial activity, because tax and business-record rules require them. In that case deleting your account closes it instead: you can&apos;t sign in, your subscription is canceled, and the records are deleted when the 7 years end. You can ask for a copy at any time.</p>}
         <h2 className="pt-2 text-xl font-bold text-ink">Service providers</h2>
-        <p>Supabase (database, authentication, file storage), Stripe (payments), Google Analytics (website analytics), and our hosting provider process data on our behalf.</p>
+        <p>Supabase (database, authentication, file storage), Stripe (payments), Google Analytics (website analytics), and our hosting provider process data on our behalf. If you choose to connect a bank account, Plaid provides read-only access to its balances and transactions; we never see your bank sign-in and cannot move money. See <Link className="underline" href="/security">Security</Link> for how we protect your data.</p>
         <h2 className="pt-2 text-xl font-bold text-ink">Contact</h2>
         <p>Questions: <a className="underline" href={`mailto:${site.supportEmail}`}>{site.supportEmail}</a></p>
       </div>
