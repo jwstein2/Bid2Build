@@ -130,5 +130,12 @@ const ERRORS: Record<string, string> = {
   customer_mismatch: "That invoice belongs to a different customer.",
   not_found: "We couldn't find that record.",
   idempotency_conflict: "That was already saved.",
+  // V6.9 tax + connected banking
+  provider_not_approved: "Secure bank connections are coming soon. They turn on after the owner approves a banking provider.",
+  mock_outside_sandbox: "Practice bank connections only work in practice mode.",
+  rate_limited: "This bank was refreshed several times today. Try again tomorrow, or wait for the daily update.",
+  disconnected: "This bank connection was disconnected. Connect it again to resume updates.",
+  needs_reconnect: "This bank connection needs to be refreshed. Use Reconnect.",
+  token_store_failed: "The bank connection couldn't be saved securely. Nothing was stored. Try again.",
 };
 export const finErrorText = (code: string | undefined | null) => (code && ERRORS[code]) || "Something went wrong. Nothing was changed.";

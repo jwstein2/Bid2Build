@@ -6,7 +6,7 @@ export const PRIMARY = [
   { href: "/admin/customers", label: "Customers", also: ["/admin/complimentary"] },
   { href: "/admin/revenue", label: "Revenue" },
   { href: "/admin/usage", label: "Product usage" },
-  { href: "/admin/operations", label: "Operations", also: ["/admin/states", "/admin/definitions"] },
+  { href: "/admin/operations", label: "Operations", also: ["/admin/states", "/admin/definitions", "/admin/tax-banking"] },
 ];
 /** Existing owner tools, kept reachable from every page (and listed on Operations). */
 export const TOOLS = [

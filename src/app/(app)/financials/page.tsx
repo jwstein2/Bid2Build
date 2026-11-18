@@ -23,6 +23,7 @@ import { FinStateNotice } from "@/components/financials/fin-state-notice";
 import { ArrangeableCards, ArrangeableQuickActions } from "@/components/financials/home-arrange";
 import { QuickActionsSection } from "@/components/financials/quick-actions-editor";
 import { HomeOverview } from "@/components/financials/home-overview";
+import { TaxBankSetupPrompt } from "@/components/tax-banking/setup-prompt";
 import { AccountantHome } from "@/components/financials/accounting/home";
 import { ContractorNav } from "@/components/financials/accounting/contractor-nav";
 import { loadAccountantMetrics, loadBank, loadLookups, loadQueue, queueTotal } from "@/lib/financials/accounting-load";
@@ -48,6 +49,13 @@ export default async function FinancialsHome() {
   const { ctx } = state;
   const { access, layout, profile } = ctx;
   const home = await loadHome(db, ctx);
+  // V6.9 onboarding: tax setup and a bank connection (tables may not exist yet: errors read as "already done").
+  const manageCfg = ctx.access.permissions.includes("manage_financial_config") && ctx.access.active && !ctx.access.readOnly;
+  const [taxProf, bankConn] = manageCfg ? await Promise.all([
+    db.from("fin_tax_profiles").select("book_id", { count: "exact", head: true }).eq("book_id", ctx.bookId),
+    db.from("fin_bank_connections").select("id", { count: "exact", head: true }).eq("book_id", ctx.bookId).neq("status", "disconnected"),
+  ]) : [null, null];
+  const setup = { needsTax: Boolean(taxProf && !taxProf.error && taxProf.count === 0), needsBank: Boolean(bankConn && !bankConn.error && bankConn.count === 0) };
   const perms = access.permissions;
   const canWrite = access.active && !access.readOnly;
   // Solo owners buy the add-on here (complimentary access needs no purchase).
@@ -118,6 +126,7 @@ export default async function FinancialsHome() {
               Add Financials for your company · Coming soon
             </button>
           </Notice>)}
+      {manageCfg && <TaxBankSetupPrompt {...setup} />}
       {!ctx.configSaved && perms.includes("manage_financial_config") && (
         <Notice title="Tell Financials what kind of work you do">
           Your home page adapts to your trades and how you bill. <Link href="/company/business-config" className="font-semibold underline">Set up Business &amp; Trade Configuration</Link>

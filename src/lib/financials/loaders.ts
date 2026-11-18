@@ -10,7 +10,7 @@ import { add, cmp, isZero, sub, toMoney, D } from "./money";
 import { dashboardLayout, finAccess, myBook } from "./server";
 import type { FinAccess } from "./types";
 import { resolveLayout, resolveProfile, resolveProjectProfile, type BusinessConfig, type ProjectOverride, type ResolvedLayout, type ResolvedProfile, type StoredPrefs } from "./profiles";
-import type { CardKey, KpiKey } from "./profiles/catalog";
+import { CARDS, type CardKey, type KpiKey } from "./profiles/catalog";
 import { invoiceSendInfo } from "./send-state";
 import { changeOrderSettlement } from "./change-orders";
 
@@ -117,6 +117,17 @@ export async function loadHome(db: Db, ctx: FinContext) {
     ? (await db.from("fin_audit_log").select("id", { count: "exact", head: true }).eq("book_id", b).gte("created_at", new Date(Date.now() - 7 * 864e5).toISOString())).count ?? 0
     : 0;
   const P = (prof.data ?? []) as Row[], I = (inv.data ?? []) as Row[], Y = (pay.data ?? []) as Row[], M = (ms.data ?? []) as Row[];
+  // V6.9 cards: new tax alerts and the latest bank-reported balances (tables may not exist yet: errors read as empty).
+  // Loaded whenever the viewer may see them (the V6.6 dashboard reads the same figures outside the home layout).
+  const shows = (k: CardKey) => CARDS[k].needs.every((n) => ctx.access.permissions.includes(n));
+  const [taxNew, bankBal] = await Promise.all([
+    shows("tax_updates") ? db.from("fin_tax_alerts").select("id, review_needed").eq("book_id", b).eq("status", "new").limit(200) : Promise.resolve({ data: null }),
+    shows("cash_position") ? db.from("fin_bank_balances").select("account_id, current_balance, as_of").eq("book_id", b).order("as_of", { ascending: false }).limit(200) : Promise.resolve({ data: null }),
+  ]);
+  const TA = (taxNew.data ?? []) as Row[];
+  const latestBal = new Map<string, Row>();
+  for (const r of (bankBal.data ?? []) as Row[]) if (!latestBal.has(String(r.account_id))) latestBal.set(String(r.account_id), r);
+  const balAsOf = [...latestBal.values()].map((r) => String(r.as_of)).sort()[0] ?? null;
   const A = (alerts.data ?? []) as Row[], R = (review.data ?? []) as Row[], B = (bills.data ?? []) as Row[], X = (exps.data ?? []) as Row[];
   const C = (comm.data ?? []) as Row[], K = (costs.data ?? []) as Row[];
   const issued = I.filter((r) => r.status === "issued");
@@ -195,6 +206,10 @@ export async function loadHome(db: Db, ctx: FinContext) {
     my_jobs_billing: money(sumOf(P, "invoiced_revenue"), "Invoiced", "/financials/records?view=jobs", { sub: `of ${$(contract)} contracted` }),
     export_center: { value: "CSV + PDF", money: false, basis: "Count", href: "/financials/accounting/reports", sub: "Ledger, aging, job costing, audit trail and more", note: "Every export is recorded in the audit trail" },
     audit_trail: count(auditWeek, "/financials/accounting/audit", { sub: "Financial actions recorded in the last 7 days" }),
+    tax_updates: count(TA.length, "/financials/tax", { sub: TA.length ? `${TA.filter((a) => a.review_needed).length} need review` : "No new tax changes for your states", tone: TA.some((a) => a.review_needed) ? "warn" : "ok" }),
+    cash_position: latestBal.size
+      ? money(add(0, ...[...latestBal.values()].map((r) => String(r.current_balance ?? "0"))), "Actual", "/financials/cash", { sub: `Bank-reported · ${latestBal.size} account${latestBal.size === 1 ? "" : "s"}`, note: balAsOf ? `Oldest update ${balAsOf.slice(0, 10)}` : undefined })
+      : { value: "No bank connected", money: false, basis: "Count", href: "/financials/banks", empty: true, sub: "Connect a bank or see the forecast" },
   };
   return { kpis, cards, alerts: A, jobs: P.length };
 }

@@ -11,7 +11,7 @@ import { FeatureHost } from "@/components/features/feature-host";
 import { PageGuideButton } from "@/components/features/tour-buttons";
 
 /** Pages that render on the dark command-center theme; the rest keep the light theme. */
-const DARK = ["/admin", "/admin/marketing", "/admin/customers", "/admin/revenue", "/admin/usage", "/admin/operations", "/admin/states", "/admin/definitions", "/admin/complimentary", "/admin/costs"];
+const DARK = ["/admin", "/admin/marketing", "/admin/customers", "/admin/revenue", "/admin/usage", "/admin/operations", "/admin/states", "/admin/definitions", "/admin/tax-banking", "/admin/complimentary", "/admin/costs"];
 
 const under = (path: string, href: string) => (href === "/admin" ? path === "/admin" : path === href || path.startsWith(`${href}/`));
 

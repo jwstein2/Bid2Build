@@ -2,6 +2,7 @@ import { z } from "zod";
 import { json } from "@/lib/http/api";
 import { finFail, finGuard } from "@/lib/financials/api";
 import * as fin from "@/lib/financials/server";
+import { snapshotIssuedInvoice } from "@/lib/tax-banking/tax/estimate-tax";
 
 export const runtime = "nodejs";
 
@@ -138,7 +139,13 @@ export async function POST(req: Request) {
       case "save_project_profile": return json({ ok: await fin.saveProjectProfile(db, a.estimateId, a.p) ?? true });
       case "add_deduction": return json({ ok: await fin.addDeduction(db, a.jobId, a.amount, a.description, a.key) ?? true });
       case "save_invoice": return json(await fin.saveInvoiceDraft(db, a.jobId, { ...a.p, lines: a.p.lines ?? [] }, a.key));
-      case "issue_invoice": return json(await fin.issueInvoice(db, a.invoiceId, { issueDate: a.issueDate, exceptionReason: a.exceptionReason || undefined }));
+      case "issue_invoice": {
+        const r = await fin.issueInvoice(db, a.invoiceId, { issueDate: a.issueDate, exceptionReason: a.exceptionReason || undefined });
+        // V6.9: lock a tax snapshot of the invoice as issued (never changes its amounts). Best effort: a missing
+        // table (SQL not run yet) or a tax-service hiccup never blocks issuing.
+        const snap = await snapshotIssuedInvoice(db, a.invoiceId).catch(() => null);
+        return json({ ...r, taxReview: snap?.note ?? null });
+      }
       case "delete_invoice_draft": { const { error } = await db.rpc("fin_invoice_delete_draft", { p_invoice_id: a.invoiceId }); if (error) throw new fin.FinError(error.message, error.message, error.details ?? undefined); return json({ ok: true }); }
       case "delete_invoice": {
         const { data, error } = await db.rpc("fin_invoice_delete_mistake", { p_invoice_id: a.invoiceId, p_reason: a.reason });

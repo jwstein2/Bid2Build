@@ -100,6 +100,8 @@ export async function WidgetBody({ inst, data, viewer }: { inst: WidgetInstance;
     case "fin_labor_costs": return homeFigure((h) => h.cards.labor_costs, "Labor costs");
     case "fin_sub_commitments": return homeFigure((h) => h.cards.open_commitments, "Subcontractor commitments");
     case "fin_sub_costs": return homeFigure((h) => h.cards.subcontractor_costs, "Subcontractor costs");
+    case "tax_updates": return homeFigure((h) => h.cards.tax_updates, "Tax & regulatory updates");
+    case "cash_position": return homeFigure((h) => h.cards.cash_position, "Cash position");
 
     case "fin_bank_balance":
     case "fin_projected_balance": {

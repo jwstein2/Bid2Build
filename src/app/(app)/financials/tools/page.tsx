@@ -33,6 +33,12 @@ const GROUPS: { title: string; tools: Tool[] }[] = [
     { label: "Profit by project", href: "/financials/reports?view=jobs", needs: "view_company_financials" },
     { label: "Profit by trade", href: "/financials/reports?view=trades", needs: "view_company_financials" },
   ] },
+  { title: "Cash, banks & tax", tools: [
+    { label: "Cash-flow forecast", href: "/financials/cash", needs: "view_company_financials" },
+    { label: "Connected banks (read-only)", href: "/financials/banks", needs: "reconcile" },
+    { label: "Tax & regulatory updates", href: "/financials/tax", needs: "view_company_financials" },
+    { label: "Tax setup & exemption certificates", href: "/financials/tax?view=setup", needs: "view_company_financials" },
+  ] },
   { title: "Keep it clean", tools: [
     { label: "Alerts", href: "/financials/records?view=alerts", needs: "view_project_financials" },
     { label: "Needs review", href: "/financials/records?view=review", needs: "view_project_financials" },

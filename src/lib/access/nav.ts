@@ -24,6 +24,9 @@ export const NAV_FEATURES: { href: string; label: string; feature: FeatureId; ws
   { href: "/company", label: "Company overview", feature: "analytics", ws: "grow" },
   { href: "/dashboard/customers/communications", label: "Customer follow-ups", feature: "communications", ws: "grow" },
   { href: "/financials", label: "Financials", feature: "fin_visibility", ws: "financials" },
+  { href: "/financials/cash", label: "Cash flow", feature: "fin_visibility", ws: "financials" },
+  { href: "/financials/banks", label: "Connected banks", feature: "bank", ws: "financials" },
+  { href: "/financials/tax", label: "Tax & regulatory updates", feature: "fin_visibility", ws: "financials" },
   { href: "/company/business-config", label: "Business & trades", feature: "fin_visibility", ws: "financials" },
   { href: "/company/ai-automation", label: "AI & Automation", feature: "fin_visibility", ws: "financials" },
 ];
