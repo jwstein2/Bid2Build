@@ -44,10 +44,12 @@ export default async function CashPage({ searchParams }: { searchParams: Promise
   const acctOpts = r.banks.accounts.filter((a) => a.status !== "disconnected").map((a) => ({ id: a.id, label: `${a.name}${a.last4 ? ` ••${a.last4}` : ""}` }));
 
   return (
-    <TbShell {...shell} intro="Where your cash is headed: today's bank-reported balance, plus bills, payroll and planned payments with set dates, plus the invoices and milestones you expect to collect. Forecasts are estimates, not guarantees.">
+    <TbShell {...shell} intro="Where your cash is headed: today's bank balance (connected or from your last imported statement), plus bills, payroll and planned payments with set dates, plus the invoices and milestones you expect to collect. Forecasts are estimates, not guarantees.">
       {!f.startsFromBank && (r.withBank
-        ? <Notice title="No bank-reported balance yet">Connect a bank (or wait for its first update) and the forecast starts from the real balance. Until then it shows the net change from today.{" "}<Link href="/financials/banks" className="font-semibold underline">Connected banks</Link></Notice>
+        ? <Notice title="No bank balance yet">Import a bank statement (CSV or OFX) or connect a bank, and the forecast starts from that balance. Until then it shows the net change from today.{" "}<Link href="/financials/accounting/bank" className="font-semibold underline">Import a statement</Link>{" · "}<Link href="/financials/banks" className="font-semibold underline">Connected banks</Link></Notice>
         : <Notice title="Showing net change only">Your role can see the forecast but not bank balances, so it starts at $0 and shows what&apos;s coming in and going out.</Notice>)}
+      {f.basis === "statement" && <Notice title="Starting from your imported bank statement">The starting balance is your last imported statement{f.openingAsOf ? ` (through ${fmtDateServer(f.openingAsOf.slice(0, 10))})` : ""}. Payments you recorded after that date are counted until they show up on a newer statement.</Notice>}
+      {f.statementOld && <Notice tone="warn" title="Your last imported statement is over a month old">Import a newer statement so the starting balance is current.{" "}<Link href="/financials/accounting/bank" className="font-semibold underline">Import a statement</Link></Notice>}
       {f.stale && <Notice tone="warn" title="Bank balance may be out of date">The last bank update was {f.openingAsOf ? fmtWhen(f.openingAsOf) : "a while ago"}. Refresh it on Connected banks.</Notice>}
       {f.missingBalances.length > 0 && <Notice tone="warn" title="Some accounts didn't report a balance">{f.missingBalances.join(", ")}. They&apos;re left out of the starting balance.</Notice>}
 
@@ -72,7 +74,9 @@ export default async function CashPage({ searchParams }: { searchParams: Promise
 
       <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5" data-testid="cash-kpis">
         {[
-          { k: "Bank-reported balance", v: f.opening !== null ? formatCurrency(f.opening) : "—", sub: f.openingAsOf ? `As of ${fmtWhen(f.openingAsOf)}` : "Not connected", href: "/financials/banks" },
+          { k: f.basis === "statement" ? "Statement balance" : f.basis === "mixed" ? "Bank and statement balance" : "Bank-reported balance", v: f.opening !== null ? formatCurrency(f.opening) : "—",
+            sub: !f.openingAsOf ? "No bank balance yet" : f.basis === "statement" ? `Through ${fmtDateServer(f.openingAsOf.slice(0, 10))}` : `As of ${fmtWhen(f.openingAsOf)}`,
+            href: f.basis === "statement" ? "/financials/accounting/bank" : "/financials/banks" },
           { k: `Projected in ${horizon} days`, v: formatCurrency(f.end.expected), sub: `Scheduled only: ${formatCurrency(f.end.scheduled)}`, href: "#events", danger: Number(f.end.expected) < 0 },
           { k: "Expected money in", v: formatCurrency(f.totals.expectedIn), sub: `Scheduled: ${formatCurrency(f.totals.scheduledIn)}`, href: "/financials/receivables" },
           { k: "Expected money out", v: formatCurrency(f.totals.expectedOut.replace("-", "")), sub: `Scheduled: ${formatCurrency(f.totals.scheduledOut.replace("-", ""))}`, href: "/financials/records?view=costs&filter=bills_pending" },

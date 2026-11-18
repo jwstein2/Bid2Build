@@ -5,6 +5,7 @@ import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge, Notice } from "@/components/ui/misc";
 import { api } from "@/components/schedule/client";
+import { Filing1099 } from "@/components/team/filing-1099";
 import { maskTin, threshold1099, totals1099Csv, type Totals1099 } from "@/lib/team/records";
 
 const money = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
@@ -52,6 +53,7 @@ export function Totals1099View({ initialYear }: { initialYear: number }) {
             <div className="rounded-xl border border-line bg-surface p-3"><p className="text-xs text-muted">Missing W-9</p><p className={`text-xl font-extrabold ${missingW9.length ? "text-danger" : "text-navy"}`}>{missingW9.length}</p></div>
             <div className="rounded-xl border border-line bg-surface p-3"><p className="text-xs text-muted">Paid (not card)</p><p className="text-xl font-extrabold text-navy">{money(data.rows.reduce((s, r) => s + r.paid, 0))}</p></div>
           </div>
+          {needs.length > 0 && <Filing1099 year={data.year} count={needs.length} />}
           {data.rows.length === 0 ? (
             <div className="rounded-xl border border-dashed border-line p-6 text-center text-sm text-muted" data-testid="empty-1099">
               No subcontractor payments recorded in {year}. Totals come from bills you pay and expenses you record in <Link href="/financials" className="font-semibold underline">Financials</Link>.

@@ -108,6 +108,9 @@ d("delete a mistaken invoice (database)", () => {
   });
 
   it("rollback restores the old guards and the migration re-applies", async () => {
+    await pool.query(readFileSync("docs/team-records/rollback_20270105001000.sql", "utf8"));
+    await pool.query(readFileSync("docs/team-records/rollback_20270104001000.sql", "utf8"));
+    await pool.query(readFileSync("docs/financials/rollback_20270103001000.sql", "utf8"));   // newest first: timesheet labor reads fin_books / pm_time_entries
     await pool.query(readFileSync("docs/financials/rollback_20261130201000.sql", "utf8"));
     await pool.query(readFileSync("docs/financials/rollback_20261130101000.sql", "utf8"));
     await pool.query(readFileSync("docs/financials/rollback_20261130001000.sql", "utf8"));

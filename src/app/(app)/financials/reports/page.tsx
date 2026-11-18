@@ -30,7 +30,7 @@ const fmt = (d: string) => { if (!d) return "—"; const [y, m, dd] = d.split("-
 const VIEWS = ["statement", "jobs", "trades"] as const;
 type View = (typeof VIEWS)[number];
 const SOURCE_LABELS: Record<string, string> = {
-  payment: "Payment received", refund: "Refund", invoice: "Invoice", credit_memo: "Credit memo", bill: "Vendor bill", bill_payment: "Bill paid", expense: "Expense",
+  payment: "Payment received", refund: "Refund", invoice: "Invoice", credit_memo: "Credit memo", bill: "Vendor bill", bill_payment: "Bill paid", expense: "Expense", time_entry: "Timesheet labor",
 };
 const sourceHref = (source: string, id: string) =>
   source === "invoice" ? `/api/financials/invoices/${id}/pdf` : source === "payment" ? `/api/financials/payments/${id}/receipt` : source === "bill_payment" ? `/api/financials/bill-payments/${id}/receipt` : null;

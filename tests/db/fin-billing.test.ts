@@ -375,6 +375,9 @@ d("Financial Command Center: receivables, milestones and emails (database)", () 
   });
 
   it("rollbacks remove the financial objects (newest first) and the migrations re-apply", async () => {
+    await pool.query(readFileSync("docs/team-records/rollback_20270105001000.sql", "utf8"));
+    await pool.query(readFileSync("docs/team-records/rollback_20270104001000.sql", "utf8"));
+    await pool.query(readFileSync("docs/financials/rollback_20270103001000.sql", "utf8"));   // newest first: timesheet labor reads fin_books / pm_time_entries
     await pool.query(readFileSync("docs/tax-banking/rollback_20261226001000.sql", "utf8"));   // V6.9 tax + banking (newer)
     await pool.query(readFileSync("docs/financials/rollback_20261213001000.sql", "utf8"));
     await pool.query(readFileSync("docs/financials/rollback_20261211001000.sql", "utf8"));

@@ -306,9 +306,17 @@ export async function loadJob(db: Db, estimateId: string, ctx: FinContext) {
     return { ...r, ...invExtra.get(id), send: invoiceSendInfo(r, emailRows.filter((e) => String(e.fin_invoice_id) === id), mark), send_note: mark?.note ?? null } as Row;
   });
   const invIds = new Set(invoiceList.map((r) => String(r.invoice_id)));
+  // Approved timesheet hours costed into this job (20270103001000). Missing function reads as null.
+  // Sub W-9 / insurance on file (20270104001000): a warning when billing or paying a sub, never a block. Missing reads as none.
+  const [{ data: tl }, { data: comp }] = await Promise.all([
+    db.rpc("fin_job_timesheet_labor", { p_job_id: jid }),
+    db.rpc("fin_vendor_compliance", { p_book_id: ctx.bookId }),
+  ]);
+  const compliance = new Map(((Array.isArray(comp) ? comp : []) as Row[]).map((c) => [String(c.vendorId), c]));
   return {
     ...base,
     job: j,
+    timesheetLabor: (tl as { counted: boolean; hours: string; amount: string; uncostedHours: string; workers: string[] } | null) ?? null,
     contract: (contract.data as Row | null) ?? null,
     snapshot: (snapshot.data as Row | null) ?? null,
     changes: (changes.data ?? []) as Row[],
@@ -337,7 +345,7 @@ export async function loadJob(db: Db, estimateId: string, ctx: FinContext) {
     review: (review.data ?? []) as Row[],
     alerts: (alerts.data ?? []) as Row[],
     costCodes: (codes.data ?? []) as Row[],
-    vendors: (vendors.data ?? []) as Row[],
+    vendors: ((vendors.data ?? []) as Row[]).map((v) => ({ ...v, compliance: compliance.get(String(v.id)) ?? null })),
     quotes: quoteRows.map((q) => {
       const revs = ((revRows ?? []) as Row[]).filter((r) => r.quote_id === q.id);
       const rev = revs.find((r) => r.id === q.applied_revision_id) ?? revs.sort((a, b) => Number(b.revision) - Number(a.revision))[0];

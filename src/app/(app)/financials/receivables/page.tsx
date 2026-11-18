@@ -12,6 +12,9 @@ import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { MetricCard } from "@/components/ui/metric-card";
 import { Badge, Notice } from "@/components/ui/misc";
 import { FinStateNotice } from "@/components/financials/fin-state-notice";
+import { ReminderSettings, type RecentReminder } from "@/components/financials/reminder-settings";
+import { mapRule, REMINDER_KINDS, type ReminderKind, type ReminderRule } from "@/lib/financials/reminders";
+import { commConfig } from "@/lib/comms/config";
 
 export const metadata: Metadata = { title: "Accounts receivable", robots: { index: false } };
 
@@ -24,7 +27,7 @@ const BUCKET_KEYS = ["open", "overdue", "paid", "due_soon", "all", ...BUCKETS] a
 /**
  * Accounting → Accounts Receivable (V5 §8.1, V5.1 §5). Real issued invoices and recorded payments only
  * (fin_ar_invoices_v / fin_payment_balances_v through RLS). Every card opens the matching filtered list and
- * keeps the other filters. Nothing here sends a reminder.
+ * keeps the other filters. Automatic reminder settings live here; the hourly customer-email job sends them.
  */
 export default async function Receivables({ searchParams }: { searchParams: Promise<SP> }) {
   if (!isFinancialsEnabled()) notFound();
@@ -49,6 +52,13 @@ export default async function Receivables({ searchParams }: { searchParams: Prom
     db.from("fin_payment_balances_v").select("payment_id, received_on, amount, refunded, unapplied, status, customer_id, job_id").eq("book_id", bookId),
     db.from("fin_books").select("company_id").eq("id", bookId).maybeSingle(),
   ]);
+  const canSeeReminders = access.permissions.includes("view_company_financials");
+  const [{ data: ruleRows }, { data: sentRows }] = canSeeReminders ? await Promise.all([
+    db.from("fin_reminder_rules").select("*").eq("book_id", bookId),
+    db.from("comm_messages").select("id, fin_invoice_id, fin_template_kind, status, status_reason, to_name, sent_at, created_at")
+      .eq("fin_book_id", bookId).eq("kind", "financial").eq("automation", true).order("created_at", { ascending: false }).limit(10),
+  ]) : [{ data: [] }, { data: [] }];
+  const rules = Object.fromEntries(REMINDER_KINDS.map((k) => [k, mapRule(((ruleRows ?? []) as Record<string, unknown>[]).find((r) => r.kind === k), k)])) as Record<ReminderKind, ReminderRule>;
   if (arErr) return <div className="mx-auto max-w-4xl space-y-4">{crumbs}<Notice tone="warn" title="One more database update">Accounts receivable turns on after the V5 financial SQL is installed. Nothing is lost in the meantime.</Notice></div>;
   // Dates compare as YYYY-MM-DD strings; normalize in case a driver returns full timestamps.
   const d10 = (v: unknown) => String(v ?? "").slice(0, 10);
@@ -157,7 +167,13 @@ export default async function Receivables({ searchParams }: { searchParams: Prom
           </div>
         )}
       </section>
-      <p className="text-xs text-muted">Payment reminders are drafts only until you turn on sending. Collections are recorded payments; &quot;verified&quot; means checked against your bank.</p>
+      {canSeeReminders && <ReminderSettings rules={rules} sendingOn={commConfig().enabled}
+        canEdit={access.permissions.includes("manage_financial_config") && access.active && !access.readOnly}
+        recent={((sentRows ?? []) as Record<string, unknown>[]).map((m): RecentReminder => ({
+          id: String(m.id), invoiceNumber: all.find((r) => r.invoice_id === m.fin_invoice_id)?.number ?? null, customer: String(m.to_name ?? "Customer"),
+          kind: m.fin_template_kind as ReminderKind, status: String(m.status), reason: (m.status_reason as string) ?? null, at: String(m.sent_at ?? m.created_at),
+        }))} />}
+      <p className="text-xs text-muted">Collections are recorded payments; &quot;verified&quot; means checked against your bank.</p>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import { FileDown, Paperclip } from "lucide-react";
 import { Button, buttonClass } from "@/components/ui/button";
 import { Badge, Field, Notice } from "@/components/ui/misc";
@@ -213,12 +214,25 @@ export function BillDialog({ open, onOpenChange, jobId, codes, vendors, commitme
           <Field label="Due date" optional htmlFor="bl-due"><input id="bl-due" type="date" className="field" value={due} onChange={(e) => setDue(e.target.value)} /></Field>
         </div>
         <Field label="Description" optional htmlFor="bl-desc"><input id="bl-desc" className="field" value={desc} onChange={(e) => setDesc(e.target.value)} maxLength={500} /></Field>
+        <ComplianceNotice vendor={vendors.find((v) => s(v.id) === vendor)} />
         {!commitment && <Field label="Cost code" optional htmlFor="bl-code"><CostCodeSelect id="bl-code" codes={codes} value={code} onChange={setCode} /></Field>}
         <Field label="Bill file" optional htmlFor="bl-file"><input id="bl-file" type="file" accept="application/pdf,image/jpeg,image/png,image/webp" className="block w-full text-sm" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></Field>
         {err && <Notice tone="danger">{err}</Notice>}
         <Button type="submit" disabled={busy}>{busy ? "Saving…" : "Save bill"}</Button>
       </form>
     </FinDialog>
+  );
+}
+
+/** Missing paperwork for a subcontractor vendor (W-9 / current insurance). A warning only; payments are never blocked. */
+export function ComplianceNotice({ vendor }: { vendor: R | undefined }) {
+  const c = vendor?.compliance as R | null | undefined;
+  if (!c) return null;
+  const expired = Array.isArray(c.expired) ? (c.expired as R[]) : [];
+  const missing = [!c.w9OnFile && "no W-9", !c.insuranceOnFile && "no current insurance certificate", expired.length > 0 && `${expired.length} expired document${expired.length === 1 ? "" : "s"}`].filter(Boolean) as string[];
+  if (!missing.length) return null;
+  return (
+    <Notice tone="warn">{s(vendor?.name)} has {missing.join(", ")} on file. You can still save this.{c.resourceId ? <> <Link href={`/projects/team/subs/${s(c.resourceId)}`} className="font-semibold underline">Open their records</Link> to request documents.</> : null}</Notice>
   );
 }
 
@@ -285,7 +299,7 @@ export function CommitmentDialog({ open, onOpenChange, jobId, codes, vendors, qu
 }
 
 /** Record a payment made to a vendor/sub outside Built2Bid. Never more than the bill's open balance. */
-export function BillPaymentDialog({ open, onOpenChange, bill, onDone }: { open: boolean; onOpenChange: (o: boolean) => void; bill: R; onDone: () => void }) {
+export function BillPaymentDialog({ open, onOpenChange, bill, vendors = [], onDone }: { open: boolean; onOpenChange: (o: boolean) => void; bill: R; vendors?: R[]; onDone: () => void }) {
   const [amount, setAmount] = useState(s(bill.balance));
   const [date, setDate] = useState(today());
   const [method, setMethod] = useState("check");
@@ -316,6 +330,7 @@ export function BillPaymentDialog({ open, onOpenChange, bill, onDone }: { open: 
           </Field>
           <Field label="Check # or reference" optional htmlFor="bp-ref"><input id="bp-ref" className="field" value={ref} onChange={(e) => setRef(e.target.value)} maxLength={120} /></Field>
         </div>
+        <ComplianceNotice vendor={vendors.find((v) => v.id === bill.vendor_id)} />
         {err && <Notice tone="danger">{err}</Notice>}
         <Button type="submit" disabled={busy}>{busy ? "Saving…" : "Record payment"}</Button>
       </form>
@@ -425,6 +440,57 @@ export function ReviewQueue({ items, canResolve, onChanged }: { items: R[]; canR
           ))}
         </ul>
       )}
+    </section>
+  );
+}
+
+export interface TimesheetLabor { counted: boolean; hours: string; amount: string; uncostedHours: string; workers: string[] }
+
+/**
+ * Approved timesheet hours on this job, costed at each worker's hourly cost (Team → Employees & time). They count
+ * as actual labor in the table above and in the billed P&L unless the company turned that off (for companies that
+ * record payroll per job as expenses, so labor isn't counted twice).
+ */
+export function TimesheetLaborCard({ labor, canConfig, writable, onChanged }: { labor: TimesheetLabor | null; canConfig: boolean; writable: boolean; onChanged: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  if (!labor) return null;
+  const hours = Number(labor.hours), uncosted = Number(labor.uncostedHours);
+  const toggle = async () => {
+    setBusy(true); setErr(null);
+    const r = await finAction({ action: "set_timesheet_labor", on: !labor.counted });
+    setBusy(false);
+    if (!r.ok) setErr(r.message); else onChanged();
+  };
+  return (
+    <section className="rounded-xl border border-line bg-surface p-4" aria-labelledby="fin-tl-h" data-testid="fin-timesheet-labor">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <h2 id="fin-tl-h" className="font-display text-lg font-extrabold">Labor from timesheets</h2>
+        <BasisBadge basis="Actual" />
+      </div>
+      {hours === 0 ? (
+        <p className="mt-1 text-sm text-ink-soft">No approved hours on this project yet. Hours your crew clock on this project&apos;s schedule show up here once a manager approves them.</p>
+      ) : (
+        <p className="mt-1 text-sm">
+          <span className="font-semibold tabular">{hours.toFixed(2)} approved hours</span>
+          {Number(labor.amount) > 0 && <> · <span className="font-semibold tabular">{usd(labor.amount)}</span> {labor.counted ? "counted as actual labor" : "(not counted: turned off)"}</>}
+        </p>
+      )}
+      {uncosted > 0 && (
+        <Notice tone="warn" className="mt-2" title={`${uncosted.toFixed(2)} hours have no hourly cost`}>
+          Add an hourly cost for {labor.workers.join(", ") || "these workers"} on <Link className="font-semibold underline" href="/projects/team/time">Team → Employees &amp; time</Link> so their hours are costed.
+        </Notice>
+      )}
+      <p className="mt-2 text-xs text-muted">Cost = hours (minus breaks) × the worker&apos;s current hourly cost. Shown on the billed P&amp;L as labor; the cash P&amp;L shows payroll you actually paid.</p>
+      {canConfig && writable && (
+        <div className="mt-2">
+          <Button size="sm" variant="secondary" disabled={busy} onClick={toggle} data-testid="fin-tl-toggle">
+            {labor.counted ? "Stop counting timesheet labor (we record payroll as job expenses)" : "Count approved timesheet hours as job labor"}
+          </Button>
+          <p className="mt-1 text-xs text-muted">This applies to every project in your books.</p>
+        </div>
+      )}
+      {err && <p role="alert" className="mt-1 text-sm text-danger">{err}</p>}
     </section>
   );
 }
