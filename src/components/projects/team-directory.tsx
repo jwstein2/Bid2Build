@@ -91,7 +91,7 @@ export function TeamDirectory({ team, people, me, usage, compliance = null }: {
           const Icon = ICON[r.kind];
           const members = r.members.map((m) => byId.get(m)?.name).filter(Boolean);
           return (
-            <li key={r.id} className="rounded-xl border border-line bg-surface p-4" data-testid="team-card">
+            <li key={r.id} className="rounded-xl border border-line bg-surface p-4" data-testid="team-card" data-search-id={r.id}>
               <div className="flex items-start gap-3">
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-paper text-navy"><Icon className="h-4 w-4" aria-hidden /></span>
                 <div className="min-w-0 flex-1">

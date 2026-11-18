@@ -71,7 +71,7 @@ export function SupplierDirectory({ list }: { list: SupplierList }) {
           const d = detail[s.id];
           const href = websiteHref(s.website);
           return (
-            <li key={s.id} className="rounded-xl border border-line bg-surface p-4" data-testid="supplier-card">
+            <li key={s.id} className="rounded-xl border border-line bg-surface p-4" data-testid="supplier-card" data-search-id={s.id}>
               <div className="flex items-start gap-3">
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-paper text-navy"><Building2 className="h-4 w-4" aria-hidden /></span>
                 <div className="min-w-0 flex-1">

@@ -18,6 +18,9 @@ import { PremiumAccessProvider } from "@/components/billing/premium";
 import { AccountThemeScript } from "@/components/theme/account-theme-script";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { NotificationBell } from "@/components/operations/notification-bell";
+import { Suspense } from "react";
+import { GlobalSearchHost, SearchField } from "@/components/search/global-search";
+import { SearchFocus } from "@/components/search/search-focus";
 
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -56,13 +59,17 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <main id="main" className="min-w-0 flex-1 px-4 py-6 sm:px-8 md:pt-2">
         {/* Desktop header row: Light/Dark switch, top right. On phones it sits in the top bar. */}
         {/* Task review notices (V4.3) sit beside it, on phones too. */}
+        {/* Universal search (V6.4): header field + Ctrl/Cmd+K on desktop; the phone icon is in the top bar. */}
         <div className="mb-1 flex items-center justify-end gap-1 no-print">
+          <div className="mr-auto hidden w-full max-w-md md:block"><SearchField /></div>
           {isPmEnabled() && <NotificationBell />}
           <span className="hidden md:inline-flex"><ThemeToggle signedIn account={user.theme ?? null} /></span>
         </div>
         {children}
       </main>
       <FeatureHost />
+      <GlobalSearchHost />
+      <Suspense fallback={null}><SearchFocus /></Suspense>
     </div>
     </PremiumAccessProvider>
   );

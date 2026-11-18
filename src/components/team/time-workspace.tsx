@@ -163,7 +163,7 @@ function EmployeeDirectory({ list, projects, sheet, onSaved, onError }: { list: 
         {shown.map((e) => {
           const open = sheet?.entries.find((x) => x.resourceId === e.id && x.status === "open");
           return (
-            <li key={e.id} className="rounded-xl border border-line bg-surface p-4" data-testid="employee-card">
+            <li key={e.id} className="rounded-xl border border-line bg-surface p-4" data-testid="employee-card" data-search-id={e.id}>
               <div className="flex items-start gap-3">
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-paper text-navy"><User className="h-4 w-4" aria-hidden /></span>
                 <div className="min-w-0 flex-1">

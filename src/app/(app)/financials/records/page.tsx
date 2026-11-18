@@ -153,7 +153,7 @@ export default async function Records({ searchParams }: { searchParams: Promise<
                 </span>
               </>
             );
-            return <li key={r.key}>{r.href ? <Link href={r.href} className="flex items-center gap-3 px-4 py-3 hover:bg-black/5">{inner}</Link> : <div className="flex items-center gap-3 px-4 py-3">{inner}</div>}</li>;
+            return <li key={r.key} data-search-id={r.key}>{r.href ? <Link href={r.href} className="flex items-center gap-3 px-4 py-3 hover:bg-black/5">{inner}</Link> : <div className="flex items-center gap-3 px-4 py-3">{inner}</div>}</li>;
           })}
         </ul>
       )}

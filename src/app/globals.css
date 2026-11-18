@@ -431,3 +431,7 @@ html[data-theme="dark"] .theme-icon-star { display: block; }
 html[data-theme="black"] .theme-icon-sun { display: block; }
 /* Switching themes changes everything in one frame instead of fading element by element. */
 .theme-switching, .theme-switching *, .theme-switching *::before, .theme-switching *::after { transition: none !important; }
+
+/* Universal search deep link (#r-<id>): the matching row is briefly highlighted (components/search/search-focus.tsx). */
+.search-target { outline: 3px solid var(--color-accent); outline-offset: 2px; border-radius: 0.5rem; box-shadow: 0 0 0 6px color-mix(in srgb, var(--color-accent) 22%, transparent); transition: outline-color var(--motion-slow), box-shadow var(--motion-slow); }
+@media (prefers-reduced-motion: reduce) { .search-target { transition: none; } }

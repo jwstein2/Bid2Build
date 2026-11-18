@@ -187,7 +187,7 @@ export function LibraryManager() {
 
 function ItemRow({ item: i, lib, onEdit, onRemoved }: { item: SavedItem; lib: Library; onEdit: () => void; onRemoved: () => void }) {
   return (
-    <li className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-2 text-sm">
+    <li className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-2 text-sm" data-search-id={i.id}>
       <div className="min-w-0 flex-1">
         <p className="font-medium">{i.name}{i.favorite && <Star className="ml-1 inline h-3.5 w-3.5 text-warn" fill="currentColor" aria-label="Favorite" />}</p>
         <p className="text-xs text-muted">{typeLabel(i.costType)}{i.quantity ? ` · default qty ${i.quantity}` : ""}{i.treatment === "pass_through" ? " · billed at cost" : ""}</p>
@@ -214,7 +214,7 @@ function StackRow({ stack: s, lib, say, onRemoved }: { stack: SavedStack; lib: L
   const [name, setName] = useState(s.name);
   const [err, setErr] = useState<string | null>(null);
   return (
-    <li className="px-4 py-2 text-sm">
+    <li className="px-4 py-2 text-sm" data-search-id={s.id}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         {renaming ? (
           <form className="flex min-w-0 flex-1 flex-wrap items-center gap-2" onSubmit={async (e) => { e.preventDefault(); if (!name.trim()) return; const r = await lib.renameStack(s.id, name.trim()); if (r.ok) setRenaming(false); else setErr(r.message); }}>

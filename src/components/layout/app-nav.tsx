@@ -13,6 +13,7 @@ import { FeatureTourButton } from "../features/tour-buttons";
 import type { FeatureId } from "@/lib/features/registry";
 import type { ThemePref } from "@/lib/theme";
 import { ThemeToggle } from "../theme/theme-toggle";
+import { SearchIconButton } from "../search/global-search";
 
 type NavItem = { href: string; label: string; icon: typeof Library; exact?: boolean; premium?: boolean; feature?: FeatureId };
 const NAV: NavItem[] = [
@@ -113,10 +114,13 @@ export function AppSidebar({ isAdmin, email, company, projects = false, financia
   };
   return (
     <>
-      <div className="flex items-center justify-between gap-1 px-3 py-3 sm:gap-2 sm:px-4 md:py-4">
+      <div className="flex items-center justify-between gap-1 px-3 py-3 max-[359px]:px-2 sm:gap-2 sm:px-4 md:py-4">
         <Logo tone="dark" href={home ? "/home" : "/dashboard"} />
         <div className="flex items-center gap-1 max-[380px]:gap-0 md:hidden">
-          <ButtonLink href="/bids" variant="accent" size="sm" className="min-h-11 max-[380px]:px-2.5" data-guide="bids.new-bid"><FileText className="h-4 w-4 max-[380px]:hidden" aria-hidden /> New bid</ButtonLink>
+          <ButtonLink href="/bids" variant="accent" size="sm" className="min-h-11 max-[380px]:px-2.5 max-[359px]:min-w-11 max-[359px]:px-0" data-guide="bids.new-bid" aria-label="New bid">
+            <FileText className="h-4 w-4 max-[440px]:hidden max-[359px]:block" aria-hidden /><span className="max-[359px]:sr-only">New bid</span>
+          </ButtonLink>
+          <SearchIconButton tone="dark" />
           <ThemeToggle signedIn account={theme} tone="dark" />
           <button
             ref={menuButton}
@@ -127,7 +131,7 @@ export function AppSidebar({ isAdmin, email, company, projects = false, financia
             className="flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-md px-2.5 text-sm font-semibold text-white hover:bg-white/10"
           >
             {open ? <X className="h-5 w-5" aria-hidden /> : <Menu className="h-5 w-5" aria-hidden />}
-            <span className="max-[380px]:sr-only">{open ? "Close" : "Menu"}</span>
+            <span className="max-[440px]:sr-only">{open ? "Close" : "Menu"}</span>
           </button>
         </div>
       </div>

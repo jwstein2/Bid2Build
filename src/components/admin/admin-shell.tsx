@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { GlobalSearchHost, SearchIconButton } from "@/components/search/global-search";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
@@ -114,6 +115,7 @@ export function AdminShell({ email, logo, children }: { email: string; logo: Rea
             <span data-guide="admin.tools" className="inline-flex"><ToolsMenu path={path} /></span>
           </nav>
           <div className="ml-auto flex items-center gap-3">
+            <SearchIconButton tone="dark" className="text-[#8fa6b4] hover:text-white" />
             {dark && <span data-guide="admin.test-data" className="inline-flex"><Suspense fallback={null}><TestDataToggle path={path} /></Suspense></span>}
             <PageGuideButton compact className="text-[#8fa6b4] hover:bg-white/10 hover:text-white" />
             <span className="hidden text-xs text-[#8fa6b4] lg:inline">{email}</span>
@@ -124,6 +126,8 @@ export function AdminShell({ email, logo, children }: { email: string; logo: Rea
       <main id="main" className={cn("mx-auto px-4 py-7", dark ? "max-w-7xl" : "max-w-6xl")} data-guide-page="admin">{children}</main>
       {/* Owner-only walkthrough (page-guides.ts "admin"): started from the compass button, never automatically. */}
       <FeatureHost auto={false} />
+      {/* Universal search (V6.4) with owner-admin account lookup; Ctrl/Cmd+K. */}
+      <GlobalSearchHost />
     </div>
   );
 }

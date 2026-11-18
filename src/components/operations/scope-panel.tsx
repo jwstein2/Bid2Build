@@ -149,7 +149,7 @@ function SectionCard({ s, data, resName, onSaved, onShare, onCreated }: { s: Sco
   );
 
   return (
-    <section className="rounded-xl border border-line bg-surface" data-testid="scope-section">
+    <section className="rounded-xl border border-line bg-surface" data-testid="scope-section" data-search-id={s.id}>
       <div className="flex flex-wrap items-center gap-2 p-3">
         <button className="flex min-w-0 flex-1 items-center gap-2 text-left" onClick={() => setOpen(!open)} aria-expanded={open}>
           <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform", open && "rotate-180")} aria-hidden />
