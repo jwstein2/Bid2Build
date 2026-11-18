@@ -75,13 +75,14 @@ for (const sc of scenarios) {
         const hero = page.locator("section").first().locator("[data-cta]");
         const labels = (await hero.allInnerTexts()).map((s) => s.trim());
         // V4.7: signed-out homepage hero leads with the 3 free bids and Project Command Center.
-        const [p1, p2] = sc.auth === false ? ["Start Your 3 Free Bids", "Explore Project Command Center"] : [sc.primary, sc.secondary];
+        const [p1, p2] = sc.auth === false ? ["Start Your 3 Free Bids", "See a sample proposal"] : [sc.primary, sc.secondary];
         check(`${tag} hero CTAs`, labels[0] === p1 && labels[1] === p2, labels.join(" | "));
         if (sc.auth !== false) check(`${tag} neutral tagline`, (await page.getByTestId("hero-tagline").innerText()) === "Professional estimates. Customer-ready proposals.");
       }
       if (pg.id === "trade") {
         const label = (await page.locator("main [data-cta]").first().innerText()).trim();
-        check(`${tag} trade CTA`, label === sc.primary, label);
+        // Rich trade pages name the trade for visitors ("Create a Free Roofing Bid", src/lib/trades/landing.ts).
+        check(`${tag} trade CTA`, label === sc.primary || (sc.auth === false && /^Create a Free .+ (Bid|Estimate)$/.test(label)), label);
       }
       if (pg.id === "pricing" && sc.auth !== false) check(`${tag} marks exactly one current plan`, (await page.getByTestId("current-plan").count()) === 1);
       if (pg.id === "billing" && sc.billing) check(`${tag} subscription status`, sc.billing.test(text));

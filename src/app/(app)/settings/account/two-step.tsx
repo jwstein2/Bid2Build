@@ -97,9 +97,19 @@ export function TwoStepSignIn() {
         </div>
       ) : enrolling ? (
         <div className="mt-3 space-y-3">
+          <div className="rounded-lg border border-accent/40 bg-accent-tint px-3 py-2 text-sm text-ink" role="note" data-testid="two-step-app-note">
+            <p className="font-semibold">You need an authenticator app first.</p>
+            <p className="mt-1">
+              Download <b>Microsoft Authenticator</b> (the blue shield icon) from the{" "}
+              <a href="https://play.google.com/store/apps/details?id=com.azure.authenticator" target="_blank" rel="noopener noreferrer" className="font-semibold text-accent-ink underline">Google Play Store</a> or the{" "}
+              <a href="https://apps.apple.com/us/app/microsoft-authenticator/id983156458" target="_blank" rel="noopener noreferrer" className="font-semibold text-accent-ink underline">Apple App Store</a>,
+              or use one you already have, such as Google Authenticator or 1Password.
+            </p>
+            <p className="mt-1">Scan the QR code from <b>inside that app</b>. Your phone&apos;s regular camera will only show a line of text, not set anything up.</p>
+          </div>
           <ol className="list-decimal space-y-1 pl-5 text-sm">
-            <li>Open your authenticator app and add an account.</li>
-            <li>Scan this QR code, or type the setup key.</li>
+            <li>Open your authenticator app and tap <b>+</b> (add account).</li>
+            <li>Choose <b>Scan a QR code</b> and scan this code, or type the setup key.</li>
             <li>Enter the 6-digit code the app shows.</li>
           </ol>
           {/* eslint-disable-next-line @next/next/no-img-element -- Supabase returns the QR code as an SVG data URL */}

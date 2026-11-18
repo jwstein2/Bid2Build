@@ -8,7 +8,7 @@ import { safeNext } from "@/lib/http/redirect";
 import { isSmsSignInEnabled } from "@/lib/auth/phone";
 import { emailOtpLength } from "@/lib/auth/config";
 
-export const metadata: Metadata = { title: "Log in", robots: { index: false } };
+export const metadata: Metadata = { title: "Log in", robots: { index: false }, alternates: { canonical: "/login" } };
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const sp = await searchParams;

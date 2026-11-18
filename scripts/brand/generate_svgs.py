@@ -122,7 +122,7 @@ def main():
         height = 64
         extra = ""
         if tagline:
-            tag, tag_end = word_paths(font, "Build estimates. Create bids. Win more work.", 13.2, 0, 0, tracking=0)
+            tag, tag_end = word_paths(font, "Professional estimates for your trade, ready to send.", 13.2, 0, 0, tracking=0)
             # Scale tagline to the wordmark width.
             k = (end - (56 + gap)) / tag_end
             extra = f'<g transform="translate({56 + gap} 70) scale({k:.4f})" fill="#6B7A89">' + "".join(f'<path d="{d}"/>' for _, d in tag) + "</g>"
@@ -135,7 +135,7 @@ def main():
             write(name, svg(width, height, "Built2Bid", inner))
     # Social preview (1200x630), rendered to PNG by brand_pngs.mjs.
     words, end = wordmark(font, 0, 0, 96, WHITE, "url(#g2)")
-    tag, tag_end = word_paths(font, "Build estimates. Create bids. Win more work.", 30, 0, 0, tracking=0)
+    tag, tag_end = word_paths(font, "Professional estimates for your trade, ready to send.", 26, 0, 0, tracking=0)
     tag_svg = "".join(f'<path d="{d}"/>' for _, d in tag)
     og = (grad_defs("g2", False) + f'<rect width="1200" height="630" fill="{NAVY}"/>'
           f'<g stroke="#FFFFFF" stroke-opacity="0.06">' + "".join(f'<path d="M{x} 0V630"/>' for x in range(0, 1201, 40))
@@ -145,7 +145,7 @@ def main():
           + f'<g transform="translate(70 110) scale(4.2)">{guides("#FFFFFF")}{mark_group(WHITE, TEAL)}</g>'
           f'<g transform="translate(370 300)">{words}</g>'
           f'<g transform="translate(374 372)" fill="#C9D6E3">{tag_svg}</g>')
-    write("og-source.svg", svg(1200, 630, "Built2Bid: Build estimates. Create bids. Win more work.", og))
+    write("og-source.svg", svg(1200, 630, "Built2Bid: Professional estimates for your trade, ready to send.", og))
 
 if __name__ == "__main__":
     sys.exit(main())

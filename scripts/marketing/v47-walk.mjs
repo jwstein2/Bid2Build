@@ -60,9 +60,9 @@ for (const vp of VIEWPORTS) {
   const page = await ctx.newPage();
   await page.goto(BASE + "/", { waitUntil: "networkidle" });
   const tag = `home/signed-out/${vp.id}`;
-  check(`${tag} headline`, (await page.locator("h1").innerText()).replace(/\s+/g, " ").includes("Win More Bids. Manage Every Job. Grow Your Business."));
+  check(`${tag} headline`, (await page.locator("h1").innerText()).replace(/\s+/g, " ").includes("Professional estimates for your trade, ready to send."));
   const hero = (await page.locator("section").first().locator("[data-cta]").allInnerTexts()).map((s) => s.trim());
-  check(`${tag} hero CTAs`, hero[0] === "Start Your 3 Free Bids" && hero[1] === "Explore Project Command Center", hero.join(" | "));
+  check(`${tag} hero CTAs`, hero[0] === "Start Your 3 Free Bids" && hero[1] === "See a sample proposal", hero.join(" | "));
   for (const p of ["win", "run", "grow"]) {
     check(`${tag} pillar link ${p}`, await page.getByTestId(`pillar-link-${p}`).isVisible());
     check(`${tag} pillar section ${p}`, (await page.locator(`[data-pillar=${p}]`).count()) === 1);
@@ -71,9 +71,9 @@ for (const vp of VIEWPORTS) {
   check(`${tag} pillar order`, titles.join("|") === "Win the Job|Run the Job|Grow the Business", titles.join("|"));
   const note = await page.getByTestId("pm-price-note").innerText();
   check(`${tag} PM price note`, /\$4\.99\/month/.test(note) && /\$49\.99\/year/.test(note) && /Enterprise includes 1 schedule editor/.test(note), note);
+  // V8: coming-soon items are left off the homepage (they stay on the pricing comparison).
   for (const id of ["nurture", "scheduled_updates"]) {
-    const badge = await page.locator(`[data-feature-id=${id}] [data-status]`).innerText();
-    check(`${tag} ${id} marked Coming soon`, badge.trim() === "Coming soon", badge);
+    check(`${tag} ${id} (coming soon) not listed on the homepage`, (await page.locator(`[data-pillar] [data-feature-id=${id}]`).count()) === 0);
   }
   const runBadges = await page.locator("[data-pillar=run] [data-feature-id] [data-status]").allInnerTexts();
   check(`${tag} run pillar badges say Project Command Center`, runBadges.length >= 5 && runBadges.every((b) => b.trim() === "Project Command Center"), runBadges.join(","));
@@ -97,11 +97,15 @@ for (const vp of VIEWPORTS) {
     if (vp.id !== "m320") await page.locator(`[data-pillar=${p}]`).screenshot({ path: path.join(out, `home-pillar-${p}__${vp.id}.png`) });
   }
   if (vp.id === "desktop") await axe(page, tag);
-  // Secondary CTA scrolls to Run the Job.
+  // V8: the secondary CTA shows the sample proposal; the pillar link still reaches Run the Job.
   await page.evaluate(() => window.scrollTo(0, 0));
-  await page.locator("section").first().locator("[data-cta=pm]").click();
+  await page.locator("section").first().locator("[data-cta=sample]").click();
   await page.waitForTimeout(600);
-  check(`${tag} Explore PCC jumps to #run-the-job`, new URL(page.url()).hash === "#run-the-job" && await page.locator("#run-the-job").isVisible(), page.url());
+  check(`${tag} See a sample proposal jumps to #sample-proposal`, new URL(page.url()).hash === "#sample-proposal" && await page.locator("#sample-proposal").isVisible(), page.url());
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.getByTestId("pillar-link-run").click();
+  await page.waitForTimeout(600);
+  check(`${tag} Run the Job pillar link jumps to #run-the-job`, new URL(page.url()).hash === "#run-the-job" && await page.locator("#run-the-job").isVisible(), page.url());
   // Primary CTA opens the trade picker for a new bid.
   await page.goto(BASE + "/", { waitUntil: "networkidle" });
   await page.locator("section").first().locator("[data-cta=create]").click();

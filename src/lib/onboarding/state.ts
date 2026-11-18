@@ -37,12 +37,14 @@ export function parseLocal(raw: string | null): LocalOnboarding | null {
 }
 
 /**
- * Pages where the popup may open by itself: the marketing pages a new visitor lands on and the
- * dashboard. Never the bid builder, sign-in, auth callbacks, checkout returns, settings or admin.
+ * Pages where the popup may open by itself: only the signed-in dashboard (V8). Visitors reading
+ * the homepage, pricing, trade pages or guides are never interrupted; they can still open the
+ * tour from "Watch Demo" or the help menu. Never the bid builder, sign-in, auth callbacks,
+ * checkout returns, settings or admin.
  */
 export function isEligiblePath(pathname: string): boolean {
   const p = pathname.replace(/\/+$/, "") || "/";
-  return p === "/" || p === "/dashboard" || p === "/pricing" || p === "/bids" || p.startsWith("/bids/") || p === "/learn" || p.startsWith("/learn/");
+  return p === "/dashboard";
 }
 
 /** Query parameters that mean sign-in or checkout is in progress on this page load. */

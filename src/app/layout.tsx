@@ -19,7 +19,7 @@ const googleVerification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION?.tri
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
-  title: { default: `${site.name}: Win more bids with professional contractor proposals`, template: `%s | ${site.name}` },
+  title: { default: `${site.name}: Contractor estimate and proposal software for every trade`, template: `%s | ${site.name}` },
   description: site.description,
   openGraph: { siteName: site.name, type: "website", locale: "en_US", title: `${site.name}: ${site.tagline}`, description: site.description, images: [OG_IMAGE] },
   twitter: { card: "summary_large_image" },

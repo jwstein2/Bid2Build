@@ -5,9 +5,9 @@ import { TOUR_STEPS } from "@/components/onboarding/steps";
 const now = "2026-11-14T00:00:00.000Z";
 
 describe("onboarding eligibility", () => {
-  it("opens only on landing pages and the dashboard", () => {
-    for (const p of ["/", "/dashboard", "/bids", "/bids/roofing", "/learn", "/learn/x", "/pricing", "/dashboard/"]) expect(isEligiblePath(p)).toBe(true);
-    for (const p of ["/builder", "/start/roofing", "/login", "/auth/finish", "/settings/billing", "/admin", "/estimates/1", "/dashboard/items"]) expect(isEligiblePath(p)).toBe(false);
+  it("opens by itself only on the signed-in dashboard, never on marketing pages", () => {
+    for (const p of ["/dashboard", "/dashboard/"]) expect(isEligiblePath(p)).toBe(true);
+    for (const p of ["/", "/bids", "/bids/roofing", "/learn", "/learn/x", "/pricing", "/about", "/builder", "/start/roofing", "/login", "/auth/finish", "/settings/billing", "/admin", "/estimates/1", "/dashboard/items"]) expect(isEligiblePath(p)).toBe(false);
   });
   it("stays out of sign-in and checkout returns", () => {
     expect(isBusySearch("?resume=monthly")).toBe(true);

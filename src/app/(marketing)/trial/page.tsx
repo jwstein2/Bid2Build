@@ -4,11 +4,15 @@ import { Container } from "@/components/ui/misc";
 import { trialConfig, TRIAL_DAYS } from "@/lib/trial/config";
 import { ClaimForm } from "./claim-form";
 
-export const metadata: Metadata = {
-  title: `${TRIAL_DAYS} free days of Unlimited`,
-  description: `Get a Built2Bid invite for ${TRIAL_DAYS} free days of Unlimited bids. No card needed.`,
-  robots: { index: false, follow: false },
-};
+// While the claim page is switched off the route is a 404, so its title must not advertise a trial.
+export function generateMetadata(): Metadata {
+  if (!trialConfig().claimPage) return { title: "Page not found", robots: { index: false, follow: false } };
+  return {
+    title: `${TRIAL_DAYS} free days of Unlimited`,
+    description: `Get a Built2Bid invite for ${TRIAL_DAYS} free days of Unlimited bids. No card needed.`,
+    robots: { index: false, follow: false },
+  };
+}
 export const dynamic = "force-dynamic";
 
 /**

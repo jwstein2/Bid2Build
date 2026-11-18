@@ -18,7 +18,7 @@ for (const [name, viewport] of Object.entries(viewports)) {
   page.on("pageerror", (e) => errors.push(e.message));
 
   await page.goto(base + "/");
-  check(await page.getByRole("heading", { level: 1, name: /Win More Bids\. Look More Professional\. Get Back to Building\./ }).isVisible(), "home hero headline");
+  check(await page.getByRole("heading", { level: 1, name: /Professional estimates for your trade, ready to send\./ }).isVisible(), "home hero headline");
   await page.getByRole("link", { name: "Create a free bid" }).first().click();
   await page.waitForURL(/\/bids$/);
   check(true, "primary CTA opens trade selection");

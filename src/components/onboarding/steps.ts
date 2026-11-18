@@ -29,7 +29,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
     id: "welcome",
     label: "Welcome",
     title: "Welcome to Built2Bid!",
-    subtitle: "Professional estimates. Faster bids. More jobs won.",
+    subtitle: "Let's build your first bid.",
     body: "Built2Bid makes creating professional contractor estimates simple. Watch this quick introduction, then take a guided tour to learn how to build your first bid.",
     note: "Built2Bid helps you build, price, and present professional estimates. The video is optional: every step of the tour makes sense on its own.",
     media: { kind: "video" },
