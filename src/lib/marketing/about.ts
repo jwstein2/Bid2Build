@@ -24,8 +24,16 @@ export const COMPANY = {
   state: "Minnesota",
 } as const;
 
-/** Owner to supply. Leave null until James sends the text (and optional photo). */
-export const FOUNDER: FounderStory | null = null;
+/** Owner-supplied (James, 2026-11-18). Photo optional, not added yet. */
+export const FOUNDER: FounderStory | null = {
+  name: "James Stein",
+  role: "Founder",
+  story: [
+    "I'm James Stein, the founder of Built2Bid. I spent twelve years as a sales rep before moving into construction, and I've now spent five years working for a general contractor that does mostly remodeling.",
+    "Those two jobs taught me that a lot of a contractor's work is selling the job: pricing it right and getting a clear, professional proposal in front of the customer. Built2Bid is the tool I wanted for that part of the work.",
+    "I read the feedback myself. I check the Academy community once a day, so if something on the site isn't working for you, tell me.",
+  ],
+};
 
 /** Product and policy promises that are true today. Each maps to code or the Terms. */
 export const PROMISES: { title: string; body: string; href?: string; link?: string }[] = [

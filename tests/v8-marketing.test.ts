@@ -40,8 +40,11 @@ describe("V8 trust content makes no unsupported claims", () => {
   it("contains none of the prohibited claim patterns", () => {
     for (const re of PROHIBITED) expect(text, String(re)).not.toMatch(re);
   });
-  it("does not render a founder story until the owner supplies one", () => {
-    expect(FOUNDER).toBeNull();
+  it("founder story is the owner's own facts and passes the same claim check", () => {
+    if (!FOUNDER) return;
+    expect(FOUNDER.story.length).toBeGreaterThan(0);
+    const story = [FOUNDER.name, FOUNDER.role, ...FOUNDER.story].join("\n");
+    for (const re of PROHIBITED) expect(story, String(re)).not.toMatch(re);
   });
 });
 
