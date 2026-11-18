@@ -114,7 +114,7 @@ export async function loadBank(db: Db, bookId: string, L: Lookups): Promise<Bank
 }
 
 // ---- Accountant dashboard metrics ---------------------------------------------------------------------------------
-export interface BankBalanceFigure { amount: string; asOf: string; source: string; refreshedAt: string; accounts: number }
+export interface BankBalanceFigure { amount: string; asOf: string; source: string; refreshedAt: string; accounts: number; connected?: boolean }
 export interface AccountantMetrics {
   bankReady: boolean;
   /** Ending balance from the latest imported statement per checking/savings account. null = none on file (never invented). */
@@ -139,14 +139,34 @@ export async function loadAccountantMetrics(db: Db, bookId: string, bank: BankDa
   let bankBalance: BankBalanceFigure | null = null;
   if (bank.ready) {
     const cashAccounts = bank.accounts.filter((a) => a.status === "active" && (a.kind === "checking" || a.kind === "savings"));
-    const latest = cashAccounts.map((a) => bank.imports.filter((i) => i.account_id === a.id && i.ending_balance !== null).sort((x, y) => s(y.statement_end).localeCompare(dt(x.statement_end)) || y.imported_at.localeCompare(x.imported_at))[0]).filter(Boolean);
-    if (latest.length) {
+    // Balances reported by a connected bank (V6.9, read-only). RLS only returns them to people allowed to see
+    // balances; a missing table or no permission simply means statements are used.
+    const connected = new Map<string, { amount: string; asOf: string }>();
+    if (cashAccounts.length) {
+      const { data, error } = await db.from("fin_bank_balances").select("account_id, current_balance, as_of").eq("book_id", bookId)
+        .in("account_id", cashAccounts.map((a) => a.id)).order("as_of", { ascending: false }).limit(500);
+      if (!error) for (const r of (data ?? []) as Record<string, unknown>[]) {
+        const id = s(r.account_id);
+        if (!connected.has(id) && r.current_balance !== null && r.current_balance !== undefined) connected.set(id, { amount: m(r.current_balance), asOf: s(r.as_of) });
+      }
+    }
+    type Pick = { amount: string; asOf: string; refreshedAt: string; label: string; kind: "statement" | "connected" };
+    const picks: Pick[] = [];
+    for (const a of cashAccounts) {
+      const st = bank.imports.filter((i) => i.account_id === a.id && i.ending_balance !== null).sort((x, y) => s(y.statement_end).localeCompare(dt(x.statement_end)) || y.imported_at.localeCompare(x.imported_at))[0];
+      const live = connected.get(a.id);
+      if (live && (!st || live.asOf.slice(0, 10) >= dt(st.statement_end))) picks.push({ amount: live.amount, asOf: live.asOf.slice(0, 10), refreshedAt: live.asOf, label: "Connected bank", kind: "connected" });
+      else if (st) picks.push({ amount: st.ending_balance!, asOf: dt(st.statement_end), refreshedAt: st.imported_at, label: `Statement ending balance · ${st.file_name}`, kind: "statement" });
+    }
+    if (picks.length) {
+      const kinds = new Set(picks.map((p) => p.kind));
       bankBalance = {
-        amount: add(0, ...latest.map((i) => i.ending_balance!)),
-        asOf: latest.map((i) => dt(i.statement_end)).sort()[0] || "",
-        source: latest.length === 1 ? `Statement ending balance · ${latest[0].file_name}` : `Statement ending balances · ${latest.length} accounts`,
-        refreshedAt: latest.map((i) => i.imported_at).sort().at(-1)!,
-        accounts: latest.length,
+        amount: add(0, ...picks.map((p) => p.amount)),
+        asOf: picks.map((p) => p.asOf).sort()[0] || "",
+        source: picks.length === 1 ? picks[0].label : `${kinds.size > 1 ? "Connected bank and statement balances" : kinds.has("connected") ? "Connected bank balances" : "Statement ending balances"} · ${picks.length} accounts`,
+        refreshedAt: picks.map((p) => p.refreshedAt).sort().at(-1)!,
+        accounts: picks.length,
+        connected: kinds.has("connected"),
       };
     }
   }
