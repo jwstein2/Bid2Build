@@ -306,9 +306,12 @@ export async function loadJob(db: Db, estimateId: string, ctx: FinContext) {
     return { ...r, ...invExtra.get(id), send: invoiceSendInfo(r, emailRows.filter((e) => String(e.fin_invoice_id) === id), mark), send_note: mark?.note ?? null } as Row;
   });
   const invIds = new Set(invoiceList.map((r) => String(r.invoice_id)));
+  // Approved timesheet hours costed into this job (20270103001000). Missing function reads as null.
+  const { data: tl } = await db.rpc("fin_job_timesheet_labor", { p_job_id: jid });
   return {
     ...base,
     job: j,
+    timesheetLabor: (tl as { counted: boolean; hours: string; amount: string; uncostedHours: string; workers: string[] } | null) ?? null,
     contract: (contract.data as Row | null) ?? null,
     snapshot: (snapshot.data as Row | null) ?? null,
     changes: (changes.data ?? []) as Row[],

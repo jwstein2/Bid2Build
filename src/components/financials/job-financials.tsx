@@ -15,7 +15,7 @@ import { ChangeOrdersCard, MarkSentDialog, SendStatus } from "./send-and-changes
 import { SandboxBar } from "./sandbox-bar";
 import type { CoRow } from "@/lib/financials/change-orders";
 import type { SendInfo } from "@/lib/financials/send-state";
-import { BillDialog, BillPaymentDialog, BudgetTable, CommitmentDialog, CostLists, ExpenseDialog, ProfitCard, ReviewQueue } from "./job-costs";
+import { BillDialog, BillPaymentDialog, BudgetTable, CommitmentDialog, CostLists, ExpenseDialog, ProfitCard, ReviewQueue, TimesheetLaborCard, type TimesheetLabor } from "./job-costs";
 import { JobSummary, type SummaryTarget } from "./job-summary";
 
 const s = (v: unknown) => (v === null || v === undefined ? "" : String(v));
@@ -28,7 +28,7 @@ type Open = { kind: "invoice"; milestone: R | null; draft: R | null } | { kind: 
 interface Payload {
   estimate: R; versions: R[]; job: R | null; contract?: R | null; milestones?: R[]; invoices?: R[]; payments?: R[]; credits?: R[];
   expenses?: R[]; bills?: R[]; billLines?: R[]; commitments?: R[]; budget?: R[]; profit?: R | null; review?: R[]; alerts?: R[];
-  costCodes?: R[]; vendors?: R[]; quotes?: R[]; summary?: R | null; changeOrders?: CoRow[];
+  costCodes?: R[]; vendors?: R[]; quotes?: R[]; summary?: R | null; changeOrders?: CoRow[]; timesheetLabor?: TimesheetLabor | null;
   access: { permissions: string[]; readOnly: boolean; active: boolean; role: string | null; sandbox?: boolean };
 }
 
@@ -288,6 +288,7 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
             <BudgetTable budget={data.budget ?? []} />
             <ProfitCard profit={data.profit ?? null} />
           </div>
+          <TimesheetLaborCard labor={data.timesheetLabor ?? null} canConfig={perms.config} writable={writable} onChanged={done} />
           <CostLists onPayBill={(b) => setOpen({ kind: "bill_payment", bill: b })} onVoid={setVoiding} data={{ expenses: data.expenses ?? [], bills: data.bills ?? [], billLines: data.billLines ?? [], commitments: data.commitments ?? [], costCodes: data.costCodes ?? [], vendors: data.vendors ?? [] }} perms={perms} writable={writable} onChanged={done} />
         </div>
       )}

@@ -123,6 +123,7 @@ d("company sandbox mode (database)", () => {
   });
 
   it("rollback refuses while a sandbox holds records; on a clean database it rolls back and re-applies", async () => {
+    await pool.query(readFileSync("docs/financials/rollback_20270103001000.sql", "utf8"));   // newest first: timesheet labor reads fin_books / pm_time_entries
     await expect(pool.query(readFileSync("docs/financials/rollback_20261130201000.sql", "utf8"))).rejects.toThrow(/sandbox_data_exists/);
     const fresh = await freshDb("byb_test_fin_sandbox_rb");
     try {
@@ -131,6 +132,7 @@ d("company sandbox mode (database)", () => {
       // An empty sandbox (no jobs) is removed by the rollback.
       const e = await wonBid(fresh.pool, w2.owner, w2.company, { title: "Fence" });
       await as2(w2.owner, "select public.fin_sandbox_enter($1)", [w2.book]);
+      await fresh.pool.query(readFileSync("docs/financials/rollback_20270103001000.sql", "utf8"));   // newest first
       await fresh.pool.query(readFileSync("docs/financials/rollback_20261130201000.sql", "utf8"));
       expect((await fresh.pool.query("select to_regprocedure('public.fin_sandbox_enter(uuid)') as f")).rows[0].f).toBeNull();
       expect((await fresh.pool.query("select count(*)::int as n from public.fin_books where name like 'Sandbox:%'")).rows[0].n).toBe(0);
