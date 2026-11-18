@@ -160,26 +160,56 @@ const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "
 
 /**
  * Find the newest rate and boundary file links for a state on an official listing page. SST files are named like
- * MNR2026Q4OCT01.zip (state, R=rate / B=boundary, year, quarter, month, day). Links with "rate"/"boundary" in the
- * name are accepted as a fallback. Returns absolute https URLs, or nulls when nothing matches.
+ * MNR2026Q4OCT01.zip (state, R=rate / B=boundary, year, quarter, month, optional day). The name is looked for in the
+ * link's path, its query string and the link text, with or without an extension, so download handlers such as
+ * /download?file=MNR2026Q4OCT01.zip or /media/1234 with the name as text are found too. Links with "rate"/"boundary"
+ * and the state in the name are accepted as a fallback. Returns absolute https URLs, or nulls when nothing matches.
  */
 export function findOfficialFiles(html: string, state: string, baseUrl: string): { rateUrl: string | null; boundaryUrl: string | null } {
-  const hrefs = [...html.matchAll(/href\s*=\s*["']([^"'#]+)["']/gi)].map((m) => m[1]);
-  const abs = (h: string) => { try { const u = new URL(h, baseUrl); return u.protocol === "https:" ? u.toString() : null; } catch { return null; } };
-  const sst = new RegExp(`(?:^|/)${state}([RB])(\\d{4})Q(\\d)([A-Z]{3})(\\d{2})[^/]*\\.(zip|csv|txt)$`, "i");
+  const ST = state.toUpperCase();
+  const sst = new RegExp(`(?:^|[^A-Z0-9])${ST}[ _-]?([RB])[ _-]?(\\d{4})[ _-]?Q(\\d)[ _-]?([A-Z]{3})?[ _-]?(\\d{2})?(?![0-9])`, "i");
+  const fallback = new RegExp(`(?:^|[^A-Z0-9])${ST}(?:[^A-Z0-9]|$)`, "i");
   const best: Record<"R" | "B", { url: string; key: string } | null> = { R: null, B: null };
-  for (const h of hrefs) {
-    const url = abs(h); if (!url) continue;
-    const path = decodeURIComponent(new URL(url).pathname);
-    const m = path.match(sst);
+  for (const { url, text } of linksOf(html, baseUrl)) {
+    let decoded = url; try { decoded = decodeURIComponent(url); } catch { /* keep raw */ }
+    const u = new URL(url);
+    const where = [u.pathname, u.search, text].map((x) => { try { return decodeURIComponent(x); } catch { return x; } });
     let kind: "R" | "B" | null = null, key = "";
-    if (m) { kind = m[1].toUpperCase() as "R" | "B"; key = `${m[2]}${String(MONTHS.indexOf(m[4].toUpperCase()) + 1).padStart(2, "0")}${m[5]}`; }
-    else if (new RegExp(`(?:^|[/_-])${state}[^/]*\\.(zip|csv)$`, "i").test(path)) {
-      kind = /bound/i.test(path) ? "B" : /rate/i.test(path) ? "R" : null; key = (path.match(/(20\d{2})[-_]?(\d{2})?/)?.slice(1).join("") ?? "");
+    const m = where.map((w) => w.match(sst)).find(Boolean);
+    if (m) {
+      kind = m[1].toUpperCase() as "R" | "B";
+      const month = m[4] ? MONTHS.indexOf(m[4].toUpperCase()) + 1 : Number(m[3]) * 3 - 2;
+      key = `${m[2]}${String(month).padStart(2, "0")}${m[5] ?? "00"}`;
+    } else if (/\.(zip|csv)(?:$|[?&#])/i.test(decoded) && where.some((w) => fallback.test(w))) {
+      const all = where.join(" ");
+      kind = /bound/i.test(all) ? "B" : /rate/i.test(all) ? "R" : null; key = (all.match(/(20\d{2})[-_]?(\d{2})?/)?.slice(1).join("") ?? "");
     }
     if (kind && (!best[kind] || key > best[kind]!.key)) best[kind] = { url, key };
   }
   return { rateUrl: best.R?.url ?? null, boundaryUrl: best.B?.url ?? null };
+}
+
+/** All https links on a page with their visible text. */
+export function linksOf(html: string, baseUrl: string): { url: string; text: string }[] {
+  const out: { url: string; text: string }[] = [];
+  const seen = new Set<string>();
+  for (const m of html.matchAll(/<a\b[^>]*?href\s*=\s*["']([^"'#]+)["'][^>]*>([\s\S]*?)<\/a>|href\s*=\s*["']([^"'#]+)["']/gi)) {
+    const href = (m[1] ?? m[3] ?? "").replace(/&amp;/g, "&").trim();
+    let url: string; try { const u = new URL(href, baseUrl); if (u.protocol !== "https:") continue; url = u.toString(); } catch { continue; }
+    const text = (m[2] ?? "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 200);
+    const k = `${url}|${text}`; if (seen.has(k)) continue; seen.add(k);
+    out.push({ url, text });
+  }
+  return out;
+}
+
+/** Short description of what a listing page offered, saved with a "couldn't find" error so the page layout can be matched. */
+export function describeListing(html: string, state: string, baseUrl: string): string {
+  const links = linksOf(html, baseUrl);
+  const files = links.filter((l) => /\.(zip|csv|txt|xlsx?)(?:$|[?&#])/i.test(l.url) || /download|file|attachment/i.test(l.url));
+  const mine = links.filter((l) => new RegExp(`(?:^|[^A-Z0-9])${state}(?:[^A-Z0-9]|$)`, "i").test(`${l.url} ${l.text}`));
+  const sample = [...files, ...mine].slice(0, 6).map((l) => `${l.url.replace(/^https:\/\//, "")}${l.text ? ` [${l.text.slice(0, 40)}]` : ""}`);
+  return `Page had ${links.length} links, ${files.length} file links, ${mine.length} mention ${state}${sample.length ? `: ${sample.join(" | ")}` : ""}`;
 }
 
 /** File name from a URL (to notice when a state publishes a new quarter's file). */

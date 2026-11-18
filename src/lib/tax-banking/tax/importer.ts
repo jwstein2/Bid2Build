@@ -11,7 +11,8 @@ import "server-only";
  * A failure never deletes or alters rates already on file. Nothing here costs money or needs credentials.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { aggregateSstBoundaries, fileNameOf, fileText, findOfficialFiles, FormatChanged, parseSstRates, parseStateTable, type OfficialRate, type TableFormat } from "./official-files";
+import { authorityFor } from "../authorities";
+import { aggregateSstBoundaries, describeListing, fileNameOf, fileText, findOfficialFiles, FormatChanged, linksOf, parseSstRates, parseStateTable, type OfficialRate, type TableFormat } from "./official-files";
 
 type Db = SupabaseClient;
 type Fetch = typeof fetch;
@@ -39,13 +40,31 @@ async function download(url: string, f: Fetch, timeoutMs: number): Promise<Buffe
 }
 
 /** Which files to read for a source: owner-set direct links first, else discovered from the listing page. */
-export async function resolveFiles(src: SourceRow, f: Fetch, timeoutMs = 8000): Promise<{ rateUrl: string | null; boundaryUrl: string | null }> {
+export async function resolveFiles(src: SourceRow, f: Fetch, timeoutMs = 8000): Promise<{ rateUrl: string | null; boundaryUrl: string | null; listing?: string }> {
   if (src.rate_url) return { rateUrl: src.rate_url, boundaryUrl: src.boundary_url };
   if (!src.listing_url) return { rateUrl: null, boundaryUrl: src.boundary_url };
   const r = await f(src.listing_url, { headers: { "user-agent": UA }, redirect: "follow", signal: AbortSignal.timeout(timeoutMs) });
   if (!r.ok) throw new Error(`listing page ${r.status}`);
-  const found = findOfficialFiles(await r.text(), src.state, src.listing_url);
-  return { rateUrl: found.rateUrl, boundaryUrl: src.boundary_url ?? found.boundaryUrl };
+  const html = await r.text();
+  let found = findOfficialFiles(html, src.state, src.listing_url);
+  if (!found.rateUrl) {
+    // Some listing pages link to a page per state; follow the first same-site link that names this state.
+    const host = new URL(src.listing_url).host;
+    const name = authorityFor(src.state)?.stateName;
+    const sub = linksOf(html, src.listing_url).find((l) => new URL(l.url).host === host && l.url !== src.listing_url
+      && !/\.(zip|csv|txt|xlsx?|pdf)(?:$|[?#])/i.test(l.url)
+      && ((name && new RegExp(`\\b${name}\\b`, "i").test(l.text)) || new RegExp(`^${src.state}$`, "i").test(l.text.trim())));
+    if (sub) {
+      const r2 = await f(sub.url, { headers: { "user-agent": UA }, redirect: "follow", signal: AbortSignal.timeout(timeoutMs) }).catch(() => null);
+      if (r2?.ok) {
+        const html2 = await r2.text();
+        const f2 = findOfficialFiles(html2, src.state, sub.url);
+        if (f2.rateUrl) found = f2;
+        else return { rateUrl: null, boundaryUrl: src.boundary_url, listing: `${describeListing(html, src.state, src.listing_url)}. State page ${sub.url}: ${describeListing(html2, src.state, sub.url)}` };
+      }
+    }
+  }
+  return { rateUrl: found.rateUrl, boundaryUrl: src.boundary_url ?? found.boundaryUrl, listing: found.rateUrl ? undefined : describeListing(html, src.state, src.listing_url) };
 }
 
 export async function importState(db: Db, src: SourceRow, deps: { fetchImpl?: Fetch; now?: Date; deadline?: number } = {}): Promise<StateImportResult> {
@@ -68,7 +87,7 @@ export async function importState(db: Db, src: SourceRow, deps: { fetchImpl?: Fe
   const patch: Record<string, unknown> = { last_attempt_at: now.toISOString(), updated_at: now.toISOString() };
   try {
     const files = await resolveFiles(src, f, Math.min(8000, left()));
-    if (!files.rateUrl) { throw new NeedsLink("Couldn't find this state's current rate file on the official page."); }
+    if (!files.rateUrl) { throw new NeedsLink(`Couldn't find this state's current rate file on the official page.${files.listing ? ` ${files.listing}` : ""}`); }
 
     // Rates
     const rateBuf = await download(files.rateUrl, f, left());

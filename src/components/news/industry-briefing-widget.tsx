@@ -3,6 +3,7 @@ import { Newspaper } from "lucide-react";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { loadBriefing, loadReader } from "@/lib/news/server";
 import { toCard } from "@/lib/news/format";
+import { logError } from "@/lib/http/api";
 import { CATEGORIES, type Category } from "@/lib/news/types";
 import { ArticleCard } from "./article-card";
 
@@ -24,14 +25,14 @@ export async function IndustryBriefingWidget({ settings = {} }: { settings?: Bri
   try {
     const reader = await loadReader(db, user.id);
     loaded = { state: "ok", feed: await loadBriefing(db, reader, { limit, topics, geo }), hasTrade: Boolean(reader.ctx.primaryTrade), hasTrades: reader.ctx.trades.length > 0 };
-  } catch {
+  } catch (e) {
+    logError("news.briefing", e);
     loaded = { state: "error" };
   }
   let content: React.ReactNode;
-  if (loaded.state === "error") {
-    content = <p className="text-sm text-muted">Industry news isn&apos;t available right now.</p>;
-  } else if (!loaded.feed.available) {
-    content = <p className="text-sm text-muted">Industry news turns on after this month&apos;s update is installed.</p>;
+  // Never an error message on a customer's dashboard: a failed load or a missing table reads like an empty feed.
+  if (loaded.state === "error" || !loaded.feed.available) {
+    content = <p className="text-sm text-muted">New stories from official and trade sources arrive every morning.</p>;
   } else if (!loaded.feed.articles.length) {
     content = (
       <div className="text-sm text-muted">

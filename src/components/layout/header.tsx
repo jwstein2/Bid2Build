@@ -4,13 +4,13 @@ import { accountCtas, creditBadge } from "@/lib/account/status";
 import { ButtonLink } from "../ui/button";
 import { Logo } from "./logo";
 import { MobileNav } from "./mobile-nav";
+import { LearnMenu } from "./learn-menu";
+import { LEARN_LINKS } from "../marketing/learn-tabs";
 
 const nav = [
   { href: "/bids", label: "Trades" },
   { href: "/#how-it-works", label: "How It Works" },
   { href: "/pricing", label: "Pricing" },
-  { href: "/academy", label: "Academy" },
-  { href: "/learn", label: "Learn" },
 ];
 
 export async function Header() {
@@ -27,6 +27,7 @@ export async function Header() {
               {n.label}
             </Link>
           ))}
+          <LearnMenu label="Learn" links={LEARN_LINKS} />
         </nav>
         <div className="hidden items-center gap-2 md:flex">
           {badge && <Link href="/settings/billing" data-testid="credit-badge" className="hidden whitespace-nowrap rounded-full bg-brand-tint px-2.5 py-1 text-xs font-semibold text-navy lg:inline-block">{badge}</Link>}
@@ -37,7 +38,7 @@ export async function Header() {
           )}
           <ButtonLink href={primary.href} variant="accent" size="sm" data-cta={primary.action}>{primary.label}</ButtonLink>
         </div>
-        <MobileNav items={nav} signedIn={status.signedIn} primary={primary} badge={badge} />
+        <MobileNav items={nav} groups={[{ label: "Learn", links: LEARN_LINKS }]} signedIn={status.signedIn} primary={primary} badge={badge} />
       </div>
     </header>
   );

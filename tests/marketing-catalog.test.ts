@@ -30,7 +30,8 @@ describe("marketing catalog", () => {
 
   it("never shows a Coming Soon feature as included on any plan", () => {
     const soon = MARKETING_FEATURES.filter((f) => f.release === "coming_soon");
-    expect(soon.map((f) => f.id).sort()).toEqual(["nurture", "scheduled_updates"]);
+    // Customer communications released 2026-11-18 (V8 MKT-7); nothing is coming soon right now.
+    expect(soon.map((f) => f.id).sort()).toEqual([]);
     for (const f of soon) {
       expect(featureStatus(f, ON)).toBe("coming_soon");
       expect(tierBadge(f, ON).label).toBe("Coming soon");

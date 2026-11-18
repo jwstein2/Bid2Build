@@ -2,8 +2,9 @@
 
 import Script from "next/script";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { analyticsAllowedOn } from "@/lib/seo/analytics";
+import { gaOptedOut } from "@/lib/seo/ga-optout";
 
 /**
  * Google Analytics 4 tag. Rendered from the root layout only on indexable production deploys with a
@@ -16,7 +17,11 @@ import { analyticsAllowedOn } from "@/lib/seo/analytics";
 export function GoogleAnalytics({ measurementId }: { measurementId: string }) {
   const pathname = usePathname();
   const [allowed] = useState(() => analyticsAllowedOn(pathname));
-  if (!allowed) return null;
+  // Visitors who turned analytics off on /privacy#analytics never load the tag (read after hydration).
+  const [optedOut, setOptedOut] = useState<boolean | null>(null);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- cookies are only readable after hydration
+  useEffect(() => { setOptedOut(gaOptedOut(document.cookie)); }, []);
+  if (!allowed || optedOut !== false) return null;
   return (
     <>
       <Script src={`https://www.googletagmanager.com/gtag/js?id=${measurementId}`} strategy="afterInteractive" />

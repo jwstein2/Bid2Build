@@ -22,6 +22,7 @@ import { QUICK_ACTIONS, instanceTitle, type QuickActionKey } from "@/lib/dashboa
 import type { WidgetInstance } from "@/lib/dashboard/schema";
 import type { DashboardData, DashboardViewer } from "@/lib/dashboard/server";
 import { ChartView } from "./charts";
+import { IndustryBriefingWidget } from "@/components/news/industry-briefing-widget";
 
 const fmtDay = (d: string) => { const [y, m, dd] = d.slice(0, 10).split("-").map(Number); return new Date(Date.UTC(y, m - 1, dd)).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }); };
 const show = (f: Figure) => (f.money ? formatCurrency(f.value) : f.value);
@@ -109,8 +110,8 @@ export async function WidgetBody({ inst, data, viewer }: { inst: WidgetInstance;
       const title = inst.type === "fin_bank_balance" ? "Bank balance" : "Projected bank balance";
       if (!a) return <Unavailable title={title} why="Financials isn't set up for this account yet." />;
       const b = a.m.bankBalance;
-      if (!b) return <MetricCard className="h-full" title={title} value="Not imported" empty sub="Import a bank statement to see a balance. It's never estimated." href="/financials/accounting/bank" action="Import a statement" status={<Sandbox on={sandbox} />} testId={tid} />;
-      if (inst.type === "fin_bank_balance") return <MetricCard className="h-full" title={title} value={formatCurrency(b.amount)} sub={`As of ${fmtDay(b.asOf)} · ${b.source}`} href="/financials/accounting/bank" action="Open bank" status={<Sandbox on={sandbox} />} hint="Ending balance from imported statements, not a live bank feed" testId={tid} />;
+      if (!b) return <MetricCard className="h-full" title={title} value="Not connected" empty sub="Connect your bank (read-only) or import a statement to see a balance. It's never estimated." href="/financials/banks" action="Connect your bank" status={<Sandbox on={sandbox} />} testId={tid} />;
+      if (inst.type === "fin_bank_balance") return <MetricCard className="h-full" title={title} value={formatCurrency(b.amount)} sub={`As of ${fmtDay(b.asOf)} · ${b.source}`} href={b.connected ? "/financials/banks" : "/financials/accounting/bank"} action="Open bank" status={<Sandbox on={sandbox} />} hint={b.connected ? "Balance reported by your connected bank" : "Ending balance from imported statements, not a live bank feed"} testId={tid} />;
       const p = a.m.projected!;
       return <MetricCard className="h-full" title={title} value={formatCurrency(p.amount)} sub={`Bank ${formatCurrency(b.amount)} + due in ${formatCurrency(p.arIn)} − bills ${formatCurrency(p.apOut)} (next 30 days)`} href="/financials/accounting/bank" action="How it's worked out" status={<Sandbox on={sandbox} />} hint="A projection from recorded invoices and approved bills, not a guarantee" testId={tid} />;
     }
@@ -198,7 +199,7 @@ export async function WidgetBody({ inst, data, viewer }: { inst: WidgetInstance;
         chart = invoiceChart(rows.filter((r) => r.issue_date >= from && r.issue_date <= to && r.status !== "void"));
       } else {
         const pl = await data.pl(cs.period, cs.basis);
-        if (!pl || !pl.ok) return <Unavailable title={title} why={pl && !pl.ok && pl.reason === "not_installed" ? "Charts turn on after the Reports update is installed." : "This chart couldn't load. Refresh to try again."} />;
+        if (!pl || !pl.ok) return <Unavailable title={title} why={pl && !pl.ok && pl.reason === "not_installed" ? "Charts turn on after the Reports update is installed." : "Nothing to chart yet."} />;
         chart = plChart(pl.data.rows, settings, pl.range);
       }
       const reportLink = info.source === "ar" ? "/financials/receivables" : `/financials/reports?period=${cs.period}&basis=${cs.basis}`;
@@ -358,7 +359,7 @@ export async function WidgetBody({ inst, data, viewer }: { inst: WidgetInstance;
     }
     case "company_pipeline": {
       const sum = await data.companySummary();
-      if (!sum) return <Unavailable title="Company pipeline" why="Company analytics aren't available right now." />;
+      if (!sum) return <Unavailable title="Company pipeline" why="Company totals show up as your team adds bids." />;
       return (
         <div className="grid h-full grid-cols-2 gap-3" data-testid={tid}>
           <MetricCard className="h-full" title="Company win rate" value={sum.winRate === null ? "None yet" : `${Math.round(sum.winRate)}%`} empty={sum.winRate === null} href="/company" action="Company overview" />
@@ -366,6 +367,9 @@ export async function WidgetBody({ inst, data, viewer }: { inst: WidgetInstance;
         </div>
       );
     }
+    case "industry_briefing":
+      return <IndustryBriefingWidget settings={{ limit: String(s.limit ?? "5"), geo: typeof s.geo === "string" ? s.geo : undefined }} />;
+
     case "customers": {
       const n = await data.customers();
       return <MetricCard className="h-full" title="Customers" value={n ?? 0} empty={!n} href="/dashboard/customers" action="Open customers" testId={tid} />;
@@ -424,6 +428,6 @@ export async function WidgetBody({ inst, data, viewer }: { inst: WidgetInstance;
       );
     }
   }
-  return <Unavailable title="Unavailable widget" why="This widget is no longer available." />;
+  return <Unavailable title="Retired card" why="This card was retired. You can remove it with Edit dashboard." />;
 }
 

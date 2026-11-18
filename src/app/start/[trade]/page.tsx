@@ -6,7 +6,8 @@ import { createClient, getUser } from "@/lib/supabase/server";
 import { proposalConfigFrom } from "@/lib/data/mappers";
 import { hasPremiumAccess } from "@/lib/billing/entitlement";
 import type { ProposalConfig } from "@/lib/proposal/types";
-import { StartClient } from "./start-client";
+import { cleanPercent, cleanQuantity, toolBySlug } from "@/lib/marketing/tools";
+import { StartClient, type StartPrefill } from "./start-client";
 
 export const metadata: Metadata = { robots: { index: false } };
 
@@ -25,5 +26,18 @@ export default async function StartPage({ params, searchParams }: PageProps<"/st
       if (data?.default_proposal_config) defaults = proposalConfigFrom(data.default_proposal_config);
     }
   }
-  return <StartClient trade={trade} blank={sp.blank === "1"} template={await publishedTemplate(trade)} defaults={defaults} />;
+  return <StartClient trade={trade} blank={sp.blank === "1"} template={await publishedTemplate(trade)} defaults={defaults} prefill={toolPrefill(trade, sp)} />;
+}
+
+/** "Send this as a bid" from a free calculator: only a known tool, its own trade and a sane value. */
+function toolPrefill(trade: string, sp: Record<string, string | string[] | undefined>): StartPrefill | undefined {
+  const tool = toolBySlug(typeof sp.tool === "string" ? sp.tool : undefined);
+  if (!tool) return undefined;
+  if (tool.kind === "quantity") {
+    const quantity = cleanQuantity(sp.q);
+    return tool.trade === trade && quantity && sp.blank !== "1" ? { tool: tool.slug, quantity } : undefined;
+  }
+  const mode = sp.pricing === "margin" ? "margin" : sp.pricing === "markup" ? "markup" : null;
+  const percent = mode && cleanPercent(sp.pct, mode);
+  return mode && percent ? { tool: tool.slug, pricing: { mode, percent } } : undefined;
 }

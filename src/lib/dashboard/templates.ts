@@ -18,6 +18,7 @@ export const TEMPLATES = {
       ["fin_ar"], ["fin_cash_received"], ["sales_drafts"], ["sales_win_rate"],
       ["pm_upcoming", 2, 1], ["sales_recent", 2, 1],
       ["fin_bank_balance"],
+      ["industry_briefing", 2, 2],
     ] as Entry[],
   },
   job: {

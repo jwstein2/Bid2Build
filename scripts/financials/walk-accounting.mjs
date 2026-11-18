@@ -80,7 +80,7 @@ const settle = async (page) => { await page.waitForLoadState("load"); await page
   const { ctx, page } = await open("/financials");
   await page.getByTestId("fin-accountant-home").waitFor({ timeout: 15000 });
   for (const id of ["fin-acct-bank", "fin-acct-projected", "fin-acct-ar", "fin-acct-ap", "fin-acct-unrec", "fin-acct-review"]) check(`home: ${id} card`, await page.getByTestId(id).isVisible());
-  check("home: bank balance is not invented before any statement", (await page.getByTestId("fin-acct-bank").innerText()).includes("No statement yet"));
+  check("home: bank balance is not invented before any statement", (await page.getByTestId("fin-acct-bank").innerText()).includes("No balance yet"));
   check("home: nine accountant quick actions for the owner", (await page.locator("[data-testid^=fin-acct-action-]").count()) === 9);
   check("home: accounting navigation", await page.getByTestId("fin-acct-nav").isVisible());
   check("home: no Coming soon on the accountant cards", !(await page.getByTestId("fin-card-export_center").innerText().catch(() => "")).includes("Coming soon") && !(await page.getByTestId("fin-card-audit_trail").innerText().catch(() => "")).includes("Coming soon"));

@@ -1,7 +1,7 @@
 import { classifyItem, type SourceOverride } from "./classify";
 import { stateName } from "./geo";
 import { parseFederalRegister, parseOpenFema, parseRss, toPlainText, type RawItem } from "./parse";
-import { CADENCE_HOURS, NEWS_SOURCES, type NewsSourceDef } from "./sources";
+import { ACTIVE_SOURCES, CADENCE_HOURS, NEWS_SOURCES, type NewsSourceDef } from "./sources";
 import { guardSummary, newsAiSettings, summaryEligibility, summaryInput, SUMMARY_SYSTEM, summarySchema, tidySummary, type SummaryOut } from "./summarize";
 import type { Authority, Category, GeoLevel, SummaryStatus } from "./types";
 import { dedupe, verifyItem } from "./verify";
@@ -161,7 +161,7 @@ export async function ingestSource(store: NewsStore, source: NewsSourceDef, st: 
 export async function runIngest(store: NewsStore, opt: IngestOptions): Promise<IngestReport[]> {
   const now = opt.now ?? new Date();
   const states = new Map((await store.sourceStates()).map((s) => [s.source_key, s]));
-  const all = (opt.sources ?? NEWS_SOURCES).filter((s) => !opt.only || opt.only.includes(s.key));
+  const all = (opt.sources ?? ACTIVE_SOURCES).filter((s) => !opt.only || opt.only.includes(s.key));
   const reports: IngestReport[] = [];
   const due: NewsSourceDef[] = [];
   for (const s of all) {

@@ -26,6 +26,7 @@ export async function Footer() {
           <li><Link href="/#how-it-works" className="inline-block py-1 hover:text-white hover:underline">How it works</Link></li>
           <li><Link href="/pricing" className="inline-block py-1 hover:text-white hover:underline">Pricing</Link></li>
           <li><Link href="/learn" className="inline-block py-1 hover:text-white hover:underline">Contractor guides</Link></li>
+          <li><Link href="/tools" className="inline-block py-1 hover:text-white hover:underline">Free calculators</Link></li>
           <li><Link href="/academy/classroom" className="inline-block py-1 hover:text-white hover:underline">Contractor Academy</Link></li>
           <li><Link href="/dashboard" className="inline-block py-1 hover:text-white hover:underline">My bids</Link></li>
         </FooterCol>
@@ -35,6 +36,7 @@ export async function Footer() {
           <li><Link href="/privacy" className="inline-block py-1 hover:text-white hover:underline">Privacy policy</Link></li>
           <li><Link href="/terms" className="inline-block py-1 hover:text-white hover:underline">Terms of service</Link></li>
           <li><Link href="/security" className="inline-block py-1 hover:text-white hover:underline">Security</Link></li>
+          <li><Link href="/privacy#analytics" className="inline-block py-1 hover:text-white hover:underline">Analytics choices</Link></li>
         </FooterCol>
       </div>
       <div className="border-t border-white/10 py-5 text-center text-xs text-[#B8C6D4]">© {new Date().getFullYear()} {site.name}. All rights reserved.</div>

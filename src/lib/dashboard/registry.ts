@@ -118,6 +118,12 @@ const DEFS: WidgetDef[] = [
   { type: "sales_recent", title: "Recently created estimates", description: "Your newest bids.", group: "sales", requires: BIDS, sources: ["bids"], size: { w: 2, h: 1, maxH: 2 }, settings: [LIMIT] },
   { type: "company_pipeline", title: "Company pipeline", description: "Company win rate and open bid value.", group: "sales", requires: [need("analytics")], sources: ["company_summary"], size: { w: 2, h: 1 }, settings: [] },
   { type: "customers", title: "Customers", description: "Customers in your customer list.", group: "growth", requires: [need("customers")], sources: ["customers"], size: { w: 1, h: 1, maxW: 2 }, settings: [] },
+  // V6.8: free for every plan and every member; loads its own (public) news, so no shared data source.
+  { type: "industry_briefing", title: "Your Industry Briefing", description: "Local, state and national news for your trades from official and trade sources.", group: "growth", requires: [], sources: [], size: { w: 2, h: 2, minW: 1, maxH: 2 },
+    settings: [
+      { key: "limit", label: "Stories", kind: "select", default: "5", options: opt([["3", "3"], ["5", "5"], ["10", "10"]]) },
+      { key: "geo", label: "Emphasis", kind: "select", default: "balanced", options: opt([["balanced", "Balanced"], ["local", "Local first"], ["state", "State first"], ["national", "National first"]]) },
+    ] },
 
   // ---- Accounting ------------------------------------------------------------------------------------------------
   { type: "chart", title: "Chart", description: "Expenses, revenue, P&L, job, labor or subcontractor costs, or cash in vs out. Add as many as you like.", group: "accounting", requires: FIN_COMPANY, sources: ["pl", "ar"], size: { w: 2, h: 2, minW: 1 }, settings: [{ key: "chart", label: "Chart", kind: "chart" }], multiple: true },

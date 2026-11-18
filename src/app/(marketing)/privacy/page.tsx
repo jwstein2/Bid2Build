@@ -2,6 +2,7 @@ import { isFinancialsEnabled } from "@/lib/env";
 import type { Metadata } from "next";
 import { Container } from "@/components/ui/misc";
 import Link from "next/link";
+import { AnalyticsOptOut } from "@/components/analytics/analytics-opt-out";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Privacy Policy", alternates: { canonical: "/privacy" } };
@@ -18,7 +19,7 @@ export default function Privacy() {
           <li>Bids: estimates, customers, and proposals you create. Drafts made before signing in stay in your browser until you create an account.</li>
           <li>Billing: handled by Stripe. We store your subscription status, not your card number.</li>
           <li>Product analytics: page and feature events (for example, “trade selected”). We do not put bid contents, prices, or customer details in analytics.</li>
-          <li>Website analytics: we use Google Analytics to understand how visitors find and use our website (pages viewed, approximate location, device and browser, and how you arrived). Google Analytics sets cookies to do this. It is not loaded on proposal signing links or sign-in links. You can opt out with Google’s <a className="underline" href="https://tools.google.com/dlpage/gaoptout" rel="noopener noreferrer" target="_blank">browser add-on</a> or by blocking cookies.</li>
+          <li id="analytics" className="scroll-mt-24">Website analytics: we use Google Analytics to understand how visitors find and use our website (pages viewed, approximate location, device and browser, and how you arrived). Google Analytics sets cookies to do this. It is not loaded on proposal signing links or sign-in links. You can turn it off for this browser here, or use Google’s <a className="underline" href="https://tools.google.com/dlpage/gaoptout" rel="noopener noreferrer" target="_blank">browser add-on</a>, or block cookies.<AnalyticsOptOut /></li>
         </ul>
         <h2 className="pt-2 text-xl font-bold text-ink">How we use it</h2>
         <p>To run the service, generate your proposals, enforce plan limits, provide support, and keep the service secure. We do not sell your data. Your internal costs and margins are never shown on customer-facing proposals.</p>

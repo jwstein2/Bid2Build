@@ -1,5 +1,6 @@
 "use client";
 import dynamic from "next/dynamic";
+import { track } from "@/lib/analytics/track";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -138,6 +139,7 @@ export function OnboardingHost() {
     opener.current = null;
     // After the dialog's own focus handling has run.
     if (back) setTimeout(() => { if (back.isConnected) back.focus(); }, 0);
+    track(how === "completed" ? "onboarding_completed" : "onboarding_dismissed", { mode });
     if (mode !== "auto") return; // replay never changes onboarding status
     const at = new Date().toISOString();
     const signed = signedIn.current || hasSessionCookie(document.cookie);
