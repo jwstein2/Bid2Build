@@ -349,7 +349,7 @@ describe("importer (mocked downloads)", () => {
     expect(seen).not.toContain("https://www.example.org/committees/certification-committee/rate-and-boundary-file-updates");
     const miss = await resolveFiles({ ...src, state: "VT" }, f);
     expect(miss.rateUrl).toBeNull();
-    expect(miss.listing).toContain("certification-committee/rate-and-boundary-files:");
+    expect(miss.listing?.startsWith("https://www.example.org/committees/certification-committee/rate-and-boundary-files:")).toBe(true);
   });
   it("a state with no link yet is skipped quickly, without a download", async () => {
     const { importState } = await import("@/lib/tax-banking/tax/importer");
