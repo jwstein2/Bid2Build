@@ -38,6 +38,8 @@ export interface NewsSourceDef {
   maxItemsPerRun: number;
   /** Items must mention construction to be kept (broad government feeds). */
   requireConstructionRelevance: boolean;
+  /** Set when the publisher blocks our fetches: the source is not fetched or shown as active. */
+  paused?: string;
   rights: string;             // what we may do and why
   termsUrl: string;
   reviewedOn: string;
@@ -91,6 +93,7 @@ export const NEWS_SOURCES: NewsSourceDef[] = [
     // The feed's description is only the release date, so there is no text to summarize: headline + link only.
     authority: "official", summaryPolicy: "headline", defaultGeo: "national", trades: [], categories: ["safety"], cadence: "daily", retentionDays: 365, maxItemsPerRun: 30,
     requireConstructionRelevance: true, rights: FEDERAL_RIGHTS, termsUrl: "https://www.dol.gov/general/aboutdol/copyright", reviewedOn: REVIEWED,
+    paused: "Blocks requests from our servers (HTTP 403, checked Nov 18, 2026). Not fetched; we don't work around blocks.",
   },
   {
     key: "fema-declarations", name: "FEMA Disaster Declarations", owner: "Federal Emergency Management Agency (OpenFEMA)", homepage: "https://www.fema.gov/disaster/declarations",
@@ -116,7 +119,7 @@ export const NEWS_SOURCES: NewsSourceDef[] = [
   press({ key: "walls-ceilings", name: "Walls & Ceilings", owner: "BNP Media", homepage: "https://www.wconline.com", feedUrl: "https://www.wconline.com/rss/17", format: "rss",
     hosts: ["wconline.com", "www.wconline.com"], trades: ["drywall"], categories: [], cadence: "several_weekly", termsUrl: "https://www.wconline.com/terms-of-use" }),
   press({ key: "landscape-management", name: "Landscape Management", owner: "North Coast Media", homepage: "https://www.landscapemanagement.net", feedUrl: "https://www.landscapemanagement.net/feed/", format: "rss",
-    hosts: ["landscapemanagement.net", "www.landscapemanagement.net"], trades: ["landscaping"], categories: [], termsUrl: "https://www.landscapemanagement.net/terms-of-use/" }),
+    hosts: ["landscapemanagement.net", "www.landscapemanagement.net"], trades: ["landscaping"], categories: [], termsUrl: "https://www.landscapemanagement.net/terms-of-use/", paused: "Blocks requests from our servers (HTTP 403, checked Nov 18, 2026). Not fetched; we don't work around blocks." }),
   press({ key: "lawn-landscape", name: "Lawn & Landscape", owner: "GIE Media", homepage: "https://www.lawnandlandscape.com", feedUrl: "https://www.lawnandlandscape.com/rss/", format: "rss",
     hosts: ["lawnandlandscape.com", "www.lawnandlandscape.com"], trades: ["landscaping"], categories: [], termsUrl: "https://www.lawnandlandscape.com/terms" }),
   press({ key: "fcnews", name: "Floor Covering News", owner: "Floor Covering News", homepage: "https://www.fcnews.net", feedUrl: "https://www.fcnews.net/feed/", format: "rss",
@@ -132,7 +135,11 @@ export const newsSource = (key: string): NewsSourceDef | undefined => BY_KEY.get
  * Sources we looked at and did NOT enable, with the reason. Shown on the owner Source Health page so
  * nobody re-adds one without checking. Associations without a public feed are reachable as links only.
  */
+/** Sources we fetch and show. Paused sources keep their definition (tests, history) but are skipped. */
+export const ACTIVE_SOURCES = NEWS_SOURCES.filter((s) => !s.paused);
+
 export const UNAVAILABLE_SOURCES: { name: string; url: string; reason: string }[] = [
+  ...NEWS_SOURCES.filter((s) => s.paused).map((s) => ({ name: s.name, url: s.homepage, reason: s.paused! })),
   { name: "NRCA, NECA, ACCA, PHCC, NALP, PCA, ACI, ASCC, AGC newsrooms", url: "https://www.nrca.net", reason: "No public RSS/API feed verified. Newsroom pages are not scraped; listed as references only." },
   { name: "Qualified Remodeler", url: "https://www.qualifiedremodeler.com", reason: "Feed sits behind a bot-protection challenge. We do not bypass bot protection." },
   { name: "EC&M (electrical)", url: "https://www.ecmweb.com", reason: "No working public feed URL found (rss.xml returns 404)." },

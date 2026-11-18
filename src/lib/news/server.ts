@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { parseUsAddress } from "@/lib/geo/address";
+import { logError } from "@/lib/http/api";
 import { sampleArticles } from "./fixtures";
 import { mergePrefs, tradeSlugFrom, type NewsPrefs, type PrefsRow } from "./prefs";
 import { pickBriefing, rankAll, type ArticleWithTerms, type RankedArticle } from "./rank";
@@ -116,8 +117,9 @@ export async function loadFeed(db: SupabaseClient, reader: ReaderProfile, f: Fee
         raw = raw.filter((a) => ids.includes(a.id));
       }
     } catch (e) {
+      // Customers never see an error here: log it for the owner and show the normal "no stories yet" state.
       if (missing(e as { code?: string })) available = false;
-      else throw e;
+      else { logError("news.feed", e); raw = []; }
     }
   }
   const sample = Boolean(opts.sample);

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { NEWS_SOURCES, UNAVAILABLE_SOURCES, AUTHORITY_LABEL, AUTHORITY_HELP } from "@/lib/news/sources";
+import { ACTIVE_SOURCES, UNAVAILABLE_SOURCES, AUTHORITY_LABEL, AUTHORITY_HELP } from "@/lib/news/sources";
 import { TRADE_NEWS } from "@/lib/news/trades";
 import { tradeName } from "@/lib/trades/catalog";
 import { AUTHORITIES } from "@/lib/news/types";
@@ -38,7 +38,7 @@ export default function IndustrySourcesPage() {
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="text-xs uppercase text-muted"><tr><th className="py-1 pr-3">Source</th><th className="py-1 pr-3">Type</th><th className="py-1 pr-3">What we show</th><th className="py-1">Checked</th></tr></thead>
             <tbody className="divide-y divide-line">
-              {NEWS_SOURCES.map((s) => (
+              {ACTIVE_SOURCES.map((s) => (
                 <tr key={s.key}>
                   <td className="py-2 pr-3"><a href={s.homepage} target="_blank" rel="noopener noreferrer" className="font-semibold text-accent-ink underline-offset-4 hover:underline">{s.name}</a><div className="text-xs text-muted">{s.owner}</div></td>
                   <td className="py-2 pr-3">{AUTHORITY_LABEL[s.authority]}</td>
