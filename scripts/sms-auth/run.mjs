@@ -175,6 +175,7 @@ for (const plan of ["monthly", "annual"]) {
   await test(`Checkout ${plan}: choose plan → text code → straight to Stripe with ${plan}, no second plan pick`, async () => {
     const { ctx, page, calls } = await setup();
     await page.goto(`${BASE}/pricing`);
+    if (plan === "monthly") await page.getByRole("radio", { name: "Monthly" }).click(); // card opens on Annual (V8 MKT-4)
     await page.getByRole("button", { name: plan === "monthly" ? "Choose Monthly" : "Choose Annual" }).click();
     await dialog(page).getByText("You're almost there!").waitFor();
     expect(await dialog(page).getByText(plan === "monthly" ? "$19.99" : "$149").first().isVisible(), "plan price in modal");
@@ -247,6 +248,7 @@ for (const [w, h, tag] of [[390, 844, "m390"], [320, 640, "m320"]]) {
     await noHScroll(page);
     await shot(page, `${tag}-new-number-choice`);
     await page.goto(`${BASE}/pricing`);
+    await page.getByRole("radio", { name: "Monthly" }).click();
     await page.getByRole("button", { name: "Choose Monthly" }).click();
     await enterPhone(page, KNOWN);
     await page.getByLabel("Verification code").waitFor();

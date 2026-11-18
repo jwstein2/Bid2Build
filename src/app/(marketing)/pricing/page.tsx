@@ -10,7 +10,9 @@ import { getAccountContext } from "@/lib/account/server";
 import { CTA_LABELS, creditBadge, type AccountStatus } from "@/lib/account/status";
 import { formatCycleDate } from "@/lib/credits/status";
 import { plans } from "@/lib/site";
-import { ANNUAL, ANNUAL_MONTHLY_EQUIVALENT, ANNUAL_SAVINGS_PERCENT, MONTHLY } from "@/lib/billing/plans";
+import { ANNUAL, ANNUAL_MONTHLY_EQUIVALENT, ANNUAL_SAVINGS_PERCENT, MONTHLY, formatUsd } from "@/lib/billing/plans";
+import { UnlimitedCard } from "@/components/marketing/pricing/unlimited-card";
+import { PlanHelper } from "@/components/marketing/pricing/plan-helper";
 import { Suspense } from "react";
 import { EnterprisePlan } from "@/components/billing/enterprise-plan";
 import { isEnterpriseConfigured } from "@/lib/env";
@@ -40,6 +42,16 @@ const BASICS: [string, string, string, string][] = [
 ];
 
 const GROUP_ORDER: CompareGroup[] = ["estimating", "sales", "customers", "projects", "communications", "team"];
+
+/** Short Enterprise card list; the full card with the seat estimate and checkout is further down (#enterprise). */
+const ENTERPRISE_CARD_FEATURES = (pcc: boolean) => [
+  "Unlimited bidding for every user",
+  "Company dashboard, roles and permissions",
+  "Company-wide bid style and analytics",
+  ...(pcc ? [`${PM_PRODUCT_NAME} with ${PRICES.pmIncludedEnterpriseEditors} schedule editor included`] : []),
+];
+
+const ANNUAL_SAVINGS_DOLLARS = formatUsd(MONTHLY.amountCents * 12 - ANNUAL.amountCents);
 
 const UNLIMITED_FEATURES = ["Unlimited estimates and bids", "Everything in Free", "Saved Items & Pricing", "Proposal Templates", "Internal Estimate Reports", "Full proposal customization"];
 
@@ -77,17 +89,26 @@ export default async function PricingPage() {
           <Plan name="Free" current={status.kind === "free" || status.kind === "no_credits"} price="$0" per="forever" billing="No credit card required." features={freeFeatures()}>
             <FreePlanAction status={status} />
           </Plan>
-          <Plan name={MONTHLY.name} current={subscribed && plan !== "annual"} price={MONTHLY.price} per="/month" billing="Billed monthly. Cancel anytime, no contract." features={UNLIMITED_FEATURES}>
-            {subscribed ? manage : <CheckoutButton plan="monthly" signedIn={Boolean(user)} label="Choose Monthly" variant="primary" />}
-          </Plan>
-          <Plan name={ANNUAL.name} current={subscribed && plan === "annual"} price={ANNUAL.price} per="/year" billing="Billed annually" highlight
-            note={<>Equivalent to {ANNUAL_MONTHLY_EQUIVALENT}/month. Save approximately {ANNUAL_SAVINGS_PERCENT}% compared with monthly billing.</>}
-            features={UNLIMITED_FEATURES}>
-            {subscribed ? manage : <CheckoutButton plan="annual" signedIn={Boolean(user)} label="Choose Annual" />}
+          <Suspense fallback={<div className="rounded-2xl border border-accent bg-surface" />}>
+            <UnlimitedCard
+              currentPlan={subscribed ? (plan === "annual" ? "annual" : "monthly") : null}
+              monthly={{ price: MONTHLY.price, per: "/month", billing: "Billed monthly. Cancel anytime, no contract.",
+                action: subscribed ? manage : <CheckoutButton plan="monthly" signedIn={Boolean(user)} label="Choose Monthly" variant="primary" /> }}
+              annual={{ price: ANNUAL.price, per: "/year", billing: "Billed annually", savings: ANNUAL_SAVINGS_DOLLARS,
+                note: <>Equivalent to {ANNUAL_MONTHLY_EQUIVALENT}/month. Save approximately {ANNUAL_SAVINGS_PERCENT}% compared with monthly billing.</>,
+                action: subscribed ? manage : <CheckoutButton plan="annual" signedIn={Boolean(user)} label="Choose Annual" /> }}
+              features={UNLIMITED_FEATURES}
+              addon={<><b className="font-semibold">Add-on:</b> {PM_PRODUCT_NAME}{pmMarketedLive() ? <>, +{PRICES.pmMonthly}/month or +{PRICES.pmAnnual}/year.</> : <> (coming soon).</>} <Link href="#project-command-center" className="font-semibold text-navy underline">What it adds</Link></>}
+            />
+          </Suspense>
+          <Plan name="Enterprise" current={entMode === "owner" || entMode === "member"} price={PRICES.enterpriseBase} per="/month" billing={`${PRICES.enterpriseIncludedUsers} users included. More at volume pricing.`}
+            features={ENTERPRISE_CARD_FEATURES(pmMarketedLive())}>
+            <ButtonLink href="#enterprise" variant="secondary" size="lg" className="w-full" data-cta="enterprise">{entMode === "owner" ? "Manage your company" : entMode === "member" ? "See your company plan" : "See Enterprise"}</ButtonLink>
           </Plan>
         </div>
         <p className="mx-auto mt-5 max-w-2xl text-center text-sm text-ink-soft">Unlimited Monthly and Unlimited Annual include exactly the same features. Only the billing schedule is different.{subscribed && " You're on Unlimited."}</p>
       </CheckoutFlowProvider>
+      <PlanHelper pccLive={pmMarketedLive()} pccName={PM_PRODUCT_NAME} />
       <PmAddonSection status={status} entMode={entMode} />
       <Suspense><EnterprisePlan signedIn={Boolean(user)} mode={entMode} supportEmail={site.supportEmail}
         extraFeatures={pmMarketedLive() ? [`${PM_PRODUCT_NAME}: ${PRICES.pmIncludedEnterpriseEditors} schedule editor included; extra editors ${PRICES.pmEditor}/month each (for licensed users)`] : []} /></Suspense>

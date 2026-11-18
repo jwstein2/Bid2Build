@@ -65,12 +65,18 @@ async function verifyEmail(page, { email = "new-contractor@example.test", wrongF
   await page.getByRole("button", { name: /Verify and continue/ }).click();
 }
 
+// The Unlimited card opens on Annual; Monthly is one tap on its billing switch (V8 MKT-4).
+async function chooseMonthly(page) {
+  await page.getByRole("radio", { name: "Monthly" }).click();
+  await page.getByRole("button", { name: "Choose Monthly" }).click();
+}
+
 // 1. Monthly: choose → verify (after one wrong code) → straight to Stripe with monthly.
 await test("Monthly selected → OTP (wrong code first) → automatic checkout, one request", async () => {
   const { ctx, page, calls } = await setup();
   await page.goto(`${BASE}/pricing`);
   await fullShot(page, "desktop-pricing");
-  await page.getByRole("button", { name: "Choose Monthly" }).click();
+  await chooseMonthly(page);
   await dialog(page).getByText("You're almost there!").waitFor();
   expect(await dialog(page).getByText("Verify your email to continue with Unlimited Monthly.").isVisible(), "monthly heading copy");
   expect(await dialog(page).getByText("$19.99").isVisible(), "monthly price in modal");
@@ -96,7 +102,7 @@ await test("Monthly selected → OTP (wrong code first) → automatic checkout, 
 await test("Annual selected → OTP → automatic checkout (and plan switch inside modal)", async () => {
   const { ctx, page, calls } = await setup();
   await page.goto(`${BASE}/pricing`);
-  await page.getByRole("button", { name: "Choose Monthly" }).click();
+  await chooseMonthly(page);
   await dialog(page).getByRole("radio", { name: "Annual" }).click();
   await dialog(page).getByText("Verify your email to continue with Unlimited Annual.").waitFor();
   await page.mouse.move(0, 0);
@@ -140,7 +146,7 @@ await test("Page refresh during verification → plan and code step preserved", 
 await test("Closing the verification modal keeps the selection with a Continue button", async () => {
   const { ctx, page } = await setup();
   await page.goto(`${BASE}/pricing`);
-  await page.getByRole("button", { name: "Choose Monthly" }).click();
+  await chooseMonthly(page);
   await page.keyboard.press("Escape");
   await page.getByText("Your Unlimited Monthly selection is saved.").waitFor();
   await page.getByRole("button", { name: /Continue to secure checkout/ }).click();
@@ -167,7 +173,7 @@ await test("Network failure → prominent retry, plan preserved, then succeeds",
 await test("Stripe initiation failure → clear message and retry", async () => {
   const { ctx, page } = await setup({ signedIn: true, respond: () => ({ status: 500, body: { error: { code: "checkout_failed", message: "We couldn't start checkout. Please try again." } } }) });
   await page.goto(`${BASE}/pricing`);
-  await page.getByRole("button", { name: "Choose Monthly" }).click();
+  await chooseMonthly(page);
   await dialog(page).getByText("We couldn't start checkout. Please try again.").waitFor();
   expect(await dialog(page).getByRole("button", { name: /Continue to secure checkout/ }).isVisible(), "retry button");
   await ctx.close();
@@ -177,7 +183,7 @@ await test("Stripe initiation failure → clear message and retry", async () => 
 await test("Logged-in user → immediate checkout", async () => {
   const { ctx, page, calls } = await setup({ signedIn: true });
   await page.goto(`${BASE}/pricing`);
-  await page.getByRole("button", { name: "Choose Monthly" }).click();
+  await chooseMonthly(page);
   await page.waitForURL(/checkout\.stripe\.test/);
   expect(calls.length === 1 && calls[0].plan === "monthly", `calls ${JSON.stringify(calls)}`);
   await ctx.close();
@@ -276,7 +282,7 @@ for (const width of [320, 375, 390, 430]) {
     await page.goto(`${BASE}/pricing`);
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     expect(overflow <= 0, `page overflows by ${overflow}px`);
-    const annualCard = page.locator("h2", { hasText: "Unlimited Annual" }).locator("..");
+    const annualCard = page.getByTestId("unlimited-plan");
     await annualCard.scrollIntoViewIfNeeded();
     await annualCard.screenshot({ path: path.join(OUT, `m${width}-annual-card.png`) });
     if (width === 390 || width === 320) await fullShot(page, `m${width}-pricing`);
