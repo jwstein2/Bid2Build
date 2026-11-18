@@ -24,6 +24,8 @@ export default function Privacy() {
         <p>To run the service, generate your proposals, enforce plan limits, provide support, and keep the service secure. We do not sell your data. Your internal costs and margins are never shown on customer-facing proposals.</p>
         <h2 className="pt-2 text-xl font-bold text-ink">Marketing email</h2>
         <p>We only send product news if you opt in, separately from creating an account. You can opt out at any time in Account settings.</p>
+        <h2 className="pt-2 text-xl font-bold text-ink">Your customers&apos; information</h2>
+        <p>When a contractor uses {site.name} to email their customers (follow-ups and project updates), we process those customers&apos; names, email addresses and project details on the contractor&apos;s behalf, only to send the emails they approve. We keep a record of each email, delivery result, reply and opt-out so unsubscribes are always honored. Recipients can unsubscribe from any follow-up with one click, and we never sell or reuse this information for our own marketing.</p>
         <h2 className="pt-2 text-xl font-bold text-ink">Website import</h2>
         <p>If you ask us to import branding from a website, we fetch that public page once, extract details for you to review, and record only the host name and outcome.</p>
         <h2 className="pt-2 text-xl font-bold text-ink">Your choices</h2>
@@ -36,7 +38,7 @@ export default function Privacy() {
         <h2 className="pt-2 text-xl font-bold text-ink">Privacy requests</h2>
         <p>You can also ask us to export or delete your data by emailing <a className="underline" href="mailto:privacy@built2bid.org">privacy@built2bid.org</a>. We complete requests within 30 days.</p>
         <h2 className="pt-2 text-xl font-bold text-ink">Service providers</h2>
-        <p>Supabase (database, authentication, file storage), Stripe (payments), Google Analytics (website analytics), and our hosting provider process data on our behalf. Plaid (optional, read-only bank connections) also processes data if you connect a bank. See <Link className="underline" href="/security">Security</Link> for how we protect your data.</p>
+        <p>Supabase (database, authentication, file storage), Stripe (payments), Resend (email delivery), Google Analytics (website analytics), and our hosting provider process data on our behalf. Plaid (optional, read-only bank connections) also processes data if you connect a bank. See <Link className="underline" href="/security">Security</Link> for how we protect your data.</p>
         <h2 className="pt-2 text-xl font-bold text-ink">Contact</h2>
         <p>Questions: <a className="underline" href={`mailto:${site.supportEmail}`}>{site.supportEmail}</a></p>
       </div>

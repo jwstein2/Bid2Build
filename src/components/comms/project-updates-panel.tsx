@@ -7,6 +7,7 @@ import { Badge, Card, Field, Notice } from "@/components/ui/misc";
 import { FREQUENCY_LABEL, MESSAGE_STATUS_LABEL, type MessageStatus, type UpdateFrequency } from "@/lib/comms/types";
 
 interface State {
+  gate?: { disabled: boolean; termsAccepted: boolean };
   settings: { frequency: UpdateFrequency; mode: "review" | "automatic"; recipientEmail: string | null; recipientName: string | null; pausedAt: string | null; autoConfirmedAt: string | null } | null;
   defaults: { frequency: UpdateFrequency; mode: "review" | "automatic"; timezone: string };
   next: { id: string; status: MessageStatus; scheduled_for: string | null; status_reason: string | null; trigger: string } | null;
@@ -44,6 +45,15 @@ export function ProjectUpdatesPanel({ scheduleId, canConfigure, canAuto }: { sch
     if (!r.ok) setErr(d?.error?.message ?? "Could not save."); else setSt({ ...st, ...d, preview: st.preview });
   };
   const on = cur.frequency !== "off" && !cur.pausedAt;
+  // Owner switched customer emails off, or nobody accepted the customer email terms yet: explain instead of showing controls that can't save.
+  if (st.gate && (st.gate.disabled || !st.gate.termsAccepted)) return (
+    <Card id="customer-updates" className="mb-4 space-y-2 p-4" data-testid="project-updates-panel" data-guide="project.updates">
+      <h2 className="font-bold">Customer updates</h2>
+      {st.gate.disabled
+        ? <div data-testid="pu-disabled"><Notice>Customer emails are turned off for your company by the account owner, so no progress emails are sent for this project.</Notice></div>
+        : <div data-testid="pu-terms"><Notice>Progress emails to the homeowner can be turned on once someone accepts the customer email terms. <Link className="font-semibold underline" href="/dashboard/customers/communications">Open Communications</Link></Notice></div>}
+    </Card>
+  );
   return (
     <Card id="customer-updates" className="mb-4 space-y-3 p-4" data-testid="project-updates-panel" data-guide="project.updates">
       <div className="flex flex-wrap items-center justify-between gap-2">

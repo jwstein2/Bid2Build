@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { fail, json, sameOrigin } from "@/lib/http/api";
 import { buildAudience } from "@/lib/comms/eligibility";
-import { PENDING_REASON, ensureSettings, loadContactFacts, loadEstimateFacts, loadSettings, loadSuppressions, logEvent, requireComm } from "@/lib/comms/server";
+import { PENDING_REASON, commGate, ensureSettings, loadContactFacts, loadEstimateFacts, loadSettings, loadSuppressions, logEvent, requireComm } from "@/lib/comms/server";
 
 export const runtime = "nodejs";
 
@@ -38,6 +38,8 @@ export async function POST(req: Request) {
   if (!g.ok) return g.res;
   const p = Body.safeParse(await req.json().catch(() => null));
   if (!p.success) return fail(400, "invalid", "That list isn't valid.");
+  const gate = await commGate(g.admin, g.access.accountId, { terms: true });
+  if (gate) return gate;
   if (p.data.activate && !g.access.perms.includes("enable_customer_nurture")) return fail(403, "forbidden", "Only someone allowed to turn on customer follow-ups can activate them.");
   await ensureSettings(g.admin, g.access.accountId, g.access.kind === "company" ? "company" : "user");
   const confirmed = new Set(p.data.confirmRelationship.map((e) => e.toLowerCase()));

@@ -91,7 +91,7 @@ export function pickOffer(offers: Offer[], entry: Pick<AudienceEntry, "groups" |
 }
 
 export function footer(ctx: Pick<NurtureContext, "companyName" | "postalAddress" | "unsubscribeUrl">, reason: string): string {
-  return ["", "--", `${ctx.companyName} · ${ctx.postalAddress}`, reason, `Don't want these follow-ups? Unsubscribe: ${ctx.unsubscribeUrl}`].join("\n");
+  return ["", "--", `${ctx.companyName} · ${ctx.postalAddress}`, reason, `Sent for ${ctx.companyName} by Built2Bid.`, `Don't want these follow-ups? Unsubscribe: ${ctx.unsubscribeUrl}`].join("\n");
 }
 
 export interface RenderedNurture { subject: string; body: string; offerId: string | null; facts: Record<string, unknown> }

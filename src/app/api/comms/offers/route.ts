@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { fail, json, sameOrigin } from "@/lib/http/api";
 import { validateOffer } from "@/lib/comms/nurture";
-import { loadOffers, logEvent, requireComm } from "@/lib/comms/server";
+import { commGate, loadOffers, logEvent, requireComm } from "@/lib/comms/server";
 
 export const runtime = "nodejs";
 
@@ -32,6 +32,8 @@ export async function POST(req: Request) {
   if (!g.ok) return g.res;
   const p = Offer.safeParse(await req.json().catch(() => null));
   if (!p.success) return fail(400, "invalid", "Check the offer details.");
+  const off = await commGate(g.admin, g.access.accountId);
+  if (off) return off;
   const o = p.data;
   const why = validateOffer(o);
   if (why) return fail(400, "invalid_offer", why);

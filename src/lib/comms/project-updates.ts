@@ -47,7 +47,8 @@ export function buildProjectUpdateEmail(r: CustomerReport, o: UpdateEmailOpts): 
   if (r.provisional) lines.push("", "Dates are still provisional and may change as the schedule is confirmed.");
   if (o.link) lines.push("", "See the full schedule update:", o.link);
   lines.push("", "Questions? Just reply to this email.", "", "Thank you,", ...[o.contactName, r.company.name].filter((v, i, a): v is string => Boolean(v) && a.indexOf(v) === i));
-  const foot = ["", "--", [r.company.name, o.postalAddress].filter(Boolean).join(" · ")];
+  const foot = ["", "--", [r.company.name, o.postalAddress].filter(Boolean).join(" · "),
+    `You're receiving this because ${r.company.name || "your contractor"} is working on your project. Sent for them by Built2Bid.`];
   if (o.unsubscribeUrl) foot.push(`Prefer not to get these progress emails? ${o.unsubscribeUrl}`);
   lines.push(...foot);
   const subject = o.milestone ? `${o.milestone.sectionName} complete: ${r.projectTitle} — ${r.company.name}` : `Project update: ${r.projectTitle || "your project"} — ${r.company.name}`;

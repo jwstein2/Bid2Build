@@ -166,9 +166,9 @@ describe("permission and entitlement filtering", () => {
     expect(resolveGuide("admin", ctx())).toEqual([]);
     expect(resolveGuide("admin", ctx({ admin: true })).length).toBeGreaterThan(2);
   });
-  it("steps for unreleased features are never shown", () => {
+  it("steps tied to a feature show once that feature is released (customer communications, 2026-11-18)", () => {
     const owner = ctx({ pm: { view: true, edit: true }, company: { role: "owner", owner: true, permissions: ["view_communications"] } });
-    expect(resolveGuide("customers.communications", owner)).toHaveLength(1);
+    expect(resolveGuide("customers.communications", owner).map((s) => s.title)).toEqual(["Customers and communications", "Follow-ups and project updates"]);
   });
   it("meets() treats a solo account as owning its own data", () => {
     expect(meets({ permission: "manage_users", owner: true }, ctx())).toBe(true);
