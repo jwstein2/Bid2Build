@@ -2,7 +2,7 @@ import { newLineItem, uid } from "@/lib/estimate/factory";
 import type { Estimate, EstimateGroup, LineItem, PricingRule } from "@/lib/estimate/types";
 import type { TemplateItem } from "@/lib/trades/catalog";
 import type { CalcRecord } from "@/lib/calculators/types";
-import { addSection, addTrade, moveSectionToTrade, moveSectionWithinTrade, moveTrade, removeTrade, restoreTrade } from "@/lib/estimate/trades";
+import { addSection, addTrade, sectionTrade, moveSectionToTrade, moveSectionWithinTrade, moveTrade, removeTrade, restoreTrade } from "@/lib/estimate/trades";
 import { tradeName } from "@/lib/trades/catalog";
 
 export type Trash =
@@ -37,6 +37,8 @@ export type Action =
   | { type: "applyCalculation"; itemId: string; record: CalcRecord }
   | { type: "clearCalculation"; itemId: string; restore?: boolean }
   | { type: "setMinimumCharge"; value: string }
+  /** Adds a reviewed AI draft to one trade: rows go into same-named sections (created when missing). */
+  | { type: "applyDraft"; trade: string; sections: { name: string; items: (Partial<LineItem> & { id: string })[] }[] }
   | { type: "undo" };
 
 export interface State {
@@ -208,6 +210,23 @@ export function reducer(state: State, action: Action): State {
         ? e.items.map((i) => (i.id === action.itemId ? { ...i, quantity: rec.previous!.quantity, unit: rec.previous!.unit } : i))
         : e.items;
       return next({ ...e, items, worksheet: { ...(e.worksheet ?? {}), calcs } });
+    }
+    case "applyDraft": {
+      if (!e.trades.includes(action.trade)) return state;
+      let cur = e;
+      for (const sec of action.sections) {
+        if (!sec.items.length) continue;
+        const name = sec.name.trim() || "General";
+        const find = (x: Estimate) => [...x.groups].sort((a, b) => a.sortOrder - b.sortOrder)
+          .filter((g) => g.name.trim().toLowerCase() === name.toLowerCase() && (x.trades.length < 2 || sectionTrade(x, g) === action.trade)).pop();
+        let group = find(cur);
+        if (!group) { cur = addSection(cur, name, action.trade); group = find(cur); }
+        if (!group) continue;
+        const list = groupItems(cur, group.id);
+        for (const f of sec.items) list.push({ ...newLineItem(group.id, 0, f), id: f.id });
+        cur = setGroupItems(cur, group.id, list);
+      }
+      return cur === e ? state : next(cur);
     }
     case "setMinimumCharge":
       return next({ ...e, worksheet: { ...(e.worksheet ?? {}), minimumCharge: action.value } });
