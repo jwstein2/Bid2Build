@@ -12,6 +12,7 @@ import type { Library } from "./library";
 import { belowTargetMargin, refreshPreview } from "@/lib/pricing/refresh";
 import { Button } from "../ui/button";
 import { VISIBILITY_LABEL } from "./workspace";
+import { TaxDetails } from "./tax-details";
 
 function equivalent(e: Estimate): string | null {
   const f = pricingFactor(e.pricing);
@@ -92,6 +93,7 @@ export function PricingPanel({ estimate: e, totals: t, dispatch, lib }: { estima
           </div>
         </div>
         <p id="adj-help" className="mt-1 text-xs text-muted">Use a negative amount for a discount. Applied before tax.</p>
+        <TaxDetails estimateId={/^[0-9a-f-]{36}$/.test(e.id) ? e.id : null} onUseRate={(rate) => dispatch({ type: "patch", patch: { taxRate: rate } })} />
         {toDec(e.fixedAdjustment).value.isZero() ? null : (
           <div className="mt-2">
             <label htmlFor="adj-label" className="label">Adjustment label</label>

@@ -17,7 +17,7 @@ export const CARD_KEYS = [
   "job_profitability", "budget_vs_actual", "open_commitments", "bills_to_approve", "expenses_to_approve",
   "material_costs", "labor_costs", "subcontractor_costs", "equipment_costs", "permit_costs", "inventory_usage",
   "tm_unbilled", "service_calls_unbilled", "retainage_placeholder", "progress_billing_placeholder", "crew_utilization_placeholder",
-  "my_jobs", "my_expenses", "my_jobs_billing", "export_center", "audit_trail",
+  "my_jobs", "my_expenses", "my_jobs_billing", "export_center", "audit_trail", "tax_updates", "cash_position",
 ] as const;
 export type CardKey = (typeof CARD_KEYS)[number];
 
@@ -62,6 +62,8 @@ export const CARDS: Record<CardKey, CardDef> = {
   my_jobs_billing: { key: "my_jobs_billing", title: "Billing on my jobs", needs: VIEW_PRJ },
   export_center: { key: "export_center", title: "Exports", needs: ["export_financials"], accountantOnly: true },
   audit_trail: { key: "audit_trail", title: "Audit trail", needs: VIEW_CO, accountantOnly: true },
+  tax_updates: { key: "tax_updates", title: "Tax & regulatory updates", needs: VIEW_CO },
+  cash_position: { key: "cash_position", title: "Cash position", needs: ["reconcile"] },
 };
 
 export const QUICK_ACTIONS = [

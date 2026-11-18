@@ -13,7 +13,7 @@ export type Mode = "contractor" | "accountant";
 
 /** Role-aware default layouts (before the profile adds trade cards). */
 export const ROLE_DEFAULT_CARDS: Record<DashboardRole, readonly CardKey[]> = {
-  owner: ["ar_aging", "job_profitability", "milestones_ready", "deposits_outstanding", "payments_received", "budget_vs_actual", "open_commitments", "bills_to_approve", "expenses_to_approve"],
+  owner: ["ar_aging", "job_profitability", "milestones_ready", "deposits_outstanding", "payments_received", "budget_vs_actual", "open_commitments", "bills_to_approve", "expenses_to_approve", "cash_position", "tax_updates"],
   financial_admin: ["ar_aging", "milestones_ready", "invoices_to_send", "payments_received", "bills_to_approve", "expenses_to_approve", "job_profitability", "budget_vs_actual"],
   bookkeeper: ["invoices_to_send", "milestones_ready", "payments_received", "ar_aging", "bills_to_approve", "open_commitments"],
   accountant: ["ar_aging", "payments_received", "job_profitability", "export_center", "audit_trail"],
