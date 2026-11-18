@@ -194,6 +194,7 @@ export function AppSidebar({ isAdmin, email, company, access = null, projects = 
         <p className="mt-3 px-3 pb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#B8C6D4]">Help</p>
         <ReplayTourButton className={cn(item, "w-full text-left text-[#C9D6E3] hover:bg-white/5 hover:text-white")} />
         <FeatureTourButton className={cn(item, "w-full text-left text-[#C9D6E3] hover:bg-white/5 hover:text-white")} />
+        <Link href="/academy" className={cn(item, "text-[#C9D6E3] hover:bg-white/5 hover:text-white")} data-testid="nav-academy"><GraduationCap className="h-4 w-4" aria-hidden /> Contractor Academy</Link>
         <Link href="/whats-new" aria-current={active("/whats-new") ? "page" : undefined} className={cn(item, active("/whats-new") ? "bg-white/10 text-white" : "text-[#C9D6E3] hover:bg-white/5 hover:text-white")} data-testid="nav-whats-new"><Sparkles className="h-4 w-4" aria-hidden /> What&apos;s New</Link>
         {isAdmin && (
           <Link href="/admin" className={cn(item, "text-[#C9D6E3] hover:bg-white/5 hover:text-white")}><Shield className="h-4 w-4" aria-hidden /> Admin</Link>
