@@ -7,7 +7,7 @@ const PRIMARY = [
   { href: "/academy", label: "Community", match: (p: string) => p === "/academy" || p.startsWith("/academy/post") },
   { href: "/academy/classroom", label: "Classroom", match: (p: string) => p.startsWith("/academy/classroom") || p.startsWith("/academy/courses") },
   { href: "/academy/members", label: "Members", match: (p: string) => p.startsWith("/academy/members") },
-  { href: "/academy/leaderboard", label: "Leaderboard", match: (p: string) => p.startsWith("/academy/leaderboard") },
+  { href: "/academy/leaderboard", label: "Leaderboard", short: "Leaders", match: (p: string) => p.startsWith("/academy/leaderboard") },
 ];
 
 /** The four primary Academy tabs (Community first), plus a small secondary menu. */
@@ -20,9 +20,9 @@ export function AcademyTabs({ secondary }: { secondary: { href: string; label: s
           const on = t.match(path);
           return (
             <Link key={t.href} href={t.href} aria-current={on ? "page" : undefined}
-              className={cn("whitespace-nowrap rounded-full px-3 py-2 text-sm font-semibold sm:px-4 transition-colors duration-(--motion-fast)",
+              className={cn("whitespace-nowrap rounded-full px-2.5 py-2 text-[13px] font-semibold sm:px-4 sm:text-sm transition-colors duration-(--motion-fast)",
                 on ? "bg-navy text-white" : "text-ink-soft hover:bg-brand-tint hover:text-navy")}>
-              {t.label}
+              {"short" in t && t.short ? <><span className="sm:hidden">{t.short}</span><span className="hidden sm:inline">{t.label}</span></> : t.label}
             </Link>
           );
         })}
