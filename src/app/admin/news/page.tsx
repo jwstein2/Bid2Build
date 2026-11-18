@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Badge, Card, Notice } from "@/components/ui/misc";
 import { requireAdmin } from "@/lib/admin/server";
-import { NEWS_SOURCES, UNAVAILABLE_SOURCES, AUTHORITY_LABEL } from "@/lib/news/sources";
+import { ACTIVE_SOURCES, UNAVAILABLE_SOURCES, AUTHORITY_LABEL } from "@/lib/news/sources";
 import { CATEGORIES } from "@/lib/news/types";
 import { CATEGORY_LABEL } from "@/lib/news/categories";
 import { newsAiSettings } from "@/lib/news/summarize";
@@ -65,7 +65,7 @@ export default async function AdminNews() {
 
       <Card>
         <ul className="divide-y divide-line">
-          {NEWS_SOURCES.map((s) => {
+          {ACTIVE_SOURCES.map((s) => {
             const x = states.get(s.key);
             const enabled = x?.enabled ?? true;
             return (

@@ -134,7 +134,7 @@ export default async function IndustryPage({ searchParams }: { searchParams: Pro
       </p>
 
       {!feed.available ? (
-        <Notice title="Industry news is almost ready">The news tables haven&apos;t been installed yet. Meanwhile you can <Link href="/industry?sample=1" className="font-semibold underline">preview with sample stories</Link>.</Notice>
+        <Notice title="Your first stories are on the way">New stories from official and trade sources arrive every morning. Meanwhile you can <Link href="/industry?sample=1" className="font-semibold underline">preview with sample stories</Link>.</Notice>
       ) : shown.length === 0 ? (
         <div className="rounded-xl border border-dashed border-line p-6 text-center text-sm text-ink-soft" data-testid="news-empty">
           {view === "saved" ? <p>You haven&apos;t saved any articles yet. Use <span className="font-semibold">Save</span> on any story to keep it here.</p>

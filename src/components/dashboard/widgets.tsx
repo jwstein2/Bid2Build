@@ -22,6 +22,7 @@ import { QUICK_ACTIONS, instanceTitle, type QuickActionKey } from "@/lib/dashboa
 import type { WidgetInstance } from "@/lib/dashboard/schema";
 import type { DashboardData, DashboardViewer } from "@/lib/dashboard/server";
 import { ChartView } from "./charts";
+import { IndustryBriefingWidget } from "@/components/news/industry-briefing-widget";
 
 const fmtDay = (d: string) => { const [y, m, dd] = d.slice(0, 10).split("-").map(Number); return new Date(Date.UTC(y, m - 1, dd)).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }); };
 const show = (f: Figure) => (f.money ? formatCurrency(f.value) : f.value);
@@ -366,6 +367,9 @@ export async function WidgetBody({ inst, data, viewer }: { inst: WidgetInstance;
         </div>
       );
     }
+    case "industry_briefing":
+      return <IndustryBriefingWidget settings={{ limit: String(s.limit ?? "5"), geo: typeof s.geo === "string" ? s.geo : undefined }} />;
+
     case "customers": {
       const n = await data.customers();
       return <MetricCard className="h-full" title="Customers" value={n ?? 0} empty={!n} href="/dashboard/customers" action="Open customers" testId={tid} />;
