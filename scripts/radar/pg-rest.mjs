@@ -81,7 +81,8 @@ export async function handleRadarRest(req, res, u, raw, send) {
       const args = JSON.parse(raw || "{}");
       const keys = Object.keys(args).filter((k) => ID.test(k));
       const call = `public.${rpc[1]}(${keys.map((k, i) => `${k} => $${i + 1}`).join(", ")})`;
-      const vals = keys.map((k) => (args[k] !== null && typeof args[k] === "object" && !Array.isArray(args[k]) ? JSON.stringify(args[k]) : args[k]));
+      // Objects, and arrays of objects (jsonb lists), go as JSON text; arrays of scalars stay Postgres arrays.
+      const vals = keys.map((k) => { const v = args[k]; return v !== null && typeof v === "object" && (!Array.isArray(v) || v.some((x) => x !== null && typeof x === "object")) ? JSON.stringify(v) : v; });
       // Functions returning a table/record come back as rows, like PostgREST; scalars and jsonb as the value.
       const kind = (await pool.query("select bool_or(p.proretset or p.prorettype = 'record'::regtype or t.typtype = 'c') as rows from pg_proc p join pg_type t on t.oid = p.prorettype where p.pronamespace = 'public'::regnamespace and p.proname = $1", [rpc[1]])).rows[0]?.rows;
       if (kind) return send(res, 200, (await exec(`select * from ${call}`, vals)).rows);
