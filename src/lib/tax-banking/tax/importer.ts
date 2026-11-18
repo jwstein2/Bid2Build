@@ -52,6 +52,10 @@ async function page(url: string, f: Fetch, timeoutMs: number, cache: boolean): P
   return html;
 }
 
+const SST_RATES_DIR = "https://www.streamlinedsalestax.org/ratesandboundry/Rates/";
+const SST_BOUNDARY_DIR = "https://www.streamlinedsalestax.org/ratesandboundry/Boundary/";
+/** Host without a leading www., so www.example.org and example.org count as the same site. */
+const siteOf = (url: string) => new URL(url).host.toLowerCase().replace(/^www\./, "");
 const FILE_EXT = /\.(zip|csv|txt|xlsx?|pdf)(?:$|[?#])/i;
 const RB_PAGE = /rate[-\s_]*(?:and|&|&amp;)?[-\s_]*boundar/i;
 
@@ -63,7 +67,18 @@ const RB_PAGE = /rate[-\s_]*(?:and|&|&amp;)?[-\s_]*boundar/i;
 export async function resolveFiles(src: SourceRow, f: Fetch, timeoutMs = 8000, opts: { cache?: boolean } = {}): Promise<{ rateUrl: string | null; boundaryUrl: string | null; listing?: string }> {
   if (src.rate_url) return { rateUrl: src.rate_url, boundaryUrl: src.boundary_url };
   if (!src.listing_url) return { rateUrl: null, boundaryUrl: src.boundary_url };
-  const host = new URL(src.listing_url).host;
+  // Streamlined Sales Tax publishes each state's current files in two plain directory listings (one file per state);
+  // its web pages link there. Read those directly; fall back to walking the pages if the listings move.
+  if (/(^|\.)streamlinedsalestax\.org$/i.test(new URL(src.listing_url).host)) {
+    try {
+      const name = authorityFor(src.state)?.stateName;
+      const [rates, bounds] = await Promise.all([page(SST_RATES_DIR, f, timeoutMs, opts.cache ?? false), page(SST_BOUNDARY_DIR, f, timeoutMs, opts.cache ?? false).catch(() => "")]);
+      const r = findOfficialFiles(rates, src.state, SST_RATES_DIR, name);
+      const b = bounds ? findOfficialFiles(bounds, src.state, SST_BOUNDARY_DIR, name) : { rateUrl: null, boundaryUrl: null };
+      if (r.rateUrl) return { rateUrl: r.rateUrl, boundaryUrl: src.boundary_url ?? b.boundaryUrl };
+    } catch { /* fall through to the page walk */ }
+  }
+  const host = siteOf(src.listing_url);
   const name = authorityFor(src.state)?.stateName;
   const visited = new Set<string>();
   const notes: string[] = [];
@@ -76,7 +91,7 @@ export async function resolveFiles(src: SourceRow, f: Fetch, timeoutMs = 8000, o
     const found = findOfficialFiles(html, src.state, url, name);
     if (found.rateUrl) return { rateUrl: found.rateUrl, boundaryUrl: src.boundary_url ?? found.boundaryUrl };
     notes.push(`${hop ? `${url}: ` : ""}${describeListing(html, src.state, url)}`);
-    const links: { url: string; text: string }[] = linksOf(html, url).filter((l) => { try { return new URL(l.url).host === host && !visited.has(l.url) && !FILE_EXT.test(l.url); } catch { return false; } });
+    const links: { url: string; text: string }[] = linksOf(html, url).filter((l) => { try { return siteOf(l.url) === host && !visited.has(l.url) && !FILE_EXT.test(l.url); } catch { return false; } });
     const statePage: { url: string; text: string } | undefined = links.find((l) => (name && new RegExp(`\\b${name}\\b`, "i").test(l.text)) || new RegExp(`^${src.state}$`, "i").test(l.text.trim()));
     const rbPage: { url: string; text: string } | undefined = links.filter((l) => RB_PAGE.test(`${l.url} ${l.text}`) && !/update|change|archive/i.test(`${l.url} ${l.text}`))
       .sort((x, y) => Number(Boolean(y.text)) - Number(Boolean(x.text)))[0];

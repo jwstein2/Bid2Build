@@ -351,6 +351,31 @@ describe("importer (mocked downloads)", () => {
     expect(miss.rateUrl).toBeNull();
     expect(miss.listing?.startsWith("https://www.example.org/committees/certification-committee/rate-and-boundary-files:")).toBe(true);
   });
+  it("reads Streamlined's directory listings and the real file layout (sampled 2026-11-18)", async () => {
+    const { resolveFiles } = await import("@/lib/tax-banking/tax/importer");
+    const dir = (kind: string, names: string[]) => `<pre><a href="/ratesandboundry/">[To Parent Directory]</a><br><br>${names.map((n) => `<a href="/ratesandboundry/${kind}/${n}">${n}</a><br>`).join("")}</pre>`;
+    const pages: Record<string, string> = {
+      "https://www.streamlinedsalestax.org/ratesandboundry/Rates/": dir("Rates", ["ARR2026Q4AUG28.csv", "INR2008Q4MAY7.csv", "KYR2012Q4Aug13.csv", "MNR2026Q4AUG18.zip", "NDR2026Q4AUG14.zip", "WYR2026Q4AUG20.CSV"]),
+      "https://www.streamlinedsalestax.org/ratesandboundry/Boundary/": dir("Boundary", ["MNB2026Q4AUG18.zip", "NDB2026Q4AUG14.zip", "WYB2026Q4AUG20.csv"]),
+    };
+    const f = (async (u: string) => pages[u] !== undefined ? new Response(pages[u]) : new Response("nope", { status: 404 })) as unknown as typeof fetch;
+    const src = { state: "WY", kind: "sst", listing_url: "https://www.streamlinedsalestax.org/quick-links/r-b-files", rate_url: null, boundary_url: null, format: null, status: "needs_link",
+      last_rate_file: null, last_boundary_file: null, zips_loaded: 0, last_success_at: null } as const;
+    expect(await resolveFiles({ ...src }, f)).toEqual({ rateUrl: "https://www.streamlinedsalestax.org/ratesandboundry/Rates/WYR2026Q4AUG20.CSV", boundaryUrl: "https://www.streamlinedsalestax.org/ratesandboundry/Boundary/WYB2026Q4AUG20.csv" });
+    expect((await resolveFiles({ ...src, state: "ND" }, f)).rateUrl).toBe("https://www.streamlinedsalestax.org/ratesandboundry/Rates/NDR2026Q4AUG14.zip");
+    expect((await resolveFiles({ ...src, state: "IN" }, f)).rateUrl).toBe("https://www.streamlinedsalestax.org/ratesandboundry/Rates/INR2008Q4MAY7.csv");
+    expect((await resolveFiles({ ...src, state: "KY" }, f)).rateUrl).toBe("https://www.streamlinedsalestax.org/ratesandboundry/Rates/KYR2012Q4Aug13.csv");
+
+    const rates = parseSstRates("56,45,56,0.04,0.04,0.04,0.04,20060701,99991231\r\n56,00,003,0.01,0.01,0.01,0.01,20060701,99991231\r\n56,69,02290,0.02,0.02,0.02,0.02,20081001,99991231\r\n56,00,001,0.02,0.02,0.02,0.02,20101001,20260630\r\n56,00,001,0.01,0.01,0.01,0.01,20260701,20260930\r\n56,00,001,0.02,0.02,0.02,0.02,20261001,99991231\r\n56,01,13150,0.01,0.01,0.01,0.01,20250401,20260630\r\n", "WY", "2026-11-18");
+    expect(rates.map((r) => [r.code, r.rate, r.effectiveFrom])).toEqual([["WY", "4", "2006-07-01"], ["WY-CO-003", "1", "2006-07-01"], ["WY-SP-02290", "2", "2008-10-01"], ["WY-CO-001", "2", "2026-10-01"]]);
+    const areas = aggregateSstBoundaries([
+      "Z,19010101,99991231,,,,,,,,,,,,,,,82001,,82001,,56021,56,56,021,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "4,20250401,20260630,,,,,,,,,,,,,,,82601,1000,82601,1007,56025,56,56,025,13150,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "4,19010101,99991231,,,,,,,,,,,,,,,82601,1008,82601,1008,56025,56,56,025,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "A,19010101,99991231,3330,3340,E,W,CODY,Ln,,,,,,Teton Village,83001,,,,,,56039,56,56,039,02290,,,,,,",
+    ].join("\r\n"), "WY", "2026-11-18");
+    expect(areas).toEqual([{ zip5: "82001", countyFips: "021", placeFips: null, specials: [], weight: 1 }, { zip5: "82601", countyFips: "025", placeFips: null, specials: [], weight: 1 }]);
+  });
   it("a state with no link yet is skipped quickly, without a download", async () => {
     const { importState } = await import("@/lib/tax-banking/tax/importer");
     let fetched = false;
