@@ -1,6 +1,6 @@
 "use client";
 import { GlobalSearchHost, SearchIconButton } from "@/components/search/global-search";
-import { AlertCircle, ArrowLeft, ArrowRight, Home, Check, CloudOff, Download, Eye, EyeOff, Loader2, Link2, Mail, RotateCcw, Undo2 } from "lucide-react";
+import { AlertCircle, ArrowLeft, ArrowRight, Home, Check, CloudOff, Download, Eye, EyeOff, Loader2, Link2, Mail, MoreHorizontal, RotateCcw, Undo2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
@@ -103,6 +103,8 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
     return resolveStartStep({ companyComplete: isCompanyComplete(biz), estimate: initialEstimate, saved: isBuilderStep(saved) ? saved : null, requested: initialStep });
   });
   const [customerView, setCustomerView] = useState(false);
+  // Phones (< 640px): Preview and Download PDF stay in the header; the other tools sit behind "More" (V8 EST-3).
+  const [moreTools, setMoreTools] = useState(false);
   // Steps opened in this session: an opened step is "visited", never "complete" on its own.
   const [visited, setVisited] = useState<ReadonlySet<Step>>(() => new Set<Step>());
   // eslint-disable-next-line react-hooks/set-state-in-effect -- records the step being shown
@@ -467,12 +469,14 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
                 {customerView ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />} Customer view
               </Button>
             )}
-            {cloudMode && user && save === "saved" && <ScheduleNowButton estimateId={estimate.id} />}
-            {cloudMode && user && <InternalReportButton estimateId={estimate.id} locked={credits ? !credits.unlimited : false} saved={save === "saved"} signedIn={Boolean(user)} businessEmail={business.email} title={estimate.title} />}
-            <Button size="sm" variant="secondary" onClick={() => setPreviewOpen(true)} data-guide="builder.preview"><Eye className="h-4 w-4" /> <span className="hidden sm:inline">Preview customer proposal</span><span className="sm:hidden">Preview</span></Button>
-            <Button size="sm" variant="secondary" onClick={startSend} disabled={exporting} aria-label="Send via My Email" data-testid="send-email-header" data-guide="builder.send">
-              <Mail className="h-4 w-4" aria-hidden /> <span className="max-[419px]:hidden"><span className="sm:hidden">Email</span><span className="hidden sm:inline xl:hidden">Send by email</span><span className="hidden xl:inline">Send via My Email</span></span>
-            </Button>
+            <div id="builder-more-tools" className={cn("contents", !moreTools && "max-sm:hidden")} data-testid="builder-more-tools">
+              {cloudMode && user && save === "saved" && <ScheduleNowButton estimateId={estimate.id} />}
+              {cloudMode && user && <InternalReportButton estimateId={estimate.id} locked={credits ? !credits.unlimited : false} saved={save === "saved"} signedIn={Boolean(user)} businessEmail={business.email} title={estimate.title} />}
+              <Button size="sm" variant="secondary" onClick={startSend} disabled={exporting} aria-label="Send via My Email" data-testid="send-email-header" data-guide="builder.send" className="max-sm:min-h-11">
+                <Mail className="h-4 w-4" aria-hidden /> <span><span className="sm:hidden">Email</span><span className="hidden sm:inline xl:hidden">Send by email</span><span className="hidden xl:inline">Send via My Email</span></span>
+              </Button>
+            </div>
+            <Button size="sm" variant="secondary" onClick={() => setPreviewOpen(true)} data-guide="builder.preview" className="max-sm:order-first max-sm:min-h-11"><Eye className="h-4 w-4" /> <span className="hidden sm:inline">Preview customer proposal</span><span className="sm:hidden">Preview</span></Button>
             <div className="flex flex-col items-end">
               <Button size="sm" variant="accent" onClick={doExport} disabled={exporting} aria-label="Download PDF">
                 {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} <span><span className="max-[360px]:hidden">Download </span>PDF</span>
@@ -483,8 +487,13 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
               {user && !credits && <span className="invisible mt-0.5 text-[11px] tabular" aria-hidden>Monthly 0 · Starter 0</span>}
               {credits && !credits.unlimited && <span className="text-[11px] text-muted">{alreadyFinalized ? "Updates are free" : "Uses 1 credit"}</span>}
             </div>
-            <PageGuideButton compact className="min-h-9 min-w-9 justify-center" />
-            <ThemeToggle signedIn={Boolean(user)} account={user?.theme ?? null} className="min-h-9 min-w-9 md:min-h-9 md:min-w-9" />
+            <div className={cn("contents", !moreTools && "max-sm:hidden")}>
+              <PageGuideButton compact className="min-h-9 min-w-9 justify-center max-sm:min-h-11 max-sm:min-w-11" />
+              <ThemeToggle signedIn={Boolean(user)} account={user?.theme ?? null} className="min-h-9 min-w-9 max-sm:min-h-11 max-sm:min-w-11 md:min-h-9 md:min-w-9" />
+            </div>
+            <Button size="sm" variant="ghost" className="min-h-11 sm:hidden" onClick={() => setMoreTools((v) => !v)} aria-expanded={moreTools} aria-controls="builder-more-tools" data-testid="builder-more">
+              <MoreHorizontal className="h-4 w-4" aria-hidden /> {moreTools ? "Less" : "More"}
+            </Button>
           </div>
         </div>
         <nav aria-label="Builder steps" className="mx-auto max-w-[1400px] px-3 sm:px-5" data-guide="builder.steps">

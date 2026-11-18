@@ -190,7 +190,7 @@ function ComparisonTable() {
   return (
     <div id="compare" className="mx-auto mt-14 max-w-5xl scroll-mt-20">
       <h2 className="text-2xl font-extrabold">Compare plans</h2>
-      <p className="mt-1 text-sm text-ink-soft">Coming soon means it&apos;s in development and not part of any plan yet.</p>
+      {MARKETING_FEATURES.some((f) => featureStatus(f) === "coming_soon") && <p className="mt-1 text-sm text-ink-soft">Coming soon means it&apos;s in development and not part of any plan yet.</p>}
       <p className="mt-1 text-xs text-muted sm:hidden" aria-hidden>Swipe the table sideways to see Unlimited and Enterprise.</p>
       <div className="mt-4 overflow-x-auto rounded-xl border border-line bg-surface" role="region" aria-label="Plan comparison" tabIndex={0}>
         <table className="w-full min-w-[600px] text-sm">

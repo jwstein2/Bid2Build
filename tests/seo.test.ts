@@ -34,3 +34,13 @@ describe("openGraphFor", () => {
     expect((openGraphFor({ title: "t", description: "d", path: "/bids/decks", ownImage: true }) as Record<string, unknown>).images).toBeUndefined();
   });
 });
+
+import { gaOptedOut } from "@/lib/seo/ga-optout";
+describe("gaOptedOut", () => {
+  it("reads the visitor's opt-out cookie exactly", () => {
+    expect(gaOptedOut("a=1; b2b_ga_optout=1")).toBe(true);
+    expect(gaOptedOut("b2b_ga_optout=0")).toBe(false);
+    expect(gaOptedOut("xb2b_ga_optout=1")).toBe(false);
+    expect(gaOptedOut(null)).toBe(false);
+  });
+});

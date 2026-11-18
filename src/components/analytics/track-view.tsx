@@ -8,7 +8,7 @@ export function TrackLandingView({ trade }: { trade: string }) {
     const key = `b2b:lv:${trade}`;
     try { if (sessionStorage.getItem(key)) return; sessionStorage.setItem(key, "1"); } catch { /* storage blocked: still fine */ }
     // Tags load afterInteractive; wait briefly so the event isn't dropped.
-    const t = setTimeout(() => track("landing_view", { trade }), 1500);
+    const t = setTimeout(() => track("landing_view", { trade, page_type: "trade" }), 1500);
     return () => clearTimeout(t);
   }, [trade]);
   return null;
