@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { ATTRIBUTION_COOKIE, ATTRIBUTION_MAX_AGE, captureAttribution, encodeAttribution } from "@/lib/growth/attribution";
 import { normalizeReferralCode, REFERRAL_COOKIE, REFERRAL_MAX_AGE } from "@/lib/growth/referral";
 import { TWO_STEP_REQUIRED, needsStepUp, stepUpExempt } from "@/lib/auth/mfa";
+import { DEMO_BLOCKED_MESSAGE, isDemoBlocked, parseDemoClaim } from "@/lib/demo/session";
 
 /** First-touch attribution: set once from UTM/ic/ref parameters, an ad click id or an outside referrer host; never overwritten. */
 function withAttribution(request: NextRequest, response: NextResponse): NextResponse {
@@ -40,6 +41,11 @@ export async function proxy(request: NextRequest) {
   // this runs on every page and prefetch without a call to the Auth server. With the legacy shared
   // secret it falls back to the Auth server, same as getUser(). Pages still authorize with getUser().
   const { data: claims } = await supabase.auth.getClaims();
+  // Demo / Practice Mode: actions that would charge money, change billing or reach a real person are
+  // refused for demo logins before any route runs (the database has its own guards as a backstop).
+  if (request.nextUrl.pathname.startsWith("/api/") && parseDemoClaim(claims?.claims?.app_metadata) && isDemoBlocked(request.nextUrl.pathname, request.method)) {
+    return Response.json({ error: { code: "demo_blocked", message: DEMO_BLOCKED_MESSAGE } }, { status: 403 }) as unknown as NextResponse;
+  }
   // Two-step sign-in: a session that passed only the email code (aal1) on an account with an authenticator
   // must enter the authenticator code before using the app. Only checked for signed-in aal1 sessions; reads
   // the session cookie, no network call.

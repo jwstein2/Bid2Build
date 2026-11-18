@@ -674,6 +674,12 @@ http.createServer((req, res) => {
       if (st === "partial") { tables.estimates = tables.estimates.slice(0, 1); tables.estimate_versions = []; }
       return send(res, 200, { ok: true, estimates: tables.estimates.length });
     }
+    // Demo Mode walk: put the server-written demo claim on the signed-in user (kind=owner_demo|practice; empty clears it).
+    if (u.pathname === "/__demo") {
+      const kind = u.searchParams.get("kind");
+      USER.app_metadata = kind ? { b2b_demo: { kind, owner: "00000000-0000-4000-8000-0000000000aa", workspace: "00000000-0000-4000-8000-0000000000bb" } } : {};
+      return send(res, 200, { ok: true, app_metadata: USER.app_metadata });
+    }
     if (u.pathname === "/__reset_library") { Object.assign(tables, JSON.parse(LIBRARY_SEED)); return send(res, 200, { ok: true }); }
     if (u.pathname === "/auth/v1/user" && req.method === "GET") return void setTimeout(() => send(res, 200, USER), authDelayMs);
     if (u.pathname === "/__otp-log") {

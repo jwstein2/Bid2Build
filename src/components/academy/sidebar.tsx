@@ -3,6 +3,7 @@ import { GraduationCap } from "lucide-react";
 import { buttonClass } from "@/components/ui/button";
 import { levelName } from "@/lib/academy/types";
 import { academyDb, loadMe, loadStats } from "@/lib/academy/server";
+import { AcademyLiveStats } from "./live-stats";
 
 const FALLBACK = {
   name: "Built2Bid Contractor Academy",
@@ -34,17 +35,7 @@ export async function AcademySidebar() {
           <h2 className="font-display text-lg font-extrabold">{settings.name}</h2>
           <p className="mt-0.5 text-xs font-semibold text-accent-ink">{settings.tagline}</p>
           <p className="mt-2 text-sm text-ink-soft">{settings.description}</p>
-          {stats ? (
-            <dl className="mt-4 grid grid-cols-4 gap-1 border-y border-line py-3 text-center" data-testid="academy-stats">
-              <div><dd className="font-display text-lg font-extrabold" data-stat="members">{n(stats.members)}</dd><dt className="text-[11px] text-muted">Members</dt></div>
-              <div><dd className="flex items-center justify-center gap-1 font-display text-lg font-extrabold" data-stat="online"><span className="h-2 w-2 rounded-full bg-ok" aria-hidden />{n(stats.online)}</dd><dt className="text-[11px] text-muted">Online</dt></div>
-              <div><dd className="font-display text-lg font-extrabold" data-stat="admins">{n(stats.admins)}</dd><dt className="text-[11px] text-muted">Admins</dt></div>
-              <div><dd className="font-display text-lg font-extrabold" data-stat="moderators">{n(stats.moderators)}</dd><dt className="text-[11px] text-muted">Moderators</dt></div>
-            </dl>
-          ) : (
-            <p className="mt-4 border-y border-line py-3 text-xs text-muted">Member counts appear once the community is live.</p>
-          )}
-          {stats && <p className="mt-2 text-[11px] text-muted">Online means active in the Academy in the last {stats.online_window_minutes} minutes. Counts include only people who joined the Academy.</p>}
+          <AcademyLiveStats initial={stats} />
           <div className="mt-4">
             {!migrated ? (
               <p className="rounded-lg bg-brand-tint px-3 py-2 text-sm text-navy">The community is being set up. The Classroom is open now.</p>

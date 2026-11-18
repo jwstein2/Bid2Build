@@ -43,6 +43,7 @@ import { stepStatuses } from "@/lib/estimate/step-status";
 import type { ShareEmailInput } from "@/lib/proposal/share-email";
 import { displayPhone } from "@/lib/proposal/customer-text";
 import { ThemeToggle } from "../theme/theme-toggle";
+import { GuideHost } from "@/components/guide/guide-host";
 import { FeatureHost } from "../features/feature-host";
 import { PageGuideButton } from "../features/tour-buttons";
 import type { ThemePref } from "@/lib/theme";
@@ -653,6 +654,8 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
       <UpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} nextCycleAt={credits?.nextCycleAt} />
       {/* The builder sits outside the signed-in layout: its own host runs the page walkthrough (no automatic popups here). */}
       <FeatureHost auto={false} />
+      {/* A guided tour that continues into the builder picks up here; the Guide button stays off this screen's bottom toolbar. */}
+      <GuideHost launcher={false} />
     </div>
     </BuilderOpsProvider>
   );
