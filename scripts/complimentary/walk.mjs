@@ -223,7 +223,7 @@ await page.goto(`${BASE}/admin/complimentary?from=2099-01-01`);
 check("M date filter", await page.getByText("No grants match these filters.").isVisible());
 await page.goto(`${BASE}/admin/complimentary`);
 const metricText = await page.locator("section[aria-label=Summary]").innerText();
-check("M metrics count enterprise + revoked", /Enterprise grants\s+1\b/.test(metricText) && metricText.includes("1 revoked"), metricText.replace(/\s+/g, " "));
+check("M metrics count enterprise + revoked", /Team grants\s+1\b/.test(metricText) && metricText.includes("1 revoked"), metricText.replace(/\s+/g, " "));
 await shot("10-table__desktop");
 
 const audit = (await db.query("select action from public.audit_logs where target_type = 'complimentary_grant' order by id")).rows.map((r) => r.action);

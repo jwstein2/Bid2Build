@@ -17,8 +17,8 @@ export default async function Programs({ searchParams }: { searchParams: Promise
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-extrabold">Learning Enterprise grants</h1>
-        <p className="mt-1 max-w-3xl text-sm text-ink-soft">Invitation-only. Not a public plan: it never appears on pricing, checkout or plan selection. Each program gives a creator 12 months of complimentary Enterprise for their own business (through Complimentary Access, no Stripe), a private mentorship dashboard, and a gift allowance of independent Unlimited accounts for their subscribers.</p>
+        <h1 className="text-3xl font-extrabold">Learning Team grants</h1>
+        <p className="mt-1 max-w-3xl text-sm text-ink-soft">Invitation-only. Not a public plan: it never appears on pricing, checkout or plan selection. Each program gives a creator 12 months of complimentary Team for their own business (through Complimentary Access, no Stripe), a private mentorship dashboard, and a gift allowance of independent Unlimited accounts for their subscribers.</p>
       </div>
       <CreatorSubNav current="/admin/creators/programs" />
       <Flash msg={sp.msg} err={sp.err} />

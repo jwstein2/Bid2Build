@@ -181,8 +181,8 @@ export default async function Prospect({ params, searchParams }: { params: Promi
             </div>
             {p.stage === "accepted" && (
               p.program_id
-                ? <Link href={`/admin/creators/programs/${p.program_id}`} className="inline-block text-sm font-semibold text-accent-ink underline">Open Learning Enterprise program</Link>
-                : <Link href={`/admin/creators/programs?prospect=${p.id}&email=${encodeURIComponent(p.contact_email ?? "")}&workspace=${encodeURIComponent(defaultWorkspaceName(p.channel_name.replace(/\s*\(.*\)$/, "")))}&gifts=${p.gift_tier}&channel=${encodeURIComponent(p.channel_name)}&url=${encodeURIComponent(p.channel_url ?? "")}`} className="inline-block text-sm font-semibold text-accent-ink underline">Create Learning Enterprise program</Link>
+                ? <Link href={`/admin/creators/programs/${p.program_id}`} className="inline-block text-sm font-semibold text-accent-ink underline">Open Learning Team program</Link>
+                : <Link href={`/admin/creators/programs?prospect=${p.id}&email=${encodeURIComponent(p.contact_email ?? "")}&workspace=${encodeURIComponent(defaultWorkspaceName(p.channel_name.replace(/\s*\(.*\)$/, "")))}&gifts=${p.gift_tier}&channel=${encodeURIComponent(p.channel_name)}&url=${encodeURIComponent(p.channel_url ?? "")}`} className="inline-block text-sm font-semibold text-accent-ink underline">Create Learning Team program</Link>
             )}
             <form action={addNote} className="space-y-2"><input type="hidden" name="prospect_id" value={p.id} />
               <textarea name="note" rows={2} maxLength={2000} placeholder="Add a note" className={input} /><button className={btnSecondary}>Add note</button></form>

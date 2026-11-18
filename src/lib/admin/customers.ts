@@ -52,8 +52,8 @@ export const planOf = (f: AccountFact): CustomerFilters["plan"] => (f.paying ? "
 export const PLAN_LABEL: Record<Exclude<CustomerFilters["plan"], "">, string> = { paying: "Paying", complimentary: "Complimentary", free: "Free", canceled: "Canceled" };
 
 export function planText(f: AccountFact): string {
-  if (f.paying) return `${f.sub?.plan === "annual" ? "Annual" : f.sub?.plan === "enterprise" ? "Enterprise" : "Monthly"}${f.pastDue ? " · past due" : f.sub?.cancel_at_period_end ? " · canceling" : ""}`;
-  if (f.comp) return `Comp ${f.comp.plan === "enterprise" ? "Enterprise" : "Unlimited"}`;
+  if (f.paying) return `${f.sub?.plan === "annual" ? "Annual" : f.sub?.plan === "enterprise" ? "Team" : "Monthly"}${f.pastDue ? " · past due" : f.sub?.cancel_at_period_end ? " · canceling" : ""}`;
+  if (f.comp) return `Comp ${f.comp.plan === "enterprise" ? "Team" : "Unlimited"}`;
   return f.everPaid ? "Canceled" : "Free";
 }
 

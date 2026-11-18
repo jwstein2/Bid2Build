@@ -99,7 +99,7 @@ export default async function BidsByState({ searchParams }: { searchParams: Prom
                 ))}
               </tbody>
             </table>
-            <p className="mt-3 text-xs text-muted">ZIP entered = share of the state&apos;s bids with a ZIP saved on the bid itself, not just read from the address. An Enterprise company counts as one business.</p>
+            <p className="mt-3 text-xs text-muted">ZIP entered = share of the state&apos;s bids with a ZIP saved on the bid itself, not just read from the address. A Team company counts as one business.</p>
           </div>
         )}
       </Panel>

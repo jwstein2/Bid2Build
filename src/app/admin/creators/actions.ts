@@ -285,7 +285,7 @@ export async function removeSlot(form: FormData) {
 }
 
 // ---------------------------------------------------------------------------
-// Learning Enterprise programs
+// Learning Team programs
 // ---------------------------------------------------------------------------
 const PROGRAMS = `${BASE}/programs`;
 
@@ -327,12 +327,12 @@ export async function provisionProgram(form: FormData) {
   const id = str(form, "id");
   if (!Id.safeParse(id).success) back(PROGRAMS, "err", "Unknown program.");
   const path = `${PROGRAMS}/${id}`;
-  if (form.get("confirm") !== "on") back(path, "err", "Confirm you're issuing a real complimentary Enterprise account.");
+  if (form.get("confirm") !== "on") back(path, "err", "Confirm you're issuing a real complimentary Team account.");
   const invite = newInviteToken();
   const { data, error } = await db.rpc("admin_creator_program_provision", { p_caller: user.id, p_id: id, p_token_hash: invite.hash });
   if (error || !data) back(path, "err", creatorErrorMessage(error?.message));
   revalidatePath(path);
-  if (data.existing_account) back(path, "msg", "Provisioned. The creator already has a verified account, so Enterprise and the Learning Enterprise dashboard are active now.");
+  if (data.existing_account) back(path, "msg", "Provisioned. The creator already has a verified account, so Team and the Learning Team dashboard are active now.");
   back(path, "msg", `Provisioned. Send the creator this private link (it works only for ${data.creator_email}): ${inviteUrl(invite.token)}`);
 }
 

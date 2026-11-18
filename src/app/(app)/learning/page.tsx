@@ -8,7 +8,7 @@ import { GIFT_STATE_LABELS, GIFT_STATE_TONES, PROGRAM_NAME, PROGRAM_STATE_LABELS
 import { confirmTerms, deleteResource, revokeGift, saveResource } from "./actions";
 import { InviteForm, RotateButton } from "./gift-forms";
 
-export const metadata: Metadata = { title: "Learning Enterprise", robots: { index: false } };
+export const metadata: Metadata = { title: "Learning Team", robots: { index: false } };
 
 type ProgramSummary = { id: string; workspace_name: string; channel_name: string | null; state: ProgramState; gift_allowance: number; seats_used: number; starts_at: string | null; expires_at: string | null; creator_confirmed_at: string | null; terms_version: string | null };
 type Gift = { id: string; email: string; display_name: string | null; state: GiftState; invited_at: string; invite_expires_at: string | null; claimed_at: string | null; business_name: string | null; primary_trade: string | null; last_engagement: string | null; shared_count: number; consent: { allow_comments: boolean; allow_suggestions: boolean; share_pipeline_summary: boolean } | null };
@@ -33,7 +33,7 @@ export default async function LearningPage({ searchParams }: PageProps<"/learnin
     return (
       <div className="mx-auto max-w-2xl">
         <h1 className="text-2xl font-extrabold">{PROGRAM_NAME}</h1>
-        <Notice className="mt-4">Learning Enterprise is an invitation-only program for Built2Bid creator partners. There isn&apos;t a program on this account.</Notice>
+        <Notice className="mt-4">Learning Team is an invitation-only program for Built2Bid creator partners. There isn&apos;t a program on this account.</Notice>
       </div>
     );
   }
@@ -96,7 +96,7 @@ export default async function LearningPage({ searchParams }: PageProps<"/learnin
           <div className="flex gap-2 text-sm">{programs.map((p) => <Link key={p.id} href={`/learning?program=${p.id}`} className={p.id === program.id ? "font-bold underline" : "underline"}>{p.workspace_name}</Link>)}</div>
         )}
       </div>
-      <nav aria-label="Learning Enterprise" className="mt-4 flex gap-1 overflow-x-auto border-b border-line">
+      <nav aria-label="Learning Team" className="mt-4 flex gap-1 overflow-x-auto border-b border-line">
         {TABS.map(([k, label]) => (
           <Link key={k} href={href(k)} aria-current={tab === k ? "page" : undefined} className={`whitespace-nowrap px-3 py-2 text-sm font-semibold ${tab === k ? "border-b-2 border-ink" : "text-ink-soft"}`}>{label}</Link>
         ))}
