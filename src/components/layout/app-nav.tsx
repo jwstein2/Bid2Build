@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { REVEAL_FEATURE_EVENT, START_TOUR_EVENT } from "@/lib/features/state";
-import { Sparkles, CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, Plug, LayoutTemplate, LogOut, X, UserCog, Receipt, Gauge, SquareKanban, CalendarRange, GraduationCap, Palette, Landmark, Shapes, Bot, House } from "lucide-react";
+import { Sparkles, CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, Plug, LayoutTemplate, LogOut, X, UserCog, Receipt, Gauge, SquareKanban, CalendarRange, GraduationCap, Palette, Landmark, Shapes, Bot, House, Newspaper } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ButtonLink } from "@/components/ui/button";
 import { Logo } from "./logo";
@@ -60,12 +60,14 @@ const FIN_SETTINGS: NavItem[] = [
 /** Projects (schedules) sit right below Bids when project scheduling is switched on. */
 const PROJECTS: NavItem = { href: "/projects", label: "Projects", icon: CalendarRange };
 const HOME: NavItem = { href: "/home", label: "Home", icon: House, exact: true };
+/** V6.8 Industry Intelligence: free for every plan. */
+const INDUSTRY: NavItem = { href: "/industry", label: "Industry News", icon: Newspaper };
 
 export function AppSidebar({ isAdmin, email, company, projects = false, financials = false, home = false, theme = null, learning }: { isAdmin: boolean; email: string | null; company?: CompanyNav | null; projects?: boolean; financials?: boolean; home?: boolean; theme?: ThemePref | null; learning?: LearningNav | null }) {
   // In a company, say whose bids and whose subscription each link is ("Team bids" is in the Company section).
   const own = (n: NavItem): NavItem => (!company ? n : n.href === "/dashboard" ? { ...n, label: "My bids" } : n.href === "/settings/billing" ? { ...n, label: "My subscription" } : n);
   const work: NavItem[] = [...(home ? [HOME] : []), ...(projects ? [NAV[0], PROJECTS, ...NAV.slice(1)] : NAV)].map(own);
-  const nav: NavItem[] = [...work, ...(financials ? [FINANCIALS, ...FIN_SETTINGS] : []), ...ACCOUNT_NAV.map(own)];
+  const nav: NavItem[] = [...work, INDUSTRY, ...(financials ? [FINANCIALS, ...FIN_SETTINGS] : []), ...ACCOUNT_NAV.map(own)];
   const path = usePathname();
   const [open, setOpen] = useState(false);
   // eslint-disable-next-line react-hooks/set-state-in-effect -- close the mobile menu after navigating

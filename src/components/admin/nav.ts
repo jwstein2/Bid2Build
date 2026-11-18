@@ -21,6 +21,7 @@ export const TOOLS = [
   { href: "/admin/sales", label: "Outreach funnel (Sales)" },
   { href: "/admin/referrals", label: "Referrals" },
   { href: "/admin/market", label: "Market intelligence" },
+  { href: "/admin/news", label: "Industry news sources" },
   { href: "/admin/templates", label: "Trade templates" },
   { href: "/admin/proposal-text", label: "Scope & exclusions" },
   { href: "/admin/flags", label: "Feature flags" },

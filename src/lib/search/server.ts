@@ -5,6 +5,7 @@ import { missingMigration } from "@/lib/operations/server";
 import { parseQuery, type ParsedQuery } from "./query";
 import { FIN_KINDS, GROUPS, PM_KINDS, SEARCH_KINDS, isSearchKind, toResult, type GroupId, type SearchKind, type SearchResult, type SearchRow } from "./kinds";
 import { scoredActions, toActionResult, type ActionResult, type SearchCaps } from "./actions";
+import { searchNews, type NewsHit } from "@/lib/news/search";
 
 export interface SearchParams {
   q: string;
@@ -37,6 +38,8 @@ export interface SearchResponse {
   actionsFirst: boolean;
   admin: { userId: string; email: string; company: string | null }[];
   workspace: "live" | "sandbox" | null;
+  /** V6.8: public industry articles, shown in their own group, never mixed with company records. */
+  news: NewsHit[];
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -69,7 +72,7 @@ export function searchableKinds(caps: SearchCaps): SearchKind[] {
 
 export async function runSearch(db: SupabaseClient, p: SearchParams): Promise<SearchResponse> {
   const parsed = parseQuery(p.q);
-  const empty: SearchResponse = { available: true, query: { text: parsed.text, understood: parsed.understood, status: parsed.status, types: parsed.types }, groups: [], results: [], total: 0, page: 1, pageSize: PAGE_SIZE, actions: [], actionsFirst: false, admin: [], workspace: null };
+  const empty: SearchResponse = { available: true, query: { text: parsed.text, understood: parsed.understood, status: parsed.status, types: parsed.types }, groups: [], results: [], total: 0, page: 1, pageSize: PAGE_SIZE, actions: [], actionsFirst: false, admin: [], workspace: null, news: [] };
   const caps = await loadCaps(db);
   if (!caps) return { ...empty, available: false };
   const allowed = searchableKinds(caps);
@@ -82,7 +85,8 @@ export async function runSearch(db: SupabaseClient, p: SearchParams): Promise<Se
   const actionsFirst = (scored[0]?.s ?? 0) >= 80;
   const workspace = caps.fin ? (caps.fin.sandbox ? "sandbox" : "live") : null;
   const hasFilters = Boolean(status || p.trade || p.customer || p.project || p.person || p.from || p.to || p.scope === "project");
-  if ((!parsed.text && !wanted && !hasFilters) || !types.length) return { ...empty, actions, actionsFirst, workspace };
+  const newsP = p.mode === "quick" && !wanted && !hasFilters ? searchNews(db, parsed.raw) : Promise.resolve([] as NewsHit[]);
+  if ((!parsed.text && !wanted && !hasFilters) || !types.length) return { ...empty, actions, actionsFirst, workspace, news: await newsP };
 
   const page = Math.max(1, Math.min(200, p.page ?? 1));
   const { data, error } = await db.rpc("search_universal", {
@@ -119,7 +123,7 @@ export async function runSearch(db: SupabaseClient, p: SearchParams): Promise<Se
     admin = ((acc ?? []) as { user_id: string; email: string; company_name: string | null }[]).map((a) => ({ userId: a.user_id, email: a.email, company: a.company_name }));
   }
   return {
-    ...empty, groups, results: p.mode === "page" ? results : [], total: rows[0]?.total_all ?? 0, page, actions, actionsFirst, admin, workspace,
+    ...empty, groups, results: p.mode === "page" ? results : [], total: rows[0]?.total_all ?? 0, page, actions, actionsFirst, admin, workspace, news: await newsP,
   };
 }
 

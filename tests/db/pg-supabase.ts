@@ -10,7 +10,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  */
 pg.types.setTypeParser(1184, (v: string) => new Date(v).toISOString()); // timestamptz -> ISO string, like PostgREST
 
-type Op = { kind: "select" | "update" | "upsert" | "insert"; cols: string; patch?: Record<string, unknown>; onConflict?: string; ignore?: boolean };
+type Row = Record<string, unknown>;
+type Op = { kind: "select" | "update" | "upsert" | "insert"; cols: string; patch?: Row; rows?: Row[]; onConflict?: string; ignore?: boolean };
 
 const ident = (s: string) => {
   if (!/^[a-z_][a-z0-9_]*$/.test(s)) throw new Error(`bad identifier ${s}`);
@@ -45,16 +46,17 @@ export function pgSupabase(pool: Pool): SupabaseClient {
         } else if (op.kind === "update") {
           const sets = Object.entries(op.patch!).map(([k, v]) => `${ident(k)} = ${p(v)}`).join(", ");
           sql = `update public.${ident(table)} set ${sets}${w} returning ${returning ? colList(returning) : "*"}`;
-        } else if (op.kind === "insert") {
-          const keys = Object.keys(op.patch!);
-          const vals = keys.map((k) => p(op.patch![k]));
-          sql = `insert into public.${ident(table)} (${keys.map(ident).join(", ")}) values (${vals.join(", ")}) returning ${returning ? colList(returning) : "*"}`;
         } else {
-          const keys = Object.keys(op.patch!);
-          const vals = keys.map((k) => p(op.patch![k]));
-          const conflict = op.onConflict!.split(",").map((c) => ident(c.trim())).join(", ");
-          const action = op.ignore ? "do nothing" : `do update set ${keys.map((k) => `${ident(k)} = excluded.${ident(k)}`).join(", ")}`;
-          sql = `insert into public.${ident(table)} (${keys.map(ident).join(", ")}) values (${vals.join(", ")}) on conflict (${conflict}) ${action} returning ${returning ? colList(returning) : "*"}`;
+          // One row or many (supabase-js accepts an array); missing keys take the column default.
+          const rows = op.rows!;
+          const keys = [...new Set(rows.flatMap((r) => Object.keys(r)))];
+          const values = rows.map((r) => `(${keys.map((k) => (k in r ? p(r[k]) : "default")).join(", ")})`).join(", ");
+          let tail = "";
+          if (op.kind === "upsert") {
+            const conflict = op.onConflict!.split(",").map((c) => ident(c.trim())).join(", ");
+            tail = ` on conflict (${conflict}) ${op.ignore ? "do nothing" : `do update set ${keys.map((k) => `${ident(k)} = excluded.${ident(k)}`).join(", ")}`}`;
+          }
+          sql = `insert into public.${ident(table)} (${keys.map(ident).join(", ")}) values ${values}${tail} returning ${returning ? colList(returning) : "*"}`;
         }
         const r = await pool.query(sql, params);
         if (mode === "single") return r.rows.length === 1 ? { data: r.rows[0], error: null } : { data: null, error: { code: "PGRST116", message: "not single" } };
@@ -69,8 +71,8 @@ export function pgSupabase(pool: Pool): SupabaseClient {
     const q: Record<string, unknown> = {
       select: (cols = "*", o?: { count?: string; head?: boolean }) => { if (op.kind === "select") { op.cols = cols; countOnly = Boolean(o?.head); } else returning = cols; return q; },
       update: (patch: Record<string, unknown>) => { op = { kind: "update", cols: "*", patch }; return q; },
-      upsert: (row: Record<string, unknown>, o: { onConflict: string; ignoreDuplicates?: boolean }) => { op = { kind: "upsert", cols: "*", patch: row, onConflict: o.onConflict, ignore: o.ignoreDuplicates }; return q; },
-      insert: (row: Record<string, unknown>) => { op = { kind: "insert", cols: "*", patch: row }; return q; },
+      upsert: (row: Row | Row[], o: { onConflict: string; ignoreDuplicates?: boolean }) => { op = { kind: "upsert", cols: "*", rows: Array.isArray(row) ? row : [row], onConflict: o.onConflict, ignore: o.ignoreDuplicates }; return q; },
+      insert: (row: Row | Row[]) => { op = { kind: "insert", cols: "*", rows: Array.isArray(row) ? row : [row] }; return q; },
       eq: (k: string, v: unknown) => filt((c) => `${c} = ${p(v)}`)(k),
       neq: (k: string, v: unknown) => filt((c) => `${c} <> ${p(v)}`)(k),
       gt: (k: string, v: unknown) => filt((c) => `${c} > ${p(v)}`)(k),
