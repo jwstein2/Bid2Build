@@ -131,7 +131,8 @@ for (const sc of PRICING) {
     await page.goto(BASE + "/pricing", { waitUntil: "networkidle" });
     await dismissOverlays(page);
     const tag = `pricing/${sc.id}/${vp.id}`;
-    const text = await page.locator("main").innerText();
+    // Monthly and Annual share one Unlimited card with a switch (V8 MKT-4): the other schedule's price is one tap away.
+    const text = await page.locator("main").textContent();
     for (const price of ["$19.99", "$149", "+$4.99", "+$49.99/year", "$49.99", "$1.99/month"]) check(`${tag} shows ${price}`, text.includes(price));
     check(`${tag} Enterprise still Contact us`, await page.getByRole("link", { name: "Contact us about Enterprise" }).isVisible());
     const pm = page.getByTestId("pm-addon-plan");
