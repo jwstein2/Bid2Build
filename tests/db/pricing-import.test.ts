@@ -115,6 +115,7 @@ d("V5 supplier price import (database)", () => {
   });
 
   it("rollback removes the feature, keeps the contractor's items, and the migration re-applies", async () => {
+    await pool.query(readFileSync("docs/supplier-pricing/rollback_20261211001000.sql", "utf8"));
     await pool.query(readFileSync("docs/v5-pricing-accounting/rollback_20261127001000.sql", "utf8"));
     expect((await pool.query("select to_regclass('public.price_imports') as t")).rows[0].t).toBeNull();
     expect((await pool.query("select unit_cost::text as c from public.saved_items where id = $1", [shingles])).rows[0].c).toBe("43.0000");

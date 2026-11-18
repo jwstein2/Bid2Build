@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Archive, Building2, ChevronDown, ChevronUp, ExternalLink, FileSpreadsheet, Mail, Pencil, Phone, Plus, RotateCcw, Search } from "lucide-react";
+import { Archive, Building2, ChevronDown, ChevronUp, ExternalLink, FileSpreadsheet, Mail, Pencil, Phone, Plus, RotateCcw, Scale, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge, Notice } from "@/components/ui/misc";
 import { api } from "@/components/schedule/client";
@@ -52,6 +52,7 @@ export function SupplierDirectory({ list }: { list: SupplierList }) {
           <input className="field h-10 pl-9" placeholder="Search name, rep, account #, trade" value={q} onChange={(e) => setQ(e.target.value)} /></label>
         <Button size="sm" variant="secondary" className="min-h-10" onClick={() => setArchived(!archived)} aria-pressed={archived}>{archived ? "Show active" : "Show archived"}</Button>
         <Link href="/dashboard/items/import" className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-line-strong bg-surface px-3 text-sm font-semibold hover:bg-paper"><FileSpreadsheet className="h-4 w-4" aria-hidden /> Import a price list</Link>
+        <Link href="/projects/team/pricing" className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-line-strong bg-surface px-3 text-sm font-semibold hover:bg-paper" data-testid="supplier-pricing-link"><Scale className="h-4 w-4" aria-hidden /> Compare prices &amp; connect</Link>
         {list.canManage && <Button size="sm" variant="accent" className="min-h-10" onClick={() => setEditing("new")} data-testid="supplier-add"><Plus className="h-4 w-4" aria-hidden /> Add supplier</Button>}
       </div>
       {!list.canManage && <Notice>You can view your company&apos;s suppliers. Ask your company admin to add or change one.</Notice>}
