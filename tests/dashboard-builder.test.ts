@@ -245,3 +245,31 @@ describe("chart data (21. totals reconcile with the P&L report)", () => {
     expect(d.slices.map((s) => [s.key, s.amount])).toEqual([["paid", "50.00"], ["open", "200.00"], ["overdue", "50.00"]]);
   });
 });
+
+// ---- V6.7 effective access (src/lib/access) drives which widgets show ------------------------------------------
+import { FEATURE_BY_ID } from "@/lib/access/capabilities";
+import { resolveAccess } from "@/lib/access/effective";
+import { DASHBOARD_FEATURES, withEffectiveAccess, hasCapability as dashHas, need as dashNeed, type DashboardAccess as DA } from "@/lib/dashboard/access";
+
+describe("dashboard access from V6.7 effective access", () => {
+  it("uses the same level keys, in the same order, as V6.7", () => {
+    for (const id of DASHBOARD_FEATURES) {
+      const keys = FEATURE_BY_ID[id].options.map((o) => o.key);
+      keys.forEach((held, i) => keys.forEach((want, j) => {
+        expect(dashHas({ features: { [id]: held }, company: null, fin: null }, dashNeed(id, want))).toBe(i >= j);
+      }));
+    }
+  });
+
+  it("a workspace turned off for an employee hides its widgets; the fin context follows fin_visibility", () => {
+    const base: DA = { features: { bids: "approve", schedule: "manage", fin_visibility: "company" }, company: { id: "c", role: "manager", isOwner: false }, fin: { role: "bookkeeper", canWrite: true, sandbox: false, accountantMode: true } };
+    const lic = { pm: true, pmEditor: true, financials: true, premium: true };
+    const company = { id: "c", name: "Co", role: "manager" as const, isOwner: false, perms: ["view_own_bids", "create_estimates", "view_schedules"], policy: { denied: [], locked: [] } };
+    const off = resolveAccess({ company: { ...company, profile: { version: 1, workspaces: { financials: false } } as never }, finPerms: ["view_company_financials"], licenses: lic });
+    const a = withEffectiveAccess(base, off);
+    expect(a.features.fin_visibility).toBeUndefined();
+    expect(a.fin).toBeNull();
+    expect(a.features.bids).toBe("create");
+    expect(withEffectiveAccess(base, null)).toBe(base);
+  });
+});
