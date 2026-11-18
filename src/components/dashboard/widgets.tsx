@@ -109,8 +109,8 @@ export async function WidgetBody({ inst, data, viewer }: { inst: WidgetInstance;
       const title = inst.type === "fin_bank_balance" ? "Bank balance" : "Projected bank balance";
       if (!a) return <Unavailable title={title} why="Financials isn't set up for this account yet." />;
       const b = a.m.bankBalance;
-      if (!b) return <MetricCard className="h-full" title={title} value="Not imported" empty sub="Import a bank statement to see a balance. It's never estimated." href="/financials/accounting/bank" action="Import a statement" status={<Sandbox on={sandbox} />} testId={tid} />;
-      if (inst.type === "fin_bank_balance") return <MetricCard className="h-full" title={title} value={formatCurrency(b.amount)} sub={`As of ${fmtDay(b.asOf)} · ${b.source}`} href="/financials/accounting/bank" action="Open bank" status={<Sandbox on={sandbox} />} hint="Ending balance from imported statements, not a live bank feed" testId={tid} />;
+      if (!b) return <MetricCard className="h-full" title={title} value="Not connected" empty sub="Connect your bank (read-only) or import a statement to see a balance. It's never estimated." href="/financials/banks" action="Connect your bank" status={<Sandbox on={sandbox} />} testId={tid} />;
+      if (inst.type === "fin_bank_balance") return <MetricCard className="h-full" title={title} value={formatCurrency(b.amount)} sub={`As of ${fmtDay(b.asOf)} · ${b.source}`} href={b.connected ? "/financials/banks" : "/financials/accounting/bank"} action="Open bank" status={<Sandbox on={sandbox} />} hint={b.connected ? "Balance reported by your connected bank" : "Ending balance from imported statements, not a live bank feed"} testId={tid} />;
       const p = a.m.projected!;
       return <MetricCard className="h-full" title={title} value={formatCurrency(p.amount)} sub={`Bank ${formatCurrency(b.amount)} + due in ${formatCurrency(p.arIn)} − bills ${formatCurrency(p.apOut)} (next 30 days)`} href="/financials/accounting/bank" action="How it's worked out" status={<Sandbox on={sandbox} />} hint="A projection from recorded invoices and approved bills, not a guarantee" testId={tid} />;
     }
