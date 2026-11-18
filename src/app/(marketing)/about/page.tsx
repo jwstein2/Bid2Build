@@ -36,6 +36,9 @@ export default function AboutPage() {
             <div className={FOUNDER.photo ? undefined : "sm:col-span-2"}>
               <h2 id="founder-h" className="text-2xl font-extrabold text-navy">Why we built it</h2>
               <div className="mt-3 space-y-3 text-ink-soft">{FOUNDER.story.map((p, i) => <p key={i}>{p}</p>)}</div>
+              {FOUNDER.link && (
+                <p className="mt-3"><a href={FOUNDER.link.href} target="_blank" rel="noopener noreferrer" className="font-semibold text-navy underline underline-offset-2 hover:text-ink" data-testid="founder-link">{FOUNDER.link.label}</a></p>
+              )}
               <p className="mt-4 font-semibold text-ink">{FOUNDER.name}, {FOUNDER.role}</p>
             </div>
           </section>
