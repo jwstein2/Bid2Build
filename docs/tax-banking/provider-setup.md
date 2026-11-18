@@ -63,6 +63,8 @@ To turn the engine off, set `TAX_PROVIDER` = `none` in Netlify. Bids go back to 
 
    Real customers can then connect their banks from **Financials → Connected banks**, or from the setup prompt on the Financials home page.
 
+7. Optional, for the admin cost estimate: in Plaid Dashboard → Billing, read your pay-as-you-go prices and add them as plain (not secret) variables: `PLAID_PRICE_TRANSACTIONS_USD` (per connected bank per month, for example `0.30`) and `PLAID_PRICE_BALANCE_USD` (per balance refresh). The Plaid panel on Admin → Tax & banking health and Admin → Tech Stack & Costs then shows cost so far and projected for the month. Without them it shows usage counts and "Unknown" cost.
+
 To turn it off, delete `BANK_PROVIDER_LIVE`. Existing bank lines and reconciliations stay, and updates stop.
 
 Sources: [Census Geocoder API](https://geocoding.geo.census.gov/geocoder/Geocoding_Services_API.html), [Streamlined rate and boundary files](https://streamlinedsalestax.org/quick-links/r-b-files), [Plaid API docs](https://plaid.com/docs/api/), [Plaid glossary](https://plaid.com/docs/quickstart/glossary/).

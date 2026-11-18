@@ -25,5 +25,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ]),
     { url: u("/privacy"), priority: 0.2 },
     { url: u("/terms"), priority: 0.2 },
+    { url: u("/security"), priority: 0.2 },
   ];
 }

@@ -2,6 +2,7 @@ import "server-only";
 import { createSign } from "node:crypto";
 import { getStripe } from "@/lib/billing/stripe";
 import type { Snapshot } from "./model";
+import { bankProviderMode } from "@/lib/tax-banking/isolation";
 
 /**
  * Read-only integrations for the owner command center. Nothing here writes to Stripe, Google or any
@@ -14,6 +15,14 @@ export interface Integration { key: string; name: string; state: IntegrationStat
 
 const env = (k: string) => (process.env[k] ?? "").trim();
 const has = (k: string) => Boolean(env(k));
+
+function plaidIntegration(): Integration {
+  const mode = bankProviderMode(process.env);
+  const penv = env("PLAID_ENV") === "production" ? "production" : "sandbox";
+  if (mode === "plaid") return { key: "plaid", name: "Plaid bank feeds (read-only)", state: penv === "production" ? "ok" : "warn", detail: `Live · ${penv}${penv === "sandbox" ? " (test banks only until Production approval)" : ""} · usage and cost on Tax & banking health` };
+  if (has("PLAID_CLIENT_ID")) return { key: "plaid", name: "Plaid bank feeds (read-only)", state: "warn", detail: "Client id set; needs PLAID_SECRET, BANK_TOKEN_KEY, BANK_PROVIDER=plaid and BANK_PROVIDER_LIVE=true" };
+  return { key: "plaid", name: "Plaid bank feeds (read-only)", state: "not_connected", detail: "Not connected (Production access requested 2026-11-18)" };
+}
 
 export function integrationStatus(snap: Snapshot): Integration[] {
   const key = env("STRIPE_SECRET_KEY");
@@ -32,6 +41,7 @@ export function integrationStatus(snap: Snapshot): Integration[] {
     { key: "gsc_api", name: "Search Console reporting", state: gsc ? "ok" : "not_connected", detail: gsc ? "Service account configured" : "Needs SEARCH_CONSOLE_SITE + the same service account added as a user" },
     { key: "email", name: "Email provider (Resend)", state: has("RESEND_API_KEY") ? (env("FOUNDER_EMAIL_ENABLED") === "true" ? "ok" : "warn") : "missing", detail: has("RESEND_API_KEY") ? `Key set · founder email ${env("FOUNDER_EMAIL_ENABLED") === "true" ? "on" : "off"}` : "No RESEND_API_KEY" },
     { key: "auth_email", name: "Sign-in email delivery (Supabase SMTP)", state: "not_connected", detail: "Supabase Auth logs are not readable by the app. Check Supabase → Logs → Auth." },
+    plaidIntegration(),
     { key: "sentry", name: "Error monitoring (Sentry)", state: has("NEXT_PUBLIC_SENTRY_DSN") ? "ok" : "missing", detail: has("NEXT_PUBLIC_SENTRY_DSN") ? "DSN set" : "No NEXT_PUBLIC_SENTRY_DSN" },
     { key: "instantly", name: "Instantly outreach sync", state: has("INSTANTLY_API_KEY") && env("INSTANTLY_SYNC_ENABLED") === "true" ? "ok" : "not_connected", detail: has("INSTANTLY_API_KEY") ? `Key set · sync ${env("INSTANTLY_SYNC_ENABLED") === "true" ? "on" : "off"}` : "Not connected (outreach links still attribute through UTM tags)" },
     { key: "netlify_api", name: "Netlify usage monitor", state: has("NETLIFY_API_TOKEN") ? "ok" : "not_connected", detail: has("NETLIFY_API_TOKEN") ? "Token set · plan and build minutes on Tech Stack & Costs" : "Needs NETLIFY_API_TOKEN (read-only use)" },

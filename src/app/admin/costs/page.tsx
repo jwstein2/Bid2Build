@@ -7,6 +7,8 @@ import { envPresent } from "@/lib/admin/integrations";
 import { loadReport } from "@/lib/admin/load";
 import { adsSetup, anthropicCost, netlifyUsage, supabaseUsage, type Monitor } from "@/lib/admin/monitors";
 import { str } from "@/lib/admin/view";
+import { loadPlaidUsage } from "@/lib/admin/plaid-cost-load";
+import { PlaidCostPanel } from "@/components/admin/plaid-cost";
 import { addExpense, deleteExpense, importExpenses, saveService } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -61,7 +63,7 @@ export default async function Costs({ searchParams }: { searchParams: Promise<Re
   const recent = [...costs.expenses].sort((a, b) => (a.incurred_on < b.incurred_on ? 1 : -1)).slice(0, 15);
   const nameOf = new Map(views.map((v) => [v.key, v.name]));
   const today = now.toISOString().slice(0, 10);
-  const [netlify, supa, anth] = await Promise.all([netlifyUsage(), supabaseUsage(), anthropicCost(now)]);
+  const [netlify, supa, anth, plaid] = await Promise.all([netlifyUsage(), supabaseUsage(), anthropicCost(now), loadPlaidUsage(now)]);
   const ads = adsSetup();
   // KPI drilldowns.
   const recurring = views.filter((v) => v.status === "active" && v.interval !== "usage" && (v.monthlyAllocatedCents ?? 0) > 0).sort((a, b) => (b.monthlyAllocatedCents ?? 0) - (a.monthlyAllocatedCents ?? 0));
@@ -131,6 +133,7 @@ export default async function Costs({ searchParams }: { searchParams: Promise<Re
           </ul>
           <p className="mt-3 text-xs text-muted">Enter their invoices below. Netlify, Supabase, Anthropic and advertising have their own monitors underneath.</p>
         </Panel>
+        <PlaidCostPanel u={plaid} />
       </div>
 
       <SectionTitle id="monitors" kicker="Provider API monitors" title="Read-only account usage from each provider" />

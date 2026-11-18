@@ -63,6 +63,7 @@ export function ConnectBank({ mode, canConnect, laterHref }: { mode: "none" | "m
         <Button size="sm" disabled={busy} onClick={() => void connect()} data-testid="bank-connect"><Landmark className="h-4 w-4" aria-hidden /> Connect Business Bank Account</Button>
         {laterHref && <a href={laterHref} className="text-sm font-semibold text-accent-ink underline">I&apos;ll do this later</a>}
         <Status msg={msg} busy={busy} />
+        <p className="basis-full text-xs text-muted" data-testid="bank-consent-note">Read-only: Built2Bid sees balances and transactions, never your bank login, and can&apos;t move money. Disconnect any time. See our <a href="/privacy" target="_blank" rel="noopener" className="underline">Privacy Policy</a>.</p>
       </div>
     );
   }

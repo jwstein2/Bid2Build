@@ -33,6 +33,7 @@ export async function Footer() {
           <li><a href={`mailto:${site.supportEmail}`} className="inline-block py-1 hover:text-white hover:underline">Contact support</a></li>
           <li><Link href="/privacy" className="inline-block py-1 hover:text-white hover:underline">Privacy policy</Link></li>
           <li><Link href="/terms" className="inline-block py-1 hover:text-white hover:underline">Terms of service</Link></li>
+          <li><Link href="/security" className="inline-block py-1 hover:text-white hover:underline">Security</Link></li>
         </FooterCol>
       </div>
       <div className="border-t border-white/10 py-5 text-center text-xs text-[#B8C6D4]">© {new Date().getFullYear()} {site.name}. All rights reserved.</div>
