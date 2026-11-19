@@ -14,6 +14,7 @@ import { plans, site } from "@/lib/site";
 import { AccountCtas } from "@/components/account/account-ctas";
 import { AcademyPromo } from "@/components/marketing/academy-promo";
 import { ReplayTourButton } from "@/components/onboarding/replay-tour-button";
+import { InstallAppButton } from "@/components/marketing/install-app-button";
 import { getAccountStatus } from "@/lib/account/server";
 import { COMPANY, PROMISES } from "@/lib/marketing/about";
 import { accountCtas, creditBadge, MEMBER_TAGLINE, type AccountStatus } from "@/lib/account/status";
@@ -100,9 +101,12 @@ export default async function HomePage() {
             <AccountCtas status={status} tone="dark" arrow createFreeLabel={`Start Your ${plans.starterCredits} Free Bids`}
               secondary={visitor ? { action: "sample", label: "See a sample proposal", href: "#sample-proposal" } : undefined}
               howHref="#how-it-works" className="lg:mt-8" />
-            <ReplayTourButton testId="watch-demo" className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-lg px-1 text-sm font-semibold text-cyan underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan">
+            <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-1">
+            <ReplayTourButton testId="watch-demo" className="inline-flex min-h-11 items-center gap-2 rounded-lg px-1 text-sm font-semibold text-cyan underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan">
               Watch Demo <span className="font-normal text-[#B8C6D4]">(3 min)</span>
             </ReplayTourButton>
+            <InstallAppButton />
+            </div>
             <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[#D5DFE9]">
               {(visitor ? VISITOR_POINTS : MEMBER_POINTS).map((x) => (
                 <li key={x} className="flex items-center gap-1.5"><Check className="h-4 w-4 text-teal" aria-hidden />{x}</li>

@@ -6,6 +6,7 @@ import { ProposalView } from "@/components/proposal/proposal-view";
 import { createAdminClient } from "@/lib/supabase/server";
 import { acceptanceText, consentText, CONSENT_VERSION, isEsignEnabled } from "@/lib/esign/config";
 import { loadLogo, loadRequestByToken } from "@/lib/esign/server";
+import { PrintButton } from "@/components/esign/print-button";
 import { site } from "@/lib/site";
 import { SignForm } from "./sign-form";
 import { isContractorSigningEnabled } from "@/lib/esign/contractor/config";
@@ -56,7 +57,7 @@ export default async function SignPage({ params }: PageProps<"/sign/[token]">) {
 
   return (
     <Shell company={doc.brand.companyName}>
-      <section aria-labelledby="summary-h" className="rounded-2xl border border-line bg-surface p-4 shadow-sm sm:p-6">
+      <section aria-labelledby="summary-h" className="rounded-2xl border border-line bg-surface p-4 shadow-sm sm:p-6 no-print">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-sm font-semibold uppercase tracking-wide text-muted">Proposal from {doc.brand.companyName}</p>
@@ -79,14 +80,22 @@ export default async function SignPage({ params }: PageProps<"/sign/[token]">) {
           <a href={`/api/sign/${token}/pdf`} className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-line px-4 font-semibold text-navy hover:bg-black/5">
             <Download className="h-4 w-4" aria-hidden /> {executed ? "Download executed agreement (PDF)" : signed ? "Download signed copy (PDF)" : "Download PDF"}
           </a>
+          <PrintButton />
         </div>
+        {!signed && <p className="mt-2 text-xs text-muted">You can download or print a copy to keep before you sign.</p>}
       </section>
 
-      <section id="proposal" aria-label="Full proposal" className="mt-6 scroll-mt-4 rounded-xl bg-[#e4eaf1] p-2 sm:p-5">
+      <section id="proposal" aria-label="Full proposal" className="mt-6 scroll-mt-4 rounded-xl bg-[#e4eaf1] p-2 sm:p-5 print:mt-0 print:bg-transparent print:p-0">
+        <div className="mb-2 flex flex-wrap justify-end gap-2 no-print">
+          <a href={`/api/sign/${token}/pdf`} className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-surface px-4 text-sm font-semibold text-navy shadow-sm hover:bg-white/80" data-testid="proposal-download">
+            <Download className="h-4 w-4" aria-hidden /> Download PDF
+          </a>
+          <PrintButton className="bg-surface text-sm shadow-sm" label="Print" />
+        </div>
         <ProposalView doc={view} contractorSignature={contractorView} />
       </section>
 
-      <section aria-labelledby="sign-h" className="mt-6 rounded-2xl border border-line bg-surface p-4 shadow-sm sm:p-6" id="sign">
+      <section aria-labelledby="sign-h" className="mt-6 rounded-2xl border border-line bg-surface p-4 shadow-sm sm:p-6 no-print" id="sign">
         <h2 id="sign-h" className="font-display text-xl font-extrabold text-navy">{signed ? "Signature recorded" : "Accept & sign"}</h2>
         {signed ? (
           <p className="mt-2 text-ink-soft">This proposal was accepted and signed electronically.{executed ? ` ${doc.brand.companyName} has also signed it, so the agreement is fully executed.` : awaitingContractor ? ` ${doc.brand.companyName} still needs to countersign it; until then this is your signed acceptance, not the fully executed agreement.` : ""} You can download your copy at any time from this page{contact ? <>, or contact {doc.brand.companyName} at <span className="font-semibold">{contact}</span></> : ""}.</p>
@@ -100,7 +109,7 @@ export default async function SignPage({ params }: PageProps<"/sign/[token]">) {
           />
         )}
       </section>
-      <p className="mt-6 flex items-start gap-2 text-xs text-muted">
+      <p className="mt-6 flex items-start gap-2 text-xs text-muted no-print">
         <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
         <span>This link is private to you. Signing records your name, email, signature, the time, and your device&apos;s IP address and browser with this exact version of the proposal. Signing does not process any payment. Questions about the proposal go to {doc.brand.companyName}.</span>
       </p>
@@ -110,14 +119,14 @@ export default async function SignPage({ params }: PageProps<"/sign/[token]">) {
 
 function Shell({ company, children }: { company?: string; children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-paper">
-      <header className="border-b border-line bg-surface">
+    <div className="min-h-screen bg-paper print:bg-white">
+      <header className="border-b border-line bg-surface no-print">
         <div className="mx-auto flex max-w-[860px] items-center justify-between gap-3 px-4 py-3">
           <span className="truncate font-display font-extrabold text-navy">{company ?? "Proposal"}</span>
           <span className="shrink-0 text-xs text-muted">Secure signing by {site.name}</span>
         </div>
       </header>
-      <main id="main" className="mx-auto max-w-[860px] px-4 py-6 sm:py-8">{children}</main>
+      <main id="main" className="mx-auto max-w-[860px] px-4 py-6 sm:py-8 print:max-w-none print:p-0">{children}</main>
     </div>
   );
 }

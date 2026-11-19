@@ -84,7 +84,7 @@ export const PRESETS: Record<PresetKey, Preset> = {
     cards: ["labor_costs", "material_costs", "crew_utilization_placeholder"], quickActions: ["snap_receipt"], reports: ["material_spend"],
     costTypes: ["labor", "material", "equipment"],
   }),
-  exterior_cleaning: p("exterior_cleaning", "Pressure & soft washing", {
+  exterior_cleaning: p("exterior_cleaning", "Cleaning & washing", {
     cards: ["service_calls_unbilled", "payments_received", "labor_costs"], quickActions: ["bill_service_call", "snap_receipt"], reports: ["payments_received"],
     costTypes: ["labor", "material", "equipment"], onboarding: ["set_up_equipment"], defaultProjectModel: "service_call", defaultPaymentStructure: "on_completion",
   }),
@@ -111,7 +111,7 @@ export const TRADE_PRESET: Record<string, PresetKey> = {
   "finish-carpentry": "residential_remodeler", "cabinets-countertops": "residential_remodeler", framing: "general_contractor", insulation: "drywall",
   demolition: "general_contractor", landscaping: "general_contractor", handyman: "residential_remodeler",
   drywall: "drywall", painting: "painting", electrical: "electrical", plumbing: "plumbing", hvac: "hvac",
-  "pressure-washing": "exterior_cleaning", "soft-washing": "exterior_cleaning",
+  "pressure-washing": "exterior_cleaning", "soft-washing": "exterior_cleaning", cleaning: "exterior_cleaning",
   "commercial-remodeling": "commercial", "general-contracting": "general_contractor", other: "custom",
 };
 

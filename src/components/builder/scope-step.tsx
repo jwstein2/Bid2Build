@@ -320,7 +320,7 @@ export function ExclusionsEditor({ estimate, signedIn, estimateId, fingerprint, 
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 id="exc-h" className="font-display text-lg font-bold">Exclusions &amp; Clarifications</h2>
-          <p className="text-sm text-muted">What isn&apos;t included, plus assumptions. Only items you approve appear on the proposal.</p>
+          <p className="text-sm text-muted">What isn&apos;t included, plus assumptions. Only exclusions you add appear on the proposal.</p>
         </div>
         <VisibilityToggle id="exc-visible" checked={value.visible} onChange={(visible) => set({ visible })} />
       </div>
@@ -337,7 +337,7 @@ export function ExclusionsEditor({ estimate, signedIn, estimateId, fingerprint, 
       )}
 
       {/* Approved list */}
-      <ol className="mt-4 space-y-2" aria-label="Approved exclusions">
+      <ol className="mt-4 space-y-2" aria-label="Exclusions on the proposal">
         {approved.map((i, n) => (
           <li key={i.id} className="flex gap-2 rounded-lg border border-line p-2">
             <span className="mt-2 w-5 shrink-0 text-right text-sm font-semibold text-muted">{n + 1}.</span>
@@ -377,7 +377,7 @@ export function ExclusionsEditor({ estimate, signedIn, estimateId, fingerprint, 
                 {[...value.history].reverse().map((h, k) => (
                   <li key={k}>
                     <button type="button" onClick={() => restore(h.items)} className="w-full rounded-md px-2 py-1.5 text-left hover:bg-paper">
-                      <span className="block text-xs font-semibold text-ink-soft">{when(h.at)} · {h.items.filter((x) => x.status === "approved").length} approved</span>
+                      <span className="block text-xs font-semibold text-ink-soft">{when(h.at)} · {h.items.filter((x) => x.status === "approved").length} added</span>
                       <span className="line-clamp-2 text-xs text-muted">{h.items.filter((x) => x.status === "approved").map(exclusionLine).join(" · ") || "Suggestions only"}</span>
                     </button>
                   </li>
@@ -397,12 +397,12 @@ export function ExclusionsEditor({ estimate, signedIn, estimateId, fingerprint, 
             <h3 className="text-sm font-bold text-navy">Suggestions to review ({suggested.length})</h3>
             <div className="flex gap-2">
               <Button size="sm" variant="ghost" onClick={() => setItems(value.items.map((i) => (i.status === "suggested" ? { ...i, status: "rejected" } : i)))}>Reject all</Button>
-              <Button size="sm" variant="secondary" onClick={() => setItems(value.items.map((i) => (i.status === "suggested" && !i.review ? { ...i, status: "approved" } : i)))} title="Approves every suggestion that isn't flagged for review">
-                <Check className="h-4 w-4" /> Approve unflagged
+              <Button size="sm" variant="secondary" onClick={() => setItems(value.items.map((i) => (i.status === "suggested" && !i.review ? { ...i, status: "approved" } : i)))} title="Adds every suggestion that isn't flagged for review to the agreement">
+                <Check className="h-4 w-4" /> Add all unflagged
               </Button>
             </div>
           </div>
-          <p className="mt-1 text-xs text-muted">Suggestions are not on the proposal until you approve them. Edit any wording first if you like.</p>
+          <p className="mt-1 text-xs text-muted">Suggestions are not on the proposal until you choose Add Exclusion. Reject dismisses a suggestion without changing the agreement. Edit any wording first if you like.</p>
           <ul className="mt-3 space-y-2">
             {suggested.map((i) => (
               <li key={i.id} className="rounded-lg border border-line bg-surface p-2">
@@ -413,7 +413,7 @@ export function ExclusionsEditor({ estimate, signedIn, estimateId, fingerprint, 
                 <textarea aria-label="Suggested exclusion text" rows={2} className="field mt-1 text-sm" value={i.text} maxLength={1000} onChange={(e) => update(i.id, { text: e.target.value })} />
                 <div className="mt-1.5 flex justify-end gap-2">
                   <Button size="sm" variant="ghost" onClick={() => setStatus(i.id, "rejected")}><X className="h-4 w-4" /> Reject</Button>
-                  <Button size="sm" onClick={() => setStatus(i.id, "approved")}><Check className="h-4 w-4" /> Approve</Button>
+                  <Button size="sm" onClick={() => setStatus(i.id, "approved")} title="Adds this exclusion to the agreement"><Check className="h-4 w-4" /> Add Exclusion</Button>
                 </div>
               </li>
             ))}
@@ -444,8 +444,8 @@ export function ExclusionsEditor({ estimate, signedIn, estimateId, fingerprint, 
 
       <p className="mt-3 flex flex-wrap gap-x-3 text-xs text-muted">
         {!value.visible && <span className="font-semibold text-warn">Hidden from the customer. Saved for your records.</span>}
-        {value.visible && visibleCount === 0 && <span>Nothing approved yet, so this section is left off the proposal.</span>}
-        {value.visible && visibleCount > 0 && <span>{visibleCount} approved item{visibleCount === 1 ? "" : "s"} will appear on the proposal.</span>}
+        {value.visible && visibleCount === 0 && <span>No exclusions added yet, so this section is left off the proposal.</span>}
+        {value.visible && visibleCount > 0 && <span>{visibleCount} exclusion{visibleCount === 1 ? "" : "s"} will appear on the proposal.</span>}
       </p>
     </section>
   );

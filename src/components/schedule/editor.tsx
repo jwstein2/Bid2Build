@@ -59,11 +59,23 @@ export function ScheduleEditor({ initial, tradeLabels, editHint, created, public
 
   const rows: GanttRow[] = useMemo(() => {
     const sections = tasks.filter((t) => t.kind === "section" && !t.splitFrom).sort((a, b) => a.sortOrder - b.sortOrder);
+    // Index once (was a nested find per task per section: slow on schedules with many line items).
+    const byId = new Map(tasks.map((t) => [t.id, t]));
+    const tradeOf = new Map(snapshot.sections.map((x) => [x.id, x.trade ?? null]));
+    const kidsOf = new Map<string, Task[]>();
+    for (const t of tasks) {
+      // Same rule as before: split from it, a child of it, or a child of one of its split pieces.
+      const heads = new Set([t.splitFrom, t.parentId, t.parentId ? byId.get(t.parentId)?.splitFrom : null].filter((x): x is string => Boolean(x)));
+      for (const head of heads) {
+        const list = kidsOf.get(head);
+        if (list) list.push(t); else kidsOf.set(head, [t]);
+      }
+    }
     const out: GanttRow[] = [];
     let lastTrade: string | null | undefined;
     for (const s of sections) {
-      const trade = snapshot.sections.find((x) => x.id === s.sourceGroupId)?.trade ?? null;
-      const kids = tasks.filter((t) => t.splitFrom === s.id || t.parentId === s.id || (t.parentId && tasks.find((p) => p.id === t.parentId)?.splitFrom === s.id))
+      const trade = tradeOf.get(s.sourceGroupId) ?? null;
+      const kids = [...(kidsOf.get(s.id) ?? [])]
         .sort((a, b) => Number(a.kind === "item") - Number(b.kind === "item") || a.sortOrder - b.sortOrder || a.plannedStart.localeCompare(b.plannedStart));
       out.push({ task: s, depth: 0, isSectionHead: true, childCount: kids.length, progress: sectionProgress(tasks, s.id, meta.progressMethod), trade, tradeHeader: multiTrade && trade !== lastTrade ? (tradeLabels[trade ?? ""] ?? trade ?? "Other") : undefined });
       lastTrade = trade;

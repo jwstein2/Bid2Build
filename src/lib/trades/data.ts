@@ -435,6 +435,28 @@ export const tradeSeeds: TradeSeed[] = [
     tips: ["Price stories or difficult access as separate setup lines rather than hiding them in a rate.", "Add plant protection as its own line so the customer sees it is included."],
   },
   {
+    slug: "cleaning", name: "Cleaning", icon: "BrushCleaning", family: "General",
+    seoTitle: "Cleaning Estimate & Quote Builder",
+    headline: "Cleaning quotes for move-outs, post-construction, and recurring service",
+    intro: "Price residential, commercial, move-in/move-out, and post-construction cleaning by the square foot, by the room, or by the hour, with supplies, travel, and add-ons on their own lines so the customer sees exactly what is included.",
+    projects: ["Post-construction final clean for a remodel", "Move-out deep clean of a three-bedroom house", "Recurring weekly office cleaning"],
+    groups: [
+      { name: "Cleaning Areas", items: ["General cleaning|square foot|labor", "Deep cleaning|square foot|labor", "Kitchen cleaning|each|labor", "Bathroom cleaning|each|labor", "Bedroom or living area cleaning|each|labor", "Floor cleaning and mopping|square foot|labor", "Carpet vacuuming or shampoo|square foot|labor"] },
+      { name: "Post-Construction", items: ["Rough clean (debris removal)|square foot|labor", "Final clean|square foot|labor", "Touch-up clean before walkthrough|lump sum|labor", "Construction dust removal|square foot|labor", "Debris haul-away|load|other"] },
+      { name: "Add-Ons", items: ["Interior window cleaning|each|labor", "Inside oven cleaning|each|labor", "Inside refrigerator cleaning|each|labor", "Cabinet interior wipe-down|each|labor", "Baseboard and trim detailing|linear foot|labor", "Wall spot cleaning|hour|labor"] },
+      { name: "Supplies & Equipment", items: ["Cleaning supplies|lump sum|material", "Trash bags and liners|box|material", "Equipment rental (floor machine, extractor)|day|equipment"] },
+      { name: "Setup & Travel", items: ["Travel charge|each|other", "Minimum service charge|lump sum|other"] },
+      { name: "Labor", items: ["Cleaning crew labor|hour|labor"] },
+    ],
+    examples: ["General cleaning|square foot|labor", "Final clean|square foot|labor", "Kitchen cleaning|each|labor", "Bathroom cleaning|each|labor", "Cleaning supplies|lump sum|material", "Cleaning crew labor|hour|labor"],
+    faqs: [
+      { q: "Should I price cleaning by the square foot, room, or hour?", a: "Any of them works. Square-foot pricing suits post-construction and commercial space, per-room pricing suits homes, and hourly suits small or unpredictable jobs. Built2Bid lets you mix them in one quote; you always enter your own rates." },
+      { q: "How do I quote recurring cleaning?", a: "Quote one visit, then state the frequency (weekly, every two weeks, monthly) in the scope of work. Price first-visit deep cleans as a separate line so the recurring price stays clear." },
+      { q: "What should a post-construction clean include?", a: "List the phases you include, such as rough clean, final clean, and touch-up before the walkthrough, and say whether windows, light fixtures, and haul-away are included. Exclusions keep the scope clear." },
+    ],
+    tips: ["Put add-ons like inside ovens, refrigerators, and interior windows on their own lines so customers can pick them.", "Set a minimum service charge so small jobs still cover travel and setup."],
+  },
+  {
     slug: "excavation", name: "Excavation", icon: "Shovel", family: "Sitework",
     seoTitle: "Excavation Estimate Template",
     headline: "Excavation bids by the yard, hour, and machine",
