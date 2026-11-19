@@ -19,6 +19,7 @@ export const metadata: Metadata = { title: "Overhead & bills", robots: { index: 
 type Row = Record<string, unknown>;
 const $ = (v: unknown) => formatCurrency(String(v ?? "0"));
 const n = (v: unknown) => Number(v ?? 0) || 0;
+const dayOffset = (days: number) => new Date(Date.now() + days * 864e5).toISOString().slice(0, 10);
 
 /**
  * Business overhead (V9 Phase 2): company costs with no customer project, entered by hand with or without a
@@ -42,7 +43,7 @@ export default async function OverheadPage() {
   const canApprove = writable && perms.includes("approve_vendor_bills");
   const canPlan = writable && can(perms, "cash.manage_plan");
 
-  const since = new Date(Date.now() - 365 * 864e5).toISOString().slice(0, 10);
+  const since = dayOffset(-365);
   const [lines, expenses, vendors, plans] = await Promise.all([
     db.from("fin_vendor_bill_lines").select("bill_id, description, amount").eq("book_id", b).is("job_id", null).limit(2000),
     db.from("fin_expenses").select("id, number, payee, vendor_id, spent_on, amount, description, status, method").eq("book_id", b).is("job_id", null).in("status", ["pending", "approved"]).gte("spent_on", since).order("spent_on", { ascending: false }).limit(200),
@@ -68,8 +69,8 @@ export default async function OverheadPage() {
   const open = bills.filter((x) => x.status !== "paid");
   const paidBills = bills.filter((x) => x.status === "paid").slice(-25).reverse();
 
-  const monthStart = new Date().toISOString().slice(0, 8) + "01";
-  const in30 = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10);
+  const monthStart = dayOffset(0).slice(0, 8) + "01";
+  const in30 = dayOffset(30);
   const expRows = (expenses.data ?? []) as Row[];
   const thisMonth = bills.filter((x) => x.billDate >= monthStart).reduce((s, x) => s + x.total, 0) + expRows.filter((x) => String(x.spent_on) >= monthStart).reduce((s, x) => s + n(x.amount), 0);
   const unpaid = open.reduce((s, x) => s + (x.approved ? x.balance : x.total - x.paid), 0);
