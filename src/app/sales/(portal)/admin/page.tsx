@@ -16,7 +16,13 @@ import { achievementText, DEFAULT_TIERS, type Tier } from "@/lib/sales/incentive
 import { RECOGNITION_ERRORS } from "@/lib/sales/preferences";
 import { RecognitionPanel, type DigestPreview, type Recognition } from "./recognition-panel";
 import { BookingsPanel, type AdminBooking } from "./bookings-panel";
-import { adjustCommission, approveStatement, assignCustomer, assignLeads, approveMilestone, congratulate, createInvite, saveAcceleratorRules, importLeads, saveMilestoneRules, saveTeamGoal, voidMilestone, closeMonth, endAttribution, recordPayout, savePolicy, saveRep } from "./actions";
+import { LeadsPanel, type AdminLeads, type PendingAssign, type PossibleDup } from "./leads-panel";
+import { ADMIN_LEAD_ERRORS, cleanFilters, LIFECYCLE, lifecycle } from "@/lib/sales/leads-admin";
+import { cookies } from "next/headers";
+import { sendInvite } from "./rep-actions";
+import { inviteEmailsOn, } from "@/lib/sales/invite-email";
+import { DELIVERY_LABEL } from "@/lib/sales/leads-admin";
+import { adjustCommission, approveStatement, assignCustomer, assignLeads, approveMilestone, congratulate, saveAcceleratorRules, importLeads, saveMilestoneRules, saveTeamGoal, voidMilestone, closeMonth, endAttribution, recordPayout, savePolicy, saveRep } from "./actions";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Admin Sales Hub" };
@@ -177,15 +183,16 @@ function RepFields({ r, owner, m }: { r?: HubRep; owner: boolean; m?: Member }) 
       {owner && <label className="flex items-start gap-2 text-sm sm:col-span-2 lg:col-span-1"><input type="checkbox" name="sells" defaultChecked={m?.sells ?? true} className="mt-1" /> Also sells (gets My Sales Hub, a link and commissions). Only applies to administrators.</label>}
       <label className="text-sm">Access
         <select name="status" defaultValue={r?.status === "invited" ? "active" : r?.status ?? "active"} className={input}>
-          <option value="active">Active</option><option value="suspended">Suspended (can&apos;t sign in, link stops counting)</option><option value="removed">Removed</option>
+          <option value="active">Active</option><option value="suspended">Suspended (can&apos;t sign in, link stops counting)</option>{r?.status === "removed" && <option value="removed">Offboarded</option>}
         </select>
       </label>
+      {r && <p className="text-xs text-muted sm:col-span-2 lg:col-span-3">To remove someone, use Offboard on their <Link className="underline" href={`/sales/admin/reps/${r.id}/manage`}>management page</Link>, so leads, meetings and final pay are handled. Suspending here is reversible.</p>}
       <label className="text-sm">How you pay them<input name="payout_note" maxLength={300} placeholder="e.g. ACH via payroll. No bank numbers." defaultValue={r?.payout_note ?? ""} className={input} /></label>
     </>
   );
 }
 
-export default async function SalesHub({ searchParams }: { searchParams: Promise<{ tab?: string; ok?: string; err?: string; status?: string; rep?: string; invite?: string; invite_rep?: string; range?: string; admins?: string }> }) {
+export default async function SalesHub({ searchParams }: { searchParams: Promise<{ tab?: string; ok?: string; err?: string; status?: string; rep?: string; invite?: string; invite_rep?: string; range?: string; admins?: string; view?: string; confirm?: string } & Record<string, string | undefined>> }) {
   const { user, db, has } = await requireSalesAdmin();
   const sp = await searchParams;
   const tab: Tab = (ADMIN_TABS.find((t) => t.id === sp.tab)?.id ?? "overview") as Tab;
@@ -200,8 +207,6 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
     );
   }
   const h = data as Hub;
-  const crm = tab === "leads" ? await db.rpc("admin_sales_crm", { p_caller: user.id }) : null;
-  const leads = ((crm?.data as { leads?: Lead[] } | null)?.leads ?? []).filter((l) => (!sp.rep || (sp.rep === "none" ? !l.assigned_rep : l.assigned_rep === sp.rep)) && (sp.status !== "agent" || l.source === "agent"));
   // Weekly automated import history (Phase 3a). Missing until that migration is run: the panel is hidden.
   const imports = tab === "leads" ? await db.rpc("admin_sales_import_batches", { p_caller: user.id }) : null;
   // State regions for the target picker. Missing until 20270114001000_sales_lead_regions.sql is run: ZIP only.
@@ -210,11 +215,49 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
   const importData = imports && !imports.error ? (imports.data as { batches: { id: string; label: string | null; received: number; added: number; duplicates: number; suppressed: number; invalid: number; unverified?: number; target_zip?: string | null; target_trade?: string | null; target_state?: string | null; target_region?: string | null; created_at: string }[]; unassigned_agent: number; suppressed: number;
     target?: LeadTarget; zips?: { zip: string; leads: number }[] }) : null;
   const activeReps = h.reps.filter((r) => r.status !== "removed");
+  // V8.6 master CRM (falls back to the earlier table until 20270121001000 is applied).
+  const leadFilters = cleanFilters(sp);
+  const v86 = tab === "leads" ? await db.rpc("admin_sales_leads", { p_caller: user.id, p: leadFilters, p_limit: 200, p_offset: 0 }) : null;
+  const v86Leads = v86 && !v86.error ? (v86.data as AdminLeads) : null;
+  const crm = tab === "leads" && !v86Leads ? await db.rpc("admin_sales_crm", { p_caller: user.id }) : null;
+  const leads = ((crm?.data as { leads?: Lead[] } | null)?.leads ?? []).filter((l) => (!sp.rep || (sp.rep === "none" ? !l.assigned_rep : l.assigned_rep === sp.rep)) && (sp.status !== "agent" || l.source === "agent"));
+  const dupRes = tab === "leads" && sp.view === "dups" ? await db.rpc("admin_sales_possible_dups", { p_caller: user.id }) : null;
+  const dups = (dupRes && !dupRes.error ? dupRes.data : null) as PossibleDup[] | null;
+  const allocRes = tab === "leads" && v86Leads ? await db.rpc("admin_sales_batch_allocations", { p_caller: user.id }) : null;
+  const batchAlloc = (allocRes && !allocRes.error ? allocRes.data : {}) as Record<string, { rep_name: string; count: number }[]>;
+  let pendingAssign: PendingAssign | null = null;
+  const importCard = (importData && (
+            <Card className="p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-bold">Weekly lead import</h2>
+                  <p className="mt-1 text-sm text-ink-soft">Businesses found by the weekly Claude agent are checked against the whole CRM, then shared out to eligible reps by round robin. Duplicates stay with their current owner, and anyone marked do-not-contact ({importData.suppressed} on the list) is skipped.</p>
+                </div>
+                {importData.unassigned_agent > 0 && <Link href="/sales/admin?tab=leads&rep=none&status=agent" className="text-sm font-semibold text-brand underline">{importData.unassigned_agent} new to assign</Link>}
+              </div>
+              {importData.target && <LeadTargetForm target={importData.target} states={leadRegions} zips={importData.zips ?? []} back="/sales/admin" />}
+              {importData.batches.length === 0 ? <p className="mt-3 text-sm text-muted">No imports yet. The first weekly run will show here.</p> : (
+                <div className="mt-3 overflow-x-auto">
+                  <table className="w-full min-w-[560px] text-sm">
+                    <thead className="text-left text-muted"><tr><th className="py-1 pr-3">Run</th><th className="py-1 pr-3">Received</th><th className="py-1 pr-3">Added</th><th className="py-1 pr-3">Already on file</th><th className="py-1 pr-3">Do not contact</th><th className="py-1">Not verified</th></tr></thead>
+                    <tbody>
+                      {importData.batches.map((b) => (
+                        <tr key={b.id} className="border-t border-line"><td className="py-1 pr-3">{dateLabel(b.created_at)}{b.target_zip || b.target_region ? ` · ${b.target_region ? `${b.target_state} ${b.target_region}` : b.target_zip}${b.target_trade ? ` ${b.target_trade}` : ""}` : b.label ? ` · ${b.label}` : ""}</td><td className="py-1 pr-3">{b.received}</td><td className="py-1 pr-3 font-semibold">{b.added}</td><td className="py-1 pr-3">{b.duplicates}</td><td className="py-1 pr-3">{b.suppressed}</td><td className="py-1">{b.invalid + (b.unverified ?? 0)}{batchAlloc[b.id]?.length ? <p className="text-xs text-muted">Shared: {batchAlloc[b.id].map((x) => `${x.rep_name} ${x.count}`).join(", ")}</p> : null}</td></tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Card>
+          ));
+  if (tab === "leads" && sp.confirm) { try { pendingAssign = JSON.parse((await cookies()).get("sales_assign_pending")?.value ?? "null"); } catch { pendingAssign = null; } }
+  const manageRes = tab === "team" ? await db.rpc("admin_sales_rep_manage_list", { p_caller: user.id }) : null;
+  const manage = (manageRes && !manageRes.error ? manageRes.data : {}) as Record<string, { linked: boolean; allocation_paused: boolean; reactivated_at: string | null; offboarding: boolean; auto_effective: boolean; on_time_off: boolean }>;
   // V8: invite links and policy versions (hidden until 20270110001000 is applied).
   const acadRes = tab === "team" ? await db.rpc("admin_sales_academy", { p_caller: user.id }) : null;
   const academy = (acadRes && !acadRes.error ? acadRes.data : null) as Record<string, string[] | null> | null;
   const invRes = tab === "team" ? await db.rpc("admin_sales_invites", { p_caller: user.id }) : null;
-  const invites = (invRes && !invRes.error ? invRes.data : {}) as Record<string, { created_at: string; expires_at: string; opened_at: string | null; accepted_at: string | null; revoked_at: string | null }>;
+  const invites = (invRes && !invRes.error ? invRes.data : {}) as Record<string, { created_at: string; expires_at: string; opened_at: string | null; accepted_at: string | null; revoked_at: string | null; delivery_status?: string; sent_at?: string | null }>;
   const verRes = tab === "policy" ? await db.rpc("admin_sales_policy_versions", { p_caller: user.id }) : null;
   const versions = (verRes && !verRes.error ? verRes.data : null) as { version: number; policy: Record<string, string | number | boolean>; note: string | null; created_at: string; lines: number }[] | null;
   // V8 goals + milestone boxes (hidden until 20270111001000 is applied).
@@ -264,6 +307,7 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
     cannot_edit_self: "You can't change your own team record. Ask the platform owner.",
     cannot_approve_own: "You can't approve or cancel your own pay. Another administrator or the owner has to.",
     ...(tab === "recognition" ? RECOGNITION_ERRORS : {}),
+    ...(tab === "leads" || tab === "team" ? ADMIN_LEAD_ERRORS : {}),
   } as Record<string, string>)[sp.err] ?? "That didn't work. Check the form and try again." : null;
 
   return (
@@ -334,7 +378,7 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
         <div className="space-y-6">
           <Card className="p-5">
             <h2 className="text-lg font-bold">Add a sales team member</h2>
-            <p className="mt-1 text-sm text-ink-soft">They get a permanent referral link right away. Then create an invite link below and send it to them yourself: it opens a welcome page and signs them in with this email. Nothing is emailed automatically. Sales staff never get owner or customer-account access.</p>
+            <p className="mt-1 text-sm text-ink-soft">They get a permanent referral link right away. Then send them an invitation: it opens a welcome page and signs them in with this email. {inviteEmailsOn() ? "Invitations are emailed from your founder address." : "Invitation emails are off, so you copy the link and send it yourself."} Sales staff never get owner or customer-account access.</p>
             <form action={saveRep} className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <RepFields owner={owner} />
               <div className="sm:col-span-2 lg:col-span-3"><button className={btn}>Add to sales team</button></div>
@@ -344,8 +388,9 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
             <Card key={r.id} className="p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="text-lg font-bold">{r.full_name} <Badge tone={REP_STATUS[r.status]?.tone}>{REP_STATUS[r.status]?.label}</Badge></p>
-                  <p className="text-sm text-muted">{roleText(r.role, members[r.id])} · <Link className="text-brand underline" href={`/sales/admin/reps/${r.id}`}>View activity</Link> · {r.email}{r.phone ? ` · ${r.phone}` : ""} · added {dateLabel(r.created_at)}{r.activated_at ? `, first signed in ${dateLabel(r.activated_at)}` : ", hasn't signed in yet"}</p>
+                  <p className="text-lg font-bold">{r.full_name} {manage[r.id] ? (() => { const lc = LIFECYCLE[lifecycle({ status: r.status, linked: manage[r.id].linked, allocation_paused: manage[r.id].allocation_paused, reactivated_at: manage[r.id].reactivated_at }, manage[r.id].offboarding)]; return <Badge tone={lc.tone}>{lc.label}</Badge>; })() : <Badge tone={REP_STATUS[r.status]?.tone}>{REP_STATUS[r.status]?.label}</Badge>}
+                    {manage[r.id]?.on_time_off && <Badge tone="accent">On time off</Badge>}{manage[r.id] && r.status === "active" && !manage[r.id].auto_effective && <Badge>No automatic leads</Badge>}</p>
+                  <p className="text-sm text-muted">{roleText(r.role, members[r.id])} · <Link className="text-brand underline" href={`/sales/admin/reps/${r.id}/manage`}>Manage</Link> · <Link className="text-brand underline" href={`/sales/admin/reps/${r.id}`}>View activity</Link> · {r.email}{r.phone ? ` · ${r.phone}` : ""} · added {dateLabel(r.created_at)}{r.activated_at ? `, first signed in ${dateLabel(r.activated_at)}` : ", hasn't signed in yet"}</p>
                   <p className="mt-1 break-all font-mono text-sm">{repLink(r.code)}</p>
                   {academy && r.linked && (() => {
                     const passed = academy[r.id] ?? [];
@@ -353,16 +398,16 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
                   })()}
                 </div>
                 {!r.linked && r.status !== "removed" && (
-                  <form action={createInvite}>
-                    <input type="hidden" name="rep" value={r.id} />
-                    <button className={btnLight}>{invites[r.id] ? "New invite link" : "Create invite link"}</button>
+                  <form action={sendInvite}>
+                    <input type="hidden" name="rep" value={r.id} /><input type="hidden" name="to" value="team" />
+                    <button className={btnLight}>{inviteEmailsOn() ? (invites[r.id] ? "Resend invitation" : "Email invitation") : invites[r.id] ? "New invite link" : "Create invite link"}</button>
                   </form>
                 )}
               </div>
               {!r.linked && invites[r.id] && (() => {
                 const i = invites[r.id];
                 const state = i.accepted_at ? "Accepted" : i.revoked_at ? "Replaced by a newer link" : new Date(i.expires_at) < new Date() ? "Expired: create a new link" : i.opened_at ? `Opened ${dateLabel(i.opened_at)}, not signed in yet` : "Not opened yet";
-                return <p className="mt-2 text-sm text-ink-soft">Invite link created {dateLabel(i.created_at)} · {state}{!i.accepted_at && !i.revoked_at ? ` · works until ${dateLabel(i.expires_at)}` : ""}</p>;
+                return <p className="mt-2 text-sm text-ink-soft">Invite link created {dateLabel(i.created_at)} · {state}{!i.accepted_at && !i.revoked_at ? ` · works until ${dateLabel(i.expires_at)}` : ""}{i.delivery_status ? ` · ${DELIVERY_LABEL[i.delivery_status] ?? i.delivery_status}${i.sent_at ? ` ${dateLabel(i.sent_at)}` : ""}` : ""}</p>;
               })()}
               {inviteLink && sp.invite_rep === r.id && (
                 <div className="mt-3 space-y-2 rounded-lg border border-ok/40 bg-ok-tint p-3">
@@ -383,33 +428,14 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
         </div>
       )}
 
-      {tab === "leads" && (
+      {tab === "leads" && v86Leads && (
+        <LeadsPanel data={v86Leads} filters={leadFilters} canAssign={has("reassign_leads")} pending={pendingAssign} dups={dups} view={sp.view} importCard={importCard}
+          reps={h.reps.filter((r) => r.status === "active" || r.status === "invited").map((r) => ({ id: r.id, name: r.full_name }))} />
+      )}
+      {tab === "leads" && !v86Leads && (
         crm?.error ? <Notice tone="warn">The CRM tables are not installed yet. Run <code className="break-all">supabase/migrations/20270107002000_sales_crm.sql</code> in the Supabase SQL Editor, then reload.</Notice> : (
         <div className="space-y-6">
-          {importData && (
-            <Card className="p-5">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h2 className="text-lg font-bold">Weekly lead import</h2>
-                  <p className="mt-1 text-sm text-ink-soft">Businesses found by the weekly Claude agent arrive here unassigned. Duplicates and anyone marked do-not-contact ({importData.suppressed} on the list) are skipped automatically.</p>
-                </div>
-                {importData.unassigned_agent > 0 && <Link href="/sales/admin?tab=leads&rep=none&status=agent" className="text-sm font-semibold text-brand underline">{importData.unassigned_agent} new to assign</Link>}
-              </div>
-              {importData.target && <LeadTargetForm target={importData.target} states={leadRegions} zips={importData.zips ?? []} back="/sales/admin" />}
-              {importData.batches.length === 0 ? <p className="mt-3 text-sm text-muted">No imports yet. The first weekly run will show here.</p> : (
-                <div className="mt-3 overflow-x-auto">
-                  <table className="w-full min-w-[560px] text-sm">
-                    <thead className="text-left text-muted"><tr><th className="py-1 pr-3">Run</th><th className="py-1 pr-3">Received</th><th className="py-1 pr-3">Added</th><th className="py-1 pr-3">Already on file</th><th className="py-1 pr-3">Do not contact</th><th className="py-1">Not verified</th></tr></thead>
-                    <tbody>
-                      {importData.batches.map((b) => (
-                        <tr key={b.id} className="border-t border-line"><td className="py-1 pr-3">{dateLabel(b.created_at)}{b.target_zip || b.target_region ? ` · ${b.target_region ? `${b.target_state} ${b.target_region}` : b.target_zip}${b.target_trade ? ` ${b.target_trade}` : ""}` : b.label ? ` · ${b.label}` : ""}</td><td className="py-1 pr-3">{b.received}</td><td className="py-1 pr-3 font-semibold">{b.added}</td><td className="py-1 pr-3">{b.duplicates}</td><td className="py-1 pr-3">{b.suppressed}</td><td className="py-1">{b.invalid + (b.unverified ?? 0)}</td></tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </Card>
-          )}
+          {importCard}
           <Card className="p-5">
             <h2 className="text-lg font-bold">Add leads</h2>
             <p className="mt-1 text-sm text-ink-soft">Paste one business per line: company, contact, email, phone, website, city, state, ZIP, trades (separate trades with ;). Businesses already on file (same website, phone, or name + ZIP) are skipped.</p>

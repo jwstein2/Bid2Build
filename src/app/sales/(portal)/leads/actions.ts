@@ -3,7 +3,8 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireSalesRep } from "@/lib/sales/server";
-import { STAGES, TRADES } from "@/lib/sales/crm";
+import { parseLeadRows, STAGES, TRADES } from "@/lib/sales/crm";
+import { csvToRows, DISPOSITIONS } from "@/lib/sales/leads-admin";
 import { activityErrorMessage } from "@/lib/sales/calling";
 
 /**
@@ -50,9 +51,10 @@ export async function updateLead(fd: FormData) {
 export async function logActivity(fd: FormData) {
   const { db } = await requireSalesRep();
   const id = z.string().uuid().parse(fd.get("id"));
-  const p = z.object({ kind: z.enum(["call", "email", "text", "meeting", "note"]), body: t(4000).min(1) }).safeParse(Object.fromEntries(fd));
+  const p = z.object({ kind: z.enum(["call", "email", "text", "meeting", "note", "reply"]), body: t(4000).min(1), disposition: t(40).optional() }).safeParse(Object.fromEntries(fd));
   if (!p.success) back(`/sales/leads/${id}`, { err: "Write a short note about what happened." });
-  const { error } = await db.rpc("sales_crm_activity_add", { p_lead: id, p_kind: p.data.kind, p_body: p.data.body, p_occurred_at: new Date().toISOString() });
+  const disposition = p.data.disposition && DISPOSITIONS[p.data.kind]?.some((d) => d.v === p.data.disposition) ? p.data.disposition : null;
+  const { error } = await db.rpc("sales_crm_activity_log", { p_lead: id, p_kind: p.data.kind, p_body: p.data.body, p_disposition: disposition });
   if (error) back(`/sales/leads/${id}`, { err: activityErrorMessage(error.message) });
   back(`/sales/leads/${id}`, { ok: "Logged." });
 }
@@ -80,4 +82,22 @@ export async function recordDncCheck(fd: FormData) {
   const { error } = await db.rpc("sales_crm_dnc_record", { p_lead: id, p_status: p.data.dnc, p_line: p.data.line, p_text_consent: p.data.text_consent === "on", p_consent_note: p.data.consent_note ?? null });
   if (error) back(`/sales/leads/${id}`, { err: "That check couldn't be saved. If this keeps happening, the database update may not be installed yet." });
   back(`/sales/leads/${id}`, { ok: p.data.dnc === "listed" ? "Recorded. This number is on the registry: no calls or texts." : "Recorded." });
+}
+
+/** A rep imports their own list (CSV or pasted rows). Their new leads stay theirs; anything already on file stays with its owner. */
+export async function importMyLeads(fd: FormData) {
+  const { db } = await requireSalesRep();
+  const file = fd.get("file");
+  let text = String(fd.get("rows") ?? "").slice(0, 300_000);
+  if (file instanceof File && file.size > 0) {
+    if (file.size > 1_000_000) back("/sales/leads", { err: "That file is too big. Split it into lists of 500 or fewer." });
+    text = await file.text();
+  }
+  const rows = csvToRows(text, 500).length ? csvToRows(text, 500) : parseLeadRows(text, 500);
+  if (rows.length === 0) back("/sales/leads", { err: "Add a CSV with a header row, or paste one business per line." });
+  const { data, error } = await db.rpc("sales_crm_import", { p_rows: rows, p_label: String(fd.get("label") ?? "").slice(0, 200) || null });
+  if (error) back("/sales/leads", { err: /not_authorized/.test(error.message) ? "Your account can't import leads." : "That list couldn't be imported. Try again." });
+  const r = data as { added: number; duplicates: number; possible: number; suppressed: number; invalid: number; existing_customers: number };
+  const skipped = r.duplicates + r.possible + r.existing_customers;
+  back("/sales/leads", { ok: `Added ${r.added} lead${r.added === 1 ? "" : "s"} to your list.${skipped ? ` ${skipped} were already on file or are customers, so they stay where they are (an admin can review them).` : ""}${r.suppressed ? ` ${r.suppressed} asked not to be contacted.` : ""}${r.invalid ? ` ${r.invalid} were missing a name or a way to reach them.` : ""}` });
 }

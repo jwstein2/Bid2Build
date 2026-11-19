@@ -6,6 +6,7 @@ import { requireSalesRep } from "@/lib/sales/server";
 import { ACTIVITY_LABEL, SOURCE_LABEL, STAGES, STAGE_LABEL, verificationSources, type Duplicate, type Lead, type LeadActivity, type LeadTask } from "@/lib/sales/crm";
 import { dateLabel, TIER_LABEL } from "@/lib/sales/format";
 import { logActivity, recordDncCheck, saveTask, updateLead } from "../actions";
+import { DISPOSITIONS, DISPOSITION_LABEL } from "@/lib/sales/leads-admin";
 import { callReadiness, DNC_REGISTRY_URL, localTimeLabel } from "@/lib/sales/calling";
 import { StarterScript } from "@/components/sales/starter-script";
 
@@ -92,9 +93,10 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
           </Card>
           <Card className="p-5">
             <h2 className="text-lg font-bold">Log an activity</h2>
-            <form action={logActivity} className="mt-3 grid gap-3 sm:grid-cols-[160px_1fr]">
+            <form action={logActivity} className="mt-3 grid gap-3 sm:grid-cols-[160px_160px_1fr]">
               <input type="hidden" name="id" value={l.id} />
-              <label className="text-sm">Type<select name="kind" className={input}><option value="call">Call</option><option value="email">Email</option><option value="text">Text</option><option value="meeting">Meeting / demo</option><option value="note">Note</option></select></label>
+              <label className="text-sm">Type<select name="kind" className={input}><option value="call">Call</option><option value="email">Email</option><option value="text">Text</option><option value="meeting">Meeting / demo</option><option value="reply">They replied</option><option value="note">Note</option></select></label>
+              <label className="text-sm">Outcome<select name="disposition" className={input}><option value="">No outcome</option>{Object.entries(DISPOSITIONS).map(([k, opts]) => <optgroup key={k} label={ACTIVITY_LABEL[k] ?? k}>{opts.map((o) => <option key={`${k}-${o.v}`} value={o.v}>{o.label}</option>)}</optgroup>)}</select></label>
               <label className="text-sm">What happened<textarea name="body" required maxLength={4000} rows={2} className={`${input} py-2`} /></label>
               <div><button className={btn}>Log it</button></div>
             </form>
@@ -105,7 +107,7 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
               {activities.length === 0 && <li className="text-ink-soft">Nothing yet.</li>}
               {activities.map((a) => (
                 <li key={a.id} className="border-l-2 border-line pl-3">
-                  <p className="text-xs text-muted">{ACTIVITY_LABEL[a.kind] ?? a.kind} · {when(a.occurred_at)}{a.rep_name ? ` · ${a.rep_name}` : ""}</p>
+                  <p className="text-xs text-muted">{ACTIVITY_LABEL[a.kind] ?? (a.kind === "reply" ? "Reply" : a.kind)}{a.disposition ? ` · ${DISPOSITION_LABEL[a.disposition] ?? a.disposition}` : ""} · {when(a.occurred_at)}{a.rep_name ? ` · ${a.rep_name}` : ""}</p>
                   {a.body && <p className="whitespace-pre-wrap">{a.body}</p>}
                 </li>
               ))}

@@ -3,7 +3,7 @@ import { Badge, Card, Notice } from "@/components/ui/misc";
 import { requireSalesRep } from "@/lib/sales/server";
 import { STAGES, STAGE_LABEL, TRADES, type Lead, type LeadTask } from "@/lib/sales/crm";
 import { dateLabel } from "@/lib/sales/format";
-import { createLead } from "./actions";
+import { createLead, importMyLeads } from "./actions";
 
 export const metadata = { title: "Leads" };
 const overdue = (iso: string) => new Date(iso).getTime() < Date.now();
@@ -15,6 +15,9 @@ export default async function SalesLeads({ searchParams }: { searchParams: Promi
   const { data, error } = await db.rpc("sales_crm_leads");
   if (error || !data) return <Notice title="Leads are getting set up">Check back in a little while.</Notice>;
   const { leads, tasks, role } = data as { leads: Lead[]; tasks: LeadTask[]; role: string };
+  // V8.6 notices (new leads assigned, leads moved). Missing until 20270121001000 is applied.
+  const nres = await db.rpc("sales_my_notices");
+  const notices = (nres.error ? [] : nres.data ?? []) as { id: number; kind: string; body: string; at: string; unread: boolean }[];
   const stage = STAGES.find((s) => s === sp.stage);
   const q = (sp.q ?? "").trim().toLowerCase();
   const shown = leads.filter((l) => (!stage || l.stage === stage) && (!q || `${l.company_name} ${l.contact_name ?? ""} ${l.city ?? ""} ${l.zip ?? ""} ${l.trades.join(" ")}`.toLowerCase().includes(q)));
@@ -27,6 +30,15 @@ export default async function SalesLeads({ searchParams }: { searchParams: Promi
       </div>
       {sp.ok && <Notice tone="ok">{sp.ok}</Notice>}
       {sp.err && <Notice tone="warn">{sp.err}</Notice>}
+
+      {notices.length > 0 && (
+        <Card className="p-5">
+          <h2 className="text-lg font-bold">Updates</h2>
+          <ul className="mt-2 space-y-1 text-sm">
+            {notices.slice(0, 6).map((n) => <li key={n.id} className={n.unread ? "font-semibold" : "text-ink-soft"}>{n.body} <span className="text-xs font-normal text-muted">{dateLabel(n.at)}</span></li>)}
+          </ul>
+        </Card>
+      )}
 
       {tasks.length > 0 && (
         <Card className="p-5">
@@ -97,6 +109,18 @@ export default async function SalesLeads({ searchParams }: { searchParams: Promi
           <label className="flex items-center gap-2 text-sm sm:col-span-2 lg:col-span-3"><input type="checkbox" name="allow_duplicate" /> It&apos;s a different business from a similar one already on file</label>
           <div><button className="min-h-11 rounded-lg bg-ink px-4 text-sm font-semibold text-white">Add lead</button></div>
         </form>
+      </Card>
+
+      <Card className="p-5">
+        <details>
+          <summary className="cursor-pointer text-lg font-bold">Import your own list</summary>
+          <p className="mt-2 text-sm text-ink-soft">Upload a CSV with a header row (company, contact, email, phone, website, city, state, zip, trades), up to 500 rows. New businesses become your leads. Anything already on file stays with whoever has it, and existing Built2Bid customers go to an admin to review.</p>
+          <form action={importMyLeads} className="mt-3 grid gap-3">
+            <label className="text-sm">CSV file<input type="file" name="file" accept=".csv,text/csv,text/plain" className={`${input} py-2`} /></label>
+            <label className="text-sm">Or paste rows<textarea name="rows" rows={3} className={`${input} py-2 font-mono`} placeholder="Summit Roofing, Dana Lee, dana@summitroofing.com, 612-555-0100, summitroofing.com, Minneapolis, MN, 55401, roofing" /></label>
+            <div><button className="min-h-11 rounded-lg bg-ink px-4 text-sm font-semibold text-white">Import</button></div>
+          </form>
+        </details>
       </Card>
     </div>
   );

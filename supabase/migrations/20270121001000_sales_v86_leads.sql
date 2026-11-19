@@ -837,6 +837,25 @@ begin
   return to_jsonb(t);
 end $$;
 
+-- The rep's lead view shows who did each thing (an admin's contact included) and how it was recorded.
+create or replace function public.sales_crm_lead(p_id uuid) returns jsonb
+language plpgsql stable security definer set search_path = public as $$
+declare rep public.sales_reps := public.sales_my_rep(); l public.sales_leads;
+begin
+  if rep.id is null then raise exception 'not_sales_staff' using errcode = '42501'; end if;
+  select * into l from public.sales_leads where id = p_id;
+  if not found or not public.sales_crm_can_see(rep, l) then raise exception 'not_found'; end if;
+  return jsonb_build_object(
+    'lead', public.sales_lead_json(l),
+    'activities', coalesce((select jsonb_agg(jsonb_build_object('id', a.id, 'kind', a.kind, 'body', a.body, 'occurred_at', a.occurred_at,
+        'rep_name', coalesce(a.actor_label, r.full_name), 'disposition', a.disposition, 'evidence', a.evidence) order by a.occurred_at desc, a.id desc)
+      from public.sales_activities a left join public.sales_reps r on r.id = a.rep_id where a.lead_id = l.id), '[]'::jsonb),
+    'tasks', coalesce((select jsonb_agg(jsonb_build_object('id', t.id, 'title', t.title, 'due_at', t.due_at, 'done_at', t.done_at) order by t.done_at nulls first, t.due_at)
+      from public.sales_tasks t where t.lead_id = l.id), '[]'::jsonb),
+    'duplicates', public.sales_lead_duplicates(l.dedupe_keys, l.id)
+  );
+end $$;
+
 -- Rep notices (assignments, moves). Reading marks them read.
 create or replace function public.sales_my_notices() returns jsonb
 language plpgsql security definer set search_path = public as $$
@@ -986,7 +1005,7 @@ begin
     if exists (select 1 from public.sales_rep_offboardings where rep_id = p_rep and status = 'in_progress') then raise exception 'offboarding_open'; end if;
     update public.sales_reps set status = case when user_id is null then 'invited' else 'active' end, updated_at = now() where id = p_rep;
   else raise exception 'invalid'; end if;
-  perform public.sales_audit(p_caller, 'sales.rep_' || p_action || 'ed', 'sales_rep', p_rep::text, jsonb_build_object('reason', btrim(p_reason), 'from', rep.status, 'signed_out_sessions', v_sessions));
+  perform public.sales_audit(p_caller, case p_action when 'suspend' then 'sales.rep_suspended' else 'sales.rep_restored' end, 'sales_rep', p_rep::text, jsonb_build_object('reason', btrim(p_reason), 'from', rep.status, 'signed_out_sessions', v_sessions));
   return jsonb_build_object('ok', true, 'signed_out_sessions', v_sessions);
 end $$;
 
@@ -1193,6 +1212,18 @@ begin
       from (select * from public.audit_logs where target_type = 'sales_rep' and target_id = rep.id::text order by created_at desc limit 30) a), '[]'::jsonb));
 end $$;
 
+-- Lifecycle layers for the team list, keyed by rep.
+create or replace function public.admin_sales_rep_manage_list(p_caller uuid) returns jsonb
+language plpgsql stable security definer set search_path = public as $$
+begin
+  perform public.sales_require_cap(p_caller, 'view_all_reps');
+  return coalesce((select jsonb_object_agg(r.id, jsonb_build_object('linked', r.user_id is not null, 'allocation_paused', r.allocation_paused,
+      'reactivated_at', r.reactivated_at, 'auto_effective', public.sales_rep_auto_default(r),
+      'offboarding', exists (select 1 from public.sales_rep_offboardings o where o.rep_id = r.id and o.status = 'in_progress'),
+      'on_time_off', exists (select 1 from public.sales_time_off t where t.rep_id = r.id and t.status = 'active' and now() >= t.starts_at and now() < t.ends_at)))
+    from public.sales_reps r), '{}'::jsonb);
+end $$;
+
 -- ---------------------------------------------------------------------------------------------------
 -- 11. Grants
 -- ---------------------------------------------------------------------------------------------------
@@ -1219,7 +1250,7 @@ begin
     'public.admin_sales_offboarding_start(uuid, uuid, jsonb)', 'public.admin_sales_offboarding_update(uuid, uuid, jsonb)',
     'public.admin_sales_rep_leads_reassign(uuid, uuid, text[], text, uuid)', 'public.admin_sales_offboarding_complete(uuid, uuid, boolean)',
     'public.admin_sales_offboarding_cancel(uuid, uuid, text)', 'public.admin_sales_rep_reactivate(uuid, uuid, text, boolean)',
-    'public.admin_sales_rep_manage(uuid, uuid)'
+    'public.admin_sales_rep_manage(uuid, uuid)', 'public.admin_sales_rep_manage_list(uuid)'
   ] loop
     execute format('revoke execute on function %s from public, anon, authenticated', f);
     execute format('grant execute on function %s to service_role', f);

@@ -46,6 +46,7 @@ drop function if exists public.admin_sales_offboarding_complete(uuid, uuid, bool
 drop function if exists public.admin_sales_offboarding_cancel(uuid, uuid, text);
 drop function if exists public.admin_sales_rep_reactivate(uuid, uuid, text, boolean);
 drop function if exists public.admin_sales_rep_manage(uuid, uuid);
+drop function if exists public.admin_sales_rep_manage_list(uuid);
 drop function if exists public.sales_crm_import(jsonb, text);
 drop function if exists public.sales_crm_activity_log(uuid, text, text, text);
 drop function if exists public.sales_my_notices();
@@ -162,6 +163,23 @@ begin
   return coalesce((select jsonb_object_agg(i.rep_id, jsonb_build_object('created_at', i.created_at, 'expires_at', i.expires_at, 'opened_at', i.opened_at,
       'accepted_at', i.accepted_at, 'revoked_at', i.revoked_at))
     from (select distinct on (rep_id) * from public.sales_rep_invites order by rep_id, created_at desc) i), '{}'::jsonb);
+end $$;
+
+create or replace function public.sales_crm_lead(p_id uuid) returns jsonb
+language plpgsql stable security definer set search_path = public as $$
+declare rep public.sales_reps := public.sales_my_rep(); l public.sales_leads;
+begin
+  if rep.id is null then raise exception 'not_sales_staff' using errcode = '42501'; end if;
+  select * into l from public.sales_leads where id = p_id;
+  if not found or not public.sales_crm_can_see(rep, l) then raise exception 'not_found'; end if;
+  return jsonb_build_object(
+    'lead', public.sales_lead_json(l),
+    'activities', coalesce((select jsonb_agg(jsonb_build_object('id', a.id, 'kind', a.kind, 'body', a.body, 'occurred_at', a.occurred_at, 'rep_name', r.full_name) order by a.occurred_at desc)
+      from public.sales_activities a left join public.sales_reps r on r.id = a.rep_id where a.lead_id = l.id), '[]'::jsonb),
+    'tasks', coalesce((select jsonb_agg(jsonb_build_object('id', t.id, 'title', t.title, 'due_at', t.due_at, 'done_at', t.done_at) order by t.done_at nulls first, t.due_at)
+      from public.sales_tasks t where t.lead_id = l.id), '[]'::jsonb),
+    'duplicates', public.sales_lead_duplicates(l.dedupe_keys, l.id)
+  );
 end $$;
 
 revoke execute on function public.sales_import_batch(text, text, jsonb, integer), public.admin_sales_crm_import(uuid, jsonb, uuid),
