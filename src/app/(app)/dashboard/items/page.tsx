@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { LibraryManager } from "@/components/library/library-manager";
+import { GenerateEntry } from "@/components/library/generator/generate-entry";
 import { PremiumDiamond } from "@/components/billing/premium";
 import { ButtonLink } from "@/components/ui/button";
 import { FileSpreadsheet } from "lucide-react";
@@ -19,6 +20,7 @@ export default function ItemsPage() {
           <FileSpreadsheet className="h-4 w-4" aria-hidden /> Import supplier price list
         </ButtonLink>
       </div>
+      <GenerateEntry />
       <LibraryManager />
     </div>
   );
