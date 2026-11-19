@@ -1,4 +1,4 @@
-# Sales Portal (Phase 1)
+# Sales Portal (Phases 1 and 2)
 
 A separate sign-in and workspace for Built2Bid's own sales staff, plus an owner **Sales Hub**. It is not
 the contractor app, not the owner admin area, and not the customer "refer a contractor" program.
@@ -57,9 +57,21 @@ rep's own customers: business name, contact email, plan tier, billing status and
 customers, financials or operational data. Owner accounts can't be added as reps; sales staff can't
 be attributed as customers.
 
-## Next phases
+## Phase 2: sales CRM (`20270107002000_sales_crm.sql`)
 
-- Phase 2: rep CRM (leads, pipeline stages, activities, tasks/reminders), owner lead assignment.
+- **Leads** (`/sales/leads`): add, search, filter by pipeline stage (new, contacted, engaged, demo,
+  trial, paying, lost), next actions with overdue flags. Reps see their own leads; managers see all.
+- **Lead page**: activity history (call, email, text, meeting, note; stage changes and assignments are
+  logged automatically), tasks with due dates, details, lost reason, do-not-contact flag.
+- **One rep per business**: duplicate check on website domain, phone, or name + ZIP. A rep can't add a
+  business another rep is working; the owner reassigns it.
+- **Automatic stages**: a lead whose email matches an account that signs up through the rep's link is
+  linked and moves to Trial; the first payment moves it to Paying.
+- **Owner Leads tab** (Sales Hub): paste-in import (duplicates skipped), filter by rep, bulk assign or
+  unassign, with history and audit log.
+
+## Next phase
+
 - Phase 3: lead discovery (Google Places API, authorized use only; storage limits apply) and compliant
   automated follow-ups (opt-out, suppression, caps, send switch off by default).
 

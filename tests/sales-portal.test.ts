@@ -61,3 +61,14 @@ describe("rep links", () => {
     expect(captureAttribution(new URL("https://built2bid.org/?utm_source=sales_rep&utm_content=AB3DE7GH"), null, null)?.source).toBe("sales_rep");
   });
 });
+
+import { parseLeadRows } from "@/lib/sales/crm";
+describe("lead import parsing", () => {
+  it("reads CSV and tab rows, skips headers and blank names, splits trades", () => {
+    const rows = parseLeadRows('company,contact\n"Summit Roofing, LLC",Dana,dana@x.com,612,summit.com,Minneapolis,MN,55401,roofing;siding\n\t\nBright Deck\tJo\t\t\t\t\t\t55102\tdecks');
+    expect(rows).toEqual([
+      { company_name: "Summit Roofing, LLC", contact_name: "Dana", email: "dana@x.com", phone: "612", website: "summit.com", city: "Minneapolis", state: "MN", zip: "55401", trades: ["roofing", "siding"] },
+      { company_name: "Bright Deck", contact_name: "Jo", zip: "55102", trades: ["decks"] },
+    ]);
+  });
+});

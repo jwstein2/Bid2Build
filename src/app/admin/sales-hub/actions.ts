@@ -127,3 +127,25 @@ export async function closeMonth() {
   const r = data as { earned?: number; statement_lines?: number; missed_anniversaries?: number };
   back("statements", { ok: `Month-end run: ${r.earned ?? 0} commissions earned, ${r.statement_lines ?? 0} lines added to statements, ${r.missed_anniversaries ?? 0} missed anniversaries marked.` });
 }
+
+export async function assignLeads(fd: FormData) {
+  const { user, db } = await requireAdmin();
+  const ids = fd.getAll("lead").map(String).filter((x) => /^[0-9a-f-]{36}$/i.test(x));
+  const rep = String(fd.get("rep") ?? "");
+  if (ids.length === 0) back("leads", { err: "invalid" });
+  const { data, error } = await db.rpc("admin_sales_crm_assign", { p_caller: user.id, p_leads: ids, p_rep: /^[0-9a-f-]{36}$/i.test(rep) ? rep : null });
+  if (error) back("leads", { err: code(error) });
+  back("leads", { ok: `${data} lead${data === 1 ? "" : "s"} updated.` });
+}
+
+export async function importLeads(fd: FormData) {
+  const { user, db } = await requireAdmin();
+  const { parseLeadRows } = await import("@/lib/sales/crm");
+  const rows = parseLeadRows(String(fd.get("rows") ?? "").slice(0, 200_000));
+  const rep = String(fd.get("rep") ?? "");
+  if (rows.length === 0) back("leads", { err: "invalid" });
+  const { data, error } = await db.rpc("admin_sales_crm_import", { p_caller: user.id, p_rows: rows, p_rep: /^[0-9a-f-]{36}$/i.test(rep) ? rep : null });
+  if (error) back("leads", { err: code(error) });
+  const r = data as { added: number; skipped: number };
+  back("leads", { ok: `Added ${r.added} lead${r.added === 1 ? "" : "s"}${r.skipped ? `, skipped ${r.skipped} already on file` : ""}.` });
+}

@@ -4,13 +4,14 @@ import { requireAdmin } from "@/lib/admin/server";
 import { repLink } from "@/lib/sales/link";
 import { COMMISSION_STATUS, dateLabel, METHOD_LABEL, plural, monthLabel, reasonLabel, TIER_LABEL, usd, yearLabel } from "@/lib/sales/format";
 import type { Hub, HubRep } from "@/lib/sales/types";
-import { adjustCommission, approveStatement, assignCustomer, closeMonth, endAttribution, recordPayout, savePolicy, saveRep } from "./actions";
+import { STAGE_LABEL, type Lead } from "@/lib/sales/crm";
+import { adjustCommission, approveStatement, assignCustomer, assignLeads, importLeads, closeMonth, endAttribution, recordPayout, savePolicy, saveRep } from "./actions";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Sales Hub" };
 
 const TABS = [
-  ["overview", "Overview"], ["team", "Sales team"], ["customers", "Customers"], ["commissions", "Commissions"], ["statements", "Statements & payouts"], ["policy", "Policy"],
+  ["overview", "Overview"], ["team", "Sales team"], ["leads", "Leads"], ["customers", "Customers"], ["commissions", "Commissions"], ["statements", "Statements & payouts"], ["policy", "Policy"],
 ] as const;
 type Tab = (typeof TABS)[number][0];
 
@@ -66,6 +67,8 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
     );
   }
   const h = data as Hub;
+  const crm = tab === "leads" ? await db.rpc("admin_sales_crm", { p_caller: user.id }) : null;
+  const leads = ((crm?.data as { leads?: Lead[] } | null)?.leads ?? []).filter((l) => !sp.rep || (sp.rep === "none" ? !l.assigned_rep : l.assigned_rep === sp.rep));
   const activeReps = h.reps.filter((r) => r.status !== "removed");
   const sumStatus = (s: string[]) => h.commissions.filter((c) => s.includes(c.status)).reduce((t, c) => t + c.amount_cents, 0);
   const errText = sp.err ? ({
@@ -159,6 +162,56 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
             </Card>
           ))}
         </div>
+      )}
+
+      {tab === "leads" && (
+        crm?.error ? <Notice tone="warn">The CRM tables are not installed yet. Run <code className="break-all">supabase/migrations/20270107002000_sales_crm.sql</code> in the Supabase SQL Editor, then reload.</Notice> : (
+        <div className="space-y-6">
+          <Card className="p-5">
+            <h2 className="text-lg font-bold">Add leads</h2>
+            <p className="mt-1 text-sm text-ink-soft">Paste one business per line: company, contact, email, phone, website, city, state, ZIP, trades (separate trades with ;). Businesses already on file (same website, phone, or name + ZIP) are skipped.</p>
+            <form action={importLeads} className="mt-3 grid gap-3">
+              <textarea name="rows" required rows={4} className={`${input} py-2 font-mono`} placeholder="Summit Roofing, Dana Lee, dana@summitroofing.com, 612-555-0100, summitroofing.com, Minneapolis, MN, 55401, roofing;siding" />
+              <div className="flex flex-wrap items-end gap-3">
+                <label className="text-sm">Assign to<select name="rep" className={input}><option value="">Nobody yet</option>{activeReps.map((r) => <option key={r.id} value={r.id}>{r.full_name}</option>)}</select></label>
+                <button className={btn}>Add leads</button>
+              </div>
+            </form>
+          </Card>
+          <nav aria-label="Filter by rep" className="flex flex-wrap gap-1 text-sm">
+            {[["", "Everyone"], ["none", "Unassigned"], ...activeReps.map((r) => [r.id, r.full_name])].map(([id, label]) => (
+              <Link key={id} href={`/admin/sales-hub?tab=leads${id ? `&rep=${id}` : ""}`} aria-current={(sp.rep ?? "") === id ? "page" : undefined}
+                className={`rounded-md px-2.5 py-1.5 font-medium ${(sp.rep ?? "") === id ? "bg-ink text-white" : "text-ink-soft hover:bg-paper"}`}>{label}</Link>
+            ))}
+          </nav>
+          <form action={assignLeads}>
+            <Card className="overflow-x-auto">
+              <table className="w-full min-w-[900px] text-sm">
+                <thead className="border-b border-line text-left text-muted"><tr><th className="p-3"><span className="sr-only">Select</span></th><th className="p-3">Business</th><th className="p-3">Location</th><th className="p-3">Trades</th><th className="p-3">Stage</th><th className="p-3">Rep</th><th className="p-3">Last activity</th><th className="p-3">Source</th></tr></thead>
+                <tbody>
+                  {leads.length === 0 && <tr><td colSpan={8} className="p-4 text-ink-soft">No leads yet.</td></tr>}
+                  {leads.map((l) => (
+                    <tr key={l.id} className="border-b border-line last:border-0">
+                      <td className="p-3"><input type="checkbox" name="lead" value={l.id} aria-label={`Select ${l.company_name}`} /></td>
+                      <td className="p-3"><p className="font-semibold">{l.company_name}</p>{l.do_not_contact && <Badge tone="danger">Do not contact</Badge>}</td>
+                      <td className="p-3">{[l.city, l.state].filter(Boolean).join(", ")} {l.zip}</td>
+                      <td className="p-3">{l.trades.join(", ") || "—"}</td>
+                      <td className="p-3">{STAGE_LABEL[l.stage]}</td>
+                      <td className="p-3">{l.rep_name ?? "Unassigned"}</td>
+                      <td className="p-3">{dateLabel(l.last_activity_at)}</td>
+                      <td className="p-3">{l.source} · {dateLabel(l.discovered_at)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Card>
+            <div className="mt-3 flex flex-wrap items-end gap-3">
+              <label className="text-sm">Assign selected to<select name="rep" className={input}><option value="">Unassign</option>{activeReps.map((r) => <option key={r.id} value={r.id}>{r.full_name}</option>)}</select></label>
+              <button className={btn}>Assign selected</button>
+            </div>
+          </form>
+        </div>
+        )
       )}
 
       {tab === "customers" && (

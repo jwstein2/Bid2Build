@@ -63,6 +63,36 @@ for (const kind of ["desktop", "phone"]) {
   await p.context().close();
 }
 
+
+// ---------- CRM (Phase 2) ----------
+{
+  const p = await newPage("desktop");
+  await go(p, "/sales/leads");
+  check("C1 rep sees only their 5 leads", (await p.locator("tbody tr").count()) === 5);
+  check("C2 overdue task flagged", await p.getByText(/^Overdue/).first().isVisible());
+  await shot(p, "06-rep-leads-desktop");
+  await p.getByRole("table").getByRole("link", { name: "Twin Cities Roofing" }).click();
+  await p.waitForURL(/\/sales\/leads\//);
+  await p.getByLabel("What happened").fill("Ran the demo; sending recap.");
+  await p.getByRole("button", { name: "Log it" }).click();
+  await p.getByText("Logged.").waitFor();
+  check("C3 activity logged", await p.getByText("Ran the demo; sending recap.").isVisible());
+  await shot(p, "07-rep-lead-detail");
+  // Duplicate of another rep's lead is refused.
+  await go(p, "/sales/leads");
+  await p.getByLabel("Business name").fill("Harbor Plumbing");
+  await p.getByLabel("ZIP").fill("55802");
+  await p.getByRole("button", { name: "Add lead" }).click();
+  await p.waitForURL(/err=/);
+  check("C4 duplicate warning names the business", await p.getByText(/Possible duplicate: Harbor Plumbing/).isVisible());
+  await p.context().close();
+  const m = await newPage("phone");
+  await go(m, "/sales/leads");
+  check("C5 phone: leads page has no horizontal scroll", await noHScroll(m));
+  await shot(m, "06-rep-leads-phone");
+  await m.context().close();
+}
+
 // A signed-in person who isn't sales staff.
 await q("update public.sales_reps set user_id = null, email = 'jordan@sales.example' where code = 'JRDN4K7P'");
 {
@@ -118,6 +148,14 @@ for (const kind of ["desktop", "phone"]) {
   const paid = await q("select count(*)::int as n from public.sales_payouts");
   check("H5 approve + record payout", paid[0].n === 2, String(paid[0].n));
   await shot(p, "16-hub-after-payout");
+  // Leads tab: assign the unassigned lead to Jordan.
+  await go(p, "/admin/sales-hub?tab=leads");
+  await p.getByLabel("Select Ridge Drywall").check();
+  await p.locator("form").filter({ has: p.getByRole("button", { name: "Assign selected" }) }).getByLabel("Assign selected to").selectOption({ label: "Jordan Ellis" });
+  await p.getByRole("button", { name: "Assign selected" }).click();
+  await p.getByText("1 lead updated.").waitFor();
+  check("H9 owner assigns a lead", (await q("select r.full_name from public.sales_leads l join public.sales_reps r on r.id = l.assigned_rep where l.company_name = 'Ridge Drywall'"))[0]?.full_name === "Jordan Ellis");
+  await shot(p, "18-hub-leads");
   // Add a rep.
   await go(p, "/admin/sales-hub?tab=team");
   const form = p.locator("form").first();

@@ -63,6 +63,26 @@ for (const [email, biz, rep, back, basis, status, bid] of customers) {
   for (let v = 0; v < 6; v++) await q("insert into public.sales_link_events (rep_id, kind) values ($1, 'visit')", [rep]);
 }
 for (let v = 0; v < 40; v++) await q("insert into public.sales_link_events (rep_id, kind, created_at) values ($1, 'visit', now() - interval '1 day' * $2)", [jordan, v]);
+
+// CRM leads (Phase 2).
+const leads = [
+  ["Twin Cities Roofing", "Pat Olsen", "55401", "Minneapolis", ["roofing"], "demo", jordan, 2],
+  ["Lakeside Decks", "Chris Byrne", "55102", "St. Paul", ["decks"], "contacted", jordan, -1],
+  ["Prairie Painting", null, "55369", "Maple Grove", ["painting"], "new", jordan, null],
+  ["Northland Electric", "Sam Ruiz", "55303", "Anoka", ["electrical"], "engaged", jordan, 5],
+  ["Metro Concrete", null, "55406", "Minneapolis", ["concrete"], "lost", jordan, null],
+  ["Harbor Plumbing", "Lee Harbor", "55802", "Duluth", ["plumbing"], "paying", maya, null],
+  ["Ridge Drywall", null, "55901", "Rochester", ["drywall"], "new", null, null],
+];
+for (const [name, contact, zip, city, trades, stage, rep, due] of leads) {
+  const id = await one(`insert into public.sales_leads (company_name, contact_name, zip, city, state, trades, stage, assigned_rep, source, dedupe_keys, lost_reason, last_activity_at, next_action_at)
+    values ($1, $2, $3, $4, 'MN', $5, $6, $7, $8, public.sales_lead_keys($1, null, null, $3), $9, now() - interval '2 days', ${"$10"}) returning id`,
+    [name, contact, zip, city, trades, stage, rep, rep ? "manual" : "owner", stage === "lost" ? "Happy with spreadsheets" : null, due == null ? null : new Date(Date.now() + due * 864e5)]);
+  if (rep) {
+    await q("insert into public.sales_activities (lead_id, rep_id, kind, body, occurred_at) values ($1, $2, 'system', 'Lead added', now() - interval '9 days'), ($1, $2, 'call', 'Talked to the owner; interested in proposals with photos.', now() - interval '2 days')", [id, rep]);
+    if (due != null) await q("insert into public.sales_tasks (lead_id, rep_id, title, due_at) values ($1, $2, $3, now() + interval '1 day' * $4)", [id, rep, due < 0 ? "Follow up on pricing question" : "Demo recap email", due]);
+  }
+}
 // Close every past month, confirm the policy, approve + pay the oldest statement.
 for (let back = 14; back >= 0; back--) await q(`select public.sales_close_month((${monthStart(back)} + interval '1 day')::timestamptz)`);
 await q("update public.sales_settings set policy_confirmed_at = now(), policy_confirmed_by = $1", [owner]);
