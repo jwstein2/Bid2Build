@@ -24,7 +24,7 @@ export async function resolveUserId(admin: SupabaseClient, sub: SubscriptionLike
   return data?.user_id ?? null;
 }
 
-export async function applySubscription(admin: SupabaseClient, sub: Stripe.Subscription | SubscriptionLike, eventCreatedSec: number): Promise<{ applied: boolean; userId: string | null }> {
+export async function applySubscription(admin: SupabaseClient, sub: Stripe.Subscription | SubscriptionLike, eventCreatedSec: number): Promise<{ applied: boolean; userId: string | null; plan?: string | null; companyId?: string | null }> {
   const s = sub as unknown as SubscriptionLike;
   const userId = await resolveUserId(admin, s);
   if (!userId) return { applied: false, userId: null };
@@ -59,7 +59,7 @@ export async function applySubscription(admin: SupabaseClient, sub: Stripe.Subsc
       if (fe) logError("billing.fin_sync", fe, { subscription: s.id });
     }
   }
-  return { applied: Boolean(data), userId };
+  return { applied: Boolean(data), userId, plan: update.p_plan ?? null, companyId };
 }
 
 /** Pull the current truth from Stripe for one user (used after checkout and by admins). */

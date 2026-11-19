@@ -10,6 +10,7 @@ import { isFirstPaidSubscriptionInvoice } from "@/lib/email/founder-welcome";
 import { deliverFounderEmails, enqueueFounderWelcome } from "@/lib/email/outbox";
 import { rewardReferrer } from "@/lib/growth/referral-server";
 import { recordEvent } from "@/lib/growth/events";
+import { salesChargeRefunded, syncSalesBilling } from "@/lib/sales/billing-server";
 
 /** List value of a new subscription's first period, in USD, from its price (for ad conversion value only). */
 function listValueUsd(sub: Stripe.Subscription): number | null {
@@ -28,6 +29,9 @@ const HANDLED = new Set([
   "customer.subscription.resumed",
   "invoice.paid",
   "invoice.payment_failed",
+  // Sales Portal: a refund can reverse a rep's commission. Only arrives once the event is added to the
+  // webhook endpoint in Stripe; nothing else depends on it.
+  "charge.refunded",
 ]);
 
 /**
@@ -62,7 +66,9 @@ export async function POST(req: Request) {
     const stripe = getStripe();
     let subscriptionId: string | null = null;
     const obj = event.data.object as unknown as Record<string, unknown>;
-    if (event.type.startsWith("customer.subscription.")) {
+    if (event.type === "charge.refunded") {
+      await salesChargeRefunded(admin, stripe, obj as unknown as Stripe.Charge);
+    } else if (event.type.startsWith("customer.subscription.")) {
       // Re-fetch so we always store the latest state, not a possibly stale event payload.
       subscriptionId = obj.id as string;
     } else if (event.type === "checkout.session.completed") {
@@ -81,6 +87,12 @@ export async function POST(req: Request) {
       const sub = await stripe.subscriptions.retrieve(subscriptionId);
       const res = await applySubscription(admin, sub, event.created);
       if (!res.userId) throw new Error(`No user for subscription ${subscriptionId}`);
+      // Sales Portal: keep a rep-attributed customer's plan and commission basis current, and create the
+      // sale-month / anniversary commission from a paid invoice. Idempotent in the database; never throws.
+      await syncSalesBilling(admin, stripe, sub, res.userId, {
+        plan: res.plan ?? null, companyId: res.companyId ?? null,
+        invoice: event.type === "invoice.paid" ? (obj as { id?: string; amount_paid?: number | null; status?: string | null; status_transitions?: { paid_at?: number | null } | null; created?: number }) : null,
+      });
       if (event.type === "checkout.session.completed") {
         // Once per subscription (webhook retries and duplicate events can't double count).
         await recordEvent(admin, { userId: res.userId, event: "subscribed", eventId: `subscribed:${subscriptionId}`, value: listValueUsd(sub) });

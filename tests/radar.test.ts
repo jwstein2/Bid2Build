@@ -335,7 +335,7 @@ describe("13 (learning). pain-point trends carry sample-size context", () => {
 describe("20. existing admin navigation is intact", () => {
   it("keeps every existing tool and adds the Radar", async () => {
     const { PRIMARY, TOOLS } = await import("@/components/admin/nav");
-    expect(PRIMARY.map((p) => p.href)).toEqual(["/admin", "/admin/marketing", "/admin/customers", "/admin/revenue", "/admin/usage", "/admin/operations"]);
+    expect(PRIMARY.map((p) => p.href)).toEqual(["/admin", "/admin/marketing", "/admin/customers", "/admin/sales-hub", "/admin/revenue", "/admin/usage", "/admin/operations"]);
     expect(TOOLS.map((t) => t.href)).toEqual(expect.arrayContaining(["/admin/complimentary", "/admin/sales", "/admin/market", "/admin/audit", "/admin/marketing/radar"]));
   });
 });

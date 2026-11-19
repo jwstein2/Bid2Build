@@ -4,6 +4,7 @@ export const PRIMARY = [
   { href: "/admin", label: "Overview" },
   { href: "/admin/marketing", label: "Marketing", also: ["/admin/creators"] },
   { href: "/admin/customers", label: "Customers", also: ["/admin/complimentary"] },
+  { href: "/admin/sales-hub", label: "Sales Hub" },
   { href: "/admin/revenue", label: "Revenue" },
   { href: "/admin/usage", label: "Product usage" },
   { href: "/admin/operations", label: "Operations", also: ["/admin/states", "/admin/definitions", "/admin/tax-banking"] },
