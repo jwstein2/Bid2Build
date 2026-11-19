@@ -1,4 +1,4 @@
--- Rollback for 20261117002000_creator_outreach_crm.sql. Run BEFORE the creator_partner_program rollback.
+-- Rollback for 20261117002001_creator_outreach_crm.sql. Run BEFORE the creator_partner_program rollback.
 -- Deletes the Creator Partnerships CRM: prospects, cohort slots, outreach messages/events, suppressions
 -- and settings. Export the CRM (Admin > Creator Partnerships > Export CSV) first if you need a record.
 -- Nothing outside these objects is touched.

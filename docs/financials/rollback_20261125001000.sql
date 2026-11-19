@@ -1,4 +1,4 @@
--- Rollback for 20261125001000_fin_access_retention.sql. Deploy the previous app version first.
+-- Rollback for 20261125001001_fin_access_retention.sql. Deploy the previous app version first.
 -- Restores the append-only guards as defined in 20261124001000 / 20261124003000 and drops the job header,
 -- retention functions and the holds table. Refuses to drop the table while it holds an open hold.
 begin;

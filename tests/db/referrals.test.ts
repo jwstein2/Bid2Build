@@ -7,7 +7,7 @@ const d = available ? describe : describe.skip;
 let pool: Pool;
 let drop: () => Promise<void>;
 
-const MIGRATION = "20261115003000_referrals.sql";
+const MIGRATION = "20261115003001_referrals.sql";
 const q1 = async (sql: string, params: unknown[] = []) => (await pool.query(sql, params)).rows[0];
 const codeFor = async (u: string) => (await q1("select public.referral_code_for($1) as c", [u])).c as string;
 const record = async (u: string, code: string) => (await q1("select public.record_referral($1, $2) as r", [u, code])).r as string;

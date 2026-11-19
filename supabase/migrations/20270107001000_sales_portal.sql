@@ -1,7 +1,7 @@
 -- Sales Portal, Phase 1: sales staff, rep referral links, account-level attribution, the commission
 -- ledger, month-end statements and owner-recorded payouts.
 --
--- Separate from the customer referral program (20261115003000_referrals.sql): different tables, a
+-- Separate from the customer referral program (20261115003001_referrals.sql): different tables, a
 -- different link (/s/<code>), a different cookie, and nothing here changes Stripe or a customer's bill.
 --
 -- Security model

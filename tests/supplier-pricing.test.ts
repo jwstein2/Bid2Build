@@ -6,7 +6,7 @@ describe("supplier pricing providers", () => {
   it("every provider id is in the catalog once, and the SQL allow-list matches", async () => {
     expect(PRICING_PROVIDERS.map((p) => p.id).sort()).toEqual([...PROVIDER_IDS].sort());
     const { readFileSync } = await import("node:fs");
-    const sql = readFileSync("supabase/migrations/20261211001000_supplier_pricing.sql", "utf8");
+    const sql = readFileSync("supabase/migrations/20261211001001_supplier_pricing.sql", "utf8");
     for (const id of PROVIDER_IDS) expect(sql).toContain(`'${id}'`);
   });
 
