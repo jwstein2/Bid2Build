@@ -31,3 +31,12 @@
   to = "https://built2bid.org/:splat"
   status = 301
   force = true
+
+# The production branch alias (main--built2bid.netlify.app) also serves production. Someone signed in
+# there in Nov 2026 and stayed on that host, so send it to the real domain too. src/proxy.ts does the
+# same for any stray netlify.app host as a backstop.
+[[redirects]]
+  from = "https://main--built2bid.netlify.app/*"
+  to = "https://built2bid.org/:splat"
+  status = 301
+  force = true

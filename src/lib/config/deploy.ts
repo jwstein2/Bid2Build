@@ -45,3 +45,24 @@ export function resolveAllowIndexing(env: Env): boolean {
 export function hostOf(url: string): string {
   try { return new URL(url).host; } catch { return url; }
 }
+
+/**
+ * Where a request on a stray netlify.app host should go instead, or null to serve it as is.
+ *
+ * Netlify serves the production build on built2bid.org and also on built2bid.netlify.app and the
+ * production branch alias main--built2bid.netlify.app. Someone who opens one of those (a bookmark, a
+ * link in the Netlify dashboard) can sign in there and stay there, because sign-in cookies belong to the
+ * host. Only production builds redirect, and only when the canonical site is not itself a netlify.app
+ * host. Deploy permalinks (<24-hex id>--site.netlify.app) are left alone so old deploys stay viewable
+ * and so an internal deploy URL can never cause a redirect loop.
+ */
+export function canonicalHostRedirect(host: string | null | undefined, env: Env): string | null {
+  if (!host || resolveDeployContext(env) !== "production") return null;
+  const site = resolveSiteUrl(env);
+  let siteHost: string;
+  try { siteHost = new URL(site).host.toLowerCase(); } catch { return null; }
+  const h = host.toLowerCase().split(":")[0];
+  if (siteHost.endsWith(".netlify.app") || h === siteHost) return null;
+  if (!h.endsWith(".netlify.app") || /^[0-9a-f]{24}--/.test(h)) return null;
+  return trimSlash(site);
+}
