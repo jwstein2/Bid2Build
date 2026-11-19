@@ -9,7 +9,7 @@
  */
 
 // ---- Prices (LIVE in Stripe, except FCC which is PROPOSED and not created) --------------------
-const STD_M = 19.99, STD_Y = 149, PM_M = 4.99, PM_Y = 49.99, ED = 1.99;
+const STD_M = 19.99, STD_Y = 199, PM_M = 4.99, PM_Y = 49.99, ED = 1.99;
 const ENT_BASE = 49.99;
 const ENT_TIERS = [[2, 19.99], [7, 17.99], [Infinity, 15.99]]; // cumulative extra seats
 const FCC_BASE = 24.99, FCC_SEAT = 4.99; // PROPOSED (3 financial users included in the base)

@@ -168,13 +168,13 @@ await T("18", "Commissions", "Month close after the hold (simulated +45 days) ma
 });
 // Annual customer + first-month cancel (second customer, direct attribution through the rep link function).
 const cust2 = `qa-cust2-${Date.now()}@audit.test`;
-await T("19", "Commissions", "Annual plan ($149) pays on monthly list price: $19.99, not $149/12", "Commission 1999 when basis comes from monthly list", async () => {
+await T("19", "Commissions", "Annual plan ($199) pays on monthly list price: $19.99, not $199/12", "Commission 1999 when basis comes from monthly list", async () => {
   const ctx = await b.newContext(vp); const p = await ctx.newPage(); await p.goto(`${BASE}/s/${r1.code}`); await uiLogin(p, cust2);
   await q("insert into public.admin_account_labels (user_id, label) select id, 'genuine' from auth.users where email=$1 on conflict (user_id) do update set label='genuine'", [cust2]);
   await p.goto(BASE + "/dashboard"); await p.waitForTimeout(2500);
   const [{ id }] = await q("select id from auth.users where email=$1", [cust2]);
   // basis.ts: annual_basis = monthly_list -> 1999 for an annual subscriber (tests/sales-*.test.ts cover the function).
-  await q("select public.sales_sync_billing($1, 'sub_qa_2', 'active', 'annual', null, 1999, '{\"annual\":true}'::jsonb, 'in_qa_a1', 14900, now())", [id]);
+  await q("select public.sales_sync_billing($1, 'sub_qa_2', 'active', 'annual', null, 1999, '{\"annual\":true}'::jsonb, 'in_qa_a1', 19900, now())", [id]);
   const c = await q("select amount_cents, status from public.sales_commissions where user_id=$1", [id]);
   return c[0]?.amount_cents === 1999 ? `1999 (${c[0].status})` : { fail: JSON.stringify(c) };
 });

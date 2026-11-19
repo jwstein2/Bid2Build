@@ -71,7 +71,7 @@ describe("growth reports", () => {
     const rows = creatorReport(facts);
     const deck = rows.find((r) => r.creator === "deckguy")!;
     expect(deck).toMatchObject({ signups: 2, paid: 1, payingNow: 1, complimentary: 1 });
-    expect(deck.mrrCents).toBe(Math.round(14900 / 12));
+    expect(deck.mrrCents).toBe(Math.round(19900 / 12));
     expect(rows.find((r) => r.creator === "(not named)")).toMatchObject({ signups: 1, paid: 0, complimentary: 0 });
   });
 

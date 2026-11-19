@@ -56,11 +56,12 @@ Stripe ─ success ─► /settings/billing?checkout=success&plan=… (confirmin
 
 All prices come from `src/lib/billing/plans.ts` (the `plans.*` labels in `src/lib/site.ts` derive from it).
 Live Stripe prices were read on 2026-11-13: monthly 1999 USD cents / month, annual 14900 USD cents / year,
-both on the same product.
+both on the same product. On 2026-11-19 the annual price moved to 19900 USD cents / year (a new Stripe price on
+the same product; `STRIPE_PRICE_ANNUAL` points at it).
 
 - Monthly: **$19.99/month**, "Billed monthly. Cancel anytime."
-- Annual: **$149/year**, "Billed annually", "Equivalent to $12.42/month. Save approximately 38% compared with monthly billing."
-  (149 / 12 = 12.4167 → $12.42; (12 × 19.99 − 149) / (12 × 19.99) = 37.9% → about 38%.)
+- Annual: **$199/year**, "Billed annually", "Equivalent to $16.58/month. Save approximately 17% compared with monthly billing."
+  (199 / 12 = 16.5833 → $16.58; (12 × 19.99 − 199) / (12 × 19.99) = 17.0% → about 17%.)
 
 ## Tests
 

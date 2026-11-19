@@ -36,7 +36,7 @@ function snap(product: ProductData = EMPTY_PRODUCT): Snapshot {
 describe("MRR by product", () => {
   it("splits core, PM add-on and Enterprise editor MRR per subscription", () => {
     expect(mrrParts({ plan: "monthly", seat_quantity: null, pm_addon: true })).toEqual({ core: 1999, pmAddon: 499, pmEditors: 0, total: 2498 });
-    expect(mrrParts({ plan: "annual", seat_quantity: null, pm_addon: true })).toEqual({ core: 1242, pmAddon: 417, pmEditors: 0, total: 1659 });
+    expect(mrrParts({ plan: "annual", seat_quantity: null, pm_addon: true })).toEqual({ core: 1658, pmAddon: 417, pmEditors: 0, total: 2075 });
     const ent = mrrParts({ plan: "enterprise", seat_quantity: 5, pm_extra_editors: 3, pm_addon: true });
     expect(ent.pmAddon).toBe(0); // Enterprise includes an editor; no Standard add-on on it
     expect(ent.pmEditors).toBe(597);

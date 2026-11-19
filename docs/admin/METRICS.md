@@ -96,7 +96,7 @@ An account with an active complimentary grant and no paid subscription.
 Monthly recurring revenue at list price from paying subscriptions.
 
 - **Source:** subscriptions
-- **Rules:** Monthly $19.99; annual $149 ÷ 12 (never counted twice); Enterprise from its licensed seats. Complimentary excluded.
+- **Rules:** Monthly $19.99; annual $199 ÷ 12 (never counted twice); Enterprise from its licensed seats. Complimentary excluded.
 - **Window:** Right now
 - **Refresh:** Live
 - **Limits:** List price, not cash collected (no discounts, refunds or tax). “Payments received” comes from Stripe invoices.
@@ -222,7 +222,7 @@ Net cash received: paid Stripe invoices minus refunds in the window.
 Current list-price MRR × 12.
 
 - **Source:** subscriptions
-- **Rules:** Annual plans contribute $149 ÷ 12 per month, so they are not double counted.
+- **Rules:** Annual plans contribute $199 ÷ 12 per month, so they are not double counted.
 - **Window:** Right now
 - **Refresh:** Live
 - **Limits:** A run rate, not a forecast or booked revenue.

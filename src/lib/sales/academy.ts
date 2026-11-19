@@ -279,10 +279,10 @@ export const TOPICS: Topic[] = [
       { mentor: "voss", text: "Honesty builds trust faster than hype. Never invent numbers, reviews or results." },
       { mentor: "gordon", text: "Follow the rules on every call: respect Do Not Call and opt-outs, call only during allowed hours, and never record without consent." },
     ],
-    tryIt: "\"Straight answer: it's $19.99 a month or $149 a year, no long-term contract, and you can export all your data anytime.\"",
+    tryIt: "\"Straight answer: it's $19.99 a month or $199 a year, no long-term contract, and you can export all your data anytime.\"",
     videos: [],
     quiz: [
-      { q: "Built2Bid's monthly plan starts at…", options: ["$9.99", "$19.99", "$49", "Free only"], answer: 1, explain: "$19.99/month or $149/year." },
+      { q: "Built2Bid's monthly plan starts at…", options: ["$9.99", "$19.99", "$49", "Free only"], answer: 1, explain: "$19.99/month or $199/year." },
       { q: "Which promise is allowed?", options: ["\"Full refund anytime\"", "\"No long-term contract, export anytime\"", "\"Guaranteed more jobs\"", "\"Cheapest on the market\""], answer: 1, explain: "Paid periods are non-refundable; never promise refunds or results." },
       { q: "A number is on the Do Not Call list. You…", options: ["Call once", "Don't call it", "Text instead", "Call after hours"], answer: 1, explain: "Do Not Call and opt-outs are always respected." },
       { q: "Can you record a call without telling the other person?", options: ["Yes", "No, never without consent", "Only in Minnesota", "Only if it's short"], answer: 1, explain: "Consent first, every time." },

@@ -90,7 +90,7 @@ export function decideOffer(offer: OfferId, ctx: OfferContext): Decision {
 
 /* ------------------------------------------ Copy helpers ------------------------------------------ */
 
-/** Dollars saved by one year of the annual plan instead of 12 monthly payments, e.g. "$90.88". */
+/** Dollars saved by one year of the annual plan instead of 12 monthly payments, e.g. "$40.88". */
 export function annualSavings(monthlyCents: number, annualCents: number): string {
   const cents = monthlyCents * 12 - annualCents;
   const d = cents / 100;

@@ -7,7 +7,7 @@ Owner decisions (James, 2026-11-19) and how the ledger enforces them. Migration
 
 | # | Rule | Where it's enforced |
 |---|------|---------------------|
-| 1 | A sale pays one month of the customer's plan at the **monthly list price**, before tax (annual customers count at $19.99, not $149 ÷ 12). | `annual_basis = monthly_list`, `src/lib/sales/basis.ts` |
+| 1 | A sale pays one month of the customer's plan at the **monthly list price**, before tax (annual customers count at $19.99, not $199 ÷ 12). | `annual_basis = monthly_list`, `src/lib/sales/basis.ts` |
 | 2 | **30-day hold.** Commission waits 30 days after the payment. A refund inside the window cancels it; a refund after that never takes money back. | `refund_policy = hold_30_no_clawback`, `sales_close_month` |
 | 3 | Earned commission is paid on the **next month-end statement** after owner approval. | `sales_close_month`, statements |
 | 4 | All eligible recurring items count (plan, seats, add-ons). | `value_scope = all_items` |

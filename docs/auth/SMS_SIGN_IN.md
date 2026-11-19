@@ -20,7 +20,7 @@ page says `NEXT_PUBLIC_SMS_SIGNIN=on`, read "both new flags = true".
    so a typo can't create a second account), then texts the phone and attaches it to that same account once
    its code is entered. Bids, customers, subscription and Stripe customer stay on the one account.
 5. **Use email instead** is always one tap away (fallback and recovery).
-6. **Checkout:** choosing Unlimited Monthly ($19.99) or Annual ($149) while signed out opens the same dialog
+6. **Checkout:** choosing Unlimited Monthly ($19.99) or Annual ($199) while signed out opens the same dialog
    with the plan shown. After the code, it goes straight to Stripe with that plan. A refresh while waiting for
    the text reopens the code step with the same plan and number, and doesn't send another text.
 7. **Account settings → Sign-in methods:** add or change a phone (verified by code), and phone-only accounts

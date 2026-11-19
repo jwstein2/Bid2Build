@@ -7,23 +7,23 @@ import { plans } from "@/lib/site";
 describe("plan prices", () => {
   it("shows the configured Stripe amounts", () => {
     expect(MONTHLY).toMatchObject({ name: "Unlimited Monthly", price: "$19.99", per: "/month", billing: "Billed monthly", amountCents: 1999, interval: "month" });
-    expect(ANNUAL).toMatchObject({ name: "Unlimited Annual", price: "$149", per: "/year", billing: "Billed annually", amountCents: 14900, interval: "year" });
+    expect(ANNUAL).toMatchObject({ name: "Unlimited Annual", price: "$199", per: "/year", billing: "Billed annually", amountCents: 19900, interval: "year" });
   });
   it("computes the annual monthly equivalent and savings honestly", () => {
-    // 149 / 12 = 12.4166… → $12.42
-    expect(monthlyEquivalentCents(14900)).toBe(1242);
-    expect(ANNUAL_MONTHLY_EQUIVALENT).toBe("$12.42");
-    // 12 × 19.99 = 239.88; (239.88 − 149) / 239.88 = 37.89% → "approximately 38%"
-    expect(annualSavingsPercent(1999, 14900)).toBe(38);
-    expect(ANNUAL_SAVINGS_PERCENT).toBe(38);
+    // 199 / 12 = 16.5833… → $16.58
+    expect(monthlyEquivalentCents(19900)).toBe(1658);
+    expect(ANNUAL_MONTHLY_EQUIVALENT).toBe("$16.58");
+    // 12 × 19.99 = 239.88; (239.88 − 199) / 239.88 = 17.04% → "approximately 17%"
+    expect(annualSavingsPercent(1999, 19900)).toBe(17);
+    expect(ANNUAL_SAVINGS_PERCENT).toBe(17);
   });
   it("keeps site-wide labels in sync with the plan table", () => {
     expect(plans.monthlyPriceLabel).toBe(MONTHLY.price);
     expect(plans.annualPriceLabel).toBe(ANNUAL.price);
-    expect(plans.annualMonthlyEquivalent).toBe("$12.42");
+    expect(plans.annualMonthlyEquivalent).toBe("$16.58");
   });
   it("formats whole and fractional dollars", () => {
-    expect(formatUsd(14900)).toBe("$149");
+    expect(formatUsd(19900)).toBe("$199");
     expect(formatUsd(1999)).toBe("$19.99");
     expect(formatUsd(1990)).toBe("$19.90");
   });
@@ -38,12 +38,12 @@ describe("server price verification", () => {
   const live = (unit_amount: number, interval: string, extra: object = {}) => ({ unit_amount, currency: "usd", recurring: { interval, interval_count: 1 }, active: true, ...extra });
   it("accepts the live prices as configured in Stripe", () => {
     expect(priceMismatch("monthly", live(1999, "month"))).toBeNull();
-    expect(priceMismatch("annual", live(14900, "year"))).toBeNull();
+    expect(priceMismatch("annual", live(19900, "year"))).toBeNull();
   });
   it("refuses a price that doesn't match what the page shows", () => {
-    expect(priceMismatch("monthly", live(14900, "year"))).toMatch(/amount/);
-    expect(priceMismatch("annual", live(14900, "month"))).toMatch(/interval/);
-    expect(priceMismatch("annual", live(14900, "year", { currency: "cad" }))).toMatch(/currency/);
+    expect(priceMismatch("monthly", live(19900, "year"))).toMatch(/amount/);
+    expect(priceMismatch("annual", live(19900, "month"))).toMatch(/interval/);
+    expect(priceMismatch("annual", live(19900, "year", { currency: "cad" }))).toMatch(/currency/);
     expect(priceMismatch("monthly", live(1999, "month", { active: false }))).toMatch(/archived/);
     expect(priceMismatch("monthly", { unit_amount: 1999, currency: "usd", recurring: null })).toMatch(/recurring/);
   });

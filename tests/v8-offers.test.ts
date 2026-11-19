@@ -42,7 +42,7 @@ describe("V8 offer caps and suppression", () => {
 
 describe("V8 annual nudge", () => {
   it("computes savings from the real plan prices", () => {
-    expect(annualSavings(MONTHLY.amountCents, ANNUAL.amountCents)).toBe("$90.88");
+    expect(annualSavings(MONTHLY.amountCents, ANNUAL.amountCents)).toBe("$40.88");
   });
   it("needs monthly, active, not cancelling, 3+ paid months and 8+ finalized bids", () => {
     const ok = { plan: "monthly", status: "active", cancelAtPeriodEnd: false, paidMonths: 3, finalizedBids: 8 };

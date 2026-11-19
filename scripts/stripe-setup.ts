@@ -14,7 +14,7 @@ const stripe = new Stripe(key);
 
 const PRICES = [
   { lookup_key: "b2b_unlimited_monthly", unit_amount: 1999, interval: "month" as const, nickname: "Unlimited Monthly" },
-  { lookup_key: "b2b_unlimited_annual", unit_amount: 14900, interval: "year" as const, nickname: "Unlimited Annual" },
+  { lookup_key: "b2b_unlimited_annual", unit_amount: 19900, interval: "year" as const, nickname: "Unlimited Annual" },
 ];
 
 async function main() {

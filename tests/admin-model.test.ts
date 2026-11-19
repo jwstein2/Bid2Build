@@ -80,12 +80,12 @@ describe("account classification", () => {
 describe("revenue rules", () => {
   const facts = accountFacts(scope(snap(), false), NOW);
   it("normalizes annual and enterprise MRR and excludes complimentary access", () => {
-    expect(monthlyCents({ plan: "annual", seat_quantity: null })).toBe(1242);
+    expect(monthlyCents({ plan: "annual", seat_quantity: null })).toBe(1658);
     // seat_quantity is the TOTAL licensed users: 5 users = base + 2 extra seats, not 3 + 5.
     expect(monthlyCents({ plan: "enterprise", seat_quantity: 5 })).toBe(4999 + 2 * 1999);
     const rev = revenueModel(facts, R30, NOW);
     expect(rev.paying).toBe(3); // u1, u2, u4 (past due still paying); comp u3 and test t1 excluded
-    expect(rev.mrrCents).toBe(1999 + 1242 + 4999 + 2 * 1999);
+    expect(rev.mrrCents).toBe(1999 + 1658 + 4999 + 2 * 1999);
     expect(rev.comp.active).toBe(1);
     expect(rev.pastDue).toBe(1);
   });

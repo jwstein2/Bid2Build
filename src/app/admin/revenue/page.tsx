@@ -25,7 +25,7 @@ export default async function Revenue({ searchParams }: { searchParams: Promise<
   const done = sc.d.events.filter((e) => e.event === "subscribed" && inWindow(e.created_at, w.start, w.end)).length;
   const mix = [
     { label: "Monthly ($19.99)", n: rev.monthly, mrr: rev.monthly * 1999 },
-    { label: "Annual ($149 ÷ 12)", n: rev.annual, mrr: rev.annual * Math.round(14900 / 12) },
+    { label: "Annual ($199 ÷ 12)", n: rev.annual, mrr: rev.annual * Math.round(19900 / 12) },
     { label: "Team (by seats)", n: rev.enterprise, mrr: facts.filter((f) => f.paying && f.sub?.plan === "enterprise").reduce((n, f) => n + mrrParts(f.sub!).core, 0) },
   ];
   const split = revenueSplit(facts, range, now);
@@ -46,7 +46,7 @@ export default async function Revenue({ searchParams }: { searchParams: Promise<
         <Kpi label="MRR (list price)" value={usd(rev.mrrCents)} tone="blue" def={tip("mrr")} href={href("/admin/revenue", view) + "#by-product"} action="Subscription revenue breakdown" sub={`${usd(rev.arrCents)} annual run rate${split.pmAddonCents + split.pmEditorCents ? ` · incl. ${usd(split.pmAddonCents + split.pmEditorCents)} scheduling add-ons` : ""}`} />
         <Kpi label="Net MRR change" value={`${rev.netMrrCents >= 0 ? "+" : "−"}${usd(Math.abs(rev.netMrrCents))}`} tone={rev.netMrrCents < 0 ? "amber" : "green"} def={tip("net_mrr")} action="Show the calculation"
           drawer={{ id: "net-mrr", title: `Net MRR change · last ${range.label}`, description: "New list-price MRR from subscriptions that started, minus MRR from subscriptions that ended, in this period.", body: <>
-            <MetricFormula><p>New MRR {usd(rev.newMrrCents)} − lost MRR {usd(rev.lostMrrCents)} = <b>{rev.netMrrCents >= 0 ? "+" : "−"}{usd(Math.abs(rev.netMrrCents))}</b></p><p className="mt-1 text-xs text-muted">List price per month; annual plans count as $149 ÷ 12. Not cash collected.</p></MetricFormula>
+            <MetricFormula><p>New MRR {usd(rev.newMrrCents)} − lost MRR {usd(rev.lostMrrCents)} = <b>{rev.netMrrCents >= 0 ? "+" : "−"}{usd(Math.abs(rev.netMrrCents))}</b></p><p className="mt-1 text-xs text-muted">List price per month; annual plans count as $199 ÷ 12. Not cash collected.</p></MetricFormula>
             <MetricRecords title={`Started (${newRows.length})`} rows={newRows.slice(0, 12).map((f) => recRow(f, "+", f.paidStartedAt))} empty="No paid subscription started in this period." more={newRows.length ? { href: cust({ cohort: "new_paid" }), label: "All new paid customers" } : undefined} />
             <MetricRecords title={`Ended (${rev.endedRows.length})`} rows={rev.endedRows.slice(0, 12).map((f) => recRow(f, "−", f.paidEndedAt))} empty="No paid subscription ended in this period." more={rev.endedRows.length ? { href: cust({ cohort: "ended" }), label: "All cancellations" } : undefined} />
           </> }} sub={`+${usd(rev.newMrrCents)} new · −${usd(rev.lostMrrCents)} lost`} />
@@ -86,7 +86,7 @@ export default async function Revenue({ searchParams }: { searchParams: Promise<
           <Table head={["Plan", "Subs", "MRR"]} align={["l", "r", "r"]} minWidth={260}>
             {mix.map((m) => <tr key={m.label}><td className="font-sans">{m.label}</td><td className="text-right text-white">{fmt(m.n)}</td><td className="text-right">{usd(m.mrr)}</td></tr>)}
           </Table>
-          <p className="mt-3 text-xs text-muted">Annual plans count once, at $149 ÷ 12 per month. Complimentary (not revenue): {rev.comp.active} active ({rev.comp.unlimited} Unlimited, {rev.comp.enterprise} Team).</p>
+          <p className="mt-3 text-xs text-muted">Annual plans count once, at $199 ÷ 12 per month. Complimentary (not revenue): {rev.comp.active} active ({rev.comp.unlimited} Unlimited, {rev.comp.enterprise} Team).</p>
         </Panel>
       </div>
 
