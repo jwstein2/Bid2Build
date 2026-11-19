@@ -11,7 +11,9 @@ import { projectedCommissions } from "@/lib/sales/basis";
 import { currentMonthChicago, monthLabel, usd } from "@/lib/sales/format";
 import type { RepOverview } from "@/lib/sales/types";
 import { DEFAULT_MILESTONES, nextMilestone, teamGoal, type GoalRaw, type MilestoneRules } from "@/lib/sales/goals";
-import { monthXp, quests, rankFor, type Progress } from "@/lib/sales/quests";
+import { quests, type Progress } from "@/lib/sales/quests";
+import { personalBests, type MonthCounts } from "@/lib/sales/incentives";
+import { AcceleratorCard, PersonalBestsCard, type MyAccelerator } from "@/components/sales/incentive-cards";
 import { TeamGoalBoard } from "@/components/sales/team-goal-board";
 import { QuestCard } from "@/components/sales/quest-card";
 import { MilestoneBoxes, type MilestoneAward } from "@/components/sales/gift-box";
@@ -25,9 +27,14 @@ export default async function SalesOverview() {
   const access = await loadSalesAccess();
   if (access.kind === "staff" && landingView(access.caps, (await cookies()).get(VIEW_COOKIE)?.value) === "admin") redirect("/sales/admin");
   const { db } = await requireSalesRep();
-  const [{ data, error }, goalRes, msRes, progRes] = await Promise.all([
+  const [{ data, error }, goalRes, msRes, progRes, accRes, recRes] = await Promise.all([
     db.rpc("sales_my_overview"), db.rpc("sales_my_team_goal"), db.rpc("sales_my_milestones"), db.rpc("sales_my_progress", {}),
+    db.rpc("sales_my_accelerator", {}), db.rpc("sales_my_records", {}),
   ]);
+  // V8.4 (hidden until 20270114001000 is applied; the accelerator card shows once the owner turns it on).
+  const acc = accRes.error || !accRes.data ? null : (accRes.data as MyAccelerator);
+  const rec = recRes.error || !recRes.data ? null : (recRes.data as { months: MonthCounts[]; achievements: { kind: string; month: string; value: number | null; detail: Record<string, unknown> | null }[] });
+  const bests = rec ? personalBests(rec.months) : null;
   // V8 boards appear once 20270111001000 is applied.
   const goal = goalRes.error || !goalRes.data ? null : teamGoal(goalRes.data as GoalRaw);
   const ms = msRes.error || !msRes.data ? null : (msRes.data as { accounts: number; every: number; rates: MilestoneRules["rates"]; min_cents: number; flat: MilestoneRules["flat"]; awards: MilestoneAward[] });
@@ -68,7 +75,9 @@ export default async function SalesOverview() {
 
       {goal && <TeamGoalBoard g={goal} />}
       {ms && <MilestoneBoxes awards={ms.awards} accounts={ms.accounts} next={nextMilestone(rules, ms.accounts)} />}
-      {prog && <QuestCard rank={rankFor(monthXp(prog.periods.month))} quests={quests(prog)} />}
+      {acc?.enabled && <AcceleratorCard a={acc} />}
+      {prog && bests && <QuestCard xp={bests[0]} quests={quests(prog)} />}
+      {bests && rec && <PersonalBestsCard bests={bests} achievements={rec.achievements} />}
 
       <Card className="p-5">
         <h2 className="text-lg font-bold">Your referral link</h2>

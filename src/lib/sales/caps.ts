@@ -46,6 +46,7 @@ export const ADMIN_TABS = [
   { id: "leads", label: "All leads" },
   { id: "customers", label: "Customers" },
   { id: "commissions", label: "Commission approvals" },
+  { id: "recognition", label: "Recognition & incentives" },
   { id: "statements", label: "Statements & payouts" },
   { id: "compliance", label: "Compliance" },
   { id: "policy", label: "Policies" },

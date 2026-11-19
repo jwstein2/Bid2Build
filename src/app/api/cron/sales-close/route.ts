@@ -25,7 +25,11 @@ export async function POST(req: Request) {
   }
   // Milestone gift boxes: create reached boxes and fix amounts whose 30-day hold has passed.
   await createAdminClient().rpc("sales_milestones_evaluate", {}).then(() => null, () => null);
+  // V8.4: monthly accelerators (finalize months whose sales cleared the hold) and achievements.
+  // Both are idempotent and do nothing before migration 20270114001000 is applied.
+  const accel = await createAdminClient().rpc("sales_accelerators_evaluate", {}).then((r) => r.data ?? null, () => null);
+  await createAdminClient().rpc("sales_achievements_evaluate", {}).then(() => null, () => null);
   // Imported leads whose sales brief didn't finish during the import.
   const briefs = await fillBriefs(createAdminClient(), { limit: 50, budgetMs: 8000 }).catch(() => 0);
-  return json({ ...(data as object), briefs_written: briefs });
+  return json({ ...(data as object), accelerators: accel, briefs_written: briefs });
 }

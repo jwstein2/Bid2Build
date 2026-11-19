@@ -8,15 +8,24 @@ import type { Hub, HubRep, HubSettings } from "@/lib/sales/types";
 import { SOURCE_LABEL, STAGE_LABEL, TRADES, type Lead } from "@/lib/sales/crm";
 import { CopyField } from "@/components/sales/copy-field";
 import { site } from "@/lib/site";
-import { DEFAULT_MILESTONES, teamGoal, type GoalRaw, type MilestoneRules } from "@/lib/sales/goals";
+import { DEFAULT_MILESTONES, nextMilestone, teamGoal, type GoalRaw, type MilestoneRules } from "@/lib/sales/goals";
 import { TeamGoalBoard } from "@/components/sales/team-goal-board";
 import { isCertified, TOPICS } from "@/lib/sales/academy";
-import { adjustCommission, approveStatement, assignCustomer, assignLeads, approveMilestone, createInvite, importLeads, saveMilestoneRules, saveTeamGoal, voidMilestone, saveLeadTarget, closeMonth, endAttribution, recordPayout, savePolicy, saveRep } from "./actions";
+import { achievementText, DEFAULT_TIERS, type Tier } from "@/lib/sales/incentives";
+import { adjustCommission, approveStatement, assignCustomer, assignLeads, approveMilestone, congratulate, createInvite, saveAcceleratorRules, importLeads, saveMilestoneRules, saveTeamGoal, voidMilestone, saveLeadTarget, closeMonth, endAttribution, recordPayout, savePolicy, saveRep } from "./actions";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Admin Sales Hub" };
 
 type Tab = AdminTab;
+interface Incentives {
+  enabled: boolean; tiers: Tier[]; active_from: string | null; month: string;
+  cost: { month: string; revenue_cents: number; base_cents: number; accelerator_cents: number; accelerator_final: boolean; box_cents: number }[];
+  accelerators: { id: string; rep_name: string; month: string; status: string; sales: number; pending: number; dropped: number; dropped_base_cents: number; base_cents: number; rate: number; bonus_cents: number; enabled: boolean; policy_version: number | null; paid_cents: number; approved_cents: number }[];
+  achievements: { id: string; rep_id: string; rep_name: string; kind: string; month: string; value: number | null; detail: Record<string, unknown> | null; at: string; congratulated_at: string | null }[];
+  recent_sales: { rep_id: string; rep_name: string; business: string | null; plan: string | null; first_paid_at: string }[];
+  accounts: { rep_id: string; rep_name: string; accounts: number }[];
+}
 type Member = { sells: boolean; role: string; is_owner: boolean; is_me: boolean };
 
 const input = "min-h-11 w-full rounded-lg border border-line bg-white px-3 text-sm";
@@ -218,6 +227,11 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
   const analytics = (anRes && !anRes.error ? (anRes.data as { reps: AnalyticsRep[] }).reps : null);
   const compAcad = tab === "compliance" ? await db.rpc("admin_sales_academy", { p_caller: user.id }) : null;
   const compAcademy = (compAcad && !compAcad.error ? compAcad.data : null) as Record<string, string[] | null> | null;
+  // V8.4 Recognition & Incentives (hidden until 20270114001000 is applied).
+  const incRes = tab === "recognition" ? await db.rpc("admin_sales_incentives", { p_caller: user.id }) : null;
+  const inc = (incRes && !incRes.error ? incRes.data : null) as Incentives | null;
+  const msForUpcoming = tab === "recognition" ? await db.rpc("admin_sales_milestones", { p_caller: user.id }) : null;
+  const recentBoxes = (msForUpcoming && !msForUpcoming.error ? msForUpcoming.data : []) as { id: string; rep_name: string; milestone: number; amount_cents: number | null; status: string; reached_at: string; commission_status: string | null }[];
   const inviteLink = sp.invite && /^[A-Za-z0-9_-]{43}$/.test(sp.invite) ? new URL(`/sales/invite/${sp.invite}`, site.url).toString() : null;
   const sumStatus = (s: string[]) => h.commissions.filter((c) => s.includes(c.status)).reduce((t, c) => t + c.amount_cents, 0);
   const errText = sp.err ? ({
@@ -599,6 +613,121 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
             </Card>
           ))}
         </div>
+      )}
+
+      {tab === "recognition" && (
+        !inc ? <Notice tone="warn">Run <code className="break-all">supabase/migrations/20270114001000_sales_v84_accelerators.sql</code> in the Supabase SQL Editor to see Recognition &amp; incentives.</Notice> : (() => {
+        const rules: MilestoneRules = h.settings.milestone_every ? { every: h.settings.milestone_every, rates: h.settings.milestone_rates ?? [], min_cents: h.settings.milestone_min_cents ?? 0, flat: h.settings.milestone_flat ?? [] } : DEFAULT_MILESTONES;
+        const tiers = [...inc.tiers, ...Array(Math.max(0, 6 - inc.tiers.length)).fill(null)] as (Tier | null)[];
+        return (
+        <div className="space-y-6">
+          {!inc.enabled && <Notice tone="neutral" title="Monthly accelerators are off">Reps don&apos;t see them and no bonus lines are created. The table below previews what the current rates would pay. {has("edit_commission_policies") ? "Review the rates, then turn them on below." : "The platform owner turns them on."}</Notice>}
+          <Card className="overflow-x-auto">
+            <h2 className="p-4 pb-0 text-lg font-bold">Incentive cost vs. collected revenue</h2>
+            <p className="px-4 text-xs text-muted">Revenue is collected before tax, net of refunds. Open months are projections.</p>
+            <table className="mt-2 w-full min-w-[720px] text-sm">
+              <thead className="border-b border-line text-left text-muted"><tr><th className="p-3">Month</th><th className="p-3">Revenue</th><th className="p-3">Base commissions</th><th className="p-3">Accelerators</th><th className="p-3">Milestone boxes</th><th className="p-3">Incentives ÷ revenue</th></tr></thead>
+              <tbody>
+                {inc.cost.map((c) => {
+                  const total = c.base_cents + c.accelerator_cents + c.box_cents;
+                  return (
+                    <tr key={c.month} className="border-b border-line last:border-0">
+                      <td className="p-3">{monthLabel(c.month)}</td><td className="p-3">{usd(c.revenue_cents)}</td><td className="p-3">{usd(c.base_cents)}</td>
+                      <td className="p-3">{usd(c.accelerator_cents)}{!c.accelerator_final && c.accelerator_cents > 0 && <span className="text-xs text-muted"> projected</span>}</td>
+                      <td className="p-3">{usd(c.box_cents)}</td><td className="p-3">{c.revenue_cents > 0 ? `${((total / c.revenue_cents) * 100).toFixed(1)}%` : "—"}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </Card>
+
+          <Card className="overflow-x-auto">
+            <h2 className="p-4 pb-0 text-lg font-bold">Monthly accelerators</h2>
+            <table className="mt-2 w-full min-w-[820px] text-sm">
+              <thead className="border-b border-line text-left text-muted"><tr><th className="p-3">Month</th><th className="p-3">Rep</th><th className="p-3">Sales</th><th className="p-3">Base</th><th className="p-3">Rate</th><th className="p-3">Bonus</th><th className="p-3">Status</th></tr></thead>
+              <tbody>
+                {inc.accelerators.map((a) => (
+                  <tr key={a.id} className="border-b border-line last:border-0">
+                    <td className="p-3">{monthLabel(a.month)}</td><td className="p-3">{a.rep_name}</td>
+                    <td className="p-3">{a.sales}{a.dropped > 0 && <p className="text-xs text-muted">{a.dropped} refunded in hold ({usd(a.dropped_base_cents)})</p>}</td>
+                    <td className="p-3">{usd(a.base_cents)}</td><td className="p-3">{Number(a.rate)}%</td><td className="p-3">{usd(a.bonus_cents)}</td>
+                    <td className="p-3">{a.status === "final" ? (a.enabled ? (a.paid_cents > 0 ? <Badge tone="ok">Paid</Badge> : a.approved_cents > 0 ? <Badge tone="brand">Approved</Badge> : a.bonus_cents > 0 ? <Badge tone="accent">Earned, on next statement</Badge> : <Badge>No bonus</Badge>) : <Badge>Closed while off</Badge>)
+                      : <Badge tone="warn">{a.pending > 0 ? `Open · ${a.pending} in hold` : "Open"}</Badge>}{a.policy_version && <p className="text-xs text-muted">Policy v{a.policy_version}</p>}</td>
+                  </tr>
+                ))}
+                {inc.accelerators.length === 0 && <tr><td colSpan={7} className="p-4 text-ink-soft">No sale-month commissions in the last six months yet.</td></tr>}
+              </tbody>
+            </table>
+          </Card>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Card className="p-5">
+              <h2 className="text-lg font-bold">Achievements</h2>
+              <p className="text-xs text-muted">Firsts, personal records and accelerator tiers. No cash is attached to these.</p>
+              <ul className="mt-3 divide-y divide-line text-sm">
+                {inc.achievements.slice(0, 25).map((x) => (
+                  <li key={x.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                    <div><p className="font-semibold">{x.rep_name}</p><p className="text-ink-soft">{achievementText(x.kind, x.value, x.detail)} · {monthLabel(x.month)}</p></div>
+                    <div className="flex items-center gap-2">
+                      <Link href={`/sales/admin/reps/${x.rep_id}`} className="text-xs font-semibold text-brand underline">View rep</Link>
+                      {x.congratulated_at ? <span className="text-xs text-muted">Congratulated {dateLabel(x.congratulated_at)}</span>
+                        : <form action={congratulate}><input type="hidden" name="id" value={x.id} /><button className={btnLight}>Mark congratulated</button></form>}
+                    </div>
+                  </li>
+                ))}
+                {inc.achievements.length === 0 && <li className="py-2 text-ink-soft">Nothing yet. Achievements appear after the nightly run.</li>}
+              </ul>
+            </Card>
+            <div className="space-y-4">
+              <Card className="p-5">
+                <h2 className="text-lg font-bold">Upcoming milestones</h2>
+                <ul className="mt-3 space-y-1 text-sm">
+                  {inc.accounts.map((r) => { const n = nextMilestone(rules, r.accounts); return (
+                    <li key={r.rep_id} className="flex justify-between gap-2 border-b border-line py-1 last:border-0"><span>{r.rep_name}</span><span className="text-muted">{r.accounts} accounts · {n.at - r.accounts} to the {n.at} box ({n.label})</span></li>
+                  ); })}
+                  {inc.accounts.length === 0 && <li className="text-ink-soft">No selling reps yet.</li>}
+                </ul>
+              </Card>
+              <Card className="p-5">
+                <h2 className="text-lg font-bold">Mystery box awards</h2>
+                <ul className="mt-3 space-y-1 text-sm">
+                  {recentBoxes.slice(0, 8).map((b) => <li key={b.id} className="flex justify-between gap-2 border-b border-line py-1 last:border-0"><span>{b.rep_name} · {b.milestone} accounts</span><span className="text-muted">{b.amount_cents != null ? usd(b.amount_cents) : "amount after hold"} · {b.status === "approved" ? (b.commission_status === "paid" ? "paid" : "approved") : b.status}</span></li>)}
+                  {recentBoxes.length === 0 && <li className="text-ink-soft">No boxes yet.</li>}
+                </ul>
+                <Link href="/sales/admin?tab=commissions" className="mt-2 inline-block text-sm font-semibold text-brand underline">Review boxes</Link>
+              </Card>
+              <Card className="p-5">
+                <h2 className="text-lg font-bold">Recent sales</h2>
+                <ul className="mt-3 space-y-1 text-sm">
+                  {inc.recent_sales.map((x, i) => <li key={i} className="flex justify-between gap-2 border-b border-line py-1 last:border-0"><span>{x.rep_name} · {x.business ?? "New customer"}</span><span className="text-muted">{dateLabel(x.first_paid_at)}</span></li>)}
+                  {inc.recent_sales.length === 0 && <li className="text-ink-soft">No paid sales yet.</li>}
+                </ul>
+              </Card>
+            </div>
+          </div>
+
+          {has("edit_commission_policies") && (
+            <Card className="p-5">
+              <h2 className="text-lg font-bold">Accelerator rules</h2>
+              <p className="mt-1 text-sm text-ink-soft">New paid sales in a calendar month (Central time) set a bonus on that month&apos;s sale commissions. Anniversaries never get it. The month is finalized after its sales clear the 30-day refund hold; changes here apply to months not yet finalized and make a new policy version. Turning it on pays from this month onward, never earlier months.</p>
+              <form action={saveAcceleratorRules} className="mt-4 grid gap-3">
+                <div className="grid gap-2 sm:grid-cols-3">
+                  {tiers.map((t, i) => (
+                    <div key={i} className="grid grid-cols-2 gap-2">
+                      <label className="text-xs">From sales<input name={`tier_from_${i}`} type="number" min={1} defaultValue={t?.from ?? ""} className={input} /></label>
+                      <label className="text-xs">Bonus (%)<input name={`tier_pct_${i}`} type="number" min={0} max={50} step="0.5" defaultValue={t?.pct ?? ""} className={input} /></label>
+                    </div>
+                  ))}
+                </div>
+                <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="enabled" defaultChecked={inc.enabled} className="mt-1" /> Accelerators are on (reps see them and bonus lines are created when months finalize)</label>
+                <label className="text-sm">Why are you changing it?<input name="note" maxLength={300} className={input} /></label>
+                <div className="flex flex-wrap items-center gap-3"><button className={btn}>Save accelerator rules</button><span className="text-xs text-muted">Proposed default: {DEFAULT_TIERS.map((t) => `${t.from}+ = ${t.pct}%`).join(", ")}{inc.active_from ? ` · paying since ${monthLabel(inc.active_from)}` : ""}</span></div>
+              </form>
+            </Card>
+          )}
+        </div>
+        ); })()
       )}
 
       {tab === "analytics" && (

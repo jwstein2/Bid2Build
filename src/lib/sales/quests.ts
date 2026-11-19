@@ -1,7 +1,7 @@
 /**
- * Rep quests, XP and the monthly rank (James, 2026-11-19). Three loops: daily/weekly quests (short),
- * a monthly Bronze→Diamond rank that resets each month (medium), milestone boxes (long). XP comes only
- * from real work; email volume never counts. No cash here.
+ * Rep quests and XP. Three loops: daily/weekly quests (short), this month against the rep's own best
+ * month (medium; V8.4 replaced the Bronze→Diamond rank, James 2026-11-19: no tiers), milestone boxes
+ * (long). XP comes only from real work; email volume never counts. No cash here.
  */
 export interface PeriodCounts { calls: number; meetings: number; follow_ups: number; tasks_done: number; paid_accounts: number }
 export interface Progress { now: string; periods: { day: PeriodCounts; week: PeriodCounts; month: PeriodCounts } }
@@ -24,19 +24,7 @@ export function quests(p: Progress): Quest[] {
   });
 }
 
-/** Monthly XP. Per-action XP is capped per month so volume alone can't climb the ranks. */
+/** Monthly XP. Per-action XP is capped per month so volume alone can't inflate it. */
 export function monthXp(m: PeriodCounts): number {
   return Math.min(m.follow_ups, 200) * 2 + Math.min(m.calls, 150) * 1 + Math.min(m.meetings, 30) * 15 + Math.min(m.tasks_done, 100) * 1 + m.paid_accounts * 100;
-}
-
-export const RANKS = [
-  { name: "Bronze", xp: 0 }, { name: "Silver", xp: 200 }, { name: "Gold", xp: 500 }, { name: "Platinum", xp: 1000 }, { name: "Diamond", xp: 1800 },
-] as const;
-
-export function rankFor(xp: number): { name: string; xp: number; next: { name: string; xp: number } | null; pct: number } {
-  let i = 0;
-  for (let k = 0; k < RANKS.length; k++) if (xp >= RANKS[k].xp) i = k;
-  const cur = RANKS[i], next = RANKS[i + 1] ?? null;
-  const pct = next ? Math.round(((xp - cur.xp) / (next.xp - cur.xp)) * 100) : 100;
-  return { name: cur.name, xp, next: next ? { name: next.name, xp: next.xp } : null, pct };
 }
