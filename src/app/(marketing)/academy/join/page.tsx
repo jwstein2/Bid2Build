@@ -68,7 +68,7 @@ export default async function JoinPage({ searchParams }: PageProps<"/academy/joi
             <p className="font-semibold">Community rules</p>
             <ol className="mt-1 list-decimal space-y-1 pl-5 text-ink-soft">{settings.rules.map((r) => <li key={r}>{r}</li>)}</ol>
           </div>
-          <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="accept_rules" required className="mt-1" /> I agree to the community rules.</label>
+          <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="accept_rules" required className="mt-1" /> <span>I agree to the community rules and the <Link href="/academy-terms" className="underline" target="_blank">Academy terms</Link>.</span></label>
           <p className="text-xs text-muted">Your email, phone number and billing details are never shown. You choose what appears in the directory and leaderboards in <b>My profile</b>, and you can leave the community at any time.</p>
           <div className="flex items-center gap-3"><Submit variant="accent" pending="Joining…">Join the community</Submit><Link href="/academy/classroom" className="text-sm font-semibold text-accent-ink hover:underline">Just browse the Classroom</Link></div>
         </form>

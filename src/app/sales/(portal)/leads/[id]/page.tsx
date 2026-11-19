@@ -5,7 +5,8 @@ import { Badge, Card, Notice } from "@/components/ui/misc";
 import { requireSalesRep } from "@/lib/sales/server";
 import { ACTIVITY_LABEL, SOURCE_LABEL, STAGES, STAGE_LABEL, verificationSources, type Duplicate, type Lead, type LeadActivity, type LeadTask } from "@/lib/sales/crm";
 import { dateLabel, TIER_LABEL } from "@/lib/sales/format";
-import { logActivity, saveTask, updateLead } from "../actions";
+import { logActivity, recordDncCheck, saveTask, updateLead } from "../actions";
+import { callReadiness, DNC_REGISTRY_URL, localTimeLabel } from "@/lib/sales/calling";
 import { StarterScript } from "@/components/sales/starter-script";
 
 export const metadata = { title: "Lead" };
@@ -21,6 +22,8 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
   const { data, error } = await db.rpc("sales_crm_lead", { p_id: id });
   if (error || !data) notFound();
   const { lead: l, activities, tasks, duplicates } = data as { lead: Lead; activities: LeadActivity[]; tasks: LeadTask[]; duplicates: Duplicate[] };
+  const ready = callReadiness(l);
+  const dnc = l.dnc_status ?? "unchecked";
   return (
     <div className="space-y-6">
       <div>
@@ -52,6 +55,37 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
               </dl>
             </Card>
           )}
+          <Card className="p-5" data-testid="before-you-call">
+            <h2 className="text-lg font-bold">Before you call</h2>
+            <p className="mt-1 text-sm">
+              {ready.canCall ? <Badge tone="ok">OK to call now</Badge> : <Badge tone="warn">Not ready to call</Badge>}{" "}
+              <span className="text-ink-soft">Their time: {localTimeLabel(l.state)}{l.state ? "" : " (no state on file, Central assumed)"}</span>
+            </p>
+            {ready.reasons.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-ink-soft">{ready.reasons.map((r) => <li key={r}>{r}</li>)}</ul>}
+            <ul className="mt-3 space-y-1 text-xs text-muted">
+              <li>Dial by hand only. No autodialers, prerecorded or artificial-voice calls.</li>
+              <li>Say your name, that you&apos;re calling for Built2Bid, and why, at the start of the call.</li>
+              <li>If they ask not to be contacted, tick Do not contact right away.</li>
+              <li>Text only if they gave written consent (for example, they texted you first).</li>
+            </ul>
+            <p className="mt-3 text-sm">
+              Registry: <strong>{dnc === "clear" ? "not listed" : dnc === "listed" ? "LISTED" : "not checked"}</strong>
+              {l.dnc_checked_at && <> · checked {dateLabel(l.dnc_checked_at)}</>}
+              {l.text_consent_at && <> · text consent on file</>}
+            </p>
+            {!l.do_not_contact && (
+              <form action={recordDncCheck} className="mt-3 grid gap-2 rounded-lg bg-paper p-3 sm:grid-cols-2">
+                <input type="hidden" name="id" value={l.id} />
+                <p className="text-sm sm:col-span-2">Look up {l.phone ? <strong>{l.phone}</strong> : "the phone number"} in the <a href={DNC_REGISTRY_URL} target="_blank" rel="noopener noreferrer" className="text-brand underline">National Do Not Call Registry</a> (the owner sets up the company&apos;s access), then record what you found.</p>
+                <label className="text-sm">Result<select name="dnc" defaultValue={dnc === "listed" ? "listed" : "clear"} className={input}><option value="clear">Not on the registry</option><option value="listed">On the registry</option></select></label>
+                <label className="text-sm">Line type<select name="line" defaultValue={l.phone_line ?? "unknown"} className={input}><option value="unknown">Don&apos;t know</option><option value="landline">Business landline</option><option value="mobile">Mobile</option><option value="voip">VoIP</option></select></label>
+                <label className="flex items-start gap-2 text-sm sm:col-span-2"><input type="checkbox" name="text_consent" className="mt-1" defaultChecked={Boolean(l.text_consent_at)} /> They gave written consent to receive texts</label>
+                <label className="text-sm sm:col-span-2">How consent was given (if any)<input name="consent_note" maxLength={300} placeholder="e.g. Texted us first on Nov 19" className={input} /></label>
+                <label className="flex items-start gap-2 text-sm font-semibold sm:col-span-2"><input type="checkbox" name="confirm" required className="mt-1" /> I checked this number in the registry today.</label>
+                <div><button className={btn}>Record check</button></div>
+              </form>
+            )}
+          </Card>
           <Card className="p-5">
             <h2 className="text-lg font-bold">Starter script</h2>
             <div className="mt-2"><StarterScript leadId={l.id} disabled={!!l.do_not_contact} /></div>
