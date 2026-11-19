@@ -17,6 +17,7 @@ run node scripts/qa-audit/reset-sales.mjs
 run node scripts/qa-audit/flows/sales-team.mjs
 run node scripts/qa-audit/flows/sales-crm.mjs
 run node scripts/qa-audit/flows/sales-pay.mjs
+run node scripts/qa-audit/flows/sales-v8x.mjs
 run node scripts/qa-audit/flows/enterprise.mjs
 run ROLE=pro node scripts/qa-audit/flows/bids.mjs
 run node scripts/qa-audit/flows/projects-financials.mjs

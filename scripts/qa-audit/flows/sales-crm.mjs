@@ -41,7 +41,7 @@ await T("02b", "Leads", "Duplicate check by email (same owner email, different s
   const r = await rest(tok, "rpc/sales_crm_lead_create", { method: "POST", body: JSON.stringify({ p: { company_name: "QA Roofing Company", email: lead.email, trades: [], allow_duplicate: false } }) });
   if (r.body?.ok === false) return `flagged (${r.body.error})`;
   await q("delete from public.sales_leads where id=$1", [r.body?.lead?.id]);
-  return { blocked: "NOT IMPLEMENTED: duplicate keys are website, phone and name+ZIP only; email matching is part of the queued V8.6 master CRM dedupe. Another rep was able to add the same owner email." };
+  return { fail: "another rep added a lead with the same owner email (V8.6 master CRM says email is a duplicate key)" };
 });
 await T("03", "Leads", "Lead details: log a call note", "Activity saved and shown on the lead timeline", async () => {
   const ctx = await as("rep1"); const p = await ctx.newPage(); await p.goto(`${BASE}/sales/leads/${leadId}`); await p.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {});
@@ -201,10 +201,5 @@ await T("24", "Roles", "Dual-role Sales Admin who also sells gets the My / Admin
   const from = p.url(); await sw.first().click(); await p.waitForTimeout(1500);
   return p.url() !== from ? `switched ${new URL(from).pathname} -> ${new URL(p.url()).pathname}` : { fail: "switcher did nothing" };
 });
-for (const [id, name, why] of [
-  ["25", "Fair lead distribution / round-robin auto-assignment", "V8.6 spec queued, not built (owner assigns by hand on All leads)"],
-  ["26", "Weekly lead reassignment / recycling rules", "V8.7 spec queued, not built"],
-  ["27", "Calendar, availability and out-of-office", "V8.4 P1-P3 still being built in the Sales Portal thread"],
-  ["28", "Reward catalog, preference survey, onboarding celebrations", "V8.4 P1+ not merged yet"],
-]) await T(id, "Not built", name, "Per spec", async () => ({ blocked: `NOT IMPLEMENTED: ${why}` }));
+// Round robin, recycling, time off, offboarding and the reward/preferences/calendar pages: flows/sales-v8x.mjs.
 console.log(rec.counts); await b.close(); await closeDb();

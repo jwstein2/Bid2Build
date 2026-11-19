@@ -129,17 +129,20 @@ await T("12", "Reinstate (Active) after suspension", "Status active; rep can ope
   const ctx = await b.newContext({ ...vp, storageState: statePath("rep2") }); const p = await ctx.newPage(); await p.goto(BASE + "/sales"); await p.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {});
   return r.status === "active" && r.code === before.code && /\/sales/.test(p.url()) && !/login/.test(p.url()) ? `active, code kept ${r.code}` : { fail: `status ${r.status} url ${p.url()}` };
 });
-await T("13", "Remove a rep, then reinstate (data preserved)", "Removed rep can't sign in; setting Active restores them with the same id/code", async () => {
-  const before = await repRow(USERS.rep2); await setStatus(USERS.rep2, "removed"); const mid = await repRow(USERS.rep2);
-  const { p } = await ownerPage("/sales/admin?tab=team"); const editable = await p.locator("div.p-5").filter({ hasText: USERS.rep2 }).locator("summary").count();
-  if (!editable) return { fail: "removed rep has no Edit control, so they can't be reinstated from the UI" };
-  await setStatus(USERS.rep2, "active"); const after = await repRow(USERS.rep2);
-  return mid.status === "removed" && ["active", "invited"].includes(after.status) && after.id === before.id && after.code === before.code ? "removed then reinstated, same id and code" : { fail: JSON.stringify({ mid: mid.status, after: after.status }) };
-});
-await T("14", "Termination with a required reason and notes", "Feature per spec: offboarding asks for reason + notes", async () => {
+await T("13", "Removing a rep goes through offboarding (V8.6), not a plain status change", "Rep form no longer offers Removed; the rep's Manage page offers Offboard", async () => {
+  const r = await repRow(USERS.rep2);
   const { p } = await ownerPage("/sales/admin?tab=team");
-  const t = await p.locator("main").innerText();
-  return /reason/i.test(t) && /offboard|terminat/i.test(t) ? "present" : { blocked: "NOT IMPLEMENTED: only Access = Active/Suspended/Removed with no reason or notes (structured offboarding is queued in V8.6)" };
+  const card = p.locator("div.p-5").filter({ hasText: USERS.rep2 }).filter({ has: p.locator("summary") }).last();
+  await card.locator("summary", { hasText: "Edit" }).click().catch(() => {});
+  const opts = await card.locator("select[name=status] option").allInnerTexts().catch(() => []); await p.close();
+  const m = await ownerPage(`/sales/admin/reps/${r.id}/manage`); const t = await m.p.locator("main").innerText(); await m.p.close();
+  return !opts.some((o) => /removed/i.test(o)) && /Offboard/.test(t) ? `status options: ${opts.join(", ")}; Offboard on Manage` : { fail: `options ${opts.join(",")}; offboard shown ${/Offboard/.test(t)}` };
+});
+await T("14", "Termination with a required reason and notes", "Offboarding form asks for a reason (required) and notes", async () => {
+  const r = await repRow(USERS.rep2);
+  const { p } = await ownerPage(`/sales/admin/reps/${r.id}/manage`);
+  const reason = await p.locator("select[name=reason_category][required]").count(); const notes = await p.locator("textarea[name=admin_notes]").count(); await p.close();
+  return reason && notes ? "reason required, notes field present (full offboarding run in V8X-10)" : { fail: `reason ${reason}, notes ${notes}` };
 });
 await T("15", "Sales Administrator cannot change commission policy", "Policy save refused for Sales Admin; owner-only", async () => {
   const ctx = await b.newContext({ ...vp, storageState: statePath("salesAdmin") }); const p = await ctx.newPage(); await p.goto(BASE + "/sales/admin?tab=policy"); await p.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {});
