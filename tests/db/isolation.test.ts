@@ -95,11 +95,11 @@ d("16. user account isolation (RLS)", () => {
       await client.query("begin; set local role anon; savepoint s");
       await expect(client.query("select * from public.estimates")).rejects.toThrow(/permission denied/);
       await client.query("rollback to savepoint s");
-      // Seeded reference data is readable: all 36 trades with a published v1 template, no prices.
+      // Seeded reference data is readable: all 39 trades with a published v1 template, no prices.
       const cats = await client.query("select count(*)::int as n from public.trade_categories");
-      expect(cats.rows[0].n).toBe(36);
+      expect(cats.rows[0].n).toBe(39);
       const tpl = await client.query("select definition from public.trade_templates where published");
-      expect(tpl.rows.length).toBe(36);
+      expect(tpl.rows.length).toBe(39);
       expect(JSON.stringify(tpl.rows)).not.toMatch(/unitCost|price/i);
       await client.query("rollback");
     } finally { client.release(); }

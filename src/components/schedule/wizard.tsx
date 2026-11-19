@@ -1,9 +1,9 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
-import { AlertTriangle, ArrowLeft, ArrowRight, CalendarDays, CalendarRange, Check, Plus, X } from "lucide-react";
+import { AlertTriangle, ArrowDown, ArrowLeft, ArrowRight, ArrowUp, CalendarDays, CalendarRange, Check, GripVertical, Plus, RotateCcw, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge, Notice } from "@/components/ui/misc";
 import { cn } from "@/lib/cn";
@@ -48,6 +48,14 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
   const [durations, setDurations] = useState<Record<string, number>>(() => Object.fromEntries(sections.map((s) => [s.id, Math.min(10, Math.max(1, s.items.length || 1))])));
   // Default: each section after the one before it. Any section can be changed to start with the project.
   const [links, setLinks] = useState<Record<string, Link_>>(() => Object.fromEntries(sections.map((s, i) => [s.id, { after: i ? sections[i - 1].id : null, lag: 0, overlap: 0 }])));
+  // Work sequence (step 5): the contractor's order, never forced to the estimate's or AI's order. A section
+  // that follows the sequence waits for the one above it; a section whose "Starts" was picked by hand
+  // (manual) keeps that choice when cards move.
+  const [order, setOrder] = useState<string[]>(() => sections.map((s) => s.id));
+  const [manual, setManual] = useState<Record<string, boolean>>({});
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dropAt, setDropAt] = useState<number | null>(null);
+  const [orderNote, setOrderNote] = useState<string | null>(null);
   // "Don't start before" offsets (working days after the project start), set by dragging bars in Review.
   const [offsets, setOffsets] = useState<Record<string, number>>({});
   const [target, setTarget] = useState("");
@@ -73,18 +81,24 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
     return () => window.removeEventListener("keydown", onKey);
   }, [calExpanded, calOpen, phone]);
 
-  const chosen = sections.filter((s) => included.includes(s.id));
+  const byId = new Map(sections.map((s) => [s.id, s]));
+  const chosen = order.flatMap((id) => (included.includes(id) && byId.has(id) ? [byId.get(id)!] : []));
   const planInput: PlanSection[] = chosen.map((s, i) => ({ key: s.id, sourceGroupId: s.id, name: s.name, durationDays: durations[s.id] || 1, sortOrder: i, offsetDays: offsets[s.id] ?? 0 }));
-  const deps: Dep[] = chosen.flatMap((s) => {
-    const l = links[s.id];
-    return l?.after && included.includes(l.after) ? [{ from: l.after, to: s.id, lagDays: l.lag, maxOverlap: l.overlap }] : [];
-  });
-  // Cheap enough to recompute on every render (a few hundred sections at most).
-  const plan = isIsoDate(start) ? planSections(planInput, deps, start, cal) : null;
-  const feas = plan && isIsoDate(target) ? checkTarget(planInput, deps, start, target, cal) : null;
+  const deps: Dep[] = depsFor(chosen, links, manual, included);
+  // Performance: the plan, the target check and the calendar's draft are recomputed only when their inputs
+  // change (not on every keystroke elsewhere in the wizard), so the Company Calendar beside it stays still.
+  const planKey = JSON.stringify([planInput, deps, start, cal]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- planKey is the serialized form of every input
+  const plan = useMemo(() => (isIsoDate(start) ? planSections(planInput, deps, start, cal) : null), [planKey]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- same inputs plus the target
+  const feas = useMemo(() => (plan && isIsoDate(target) ? checkTarget(planInput, deps, start, target, cal) : null), [planKey, target, plan]);
   const multiTrade = new Set(sections.map((s) => s.trade)).size > 1;
   // The draft appears on the Company Calendar from the Start date step on (before that: existing work only).
-  const draftPlan = step >= 2 && plan ? plan.map((p) => ({ key: p.key, name: p.name, trade: sections.find((x) => x.id === p.key)?.trade ?? null, plannedStart: p.plannedStart, plannedEnd: p.plannedEnd, durationDays: p.durationDays })) : [];
+  const showDraft = step >= 2;
+  const draftPlan = useMemo(() => (showDraft && plan ? plan.map((p) => ({ key: p.key, name: p.name, trade: sections.find((x) => x.id === p.key)?.trade ?? null, plannedStart: p.plannedStart, plannedEnd: p.plannedEnd, durationDays: p.durationDays })) : []), [showDraft, plan, sections]);
+  const pickStart = useCallback((d: string) => setStart(d), []);
+  const toggleCalExpanded = useCallback(() => setCalExpanded((v) => !v), []);
+  const closeCal = useCallback(() => setCalOpen(false), []);
 
   const canNext = [
     accepted || provisional,
@@ -99,6 +113,28 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
   ][step];
 
   const setLink = (id: string, patch: Partial<Link_>) => setLinks((m) => ({ ...m, [id]: { ...m[id], ...patch } }));
+
+  /** Moves a section to a new place in the work sequence. Refused (with a reason) if it would make a loop. */
+  const moveSection = (id: string, toChosenIndex: number) => {
+    const from = chosen.findIndex((c) => c.id === id);
+    if (from < 0 || toChosenIndex < 0 || toChosenIndex >= chosen.length || from === toChosenIndex) return;
+    const nextChosen = [...chosen];
+    const [moved] = nextChosen.splice(from, 1);
+    nextChosen.splice(toChosenIndex, 0, moved);
+    const nextDeps = depsFor(nextChosen, links, manual, included);
+    const ids = nextChosen.map((c) => c.id);
+    if (!planSections(nextChosen.map((c, i) => ({ key: c.id, sourceGroupId: c.id, name: c.name, durationDays: durations[c.id] || 1, sortOrder: i })), nextDeps, isIsoDate(start) ? start : todayIn(cal.timezone), cal)) {
+      const blocker = nextDeps.find((d) => wouldCycle(ids, nextDeps.filter((x) => x !== d), d.from, d.to));
+      setOrderNote(`${moved.name} can't go there: ${blocker ? `${nameOf(sections, blocker.to)} is set to wait for ${nameOf(sections, blocker.from)}` : "a section you set by hand waits for it"}, which would make a loop. Change that section's "Starts" first.`);
+      return;
+    }
+    // Excluded sections keep their place relative to the ones around them.
+    const chosenIds = new Set(ids);
+    let k = 0;
+    setOrder(order.map((x) => (chosenIds.has(x) ? ids[k++] : x)));
+    setOrderNote(null);
+  };
+  const resetSequence = () => { setOrder(sections.map((s) => s.id)); setManual({}); setOrderNote(null); };
 
   /** Review step: a dragged or date-edited bar becomes a duration, a wait/overlap or a start offset. */
   const reviewEdit = (e: MiniEdit) => {
@@ -262,16 +298,49 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
 
         {step === 4 && (
           <div className="mt-3 space-y-2">
-            <p className="text-sm text-ink-soft">Choose what each section waits for. Sections that start with the project can overlap. Overlap you allow here is only used if you ask the scheduler to meet a target date.</p>
-            {chosen.map((s) => {
+            <p className="text-sm text-ink-soft">Put the work in the order you build it: drag a card by its handle, or use the arrows. Each section waits for the one above it unless you choose otherwise. Sections that start with the project can overlap. Overlap you allow here is only used if you ask the scheduler to meet a target date.</p>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-xs text-muted">{chosen.length} section{chosen.length === 1 ? "" : "s"} in this order{Object.values(manual).some(Boolean) ? " · sections you set by hand keep their choice when cards move" : ""}.</p>
+              <Button type="button" size="sm" variant="ghost" onClick={resetSequence} data-testid="reset-sequence"><RotateCcw className="h-4 w-4" aria-hidden /> Reset to estimate order</Button>
+            </div>
+            {orderNote && <Notice tone="warn"><span role="status">{orderNote}</span></Notice>}
+            <ol className="space-y-2" aria-label="Work sequence" data-testid="dep-list">
+            {chosen.map((s, idx) => {
               const l = links[s.id];
-              const after = l?.after && included.includes(l.after) ? l.after : "";
+              const isManual = Boolean(manual[s.id]);
+              const prev = idx ? chosen[idx - 1] : null;
+              const after = effectiveAfter(s.id, idx, chosen, links, manual, included) ?? "";
+              const selectValue = isManual ? after : "__seq";
               return (
-                <div key={s.id} className="rounded-lg border border-line p-3" data-testid={`dep-${s.id}`}>
-                  <p className="font-semibold text-navy">{s.name}</p>
+                <li key={s.id} className={cn("rounded-lg border bg-surface p-3", dragId === s.id ? "border-accent opacity-60" : "border-line", dropAt === idx && dragId && dragId !== s.id && "ring-2 ring-accent")}
+                  data-testid={`dep-${s.id}`}
+                  onDragOver={(e) => { if (!dragId) return; e.preventDefault(); e.dataTransfer.dropEffect = "move"; if (dropAt !== idx) setDropAt(idx); }}
+                  onDrop={(e) => { e.preventDefault(); if (dragId) moveSection(dragId, idx); setDragId(null); setDropAt(null); }}>
+                  <div className="flex items-center gap-2">
+                    <span draggable onDragStart={(e) => { setDragId(s.id); e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", s.id); }}
+                      onDragEnd={() => { setDragId(null); setDropAt(null); }}
+                      className="hidden h-9 w-6 cursor-grab place-items-center rounded text-muted hover:bg-black/5 active:cursor-grabbing md:grid" title="Drag to reorder" aria-hidden data-testid={`drag-${s.id}`}>
+                      <GripVertical className="h-4 w-4" />
+                    </span>
+                    <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-navy/10 text-xs font-bold text-navy" aria-hidden>{idx + 1}</span>
+                    <p className="min-w-0 flex-1 font-semibold text-navy">{s.name}</p>
+                    <span className="flex shrink-0 gap-1">
+                      <button type="button" onClick={() => moveSection(s.id, idx - 1)} disabled={idx === 0} aria-label={`Move ${s.name} earlier`} data-testid={`move-up-${s.id}`}
+                        className="grid h-11 w-11 place-items-center rounded-md border border-line text-ink-soft hover:bg-black/5 disabled:opacity-40 sm:h-9 sm:w-9"><ArrowUp className="h-4 w-4" aria-hidden /></button>
+                      <button type="button" onClick={() => moveSection(s.id, idx + 1)} disabled={idx === chosen.length - 1} aria-label={`Move ${s.name} later`} data-testid={`move-down-${s.id}`}
+                        className="grid h-11 w-11 place-items-center rounded-md border border-line text-ink-soft hover:bg-black/5 disabled:opacity-40 sm:h-9 sm:w-9"><ArrowDown className="h-4 w-4" aria-hidden /></button>
+                    </span>
+                  </div>
                   <div className="mt-2 grid gap-3 sm:grid-cols-3">
                     <label className="block"><span className="label">Starts</span>
-                      <select className="field" value={after} onChange={(e) => setLink(s.id, { after: e.target.value || null })} aria-label={`${s.name} starts`}>
+                      <select className="field" value={selectValue} aria-label={`${s.name} starts`}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          if (v === "__seq") { setManual((m) => ({ ...m, [s.id]: false })); return; }
+                          setManual((m) => ({ ...m, [s.id]: true }));
+                          setLink(s.id, { after: v || null });
+                        }}>
+                        <option value="__seq">{prev ? `After ${prev.name} finishes (follows the order)` : "With the project start (first in the order)"}</option>
                         <option value="">With the project start</option>
                         {chosen.filter((o) => o.id !== s.id && !wouldCycle(chosen.map((c) => c.id), deps.filter((d) => d.to !== s.id), o.id, s.id)).map((o) => <option key={o.id} value={o.id}>After {o.name} finishes</option>)}
                       </select>
@@ -283,9 +352,17 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
                         <input type="number" min={0} max={365} className="field" value={l.overlap} onChange={(e) => setLink(s.id, { overlap: Math.max(0, Math.min(365, Math.round(Number(e.target.value) || 0))) })} /></label>
                     </>}
                   </div>
-                </div>
+                  {isManual && <p className="mt-1 text-xs text-muted">Set by hand: stays the same when you move cards.</p>}
+                </li>
               );
             })}
+            </ol>
+            {plan && plan.length > 0 && (
+              <div className="pt-2" data-testid="sequence-preview">
+                <p className="mb-1 text-xs font-bold uppercase tracking-wider text-muted">Schedule preview · finishes {formatDay(finishOf(plan), { weekday: "short", month: "short", day: "numeric" })}</p>
+                <MiniTimeline rows={plan.map((p) => ({ id: p.key, name: p.name, start: p.plannedStart, end: p.plannedEnd, durationDays: p.durationDays }))} />
+              </div>
+            )}
           </div>
         )}
 
@@ -367,9 +444,9 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
         )}>
         <CompanyCalendar
           plan={draftPlan} assign={assign} calendar={cal} team={team} today={todayIn(cal.timezone)} projectName={estimate.title}
-          onPickStart={step < LAST ? (d) => setStart(d) : undefined}
-          expanded={calExpanded && !phone} onToggleExpanded={() => setCalExpanded((v) => !v)}
-          onClose={phone ? () => setCalOpen(false) : undefined} stepLabel={`step ${step + 1}`}
+          onPickStart={step < LAST ? pickStart : undefined}
+          expanded={calExpanded && !phone} onToggleExpanded={toggleCalExpanded}
+          onClose={phone ? closeCal : undefined} stepLabel={`step ${step + 1}`}
         />
       </aside>
       </div>
@@ -397,6 +474,20 @@ function ChoiceButton({ title, detail, onClick, testid }: { title: string; detai
       <span className="mt-0.5 block text-xs text-ink-soft">{detail}</span>
     </button>
   );
+}
+
+/** Which section this one waits for: the one above it in the sequence, unless its "Starts" was set by hand. */
+function effectiveAfter(id: string, idx: number, chosen: WizardSection[], links: Record<string, Link_>, manual: Record<string, boolean>, included: string[]): string | null {
+  if (manual[id]) { const a = links[id]?.after; return a && included.includes(a) && a !== id ? a : null; }
+  return idx ? chosen[idx - 1].id : null;
+}
+
+function depsFor(chosen: WizardSection[], links: Record<string, Link_>, manual: Record<string, boolean>, included: string[]): Dep[] {
+  return chosen.flatMap((s, i) => {
+    const after = effectiveAfter(s.id, i, chosen, links, manual, included);
+    const l = links[s.id] ?? { lag: 0, overlap: 0 };
+    return after ? [{ from: after, to: s.id, lagDays: l.lag, maxOverlap: l.overlap }] : [];
+  });
 }
 
 const nameOf = (sections: WizardSection[], id: string) => sections.find((s) => s.id === id)?.name ?? "A section";

@@ -149,6 +149,27 @@ d("Enterprise PM permissions and seats (database)", () => {
     await setAccess(viewer, ["view_company_bids"]);
   });
 
+  it("the project manager assigned to someone else's project can see and edit its schedule", async () => {
+    const sid = await schedule(est);
+    await assign(owner, est2);
+    // est2 only sees their own bids: not visible or editable until picked as the project manager.
+    expect(await get(est2, sid)).toBeNull();
+    expect(await perms(est2, sid)).toMatchObject({ edit: false });
+    await pool.query("update public.project_schedules set project_manager_id = $2 where id = $1", [sid, est2]);
+    const s = (await get(est2, sid))!;
+    expect(s).not.toBeNull();
+    expect(s.tasks).toHaveLength(2);
+    expect(s.permissions).toMatchObject({ edit: true, progress: true, dependencies: true });
+    expect(await save(est2, sid, 1, { summary: "rename", schedule: { name: "Kitchen (PM)" } })).toBe(2);
+    // "Edit assigned schedules" revoked: still visible, no longer editable. Unassigned: hidden again.
+    await setAccess(est2, [], ["edit_assigned_schedules"]);
+    expect(await perms(est2, sid)).toMatchObject({ edit: false });
+    await setAccess(est2);
+    await pool.query("update public.project_schedules set project_manager_id = null where id = $1", [sid]);
+    expect(await get(est2, sid)).toBeNull();
+    await assign(owner, est2, false);
+  });
+
   it("reassigning a seat keeps the count, the seat's place and the subscription", async () => {
     // Seats now: est (rank 1). Add est2 so there's a paid seat to move.
     await assign(owner, est2);

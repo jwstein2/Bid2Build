@@ -2999,6 +2999,126 @@
       }
     ]
   },
+  "cleaning": {
+    "intro": "Cleaning companies win and keep work by quoting clearly, staffing reliably and turning one-time cleans into recurring service. This classroom covers pricing by area, room or hour, post-construction phases, crew scheduling, chemical safety and building a recurring customer base.",
+    "seoTitle": "Cleaning Business Courses",
+    "seoDescription": "Cleaning business courses on pricing by square foot, room or hour, post-construction cleaning, crew scheduling, chemical safety and recurring revenue.",
+    "salesChallenge": "Customers compare cleaning quotes on price alone and rarely see what is included. Explain the scope room by room, list add-ons separately, and show how a first deep clean differs from recurring visits.",
+    "cards": [
+      {
+        "pillar": "getting_started",
+        "title": "Cleaning Business Setup: Licensing, Bonding and Insurance",
+        "summary": "Business basics for a residential, commercial or post-construction cleaning company.",
+        "description": "Starting a cleaning company means choosing your market, registering the business, and carrying the right insurance and bonding for working inside customers' homes and buildings. This course covers entity setup, general liability and janitorial bonds, workers' compensation basics and setting a service area. Requirements vary by state and city; confirm them with your licensing office and insurance agent.",
+        "level": "beginner",
+        "lessons": [
+          "Choosing residential, commercial or post-construction work",
+          "Entity setup and tax registration basics",
+          "Liability insurance and janitorial bonds",
+          "Workers' compensation basics",
+          "Setting a service area and minimum job"
+        ]
+      },
+      {
+        "pillar": "sales",
+        "title": "Selling Cleaning Services Beyond the Lowest Price",
+        "summary": "Show customers exactly what is included so they compare value, not just price.",
+        "description": "Cleaning quotes are easy to compare on price alone. This course covers walking the space with the customer, presenting the scope room by room, offering add-ons as separate choices, and explaining how a first deep clean differs from recurring visits.",
+        "level": "intermediate",
+        "lessons": [
+          "Walking the space and confirming expectations",
+          "Presenting scope room by room",
+          "Offering add-ons as separate choices",
+          "Explaining first deep clean versus recurring",
+          "Following up on quotes that went quiet"
+        ]
+      },
+      {
+        "pillar": "estimating",
+        "title": "Cleaning Estimates by Square Foot, Room and Hour",
+        "summary": "Choose the right pricing method for each job and keep supplies, travel and add-ons visible.",
+        "description": "Square-foot pricing suits post-construction and commercial space, per-room pricing suits homes, and hourly suits small or unpredictable jobs. This course covers measuring space, estimating crew hours from production rates you track, pricing post-construction phases, and adding supplies, travel and a minimum charge.",
+        "level": "intermediate",
+        "lessons": [
+          "Measuring cleanable area",
+          "Tracking your own production rates",
+          "Pricing rough, final and touch-up cleans",
+          "Pricing add-ons and supplies",
+          "Setting a minimum service charge"
+        ]
+      },
+      {
+        "pillar": "project_management",
+        "title": "Scheduling Cleaning Crews and Post-Construction Phases",
+        "summary": "Plan crews and visits so cleans land on time, including around other trades on construction sites.",
+        "description": "Post-construction cleaning happens in phases that depend on other trades finishing, while recurring service depends on dependable routes. This course covers coordinating with the general contractor, scheduling rough, final and touch-up cleans, building recurring routes and using checklists for consistent quality.",
+        "level": "intermediate",
+        "lessons": [
+          "Coordinating with the general contractor",
+          "Scheduling rough, final and touch-up cleans",
+          "Building efficient recurring routes",
+          "Quality checklists and walkthroughs",
+          "Handling reschedules and access issues"
+        ]
+      },
+      {
+        "pillar": "accounting",
+        "title": "Cleaning Business Financials: Job Costing and Recurring Billing",
+        "summary": "Track labor, supplies and travel per job and bill recurring customers reliably.",
+        "description": "Labor is the largest cost in cleaning, so margins depend on knowing real crew hours. This course covers costing each job, tracking supplies and travel, billing recurring customers on a schedule, and reading profit and loss by service type.",
+        "level": "intermediate",
+        "lessons": [
+          "Job costing crew hours",
+          "Tracking supplies and travel costs",
+          "Recurring billing and autopay",
+          "Profit by service type",
+          "Setting aside taxes and overhead"
+        ]
+      },
+      {
+        "pillar": "hr",
+        "title": "Hiring, Training and Keeping Cleaning Crews",
+        "summary": "Recruit dependable cleaners, train to a standard and reduce turnover.",
+        "description": "Turnover is one of the biggest challenges in cleaning. This course covers recruiting, background checks where permitted, training to written checklists, scheduling fairly and recognizing good work. Employment and background check rules vary by state; follow the laws where you operate.",
+        "level": "beginner",
+        "lessons": [
+          "Recruiting dependable cleaners",
+          "Background checks where permitted",
+          "Training to written checklists",
+          "Fair scheduling and pay",
+          "Reducing turnover"
+        ]
+      },
+      {
+        "pillar": "growth",
+        "title": "Building Recurring Cleaning Revenue",
+        "summary": "Turn one-time cleans into weekly, every-two-weeks and monthly service.",
+        "description": "Recurring customers make cleaning revenue predictable. This course covers offering recurring plans after a first clean, pricing frequency fairly, partnering with builders and property managers for post-construction and turnover work, and asking for reviews and referrals.",
+        "level": "intermediate",
+        "lessons": [
+          "Offering recurring plans after the first clean",
+          "Pricing by frequency",
+          "Builder and property manager partnerships",
+          "Reviews and referrals",
+          "Seasonal and move-season promotions"
+        ]
+      },
+      {
+        "pillar": "safety",
+        "title": "Cleaning Chemical Safety and Hazard Communication",
+        "summary": "Use cleaning chemicals safely, keep safety data sheets and protect crews and customers.",
+        "description": "Cleaning crews handle chemicals daily. This course covers OSHA hazard communication, safety data sheets, never mixing incompatible products, protective equipment, and construction dust and silica awareness on post-construction jobs. Follow product labels and the rules where you work.",
+        "level": "beginner",
+        "lessons": [
+          "Hazard communication basics",
+          "Safety data sheets and labeling",
+          "Avoiding dangerous chemical mixes",
+          "Protective equipment",
+          "Construction dust and silica awareness"
+        ]
+      }
+    ]
+  },
   "excavation": {
     "intro": "Excavation businesses price equipment time, hauling, fill, grading, and mobilization, and the trucking is often where margins are lost. This classroom covers estimating dig and grade work by volume and hours, managing trucks and crews on tight sites, and keeping utility and safety responsibilities clear.",
     "seoTitle": "Excavation Contractor Business Courses",

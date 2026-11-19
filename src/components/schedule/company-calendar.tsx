@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { AlertTriangle, CalendarDays, ChevronLeft, ChevronRight, ExternalLink, Layers, Loader2, Maximize2, Minimize2, Users, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { addDays, formatDay, formatRange, isWorkday, type WorkCalendar } from "@/lib/schedule/calendar";
@@ -59,8 +59,11 @@ export interface CompanyCalendarProps {
  * with this job's unsaved plan drawn on top as a dashed draft. Inspecting days and projects never
  * touches the wizard's form; nothing is saved from here.
  */
-export function CompanyCalendar({ plan, assign, calendar, team, today, projectName, onPickStart, expanded, onToggleExpanded, onClose, stepLabel }: CompanyCalendarProps) {
-  const win = draftWindow(plan);
+/** Memoized: the wizard re-renders on every keystroke, and the calendar only needs to when its props change. */
+export const CompanyCalendar = memo(CompanyCalendarView);
+
+function CompanyCalendarView({ plan, assign, calendar, team, today, projectName, onPickStart, expanded, onToggleExpanded, onClose, stepLabel }: CompanyCalendarProps) {
+  const win = useMemo(() => draftWindow(plan), [plan]);
   const [anchor, setAnchor] = useState(() => monthStart(win?.start ?? today));
   const [lastStart, setLastStart] = useState(win?.start ?? null);
   // Follow the draft: when its start moves to another month, show that month.
@@ -74,7 +77,11 @@ export function CompanyCalendar({ plan, assign, calendar, team, today, projectNa
 
   const data = load.state === "ready" ? load.data : null;
   const projects = useMemo(() => data?.projects ?? [], [data]);
-  const existing = useMemo(() => (data ? leafTasks(data.tasks).filter((t) => projects.some((p) => p.id === t.scheduleId && p.status !== "archived")) : []), [data, projects]);
+  const existing = useMemo(() => {
+    if (!data) return [];
+    const live = new Set(projects.filter((p) => p.status !== "archived").map((p) => p.id));
+    return leafTasks(data.tasks).filter((t) => live.has(t.scheduleId));
+  }, [data, projects]);
   const draft = useMemo(() => draftTasks(plan, assign), [plan, assign]);
   const overlaps = useMemo(() => overlappingProjects(win, projects, existing), [win, projects, existing]);
   const conflicts = useMemo(() => (team ? draftConflicts(draft, calendar, projects, existing, toResourceRefs(team)) : []), [draft, calendar, projects, existing, team]);

@@ -71,7 +71,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <aside className="on-dark bg-navy text-white md:sticky md:top-0 md:flex md:h-screen md:w-64 md:shrink-0 md:flex-col md:overflow-y-auto md:overscroll-contain no-print">
         <AppSidebar isAdmin={Boolean(isAdmin)} projects={isPmEnabled()} financials={isFinancialsEnabled()} home={isUnifiedHomeEnabled()} company={companyNav(company)} access={sidebarAccess(access)} learning={learning} email={user.email ?? (user.phone ? formatPhone(user.phone) : null)} theme={user.theme ?? null} />
       </aside>
-      <main id="main" className="min-w-0 flex-1 px-4 py-6 sm:px-8 md:pt-2">
+      {/* Bottom padding keeps the last controls on every page clear of the fixed Guide button (bottom left). */}
+      <main id="main" className="min-w-0 flex-1 px-4 pb-24 pt-6 sm:px-8 md:pt-2">
         {/* Desktop header row: Light/Dark switch, top right. On phones it sits in the top bar. */}
         {/* Task review notices (V4.3) sit beside it, on phones too. */}
         {/* Universal search (V6.4): header field + Ctrl/Cmd+K on desktop; the phone icon is in the top bar. */}
