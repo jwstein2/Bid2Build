@@ -101,3 +101,22 @@ sees a one-time celebration (a small pop and a few sparks, no confetti), then th
 ### Not in P1
 Weekly recognition digest email and immediate milestone notifications (P3), the "My Business" portfolio
 page (P3), calendar and scheduling (P2).
+
+## P3: My Business, voluntary goals, team wins and the owner's digest
+
+Migration `20270119001000_sales_v84_business.sql` (rollback in `supabase/rollback/`).
+
+- **My Business** (`/sales/business`): the rep's own customer portfolio. It shows customers, sales by month, upcoming
+  anniversaries (contingent on the customer staying subscribed), suggested check-ins, and an illustrative "what if"
+  calculator that is clearly labeled as an illustration, not a promise. It closes with a short "How we work" section
+  that sets expectations in plain language.
+- **Goals are voluntary.** A rep may set monthly targets for new sales, onboardings, follow-ups, prospects contacted or
+  earnings. Goals are never required, never ranked, never shown to other reps, and never used for pay, leads or any
+  decision about the rep. Last month's actuals appear as a reference point only.
+- **Team wins** (overview "Team" section): first names and what happened (onboarding complete, first sale, record
+  month) over the last 14 days, only for reps who turned on public recognition in My preferences. No amounts, no ranking.
+- **Owner's weekly digest**: off by default. When the owner turns it on in Admin, Recognition, the daily sales cron
+  sends one email per week (Monday or later, Central time) to the owner only, summarizing sales, customer successes,
+  achievements and anything awaiting the owner. `SALES_DIGEST_TO` overrides the recipient; otherwise it goes to the
+  founder address. A preview is on the same admin card.
+- Known approximation: My Business matches onboarding successes to customers by company name.

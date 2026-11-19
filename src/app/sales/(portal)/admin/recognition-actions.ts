@@ -139,3 +139,12 @@ export async function reassignBooking(fd: FormData) {
   await deleteEvent(db, r.from_rep, r.google_event_id);
   back({ ok: "Session reassigned. The new rep sees it on their calendar; the original rep keeps the attribution." }, "overview");
 }
+
+/** The owner's weekly recognition email (to the owner only). */
+export async function saveDigestSettings(fd: FormData) {
+  const { user, db } = await need("edit_commission_policies");
+  const enabled = fd.get("enabled") === "on";
+  const { error } = await db.rpc("admin_sales_digest_settings_save", { p_caller: user.id, p_enabled: enabled });
+  if (error) back({ err: code(error) });
+  back({ ok: enabled ? "Weekly digest on. It arrives Monday mornings." : "Weekly digest off." });
+}

@@ -65,3 +65,21 @@ describe("V8.4 scheduling content", () => {
     expect(m.text).toContain("Need a different time? https://built2bid.org/meet/booking/x");
   });
 });
+
+describe("V8.4 My Business helpers", async () => {
+  const { attentionFor, retention, scenario } = await import("@/lib/sales/business");
+  const c = (o: Record<string, unknown>) => ({ business: null, email: null, tier: "standard", plan: null, sub_status: "active", signed_up_at: null, attributed_at: "2026-10-01", first_paid_at: "2026-10-01", last_paid_at: null, basis_cents: 1999, has_estimate: true, ended: false, next_anniversary: null, ...o });
+  it("flags only relationships that need a check-in", () => {
+    const now = new Date("2026-11-20");
+    expect(attentionFor(c({ sub_status: "past_due" }), true, now)).toBe("past_due");
+    expect(attentionFor(c({}), false, now)).toBe("not_onboarded");
+    expect(attentionFor(c({ first_paid_at: "2026-11-15" }), false, now)).toBeNull();
+    expect(attentionFor(c({ ended: true, sub_status: "past_due" }), false, now)).toBeNull();
+  });
+  it("hides retention until there are enough customers and never invents any", () => {
+    expect(retention([c({}), c({})]).pct).toBeNull();
+    expect(retention([c({}), c({}), c({ sub_status: "canceled" }), c({ first_paid_at: null })])).toEqual({ acquired: 3, active: 2, pct: 67 });
+    expect(scenario(0, 1999).every((m) => m.cents === 0)).toBe(true);
+    expect(scenario(3, 1999)[11]).toEqual({ month: 12, cents: 5997, customers: 36 });
+  });
+});
