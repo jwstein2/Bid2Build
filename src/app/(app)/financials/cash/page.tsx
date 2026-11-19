@@ -44,7 +44,8 @@ export default async function CashPage({ searchParams }: { searchParams: Promise
   const acctOpts = r.banks.accounts.filter((a) => a.status !== "disconnected").map((a) => ({ id: a.id, label: `${a.name}${a.last4 ? ` ••${a.last4}` : ""}` }));
 
   return (
-    <TbShell {...shell} intro="Where your cash is headed: today's bank balance (connected or from your last imported statement), plus bills, payroll and planned payments with set dates, plus the invoices and milestones you expect to collect. Forecasts are estimates, not guarantees.">
+    <TbShell {...shell} intro="Where your cash is headed: today's bank balance (connected or from your last imported statement), plus bills, payroll and planned payments with set dates, plus the invoices and milestones you expect to collect. Forecasts are estimates, not guarantees."
+      actions={<Link href="/financials/overhead#add" className="inline-flex min-h-9 items-center rounded-lg border border-line px-3 text-sm font-semibold hover:bg-black/5" data-testid="cash-enter-bill">+ Enter a bill</Link>}>
       {!f.startsFromBank && (r.withBank
         ? <Notice title="No bank balance yet">Import a bank statement (CSV or OFX) or connect a bank, and the forecast starts from that balance. Until then it shows the net change from today.{" "}<Link href="/financials/accounting/bank" className="font-semibold underline">Import a statement</Link>{" · "}<Link href="/financials/banks" className="font-semibold underline">Connected banks</Link></Notice>
         : <Notice title="Showing net change only">Your role can see the forecast but not bank balances, so it starts at $0 and shows what&apos;s coming in and going out.</Notice>)}
@@ -113,7 +114,7 @@ export default async function CashPage({ searchParams }: { searchParams: Promise
 
       <section aria-labelledby="plan-h" className="space-y-2">
         <h2 id="plan-h" className="font-display text-lg font-extrabold">Cash plan</h2>
-        <p className="text-sm text-ink-soft">Payroll, rent, expected deposits and transfers that aren&apos;t in your records yet. These are forecast entries only.</p>
+        <p className="text-sm text-ink-soft">Payroll, rent, expected deposits and transfers that aren&apos;t in your records yet. These are forecast entries only. To record an actual bill you owe (rent, insurance, a vendor invoice), use <Link href="/financials/overhead#add" className="font-semibold text-accent-ink underline" data-testid="cash-add-bill">Overhead &amp; bills</Link>: unpaid bills appear here by their due date.</p>
         {canPlan && <CashPlanForm accounts={acctOpts} invoices={r.invoices} />}
         {planned.length > 0 && (
           <ul className="divide-y divide-line rounded-xl border border-line bg-surface text-sm">

@@ -613,6 +613,15 @@ export const PAGE_GUIDES = {
       { target: "fin.records-list", title: "The records", body: "Each row shows the amount, what it's based on and its status. Click a row for that job's financials.", hint: "For {job}, the job row compares contract, invoiced and actual cost." },
     ],
   },
+  "financials.overhead": {
+    route: "/financials/overhead",
+    label: "Financials · Overhead & bills",
+    steps: [
+      { target: "fin.overhead-form", title: "Add a company cost", body: "Rent, insurance, software, vehicles or office payroll: anything that isn't for a customer project. Mark it paid, partly paid or not paid yet, and attach the bill if you have it." },
+      { target: "fin.overhead-open", title: "Bills still to pay", body: "Unpaid overhead bills by due date. They show in your cash-flow forecast. Record a payment here when you pay one outside Built2Bid." },
+      { target: "fin.overhead-recurring", title: "Recurring costs", body: "Costs that repeat are planned in the cash-flow forecast. When the real bill arrives, choose Enter this bill and the plan moves to the next date, so nothing is counted twice." },
+    ],
+  },
   "financials.tools": {
     route: "/financials/tools",
     label: "Financials · All tools",
