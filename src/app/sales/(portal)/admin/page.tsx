@@ -13,6 +13,8 @@ import { TeamGoalBoard } from "@/components/sales/team-goal-board";
 import { LeadTargetForm, type LeadRegionState, type LeadTarget } from "@/components/sales/lead-target-form";
 import { isCertified, TOPICS } from "@/lib/sales/academy";
 import { achievementText, DEFAULT_TIERS, type Tier } from "@/lib/sales/incentives";
+import { RECOGNITION_ERRORS } from "@/lib/sales/preferences";
+import { RecognitionPanel, type Recognition } from "./recognition-panel";
 import { adjustCommission, approveStatement, assignCustomer, assignLeads, approveMilestone, congratulate, createInvite, saveAcceleratorRules, importLeads, saveMilestoneRules, saveTeamGoal, voidMilestone, closeMonth, endAttribution, recordPayout, savePolicy, saveRep } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -234,6 +236,9 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
   // V8.4 Recognition & Incentives (hidden until 20270116001000 is applied).
   const incRes = tab === "recognition" ? await db.rpc("admin_sales_incentives", { p_caller: user.id }) : null;
   const inc = (incRes && !incRes.error ? incRes.data : null) as Incentives | null;
+  // V8.4 P1 (hidden until 20270117001000 is applied).
+  const recRes = tab === "recognition" ? await db.rpc("admin_sales_recognition", { p_caller: user.id }) : null;
+  const recog = (recRes && !recRes.error ? recRes.data : null) as Recognition | null;
   const msForUpcoming = tab === "recognition" ? await db.rpc("admin_sales_milestones", { p_caller: user.id }) : null;
   const recentBoxes = (msForUpcoming && !msForUpcoming.error ? msForUpcoming.data : []) as { id: string; rep_name: string; milestone: number; amount_cents: number | null; status: string; reached_at: string; commission_status: string | null }[];
   const inviteLink = sp.invite && /^[A-Za-z0-9_-]{43}$/.test(sp.invite) ? new URL(`/sales/invite/${sp.invite}`, site.url).toString() : null;
@@ -252,6 +257,7 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
     owner_only: "Only the platform owner can make someone a Sales Administrator or change an administrator.",
     cannot_edit_self: "You can't change your own team record. Ask the platform owner.",
     cannot_approve_own: "You can't approve or cancel your own pay. Another administrator or the owner has to.",
+    ...(tab === "recognition" ? RECOGNITION_ERRORS : {}),
   } as Record<string, string>)[sp.err] ?? "That didn't work. Check the form and try again." : null;
 
   return (
@@ -692,6 +698,9 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
               </Card>
             </div>
           </div>
+
+          {recog ? <RecognitionPanel r={recog} isOwner={has("edit_commission_policies")} canPropose={has("approve_commissions")} />
+            : <Notice tone="warn">Run <code className="break-all">supabase/migrations/20270117001000_sales_v84_recognition.sql</code> to add customer successes, congratulations emails and the reward catalog.</Notice>}
 
           {has("edit_commission_policies") && (
             <Card className="p-5">
