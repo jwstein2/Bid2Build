@@ -96,11 +96,15 @@ export function ProjectsWorkspace({ initial, today, myName, extras = {} }: { ini
   const nameOf = useCallback((id: string | null) => (id ? people.get(id) ?? "Former member" : "Not assigned"), [people]);
   const { projects, tasks } = useMemo(() => filterWorkspace(ws, filters, today), [ws, filters, today]);
   const resources = useMemo(() => extras.resources ?? [], [extras.resources]);
+  const resourceLabel = useMemo(() => new Map(resources.map((r) => [r.key, r.label])), [resources]);
   const labelOf = useCallback((t: WsTask) => {
     const k = assigneeKey(t);
     if (!k) return null;
-    return resources.find((r) => r.key === k)?.label ?? t.assignee ?? null;
-  }, [resources]);
+    return resourceLabel.get(k) ?? t.assignee ?? null;
+  }, [resourceLabel]);
+  // Overview needs every status too; computed once per change instead of on every render.
+  const allProjects = useMemo(() => filterWorkspace(ws, { ...filters, status: "all" }, today).projects, [ws, filters, today]);
+  const myWorkTasks = useMemo(() => { const ids = new Set(projects.map((p) => p.id)); return ws.tasks.filter((t) => ids.has(t.scheduleId)); }, [ws.tasks, projects]);
   const trades = [...new Set(ws.projects.flatMap((p) => p.trades))].sort();
   const assignees = useMemo(() => {
     const m = new Map<string, string>();
@@ -147,14 +151,14 @@ export function ProjectsWorkspace({ initial, today, myName, extras = {} }: { ini
         )}
       </div>
 
-      {view === "overview" && <Overview projects={projects} allProjects={filterWorkspace(ws, { ...filters, status: "all" }, today).projects} nameOf={nameOf} today={today} periodStart={addDays(today, -30)}
+      {view === "overview" && <Overview projects={projects} allProjects={allProjects} nameOf={nameOf} today={today} periodStart={addDays(today, -30)}
         onCalendar={(id) => { set({ project: id }); setView("calendar"); }} focus={focus} onFocus={setFocus} />}
       {view === "calendar" && <CalendarView projects={projects} tasks={tasks} today={today} anchor={anchor} setAnchor={setAnchor} mode={calMode} setMode={setCalMode}
         labelOf={labelOf} onOpen={(t) => setOpen({ task: t })}
         onDropMove={(t, day) => { const len = Math.round((Date.parse(t.plannedEnd) - Date.parse(t.plannedStart)) / 864e5); setOpen({ task: t, start: day, end: addDays(day, len) }); }} />}
       {view === "timeline" && <TimelineView projects={projects} tasks={tasks} deps={ws.deps} today={today} labelOf={labelOf} onOpen={(t) => setOpen({ task: t })} onDragEdit={(t, s, e) => setOpen({ task: t, start: s, end: e })} />}
       {view === "workload" && <WorkloadView projects={projects} tasks={tasks} resources={resources} today={today} onOpen={(t) => setOpen({ task: t })} nameOf={nameOf} teamHref={extras.teamHref} />}
-      {view === "mywork" && <MyWorkView buckets={myTasks({ ...ws, projects, tasks: ws.tasks.filter((t) => projects.some((p) => p.id === t.scheduleId)) }, myName, extras.myResourceKeys ?? [], today)} projects={projects} onOpen={(t) => setOpen({ task: t })} labelOf={labelOf} />}
+      {view === "mywork" && <MyWorkView buckets={myTasks({ ...ws, projects, tasks: myWorkTasks }, myName, extras.myResourceKeys ?? [], today)} projects={projects} onOpen={(t) => setOpen({ task: t })} labelOf={labelOf} />}
 
       <p className="text-xs text-muted">Showing scheduled tasks from {formatDay(ws.from, { month: "short", day: "numeric", year: "numeric" })} to {formatDay(ws.to, { month: "short", day: "numeric", year: "numeric" })}.</p>
 
@@ -163,8 +167,8 @@ export function ProjectsWorkspace({ initial, today, myName, extras = {} }: { ini
           resource={(() => { const k = assigneeKey(open.task); return k ? extras.resourceInfo?.[k] ?? null : null; })()}
           initialStart={open.start} initialEnd={open.end}
           extra={extras.team ? <AssignPanel task={open.task} project={project} team={extras.team} tasks={ws.tasks} people={ws.people} me={ws.me} myName={myName}
-            onSaved={() => { void refresh(); router.refresh(); }} /> : undefined}
-          onClose={() => setOpen(null)} onSaved={() => { void refresh(); router.refresh(); }} />
+            onSaved={() => { void refresh(); }} /> : undefined}
+          onClose={() => setOpen(null)} onSaved={() => { void refresh(); }} />
       )}
     </div>
   );
