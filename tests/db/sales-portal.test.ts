@@ -29,6 +29,8 @@ d("sales portal (database)", () => {
     owner = await createUser(pool, "owner@built2bid.org");
     await pool.query("insert into public.admin_roles (user_id, role) values ($1, 'admin')", [owner]);
     await applyMigration(pool, MIGRATION); // idempotent re-run
+    // These tests cover the original month-end rules; the V8 defaults (30-day hold, 90 days) are tested in sales-v8.test.ts.
+    await pool.query("update public.sales_settings set refund_policy = 'month_end_clawback', attribution_window_days = 30, first_month_cancel_voids = false where id");
   });
   afterAll(async () => { await drop?.(); });
 

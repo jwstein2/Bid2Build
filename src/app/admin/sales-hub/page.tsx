@@ -3,9 +3,11 @@ import { Badge, Card, Notice } from "@/components/ui/misc";
 import { requireAdmin } from "@/lib/admin/server";
 import { repLink } from "@/lib/sales/link";
 import { COMMISSION_STATUS, dateLabel, METHOD_LABEL, plural, monthLabel, reasonLabel, TIER_LABEL, usd, yearLabel } from "@/lib/sales/format";
-import type { Hub, HubRep } from "@/lib/sales/types";
+import type { Hub, HubRep, HubSettings } from "@/lib/sales/types";
 import { SOURCE_LABEL, STAGE_LABEL, TRADES, type Lead } from "@/lib/sales/crm";
-import { adjustCommission, approveStatement, assignCustomer, assignLeads, importLeads, saveLeadTarget, closeMonth, endAttribution, recordPayout, savePolicy, saveRep } from "./actions";
+import { CopyField } from "@/components/sales/copy-field";
+import { site } from "@/lib/site";
+import { adjustCommission, approveStatement, assignCustomer, assignLeads, createInvite, importLeads, saveLeadTarget, closeMonth, endAttribution, recordPayout, savePolicy, saveRep } from "./actions";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Sales Hub" };
@@ -32,6 +34,27 @@ const POLICY = {
   value_scope: { plan_seats: "Plan + Enterprise seats (add-ons excluded)", all_items: "Everything on the subscription", base_plan: "Base plan only" },
 } as const;
 
+function policyLine(p: Record<string, string | number | boolean>): string {
+  const refund = p.refund_policy === "hold_30_no_clawback" ? "30-day hold, no clawback" : p.refund_policy === "never_reverse" ? "never reversed" : "month-end clawback";
+  return `${refund} · ${p.attribution_window_days}-day link window · ${p.commission_years} years · ${p.first_month_cancel_voids ? "first-month cancel pays nothing" : "first-month cancel still pays"}`;
+}
+
+/** The rules as a rep would read them, with a worked example at the $19.99 list price. */
+function PolicySummary({ s }: { s: HubSettings }) {
+  const month = 1999;
+  const hold = s.refund_policy === "hold_30_no_clawback";
+  const rules = [
+    `Each sale pays one month of the customer's plan, before tax. On the $19.99 plan that's ${usd(month)}.`,
+    s.annual_basis === "monthly_list" ? "Annual customers count at the monthly list price, not the discounted annual price." : s.annual_basis === "divide_12" ? "Annual customers count at their annual price divided by 12." : "Annual customers count at the full annual payment.",
+    `The rep is paid again on each anniversary while the customer is still active and paid, for ${s.commission_years} year${s.commission_years === 1 ? "" : "s"} in total (${s.commission_years} payments).`,
+    hold ? "Commission waits 30 days after the customer pays. A refund inside those 30 days cancels it; a refund after that never takes money back from the rep." : s.refund_policy === "never_reverse" ? "Commission is earned when the customer pays and is never reversed." : "Commission waits until month end. A refund before payout cancels it; after payout it comes off the next statement.",
+    s.first_month_cancel_voids ? "If the customer cancels within their first month, the rep is not paid for that sale." : "A customer who cancels in their first month still counts once the hold passes.",
+    `A rep's link counts for accounts created within ${s.attribution_window_days} days of the visit.`,
+    "Earned commission is paid on the next month-end statement after the owner approves it. Rep tools are paid for by the company.",
+  ];
+  return <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-sm">{rules.map((r) => <li key={r}>{r}</li>)}</ol>;
+}
+
 function RepFields({ r }: { r?: HubRep }) {
   return (
     <>
@@ -53,7 +76,7 @@ function RepFields({ r }: { r?: HubRep }) {
   );
 }
 
-export default async function SalesHub({ searchParams }: { searchParams: Promise<{ tab?: string; ok?: string; err?: string; status?: string; rep?: string }> }) {
+export default async function SalesHub({ searchParams }: { searchParams: Promise<{ tab?: string; ok?: string; err?: string; status?: string; rep?: string; invite?: string; invite_rep?: string }> }) {
   const { user, db } = await requireAdmin();
   const sp = await searchParams;
   const tab: Tab = (TABS.find(([k]) => k === sp.tab)?.[0] ?? "overview") as Tab;
@@ -74,6 +97,12 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
   const importData = imports && !imports.error ? (imports.data as { batches: { id: string; label: string | null; received: number; added: number; duplicates: number; suppressed: number; invalid: number; unverified?: number; target_zip?: string | null; target_trade?: string | null; created_at: string }[]; unassigned_agent: number; suppressed: number;
     target?: { zip: string | null; trade: string | null; radius_miles: number; count: number; paused: boolean }; zips?: { zip: string; leads: number }[] }) : null;
   const activeReps = h.reps.filter((r) => r.status !== "removed");
+  // V8: invite links and policy versions (hidden until 20270110001000 is applied).
+  const invRes = tab === "team" ? await db.rpc("admin_sales_invites", { p_caller: user.id }) : null;
+  const invites = (invRes && !invRes.error ? invRes.data : {}) as Record<string, { created_at: string; expires_at: string; opened_at: string | null; accepted_at: string | null; revoked_at: string | null }>;
+  const verRes = tab === "policy" ? await db.rpc("admin_sales_policy_versions", { p_caller: user.id }) : null;
+  const versions = (verRes && !verRes.error ? verRes.data : null) as { version: number; policy: Record<string, string | number | boolean>; note: string | null; created_at: string; lines: number }[] | null;
+  const inviteLink = sp.invite && /^[A-Za-z0-9_-]{43}$/.test(sp.invite) ? new URL(`/sales/invite/${sp.invite}`, site.url).toString() : null;
   const sumStatus = (s: string[]) => h.commissions.filter((c) => s.includes(c.status)).reduce((t, c) => t + c.amount_cents, 0);
   const errText = sp.err ? ({
     owner_cannot_be_rep: "That email belongs to an owner account. Sales staff need their own email.",
@@ -141,7 +170,7 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
         <div className="space-y-6">
           <Card className="p-5">
             <h2 className="text-lg font-bold">Add a sales team member</h2>
-            <p className="mt-1 text-sm text-ink-soft">They get a permanent referral link right away. Nothing is emailed: send them to <b>built2bid.org/sales</b> to sign in with this email. Sales staff never get owner or customer-account access.</p>
+            <p className="mt-1 text-sm text-ink-soft">They get a permanent referral link right away. Then create an invite link below and send it to them yourself: it opens a welcome page and signs them in with this email. Nothing is emailed automatically. Sales staff never get owner or customer-account access.</p>
             <form action={saveRep} className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <RepFields />
               <div className="sm:col-span-2 lg:col-span-3"><button className={btn}>Add to sales team</button></div>
@@ -155,7 +184,25 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
                   <p className="text-sm text-muted">{r.role === "manager" ? "Sales manager" : "Sales rep"} · {r.email}{r.phone ? ` · ${r.phone}` : ""} · added {dateLabel(r.created_at)}{r.activated_at ? `, first signed in ${dateLabel(r.activated_at)}` : ", hasn't signed in yet"}</p>
                   <p className="mt-1 break-all font-mono text-sm">{repLink(r.code)}</p>
                 </div>
+                {!r.linked && r.status !== "removed" && (
+                  <form action={createInvite}>
+                    <input type="hidden" name="rep" value={r.id} />
+                    <button className={btnLight}>{invites[r.id] ? "New invite link" : "Create invite link"}</button>
+                  </form>
+                )}
               </div>
+              {!r.linked && invites[r.id] && (() => {
+                const i = invites[r.id];
+                const state = i.accepted_at ? "Accepted" : i.revoked_at ? "Replaced by a newer link" : new Date(i.expires_at) < new Date() ? "Expired: create a new link" : i.opened_at ? `Opened ${dateLabel(i.opened_at)}, not signed in yet` : "Not opened yet";
+                return <p className="mt-2 text-sm text-ink-soft">Invite link created {dateLabel(i.created_at)} · {state}{!i.accepted_at && !i.revoked_at ? ` · works until ${dateLabel(i.expires_at)}` : ""}</p>;
+              })()}
+              {inviteLink && sp.invite_rep === r.id && (
+                <div className="mt-3 space-y-2 rounded-lg border border-ok/40 bg-ok-tint p-3">
+                  <p className="text-sm font-semibold">Invite link for {r.full_name} (shown once, works for 14 days)</p>
+                  <CopyField value={inviteLink} label={`Invite link for ${r.full_name}`} />
+                  <p className="text-xs text-ink-soft">Send it to {r.email} by email or text. It only works when they sign in with that email. Creating a new link turns this one off.</p>
+                </div>
+              )}
               <details className="mt-3">
                 <summary className="cursor-pointer text-sm font-semibold text-brand">Edit</summary>
                 <form action={saveRep} className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -391,27 +438,50 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
       )}
 
       {tab === "policy" && (
-        <Card className="p-5">
-          <h2 className="text-lg font-bold">Commission policy</h2>
-          <p className="mt-1 text-sm text-ink-soft">One month of the customer&apos;s subscription value, before tax, at the sale month and each anniversary month. These settings are the written rules the ledger follows; every change is audit logged. {h.settings.policy_confirmed_at ? `Confirmed ${dateLabel(h.settings.policy_confirmed_at)}.` : "Not confirmed yet."}</p>
-          <form action={savePolicy} className="mt-4 grid gap-4">
-            {(Object.keys(POLICY) as (keyof typeof POLICY)[]).map((k) => (
-              <fieldset key={k} className="space-y-1">
-                <legend className="text-sm font-semibold">{k === "annual_basis" ? "Annual plans" : k === "refund_policy" ? "Refunds" : "What counts as the monthly value"}</legend>
-                {Object.entries(POLICY[k]).map(([v, label]) => (
-                  <label key={v} className="flex items-start gap-2 text-sm"><input type="radio" name={k} value={v} defaultChecked={h.settings[k] === v} className="mt-1" /> {label}</label>
+        <div className="space-y-4">
+          <Card className="p-5">
+            <h2 className="text-lg font-bold">Commission rules in plain language</h2>
+            <p className="mt-1 text-sm text-ink-soft">This is what reps are told and what the ledger does. {h.settings.policy_confirmed_at ? `Confirmed ${dateLabel(h.settings.policy_confirmed_at)}.` : "Not confirmed yet."}</p>
+            <PolicySummary s={h.settings} />
+          </Card>
+          <Card className="p-5">
+            <h2 className="text-lg font-bold">Change the rules</h2>
+            <p className="mt-1 text-sm text-ink-soft">Every change becomes a new numbered version. Commissions already created keep the version they were created under; only new sales use the new rules.</p>
+            <form action={savePolicy} className="mt-4 grid gap-4">
+              {(Object.keys(POLICY) as (keyof typeof POLICY)[]).map((k) => (
+                <fieldset key={k} className="space-y-1">
+                  <legend className="text-sm font-semibold">{k === "annual_basis" ? "Annual plans" : k === "refund_policy" ? "Refunds" : "What counts as the monthly value"}</legend>
+                  {Object.entries(POLICY[k]).map(([v, label]) => (
+                    <label key={v} className="flex items-start gap-2 text-sm"><input type="radio" name={k} value={v} defaultChecked={h.settings[k] === v} className="mt-1" /> {label}</label>
+                  ))}
+                </fieldset>
+              ))}
+              <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="first_month_cancel" className="mt-1" defaultChecked={h.settings.first_month_cancel_voids ?? true} /> If the customer cancels within their first month, the rep is not paid for that sale.</label>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="text-sm">Years of commission<input type="number" name="commission_years" min={1} max={10} defaultValue={h.settings.commission_years} className={input} /></label>
+                <label className="text-sm">Link counts for accounts created within (days of the visit)<input type="number" name="attribution_window_days" min={1} max={365} defaultValue={h.settings.attribution_window_days} className={input} /></label>
+              </div>
+              <label className="text-sm">Why are you changing it? (saved with the version)<input name="note" maxLength={300} className={input} placeholder="e.g. Owner decision, Nov 2026" /></label>
+              <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="confirm" className="mt-1" defaultChecked={false} /> I confirm these are the commission rules (needed before statements can be approved).</label>
+              <div><button className={btn}>Save policy</button></div>
+            </form>
+            <p className="mt-4 text-xs text-muted">Months close in Central time. Discounts and coupons aren&apos;t subtracted automatically; adjust a line before approving if needed. Payouts stay manual: nothing here moves money.</p>
+          </Card>
+          {versions && (
+            <Card className="p-5">
+              <h2 className="text-lg font-bold">Version history</h2>
+              <ul className="mt-3 divide-y divide-line text-sm">
+                {versions.map((v) => (
+                  <li key={v.version} className="py-2">
+                    <div className="flex flex-wrap items-baseline justify-between gap-2"><span className="font-semibold">Version {v.version}{v.version === versions[0]?.version ? " (current)" : ""}</span><span className="text-xs text-muted">{dateLabel(v.created_at)} · {v.lines} commission line{v.lines === 1 ? "" : "s"}</span></div>
+                    {v.note && <p className="text-ink-soft">{v.note}</p>}
+                    <p className="text-xs text-muted">{policyLine(v.policy)}</p>
+                  </li>
                 ))}
-              </fieldset>
-            ))}
-            <div className="grid gap-3 sm:grid-cols-2">
-              <label className="text-sm">Years of commission<input type="number" name="commission_years" min={1} max={10} defaultValue={h.settings.commission_years} className={input} /></label>
-              <label className="text-sm">Link counts for accounts created within (days of the visit)<input type="number" name="attribution_window_days" min={1} max={365} defaultValue={h.settings.attribution_window_days} className={input} /></label>
-            </div>
-            <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="confirm" className="mt-1" defaultChecked={false} /> I confirm these are the commission rules (needed before statements can be approved).</label>
-            <div><button className={btn}>Save policy</button></div>
-          </form>
-          <p className="mt-4 text-xs text-muted">Months close in Central time. Discounts and coupons aren&apos;t subtracted automatically; adjust a line before approving if needed. Refunds are tracked once the Stripe webhook includes the charge.refunded event.</p>
-        </Card>
+              </ul>
+            </Card>
+          )}
+        </div>
       )}
     </div>
   );

@@ -64,11 +64,22 @@ export async function syncSalesBilling(db: SupabaseClient, stripe: Stripe, sub: 
       p_paid_at: paid && paidAtSec ? new Date(paidAtSec * 1000).toISOString() : null,
     });
     if (error) throw error;
+    // First-month cancellation rule (V8): a cancel request, or a canceled subscription, is reported so the
+    // database can cancel an unpaid sale-month commission when it came within the first month.
+    const canceledAt = cancellationTime(sub);
+    if (canceledAt) await db.rpc("sales_customer_canceled", { p_user: userId, p_canceled_at: canceledAt });
     return String((data as { action?: string })?.action ?? "synced");
   } catch (err) {
     logError("sales.sync_billing", err, { user: userId, subscription: sub.id });
     return "failed";
   }
+}
+
+/** When the customer asked to cancel (Stripe canceled_at), or now if the subscription is set to cancel. */
+export function cancellationTime(sub: Pick<Stripe.Subscription, "status" | "cancel_at_period_end" | "cancel_at" | "canceled_at">): string | null {
+  if (sub.canceled_at) return new Date(sub.canceled_at * 1000).toISOString();
+  if (sub.status === "canceled" || sub.cancel_at_period_end || sub.cancel_at) return new Date().toISOString();
+  return null;
 }
 
 /**
