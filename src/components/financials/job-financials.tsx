@@ -106,7 +106,8 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
       <section className="rounded-xl border border-line bg-surface p-4" data-testid="fin-open-job" data-guide-page="financials.job" data-guide-trade={guideTrade(data.estimate)} data-guide="fin.open-job">
         <h2 className="font-display text-lg font-extrabold">Job financials</h2>
         {!won ? <p className="mt-2 text-sm text-ink-soft">Financials start when the bid is won. Mark it won in your pipeline, then come back.</p>
-          : !perms.invoice || !writable ? <p className="mt-2 text-sm text-ink-soft">Someone with invoicing access opens the job&apos;s financials. Nothing is recorded yet.</p> : (
+          : !writable ? <p className="mt-2 text-sm text-ink-soft">Recording job financials turns on with the Financials add-on. <a className="font-semibold text-brand underline" href="/financials">Add it on Financials</a>. Nothing is recorded yet.</p>
+          : !perms.invoice ? <p className="mt-2 text-sm text-ink-soft">Someone with invoicing access opens the job&apos;s financials. Nothing is recorded yet.</p> : (
             <div className="mt-2 space-y-3">
               {sb ? <p className="text-sm text-ink-soft">Practice on a copy of this job. Its real financials have to be opened in the real books first. The copy gets its own SBX- numbers and never touches the real job.</p>
                 : <p className="text-sm text-ink-soft">This freezes the contract amount and the signed payment schedule so invoices can be checked against them. It doesn&apos;t create an invoice or send anything.</p>}

@@ -1,4 +1,4 @@
--- Rollback for 20261117001000_growth_activation.sql. Removes only what it added.
+-- Rollback for 20261117001001_growth_activation.sql. Removes only what it added.
 -- Rows recorded with the new event names must go before the old check list can return.
 drop function if exists public.growth_meaningful_estimates();
 drop index if exists public.analytics_events_user_event_idx;

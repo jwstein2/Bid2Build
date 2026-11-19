@@ -81,4 +81,4 @@ All 38 trades in `src/lib/trades/data.ts` are mapped in `src/lib/news/trades.ts`
 
 ## Database
 
-The migration is `supabase/migrations/20261221001000_industry_news.sql`. A paste-ready copy and a rollback are in the project files under `industry-news/`.
+The migration is `supabase/migrations/20261221001001_industry_news.sql`. A paste-ready copy and a rollback are in the project files under `industry-news/`.

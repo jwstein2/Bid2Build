@@ -36,19 +36,21 @@ async function need(cap: SalesCap, fd: FormData) {
 export async function sendInvite(fd: FormData) {
   const { user, db, rep } = await need("manage_reps", fd);
   const to = fd.get("to") === "team" ? "team" : "manage";
-  const { newInviteToken } = await import("@/lib/sales/invite");
+  const { newInviteToken, INVITE_FLASH } = await import("@/lib/sales/invite");
   const t = newInviteToken();
+  // Shown once from a two-minute HTTP-only cookie, never from the address bar (history, logs).
+  const flash = async () => { const { cookies } = await import("next/headers"); (await cookies()).set(INVITE_FLASH, `${rep}.${t.token}`, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "strict", path: "/sales/admin", maxAge: 120 }); };
   const { data, error } = await db.rpc("admin_sales_invite_resend", { p_caller: user.id, p_rep: rep, p_token_hash: t.hash });
   if (error) back(rep, { err: code(error) }, {}, to);
   const inv = data as { id: string; expires_at: string; email: string; full_name: string };
   const link = new URL(`/sales/invite/${t.token}`, site.url).toString();
   const { inviteEmailsOn, inviteText, sendInviteEmail } = await import("@/lib/sales/invite-email");
-  if (!inviteEmailsOn()) back(rep, { ok: "New invite link made. Copy it and send it yourself (invitation emails are off)." }, { invite: t.token, invite_rep: rep }, to);
+  if (!inviteEmailsOn()) { await flash(); back(rep, { ok: "New invite link made. Copy it and send it yourself (invitation emails are off)." }, { invite_rep: rep }, to); }
   const expires = new Date(inv.expires_at).toLocaleDateString("en-US", { month: "long", day: "numeric", timeZone: "America/Chicago" });
   const msg = inviteText(inv.full_name.split(" ")[0] || "there", link, expires);
   const res = await sendInviteEmail({ inviteId: inv.id, to: inv.email, ...msg });
   await db.rpc("admin_sales_invite_sent", { p_caller: user.id, p_invite: inv.id, p_ok: res.ok, p_message_id: res.ok ? res.id : null, p_error: res.ok ? null : res.error });
-  if (!res.ok) back(rep, { err: "send_failed" }, { invite: t.token, invite_rep: rep }, to);
+  if (!res.ok) { await flash(); back(rep, { err: "send_failed" }, { invite_rep: rep }, to); }
   back(rep, { ok: `Invitation emailed to ${inv.email}. The email provider accepted it; delivery shows here once it's confirmed.` }, {}, to);
 }
 

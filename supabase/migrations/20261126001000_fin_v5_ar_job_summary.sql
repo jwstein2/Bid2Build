@@ -15,7 +15,7 @@
 --      changes and unpaid bills, from the authoritative records only. AR counts issued invoices only.
 --   6. fin_ar_invoices_v: the AR table (customer, project, rep, PM, aging) for the Accounts Receivable page.
 --
--- Safe to run more than once. Requires 20261125001000_fin_access_retention.sql.
+-- Safe to run more than once. Requires 20261125001001_fin_access_retention.sql.
 -- Rollback: docs/financials/rollback_20261126001000.sql
 
 -- 1. RLS repair ----------------------------------------------------------------------------------------------

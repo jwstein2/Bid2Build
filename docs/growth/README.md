@@ -5,7 +5,7 @@ that extend what already exists instead of adding parallel systems.
 
 | PR | Scope | SQL | Live effect |
 |---|---|---|---|
-| 1 | First-bid activation: dashboard first-bid prompt, activation checklist, 7-day activation metric, event dedupe | `20261117001000_growth_activation.sql` | Visible to users (dashboard) |
+| 1 | First-bid activation: dashboard first-bid prompt, activation checklist, 7-day activation metric, event dedupe | `20261117001001_growth_activation.sql` | Visible to users (dashboard) |
 | 2 | Top-10 trade landing pages (same `/bids/[trade]` URLs) | none planned | Visible |
 | 3 | Conversion events from real transactions; Meta Pixel/CAPI + GA4 events, built **off** | small | None until switched on |
 | 4 | Lifecycle emails A–E on the existing outbox + Resend, sending **off** | yes | None until approved |

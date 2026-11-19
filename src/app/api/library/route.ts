@@ -91,6 +91,12 @@ const itemRow = (i: z.infer<typeof savedItemSchema>) => ({
   cost_type: i.costType, treatment: i.treatment, quantity: i.quantity ? i.quantity : null, unit: i.unit,
   unit_cost: i.unitCost === "" ? null : i.unitCost, taxable: i.taxable,
 });
+/** Stack rows: assembly_items has no trade or category columns (the stack carries the trade), so sending them fails the insert. */
+const stackItemRow = (i: z.infer<typeof savedItemSchema>) => {
+  const { trade: _trade, category: _category, ...row } = itemRow(i);
+  void _trade; void _category;
+  return row;
+};
 
 export async function POST(req: Request) {
   if (!(await sameOrigin())) return fail(403, "bad_origin", "Cross-site request refused.");
@@ -155,7 +161,7 @@ export async function POST(req: Request) {
     if (!error) {
       ({ error } = await supabase.from("assembly_items").insert(s.items.map((i, k) => ({
         // Client ids are kept so the open page can edit the rows right away (scaling) without a reload.
-        id: i.id, ...itemRow(i), quantity: i.quantity || "1", assembly_id: s.id, user_id: user.id, sort_order: k,
+        id: i.id, ...stackItemRow(i), quantity: i.quantity || "1", assembly_id: s.id, user_id: user.id, sort_order: k,
         ...(s.scale ? { qty_per: i.per || null, waste_pct: i.wastePct || 0, round_up: Boolean(i.roundUp) } : {}),
       }))));
       // Don't leave an empty stack behind if its rows were refused.
