@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { Card, Notice } from "@/components/ui/misc";
 import { ShareLink } from "@/components/sales/share-link";
-import { requireSalesRep } from "@/lib/sales/server";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { loadSalesAccess, requireSalesRep } from "@/lib/sales/server";
+import { landingView, VIEW_COOKIE } from "@/lib/sales/caps";
 import { repLink } from "@/lib/sales/link";
 import { qrFor } from "@/lib/sales/qr";
 import { projectedCommissions } from "@/lib/sales/basis";
@@ -18,6 +21,9 @@ export const metadata = { title: "Overview" };
 const pct = (n: number, d: number) => (d > 0 ? `${Math.round((n / d) * 100)}%` : "—");
 
 export default async function SalesOverview() {
+  // /sales opens the hub the person used last (or the only one they have).
+  const access = await loadSalesAccess();
+  if (access.kind === "staff" && landingView(access.caps, (await cookies()).get(VIEW_COOKIE)?.value) === "admin") redirect("/sales/admin");
   const { db } = await requireSalesRep();
   const [{ data, error }, goalRes, msRes, progRes] = await Promise.all([
     db.rpc("sales_my_overview"), db.rpc("sales_my_team_goal"), db.rpc("sales_my_milestones"), db.rpc("sales_my_progress", {}),
