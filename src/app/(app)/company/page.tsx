@@ -30,7 +30,7 @@ export default async function CompanyOverviewPage({ searchParams }: PageProps<"/
     return (
       <div className="mx-auto max-w-4xl space-y-6">
         <h1 className="text-3xl font-extrabold">Company Overview</h1>
-        <Notice title="No company account">The Command Center is part of the Team plan. <Link href="/pricing#enterprise" className="underline">See Team</Link>.</Notice>
+        <Notice title="No company account">The Command Center is part of the Team plan. <Link href="/pricing?plan=team#enterprise" className="underline">Get Team</Link>.</Notice>
       </div>
     );
   }

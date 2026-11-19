@@ -51,6 +51,17 @@ export function paymentStatusSentence(p: NonNullable<EmailFacts["payment"]>): st
   return p.verified ? `We've received your payment of ${amt} on ${when}.` : `We've recorded your payment of ${amt} (${p.method}) on ${when}.`;
 }
 
+/**
+ * "How to pay" for invoice emails: the same instructions the invoice PDF prints, so the email and the
+ * attached/linked PDF never disagree. Built only from the company's public contact details.
+ */
+export function payInstructionsText(company: { name?: string; phone?: string; email?: string }, invoiceNumber?: string): string {
+  const name = company.name?.trim() || "us";
+  const ref = invoiceNumber ? ` and include invoice number ${invoiceNumber} with your payment` : "";
+  const contact = [company.phone?.trim(), company.email?.trim()].filter(Boolean).join(" or ");
+  return `How to pay: make payment to ${name}${ref}.${contact ? ` Questions about this invoice? Reach us at ${contact}.` : ""}`;
+}
+
 export function canonicalFacts(kind: TemplateKind, f: EmailFacts): string {
   const facts = {
     kind, invoiceNumber: f.invoiceNumber ?? null, amountDue: f.amountDue !== undefined ? toMoney(f.amountDue) : null, dueDate: f.dueDate ?? null,

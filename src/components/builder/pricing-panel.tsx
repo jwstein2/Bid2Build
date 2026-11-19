@@ -13,6 +13,7 @@ import { belowTargetMargin, refreshPreview } from "@/lib/pricing/refresh";
 import { Button } from "../ui/button";
 import { VISIBILITY_LABEL } from "./workspace";
 import { TaxDetails } from "./tax-details";
+import { useBuilderOps } from "./ops-context";
 
 function equivalent(e: Estimate): string | null {
   const f = pricingFactor(e.pricing);
@@ -34,6 +35,13 @@ export function PricingPanel({ estimate: e, totals: t, dispatch, lib }: { estima
   const eq = equivalent(e);
   const taxInvalid = t.issues.some((i) => i.code === "invalid_tax");
   const negProfit = t.grossProfit.isNegative();
+  // What the customer will actually see (company proposal style applied), not just this bid's raw value.
+  const pd = useBuilderOps().priceDisplay;
+  const mode = pd?.displayMode ?? e.displayMode;
+  const vis = pd?.defaultGroupVisibility ?? e.defaultGroupVisibility;
+  const canMode = pd?.canEdit.displayMode ?? true;
+  const canVis = pd?.canEdit.defaultGroupVisibility ?? true;
+  const chooseMode = (m: Estimate["displayMode"]) => { dispatch({ type: "patch", patch: { displayMode: m } }); pd?.choose("displayMode"); };
 
   return (
     <aside className="space-y-4 lg:sticky lg:top-[7.5rem] lg:self-start" aria-label="Pricing">
@@ -150,21 +158,22 @@ export function PricingPanel({ estimate: e, totals: t, dispatch, lib }: { estima
 
       <div className="rounded-xl border border-line bg-surface p-4">
         <h2 className="font-display font-bold">Customer pricing display</h2>
-        <fieldset className="mt-3 space-y-2 text-sm">
+        <fieldset className="mt-3 space-y-2 text-sm" disabled={!canMode} data-testid="price-display">
           <legend className="sr-only">Display mode</legend>
           <label className="flex items-start gap-2">
-            <input type="radio" name="display" checked={e.displayMode === "by_group"} onChange={() => dispatch({ type: "patch", patch: { displayMode: "by_group" } })} className="mt-1 accent-[var(--color-brand)]" />
+            <input type="radio" name="display" checked={mode === "by_group"} onChange={() => chooseMode("by_group")} className="mt-1 accent-[var(--color-brand)]" />
             <span>Show sections <span className="block text-xs text-muted">Each section uses its own setting.</span></span>
           </label>
           <label className="flex items-start gap-2">
-            <input type="radio" name="display" checked={e.displayMode === "project_total"} onChange={() => dispatch({ type: "patch", patch: { displayMode: "project_total" } })} className="mt-1 accent-[var(--color-brand)]" />
-            <span>Single project total <span className="block text-xs text-muted">One price for the entire project.</span></span>
+            <input type="radio" name="display" checked={mode === "project_total"} onChange={() => chooseMode("project_total")} className="mt-1 accent-[var(--color-brand)]" />
+            <span>Single project total <span className="block text-xs text-muted">One price for the entire project. Sections, line items, costs and markup stay private.</span></span>
           </label>
         </fieldset>
-        {e.displayMode === "by_group" && (
+        {!canMode && <p className="mt-2 text-xs text-muted">Set by your company&apos;s proposal style.</p>}
+        {mode === "by_group" && (
           <div className="mt-3">
             <label htmlFor="default-vis" className="label">Default for sections</label>
-            <select id="default-vis" value={e.defaultGroupVisibility} onChange={(ev) => dispatch({ type: "patch", patch: { defaultGroupVisibility: ev.target.value as GroupVisibility } })} className="field field-sm">
+            <select id="default-vis" value={vis} disabled={!canVis} onChange={(ev) => { dispatch({ type: "patch", patch: { defaultGroupVisibility: ev.target.value as GroupVisibility } }); pd?.choose("defaultGroupVisibility"); }} className="field field-sm">
               {Object.entries(VISIBILITY_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
             </select>
           </div>

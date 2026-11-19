@@ -1,6 +1,6 @@
 "use client";
 import { isNewAccount, track } from "@/lib/analytics/track";
-import { Loader2, Mail, MessageSquareText } from "lucide-react";
+import { Inbox, Loader2, Mail, MessageSquareText } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { getBrowserClient, getOtpClient } from "@/lib/supabase/client";
@@ -399,8 +399,17 @@ export function AuthDialog({ open, onOpenChange, next, onVerified, title, copy, 
 
       {stage === "email-code" && (
         <form onSubmit={(ev) => { ev.preventDefault(); void verifyEmail(); }} className="space-y-3">
-          <p className="text-sm text-ink-soft">{`Keep this ${copy ? "window" : "tab"} open${copy || linkPhone ? "" : "; your bid is saved on this device"}. Not there in a minute? Check Spam, Junk or Promotions for "Your Built2Bid verification code".`}</p>
+          <p className="text-sm text-ink-soft">{`Keep this ${copy ? "window" : "tab"} open${copy || linkPhone ? "" : "; your bid is saved on this device"}. Nothing is lost while you wait.`}</p>
           {codeField("auth-code")}
+          {/* Codes sometimes land in spam: say so plainly, up front, so a slow inbox never feels like a failed sign-up. */}
+          <div className="rounded-lg border border-line bg-paper p-3 text-sm" data-testid="code-spam-help">
+            <p className="flex items-center gap-1.5 font-semibold"><Inbox className="h-4 w-4 shrink-0 text-brand" aria-hidden /> Don&apos;t see the email?</p>
+            <ul className="mt-1 list-disc space-y-0.5 pl-5 text-ink-soft">
+              <li>Check <b className="font-semibold text-ink">Spam</b>, <b className="font-semibold text-ink">Junk</b> or <b className="font-semibold text-ink">Promotions</b> for &quot;Your Built2Bid verification code&quot;.</li>
+              <li>Found it there? Mark it <b className="font-semibold text-ink">Not spam</b> so your proposals and receipts reach your inbox.</li>
+              <li>Still nothing after a minute? Resend below; the newest code is the one that works.</li>
+            </ul>
+          </div>
           <Captcha onToken={setCaptchaToken} resetKey={captchaReset} />
           <Button type="submit" className="w-full" size="lg" disabled={busy || code.length !== codeLen}>{busy && <Loader2 className="h-4 w-4 animate-spin" />} {copy?.submitLabel ?? "Verify and continue"}</Button>
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm">

@@ -15,6 +15,7 @@ import type { Action } from "./state";
 import type { Library } from "./library";
 import { SavedItemsPicker, useSavedItemsUi, type SavedItemsUi } from "./saved-items";
 import { PricingPanel } from "./pricing-panel";
+import { useBuilderOps } from "./ops-context";
 import { Modal } from "./dialogs";
 import { useOpenSections } from "./open-sections";
 import { QuantityCalculator } from "./calculators/quantity-calculator";
@@ -280,7 +281,7 @@ function GroupCard(props: {
   const items = itemsForGroup(estimate, g.id);
   const gt = totals.groups[g.id];
   const examples = props.examples.length ? props.examples : props.fallbackExamples;
-  const projectTotalMode = estimate.displayMode === "project_total";
+  const projectTotalMode = (useBuilderOps().priceDisplay?.displayMode ?? estimate.displayMode) === "project_total";
   const panelId = `gp-${g.id}`;
   const sectionName = g.name || "untitled section";
   // Fade the rows in only when the contractor opens the section, not on page load.

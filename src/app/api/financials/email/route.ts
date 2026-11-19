@@ -2,6 +2,9 @@ import { z } from "zod";
 import { fail, json } from "@/lib/http/api";
 import { finFail, finGuard } from "@/lib/financials/api";
 import { finAccess } from "@/lib/financials/server";
+import { loadBranding } from "@/lib/financials/branding";
+import { displayPhone } from "@/lib/proposal/customer-text";
+import { payInstructionsText } from "@/lib/financials/emails/render";
 import { defaultTemplate, render, TEMPLATE_KINDS, TONES, type EmailFacts, type TemplateKind, type Tone } from "@/lib/financials/emails";
 import { sub, toMoney } from "@/lib/financials/money";
 
@@ -18,7 +21,8 @@ type Row = Record<string, unknown>;
 /**
  * Render an invoice or payment email from verified records (deterministic templates; no AI). Returns the
  * company's saved wording for this kind + tone when there is one, and the standard wording to restore.
- * This route only renders text: nothing is stored or sent. Sending is not built (it turns on after approval).
+ * This route only renders text: nothing is stored or sent. Sending is not built (it turns on after approval),
+ * so it stays open in Demo Mode (see DEMO_BLOCKED): a demo can show the draft without reaching anyone.
  */
 export async function POST(req: Request) {
   const g = await finGuard({ write: true, limitKey: "fin-email-render", limit: 300 });
@@ -27,7 +31,7 @@ export async function POST(req: Request) {
   const p = body.safeParse(await req.json().catch(() => null));
   if (!p.success || (!p.data.invoiceId && !p.data.paymentId)) return fail(400, "invalid", "Choose an invoice or payment.");
   try {
-    const access = await finAccess(db, bookId);
+    const [access, brand] = await Promise.all([finAccess(db, bookId), loadBranding(db, bookId, { logo: false }).catch(() => null)]);
     const [{ data: settings }, inv, pay] = await Promise.all([
       db.from("fin_email_settings").select("tone").eq("book_id", bookId).maybeSingle(),
       p.data.invoiceId ? db.from("fin_invoices").select("id, job_id, kind, number, status, due_date, total, bill_to, milestone_id, memo").eq("id", p.data.invoiceId).eq("book_id", bookId).maybeSingle() : Promise.resolve({ data: null }),
@@ -59,14 +63,17 @@ export async function POST(req: Request) {
     const tone: Tone = p.data.tone ?? ((settings as Row | null)?.tone as Tone | undefined) ?? "professional";
     const schedule = ((snap as Row | null)?.payment_schedule as Row[] | null) ?? [];
     const facts: EmailFacts = {
-      customerName, companyName: access?.name ?? "", projectName: String((job as Row | null)?.name ?? ""),
+      customerName, companyName: access?.name || brand?.company.name || "", projectName: String((job as Row | null)?.name ?? ""),
       invoiceNumber: invoice?.number ? String(invoice.number) : undefined,
       amountDue: invoice ? toMoney(String((bal as Row | null)?.balance ?? invoice.total)) : undefined,
       dueDate: invoice?.due_date ? String(invoice.due_date) : undefined,
       milestone: (ms as Row | null)?.description ? String((ms as Row).description) : undefined,
-      balance: jobOwed,
+      // Invoice emails talk about this invoice's open balance (as the automatic reminders do); receipts about the job's.
+      balance: invoice ? toMoney(String((bal as Row | null)?.balance ?? invoice.total)) : jobOwed,
       contractTotal: kind === "deposit" && contract ? toMoney(String((contract as Row).current_contract)) : undefined,
       schedule: kind === "deposit" ? schedule.map((s) => ({ label: String(s.label), percent: String(s.percent) })) : undefined,
+      // Same "How to pay" wording as the invoice PDF (invoice emails only).
+      payInstructions: invoice ? payInstructionsText({ name: access?.name || brand?.company.name, phone: brand?.company.phone ? displayPhone(brand.company.phone) : undefined, email: brand?.company.email }, invoice.number ? String(invoice.number) : undefined) : undefined,
       payment: payment ? { amount: toMoney(sub(String(payment.amount), String(payment.refunded ?? "0"))), date: String(payment.received_on), method: String(payment.method), verified: Boolean(payment.verified) } : undefined,
     };
     const { data: tpl } = await db.from("fin_email_templates").select("subject, body").eq("book_id", bookId).eq("template_kind", kind).eq("tone", tone).maybeSingle();
@@ -80,6 +87,8 @@ export async function POST(req: Request) {
       template: (tpl as { subject: string; body: string } | null) ?? defaultTemplate(kind, tone),
       standardTemplate: defaultTemplate(kind, tone),
       sendingEnabled: false,
+      // The customer PDF stays available as the fallback for any email (issued invoices only).
+      pdfUrl: invoice && invoice.status !== "draft" ? `/api/financials/invoices/${String(invoice.id)}/pdf?download=1` : null,
     });
   } catch (e) {
     return finFail(e, "financials.email.render");

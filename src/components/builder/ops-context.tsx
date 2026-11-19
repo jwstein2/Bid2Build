@@ -2,6 +2,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import type { ContractSummary } from "@/lib/operations/contract";
 import type { StylePolicy } from "@/lib/operations/proposal-style";
+import type { EstimateDisplayMode, GroupVisibility } from "@/lib/estimate/types";
 import type { SubQuoteBundle } from "@/lib/operations/sub-quotes";
 
 export interface TeamResource { id: string; name: string; kind: "staff" | "subcontractor" | "crew"; trades: string[] }
@@ -23,8 +24,19 @@ export interface BuilderOps {
   };
 }
 
-interface Ctx { estimateId: string | null; ops: BuilderOps | null; refresh: () => void; saved: boolean }
-const OpsContext = createContext<Ctx>({ estimateId: null, ops: null, refresh: () => {}, saved: false });
+/**
+ * Customer price display as the customer will actually see it (after the company proposal style is
+ * applied), plus a hook that records the bid's own choice so company-managed bids honor it.
+ */
+export interface PriceDisplay {
+  displayMode: EstimateDisplayMode;
+  defaultGroupVisibility: GroupVisibility;
+  canEdit: { displayMode: boolean; defaultGroupVisibility: boolean };
+  choose: (key: "displayMode" | "defaultGroupVisibility") => void;
+}
+
+interface Ctx { estimateId: string | null; ops: BuilderOps | null; refresh: () => void; saved: boolean; priceDisplay?: PriceDisplay | null }
+const OpsContext = createContext<Ctx>({ estimateId: null, ops: null, refresh: () => {}, saved: false, priceDisplay: null });
 
 /** Loads project-operations data for a saved (cloud) bid. Nothing loads for local drafts. */
 export function useOpsLoader(estimateId: string | null) {
@@ -43,8 +55,8 @@ export function useOpsLoader(estimateId: string | null) {
   return { ops: estimateId ? ops : null, refresh };
 }
 
-export function BuilderOpsProvider({ estimateId, saved, ops, refresh, children }: { estimateId: string | null; saved: boolean; ops: BuilderOps | null; refresh: () => void; children: ReactNode }) {
-  return <OpsContext.Provider value={{ estimateId, ops, refresh, saved }}>{children}</OpsContext.Provider>;
+export function BuilderOpsProvider({ estimateId, saved, ops, refresh, priceDisplay, children }: { estimateId: string | null; saved: boolean; ops: BuilderOps | null; refresh: () => void; priceDisplay?: PriceDisplay | null; children: ReactNode }) {
+  return <OpsContext.Provider value={{ estimateId, ops, refresh, saved, priceDisplay }}>{children}</OpsContext.Provider>;
 }
 
 export const useBuilderOps = () => useContext(OpsContext);

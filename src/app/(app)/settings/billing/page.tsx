@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { createAdminClient, createClient, getUser } from "@/lib/supabase/server";
-import { isPmBillingConfigured, isPmEnabled, isStripeConfigured } from "@/lib/env";
+import { isEnterpriseConfigured, isPmBillingConfigured, isPmEnabled, isStripeConfigured } from "@/lib/env";
+import { PRICES } from "@/lib/marketing/catalog";
 import { loadPmAccess } from "@/lib/pm/server";
 import { PmAddonCard } from "@/components/billing/pm-addon";
 import { getStripe } from "@/lib/billing/stripe";
@@ -128,6 +129,18 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
           <Card className="flex flex-col border-accent p-5"><p className="font-bold">{ANNUAL.name} <Badge tone="accent">Best value</Badge></p><p className="text-2xl font-extrabold">{ANNUAL.price}<span className="text-sm font-semibold text-muted">/year</span></p><p className="mb-4 flex-1 text-sm text-ink-soft">Billed annually. Equivalent to {ANNUAL_MONTHLY_EQUIVALENT}/month.</p><CheckoutButton plan="annual" signedIn label="Choose Annual" /></Card>
           <p className="text-sm text-muted sm:col-span-2">Both plans include exactly the same Unlimited features.</p>
         </div>
+      )}
+
+      {!company && isEnterpriseConfigured() && (
+        <Card className="flex flex-wrap items-center justify-between gap-3 border-navy/30 p-5" data-testid="billing-team-offer">
+          <div className="min-w-0">
+            <p className="font-bold">Team <span className="font-semibold text-muted">· {PRICES.enterpriseBase}/month</span></p>
+            <p className="text-sm text-ink-soft">{PRICES.enterpriseIncludedUsers} licensed users with unlimited bidding, a company dashboard, roles and one shared bill.
+              {paidActive ? " Team replaces Unlimited; turn off Unlimited's renewal first so you never pay for both." : ""}</p>
+          </div>
+          {/* Opens straight to the company step of Team checkout on the pricing page (no re-choosing). */}
+          <Link href="/pricing?plan=team#enterprise" className="inline-flex min-h-11 items-center rounded-lg bg-navy px-4 font-semibold text-white" data-cta="billing-get-team">{paidActive ? "See Team" : "Get Team"}</Link>
+        </Card>
       )}
     </div>
   );

@@ -54,7 +54,6 @@ export const DEMO_BLOCKED: readonly { prefix: string; write?: boolean }[] = [
   { prefix: "/api/account/market-consent", write: true },
   { prefix: "/api/account/ad-consent", write: true },
   { prefix: "/api/estimates/", write: true, /* signing + countersign only, see matcher */ },
-  { prefix: "/api/financials/email", write: true },
   { prefix: "/api/financials/tax-banking", write: true },
   { prefix: "/api/comms/", write: true },
   { prefix: "/api/comms", write: true },

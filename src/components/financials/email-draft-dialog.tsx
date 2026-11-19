@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import { Eye, Pencil, RotateCcw, Save } from "lucide-react";
+import { Eye, FileDown, Pencil, RotateCcw, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field, Notice } from "@/components/ui/misc";
 import { FinDialog } from "./fin-dialog";
@@ -17,7 +17,7 @@ type Tone = keyof typeof TONE_LABELS;
 interface Rendered {
   kind: string; tone: Tone; options: string[]; toEmail: string; toName: string; subject: string; body: string; fieldsHash: string;
   standard: { subject: string; body: string }; template: { subject: string; body: string }; standardTemplate: { subject: string; body: string };
-  companyTemplate: boolean; canSaveTemplate: boolean; sendingEnabled: boolean;
+  companyTemplate: boolean; canSaveTemplate: boolean; sendingEnabled: boolean; pdfUrl?: string | null;
 }
 
 /**
@@ -43,7 +43,10 @@ export function EmailDraftDialog({ open, onOpenChange, invoiceId, paymentId }: {
     const res = await fetch("/api/financials/email", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ invoiceId, paymentId, kind, tone }) }).catch(() => null);
     const data = res ? await res.json().catch(() => null) : null;
     setBusy(false);
-    if (!res?.ok || !data) return setMsg({ tone: "danger", text: data?.message ?? "We couldn't build the email." });
+    // Errors come back as { error: { code, message } }. Say what happened instead of a generic failure.
+    const apiErr = data && typeof data.error === "object" && data.error ? (data.error as { code?: string; message?: string }) : null;
+    if (!res) return setMsg({ tone: "danger", text: "You're offline or the connection dropped. Nothing was sent." });
+    if (!res.ok || !data) return setMsg({ tone: "danger", text: apiErr?.message ?? data?.message ?? "We couldn't build the email. Nothing was sent." });
     setR(data); setSubject(data.subject); setBody(data.body); setToEmail(data.toEmail); setTpl(data.template);
   }, [invoiceId, paymentId]);
 
@@ -69,7 +72,17 @@ export function EmailDraftDialog({ open, onOpenChange, invoiceId, paymentId }: {
 
   return (
     <FinDialog open={open} onOpenChange={onOpenChange} title="Email draft" wide description="Review and edit before anything goes out. Nothing is sent from here.">
-      {!r ? <p className="text-sm text-ink-soft">{busy ? "Building the email from your records…" : msg?.text}</p> : (
+      {!r ? (
+        <div className="space-y-3">
+          <p className="text-sm text-ink-soft" role={msg?.tone === "danger" ? "alert" : undefined}>{busy ? "Building the email from your records…" : msg?.text}</p>
+          {!busy && msg?.tone === "danger" && (
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant="secondary" onClick={() => void load()}>Try again</Button>
+              {invoiceId && <a className="inline-flex min-h-9 items-center text-sm font-semibold text-brand underline" href={`/api/financials/invoices/${invoiceId}/pdf?download=1`}><FileDown className="mr-1 h-4 w-4" aria-hidden />Download the invoice PDF instead</a>}
+            </div>
+          )}
+        </div>
+      ) : (
         <div className="space-y-3" data-testid="fin-email-dialog">
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="Email type" htmlFor="em-kind">
@@ -126,7 +139,8 @@ export function EmailDraftDialog({ open, onOpenChange, invoiceId, paymentId }: {
             <Button onClick={saveDraft} disabled={busy || !toEmail || !subject.trim() || !body.trim()} data-testid="fin-email-save">Save draft</Button>
             {/* No send path exists in this release: the button is permanently disabled until sending is approved. */}
             <Button variant="secondary" disabled aria-describedby="em-send-note" data-testid="fin-email-send">Send</Button>
-            <span id="em-send-note" className="text-xs text-muted">Sending turns on after approval.</span>
+            <span id="em-send-note" className="text-xs text-muted">Sending turns on after approval. Saving a draft never emails anyone.</span>
+            {r.pdfUrl && <a className="ml-auto inline-flex min-h-11 items-center text-sm font-semibold text-brand underline" href={r.pdfUrl} data-testid="fin-email-pdf"><FileDown className="mr-1 h-4 w-4" aria-hidden />Invoice PDF</a>}
           </div>
         </div>
       )}
