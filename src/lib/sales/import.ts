@@ -7,6 +7,7 @@
  * start date and ZIP are all required, and the owner name, email and phone must each cite the public
  * page they were checked on. Rows missing any of that are counted as "unverified" and not stored.
  */
+import { timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 
 const s = (max: number) => z.string().trim().max(max).optional().nullable();
@@ -62,4 +63,16 @@ export function cleanRows(rows: unknown[]): { valid: ImportLeadRow[]; unverified
     else { unverified++; for (const i of p.error.issues.slice(0, 3)) reasons.add(i.path.join(".") || "row"); }
   }
   return { valid, unverified, reasons: [...reasons].slice(0, 10) };
+}
+
+/**
+ * Does the request's Authorization header carry the import secret? Tolerates the usual paste slips
+ * (surrounding spaces or a trailing newline on either side, "bearer" in any case, or no "Bearer " at
+ * all). A secret under 24 characters keeps the route closed.
+ */
+export function importSecretMatches(header: string | null, secret: string | undefined): boolean {
+  const want = (secret ?? "").trim();
+  const got = (header ?? "").trim().replace(/^bearer\s+/i, "").trim();
+  const a = Buffer.from(got), b = Buffer.from(want);
+  return want.length >= 24 && a.length === b.length && timingSafeEqual(a, b);
 }
