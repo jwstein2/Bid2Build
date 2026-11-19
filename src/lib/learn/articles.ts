@@ -18,6 +18,8 @@ export interface Article {
   blocks: ArticleBlock[];
   /** "Further reading" links found by the writer's research step (generated guides only). */
   sources?: { title: string; url: string }[];
+  /** Written by the scheduled AI writer (Claude Haiku) and published after automated checks. Shown on the page. */
+  aiAssisted?: boolean;
 }
 
 const coreArticles: Article[] = [
@@ -86,7 +88,7 @@ const coreArticles: Article[] = [
  * .github/workflows/pricing-articles.yml). Every entry passed the writer's automated checks before
  * it was committed; tests/learn-articles.test.ts re-checks the whole file on every build.
  */
-const generatedArticles = generated as Article[];
+const generatedArticles = (generated as Article[]).map((a) => ({ ...a, aiAssisted: true }));
 
 /** Newest pricing guides first, then the core guides. */
 export const articles: Article[] = [

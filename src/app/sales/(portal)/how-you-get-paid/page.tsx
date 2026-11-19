@@ -19,6 +19,7 @@ export default async function HowYouGetPaid() {
     ["4. Month-end statement", "Earned commission goes on your next month-end statement. The owner approves it and you're paid."],
     ["5. Anniversaries", "On the customer's 1-year and 2-year anniversaries you're paid again if they're still active and paid (3 payments in total). Upgrades count at the anniversary."],
     ["6. Milestone boxes", `At ${rules.flat.map((f) => f.at).join(", ")}, ${rules.every} and every ${rules.every} accounts after that, a Built2Bid gift box pops up on your dashboard. Click the box to open it and see your bonus. It goes on your next statement once the owner approves it.`],
+    ["7. If you leave", "You're paid for every sale whose customer paid before your last day, including sales still in the 30-day hold and gift boxes you already unlocked. Payments that come in after you leave (including 1-year and 2-year anniversaries) don't earn commission. Your written sales agreement has the details."],
   ];
   return (
     <div className="space-y-6">

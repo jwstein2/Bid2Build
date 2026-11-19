@@ -125,5 +125,141 @@
         "url": "https://buildingcodegeek.com/irc-roof-ventilation-requirements/"
       }
     ]
+  },
+  {
+    "slug": "how-to-price-siding-jobs",
+    "title": "How to Price Siding Jobs: A Step-by-Step Method",
+    "description": "Step-by-step method for pricing siding jobs: takeoff in squares, materials with waste, labor hours, disposal, permits, overhead, and markup or margin.",
+    "updated": "2026-11-19",
+    "published": "2026-11-19",
+    "trade": "siding",
+    "blocks": [
+      {
+        "p": [
+          "Siding bids are mostly arithmetic done in the right units. Measure in squares for panels, linear feet for trim and fascia, and rolls for house wrap, then price each line with your own costs and your own labor rate.",
+          "This guide follows the order most estimates are built: takeoff, materials with waste, labor, removal and disposal, permits, overhead, and then markup or margin. Use your own supplier quotes and recent invoices throughout."
+        ]
+      },
+      {
+        "h": "Measure and take off quantities",
+        "p": [
+          "Start with a takeoff of each elevation being sided. Measure wall area and convert it to squares, where one square is 100 square feet. Subtract large openings such as windows and doors, but keep the trim and flashing they require as their own lines.",
+          "Measure perimeters for corners, starter strip, soffit and fascia. Count outside corners, J-channel and openings separately.",
+          "Built2Bid's area and perimeter calculators can do the arithmetic. Each estimate is organised in sections with line items showing quantity, unit, unit cost and cost type (material, labor, equipment, subcontractor or other). Keep the units the same as your supplier's: squares for panels, pieces for J-channel and outside corners, rolls for house wrap, square feet for soffit, linear feet for fascia wrap, and boxes for fasteners."
+        ]
+      },
+      {
+        "h": "Price materials with waste",
+        "p": [
+          "Order from the takeoff plus a waste allowance that reflects the cuts on your job, such as gables, dormers and small wall sections. Check the waste percentage against your own past jobs and your supplier's guidance.",
+          "Price each material line from a current supplier quote, not from memory. Quotes can change, so note the date and the validity period."
+        ],
+        "list": [
+          "House wrap (roll) for the wall area, including the overlaps your crew uses.",
+          "Siding panels (square) for the net area plus waste.",
+          "J-channel and outside corners (piece) counted from openings and corners.",
+          "Soffit (square foot) and fascia wrap (linear foot) from eave and rake measurements.",
+          "Fasteners (box) counted from the squares, using the quantity your manufacturer's instructions call for."
+        ]
+      },
+      {
+        "h": "Estimate labor hours and labor rate",
+        "p": [
+          "Labor is hours multiplied by your fully loaded labor rate. Build hours per square and per linear foot of trim from your own job history, and adjust for tear-off, height, number of stories and the number of openings.",
+          "Price siding installation per square, trim and soffit installation per linear foot, and cleanup as a lump sum.",
+          "Group trim in its own section of the estimate, so the trim and soffit hours are easy to see and check. Whether trim and soffit take the most labor on your jobs is a judgment to test against your own job history, not something to assume."
+        ]
+      },
+      {
+        "h": "Removal, disposal and equipment",
+        "p": [
+          "Price tear-off of existing siding per square. Count disposal as each load or unit you will haul, using your own disposal cost.",
+          "Add equipment such as ladders, scaffolding, lifts or a dumpster as separate equipment lines, using rental quotes or your own equipment cost. Partial repairs often need protection of landscaping and access planning, so include those hours too."
+        ]
+      },
+      {
+        "h": "Permits, licensing and inspection time",
+        "p": [
+          "Requirements vary. Contact the local building department about permit fees, whether a permit applies to your scope, and which inspections apply to siding work. Contact the state licensing board for contractor licensing rules, and a tax professional about sales tax on materials.",
+          "Add the permit fee, and the time to schedule and meet the inspector, as their own lines so they are not hidden in labor."
+        ]
+      },
+      {
+        "h": "Overhead and contingency",
+        "p": [
+          "Overhead covers the costs of running the business that do not appear on a single job, such as insurance, vehicles, tools, office costs and unbilled time. Spread your overhead across billable hours, or add a percentage to direct cost based on your own records.",
+          "Add a contingency line for known unknowns, such as rot under old siding. State in the proposal what is excluded so the contingency is not used to cover gaps in scope."
+        ]
+      },
+      {
+        "h": "Markup or target margin",
+        "p": [
+          "Built2Bid prices each estimate with either markup on cost or target gross margin, and shows the other figure for reference. Price = Cost × (1 + Markup). Price = Cost ÷ (1 − Margin). A 25 percent markup on cost gives a 20 percent gross margin, so pick one method, then check the other number before you send the bid.",
+          "Sales tax applies only to lines marked taxable, and adjustments or discounts apply before tax. Confirm with a tax professional how tax applies to your materials and labor in your state."
+        ]
+      },
+      {
+        "h": "Simplified example",
+        "p": [
+          "This simplified example covers only the siding panel and siding installation lines, plus markup, for 10 squares of wall. A real estimate includes every section above, including removal, house wrap, trim, flashing, disposal, permits and overhead. The numbers are for illustration only and are not prices to use."
+        ],
+        "formula": [
+          "Example: 10 squares × 1.10 (10% waste) = 11 squares of siding panels",
+          "Example: 11 squares × $200 = $2,200 for siding panels",
+          "Example: 10 squares × 3 labor hours per square = 30 labor hours",
+          "Example: 30 hours × $60 per hour = $1,800 for siding installation",
+          "Example: $2,200 + $1,800 = $4,000 cost",
+          "Example: $4,000 × (1 + 0.25) = $5,000 price at 25% markup",
+          "Example: $4,000 ÷ (1 − 0.20) = $5,000 price at 20% target margin"
+        ]
+      },
+      {
+        "h": "Quality tips and code items inspectors check",
+        "p": [
+          "These items affect what you include in the estimate. Local editions and amendments vary, so confirm each item with the local building department, and follow the manufacturer's installation instructions for every product."
+        ],
+        "list": [
+          "R703 (Exterior covering) covers siding, the water-resistive barrier and flashing. An inspector may look at how these are installed. Include the house wrap, its fasteners and the labor to install the barrier ahead of the siding.",
+          "R703.4 (Flashing) covers flashing around windows, doors and wall penetrations. An inspector may look at these details. Count every opening and penetration in the takeoff, and price flashing material and labor for each one instead of leaving it to the trim section.",
+          "R703.8 (Anchored stone and masonry veneer) covers anchored veneer. If the job includes anchored veneer, price the anchoring work and its labor, and ask the building department whether it falls within your scope.",
+          "R316 (Foam plastic) covers foam plastic. If foam sheathing, foam trim or other foam accessories are part of the job, add the material and the labor to fit them, and ask the building department how the inspector will review them.",
+          "Fiber cement attachment requirements have changed across editions of the residential code. Confirm which edition and amendments apply, and price the fasteners and labor for the attachment method the building department accepts."
+        ]
+      },
+      {
+        "h": "What is changing for siding contractors and how to reflect it in a bid",
+        "p": [
+          "Vinyl is usually the easiest product to schedule, because material is almost always in stock locally. Specialty lines and colors can stretch the calendar. Disruptions in resin, steel and fiber cement production have also stretched lead times for many cladding types. Check local stock and lead time for each product before you commit to a start date.",
+          "In the bid, confirm lead times with the supplier in writing, price from a current quote, and set a price validity date on the proposal so a delayed order does not quietly change the price. For specialty products, state in the terms what happens if material arrives late.",
+          "Fiber cement attachment rules can differ by local edition, and high-wind coastal sites can fall outside what the prescriptive tables reflect. Ask the building department early how attachment is to be handled at your site, and budget time for that review.",
+          "Partial siding repairs after storm damage can turn into scope disputes. Whether a claim covers matching depends on the policy wording and the facts of the loss. Document the damage with photos, put the scope in writing, and talk with an attorney or the homeowner's insurer before agreeing to match a full elevation."
+        ]
+      },
+      {
+        "h": "Putting it together",
+        "p": [
+          "Work in the order above: takeoff in squares, linear feet, rolls and boxes; materials with waste from current quotes; labor hours at your rate, with trim in its own section; then removal, disposal, equipment, permits, overhead and contingency; and finally markup or margin.",
+          "Check each line against your own invoices and review the totals before you send the proposal. Requirements vary for permits, licensing, tax and contract terms, so confirm those with the local building department, the state licensing board, a tax professional or an attorney."
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "title": "Siding Installation Management Guide for GCs",
+        "url": "https://projul.com/blog/construction-siding-installation-guide/"
+      },
+      {
+        "title": "Choose Best Siding Before 2026 Supply Crunch",
+        "url": "https://www.sidinghelp.net/best-siding-materials-before-2026-supply-crunch"
+      },
+      {
+        "title": "Evaluating the Adequacy of Siding Attachment",
+        "url": "https://iibec.org/evaluating-siding-attachment/"
+      },
+      {
+        "title": "Partial Roof and Siding Replacement, Explained for Storm Claims - Advantage Construction",
+        "url": "https://www.advantage-construction.com/partial-roof-and-siding-replacement-storm-claims"
+      }
+    ]
   }
 ]

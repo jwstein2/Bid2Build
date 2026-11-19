@@ -10,7 +10,7 @@ export interface Lead {
   id: string; company_name: string; contact_name: string | null; email: string | null; phone: string | null; website: string | null;
   city: string | null; state: string | null; zip: string | null; trades: string[]; source: string; source_ref: string | null; discovered_at: string;
   stage: Stage; lost_reason: string | null; assigned_rep: string | null; rep_name: string | null; customer_user_id: string | null; customer_tier: string | null;
-  do_not_contact: boolean; next_action_at: string | null; last_activity_at: string | null; notes: string | null; open_tasks: number; created_at: string; updated_at: string;
+  do_not_contact: boolean; dnc_status?: "unchecked" | "clear" | "listed"; dnc_checked_at?: string | null; phone_line?: "unknown" | "landline" | "mobile" | "voip"; text_consent_at?: string | null; next_action_at: string | null; last_activity_at: string | null; notes: string | null; open_tasks: number; created_at: string; updated_at: string;
   /** Weekly import only: business start date as published, where each fact was checked, Haiku sales brief. */
   business_started?: string | null; verification?: Record<string, unknown> | null; sales_brief?: string | null;
 }
@@ -25,7 +25,7 @@ export function verificationSources(v: Lead["verification"]): { field: string; u
   });
 }
 export interface LeadTask { id: string; lead_id?: string; company_name?: string; title: string; due_at: string; done_at?: string | null }
-export interface LeadActivity { id: number; kind: string; body: string | null; occurred_at: string; rep_name: string | null }
+export interface LeadActivity { id: number; kind: string; body: string | null; occurred_at: string; rep_name: string | null; disposition?: string | null; evidence?: string }
 export interface Duplicate { id: string; company_name: string; zip: string | null; rep_name: string | null; stage: string }
 
 /** Parse pasted rows: one business per line, comma or tab separated, in COLUMNS order. A header row is skipped. */

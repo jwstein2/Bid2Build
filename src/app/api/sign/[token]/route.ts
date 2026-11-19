@@ -6,6 +6,8 @@ import { acceptSchema } from "@/lib/esign/validate";
 import { ensureSignedPdf, loadRequestByToken, requestEvidence } from "@/lib/esign/server";
 import { isContractorSigningEnabled } from "@/lib/esign/contractor/config";
 import { ensureExecutedPdf } from "@/lib/esign/contractor/server";
+import { recordSigningEvent } from "@/lib/esign/events";
+import { sendSignerCopy } from "@/lib/esign/signer-copy";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -69,6 +71,7 @@ export async function POST(req: Request, ctx: RouteContext<"/api/sign/[token]">)
     return fail(500, "sign_failed", "We couldn't record your signature. Nothing was signed. Please try again.");
   }
   const row = (Array.isArray(data) ? data[0] : data) as { signature_id: string; created: boolean };
+  if (row.created) await recordSigningEvent(admin, r.id, "signed", { ip, userAgent });
 
   // V5.3: contractor side. Contractor-first opens the executed record; automatic application after the
   // customer signs happens here when the policy allows it; otherwise the contract waits for a person to
@@ -82,5 +85,10 @@ export async function POST(req: Request, ctx: RouteContext<"/api/sign/[token]">)
   // Acceptance is committed. The signed copy is best effort: a failure is retried on download.
   const pdf = await ensureSignedPdf(admin, row.signature_id);
   if (execution === "fully_executed") await ensureExecutedPdf(admin, row.signature_id);
+  // The signer gets a copy by email (like other e-signature services) when ESIGN_SIGNER_COPY_EMAIL=on.
+  if (row.created) {
+    const sent = await sendSignerCopy({ to: input.signerEmail, signerName: input.signerName, token, doc: r.doc, signatureId: row.signature_id });
+    if (sent) await recordSigningEvent(admin, r.id, "copy_emailed", { ip: null, userAgent: null });
+  }
   return json({ signed: true, signatureId: row.signature_id, pdfReady: pdf.ok, execution });
 }

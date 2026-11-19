@@ -9,6 +9,7 @@ import type { ProposalDocument } from "@/lib/proposal/types";
 import { logError } from "@/lib/http/api";
 import { sha256 } from "@/lib/export/finalize";
 import { hashSigningToken, isSigningToken } from "./token";
+import { EVENT_LABELS, listSigningEvents } from "./events";
 
 /** Private storage path of the exact PDF a signing request shows (written once, never replaced). */
 export const requestPdfPath = (userId: string, estimateId: string, requestId: string) => `${userId}/${estimateId}/signing/${requestId}.pdf`;
@@ -113,6 +114,7 @@ export async function ensureSignedPdf(admin: SupabaseClient, signatureId: string
       consentVersion: s.consent_version, consentText: s.consent_text, acceptanceText: s.acceptance_text, verification: s.verification,
       documentHash: s.document_hash, contentHash: s.content_hash, versionNumber: s.version_number, total: formatCurrency(String(s.total)),
       ipAddress: s.ip_address, userAgent: s.user_agent, linkCreatedAt: req?.created_at ?? s.signed_at,
+      events: (await listSigningEvents(admin, s.request_id)).filter((e) => e.at <= s.signed_at || e.event === "signed").map((e) => ({ label: EVENT_LABELS[e.event], at: e.at, ipAddress: e.ipAddress })),
     }, opts);
     const path = signedPdfPath(s.user_id, s.estimate_id, s.id);
     const up = await admin.storage.from("documents").upload(path, pdf, { contentType: "application/pdf", upsert: true });

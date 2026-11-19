@@ -50,3 +50,73 @@ is attached.
 * Upcoming milestones, mystery box awards and recent sales.
 
 The congratulation email, preferences survey, reward catalog and calendar are V8.4 P1-P2.
+
+## P1: preferences, celebrations, congratulations and rewards
+
+Migration `20270117001000_sales_v84_recognition.sql`, rollback in `supabase/rollback/`.
+
+### Work preferences (`/sales/preferences`)
+* 20 optional questions (`src/lib/sales/preferences.ts`), written for Built2Bid around common workplace
+  motivation ideas (autonomy, competence, relatedness, goal setting, recognition preferences). Not copied
+  from any published instrument, not validated, not a psychological or suitability assessment.
+* Nothing sensitive is asked (no health, family, finances or protected traits). Save, Skip for now and
+  Delete my answers. Skipping changes nothing about pay, leads or access.
+* The rep sees a plain summary. No score, no type, no label.
+* Choices: dashboard layout (recommended from question 1, or the rep's own pick), public recognition
+  (off by default), owner congratulation emails (on unless turned off), share hobbies with admins, and
+  celebration animations (the device's reduced-motion setting always wins).
+* Admins see only recognition and reward answers (questions 3, 4, 11, 12, 15, 16, 17) and hobbies when
+  shared (13, 14). Everything else stays with the rep. Answers are never used for pay or decisions.
+
+### Personalized overview
+The layout changes only the order of the overview sections (progress, earnings, customers, team). Every
+section, including earnings, is always shown.
+
+### Customer success celebrations
+Checked nightly by `sales_customer_successes_evaluate` (sales-close cron) for attributed, paying customers:
+* First real estimate: 3+ line items with a name, quantity and price (the growth activation rule).
+* First proposal: a signing link created or a PDF exported.
+* Activated: Built2Bid's 7-day activation rule.
+* Onboarding complete: a real estimate and a proposal.
+
+Opening a tutorial or finishing the tour doesn't count. Each customer and kind is recorded once. The rep
+sees a one-time celebration (a small pop and a few sparks, no confetti), then the history.
+
+### Owner congratulations email
+* Off by default. The owner turns it on and edits the default message (spec text, `{first_name}`).
+* Each completed onboarding creates one draft (unique per success). The owner edits, then sends it from
+  the verified founder address (`FOUNDER_EMAIL_FROM`, default james@built2bid.org) through Resend. The
+  provider idempotency key is the draft id, so a double click or retry can't send twice.
+* A rep who turned emails off is skipped, including drafts already waiting.
+
+### Reward catalog and awards (`/sales/rewards`)
+* Owner-only catalog: name, description, category, eligibility, value, cost, delivery method, tax
+  treatment, status. Cash is always taxable cash; gift cards are always cash equivalents.
+* Sales Admins propose awards (never for themselves); the owner authorizes, marks ordered and delivered,
+  or cancels. One live award per customer success or achievement.
+* Only an authorized cash reward touches money: one earned `reward` ledger line on the next statement,
+  through the normal approval. Gift cards and prizes are bought and sent by hand. Nothing is purchased
+  automatically.
+
+### Not in P1
+Weekly recognition digest email and immediate milestone notifications (P3), the "My Business" portfolio
+page (P3), calendar and scheduling (P2).
+
+## P3: My Business, voluntary goals, team wins and the owner's digest
+
+Migration `20270119001000_sales_v84_business.sql` (rollback in `supabase/rollback/`).
+
+- **My Business** (`/sales/business`): the rep's own customer portfolio. It shows customers, sales by month, upcoming
+  anniversaries (contingent on the customer staying subscribed), suggested check-ins, and an illustrative "what if"
+  calculator that is clearly labeled as an illustration, not a promise. It closes with a short "How we work" section
+  that sets expectations in plain language.
+- **Goals are voluntary.** A rep may set monthly targets for new sales, onboardings, follow-ups, prospects contacted or
+  earnings. Goals are never required, never ranked, never shown to other reps, and never used for pay, leads or any
+  decision about the rep. Last month's actuals appear as a reference point only.
+- **Team wins** (overview "Team" section): first names and what happened (onboarding complete, first sale, record
+  month) over the last 14 days, only for reps who turned on public recognition in My preferences. No amounts, no ranking.
+- **Owner's weekly digest**: off by default. When the owner turns it on in Admin, Recognition, the daily sales cron
+  sends one email per week (Monday or later, Central time) to the owner only, summarizing sales, customer successes,
+  achievements and anything awaiting the owner. `SALES_DIGEST_TO` overrides the recipient; otherwise it goes to the
+  founder address. A preview is on the same admin card.
+- Known approximation: My Business matches onboarding successes to customers by company name.

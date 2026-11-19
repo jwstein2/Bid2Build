@@ -1,7 +1,8 @@
 import { createAdminClient } from "@/lib/supabase/server";
 import { fail, rateLimit } from "@/lib/http/api";
 import { isEsignEnabled } from "@/lib/esign/config";
-import { ensureSignedPdf, loadRequestByToken, requestPdf, signedFilename } from "@/lib/esign/server";
+import { ensureSignedPdf, loadRequestByToken, requestEvidence, requestPdf, signedFilename } from "@/lib/esign/server";
+import { recordSigningEvent } from "@/lib/esign/events";
 import { pdfFilename } from "@/lib/pdf/render";
 import { isContractorSigningEnabled } from "@/lib/esign/contractor/config";
 import { ensureExecutedPdf } from "@/lib/esign/contractor/server";
@@ -23,6 +24,7 @@ export async function GET(_req: Request, ctx: RouteContext<"/api/sign/[token]/pd
   // A revoked or expired, never-signed link no longer serves the proposal.
   if (r.phase === "revoked" || r.phase === "expired") return fail(410, "link_inactive", "This signing link is no longer active.");
 
+  await recordSigningEvent(admin, r.id, "pdf_downloaded", await requestEvidence());
   let bytes: Buffer, filename: string;
   // V5.3: once fully executed (both signatures recorded) the customer's copy is the executed agreement.
   const executed = r.phase === "signed" && r.signatureId && isContractorSigningEnabled() ? await ensureExecutedPdf(admin, r.signatureId) : null;

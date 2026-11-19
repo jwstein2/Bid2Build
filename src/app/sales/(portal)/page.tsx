@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AttentionCard, type Attention } from "./leads/attention";
 import { Card, Notice } from "@/components/ui/misc";
 import { ShareLink } from "@/components/sales/share-link";
 import { cookies } from "next/headers";
@@ -17,20 +18,34 @@ import { AcceleratorCard, PersonalBestsCard, type MyAccelerator } from "@/compon
 import { TeamGoalBoard } from "@/components/sales/team-goal-board";
 import { QuestCard } from "@/components/sales/quest-card";
 import { MilestoneBoxes, type MilestoneAward } from "@/components/sales/gift-box";
+import { TeamWins } from "@/components/sales/team-wins";
+import { CustomerSuccessCard, SuccessCelebration, type Success } from "@/components/sales/success-celebration";
+import { recommendedLayout, sectionOrder, type Answers, type Layout } from "@/lib/sales/preferences";
 
 export const metadata = { title: "Overview" };
 
 const pct = (n: number, d: number) => (d > 0 ? `${Math.round((n / d) * 100)}%` : "—");
 
-export default async function SalesOverview() {
+export default async function SalesOverview({ searchParams }: { searchParams: Promise<{ welcome?: string }> }) {
+  const welcome = (await searchParams).welcome === "1";
   // /sales opens the hub the person used last (or the only one they have).
   const access = await loadSalesAccess();
   if (access.kind === "staff" && landingView(access.caps, (await cookies()).get(VIEW_COOKIE)?.value) === "admin") redirect("/sales/admin");
   const { db } = await requireSalesRep();
-  const [{ data, error }, goalRes, msRes, progRes, accRes, recRes] = await Promise.all([
+  const [{ data, error }, goalRes, msRes, progRes, accRes, recRes, prefRes, sucRes] = await Promise.all([
     db.rpc("sales_my_overview"), db.rpc("sales_my_team_goal"), db.rpc("sales_my_milestones"), db.rpc("sales_my_progress", {}),
-    db.rpc("sales_my_accelerator", {}), db.rpc("sales_my_records", {}),
+    db.rpc("sales_my_accelerator", {}), db.rpc("sales_my_records", {}), db.rpc("sales_my_preferences"), db.rpc("sales_my_successes"),
   ]);
+  // V8.7 lead recycling (hidden until 20270122001000 is applied).
+  const attRes = await db.rpc("sales_my_attention");
+  const attention = attRes.error || !attRes.data ? null : (attRes.data as Attention);
+  // V8.4 P3 (hidden until 20270119001000 is applied).
+  const winsRes = await db.rpc("sales_team_wins", {});
+  const wins = winsRes.error || !winsRes.data ? null : (winsRes.data as { rep: string; kind: string; at: string; mine: boolean }[]);
+  // V8.4 P1 (hidden until 20270117001000 is applied): layout order and customer success celebrations.
+  const prefs = prefRes.error || !prefRes.data ? null : (prefRes.data as { status: string; answers: Answers; dashboard_layout: Layout | null; animations: boolean });
+  const successes = sucRes.error || !sucRes.data ? null : (sucRes.data as Success[]);
+  const layout: Layout = prefs?.dashboard_layout ?? (prefs ? recommendedLayout(prefs.answers ?? {}) : "progress");
   // V8.4 (hidden until 20270116001000 is applied; the accelerator card shows once the owner turns it on).
   const acc = accRes.error || !accRes.data ? null : (accRes.data as MyAccelerator);
   const rec = recRes.error || !recRes.data ? null : (recRes.data as { months: MonthCounts[]; achievements: { kind: string; month: string; value: number | null; detail: Record<string, unknown> | null }[] });
@@ -73,12 +88,38 @@ export default async function SalesOverview() {
         <p className="mt-1 text-ink-soft">Share your link. Anyone who signs up through it stays connected to you, even if they buy months later.</p>
       </div>
 
-      {goal && <TeamGoalBoard g={goal} />}
+      {welcome && (
+        <Card className="p-5">
+          <h2 className="text-lg font-bold">You&apos;re in. Here&apos;s where to start</h2>
+          <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm">
+            <li><Link className="text-brand underline" href="/sales/how-you-get-paid">How you get paid</Link>: commissions, the 30-day hold and milestone boxes.</li>
+            <li><Link className="text-brand underline" href="/sales/academy">Sales Academy</Link>: short lessons and quizzes. Passing them certifies you to sell.</li>
+            <li><Link className="text-brand underline" href="/sales/preferences">My preferences</Link>: optional, sets how we celebrate wins with you.</li>
+            <li><Link className="text-brand underline" href="/sales/leads">Leads</Link>: new company leads are shared out automatically; work each one with a call or email.</li>
+          </ol>
+        </Card>
+      )}
+      {attention && <AttentionCard data={attention} compact />}
+      {successes && <SuccessCelebration items={successes} firstName={o.rep.full_name.split(" ")[0]} animate={prefs?.animations ?? true} />}
+      {prefs && prefs.status === "not_started" && (
+        <Card className="flex flex-wrap items-center justify-between gap-3 p-4 text-sm">
+          <p><span className="font-semibold">Make the Sales Hub yours.</span> A short, optional survey sets how we celebrate wins with you and which rewards to suggest.</p>
+          <Link href="/sales/preferences" className="font-semibold text-brand underline">Set my preferences</Link>
+        </Card>
+      )}
+      {sectionOrder(layout).map((sec) => {
+        if (sec === "team") return goal || wins ? <div key="team" className="space-y-8">{goal && <TeamGoalBoard g={goal} />}{wins && <TeamWins wins={wins} optedIn={!!(prefRes.data as { public_recognition?: boolean } | null)?.public_recognition} />}</div> : null;
+        if (sec === "progress") return (
+          <div key="progress" className="space-y-8">
       {ms && <MilestoneBoxes awards={ms.awards} accounts={ms.accounts} next={nextMilestone(rules, ms.accounts)} />}
       {acc?.enabled && <AcceleratorCard a={acc} />}
       {prog && bests && <QuestCard xp={bests[0]} quests={quests(prog)} />}
       {bests && rec && <PersonalBestsCard bests={bests} achievements={rec.achievements} />}
 
+          </div>
+        );
+        if (sec === "portfolio") return (
+          <div key="portfolio" className="space-y-8">
       <Card className="p-5">
         <h2 className="text-lg font-bold">Your referral link</h2>
         <p className="mb-3 mt-1 text-sm text-ink-soft">This link is permanent. A visit or free signup doesn&apos;t earn a commission by itself; the customer&apos;s paid subscription does.</p>
@@ -94,6 +135,11 @@ export default async function SalesOverview() {
         </div>
       </section>
 
+      {successes && <CustomerSuccessCard items={successes} />}
+          </div>
+        );
+        return (
+          <div key="earnings">
       <section aria-labelledby="money-h">
         <div className="mb-3 flex items-end justify-between gap-3">
           <h2 id="money-h" className="text-lg font-bold">Commissions</h2>
@@ -108,6 +154,10 @@ export default async function SalesOverview() {
           <p className="mt-2 text-xs text-muted">Next projected: {monthLabel(projected.map((p) => p.month).sort()[0])}. Projections assume each customer stays on their current plan.</p>
         )}
       </section>
+
+          </div>
+        );
+      })}
 
       <Card className="p-5 text-sm text-ink-soft">
         <h2 className="text-base font-bold text-ink">How you&apos;re paid</h2>

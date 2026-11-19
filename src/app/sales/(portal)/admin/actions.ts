@@ -37,6 +37,7 @@ const ERRORS: Record<string, string> = {
   invalid_goal: "Enter a whole number of accounts.",
   invalid_tiers: "Check the accelerator tiers: sales counts and rates must both go up, rates 50% or less.",
   invalid_milestones: "Check the milestone rules: increasing account numbers, rates 0-20%, flat boxes before the first percentage box.",
+  use_offboarding: "Use Offboard on the rep's management page to remove someone, so their records and pay are handled properly.",
 };
 
 function back(tab: string, result: { ok?: string; err?: string }): never {
@@ -67,6 +68,11 @@ export async function saveRep(fd: FormData) {
   }).safeParse(Object.fromEntries(fd));
   if (!p.success) back("team", { err: "invalid" });
   const v = p.data;
+  if (v.status === "removed") {
+    // Removing someone goes through offboarding (leads, meetings, final pay). Keeping an already-offboarded record as is is fine.
+    const { data: cur } = v.id ? await db.from("sales_reps").select("status").eq("id", v.id).maybeSingle() : { data: null };
+    if ((cur as { status?: string } | null)?.status !== "removed") back("team", { err: "use_offboarding" });
+  }
   const { error } = await db.rpc("admin_sales_member_save", { p_caller: user.id, p_id: v.id || null, p_email: v.email, p_full_name: v.full_name, p_phone: v.phone, p_role: v.role, p_status: v.status, p_payout_note: v.payout_note, p_sells: v.role !== "admin" || v.sells === "on" });
   if (error) back("team", { err: code(error) });
   back("team", { ok: v.id ? "Saved." : `Added ${v.email}. Send them to built2bid.org/sales to sign in with that email.` });
