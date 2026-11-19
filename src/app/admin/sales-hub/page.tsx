@@ -7,7 +7,9 @@ import type { Hub, HubRep, HubSettings } from "@/lib/sales/types";
 import { SOURCE_LABEL, STAGE_LABEL, TRADES, type Lead } from "@/lib/sales/crm";
 import { CopyField } from "@/components/sales/copy-field";
 import { site } from "@/lib/site";
-import { adjustCommission, approveStatement, assignCustomer, assignLeads, createInvite, importLeads, saveLeadTarget, closeMonth, endAttribution, recordPayout, savePolicy, saveRep } from "./actions";
+import { DEFAULT_MILESTONES, teamGoal, type GoalRaw, type MilestoneRules } from "@/lib/sales/goals";
+import { TeamGoalBoard } from "@/components/sales/team-goal-board";
+import { adjustCommission, approveStatement, assignCustomer, assignLeads, approveMilestone, createInvite, importLeads, saveMilestoneRules, saveTeamGoal, voidMilestone, saveLeadTarget, closeMonth, endAttribution, recordPayout, savePolicy, saveRep } from "./actions";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Sales Hub" };
@@ -51,8 +53,49 @@ function PolicySummary({ s }: { s: HubSettings }) {
     s.first_month_cancel_voids ? "If the customer cancels within their first month, the rep is not paid for that sale." : "A customer who cancels in their first month still counts once the hold passes.",
     `A rep's link counts for accounts created within ${s.attribution_window_days} days of the visit.`,
     "Earned commission is paid on the next month-end statement after the owner approves it. Rep tools are paid for by the company.",
+    ...(s.milestone_every ? [`Milestone gift boxes: ${(s.milestone_flat ?? []).map((f) => `${usd(f.cents)} at ${f.at}`).join(", ")}${(s.milestone_flat ?? []).length ? ", then " : ""}every ${s.milestone_every} accounts ${(s.milestone_rates ?? []).map((r) => `${r.pct}% from ${r.from}`).join(", ")} of still-active customers' payments since the last percentage box (at least ${usd(s.milestone_min_cents ?? 0)}). Owner approves; paid on the next statement.`] : []),
   ];
   return <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-sm">{rules.map((r) => <li key={r}>{r}</li>)}</ol>;
+}
+
+function MilestoneRulesForm({ s }: { s: HubSettings }) {
+  const r: MilestoneRules = s.milestone_every ? { every: s.milestone_every, rates: s.milestone_rates ?? [], min_cents: s.milestone_min_cents ?? 0, flat: s.milestone_flat ?? [] } : DEFAULT_MILESTONES;
+  if (!s.milestone_every) return null; // migration 20270111001000 not applied yet
+  const rates = [...r.rates, ...Array(Math.max(0, 4 - r.rates.length)).fill(null)] as (MilestoneRules["rates"][number] | null)[];
+  const flat = [...r.flat, ...Array(Math.max(0, 3 - r.flat.length)).fill(null)] as (MilestoneRules["flat"][number] | null)[];
+  return (
+    <Card className="p-5">
+      <h2 className="text-lg font-bold">Milestone gift boxes</h2>
+      <p className="mt-1 text-sm text-ink-soft">Early boxes pay a flat amount. Then every N accounts a percentage box pays a share of what the rep&apos;s still-active customers paid since the last percentage box, with a minimum. Changing these makes a new policy version.</p>
+      <form action={saveMilestoneRules} className="mt-4 grid gap-4">
+        <fieldset className="grid gap-2">
+          <legend className="text-sm font-semibold">Flat early boxes (leave blank to skip)</legend>
+          {flat.map((f, i) => (
+            <div key={i} className="grid grid-cols-3 gap-2">
+              <label className="text-xs">At account<input name={`flat_at_${i}`} type="number" min={1} defaultValue={f?.at ?? ""} className={input} /></label>
+              <label className="text-xs">Bonus ($)<input name={`flat_dollars_${i}`} type="number" min={0} step="0.01" defaultValue={f ? f.cents / 100 : ""} className={input} /></label>
+              <label className="text-xs">Badge<input name={`flat_badge_${i}`} maxLength={60} defaultValue={f?.badge ?? ""} className={input} /></label>
+            </div>
+          ))}
+        </fieldset>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <label className="text-sm">Percentage box every (accounts)<input name="every" type="number" min={1} max={10000} defaultValue={r.every} className={input} /></label>
+          <label className="text-sm">Minimum per percentage box ($)<input name="min_dollars" type="number" min={0} step="0.01" defaultValue={r.min_cents / 100} className={input} /></label>
+        </div>
+        <fieldset className="grid gap-2">
+          <legend className="text-sm font-semibold">Rates (from this account number on)</legend>
+          {rates.map((x, i) => (
+            <div key={i} className="grid grid-cols-2 gap-2">
+              <label className="text-xs">From account<input name={`rate_from_${i}`} type="number" min={1} defaultValue={x?.from ?? ""} className={input} /></label>
+              <label className="text-xs">Rate (%)<input name={`rate_pct_${i}`} type="number" min={0} max={20} step="0.1" defaultValue={x?.pct ?? ""} className={input} /></label>
+            </div>
+          ))}
+        </fieldset>
+        <label className="text-sm">Why are you changing it?<input name="note" maxLength={300} className={input} /></label>
+        <div><button className={btn}>Save milestone rules</button></div>
+      </form>
+    </Card>
+  );
 }
 
 function RepFields({ r }: { r?: HubRep }) {
@@ -102,6 +145,12 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
   const invites = (invRes && !invRes.error ? invRes.data : {}) as Record<string, { created_at: string; expires_at: string; opened_at: string | null; accepted_at: string | null; revoked_at: string | null }>;
   const verRes = tab === "policy" ? await db.rpc("admin_sales_policy_versions", { p_caller: user.id }) : null;
   const versions = (verRes && !verRes.error ? verRes.data : null) as { version: number; policy: Record<string, string | number | boolean>; note: string | null; created_at: string; lines: number }[] | null;
+  // V8 goals + milestone boxes (hidden until 20270111001000 is applied).
+  const goalRes = tab === "overview" ? await db.rpc("admin_sales_team_goal", { p_caller: user.id }) : null;
+  const goal = goalRes && !goalRes.error && goalRes.data ? teamGoal(goalRes.data as GoalRaw) : null;
+  const goalFloor = goalRes && !goalRes.error && goalRes.data ? (goalRes.data as GoalRaw).floor : 5;
+  const msRes = tab === "commissions" ? await db.rpc("admin_sales_milestones", { p_caller: user.id }) : null;
+  const awards = (msRes && !msRes.error ? msRes.data : null) as { id: string; rep_name: string; milestone: number; pct: number; flat_cents: number | null; badge: string | null; min_cents: number; reached_at: string; unlocks_at: string; revenue_cents: number | null; amount_cents: number | null; status: string; opened_at: string | null; void_reason: string | null; commission_status: string | null }[] | null;
   const inviteLink = sp.invite && /^[A-Za-z0-9_-]{43}$/.test(sp.invite) ? new URL(`/sales/invite/${sp.invite}`, site.url).toString() : null;
   const sumStatus = (s: string[]) => h.commissions.filter((c) => s.includes(c.status)).reduce((t, c) => t + c.amount_cents, 0);
   const errText = sp.err ? ({
@@ -111,6 +160,9 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
     policy_not_confirmed: "Confirm the commission policy (Policy tab) before approving statements.", already_approved: "That statement was already approved.",
     already_paid: "A payout was already recorded for that statement.", approve_first: "Approve the statement before recording its payout.",
     locked_after_approval: "Approved and paid lines can't be changed.", duplicate: "Someone with that email is already on the sales team.",
+    already_joined: "That person already signed in, so they don't need an invite.", invalid_zip: "Enter a 5-digit ZIP code.",
+    not_ready: "That box isn't ready to approve yet (it unlocks after the 30-day refund hold).", invalid_goal: "Enter a whole number of accounts.",
+    invalid_milestones: "Check the milestone rules: increasing account numbers, rates 0-20%, flat boxes before the first percentage box.",
   } as Record<string, string>)[sp.err] ?? "That didn't work. Check the form and try again." : null;
 
   return (
@@ -136,6 +188,21 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
 
       {tab === "overview" && (
         <div className="space-y-6">
+          {goal && (
+            <div className="grid gap-3 lg:grid-cols-[2fr_1fr]">
+              <TeamGoalBoard g={goal} />
+              <Card className="p-5">
+                <h2 className="text-base font-bold">Adjust the goal</h2>
+                <p className="mt-1 text-xs text-muted">Automatic target this month: {goal.auto}. Reps see the same board.</p>
+                <form action={saveTeamGoal} className="mt-3 grid gap-2">
+                  <label className="text-sm">Set this month&apos;s target<input name="target" inputMode="numeric" pattern="[0-9]*" defaultValue={goal.overridden ? goal.target : ""} placeholder={`Automatic (${goal.auto})`} className={input} /></label>
+                  <label className="text-sm">Never below<input type="number" name="floor" min={0} max={10000} defaultValue={goalFloor} className={input} /></label>
+                  <label className="text-sm">Note for reps (optional)<input name="note" maxLength={300} defaultValue={goal.note ?? ""} className={input} /></label>
+                  <div className="flex flex-wrap gap-2"><button name="mode" value="set" className={btn}>Save goal</button>{goal.overridden && <button name="mode" value="auto" className={btnLight}>Back to automatic</button>}</div>
+                </form>
+              </Card>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
             {([
               ["Active reps", activeReps.filter((r) => r.status === "active").length, `${activeReps.filter((r) => r.status === "invited").length} invited`],
@@ -355,6 +422,30 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
 
       {tab === "commissions" && (
         <div className="space-y-3">
+          {awards && awards.length > 0 && (
+            <Card className="p-5">
+              <h2 className="text-lg font-bold">Milestone gift boxes</h2>
+              <p className="mt-1 text-sm text-ink-soft">Boxes unlock after a 30-day refund hold. Approving adds the bonus to the rep&apos;s next month-end statement; nothing is paid automatically.</p>
+              <ul className="mt-3 divide-y divide-line text-sm">
+                {awards.map((a) => (
+                  <li key={a.id} className="flex flex-wrap items-start justify-between gap-3 py-3">
+                    <div>
+                      <p className="font-semibold">{a.rep_name} · {a.milestone} accounts · {a.flat_cents != null ? `flat ${usd(a.flat_cents)}` : `${a.pct}% (min ${usd(a.min_cents)})`}</p>
+                      <p className="text-xs text-muted">
+                        Reached {dateLabel(a.reached_at)} · {a.status === "locked" ? `unlocks ${dateLabel(a.unlocks_at)}` : a.status === "void" ? `canceled: ${a.void_reason ?? ""}` : `${usd(a.amount_cents ?? 0)}${a.flat_cents == null ? ` from ${usd(a.revenue_cents ?? 0)} active revenue` : ""} · ${a.opened_at ? "opened by rep" : "not opened yet"}${a.status === "approved" ? ` · ${a.commission_status === "paid" ? "paid" : "approved"}` : ""}`}
+                      </p>
+                    </div>
+                    {a.status === "ready" && (
+                      <div className="flex flex-wrap gap-2">
+                        <form action={approveMilestone}><input type="hidden" name="id" value={a.id} /><button className={btn}>Approve {usd(a.amount_cents ?? 0)}</button></form>
+                        <form action={voidMilestone} className="flex gap-2"><input type="hidden" name="id" value={a.id} /><input name="reason" required maxLength={300} placeholder="Reason to cancel" aria-label="Reason to cancel" className={`${input} w-40`} /><button className={btnLight}>Cancel box</button></form>
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
           <nav aria-label="Filter" className="flex flex-wrap gap-1 text-sm">
             {["all", ...Object.keys(COMMISSION_STATUS)].map((s) => (
               <Link key={s} href={`/admin/sales-hub?tab=commissions${s === "all" ? "" : `&status=${s}`}`} aria-current={(sp.status ?? "all") === s ? "page" : undefined}
@@ -467,6 +558,7 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
             </form>
             <p className="mt-4 text-xs text-muted">Months close in Central time. Discounts and coupons aren&apos;t subtracted automatically; adjust a line before approving if needed. Payouts stay manual: nothing here moves money.</p>
           </Card>
+          <MilestoneRulesForm s={h.settings} />
           {versions && (
             <Card className="p-5">
               <h2 className="text-lg font-bold">Version history</h2>

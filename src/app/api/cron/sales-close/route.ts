@@ -23,6 +23,8 @@ export async function POST(req: Request) {
     logError("sales.close_month", error);
     return fail(500, "close_failed", "Month-end close failed.");
   }
+  // Milestone gift boxes: create reached boxes and fix amounts whose 30-day hold has passed.
+  await createAdminClient().rpc("sales_milestones_evaluate", {}).then(() => null, () => null);
   // Imported leads whose sales brief didn't finish during the import.
   const briefs = await fillBriefs(createAdminClient(), { limit: 50, budgetMs: 8000 }).catch(() => 0);
   return json({ ...(data as object), briefs_written: briefs });
