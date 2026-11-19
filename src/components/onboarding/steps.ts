@@ -40,7 +40,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
     title: "What Are You Bidding Today?",
     body: "Every new estimate starts by choosing the type of project. Built2Bid opens the bid with sections and suggested items made for that trade.",
     bullets: [
-      "Pick Roofing, Decks & Porches, Siding, Concrete, Painting, or any of 41 trades.",
+      "Pick Roofing, Decks & Porches, Siding, Concrete, Painting, or any of 42 trades.",
       "Choose Other / Custom Project to start from a blank estimate.",
       "Need more than one trade on a job? Add another trade to the same project at any time.",
     ],

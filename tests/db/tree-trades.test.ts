@@ -28,7 +28,7 @@ d("tree trades migration", () => {
       delete from public.trade_categories where slug like 'tree-%';`);
     expect(await counts()).toMatchObject({ cats: 0, tpl: 0, at: 0, courses: 0 });
     await applyMigration(pool, FILE);
-    expect(await counts()).toEqual({ cats: 2, tpl: 2, at: 2, courses: 16, all_cats: 41 });
+    expect(await counts()).toEqual({ cats: 2, tpl: 2, at: 2, courses: 16, all_cats: 42 });
     const order = (await pool.query("select slug from public.trade_categories order by sort_order")).rows.map((r) => r.slug);
     expect(order.indexOf("tree-removal")).toBe(order.indexOf("landscaping") + 1);
     expect(order.indexOf("tree-trimming")).toBe(order.indexOf("landscaping") + 2);
@@ -38,6 +38,6 @@ d("tree trades migration", () => {
 
   it("is idempotent", async () => {
     await applyMigration(pool, FILE);
-    expect(await counts()).toEqual({ cats: 2, tpl: 2, at: 2, courses: 16, all_cats: 41 });
+    expect(await counts()).toEqual({ cats: 2, tpl: 2, at: 2, courses: 16, all_cats: 42 });
   });
 });

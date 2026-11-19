@@ -95,7 +95,7 @@ type Starter = Omit<SavedStack, "id" | "items"> & { key: string; summary: string
 const mat = { costType: "material" as const }, lab = { costType: "labor" as const };
 
 /**
- * Built-in starting points for the first five trades, plus per-tree stacks for tree removal and trimming. Ratios are common rules of thumb, shown as
+ * Built-in starting points for the first five trades, plus per-tree stacks for tree removal and trimming and a perimeter-based pest control plan. Ratios are common rules of thumb, shown as
  * "starting ratios" for the contractor to check and change. No prices: rates come from the contractor.
  */
 export const STARTER_ASSEMBLIES: Starter[] = [
@@ -177,6 +177,17 @@ export const STARTER_ASSEMBLIES: Starter[] = [
       { ...lab, name: "Crown cleaning (deadwood removal)", category: "Pruning", unit: "each", quantity: "1", per: "1" },
       { costType: "other", name: "Brush and debris haul-away", category: "Cleanup & Haul-Away", unit: "load", quantity: "1", per: "0.25", roundUp: true },
       { ...lab, name: "Site cleanup and raking", category: "Cleanup & Haul-Away", unit: "lump sum", quantity: "1" },
+    ],
+  },
+  {
+    key: "pest-control-initial-quarterly", name: "Initial treatment + quarterly plan", trade: "pest-control", summary: "Inspection, perimeter and crack-and-crevice treatment, products and four quarterly visits, scaled by the treated perimeter.",
+    scale: { unit: "linear foot", label: "Treated perimeter", calc: "perimeter" },
+    items: [
+      { ...lab, name: "Pest inspection", category: "Inspection", unit: "each", quantity: "1" },
+      { ...lab, name: "Exterior perimeter treatment", category: "General Pest Treatment", unit: "linear foot", quantity: "1", per: "1" },
+      { ...lab, name: "Crack and crevice treatment", category: "General Pest Treatment", unit: "each", quantity: "1" },
+      { ...mat, name: "Treatment products", category: "General Pest Treatment", unit: "lump sum", quantity: "1" },
+      { ...lab, name: "Quarterly service visit", category: "Service Plans", unit: "each", quantity: "4" },
     ],
   },
 ];

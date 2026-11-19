@@ -38,6 +38,9 @@ const RULES: Rule[] = [
   { units: AREA_UNITS, name: /roof|shingle|underlayment|tear-?off|re-?roof|felt|membrane/i, presets: [{ calc: "roof", label: "Roof area" }] },
   { units: AREA_UNITS, trades: ["roofing"], presets: [{ calc: "roof", label: "Roof area" }] },
 
+  // Pest control: perimeter treatments, termite trenching and exclusion sealing run around the building.
+  { units: ["linear foot"], trades: ["pest-control"], name: /perimeter|termite|trench|barrier|exclusion|foundation/i, presets: [{ calc: "perimeter", label: "Building perimeter" }] },
+
   // Edges & trim (roof edges, siding accessories, fascia, railing, fence).
   { units: ["linear foot", "piece"], name: /ridge|hip|valley|eave|rake|drip edge/i, presets: [{ calc: "linear", label: "Ridge & edge lengths" }] },
   { units: ["linear foot", "piece", "bundle"], name: /starter/i, presets: [{ calc: "perimeter", label: "Starter strip (building perimeter)" }] },

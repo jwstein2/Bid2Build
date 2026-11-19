@@ -111,7 +111,7 @@ export const TRADE_PRESET: Record<string, PresetKey> = {
   "finish-carpentry": "residential_remodeler", "cabinets-countertops": "residential_remodeler", framing: "general_contractor", insulation: "drywall",
   demolition: "general_contractor", landscaping: "general_contractor", "tree-removal": "general_contractor", "tree-trimming": "general_contractor", handyman: "residential_remodeler",
   drywall: "drywall", painting: "painting", electrical: "electrical", plumbing: "plumbing", hvac: "hvac",
-  "pressure-washing": "exterior_cleaning", "soft-washing": "exterior_cleaning", cleaning: "exterior_cleaning",
+  "pressure-washing": "exterior_cleaning", "soft-washing": "exterior_cleaning", cleaning: "exterior_cleaning", "pest-control": "exterior_cleaning",
   "commercial-remodeling": "commercial", "general-contracting": "general_contractor", other: "custom",
 };
 

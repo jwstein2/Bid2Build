@@ -40,7 +40,7 @@ export function ScaleStackForm({ stack, estimate, starter, onAdd, onCancel }: {
           ))}
         </div>
       ) : (
-        <p className="mt-2 text-xs text-muted">Tip: measure a row with its calculator first (for example the {scale.calc === "roof" ? "roof planes" : "area"} calculator). Its result then shows here.</p>
+        <p className="mt-2 text-xs text-muted">Tip: measure a row with its calculator first (for example the {scale.calc === "roof" ? "roof planes" : scale.calc === "perimeter" ? "perimeter" : "area"} calculator). Its result then shows here.</p>
       )}
       <div className="mt-4 overflow-hidden rounded-lg border border-line">
         <table className="w-full text-sm">

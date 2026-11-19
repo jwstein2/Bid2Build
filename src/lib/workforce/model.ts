@@ -236,6 +236,7 @@ const ALIASES: Record<string, string[]> = {
   hvac: ["hvac", "heating", "cooling"], heat: ["hvac"], cool: ["hvac"], ac: ["hvac"], sheetrock: ["drywall"], drywal: ["drywall"], tiler: ["tile"],
   handyman: ["general"], gc: ["general"], landscap: ["landscaping"], gutter: ["gutters"], deck: ["decking"], window: ["windows"], cabinet: ["cabinets"],
   countertop: ["countertops"], floor: ["flooring"], demo: ["demolition"], roof: ["roofing"], paint: ["painting"], plumb: ["plumbing"],
+  pest: ["pest control"], exterminator: ["pest control"], extermin: ["pest control"], termite: ["pest control"],
 };
 function queryTerms(q: string): string[][] {
   return q.toLowerCase().split(/\s+/).filter(Boolean).map((w) => {

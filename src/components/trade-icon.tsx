@@ -1,11 +1,11 @@
 import {
-  Archive, ArrowDownToLine, Axe, Bath, BoxSelect, BrickWall, BrushCleaning, Building, Building2, CookingPot, DoorOpen, Droplets, Fan, Fence, Frame,
+  Archive, ArrowDownToLine, Axe, Bath, BoxSelect, BrickWall, BrushCleaning, Bug, Building, Building2, CookingPot, DoorOpen, Droplets, Fan, Fence, Frame,
   Grid2x2, Hammer, HardHat, House, Layers, LayoutGrid, Paintbrush, PanelsTopLeft, Route, ShowerHead, Shovel, Sofa, Sparkles, SprayCan, Sprout, Square,
   Thermometer, Tractor, TreeDeciduous, Trees, Warehouse, Waves, Wrench, Zap, type LucideIcon,
 } from "lucide-react";
 
 const icons: Record<string, LucideIcon> = {
-  Archive, ArrowDownToLine, Axe, Bath, BoxSelect, BrickWall, BrushCleaning, Building, Building2, CookingPot, DoorOpen, Droplets, Fan, Fence, Frame,
+  Archive, ArrowDownToLine, Axe, Bath, BoxSelect, BrickWall, BrushCleaning, Bug, Building, Building2, CookingPot, DoorOpen, Droplets, Fan, Fence, Frame,
   Grid2x2, Hammer, HardHat, House, Layers, LayoutGrid, Paintbrush, PanelsTopLeft, Route, ShowerHead, Shovel, Sofa, Sparkles, SprayCan, Sprout, Square,
   Thermometer, Tractor, TreeDeciduous, Trees, Warehouse, Waves, Wrench, Zap,
 };
