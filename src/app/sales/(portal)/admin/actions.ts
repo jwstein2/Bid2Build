@@ -194,12 +194,16 @@ export async function createInvite(fd: FormData) {
   const { user, db } = await need("manage_reps", "team");
   const rep = String(fd.get("rep") ?? "");
   if (!/^[0-9a-f-]{36}$/i.test(rep)) back("team", { err: "invalid" });
-  const { newInviteToken } = await import("@/lib/sales/invite");
+  const { newInviteToken, INVITE_FLASH } = await import("@/lib/sales/invite");
   const t = newInviteToken();
   const { error } = await db.rpc("admin_sales_invite_create", { p_caller: user.id, p_rep: rep, p_token_hash: t.hash, p_days: 14 });
   if (error) back("team", { err: code(error) });
   revalidatePath(PATH);
-  redirect(`${PATH}?${new URLSearchParams({ tab: "team", invite: t.token, invite_rep: rep })}`);
+  // The raw token rides in a short-lived, HTTP-only cookie scoped to this page, never in the address bar,
+  // so it stays out of browser history, analytics and server/CDN logs.
+  const { cookies } = await import("next/headers");
+  (await cookies()).set(INVITE_FLASH, `${rep}.${t.token}`, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "strict", path: PATH, maxAge: 120 });
+  redirect(`${PATH}?${new URLSearchParams({ tab: "team", invite_rep: rep })}`);
 }
 
 export async function saveTeamGoal(fd: FormData) {

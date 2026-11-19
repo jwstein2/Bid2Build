@@ -22,5 +22,6 @@ run ROLE=pro node scripts/qa-audit/flows/bids.mjs
 run node scripts/qa-audit/flows/projects-financials.mjs
 run node scripts/qa-audit/flows/pm.mjs
 run ROLE=pro node scripts/qa-audit/flows/bids.mjs
+run node scripts/qa-audit/flows/checkout.mjs
 run node scripts/qa-audit/flows/esign-misc.mjs
 run node scripts/qa-audit/flows/uploads.mjs

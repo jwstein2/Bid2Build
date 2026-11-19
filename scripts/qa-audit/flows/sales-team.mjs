@@ -56,15 +56,16 @@ async function createInvite(email) {
   await card.getByRole("button", { name: /invite link/i }).click(); await p.waitForTimeout(1500); await p.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {}); await p.waitForTimeout(800);
   const val = await p.locator(`input[aria-label^="Invite link for"]`).first().inputValue().catch(() => "");
   if (!val) await shot(p, `sales-invite-missing-${email.split("@")[0]}`);
-  await p.close(); return { link: val, rep: r };
+  const url = p.url(); await p.close(); return { link: val, rep: r, url };
 }
 await T("05", "Create an invite link for a rep", "Link /sales/invite/<token> shown once; only a hash stored", async () => {
-  const { link, rep } = await createInvite(USERS.rep1); links.rep1 = link;
+  const { link, rep, url } = await createInvite(USERS.rep1); links.rep1 = link;
   const inv = await q("select token_hash, expires_at, revoked_at from public.sales_rep_invites where rep_id=$1 order by created_at desc", [rep.id]).catch((e) => [{ err: e.message }]);
   if (!/\/sales\/invite\//.test(link)) return { fail: `no link shown (${link})` };
   const token = link.split("/").pop();
   const stored = JSON.stringify(inv[0]);
   if (stored.includes(token)) return { fail: "raw token stored" };
+  if (url.includes(token)) return { fail: "raw token in the page address (browser history, logs)" }; // F4
   return `link shown; expires ${inv[0].expires_at?.toISOString?.().slice(0, 10)}`;
 });
 await T("06", "New invite link replaces (revokes) the old one", "Old link explains it was replaced; new link works", async () => {
