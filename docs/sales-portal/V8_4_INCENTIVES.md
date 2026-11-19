@@ -104,7 +104,7 @@ page (P3), calendar and scheduling (P2).
 
 ## P3: My Business, voluntary goals, team wins and the owner's digest
 
-Migration `20270119001000_sales_v84_business.sql` (rollback in `supabase/rollback/`).
+Migration `20270119001001_sales_v84_business.sql` (rollback in `supabase/rollback/`).
 
 - **My Business** (`/sales/business`): the rep's own customer portfolio. It shows customers, sales by month, upcoming
   anniversaries (contingent on the customer staying subscribed), suggested check-ins, and an illustrative "what if"

@@ -1,3 +1,5 @@
+import { cookies } from "next/headers";
+import { INVITE_FLASH, parseInviteFlash } from "@/lib/sales/invite";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge, Card, Notice } from "@/components/ui/misc";
@@ -47,7 +49,7 @@ const ACTION: Record<string, string> = {
  * One place to run a rep's whole lifecycle: invitation, lead allocation, access, offboarding and
  * reactivation. Each control is checked again in the database; offboarding never deletes records.
  */
-export default async function ManageRep({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ ok?: string; err?: string; invite?: string; invite_rep?: string }> }) {
+export default async function ManageRep({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ ok?: string; err?: string; invite_rep?: string }> }) {
   const { user, db, has } = await requireSalesAdmin();
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
@@ -63,7 +65,8 @@ export default async function ManageRep({ params, searchParams }: { params: Prom
   const lc = LIFECYCLE[lifecycle({ status: r.status, linked: r.linked, allocation_paused: r.allocation_paused, reactivated_at: r.reactivated_at }, !!m.offboarding)];
   const inv = m.invites[0];
   const invState = !inv ? null : inv.accepted_at ? `Accepted ${dateLabel(inv.accepted_at)}` : inv.revoked_at ? "Turned off" : new Date(inv.expires_at) < new Date() ? "Expired" : inv.opened_at ? `Opened ${dateLabel(inv.opened_at)}, not signed in yet` : "Not opened yet";
-  const inviteLink = sp.invite && sp.invite_rep === id && /^[A-Za-z0-9_-]{43}$/.test(sp.invite) ? new URL(`/sales/invite/${sp.invite}`, site.url).toString() : null;
+  const flash = sp.invite_rep === id ? parseInviteFlash((await cookies()).get(INVITE_FLASH)?.value) : null;
+  const inviteLink = flash && flash.rep === id ? new URL(`/sales/invite/${flash.token}`, site.url).toString() : null;
   const err = sp.err ? ADMIN_LEAD_ERRORS[sp.err] ?? "That didn't work. Check the form and try again." : null;
   const w = m.work;
   const openLeads = w.leads.new + w.leads.contacted + w.leads.active + w.leads.trial;

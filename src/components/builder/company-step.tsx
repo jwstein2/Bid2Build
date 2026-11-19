@@ -92,8 +92,8 @@ export function CompanyStep({ business, onChange, signedIn, onDone, missing, asP
         <h3 className="font-bold">Do you have a company website?</h3>
         <p className="text-sm text-muted">We can pull your name, logo, colors, and contact details so you don&apos;t have to type them. You review everything first.</p>
         <div className="mt-3 flex gap-2">
-          <Button size="sm" variant={hasSite === true ? "primary" : "secondary"} onClick={() => setHasSite(true)}>Yes</Button>
-          <Button size="sm" variant={hasSite === false ? "primary" : "secondary"} onClick={() => setHasSite(false)}>No, I&apos;ll enter it</Button>
+          <Button size="sm" variant={hasSite === true ? "primary" : "secondary"} aria-pressed={hasSite === true} onClick={() => setHasSite(true)}>Yes</Button>
+          <Button size="sm" variant={hasSite === false ? "primary" : "secondary"} aria-pressed={hasSite === false} onClick={() => setHasSite(false)}>No, I&apos;ll enter it</Button>
         </div>
         {hasSite && (
           <form className="mt-4 flex flex-col gap-2 sm:flex-row" onSubmit={(e) => { e.preventDefault(); if (url.trim()) runImport(); }}>

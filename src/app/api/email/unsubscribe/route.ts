@@ -18,7 +18,11 @@ export async function POST(req: Request) {
     const f = await req.formData().catch(() => null);
     u = String(f?.get("u") ?? ""); s = String(f?.get("s") ?? "");
   }
-  if (!checkLifecycleUnsubSig(u, s)) return new Response("Invalid link", { status: 400 });
+  if (!checkLifecycleUnsubSig(u, s)) {
+    // From the button on the page (a browser), go back to the page with a plain explanation instead of a bare text reply.
+    if ((req.headers.get("accept") ?? "").includes("text/html")) return Response.redirect(new URL("/email/unsubscribe?invalid=1", req.url), 303);
+    return new Response("Invalid link", { status: 400 });
+  }
   const { error } = await createAdminClient().from("profiles").update({ lifecycle_unsubscribed_at: new Date().toISOString() }).eq("id", u).is("lifecycle_unsubscribed_at", null);
   if (error) { logError("lifecycle.unsubscribe", error); return new Response("Please try again", { status: 503 }); }
   const admin = createAdminClient();

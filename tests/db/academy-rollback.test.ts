@@ -30,13 +30,13 @@ d("contractor academy rollback", () => {
     await applyMigration(pool, "20261230001000_contractor_academy.sql");
     await applyMigration(pool, "20261230002000_academy_content_seed.sql");
     expect(Number((await count()).t)).toBe(20);
-    expect(Number((await pool.query("select count(*) n from public.academy_courses")).rows[0].n)).toBe(305);
+    expect(Number((await pool.query("select count(*) n from public.academy_courses")).rows[0].n)).toBe(321);
   });
 
   it("is idempotent: running the migrations twice changes nothing", async () => {
     await applyMigration(pool, "20261230001000_contractor_academy.sql");
     await applyMigration(pool, "20261230002000_academy_content_seed.sql");
-    expect(Number((await pool.query("select count(*) n from public.academy_courses")).rows[0].n)).toBe(305);
+    expect(Number((await pool.query("select count(*) n from public.academy_courses")).rows[0].n)).toBe(321);
     expect(Number((await pool.query("select count(*) n from public.academy_categories")).rows[0].n)).toBe(14);
   });
 });

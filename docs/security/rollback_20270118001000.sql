@@ -1,4 +1,4 @@
--- Rollback for 20270118001000_security_definer_view_fix.sql. Restores the owner-rights view (the advisor finding
+-- Rollback for 20270118001001_security_definer_view_fix.sql. Restores the owner-rights view (the advisor finding
 -- comes back) and un-pins the helper functions' search_path. Safe to run more than once.
 create or replace view public.fin_timesheet_labor_v with (security_invoker = false) as
 select e.id as entry_id, b.id as book_id, j.id as job_id, lc.cost_code_id, cc.trade_slug,

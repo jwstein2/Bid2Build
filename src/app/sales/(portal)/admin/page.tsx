@@ -8,6 +8,7 @@ import type { Hub, HubRep, HubSettings } from "@/lib/sales/types";
 import { SOURCE_LABEL, STAGE_LABEL, type Lead } from "@/lib/sales/crm";
 import { CopyField } from "@/components/sales/copy-field";
 import { site } from "@/lib/site";
+import { INVITE_FLASH, parseInviteFlash } from "@/lib/sales/invite";
 import { DEFAULT_MILESTONES, nextMilestone, teamGoal, type GoalRaw, type MilestoneRules } from "@/lib/sales/goals";
 import { TeamGoalBoard } from "@/components/sales/team-goal-board";
 import { LeadTargetForm, type LeadRegionState, type LeadTarget } from "@/components/sales/lead-target-form";
@@ -193,7 +194,7 @@ function RepFields({ r, owner, m }: { r?: HubRep; owner: boolean; m?: Member }) 
   );
 }
 
-export default async function SalesHub({ searchParams }: { searchParams: Promise<{ tab?: string; ok?: string; err?: string; status?: string; rep?: string; invite?: string; invite_rep?: string; range?: string; admins?: string; view?: string; confirm?: string } & Record<string, string | undefined>> }) {
+export default async function SalesHub({ searchParams }: { searchParams: Promise<{ tab?: string; ok?: string; err?: string; status?: string; rep?: string; invite_rep?: string; range?: string; admins?: string; view?: string; confirm?: string } & Record<string, string | undefined>> }) {
   const { user, db, has } = await requireSalesAdmin();
   const sp = await searchParams;
   const tab: Tab = (ADMIN_TABS.find((t) => t.id === sp.tab)?.id ?? "overview") as Tab;
@@ -294,7 +295,9 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
   const digest = (dgRes && !dgRes.error ? dgRes.data : null) as DigestPreview | null;
   const msForUpcoming = tab === "recognition" ? await db.rpc("admin_sales_milestones", { p_caller: user.id }) : null;
   const recentBoxes = (msForUpcoming && !msForUpcoming.error ? msForUpcoming.data : []) as { id: string; rep_name: string; milestone: number; amount_cents: number | null; status: string; reached_at: string; commission_status: string | null }[];
-  const inviteLink = sp.invite && /^[A-Za-z0-9_-]{43}$/.test(sp.invite) ? new URL(`/sales/invite/${sp.invite}`, site.url).toString() : null;
+  // A just-created invite link arrives in a two-minute cookie (never in the URL); it shows on the rep it was made for.
+  const flash = sp.invite_rep ? parseInviteFlash((await cookies()).get(INVITE_FLASH)?.value) : null;
+  const inviteLink = flash && flash.rep === sp.invite_rep ? new URL(`/sales/invite/${flash.token}`, site.url).toString() : null;
   const sumStatus = (s: string[]) => h.commissions.filter((c) => s.includes(c.status)).reduce((t, c) => t + c.amount_cents, 0);
   const errText = sp.err ? ({
     owner_cannot_be_rep: "That email belongs to an owner account. Sales staff need their own email.",

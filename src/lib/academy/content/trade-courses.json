@@ -4558,5 +4558,245 @@
         ]
       }
     ]
+  },
+  "tree-removal": {
+    "intro": "Tree removal companies win work by explaining risk, method and cleanup clearly, and they keep crews safe with planning and the right equipment. This classroom covers pricing trees by size and access, rigging and crane jobs, storm response, chipper and chainsaw safety, and building steady work with property managers and builders.",
+    "seoTitle": "Tree Removal Business Courses",
+    "seoDescription": "Tree removal business courses on pricing by size and access, crane and rigging jobs, storm work, stump grinding, crew safety and growth.",
+    "salesChallenge": "Homeowners often get tree removal quotes that look wildly different and can't tell why. Walk the tree with them, explain the removal method, and list stump grinding and haul-away as separate choices so they compare the same scope.",
+    "cards": [
+      {
+        "pillar": "getting_started",
+        "title": "Starting a Tree Removal Business: Licensing, Insurance and Equipment",
+        "summary": "Business basics for a tree removal company, from insurance and licensing to the first truck and chipper.",
+        "description": "Tree removal carries real risk to people and property, so insurance and the right setup come first. This course covers entity setup, general liability and workers' compensation for tree work, arborist certification and local licensing where required, and choosing a first truck, chipper and stump grinder. Licensing and insurance requirements vary by state and city; confirm them with your licensing office and insurance agent.",
+        "level": "beginner",
+        "lessons": [
+          "Entity setup and tax registration basics",
+          "Liability and workers' compensation for tree work",
+          "Arborist certification and local licensing",
+          "Choosing a first truck, chipper and grinder",
+          "Setting a service area and minimum job"
+        ]
+      },
+      {
+        "pillar": "sales",
+        "title": "Selling Tree Removal: Explaining Risk, Method and Cleanup",
+        "summary": "Help homeowners compare quotes on scope and safety, not just price.",
+        "description": "Tree removal quotes can differ by thousands of dollars for the same tree. This course covers walking the tree with the customer, explaining the removal method, offering stump grinding and haul-away as separate choices, and showing proof of insurance so the customer compares like for like.",
+        "level": "intermediate",
+        "lessons": [
+          "Walking the tree with the customer",
+          "Explaining climbing, rigging, bucket truck and crane methods",
+          "Offering stump grinding and haul-away as options",
+          "Showing insurance and certification",
+          "Following up on storm and hazard quotes"
+        ]
+      },
+      {
+        "pillar": "estimating",
+        "title": "Tree Removal Estimates by Size, Access and Equipment",
+        "summary": "Price each tree from height, diameter and drop zone, with equipment and disposal on their own lines.",
+        "description": "Height, trunk diameter, lean, and what sits under the tree drive most of the cost. This course covers estimating crew hours from your own production records, pricing rigging, bucket truck and crane time, stump grinding by diameter, and disposal, log hauling and wood chip haul-away.",
+        "level": "intermediate",
+        "lessons": [
+          "Sizing a tree: height, diameter and lean",
+          "Pricing access and the drop zone",
+          "Equipment and crane time",
+          "Stump grinding and root work",
+          "Disposal, logs and wood chips"
+        ]
+      },
+      {
+        "pillar": "project_management",
+        "title": "Planning Crane, Rigging and Storm Jobs",
+        "summary": "Plan crews, equipment and the site so complex removals go safely and on schedule.",
+        "description": "Complex removals depend on planning before the saw starts. This course covers job briefings, coordinating crane and bucket truck time, calling for utility locates, protecting lawns and driveways, and running storm response when demand spikes.",
+        "level": "intermediate",
+        "lessons": [
+          "Pre-job site walk and briefing",
+          "Coordinating crane and equipment time",
+          "Utility locates and line clearance",
+          "Protecting lawns, driveways and structures",
+          "Running storm response"
+        ]
+      },
+      {
+        "pillar": "accounting",
+        "title": "Tree Service Financials: Equipment Costs and Job Costing",
+        "summary": "Track equipment, crew hours and disposal per job so every removal pays.",
+        "description": "Trucks, chippers, grinders and cranes are a large share of a tree company's costs. This course covers costing each job, setting equipment rates that cover payments and repairs, tracking dump and green waste fees, and planning cash flow around seasonal and storm work.",
+        "level": "intermediate",
+        "lessons": [
+          "Job costing crew and climber hours",
+          "Setting equipment rates",
+          "Tracking disposal and dump fees",
+          "Seasonal and storm cash flow",
+          "Setting aside taxes and overhead"
+        ]
+      },
+      {
+        "pillar": "hr",
+        "title": "Hiring and Training Tree Crews and Climbers",
+        "summary": "Recruit, train and keep groundworkers and climbers who work safely.",
+        "description": "Good climbers and groundworkers are hard to find and keep. This course covers recruiting, structured training from ground crew to climber, certification paths, fair pay for skill levels, and building a safety culture that keeps people. Employment rules vary by state; follow the laws where you operate.",
+        "level": "beginner",
+        "lessons": [
+          "Recruiting groundworkers and climbers",
+          "Training from ground crew to climber",
+          "Certification paths",
+          "Pay by skill level",
+          "Building a safety culture"
+        ]
+      },
+      {
+        "pillar": "growth",
+        "title": "Growing a Tree Service: Storm Work, Builders and Property Managers",
+        "summary": "Build steady work beyond one-off removals.",
+        "description": "Storm work is unpredictable, so steady relationships matter. This course covers partnering with builders for lot clearing, serving property managers and HOAs, turning removals into pruning customers, and asking for reviews and referrals after a clean job.",
+        "level": "intermediate",
+        "lessons": [
+          "Builder and lot clearing partnerships",
+          "Property managers and HOAs",
+          "Turning removals into pruning customers",
+          "Reviews and referrals",
+          "Preparing for storm season"
+        ]
+      },
+      {
+        "pillar": "safety",
+        "title": "Chainsaw, Chipper and Rigging Safety",
+        "summary": "Keep crews safe around saws, chippers, rigging and power lines.",
+        "description": "Tree work is one of the more dangerous trades. This course covers protective equipment, chainsaw and chipper safety, drop zones and communication, rigging basics, and staying clear of power lines. Follow OSHA rules, the ANSI Z133 safety standard, equipment manuals and the rules where you work.",
+        "level": "beginner",
+        "lessons": [
+          "Protective equipment",
+          "Chainsaw and chipper safety",
+          "Drop zones and crew communication",
+          "Rigging basics",
+          "Power line clearance"
+        ]
+      }
+    ]
+  },
+  "tree-trimming": {
+    "intro": "Tree trimming companies earn steady work by pruning to clear goals, keeping customers on a regular cycle and working safely at height. This classroom covers quoting tree by tree, explaining pruning types, scheduling routes and seasons, climbing and aerial lift safety, and building recurring pruning customers.",
+    "seoTitle": "Tree Trimming Business Courses",
+    "seoDescription": "Tree trimming and pruning business courses on quoting tree by tree, pruning types, route scheduling, recurring customers and climbing safety.",
+    "salesChallenge": "Customers often can't picture what trimming will look like and worry about over-pruning. Describe the pruning type and goal for each tree, show before and after examples, and offer a regular cycle so the trees stay healthy.",
+    "cards": [
+      {
+        "pillar": "getting_started",
+        "title": "Starting a Tree Trimming Business: Insurance, Certification and Equipment",
+        "summary": "Business basics for a tree trimming and pruning company.",
+        "description": "Trimming work happens at height and near homes, so insurance and training come first. This course covers entity setup, liability and workers' compensation for tree work, arborist certification, and choosing climbing gear, a chipper and access equipment. Requirements vary by state and city; confirm them with your licensing office and insurance agent.",
+        "level": "beginner",
+        "lessons": [
+          "Entity setup and tax registration basics",
+          "Liability and workers' compensation",
+          "Arborist certification",
+          "Climbing gear, chipper and lift choices",
+          "Setting a service area and minimum job"
+        ]
+      },
+      {
+        "pillar": "sales",
+        "title": "Selling Tree Trimming: Explaining Pruning Goals",
+        "summary": "Help customers understand what each tree gets and why.",
+        "description": "Customers worry about how a tree will look after trimming. This course covers walking the property, describing pruning types and goals in plain language, offering tree-by-tree options, and presenting a regular pruning cycle.",
+        "level": "intermediate",
+        "lessons": [
+          "Walking the property with the customer",
+          "Explaining pruning types in plain language",
+          "Tree-by-tree options",
+          "Before and after examples",
+          "Offering a pruning cycle"
+        ]
+      },
+      {
+        "pillar": "estimating",
+        "title": "Tree Trimming Estimates, Tree by Tree",
+        "summary": "Price each tree by pruning type, size and access, with cleanup and haul-away listed.",
+        "description": "Pruning prices depend on tree size, pruning type, and how hard the tree is to reach. This course covers estimating crew hours from your own records, pricing crown cleaning, thinning, raising and reduction, clearance work, equipment time, and brush and chip haul-away.",
+        "level": "intermediate",
+        "lessons": [
+          "Pricing by pruning type",
+          "Size and access adjustments",
+          "Clearance and hedge work",
+          "Equipment and lift time",
+          "Cleanup and haul-away"
+        ]
+      },
+      {
+        "pillar": "project_management",
+        "title": "Scheduling Trimming Routes and Pruning Seasons",
+        "summary": "Plan crews and routes around seasons, weather and customer cycles.",
+        "description": "Trimming work follows seasons and repeat cycles. This course covers building efficient routes, timing pruning for species and season, coordinating access with customers, and keeping a schedule of repeat visits.",
+        "level": "intermediate",
+        "lessons": [
+          "Building efficient routes",
+          "Timing pruning by species and season",
+          "Customer access and notifications",
+          "Tracking repeat visits",
+          "Weather and reschedules"
+        ]
+      },
+      {
+        "pillar": "accounting",
+        "title": "Tree Trimming Financials: Job Costing and Recurring Revenue",
+        "summary": "Know what each tree and each route really earns.",
+        "description": "Small trimming jobs can lose money without clear costing. This course covers job costing crew hours, setting equipment rates, tracking disposal, billing recurring customers and reading profit by service type.",
+        "level": "intermediate",
+        "lessons": [
+          "Job costing crew hours",
+          "Equipment rates",
+          "Disposal costs",
+          "Recurring billing",
+          "Profit by service type"
+        ]
+      },
+      {
+        "pillar": "hr",
+        "title": "Training Climbers and Ground Crews",
+        "summary": "Develop skilled, safe climbers and dependable ground crews.",
+        "description": "Skilled climbers take time to develop. This course covers recruiting, structured training and mentoring, certification paths, pay by skill level and keeping crews. Employment rules vary by state; follow the laws where you operate.",
+        "level": "beginner",
+        "lessons": [
+          "Recruiting ground crew",
+          "Mentoring new climbers",
+          "Certification paths",
+          "Pay by skill level",
+          "Keeping good crews"
+        ]
+      },
+      {
+        "pillar": "growth",
+        "title": "Building Recurring Pruning Customers",
+        "summary": "Turn one-time trims into yearly and multi-year pruning cycles.",
+        "description": "Recurring pruning makes revenue predictable. This course covers offering pruning cycles, serving property managers, HOAs and commercial sites, seasonal promotions, and asking for reviews and referrals.",
+        "level": "intermediate",
+        "lessons": [
+          "Offering pruning cycles",
+          "Property managers and HOAs",
+          "Commercial grounds work",
+          "Seasonal promotions",
+          "Reviews and referrals"
+        ]
+      },
+      {
+        "pillar": "safety",
+        "title": "Climbing, Aerial Lift and Power Line Safety",
+        "summary": "Work safely at height and stay clear of power lines.",
+        "description": "Trimming puts crews at height with saws. This course covers protective equipment, climbing system inspections, aerial lift safety, drop zones, and minimum approach distances to power lines. Follow OSHA rules, the ANSI Z133 safety standard, equipment manuals and the rules where you work.",
+        "level": "beginner",
+        "lessons": [
+          "Protective equipment",
+          "Climbing system inspections",
+          "Aerial lift safety",
+          "Drop zones and communication",
+          "Power line approach distances"
+        ]
+      }
+    ]
   }
 }

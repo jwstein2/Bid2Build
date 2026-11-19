@@ -19,7 +19,7 @@ export const TRADES = [
   ["interior-remodeling", "Interior Remodeling"], ["exterior-remodeling", "Exterior Remodeling"], ["drywall", "Drywall"], ["painting", "Painting"],
   ["electrical", "Electrical"], ["plumbing", "Plumbing"], ["hvac", "HVAC"], ["flooring", "Flooring"], ["tile", "Tile"], ["framing", "Framing"],
   ["finish-carpentry", "Finish Carpentry"], ["cabinets-countertops", "Cabinets & Countertops"], ["windows-doors", "Windows & Doors"],
-  ["insulation", "Insulation"], ["gutters", "Gutters"], ["fencing", "Fencing"], ["landscaping", "Landscaping"], ["pressure-washing", "Pressure Washing"],
+  ["insulation", "Insulation"], ["gutters", "Gutters"], ["fencing", "Fencing"], ["landscaping", "Landscaping"], ["tree-removal", "Tree Removal"], ["tree-trimming", "Tree Trimming"], ["pressure-washing", "Pressure Washing"],
   ["soft-washing", "Soft Washing"], ["excavation", "Excavation"], ["foundations", "Foundations"], ["masonry", "Masonry"], ["asphalt-paving", "Asphalt Paving"],
   ["demolition", "Demolition"], ["basements", "Basements"], ["additions", "Additions"], ["garages", "Garages"], ["pole-barns", "Pole Barns"],
   ["commercial-remodeling", "Commercial Remodeling"], ["general-contracting", "General Contracting"], ["handyman", "Handyman"], ["other", "Other"],

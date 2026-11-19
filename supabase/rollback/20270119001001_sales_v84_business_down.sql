@@ -1,4 +1,4 @@
--- Rollback for 20270119001000_sales_v84_business.sql. Removes voluntary goals, team wins and the owner's digest.
+-- Rollback for 20270119001001_sales_v84_business.sql. Removes voluntary goals, team wins and the owner's digest.
 drop function if exists public.admin_sales_digest_preview(uuid);
 drop function if exists public.admin_sales_digest_settings_save(uuid, boolean);
 drop function if exists public.sales_digest_claim(timestamptz);

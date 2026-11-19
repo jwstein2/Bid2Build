@@ -51,7 +51,7 @@ d("creator partner program (database)", () => {
     await subscribe(payer);
     // The migrations are idempotent.
     const { readFileSync } = await import("node:fs");
-    for (const f of ["20261117001000_creator_partner_program.sql", "20261117002000_creator_outreach_crm.sql"]) {
+    for (const f of ["20261117001000_creator_partner_program.sql", "20261117002001_creator_outreach_crm.sql"]) {
       await pool.query(readFileSync(new URL(`../../supabase/migrations/${f}`, import.meta.url), "utf8"));
     }
   });

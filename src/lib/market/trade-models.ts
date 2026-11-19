@@ -288,6 +288,31 @@ export const TRADE_MODELS: Record<string, TradeModel> = {
     complexity: (m) => (m.condition === "heavy" ? "complex" : m.condition ? "standard" : null),
     complexityRule: "Complex = heavy condition (construction dust or neglect).",
   },
+  "tree-removal": {
+    trade: "tree-removal",
+    projectTypes: o(["single", "Single tree"], ["multiple", "Multiple trees"], ["storm", "Storm / hazard"], ["lot_clearing", "Lot clearing"]),
+    primary: { key: "trees", unit: "each", label: "Trees removed" },
+    fields: [
+      num("trees", "Trees removed", "count"),
+      num("height_ft", "Tallest tree height", "ft"),
+      num("stumps", "Stumps ground", "count"),
+      sel("access", "Access", o(["open", "Open drop zone"], ["limited", "Limited (rigging needed)"], ["difficult", "Over a structure or near lines"])),
+    ],
+    complexity: (m) => (m.access === "difficult" || n(m, "height_ft") > 60 ? "complex" : m.access || m.height_ft ? "standard" : null),
+    complexityRule: "Complex = over a structure or near lines, or a tree taller than 60 ft.",
+  },
+  "tree-trimming": {
+    trade: "tree-trimming",
+    projectTypes: o(["pruning", "Pruning"], ["clearance", "Roof / line clearance"], ["hedges", "Hedges & shrubs"], ["storm", "Storm damage"]),
+    primary: { key: "trees", unit: "each", label: "Trees trimmed" },
+    fields: [
+      num("trees", "Trees trimmed", "count"),
+      num("height_ft", "Tallest tree height", "ft"),
+      sel("access", "Access", o(["open", "Open"], ["limited", "Limited (climb needed)"], ["difficult", "Over a structure or near lines"])),
+    ],
+    complexity: (m) => (m.access === "difficult" || n(m, "height_ft") > 60 ? "complex" : m.access || m.height_ft ? "standard" : null),
+    complexityRule: "Complex = over a structure or near lines, or a tree taller than 60 ft.",
+  },
   landscaping: {
     trade: "landscaping",
     projectTypes: o(["install", "New install"], ["maintenance", "Maintenance"], ["hardscape", "Hardscape"]),
