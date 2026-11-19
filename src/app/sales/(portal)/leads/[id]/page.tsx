@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge, Card, Notice } from "@/components/ui/misc";
 import { requireSalesRep } from "@/lib/sales/server";
-import { ACTIVITY_LABEL, STAGES, STAGE_LABEL, type Duplicate, type Lead, type LeadActivity, type LeadTask } from "@/lib/sales/crm";
+import { ACTIVITY_LABEL, SOURCE_LABEL, STAGES, STAGE_LABEL, type Duplicate, type Lead, type LeadActivity, type LeadTask } from "@/lib/sales/crm";
 import { dateLabel, TIER_LABEL } from "@/lib/sales/format";
 import { logActivity, saveTask, updateLead } from "../actions";
 
@@ -26,7 +26,7 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
         <h1 className="mt-2 text-3xl font-extrabold">{l.company_name}</h1>
         <p className="mt-1 text-sm text-ink-soft">
           <Badge tone={l.stage === "paying" ? "ok" : "brand"}>{STAGE_LABEL[l.stage]}</Badge>{" "}
-          {[l.city, l.state, l.zip].filter(Boolean).join(", ")} · {l.trades.join(", ") || "no trade set"} · source: {l.source}, found {dateLabel(l.discovered_at)}
+          {[l.city, l.state, l.zip].filter(Boolean).join(", ")} · {l.trades.join(", ") || "no trade set"} · {SOURCE_LABEL[l.source] ?? l.source}, found {dateLabel(l.discovered_at)}
           {l.customer_tier && <> · Built2Bid account: {TIER_LABEL[l.customer_tier] ?? l.customer_tier}</>}
         </p>
       </div>

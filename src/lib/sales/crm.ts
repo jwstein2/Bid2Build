@@ -3,6 +3,7 @@ export const STAGES = ["new", "contacted", "engaged", "demo", "trial", "paying",
 export type Stage = (typeof STAGES)[number];
 export const STAGE_LABEL: Record<Stage, string> = { new: "New lead", contacted: "Contacted", engaged: "Engaged", demo: "Demo", trial: "Trial / free account", paying: "Paying", lost: "Lost" };
 export const ACTIVITY_LABEL: Record<string, string> = { call: "Call", email: "Email", text: "Text", meeting: "Meeting", note: "Note", stage: "Stage change", assignment: "Assignment", system: "System" };
+export const SOURCE_LABEL: Record<string, string> = { manual: "Added by rep", import: "Imported", places: "Places search", link: "Rep link", owner: "Added by owner", agent: "Weekly import" };
 export const TRADES = ["general contracting", "roofing", "siding", "decks", "painting", "concrete", "electrical", "plumbing", "hvac", "drywall", "fencing", "landscaping", "remodeling", "windows", "gutters", "flooring"] as const;
 
 export interface Lead {
