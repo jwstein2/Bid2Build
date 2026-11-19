@@ -4,8 +4,8 @@ import { requireAdmin } from "@/lib/admin/server";
 import { repLink } from "@/lib/sales/link";
 import { COMMISSION_STATUS, dateLabel, METHOD_LABEL, plural, monthLabel, reasonLabel, TIER_LABEL, usd, yearLabel } from "@/lib/sales/format";
 import type { Hub, HubRep } from "@/lib/sales/types";
-import { STAGE_LABEL, type Lead } from "@/lib/sales/crm";
-import { adjustCommission, approveStatement, assignCustomer, assignLeads, importLeads, closeMonth, endAttribution, recordPayout, savePolicy, saveRep } from "./actions";
+import { SOURCE_LABEL, STAGE_LABEL, TRADES, type Lead } from "@/lib/sales/crm";
+import { adjustCommission, approveStatement, assignCustomer, assignLeads, importLeads, saveLeadTarget, closeMonth, endAttribution, recordPayout, savePolicy, saveRep } from "./actions";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Sales Hub" };
@@ -68,7 +68,11 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
   }
   const h = data as Hub;
   const crm = tab === "leads" ? await db.rpc("admin_sales_crm", { p_caller: user.id }) : null;
-  const leads = ((crm?.data as { leads?: Lead[] } | null)?.leads ?? []).filter((l) => !sp.rep || (sp.rep === "none" ? !l.assigned_rep : l.assigned_rep === sp.rep));
+  const leads = ((crm?.data as { leads?: Lead[] } | null)?.leads ?? []).filter((l) => (!sp.rep || (sp.rep === "none" ? !l.assigned_rep : l.assigned_rep === sp.rep)) && (sp.status !== "agent" || l.source === "agent"));
+  // Weekly automated import history (Phase 3a). Missing until that migration is run: the panel is hidden.
+  const imports = tab === "leads" ? await db.rpc("admin_sales_import_batches", { p_caller: user.id }) : null;
+  const importData = imports && !imports.error ? (imports.data as { batches: { id: string; label: string | null; received: number; added: number; duplicates: number; suppressed: number; invalid: number; unverified?: number; target_zip?: string | null; target_trade?: string | null; created_at: string }[]; unassigned_agent: number; suppressed: number;
+    target?: { zip: string | null; trade: string | null; radius_miles: number; count: number; paused: boolean }; zips?: { zip: string; leads: number }[] }) : null;
   const activeReps = h.reps.filter((r) => r.status !== "removed");
   const sumStatus = (s: string[]) => h.commissions.filter((c) => s.includes(c.status)).reduce((t, c) => t + c.amount_cents, 0);
   const errText = sp.err ? ({
@@ -167,6 +171,48 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
       {tab === "leads" && (
         crm?.error ? <Notice tone="warn">The CRM tables are not installed yet. Run <code className="break-all">supabase/migrations/20270107002000_sales_crm.sql</code> in the Supabase SQL Editor, then reload.</Notice> : (
         <div className="space-y-6">
+          {importData && (
+            <Card className="p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-bold">Weekly lead import</h2>
+                  <p className="mt-1 text-sm text-ink-soft">Businesses found by the weekly Claude agent arrive here unassigned. Duplicates and anyone marked do-not-contact ({importData.suppressed} on the list) are skipped automatically.</p>
+                </div>
+                {importData.unassigned_agent > 0 && <Link href="/admin/sales-hub?tab=leads&rep=none&status=agent" className="text-sm font-semibold text-brand underline">{importData.unassigned_agent} new to assign</Link>}
+              </div>
+              {importData.target && (
+                <form action={saveLeadTarget} className="mt-4 grid gap-3 rounded-lg border border-line bg-paper p-3 sm:grid-cols-[1fr_1fr_auto_auto] sm:items-end">
+                  <p className="text-sm font-semibold sm:col-span-4">Next run target{importData.target.zip ? `: ${importData.target.count} leads within ${importData.target.radius_miles} miles of ${importData.target.zip}${importData.target.trade ? `, ${importData.target.trade}` : ""}${importData.target.paused && importData.target.zip ? " (paused)" : ""}` : ": not set yet, so the weekly run is waiting"}</p>
+                  <label className="text-sm">Active ZIP code
+                    <input name="zip" required inputMode="numeric" pattern="[0-9]{5}" maxLength={5} list="lead-target-zips" defaultValue={importData.target.zip ?? ""} className={input} placeholder="55401" />
+                    <datalist id="lead-target-zips">{(importData.zips ?? []).map((z) => <option key={z.zip} value={z.zip}>{`${z.leads} lead${z.leads === 1 ? "" : "s"}`}</option>)}</datalist>
+                  </label>
+                  <label className="text-sm">Trade
+                    <select name="trade" defaultValue={importData.target.trade ?? ""} className={input}>
+                      <option value="">All trades</option>
+                      {TRADES.map((t) => <option key={t} value={t}>{t[0].toUpperCase() + t.slice(1)}</option>)}
+                    </select>
+                  </label>
+                  <label className="text-sm">Miles<input name="radius" type="number" min={5} max={250} defaultValue={importData.target.radius_miles} className={`${input} w-24`} /></label>
+                  <label className="text-sm">Leads per run<input name="count" type="number" min={1} max={200} defaultValue={importData.target.count} className={`${input} w-24`} /></label>
+                  <label className="flex items-center gap-2 text-sm sm:col-span-3"><input type="checkbox" name="paused" defaultChecked={importData.target.paused && !!importData.target.zip} /> Pause the weekly run</label>
+                  <button className={btn}>Save target</button>
+                </form>
+              )}
+              {importData.batches.length === 0 ? <p className="mt-3 text-sm text-muted">No imports yet. The first weekly run will show here.</p> : (
+                <div className="mt-3 overflow-x-auto">
+                  <table className="w-full min-w-[560px] text-sm">
+                    <thead className="text-left text-muted"><tr><th className="py-1 pr-3">Run</th><th className="py-1 pr-3">Received</th><th className="py-1 pr-3">Added</th><th className="py-1 pr-3">Already on file</th><th className="py-1 pr-3">Do not contact</th><th className="py-1">Not verified</th></tr></thead>
+                    <tbody>
+                      {importData.batches.map((b) => (
+                        <tr key={b.id} className="border-t border-line"><td className="py-1 pr-3">{dateLabel(b.created_at)}{b.target_zip ? ` · ${b.target_zip}${b.target_trade ? ` ${b.target_trade}` : ""}` : b.label ? ` · ${b.label}` : ""}</td><td className="py-1 pr-3">{b.received}</td><td className="py-1 pr-3 font-semibold">{b.added}</td><td className="py-1 pr-3">{b.duplicates}</td><td className="py-1 pr-3">{b.suppressed}</td><td className="py-1">{b.invalid + (b.unverified ?? 0)}</td></tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Card>
+          )}
           <Card className="p-5">
             <h2 className="text-lg font-bold">Add leads</h2>
             <p className="mt-1 text-sm text-ink-soft">Paste one business per line: company, contact, email, phone, website, city, state, ZIP, trades (separate trades with ;). Businesses already on file (same website, phone, or name + ZIP) are skipped.</p>
@@ -193,13 +239,13 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
                   {leads.map((l) => (
                     <tr key={l.id} className="border-b border-line last:border-0">
                       <td className="p-3"><input type="checkbox" name="lead" value={l.id} aria-label={`Select ${l.company_name}`} /></td>
-                      <td className="p-3"><p className="font-semibold">{l.company_name}</p>{l.do_not_contact && <Badge tone="danger">Do not contact</Badge>}</td>
+                      <td className="p-3"><p className="font-semibold">{l.company_name}</p>{l.contact_name && <p className="text-xs text-ink-soft">{l.contact_name}{l.business_started ? ` · since ${l.business_started.slice(0, 4)}` : ""}</p>}{l.sales_brief && <p className="mt-1 max-w-xs text-xs text-ink-soft">{l.sales_brief}</p>}{l.do_not_contact && <Badge tone="danger">Do not contact</Badge>}</td>
                       <td className="p-3">{[l.city, l.state].filter(Boolean).join(", ")} {l.zip}</td>
                       <td className="p-3">{l.trades.join(", ") || "—"}</td>
                       <td className="p-3">{STAGE_LABEL[l.stage]}</td>
                       <td className="p-3">{l.rep_name ?? "Unassigned"}</td>
                       <td className="p-3">{dateLabel(l.last_activity_at)}</td>
-                      <td className="p-3">{l.source} · {dateLabel(l.discovered_at)}</td>
+                      <td className="p-3">{SOURCE_LABEL[l.source] ?? l.source} · {dateLabel(l.discovered_at)}</td>
                     </tr>
                   ))}
                 </tbody>

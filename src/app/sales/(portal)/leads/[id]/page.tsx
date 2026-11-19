@@ -1,8 +1,9 @@
 import Link from "next/link";
+import { Fragment } from "react";
 import { notFound } from "next/navigation";
 import { Badge, Card, Notice } from "@/components/ui/misc";
 import { requireSalesRep } from "@/lib/sales/server";
-import { ACTIVITY_LABEL, STAGES, STAGE_LABEL, type Duplicate, type Lead, type LeadActivity, type LeadTask } from "@/lib/sales/crm";
+import { ACTIVITY_LABEL, SOURCE_LABEL, STAGES, STAGE_LABEL, verificationSources, type Duplicate, type Lead, type LeadActivity, type LeadTask } from "@/lib/sales/crm";
 import { dateLabel, TIER_LABEL } from "@/lib/sales/format";
 import { logActivity, saveTask, updateLead } from "../actions";
 
@@ -26,7 +27,7 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
         <h1 className="mt-2 text-3xl font-extrabold">{l.company_name}</h1>
         <p className="mt-1 text-sm text-ink-soft">
           <Badge tone={l.stage === "paying" ? "ok" : "brand"}>{STAGE_LABEL[l.stage]}</Badge>{" "}
-          {[l.city, l.state, l.zip].filter(Boolean).join(", ")} · {l.trades.join(", ") || "no trade set"} · source: {l.source}, found {dateLabel(l.discovered_at)}
+          {[l.city, l.state, l.zip].filter(Boolean).join(", ")} · {l.trades.join(", ") || "no trade set"} · {SOURCE_LABEL[l.source] ?? l.source}, found {dateLabel(l.discovered_at)}
           {l.customer_tier && <> · Built2Bid account: {TIER_LABEL[l.customer_tier] ?? l.customer_tier}</>}
         </p>
       </div>
@@ -37,6 +38,19 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
 
       <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
         <div className="space-y-6">
+          {(l.sales_brief || l.business_started || l.verification) && (
+            <Card className="p-5">
+              <h2 className="text-lg font-bold">Sales brief</h2>
+              {l.sales_brief ? <p className="mt-2 text-sm">{l.sales_brief}</p> : <p className="mt-2 text-sm text-ink-soft">The brief is being written and will show here shortly.</p>}
+              <dl className="mt-3 grid gap-x-4 gap-y-1 text-sm sm:grid-cols-[auto_1fr]">
+                {l.contact_name && <><dt className="text-muted">Owner</dt><dd>{l.contact_name}</dd></>}
+                {l.business_started && <><dt className="text-muted">In business since</dt><dd>{l.business_started}</dd></>}
+                {verificationSources(l.verification).map((v) => (
+                  <Fragment key={v.field}><dt className="text-muted">{v.field} checked on</dt><dd className="break-all">{v.urls.map((u, i) => <Fragment key={u}>{i > 0 && ", "}<a href={u} target="_blank" rel="noopener noreferrer nofollow" className="text-brand underline">{hostOf(u)}</a></Fragment>)}</dd></Fragment>
+                ))}
+              </dl>
+            </Card>
+          )}
           <Card className="p-5">
             <h2 className="text-lg font-bold">Log an activity</h2>
             <form action={logActivity} className="mt-3 grid gap-3 sm:grid-cols-[160px_1fr]">
@@ -101,4 +115,8 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
       </div>
     </div>
   );
+}
+
+function hostOf(u: string): string {
+  try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return u; }
 }

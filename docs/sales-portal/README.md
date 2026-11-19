@@ -1,4 +1,4 @@
-# Sales Portal (Phases 1 and 2)
+# Sales Portal (Phases 1 to 3a)
 
 A separate sign-in and workspace for Built2Bid's own sales staff, plus an owner **Sales Hub**. It is not
 the contractor app, not the owner admin area, and not the customer "refer a contractor" program.
@@ -70,10 +70,19 @@ be attributed as customers.
 - **Owner Leads tab** (Sales Hub): paste-in import (duplicates skipped), filter by rep, bulk assign or
   unassign, with history and audit log.
 
+## Phase 3a: weekly lead import (`20270109101000_sales_lead_import.sql`)
+
+The owner sets the weekly target in the Hub Leads tab (ZIP, trade, 50-mile radius, 50 leads). A scheduled
+Claude agent reads it (`GET /api/sales/leads/import`) and posts verified leads (`POST`, Bearer
+`SALES_LEAD_IMPORT_SECRET`): owner name, email, phone, trade, business start date, with a source URL for
+each fact. Leads arrive unassigned with a Haiku 5.5 sales brief; duplicates and do-not-contact businesses
+are skipped, and each run is a batch with counts in the Hub Leads tab. Marking
+a lead do-not-contact adds it to a permanent suppression list. Format and agent prompt: `LEAD_IMPORT.md`.
+
 ## Next phase
 
-- Phase 3: lead discovery (Google Places API, authorized use only; storage limits apply) and compliant
-  automated follow-ups (opt-out, suppression, caps, send switch off by default).
+- Phase 3b: compliant automated follow-ups (opt-out link, suppression list, daily caps, send switch off
+  by default).
 
 ## Tests
 
@@ -83,4 +92,5 @@ be attributed as customers.
 - `tests/sales-portal.test.ts`: basis math, links, cookie, attribution skip paths.
 - `scripts/sales-portal/walk.mjs`: browser walk (31 checks) with screenshots.
 
-Rollback: `supabase/rollback/20270107001000_sales_portal_down.sql` (deletes all sales data).
+Rollback: `supabase/rollback/20270107001000_sales_portal_down.sql` (deletes all sales data);
+`20270109101000_sales_lead_import_down.sql` undoes only the import.

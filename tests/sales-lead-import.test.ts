@@ -1,0 +1,37 @@
+import { describe, expect, it } from "vitest";
+import { cleanRows, ImportBody } from "@/lib/sales/import";
+import { verificationSources } from "@/lib/sales/crm";
+
+const good = {
+  company_name: "  Summit Roofing ", contact_name: "Dana Lee", email: "Office@SummitRoof.com", phone: "(612) 555-0100", zip: "55401",
+  trades: ["roofing"], business_started: "2014-03-02",
+  verification: { owner_name: ["https://mn.gov/license/123"], email: ["https://summitroof.com/contact"], phone: ["https://summitroof.com/contact"] },
+};
+
+describe("sales lead import payload", () => {
+  it("keeps only verified rows and says which facts were missing", () => {
+    const { valid, unverified, reasons } = cleanRows([
+      good,
+      { ...good, contact_name: undefined },
+      { ...good, verification: { owner_name: ["https://x.org"], email: [], phone: ["https://x.org"] } },
+      { ...good, business_started: "around 2010" },
+      { ...good, phone: "555-0100" },
+      "not an object",
+    ]);
+    expect(valid).toHaveLength(1);
+    expect(valid[0]).toMatchObject({ company_name: "Summit Roofing", email: "office@summitroof.com" });
+    expect(unverified).toBe(5);
+    expect(reasons).toEqual(expect.arrayContaining(["contact_name", "verification.email", "business_started", "phone"]));
+  });
+
+  it("requires a batch id and caps a request at 1,000 leads", () => {
+    expect(ImportBody.safeParse({ leads: [] }).success).toBe(false);
+    expect(ImportBody.safeParse({ batch_id: "2026-W47", leads: [] }).success).toBe(true);
+    expect(ImportBody.safeParse({ batch_id: "2026-W47", leads: Array(1001).fill({}) }).success).toBe(false);
+  });
+
+  it("lists verification sources by field, ignoring anything that isn't a web link", () => {
+    expect(verificationSources({ owner_name: ["https://mn.gov/x", "javascript:alert(1)"], phone: "nope", email_domain_mx: true }))
+      .toEqual([{ field: "Owner", urls: ["https://mn.gov/x"] }]);
+  });
+});

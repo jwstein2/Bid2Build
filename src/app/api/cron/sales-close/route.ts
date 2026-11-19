@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/server";
 import { fail, json, logError } from "@/lib/http/api";
+import { fillBriefs } from "@/lib/sales/brief";
 
 export const runtime = "nodejs";
 
@@ -8,7 +9,7 @@ export const runtime = "nodejs";
  * Sales Portal month-end close (netlify/functions/sales-close-cron.mts, daily). Authorization:
  * Bearer $EMAIL_OUTBOX_SECRET (the existing scheduled-job secret). Idempotent: on the first run of a new
  * month it earns last month's pending commissions and puts them on each rep's statement; other days it
- * only catches late changes. Never pays anyone: payouts are approved and recorded by the owner.
+ * only catches late changes. Also writes any missing lead sales briefs. Never pays anyone: payouts are approved and recorded by the owner.
  */
 export async function POST(req: Request) {
   const secret = process.env.EMAIL_OUTBOX_SECRET ?? "";
@@ -22,5 +23,7 @@ export async function POST(req: Request) {
     logError("sales.close_month", error);
     return fail(500, "close_failed", "Month-end close failed.");
   }
-  return json(data);
+  // Imported leads whose sales brief didn't finish during the import.
+  const briefs = await fillBriefs(createAdminClient(), { limit: 50, budgetMs: 8000 }).catch(() => 0);
+  return json({ ...(data as object), briefs_written: briefs });
 }

@@ -24,6 +24,7 @@ const ERRORS: Record<string, string> = {
   locked_after_approval: "Approved and paid lines can't be changed. A refund after payout is deducted automatically.",
   invalid: "Check the form and try again.",
   duplicate: "Someone with that email is already on the sales team.",
+  invalid_zip: "Enter a 5-digit ZIP code.",
 };
 
 function back(tab: string, result: { ok?: string; err?: string }): never {
@@ -148,4 +149,17 @@ export async function importLeads(fd: FormData) {
   if (error) back("leads", { err: code(error) });
   const r = data as { added: number; skipped: number };
   back("leads", { ok: `Added ${r.added} lead${r.added === 1 ? "" : "s"}${r.skipped ? `, skipped ${r.skipped} already on file` : ""}.` });
+}
+
+/** The weekly lead import's target: the agent searches within the radius of this ZIP for this trade. */
+export async function saveLeadTarget(fd: FormData) {
+  const { user, db } = await requireAdmin();
+  const zip = String(fd.get("zip") ?? "").trim();
+  if (!/^\d{5}$/.test(zip)) back("leads", { err: "invalid_zip" });
+  const { error } = await db.rpc("admin_sales_import_target_save", {
+    p_caller: user.id, p_zip: zip, p_trade: String(fd.get("trade") ?? "").slice(0, 40) || null,
+    p_radius: Number(fd.get("radius")) || 50, p_count: Number(fd.get("count")) || 50, p_paused: fd.get("paused") === "on",
+  });
+  if (error) back("leads", { err: code(error) });
+  back("leads", { ok: "Saved. The next weekly run will use this target." });
 }
