@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AttentionCard, type Attention } from "./leads/attention";
 import { Card, Notice } from "@/components/ui/misc";
 import { ShareLink } from "@/components/sales/share-link";
 import { cookies } from "next/headers";
@@ -35,6 +36,9 @@ export default async function SalesOverview({ searchParams }: { searchParams: Pr
     db.rpc("sales_my_overview"), db.rpc("sales_my_team_goal"), db.rpc("sales_my_milestones"), db.rpc("sales_my_progress", {}),
     db.rpc("sales_my_accelerator", {}), db.rpc("sales_my_records", {}), db.rpc("sales_my_preferences"), db.rpc("sales_my_successes"),
   ]);
+  // V8.7 lead recycling (hidden until 20270122001000 is applied).
+  const attRes = await db.rpc("sales_my_attention");
+  const attention = attRes.error || !attRes.data ? null : (attRes.data as Attention);
   // V8.4 P3 (hidden until 20270119001000 is applied).
   const winsRes = await db.rpc("sales_team_wins", {});
   const wins = winsRes.error || !winsRes.data ? null : (winsRes.data as { rep: string; kind: string; at: string; mine: boolean }[]);
@@ -95,6 +99,7 @@ export default async function SalesOverview({ searchParams }: { searchParams: Pr
           </ol>
         </Card>
       )}
+      {attention && <AttentionCard data={attention} compact />}
       {successes && <SuccessCelebration items={successes} firstName={o.rep.full_name.split(" ")[0]} animate={prefs?.animations ?? true} />}
       {prefs && prefs.status === "not_started" && (
         <Card className="flex flex-wrap items-center justify-between gap-3 p-4 text-sm">

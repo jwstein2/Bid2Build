@@ -8,7 +8,8 @@ import { ADMIN_LEAD_ERRORS, DISPOSITIONS, DISPOSITION_LABEL, HOLD_LABEL, METHOD_
 import { cookies } from "next/headers";
 import { adminLogActivity, adminScheduleFollowUp, assignLeadsV86, cancelAssign, confirmAssign, holdLeads } from "../../lead-actions";
 import type { PendingAssign } from "../../leads-panel";
-import { WARNING_LABEL } from "@/lib/sales/leads-admin";
+import { CONTACT_LEVEL, RECYCLE_OUTCOME, RECYCLE_PROTECTED, RECYCLE_REASON, RECYCLE_RULE, untilLabel, WARNING_LABEL } from "@/lib/sales/leads-admin";
+import { extendDeadline, holdFromRecycling, recycleNow } from "../../recycle-actions";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Lead" };
@@ -22,6 +23,13 @@ interface Detail {
   bookings: { starts_at: string; session: string; rep_name: string }[];
   imports: { at: string; outcome: string; source: string; label: string | null }[];
   duplicates: Duplicate[];
+}
+
+interface LeadRecycle {
+  state: { rule: string | null; deadline: string | null; warned: boolean; protected: string | null } | null;
+  contact_level: string; count: number; hold_until: string | null; hold_note: string | null; origin: string;
+  history: { reason: string; outcome: string; cycle: number; at: string; note: string | null; from: string | null; to: string | null }[];
+  disputes: { id: string; status: string; note: string; at: string }[];
 }
 
 const input = "min-h-11 w-full rounded-lg border border-line bg-white px-3 text-sm";
@@ -45,6 +53,8 @@ export default async function AdminLead({ params, searchParams }: { params: Prom
   const back = `lead:${id}`;
   const err = sp.err ? ADMIN_LEAD_ERRORS[sp.err] ?? "That didn't work. Check the form and try again." : null;
   const canAssign = has("reassign_leads");
+  const rcRes = await db.rpc("admin_sales_lead_recycle", { p_caller: user.id, p_lead: id });
+  const rc = rcRes.error ? null : (rcRes.data as LeadRecycle);
   let pending: PendingAssign | null = null;
   if (sp.confirm) { try { pending = JSON.parse((await cookies()).get("sales_assign_pending")?.value ?? "null"); } catch { pending = null; } }
 
@@ -97,6 +107,44 @@ export default async function AdminLead({ params, searchParams }: { params: Prom
               </div>
             )}
           </Card>
+
+          {rc && (
+            <Card className="p-5" id="recycling">
+              <h2 className="text-lg font-bold">Recycling</h2>
+              <dl className="mt-2 grid gap-x-4 gap-y-1 text-sm sm:grid-cols-[12rem_1fr]">
+                <dt className="text-muted">Contact so far</dt><dd>{CONTACT_LEVEL[rc.contact_level] ?? rc.contact_level}</dd>
+                <dt className="text-muted">Clock</dt>
+                <dd>{rc.origin !== "company" ? "Not recycled (not a company lead)" : !rc.state ? "No owner" : rc.state.protected ? `Paused: ${RECYCLE_PROTECTED[rc.state.protected] ?? rc.state.protected}`
+                  : rc.state.rule ? <>{RECYCLE_RULE[rc.state.rule] ?? rc.state.rule}, deadline {when(rc.state.deadline!)} ({untilLabel(rc.state.deadline)}){rc.state.warned && <> · <Badge tone="warn">Rep warned</Badge></>}</> : "On track (worked, no overdue follow-up)"}</dd>
+                <dt className="text-muted">Times recycled</dt><dd>{rc.count}{rc.hold_until ? ` · held until ${dateLabel(rc.hold_until)}${rc.hold_note ? ` (${rc.hold_note})` : ""}` : ""}</dd>
+              </dl>
+              {canAssign && l.assigned_rep && rc.origin === "company" && (
+                <div className="mt-3 flex flex-wrap items-end gap-2">
+                  <form action={extendDeadline} className="flex flex-wrap items-end gap-2">
+                    <input type="hidden" name="back" value={back} /><input type="hidden" name="lead" value={id} />
+                    <label className="text-sm">Extend<select name="days" defaultValue="7" className={input}>{[3, 7, 14, 30].map((n) => <option key={n} value={n}>{n} days</option>)}</select></label>
+                    <button className={btnLight}>Extend deadline</button>
+                  </form>
+                  <form action={holdFromRecycling} className="flex flex-wrap items-end gap-2">
+                    <input type="hidden" name="back" value={back} /><input type="hidden" name="lead" value={id} />
+                    {rc.hold_until ? <button name="release" value="1" className={btnLight}>Remove recycling hold</button> : <>
+                      <label className="text-sm">Hold until<input type="date" name="until" required className={input} /></label>
+                      <label className="text-sm">Note<input name="note" maxLength={300} className={input} /></label>
+                      <button className={btnLight}>Hold from recycling</button></>}
+                  </form>
+                  <form action={recycleNow} className="flex flex-wrap items-end gap-2">
+                    <input type="hidden" name="back" value={back} /><input type="hidden" name="lead" value={id} />
+                    <label className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" name="confirm" required className="h-5 w-5" /> I&apos;m sure</label>
+                    <button className={btnLight}>Recycle now</button>
+                  </form>
+                </div>
+              )}
+              {rc.disputes.length > 0 && <p className="mt-2 text-sm">Review requests: {rc.disputes.map((x) => `${dateLabel(x.at)} ${x.status} ("${x.note}")`).join("; ")}</p>}
+              {rc.history.length > 0 && (
+                <ul className="mt-2 space-y-1 text-sm">{rc.history.map((h, i) => <li key={i}>{dateLabel(h.at)}: {RECYCLE_REASON[h.reason] ?? h.reason}, {h.from ?? "–"} → {h.to ?? "queue"} ({RECYCLE_OUTCOME[h.outcome] ?? h.outcome}){h.note ? ` · ${h.note}` : ""}</li>)}</ul>
+              )}
+            </Card>
+          )}
 
           <Card className="p-5" id="log">
             <h2 className="text-lg font-bold">Log an activity</h2>

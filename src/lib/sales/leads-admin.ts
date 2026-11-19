@@ -12,7 +12,41 @@ export const HOLD_LABEL: Record<string, string> = {
   needs_classification: "Needs a trade or location",
   manual: "Returned to the queue",
   existing_customer: "Already a Built2Bid customer",
+  recycle_no_alternative: "Recycled, waiting for another rep",
+  recycle_review: "Recycled too many times: review",
+  dormant: "Dormant (parked)",
 };
+
+/** V8.7 lead recycling labels. */
+export const RECYCLE_RULE: Record<string, string> = {
+  first_contact: "No first contact yet", overdue_followup: "Follow-up overdue", owner_inactive: "Owner no longer active",
+};
+export const RECYCLE_REASON: Record<string, string> = {
+  first_contact: "No first contact in time", overdue_followup: "Follow-up overdue", owner_inactive: "Owner no longer active", admin: "Recycled by an admin", returned: "Handed back by the rep",
+};
+export const RECYCLE_OUTCOME: Record<string, string> = { reassigned: "Reassigned", no_alternative: "Waiting for another rep", review: "Sent to review" };
+export const RECYCLE_PROTECTED: Record<string, string> = {
+  customer_or_closed: "Customer, trial or closed", contact_restricted: "Do not contact", admin_hold: "On recycling hold", appointment: "Appointment booked",
+  offboarding: "Owner is offboarding", time_off: "Owner on time off", disputed: "Under review",
+};
+export const CONTACT_LEVEL: Record<string, string> = { none: "Not contacted", attempted: "Attempted", delivered: "Delivered", two_way: "Two-way contact", opportunity: "Active opportunity" };
+
+/** Hours (or days) left until a deadline, in plain words. Negative = overdue. */
+export function untilLabel(iso: string | null | undefined, now = Date.now()): string {
+  if (!iso) return "";
+  const ms = Date.parse(iso) - now;
+  const h = Math.round(Math.abs(ms) / 3_600_000);
+  const words = h < 1 ? "under an hour" : h < 48 ? `${h} hour${h === 1 ? "" : "s"}` : `${Math.round(h / 24)} days`;
+  return ms >= 0 ? `in ${words}` : `${words} overdue`;
+}
+
+/** Recycling history rows as CSV (formula-safe). */
+export function recycleCsv(rows: { at: string; company_name: string; reason: string; outcome: string; cycle: number; from: string | null; to: string | null; note: string | null }[]): string {
+  const cell = (v: unknown) => { let s = String(v ?? ""); if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`; return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+  const head = ["When", "Business", "Reason", "Outcome", "Cycle", "From", "To", "Note"];
+  return [head, ...rows.map((r) => [r.at, r.company_name, RECYCLE_REASON[r.reason] ?? r.reason, RECYCLE_OUTCOME[r.outcome] ?? r.outcome, r.cycle, r.from, r.to, r.note])]
+    .map((r) => r.map(cell).join(",")).join("\n") + "\n";
+}
 
 export const ORIGIN_LABEL: Record<string, string> = {
   company: "Company lead", rep_sourced: "Rep's own lead", referral: "Referral (rep link)", customer: "Existing customer", historical: "Historical contact",
@@ -178,6 +212,10 @@ export const ADMIN_LEAD_ERRORS: Record<string, string> = {
   already_joined: "That person already signed in, so they don't need an invite.",
   use_offboarding: "Use Offboard on the rep's management page to remove someone, so their records and pay are handled properly.",
   send_failed: "The invitation email didn't send. The new link is shown below so you can send it yourself.",
+  already_disputed: "A review was already requested for this lead.",
+  cannot_return: "Only company leads that aren't customers or trials can be handed back.",
+  rep_not_eligible: "That rep can't take leads right now.",
+  note_required: "Add a short note.",
   not_authorized: "Your role can't do that.",
   invalid: "Check the form and try again.",
 };

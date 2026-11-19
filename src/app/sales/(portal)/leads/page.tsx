@@ -4,6 +4,7 @@ import { requireSalesRep } from "@/lib/sales/server";
 import { STAGES, STAGE_LABEL, TRADES, type Lead, type LeadTask } from "@/lib/sales/crm";
 import { dateLabel } from "@/lib/sales/format";
 import { createLead, importMyLeads } from "./actions";
+import { AttentionCard, type Attention } from "./attention";
 
 export const metadata = { title: "Leads" };
 const overdue = (iso: string) => new Date(iso).getTime() < Date.now();
@@ -18,6 +19,9 @@ export default async function SalesLeads({ searchParams }: { searchParams: Promi
   // V8.6 notices (new leads assigned, leads moved). Missing until 20270121001000 is applied.
   const nres = await db.rpc("sales_my_notices");
   const notices = (nres.error ? [] : nres.data ?? []) as { id: number; kind: string; body: string; at: string; unread: boolean }[];
+  // V8.7 lead recycling. Missing until 20270122001000 is applied.
+  const ares = await db.rpc("sales_my_attention");
+  const attention = ares.error ? null : (ares.data as Attention);
   const stage = STAGES.find((s) => s === sp.stage);
   const q = (sp.q ?? "").trim().toLowerCase();
   const shown = leads.filter((l) => (!stage || l.stage === stage) && (!q || `${l.company_name} ${l.contact_name ?? ""} ${l.city ?? ""} ${l.zip ?? ""} ${l.trades.join(" ")}`.toLowerCase().includes(q)));
@@ -30,6 +34,8 @@ export default async function SalesLeads({ searchParams }: { searchParams: Promi
       </div>
       {sp.ok && <Notice tone="ok">{sp.ok}</Notice>}
       {sp.err && <Notice tone="warn">{sp.err}</Notice>}
+
+      {attention && <AttentionCard data={attention} />}
 
       {notices.length > 0 && (
         <Card className="p-5">

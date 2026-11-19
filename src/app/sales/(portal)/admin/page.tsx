@@ -16,6 +16,7 @@ import { achievementText, DEFAULT_TIERS, type Tier } from "@/lib/sales/incentive
 import { RECOGNITION_ERRORS } from "@/lib/sales/preferences";
 import { RecognitionPanel, type DigestPreview, type Recognition } from "./recognition-panel";
 import { BookingsPanel, type AdminBooking } from "./bookings-panel";
+import { RecyclingPanel, type RecycleFilters, type RecycleOverview } from "./recycling-panel";
 import { LeadsPanel, type AdminLeads, type PendingAssign, type PossibleDup } from "./leads-panel";
 import { ADMIN_LEAD_ERRORS, cleanFilters, LIFECYCLE, lifecycle } from "@/lib/sales/leads-admin";
 import { cookies } from "next/headers";
@@ -251,6 +252,9 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
             </Card>
           ));
   if (tab === "leads" && sp.confirm) { try { pendingAssign = JSON.parse((await cookies()).get("sales_assign_pending")?.value ?? "null"); } catch { pendingAssign = null; } }
+  const recFilters: RecycleFilters = { rep: /^[0-9a-f-]{36}$/i.test(sp.rep ?? "") ? sp.rep : undefined, trade: (sp.trade ?? "").slice(0, 40) || undefined, source: ["import", "owner", "places"].includes(sp.source ?? "") ? sp.source : undefined, days: ["7", "30", "90"].includes(sp.days ?? "") ? sp.days : undefined };
+  const recycleRes = tab === "recycling" ? await db.rpc("admin_sales_recycle_overview", { p_caller: user.id, p: { ...recFilters, days: Number(recFilters.days ?? 7) } }) : null;
+  const recycle = recycleRes && !recycleRes.error ? (recycleRes.data as RecycleOverview) : null;
   const manageRes = tab === "team" ? await db.rpc("admin_sales_rep_manage_list", { p_caller: user.id }) : null;
   const manage = (manageRes && !manageRes.error ? manageRes.data : {}) as Record<string, { linked: boolean; allocation_paused: boolean; reactivated_at: string | null; offboarding: boolean; auto_effective: boolean; on_time_off: boolean }>;
   // V8: invite links and policy versions (hidden until 20270110001000 is applied).
@@ -307,7 +311,7 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
     cannot_edit_self: "You can't change your own team record. Ask the platform owner.",
     cannot_approve_own: "You can't approve or cancel your own pay. Another administrator or the owner has to.",
     ...(tab === "recognition" ? RECOGNITION_ERRORS : {}),
-    ...(tab === "leads" || tab === "team" ? ADMIN_LEAD_ERRORS : {}),
+    ...(tab === "leads" || tab === "team" || tab === "recycling" ? ADMIN_LEAD_ERRORS : {}),
   } as Record<string, string>)[sp.err] ?? "That didn't work. Check the form and try again." : null;
 
   return (
@@ -432,6 +436,10 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
         <LeadsPanel data={v86Leads} filters={leadFilters} canAssign={has("reassign_leads")} pending={pendingAssign} dups={dups} view={sp.view} importCard={importCard}
           reps={h.reps.filter((r) => r.status === "active" || r.status === "invited").map((r) => ({ id: r.id, name: r.full_name }))} />
       )}
+      {tab === "recycling" && (recycle
+        ? <RecyclingPanel data={recycle} filters={recFilters} canAct={has("reassign_leads")} canSettings={has("manage_reps")}
+            reps={h.reps.filter((r) => r.status === "active").map((r) => ({ id: r.id, name: r.full_name }))} />
+        : <Notice tone="warn">Lead recycling isn&apos;t installed yet. Run <code className="break-all">supabase/migrations/20270122001000_sales_v87_recycling.sql</code> in the Supabase SQL Editor, then reload.</Notice>)}
       {tab === "leads" && !v86Leads && (
         crm?.error ? <Notice tone="warn">The CRM tables are not installed yet. Run <code className="break-all">supabase/migrations/20270107002000_sales_crm.sql</code> in the Supabase SQL Editor, then reload.</Notice> : (
         <div className="space-y-6">

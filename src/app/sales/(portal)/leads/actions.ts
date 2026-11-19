@@ -56,7 +56,29 @@ export async function logActivity(fd: FormData) {
   const disposition = p.data.disposition && DISPOSITIONS[p.data.kind]?.some((d) => d.v === p.data.disposition) ? p.data.disposition : null;
   const { error } = await db.rpc("sales_crm_activity_log", { p_lead: id, p_kind: p.data.kind, p_body: p.data.body, p_disposition: disposition });
   if (error) back(`/sales/leads/${id}`, { err: activityErrorMessage(error.message) });
-  back(`/sales/leads/${id}`, { ok: "Logged." });
+  const counts = p.data.kind === "reply" || (disposition && !["failed", "bounced"].includes(disposition) && p.data.kind !== "note");
+  back(`/sales/leads/${id}`, { ok: counts || p.data.kind === "note" ? "Logged." : "Logged. Pick an outcome (like Sent or Voicemail) next time so it counts as working the lead." });
+}
+
+/** V8.7: hand a company lead back to the team pool. It goes to the next rep in turn. */
+export async function returnLead(fd: FormData) {
+  const { db } = await requireSalesRep();
+  const id = z.string().uuid().parse(fd.get("id"));
+  if (fd.get("confirm") !== "on") back(`/sales/leads/${id}`, { err: "Tick the box to confirm you're handing this lead back." });
+  const { error } = await db.rpc("sales_crm_return_lead", { p_lead: id, p_note: String(fd.get("note") ?? "").slice(0, 300) || null });
+  if (error) back(`/sales/leads/${id}`, { err: /cannot_return/.test(error.message) ? "Customers, trials and your own leads can't be handed back." : "That didn't work. Try again." });
+  back("/sales/leads", { ok: "Lead handed back to the team. Thanks for letting it go to someone who can work it." });
+}
+
+/** V8.7: ask an administrator to review a recycling warning (once per assignment). */
+export async function requestRecycleReview(fd: FormData) {
+  const { db } = await requireSalesRep();
+  const id = z.string().uuid().parse(fd.get("id"));
+  const note = String(fd.get("note") ?? "").trim().slice(0, 1000);
+  if (note.length < 3) back(`/sales/leads/${id}`, { err: "Add a short note about what happened with this lead." });
+  const { error } = await db.rpc("sales_recycle_dispute", { p_lead: id, p_note: note });
+  if (error) back(`/sales/leads/${id}`, { err: /already_disputed/.test(error.message) ? "You've already asked for a review on this lead." : "That didn't work. Try again." });
+  back(`/sales/leads/${id}`, { ok: "Review requested. The lead won't move until an administrator looks at it." });
 }
 
 export async function saveTask(fd: FormData) {

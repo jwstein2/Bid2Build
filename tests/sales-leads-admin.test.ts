@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ageLabel, cleanFilters, csvToRows, filterQuery, lifecycle, listField } from "@/lib/sales/leads-admin";
+import { ageLabel, cleanFilters, csvToRows, filterQuery, lifecycle, listField, recycleCsv, untilLabel } from "@/lib/sales/leads-admin";
 import { inviteEmailsOn, inviteText, sendInviteEmail } from "@/lib/sales/invite-email";
 
 describe("V8.6 lead admin helpers", () => {
@@ -47,5 +47,14 @@ describe("V8.6 lead admin helpers", () => {
     const ok = await sendInviteEmail({ inviteId: "i1", to: "a@b.com", ...t }, env, fake);
     expect(ok).toEqual({ ok: true, id: "msg_1" });
     expect((seen?.headers as Record<string, string>)["idempotency-key"]).toBe("sales-invite/i1");
+  });
+
+  it("words recycling deadlines and exports formula-safe CSV", () => {
+    const now = Date.parse("2026-11-19T12:00:00Z");
+    expect(untilLabel("2026-11-20T12:00:00Z", now)).toBe("in 24 hours");
+    expect(untilLabel("2026-11-26T12:00:00Z", now)).toBe("in 7 days");
+    expect(untilLabel("2026-11-19T09:00:00Z", now)).toBe("3 hours overdue");
+    const csv = recycleCsv([{ at: "2026-11-19", company_name: "=HYPERLINK(1)", reason: "first_contact", outcome: "reassigned", cycle: 1, from: "Ana", to: "Ben", note: "a, b" }]);
+    expect(csv.split("\n")[1]).toBe(`2026-11-19,'=HYPERLINK(1),No first contact in time,Reassigned,1,Ana,Ben,"a, b"`);
   });
 });
