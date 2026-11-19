@@ -5,6 +5,7 @@ import { normalizeReferralCode, REFERRAL_COOKIE, REFERRAL_MAX_AGE } from "@/lib/
 import { TWO_STEP_REQUIRED, needsStepUp, stepUpExempt } from "@/lib/auth/mfa";
 import { DEMO_BLOCKED_MESSAGE, isDemoBlocked, parseDemoClaim } from "@/lib/demo/session";
 import { salesLoginRedirect } from "@/lib/sales/next";
+import { appLoginRedirect } from "@/lib/auth/app-next";
 
 /** First-touch attribution: set once from UTM/ic/ref parameters, an ad click id or an outside referrer host; never overwritten. */
 function withAttribution(request: NextRequest, response: NextResponse): NextResponse {
@@ -45,7 +46,8 @@ export async function proxy(request: NextRequest) {
   // Sales portal: a signed-out visit to a private /sales page goes to the sales sign-in and comes back
   // afterwards. The portal layout still authorizes; this only keeps the destination.
   if (!claims?.claims && request.method === "GET") {
-    const login = salesLoginRedirect(request.nextUrl.pathname, request.nextUrl.search);
+    // App pages do the same with the main sign-in (the app layout alone could only send them to /dashboard).
+    const login = salesLoginRedirect(request.nextUrl.pathname, request.nextUrl.search) ?? appLoginRedirect(request.nextUrl.pathname, request.nextUrl.search);
     if (login) {
       const redirect = NextResponse.redirect(new URL(login, request.url));
       response.cookies.getAll().forEach((c) => redirect.cookies.set(c));
