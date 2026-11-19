@@ -3,7 +3,7 @@ import { Badge, Card, Notice } from "@/components/ui/misc";
 import { dateLabel, usd } from "@/lib/sales/format";
 import { AWARD_STATUS, REWARD_CATEGORIES, SUCCESS_TEXT, TAX_LABELS } from "@/lib/sales/preferences";
 import {
-  markSuccessCongratulated, proposeAward, saveCongratsSettings, saveRecognitionNote, saveReward, sendCongratsEmail, setAward, skipCongratsEmail,
+  markSuccessCongratulated, proposeAward, saveDigestSettings, saveCongratsSettings, saveRecognitionNote, saveReward, sendCongratsEmail, setAward, skipCongratsEmail,
 } from "./recognition-actions";
 
 export interface Recognition {
@@ -20,7 +20,9 @@ const btn = "min-h-11 rounded-lg bg-ink px-4 text-sm font-semibold text-white";
 const btnLight = "min-h-11 rounded-lg border border-line bg-white px-3 text-sm font-semibold";
 const show = (v: string | string[] | undefined) => (Array.isArray(v) ? v.join(", ") : v ?? "").replace(/_/g, " ");
 
-export function RecognitionPanel({ r, isOwner, canPropose }: { r: Recognition; isOwner: boolean; canPropose: boolean }) {
+export type DigestPreview = { enabled: boolean; sales: number; successes: unknown[]; achievements: unknown[]; awaiting: { congrats: number; rewards: number; boxes: number; not_congratulated: number } };
+
+export function RecognitionPanel({ r, isOwner, canPropose, digest }: { r: Recognition; isOwner: boolean; canPropose: boolean; digest?: DigestPreview | null }) {
   const pending = r.congrats.filter((m) => m.status === "draft" || m.status === "failed" || m.status === "sending");
   const activeRewards = r.rewards.filter((w) => w.status === "active");
   return (
@@ -163,6 +165,13 @@ export function RecognitionPanel({ r, isOwner, canPropose }: { r: Recognition; i
           </tbody>
         </table>
       </Card>
+      {digest && (
+        <Card className="p-5">
+          <div className="flex flex-wrap items-baseline justify-between gap-2"><h2 className="text-lg font-bold">Weekly recognition digest</h2><Badge tone={digest.enabled ? "ok" : "neutral"}>{digest.enabled ? "On" : "Off"}</Badge></div>
+          <p className="mt-1 text-sm text-ink-soft">This week so far: {digest.sales} new paying customer{digest.sales === 1 ? "" : "s"}, {digest.successes.length} onboarding{digest.successes.length === 1 ? "" : "s"}, {digest.achievements.length} achievement{digest.achievements.length === 1 ? "" : "s"}. Waiting: {digest.awaiting.congrats} emails, {digest.awaiting.rewards} rewards, {digest.awaiting.boxes} boxes.</p>
+          {isOwner && <form action={saveDigestSettings} className="mt-3 flex flex-wrap items-center gap-3"><label className="flex items-center gap-2 text-sm"><input type="checkbox" name="enabled" defaultChecked={digest.enabled} /> Email me this summary every Monday</label><button className={btnLight}>Save</button></form>}
+        </Card>
+      )}
       {!isOwner && <Notice>Rewards, congratulation emails and their settings are managed by the platform owner.</Notice>}
     </div>
   );

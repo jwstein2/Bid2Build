@@ -17,6 +17,7 @@ import { AcceleratorCard, PersonalBestsCard, type MyAccelerator } from "@/compon
 import { TeamGoalBoard } from "@/components/sales/team-goal-board";
 import { QuestCard } from "@/components/sales/quest-card";
 import { MilestoneBoxes, type MilestoneAward } from "@/components/sales/gift-box";
+import { TeamWins } from "@/components/sales/team-wins";
 import { CustomerSuccessCard, SuccessCelebration, type Success } from "@/components/sales/success-celebration";
 import { recommendedLayout, sectionOrder, type Answers, type Layout } from "@/lib/sales/preferences";
 
@@ -33,6 +34,9 @@ export default async function SalesOverview() {
     db.rpc("sales_my_overview"), db.rpc("sales_my_team_goal"), db.rpc("sales_my_milestones"), db.rpc("sales_my_progress", {}),
     db.rpc("sales_my_accelerator", {}), db.rpc("sales_my_records", {}), db.rpc("sales_my_preferences"), db.rpc("sales_my_successes"),
   ]);
+  // V8.4 P3 (hidden until 20270119001000 is applied).
+  const winsRes = await db.rpc("sales_team_wins", {});
+  const wins = winsRes.error || !winsRes.data ? null : (winsRes.data as { rep: string; kind: string; at: string; mine: boolean }[]);
   // V8.4 P1 (hidden until 20270117001000 is applied): layout order and customer success celebrations.
   const prefs = prefRes.error || !prefRes.data ? null : (prefRes.data as { status: string; answers: Answers; dashboard_layout: Layout | null; animations: boolean });
   const successes = sucRes.error || !sucRes.data ? null : (sucRes.data as Success[]);
@@ -87,7 +91,7 @@ export default async function SalesOverview() {
         </Card>
       )}
       {sectionOrder(layout).map((sec) => {
-        if (sec === "team") return goal ? <div key="team"><TeamGoalBoard g={goal} /></div> : null;
+        if (sec === "team") return goal || wins ? <div key="team" className="space-y-8">{goal && <TeamGoalBoard g={goal} />}{wins && <TeamWins wins={wins} optedIn={!!(prefRes.data as { public_recognition?: boolean } | null)?.public_recognition} />}</div> : null;
         if (sec === "progress") return (
           <div key="progress" className="space-y-8">
       {ms && <MilestoneBoxes awards={ms.awards} accounts={ms.accounts} next={nextMilestone(rules, ms.accounts)} />}

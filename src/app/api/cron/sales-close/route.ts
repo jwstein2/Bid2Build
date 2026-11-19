@@ -2,6 +2,8 @@ import { timingSafeEqual } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/server";
 import { fail, json, logError } from "@/lib/http/api";
 import { fillBriefs } from "@/lib/sales/brief";
+import { sendDayBeforeReminders } from "@/lib/sales/booking-email";
+import { sendWeeklyDigest } from "@/lib/sales/digest";
 
 export const runtime = "nodejs";
 
@@ -31,7 +33,11 @@ export async function POST(req: Request) {
   await createAdminClient().rpc("sales_achievements_evaluate", {}).then(() => null, () => null);
   // V8.4 P1: customer success celebrations (and owner congratulation drafts, when the owner has them on).
   const successes = await createAdminClient().rpc("sales_customer_successes_evaluate", {}).then((r) => r.data ?? null, () => null);
+  // V8.4 P2: day-before reminders for client sessions (only when SALES_BOOKING_EMAILS=on).
+  const reminders = await sendDayBeforeReminders(createAdminClient()).catch(() => 0);
+  // V8.4 P3: the owner's weekly recognition digest (Monday or later, once a week, only when turned on).
+  const digest = await sendWeeklyDigest(createAdminClient()).catch(() => false);
   // Imported leads whose sales brief didn't finish during the import.
   const briefs = await fillBriefs(createAdminClient(), { limit: 50, budgetMs: 8000 }).catch(() => 0);
-  return json({ ...(data as object), accelerators: accel, customer_successes: successes, briefs_written: briefs });
+  return json({ ...(data as object), accelerators: accel, customer_successes: successes, reminders, digest, briefs_written: briefs });
 }

@@ -169,6 +169,7 @@ export const RECOGNITION_ERRORS: Record<string, string> = {
   invalid_transition: "That award can't move to that status.",
   already_paid: "The cash reward is already on an approved or paid statement, so it can't be canceled here.",
   not_skippable: "That email can't be skipped now.",
+  rep_busy: "That rep is busy or out of office at that time. Pick someone else.",
   send_failed: "The email didn't send. It's marked failed; you can try again.",
   invalid: "Check the form and try again.",
 };
