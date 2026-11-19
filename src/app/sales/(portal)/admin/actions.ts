@@ -35,6 +35,7 @@ const ERRORS: Record<string, string> = {
   already_joined: "That person already signed in, so they don't need an invite.",
   not_ready: "That box isn't ready to approve yet (it unlocks after the 30-day refund hold).",
   invalid_goal: "Enter a whole number of accounts.",
+  invalid_tiers: "Check the accelerator tiers: sales counts and rates must both go up, rates 50% or less.",
   invalid_milestones: "Check the milestone rules: increasing account numbers, rates 0-20%, flat boxes before the first percentage box.",
 };
 
@@ -241,4 +242,26 @@ export async function saveMilestoneRules(fd: FormData) {
   const { data, error } = await db.rpc("admin_sales_milestone_rules_save", { p_caller: user.id, p_every: every, p_rates: rates, p_min_cents: Math.round(minDollars * 100), p_flat: flat, p_note: text(500).parse(fd.get("note") ?? "") || null });
   if (error) back("policy", { err: code(error) });
   back("policy", { ok: `Milestone rules saved (policy version ${(data as { version?: number } | null)?.version ?? "updated"}). Boxes already created keep their rules.` });
+}
+
+/** Accelerator tiers and the on/off switch (owner only; each save is a new policy version). */
+export async function saveAcceleratorRules(fd: FormData) {
+  const { user, db } = await need("edit_commission_policies", "recognition");
+  const tiers = [0, 1, 2, 3, 4, 5].map((i) => ({ from: Number(fd.get(`tier_from_${i}`) ?? NaN), pct: Number(fd.get(`tier_pct_${i}`) ?? NaN) }))
+    .filter((t) => Number.isInteger(t.from) && t.from > 0 && Number.isFinite(t.pct) && t.pct > 0);
+  if (tiers.length === 0) back("recognition", { err: "invalid_tiers" });
+  const enabled = fd.get("enabled") === "on";
+  const { data, error } = await db.rpc("admin_sales_accelerator_rules_save", { p_caller: user.id, p_enabled: enabled, p_tiers: tiers, p_note: text(500).parse(fd.get("note") ?? "") || null });
+  if (error) back("recognition", { err: code(error) });
+  back("recognition", { ok: `Accelerator ${enabled ? "on" : "off"} (policy version ${(data as { version?: number } | null)?.version ?? "updated"}). Finalized months keep the rates they were finalized with.` });
+}
+
+/** Note that the owner congratulated someone. Sending the message itself comes with the approved email step. */
+export async function congratulate(fd: FormData) {
+  const { user, db } = await need("view_all_reps", "recognition");
+  const id = z.string().uuid().safeParse(fd.get("id"));
+  if (!id.success) back("recognition", { err: "invalid" });
+  const { error } = await db.rpc("admin_sales_achievement_congratulate", { p_caller: user.id, p_id: id.data });
+  if (error) back("recognition", { err: code(error) });
+  back("recognition", { ok: "Marked as congratulated." });
 }

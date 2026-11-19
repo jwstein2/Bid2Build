@@ -65,3 +65,26 @@ describe("team reporting", () => {
     expect(csv(["Rep"], [[d.rep.full_name]])).toContain(`"'=HYPERLINK(1)"`);
   });
 });
+
+describe("V8.4 accelerators and personal bests", async () => {
+  const { DEFAULT_TIERS, tierRate, nextTier, accelBonus, splitBonus, personalBests } = await import("@/lib/sales/incentives");
+  it("matches the spec's tiers and example", () => {
+    expect([1, 4, 5, 9, 10, 14, 15, 19, 20, 50].map((n) => tierRate(DEFAULT_TIERS, n))).toEqual([0, 0, 5, 5, 10, 10, 15, 15, 20, 20]);
+    expect(accelBonus(19990, 10)).toBe(1999); // $199.90 x 10% = $19.99, total $219.89
+    expect(nextTier(DEFAULT_TIERS, 7)).toMatchObject({ from: 10, pct: 10, needed: 3 });
+    expect(nextTier(DEFAULT_TIERS, 25)).toBeNull();
+  });
+  it("splits a month's bonus so the parts add up exactly", () => {
+    const parts = splitBonus(Array(10).fill(1999), 10);
+    expect(parts.reduce((t, p) => t + p, 0)).toBe(1999);
+    expect(Math.max(...parts) - Math.min(...parts)).toBeLessThanOrEqual(1);
+    expect(splitBonus([1999, 2999, 4999], 15).reduce((t, p) => t + p, 0)).toBe(accelBonus(9997, 15));
+  });
+  it("compares a rep only with their own history", () => {
+    const m = (month: string, paid: number) => ({ month, calls: 0, meetings: 0, follow_ups: 0, tasks_done: 0, paid_accounts: paid });
+    const [, paid] = personalBests([m("2026-09-01", 2), m("2026-10-01", 4), m("2026-11-01", 5)]);
+    expect(paid).toMatchObject({ now: 5, best: 4, bestMonth: "2026-10-01", beaten: true, pct: 100 });
+    const [, fresh] = personalBests([m("2026-11-01", 1)]);
+    expect(fresh).toMatchObject({ hasHistory: false, beaten: false });
+  });
+});

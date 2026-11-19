@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { autoTarget, DEFAULT_MILESTONES, isMilestone, milestoneBonus, milestoneRate, nextMilestone, payExample, teamGoal } from "@/lib/sales/goals";
-import { monthXp, quests, rankFor } from "@/lib/sales/quests";
+import { monthXp, quests } from "@/lib/sales/quests";
 
 describe("team goal", () => {
   it("grows 10% (at least one sale) from the 3-month average", () => {
@@ -55,7 +55,7 @@ describe("milestone boxes", () => {
   });
 });
 
-describe("quests and rank", () => {
+describe("quests and XP", () => {
   const zero = { calls: 0, meetings: 0, follow_ups: 0, tasks_done: 0, paid_accounts: 0 };
   it("tracks daily and weekly quests", () => {
     const q = quests({ now: "", periods: { day: { ...zero, follow_ups: 5, calls: 1 }, week: { ...zero, meetings: 1 }, month: zero } });
@@ -63,10 +63,7 @@ describe("quests and rank", () => {
     expect(q.find((x) => x.id === "d-call")).toMatchObject({ done: 1, goal: 3, complete: false });
     expect(q.find((x) => x.id === "w-demo")?.complete).toBe(true);
   });
-  it("caps volume XP and ranks Bronze to Diamond", () => {
+  it("caps volume XP", () => {
     expect(monthXp({ ...zero, calls: 10000 })).toBe(150);
-    expect(rankFor(0).name).toBe("Bronze");
-    expect(rankFor(600)).toMatchObject({ name: "Gold", next: { name: "Platinum", xp: 1000 }, pct: 20 });
-    expect(rankFor(5000)).toMatchObject({ name: "Diamond", next: null, pct: 100 });
   });
 });

@@ -1,7 +1,6 @@
 import { Card } from "@/components/ui/misc";
 import { requireSalesRep } from "@/lib/sales/server";
 import { DEFAULT_MILESTONES, payExample, type MilestoneRules } from "@/lib/sales/goals";
-import { RANKS } from "@/lib/sales/quests";
 import { usd } from "@/lib/sales/format";
 
 export const metadata = { title: "How you get paid" };
@@ -73,8 +72,10 @@ export default async function HowYouGetPaid() {
       </Card>
 
       <Card className="p-5">
-        <h2 className="text-lg font-bold">Quests and monthly rank</h2>
-        <p className="mt-1 text-sm text-ink-soft">Daily and weekly quests (follow-ups, calls, demos, closed accounts) earn XP. Your XP sets your rank for the month: {RANKS.map((r) => r.name).join(", ")}. Ranks reset on the 1st. XP and ranks are for bragging rights, not cash.</p>
+        <h2 className="text-lg font-bold">Quests and personal records</h2>
+        <p className="mt-1 text-sm text-ink-soft">Daily and weekly quests (follow-ups, calls, demos, closed accounts) earn XP. Your dashboard compares this month only with your own best month, never with other reps. There are no ranks or tiers: we&apos;re all equals. XP and records are for you, not cash.</p>
+        <h2 className="mt-5 text-lg font-bold">Monthly accelerator</h2>
+        <p className="mt-1 text-sm text-ink-soft">When the owner turns it on: 5 or more new paid sales in a calendar month adds 5% to that month&apos;s sale commissions, 10 or more adds 10%, 15 or more 15%, and 20 or more 20%. Example: 10 sales whose sale-month commissions total $199.90 earn a $19.99 bonus, $219.89 in all. It never applies to anniversaries, is fixed once the month&apos;s sales clear the 30-day refund hold, and is paid on the next statement after approval. The current rates are on the Policy page your admin shares.</p>
       </Card>
     </div>
   );
