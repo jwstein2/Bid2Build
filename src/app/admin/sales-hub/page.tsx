@@ -9,6 +9,7 @@ import { CopyField } from "@/components/sales/copy-field";
 import { site } from "@/lib/site";
 import { DEFAULT_MILESTONES, teamGoal, type GoalRaw, type MilestoneRules } from "@/lib/sales/goals";
 import { TeamGoalBoard } from "@/components/sales/team-goal-board";
+import { isCertified, TOPICS } from "@/lib/sales/academy";
 import { adjustCommission, approveStatement, assignCustomer, assignLeads, approveMilestone, createInvite, importLeads, saveMilestoneRules, saveTeamGoal, voidMilestone, saveLeadTarget, closeMonth, endAttribution, recordPayout, savePolicy, saveRep } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -141,6 +142,8 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
     target?: { zip: string | null; trade: string | null; radius_miles: number; count: number; paused: boolean }; zips?: { zip: string; leads: number }[] }) : null;
   const activeReps = h.reps.filter((r) => r.status !== "removed");
   // V8: invite links and policy versions (hidden until 20270110001000 is applied).
+  const acadRes = tab === "team" ? await db.rpc("admin_sales_academy", { p_caller: user.id }) : null;
+  const academy = (acadRes && !acadRes.error ? acadRes.data : null) as Record<string, string[] | null> | null;
   const invRes = tab === "team" ? await db.rpc("admin_sales_invites", { p_caller: user.id }) : null;
   const invites = (invRes && !invRes.error ? invRes.data : {}) as Record<string, { created_at: string; expires_at: string; opened_at: string | null; accepted_at: string | null; revoked_at: string | null }>;
   const verRes = tab === "policy" ? await db.rpc("admin_sales_policy_versions", { p_caller: user.id }) : null;
@@ -250,6 +253,10 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
                   <p className="text-lg font-bold">{r.full_name} <Badge tone={REP_STATUS[r.status]?.tone}>{REP_STATUS[r.status]?.label}</Badge></p>
                   <p className="text-sm text-muted">{r.role === "manager" ? "Sales manager" : "Sales rep"} · {r.email}{r.phone ? ` · ${r.phone}` : ""} · added {dateLabel(r.created_at)}{r.activated_at ? `, first signed in ${dateLabel(r.activated_at)}` : ", hasn't signed in yet"}</p>
                   <p className="mt-1 break-all font-mono text-sm">{repLink(r.code)}</p>
+                  {academy && r.linked && (() => {
+                    const passed = academy[r.id] ?? [];
+                    return <p className="mt-1 text-sm">{isCertified(passed) ? <Badge tone="ok">Certified to sell</Badge> : <span className="text-ink-soft">Academy: {passed.filter((t) => TOPICS.some((x) => x.id === t)).length} of {TOPICS.length} topics passed</span>}</p>;
+                  })()}
                 </div>
                 {!r.linked && r.status !== "removed" && (
                   <form action={createInvite}>

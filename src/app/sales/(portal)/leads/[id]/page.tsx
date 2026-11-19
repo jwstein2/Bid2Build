@@ -6,6 +6,7 @@ import { requireSalesRep } from "@/lib/sales/server";
 import { ACTIVITY_LABEL, SOURCE_LABEL, STAGES, STAGE_LABEL, verificationSources, type Duplicate, type Lead, type LeadActivity, type LeadTask } from "@/lib/sales/crm";
 import { dateLabel, TIER_LABEL } from "@/lib/sales/format";
 import { logActivity, saveTask, updateLead } from "../actions";
+import { StarterScript } from "@/components/sales/starter-script";
 
 export const metadata = { title: "Lead" };
 const input = "min-h-11 w-full rounded-lg border border-line bg-white px-3 text-sm";
@@ -51,6 +52,10 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
               </dl>
             </Card>
           )}
+          <Card className="p-5">
+            <h2 className="text-lg font-bold">Starter script</h2>
+            <div className="mt-2"><StarterScript leadId={l.id} disabled={!!l.do_not_contact} /></div>
+          </Card>
           <Card className="p-5">
             <h2 className="text-lg font-bold">Log an activity</h2>
             <form action={logActivity} className="mt-3 grid gap-3 sm:grid-cols-[160px_1fr]">
