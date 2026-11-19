@@ -13,6 +13,7 @@ run ROLE=pro node scripts/qa-audit/flows/bids.mjs
 run ROLE=pro node scripts/qa-audit/flows/contractor-core.mjs
 run ROLE=free node scripts/qa-audit/flows/contractor-core.mjs
 run node scripts/qa-audit/flows/library.mjs
+run node scripts/qa-audit/reset-sales.mjs
 run node scripts/qa-audit/flows/sales-team.mjs
 run node scripts/qa-audit/flows/sales-crm.mjs
 run node scripts/qa-audit/flows/sales-pay.mjs
