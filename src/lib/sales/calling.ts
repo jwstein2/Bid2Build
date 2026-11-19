@@ -1,6 +1,6 @@
 /**
  * Calling compliance for sales reps (legal review 2026-11-19). Pure helpers shared by the lead page and
- * tests. The database enforces the same rules in sales_crm_activity_add (20270118002000_sales_compliance.sql).
+ * tests. The database enforces the same rules in sales_crm_activity_add (20270119002000_sales_compliance.sql).
  */
 export type DncStatus = "unchecked" | "clear" | "listed";
 export type PhoneLine = "unknown" | "landline" | "mobile" | "voip";
