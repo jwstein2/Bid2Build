@@ -27,8 +27,12 @@ export function MetaPixel({ pixelId }: { pixelId: string }) {
   const pathname = usePathname();
   const [allowedPath] = useState(() => analyticsAllowedOn(pathname));
   const [choice, setChoice] = useState<"granted" | "denied" | null | "unknown">("unknown");
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- cookies are only readable after hydration
-  useEffect(() => { setChoice(readConsentCookie(document.cookie)); }, []);
+  useEffect(() => {
+    // Global Privacy Control is an opt-out of ad measurement (Privacy Policy): no banner, nothing loads.
+    const gpc = (navigator as Navigator & { globalPrivacyControl?: boolean }).globalPrivacyControl === true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- cookies are only readable after hydration
+    setChoice(gpc ? "denied" : readConsentCookie(document.cookie));
+  }, []);
   if (!allowedPath || choice === "unknown") return null;
   const decide = (granted: boolean) => { setChoice(granted ? "granted" : "denied"); void saveChoice(granted); };
   return (
@@ -40,7 +44,7 @@ export function MetaPixel({ pixelId }: { pixelId: string }) {
       )}
       {choice === null && (
         <div role="region" aria-label="Ad measurement choice" className="fixed inset-x-3 bottom-3 z-50 mx-auto max-w-xl rounded-xl border border-line bg-surface p-4 text-sm shadow-lg" data-testid="ad-consent">
-          <p className="text-ink">We&apos;d like to measure which of our ads bring contractors to Built2Bid, using Meta&apos;s pixel. No bid, customer or pricing details are ever shared. <a href="/privacy" className="font-semibold text-accent-ink underline">Privacy</a></p>
+          <p className="text-ink">We&apos;d like to measure which of our ads bring contractors to Built2Bid, using Meta&apos;s pixel. No bid, customer or pricing details are ever shared. <a href="/cookies" className="font-semibold text-accent-ink underline">Cookie policy</a></p>
           <div className="mt-3 flex flex-wrap gap-2">
             <button type="button" onClick={() => decide(true)} className="min-h-10 rounded-lg bg-navy px-4 font-semibold text-white">Allow</button>
             <button type="button" onClick={() => decide(false)} className="min-h-10 rounded-lg border border-line px-4 font-semibold text-ink">No thanks</button>

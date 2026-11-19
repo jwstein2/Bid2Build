@@ -12,19 +12,21 @@ export const LINK_DAYS_MAX = 90;
 /** "Recently signed" window on the dashboard. */
 export const RECENT_SIGNED_DAYS = 30;
 
-/** Bumped whenever the consent wording changes; stored with every signature. */
-export const CONSENT_VERSION = "esign-consent-2026-11-15";
+/** Bumped whenever the consent wording changes; stored with every signature (older signatures keep theirs). */
+export const CONSENT_VERSION = "esign-consent-2026-11-19";
 
 /**
  * ESIGN Act (15 U.S.C. 7001(c)) style consumer disclosure, shown before the customer agrees.
- * Needs attorney review before public release (docs/esign/LEGAL_REVIEW.md).
+ * v2026-11-19 adds: what the consent covers, no fee for paper, how to update an email address, the
+ * consequence of withdrawing, and an affirmation that the signer can open and keep the PDF on this
+ * device (the "reasonably demonstrates" step). Draft wording for attorney review (docs/esign/LEGAL_REVIEW.md).
  */
 export function consentText(companyName: string): string {
   const c = companyName.trim() || "the contractor";
   return [
-    `By checking this box, I agree to use electronic records and an electronic signature for this proposal from ${c}, and I agree that my electronic signature has the same effect as a handwritten signature.`,
-    `I understand that I may ask ${c} for a paper copy of this proposal at no charge, and that I may withdraw this consent before I sign by not signing and contacting ${c}. Withdrawing consent does not affect anything I already signed.`,
-    "To view and keep this record I need a device with a current web browser that can open PDF files. After I sign, I can download a copy of the signed proposal from this page.",
+    `By checking this box, I agree to receive, review and sign this proposal from ${c} electronically, and I agree that my electronic signature has the same legal effect as a handwritten signature. This consent covers this proposal and the records about signing it.`,
+    `I may ask ${c} for a paper copy at no charge. I may withdraw this consent before I sign by not signing and telling ${c}; ${c} can then give me the proposal on paper. Withdrawing consent does not affect anything I already signed. If my email address changes, I will tell ${c}.`,
+    "To view and keep this record I need a device with a current web browser that can open PDF files. I confirm that I can open the proposal PDF on this device, and I understand I can download and save a copy of the signed proposal from this page.",
   ].join(" ");
 }
 

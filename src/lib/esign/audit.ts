@@ -2,6 +2,8 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { isContractorSigningEnabled } from "./contractor/config";
 import { executionFor } from "./contractor/server";
+import { createAdminClient } from "@/lib/supabase/server";
+import { listSigningEvents, type SigningEvent } from "./events";
 import { applicationLabel, EXECUTION_LABELS, signingOrder, type ExecutionState } from "./contractor/status";
 
 export interface AuditRecord {
@@ -15,6 +17,8 @@ export interface AuditRecord {
   document: { proposalPdfSha256: string; proposalContentSha256: string; signedPdfSha256: string | null; signedPdfStatus: string };
   request: { id: string; createdAtUtc: string; expiresAtUtc: string; status: string } | null;
   evidence: { ipAddress: string | null; userAgent: string | null };
+  /** Audit trail of the signing link: opened, PDF downloaded, signed, copy emailed (oldest first). */
+  activity: SigningEvent[];
   estimateId: string;
   versionId: string;
   /** V5.3 contractor side (present when contractor signatures are enabled). */
@@ -46,6 +50,8 @@ export async function auditRecord(supabase: SupabaseClient, signatureId: string)
     document: { proposalPdfSha256: s.document_hash, proposalContentSha256: s.content_hash, signedPdfSha256: s.pdf_hash, signedPdfStatus: s.pdf_status },
     request: r ? { id: r.id, createdAtUtc: r.created_at, expiresAtUtc: r.expires_at, status: r.status } : null,
     evidence: { ipAddress: s.ip_address, userAgent: s.user_agent },
+    // The caller may see this signature (RLS check above), so its request's events are read with the service role.
+    activity: await listSigningEvents(createAdminClient(), s.request_id),
     estimateId: s.estimate_id,
     versionId: s.version_id,
     ...(isContractorSigningEnabled() ? { execution: await executionAudit(supabase, s) } : {}),

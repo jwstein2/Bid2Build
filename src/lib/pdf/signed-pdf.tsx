@@ -24,6 +24,8 @@ export interface SignatureCertificate {
   ipAddress?: string | null;
   userAgent?: string | null;
   linkCreatedAt: string;
+  /** Audit trail of the signing link (opened, downloaded, signed), oldest first. */
+  events?: { label: string; at: string; ipAddress?: string | null }[];
 }
 
 /** The contractor-side signature record shown on the certificate (V5.3). Always a recorded row. */
@@ -144,12 +146,19 @@ export async function renderSignedPdf(doc: ProposalDocument, logo: { data: Buffe
         <KV k="Proposal content SHA-256" v={c.contentHash} mono />
       </View>
       <KV k="Signing link issued" v={utc(c.linkCreatedAt)} />
+      {c.events && c.events.length ? (
+        <View>
+          <Text style={s.h2}>Activity on the signing link</Text>
+          {c.events.slice(0, 40).map((e, i) => <KV key={i} k={utc(e.at)} v={`${e.label}${e.ipAddress ? ` (IP ${e.ipAddress})` : ""}`} />)}
+          {c.events.length > 40 ? <Text style={s.muted}>{T(`${c.events.length - 40} more events are in the audit record.`)}</Text> : null}
+        </View>
+      ) : null}
       <KV k="Signature record ID" v={c.signatureId} mono />
       <KV k="Signing request ID" v={c.requestId} mono />
       {c.ipAddress ? <KV k="IP address" v={c.ipAddress} /> : null}
       {c.userAgent ? <KV k="Browser" v={c.userAgent.slice(0, 200)} /> : null}
       <Text style={[s.muted, { marginTop: 14, fontSize: 8 }]}>
-        {T(`The proposal pages in this file are the version the signer reviewed (its PDF hash is listed above). Signed ${date}. A record of this signature is kept by ${doc.brand.companyName} through Built2Bid.`)}
+        {T(`The proposal pages in this file are the version the signer reviewed (its PDF hash is listed above). Signed ${date}. A record of this signature is kept by ${doc.brand.companyName} through Built2Bid. To check that this file has not been changed since it was signed, upload it at built2bid.org/verify.`)}
       </Text>
     </Page>
   );

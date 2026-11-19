@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireSalesRep } from "@/lib/sales/server";
 import { STAGES, TRADES } from "@/lib/sales/crm";
+import { activityErrorMessage } from "@/lib/sales/calling";
 
 /**
  * Rep CRM actions. Every call runs with the rep's own session through sales_crm_* functions, which
@@ -52,7 +53,7 @@ export async function logActivity(fd: FormData) {
   const p = z.object({ kind: z.enum(["call", "email", "text", "meeting", "note"]), body: t(4000).min(1) }).safeParse(Object.fromEntries(fd));
   if (!p.success) back(`/sales/leads/${id}`, { err: "Write a short note about what happened." });
   const { error } = await db.rpc("sales_crm_activity_add", { p_lead: id, p_kind: p.data.kind, p_body: p.data.body, p_occurred_at: new Date().toISOString() });
-  if (error) back(`/sales/leads/${id}`, { err: "That couldn't be logged." });
+  if (error) back(`/sales/leads/${id}`, { err: activityErrorMessage(error.message) });
   back(`/sales/leads/${id}`, { ok: "Logged." });
 }
 
@@ -68,4 +69,15 @@ export async function saveTask(fd: FormData) {
   const { error } = await db.rpc("sales_crm_task_save", { p_lead: id, p_task: task || null, p_title: title || null, p_due_at: dueAt, p_done: done });
   if (error) back(`/sales/leads/${id}`, { err: "That task couldn't be saved." });
   back(`/sales/leads/${id}`, { ok: done ? "Task done." : "Task saved." });
+}
+
+/** Record a National Do Not Call Registry check (and the line type, and text consent if given). */
+export async function recordDncCheck(fd: FormData) {
+  const { db } = await requireSalesRep();
+  const id = z.string().uuid().parse(fd.get("id"));
+  const p = z.object({ dnc: z.enum(["clear", "listed"]), line: z.enum(["unknown", "landline", "mobile", "voip"]), text_consent: z.string().optional(), consent_note: t(300).optional(), confirm: z.literal("on") }).safeParse(Object.fromEntries(fd));
+  if (!p.success) back(`/sales/leads/${id}`, { err: "Choose the registry result and tick the box to confirm you checked it." });
+  const { error } = await db.rpc("sales_crm_dnc_record", { p_lead: id, p_status: p.data.dnc, p_line: p.data.line, p_text_consent: p.data.text_consent === "on", p_consent_note: p.data.consent_note ?? null });
+  if (error) back(`/sales/leads/${id}`, { err: "That check couldn't be saved. If this keeps happening, the database update may not be installed yet." });
+  back(`/sales/leads/${id}`, { ok: p.data.dnc === "listed" ? "Recorded. This number is on the registry: no calls or texts." : "Recorded." });
 }

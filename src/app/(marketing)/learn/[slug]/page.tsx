@@ -42,6 +42,11 @@ export default async function ArticlePage({ params }: PageProps<"/learn/[slug]">
         <Link href="/learn" className="text-sm text-ink-soft underline">Learn</Link>
         <h1 className="mt-2 text-4xl font-extrabold leading-tight">{a.title}</h1>
         <p className="mt-2 text-sm text-muted">Updated {new Date(a.updated + "T12:00:00Z").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</p>
+        {a.aiAssisted && (
+          <p className="mt-3 rounded-lg bg-paper px-3 py-2 text-sm text-ink-soft" data-testid="ai-disclosure">
+            This guide was written with AI assistance from public sources and checked automatically before publishing. It is general information, not professional advice. Check codes, permits, tax and contract rules with your local authority.
+          </p>
+        )}
         <div className="mt-6 space-y-5 leading-relaxed">
           {a.blocks.map((b, i) => (
             <section key={i}>
