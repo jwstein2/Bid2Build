@@ -9,3 +9,12 @@ updates:
     groups:
       minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      # Production runs Node 22 (NODE_VERSION in netlify.toml). Newer @types/node majors would let
+      # code type-check against Node APIs that don't exist at runtime. Bump this with the runtime.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      # TypeScript 7 crashes `npm run lint`: typescript-eslint (via eslint-config-next) does not
+      # support it yet. Remove this once typescript-eslint supports TS 7.
+      - dependency-name: "typescript"
+        versions: [">=7"]
