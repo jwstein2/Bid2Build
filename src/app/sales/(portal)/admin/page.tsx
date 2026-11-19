@@ -15,6 +15,7 @@ import { isCertified, TOPICS } from "@/lib/sales/academy";
 import { achievementText, DEFAULT_TIERS, type Tier } from "@/lib/sales/incentives";
 import { RECOGNITION_ERRORS } from "@/lib/sales/preferences";
 import { RecognitionPanel, type Recognition } from "./recognition-panel";
+import { BookingsPanel, type AdminBooking } from "./bookings-panel";
 import { adjustCommission, approveStatement, assignCustomer, assignLeads, approveMilestone, congratulate, createInvite, saveAcceleratorRules, importLeads, saveMilestoneRules, saveTeamGoal, voidMilestone, closeMonth, endAttribution, recordPayout, savePolicy, saveRep } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -236,6 +237,9 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
   // V8.4 Recognition & Incentives (hidden until 20270116001000 is applied).
   const incRes = tab === "recognition" ? await db.rpc("admin_sales_incentives", { p_caller: user.id }) : null;
   const inc = (incRes && !incRes.error ? incRes.data : null) as Incentives | null;
+  // V8.4 P2 client sessions (hidden until 20270118001000 is applied).
+  const bkRes = tab === "overview" ? await db.rpc("admin_sales_bookings", { p_caller: user.id }) : null;
+  const bookings = (bkRes && !bkRes.error ? bkRes.data : null) as AdminBooking[] | null;
   // V8.4 P1 (hidden until 20270117001000 is applied).
   const recRes = tab === "recognition" ? await db.rpc("admin_sales_recognition", { p_caller: user.id }) : null;
   const recog = (recRes && !recRes.error ? recRes.data : null) as Recognition | null;
@@ -277,6 +281,7 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
 
       {tab === "overview" && (
         <div className="space-y-6">
+          {bookings && <BookingsPanel bookings={bookings} canReassign={has("reassign_leads")} reps={h.reps.filter((r) => r.status === "active").map((r) => ({ id: r.id, name: r.full_name }))} />}
           {goal && (
             <div className={has("set_team_goals") ? "grid gap-3 lg:grid-cols-[2fr_1fr]" : ""}>
               <TeamGoalBoard g={goal} />

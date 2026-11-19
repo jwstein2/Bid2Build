@@ -7,6 +7,7 @@ const MY_LINKS = [
   { href: "/sales", label: "Overview" },
   { href: "/sales/leads", label: "Leads" },
   { href: "/sales/customers", label: "Customers" },
+  { href: "/sales/calendar", label: "Calendar" },
   { href: "/sales/commissions", label: "Commissions" },
   { href: "/sales/rewards", label: "Rewards" },
   { href: "/sales/academy", label: "Academy" },

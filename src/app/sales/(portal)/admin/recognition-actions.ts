@@ -16,8 +16,8 @@ import { RECOGNITION_ERRORS, REWARD_CATEGORIES, TAX_LABELS } from "@/lib/sales/p
 
 const ERRORS = RECOGNITION_ERRORS;
 
-function back(result: { ok?: string; err?: string }): never {
-  const q = new URLSearchParams({ tab: "recognition", ...(result.ok ? { ok: result.ok } : {}), ...(result.err ? { err: ERRORS[result.err] ? result.err : "invalid" } : {}) });
+function back(result: { ok?: string; err?: string }, tab = "recognition"): never {
+  const q = new URLSearchParams({ tab, ...(result.ok ? { ok: result.ok } : {}), ...(result.err ? { err: ERRORS[result.err] ? result.err : "invalid" } : {}) });
   revalidatePath("/sales/admin");
   redirect(`/sales/admin?${q.toString()}`);
 }
@@ -125,4 +125,17 @@ export async function setAward(fd: FormData) {
   if (error) back({ err: code(error) });
   const line = (data as { commission_id?: string | null } | null)?.commission_id;
   back({ ok: line ? "Authorized. The cash reward is an earned line on the next statement." : `Award ${status}.` });
+}
+
+/** Approved reassignment of a client session to another free rep. Attribution and commissions stay with the original rep. */
+export async function reassignBooking(fd: FormData) {
+  const { user, db } = await need("reassign_leads");
+  const id = uuid.safeParse(fd.get("id")), rep = uuid.safeParse(fd.get("rep_id"));
+  if (!id.success || !rep.success) back({ err: "invalid" }, "overview");
+  const { data, error } = await db.rpc("admin_sales_booking_reassign", { p_caller: user.id, p_booking: id.data, p_rep: rep.data });
+  if (error) back({ err: /rep_busy/.test(error.message) ? "rep_busy" : code(error) }, "overview");
+  const r = data as { from_rep: string; to_rep: string; google_event_id: string | null };
+  const { deleteEvent } = await import("@/lib/sales/google");
+  await deleteEvent(db, r.from_rep, r.google_event_id);
+  back({ ok: "Session reassigned. The new rep sees it on their calendar; the original rep keeps the attribution." }, "overview");
 }
