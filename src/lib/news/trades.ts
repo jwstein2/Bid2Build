@@ -1,7 +1,7 @@
 import type { Category } from "./types";
 
 /**
- * Trade → news mapping for every trade in src/lib/trades/data.ts (41 today; a test fails if a trade is
+ * Trade → news mapping for every trade in src/lib/trades/data.ts (42 today; a test fails if a trade is
  * added there without a mapping here).
  *
  * associations: recognized organizations for the trade, listed for reference and for the "where this
@@ -43,6 +43,7 @@ const ASCC = A("American Society of Concrete Contractors", "ASCC", "https://www.
 const PWNA = A("Power Washers of North America", "PWNA", "https://www.pwna.org");
 const TCIA = A("Tree Care Industry Association", "TCIA", "https://www.tcia.org");
 const ISA = A("International Society of Arboriculture", "ISA", "https://www.isa-arbor.com", "secondary");
+const NPMA = A("National Pest Management Association", "NPMA", "https://www.npmapestworld.org");
 const NRCA = A("National Roofing Contractors Association", "NRCA", "https://www.nrca.net");
 
 const OFFICIAL_SAFETY = ["fr-osha", "osha-news"];
@@ -253,6 +254,13 @@ export const TRADE_NEWS: TradeNewsDef[] = [
     topics: ["labor_workforce", "safety", "business_taxes"],
     keywords: ["janitorial", "commercial cleaning", "residential cleaning", "house cleaning", "post-construction cleaning", "cleaning company", "cleaning companies", "cleaning crews", "custodial", "maid service"],
     related: ["cleaning chemicals", "disinfectant", "green cleaning", "hazard communication", "silica dust"], exclude: ["dry cleaning", "data cleaning", "spring cleaning sale", "ethnic cleansing"], geo: "balanced", market: "both",
+  }),
+  T("pest-control", {
+    associations: [NPMA],
+    publications: GENERAL_PRESS, official: [...OFFICIAL_ENV, ...OFFICIAL_SAFETY, ...OFFICIAL_LABOR],
+    topics: ["licensing_regulations", "safety", "labor_workforce", "business_taxes"],
+    keywords: ["pest control", "pest management", "exterminator", "exterminators", "termite", "termites", "bed bugs", "rodent control", "pest control company", "pest control companies", "pesticide applicator"],
+    related: ["pesticide", "pesticides", "fifra", "mosquito", "ticks", "rodenticide", "invasive species", "fumigation"], exclude: ["computer bug", "software bug", "bug bounty", "stomach bug"], geo: "balanced", market: "both",
   }),
   T("excavation", {
     associations: [A("National Utility Contractors Association", "NUCA", "https://www.nuca.com"), AGC],

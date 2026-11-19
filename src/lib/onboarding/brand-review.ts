@@ -110,6 +110,7 @@ const TRADE_WORDS: [RegExp, string][] = [
   [/\bkitchen/, "Kitchens"], [/\bbath(room)?s?\b/, "Bathrooms"], [/\bpaint(ing|er|ers)?\b/, "Painting"], [/\belectric(al|ian)\b/, "Electrical"],
   [/\bfloor(ing)?\b/, "Flooring"], [/\bplumb(ing|er)\b/, "Plumbing"], [/\bhvac\b|\bheating\b|\bair conditioning\b/, "HVAC"], [/\bfenc(e|ing)\b/, "Fencing"],
   [/\bremodel(ing)?\b|\brenovation/, "Remodeling"], [/\bdrywall\b/, "Drywall"], [/\btile\b/, "Tile"], [/\blandscap/, "Landscaping"], [/\bhandyman\b/, "Handyman"],
+  [/\bpest control\b|\bexterminat(or|ing|ion)\b|\btermite/, "Pest Control"],
 ];
 
 export function guessTrade(text: string | null | undefined): string | null {

@@ -22,7 +22,7 @@ export const GOAL_OPTIONS: (Option & { value: Goal })[] = [
 ];
 
 /** Trades the "Other trade" question offers (catalog trades without their own hand-written bank). */
-export const OTHER_TRADES = ["flooring", "plumbing", "hvac", "windows-doors", "tile", "fencing", "gutters", "landscaping", "masonry", "insulation", "framing", "general-contracting", "handyman", "pressure-washing"];
+export const OTHER_TRADES = ["flooring", "plumbing", "hvac", "windows-doors", "tile", "fencing", "gutters", "landscaping", "masonry", "insulation", "framing", "general-contracting", "handyman", "pressure-washing", "pest-control"];
 
 const TOOLS: Option[] = [
   { value: "notes", label: "Notes or paper" },

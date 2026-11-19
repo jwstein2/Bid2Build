@@ -39,7 +39,7 @@ Hard rules:
 - Do not repeat exclusions the contractor already has.
 - Do not invent contractual obligations, warranties, legal requirements, deadlines, payment terms or penalties.
 - Use professional, customer-friendly language. Each text is one or two sentences. "excluded unless listed in the estimate" phrasing is appropriate.
-- category: a short lowercase key such as permits, electrical, plumbing, hvac, landscaping, demolition, disposal, finishing, engineering, appliances, contents, hazardous, unforeseen, change_orders, water_access, stain_results, existing_damage, property_protection, roof_method, cleaning_method, stump_grinding, wood_left, utility_lines, hidden_hazards, or custom.
+- category: a short lowercase key such as permits, electrical, plumbing, hvac, landscaping, demolition, disposal, finishing, engineering, appliances, contents, hazardous, unforeseen, change_orders, water_access, stain_results, existing_damage, property_protection, roof_method, cleaning_method, stump_grinding, wood_left, utility_lines, hidden_hazards, pest_prep, pest_results, pest_damage, inaccessible_areas, or custom.
 - Pressure washing and soft washing: never recommend chemicals, mixtures, pressure settings or application methods. If roof cleaning is included, state that access, safety and method are confirmed on site before work begins.
 - Suggest between 3 and 10 items, most important first.`;
 

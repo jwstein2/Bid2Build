@@ -4798,5 +4798,125 @@
         ]
       }
     ]
+  },
+  "pest-control": {
+    "intro": "Pest control companies grow on recurring service plans, clear explanations of what each visit covers, and licensed technicians who work safely. This classroom covers licensing and insurance, quoting initial treatments and service plans, termite and rodent work, routing, technician training and building a book of recurring customers.",
+    "seoTitle": "Pest Control Business Courses",
+    "seoDescription": "Pest control business courses on licensing, quoting service plans, termite and rodent work, route scheduling, technician training and recurring revenue.",
+    "salesChallenge": "Customers often compare a one-time spray price with a full service plan and can't tell why the numbers differ. Separate the initial treatment from the recurring visit, name the pests covered and say what callbacks are included so they compare the same thing.",
+    "cards": [
+      {
+        "pillar": "getting_started",
+        "title": "Starting a Pest Control Business: Licensing, Insurance and Equipment",
+        "summary": "Business basics for a pest control company, from applicator licensing to the first service vehicle.",
+        "description": "Commercial pesticide application requires a license in every state, so licensing and insurance come first. This course covers entity setup, state applicator certification and business licensing, general liability and pollution coverage, and choosing a first vehicle, sprayers and storage. Requirements vary by state; confirm them with your state pesticide regulatory agency and insurance agent.",
+        "level": "beginner",
+        "lessons": [
+          "Entity setup and tax registration basics",
+          "State applicator certification and business licensing",
+          "Liability and pollution insurance",
+          "Choosing a vehicle, equipment and safe storage",
+          "Setting a service area and minimum job"
+        ]
+      },
+      {
+        "pillar": "sales",
+        "title": "Selling Pest Control: Initial Treatments and Service Plans",
+        "summary": "Help customers understand what the first service and each plan visit cover.",
+        "description": "Customers often compare a one-time spray with a full plan. This course covers inspecting with the customer, explaining the initial treatment and the recurring visit separately, naming the pests covered, explaining callbacks, and following up on termite and rodent quotes.",
+        "level": "intermediate",
+        "lessons": [
+          "Inspecting with the customer",
+          "Separating the initial treatment from the plan",
+          "Naming covered pests and callbacks",
+          "Showing licensing and insurance",
+          "Following up on termite and rodent quotes"
+        ]
+      },
+      {
+        "pillar": "estimating",
+        "title": "Pest Control Estimates: Visits, Perimeter and Specialty Work",
+        "summary": "Price initial services, plan visits and specialty work from your own production times.",
+        "description": "Home size, perimeter, activity level and visit frequency drive most pest pricing. This course covers estimating technician time from your own records, pricing initial and recurring visits, linear-foot termite and exclusion work, bait stations, and specialty services like bed bugs and wildlife.",
+        "level": "intermediate",
+        "lessons": [
+          "Sizing the home: area and perimeter",
+          "Initial and recurring visit pricing",
+          "Termite trenching and bait stations",
+          "Rodent exclusion by the linear foot",
+          "Specialty services and minimums"
+        ]
+      },
+      {
+        "pillar": "project_management",
+        "title": "Routing, Scheduling and Service Records",
+        "summary": "Plan efficient routes and keep clear records for every visit.",
+        "description": "Recurring pest work lives or dies on routing and records. This course covers building dense routes, scheduling monthly, bi-monthly and quarterly visits, customer notices and prep instructions, weather reschedules, and keeping the service and application records your state requires.",
+        "level": "intermediate",
+        "lessons": [
+          "Building dense routes",
+          "Scheduling recurring visits",
+          "Customer notices and prep instructions",
+          "Weather and reschedules",
+          "Service and application records"
+        ]
+      },
+      {
+        "pillar": "accounting",
+        "title": "Pest Control Financials: Recurring Revenue and Route Profit",
+        "summary": "Know what each route, plan and technician really earns.",
+        "description": "Recurring revenue makes pest control predictable when the numbers are clear. This course covers costing visits and routes, tracking product and vehicle costs, billing service plans, measuring customer churn, and setting aside taxes and overhead.",
+        "level": "intermediate",
+        "lessons": [
+          "Costing visits and routes",
+          "Product and vehicle costs",
+          "Billing service plans",
+          "Measuring churn and retention",
+          "Setting aside taxes and overhead"
+        ]
+      },
+      {
+        "pillar": "hr",
+        "title": "Hiring and Training Pest Control Technicians",
+        "summary": "Recruit, license and keep technicians who work safely and talk well with customers.",
+        "description": "Technicians are the face of a pest company. This course covers recruiting, supervised training toward state certification, continuing education credits, pay and route incentives, and keeping good technicians. Licensing and employment rules vary by state; follow the laws where you operate.",
+        "level": "beginner",
+        "lessons": [
+          "Recruiting technicians",
+          "Training toward state certification",
+          "Continuing education credits",
+          "Pay and route incentives",
+          "Keeping good technicians"
+        ]
+      },
+      {
+        "pillar": "growth",
+        "title": "Growing a Pest Control Company: Plans, Commercial Accounts and Referrals",
+        "summary": "Build a book of recurring customers and steady commercial work.",
+        "description": "Growth in pest control comes from recurring plans. This course covers converting one-time jobs into plans, adding mosquito and termite services, serving property managers, restaurants and other commercial accounts, real estate inspection work, and asking for reviews and referrals.",
+        "level": "intermediate",
+        "lessons": [
+          "Turning one-time jobs into plans",
+          "Adding seasonal and termite services",
+          "Commercial and property manager accounts",
+          "Real estate inspection work",
+          "Reviews and referrals"
+        ]
+      },
+      {
+        "pillar": "safety",
+        "title": "Pesticide Safety, Label Compliance and PPE",
+        "summary": "Keep technicians, customers and pets safe on every visit.",
+        "description": "Safe pest control starts with the label. This course covers reading and following product labels, protective equipment, safe mixing, transport and storage, spill response, and customer prep and re-entry instructions. The label is the law: follow it, EPA and OSHA rules, and the regulations where you work.",
+        "level": "beginner",
+        "lessons": [
+          "Reading and following the label",
+          "Protective equipment",
+          "Mixing, transport and storage",
+          "Spill response",
+          "Customer prep and re-entry"
+        ]
+      }
+    ]
   }
 }

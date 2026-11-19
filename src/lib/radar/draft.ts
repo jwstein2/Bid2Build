@@ -132,7 +132,7 @@ export const hasDisclosure = (s: string) => DISCLOSURE.test(s);
 
 const SHORT_TRADE: Record<string, string> = {
   decks: "deck", kitchens: "kitchen", bathrooms: "bathroom", "interior-remodeling": "remodeling", "exterior-remodeling": "exterior remodeling",
-  "pressure-washing": "pressure washing", "soft-washing": "soft washing", "tree-removal": "tree removal", "tree-trimming": "tree trimming", "general-contracting": "general contracting", handyman: "handyman", other: "",
+  "pressure-washing": "pressure washing", "soft-washing": "soft washing", "tree-removal": "tree removal", "tree-trimming": "tree trimming", "pest-control": "pest control", "general-contracting": "general contracting", handyman: "handyman", other: "",
 };
 
 function productBlock(ctx: DraftContext, priority: string): { text: string; link: boolean } {

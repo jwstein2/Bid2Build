@@ -121,6 +121,7 @@ const OUTDOOR = ["decks", "fencing", "concrete", "landscaping", "excavation", "f
 const INTERIOR = ["kitchens", "bathrooms", "interior-remodeling", "drywall", "painting", "flooring", "tile", "finish-carpentry", "cabinets-countertops", "basements", "insulation", "commercial-remodeling", "windows-doors", "handyman"];
 const WASHING = ["pressure-washing", "soft-washing"];
 const TREE = ["tree-removal", "tree-trimming"];
+const PEST = ["pest-control"];
 const STRUCTURAL = ["decks", "additions", "framing", "foundations", "garages", "pole-barns", "basements", "concrete", "exterior-remodeling", "general-contracting"];
 
 const CANDIDATES: Candidate[] = [
@@ -170,7 +171,7 @@ const CANDIDATES: Candidate[] = [
     },
   },
   {
-    category: "demolition", title: "Demolition & Removal", trades: "*", notFor: ["demolition", ...WASHING, ...TREE],
+    category: "demolition", title: "Demolition & Removal", trades: "*", notFor: ["demolition", ...WASHING, ...TREE, ...PEST],
     keywords: /demo(lition)?\b|tear[- ]?(off|out)|remov(e|al)|rip[- ]?out|strip/i,
     text: {
       simple: "Removing existing materials or structures is not included unless listed in the estimate.",
@@ -314,6 +315,38 @@ const CANDIDATES: Candidate[] = [
     },
   },
   {
+    category: "pest_prep", title: "Treatment Prep & Re-Entry", trades: PEST, keywords: /$^/, clarify: true,
+    text: {
+      simple: "Products are applied by a licensed technician following the label. We'll tell you how to prepare and when it's safe to go back in.",
+      professional: "All products are applied by a licensed technician according to label directions and applicable law. The customer agrees to follow the preparation and re-entry instructions provided, including for children and pets.",
+      detailed: "All products are selected and applied by a licensed applicator according to the product label and the laws where the work is done. The customer agrees to follow the written preparation, occupancy, and re-entry instructions provided before each service, including for children, pets, and aquariums, and to tell us about any known sensitivities before treatment.",
+    },
+  },
+  {
+    category: "pest_results", title: "Results & Re-Infestation", trades: PEST, keywords: /$^/,
+    text: {
+      simple: "We work to control the pests listed, but can't promise they will never return. Extra visits between services are included only if listed.",
+      professional: "Treatment controls the pests listed in the estimate. Complete elimination or prevention of future activity is not guaranteed, and re-service visits between scheduled services are included only as stated in the estimate.",
+      detailed: "Service is intended to control the pests named in this estimate. Results depend on conditions such as sanitation, moisture, and entry points, so complete elimination and prevention of future activity are not guaranteed. Re-service visits between scheduled services, pests not named in the estimate, and new infestations are included only as stated in this estimate.",
+    },
+  },
+  {
+    category: "pest_damage", title: "Repair of Pest Damage", trades: PEST, keywords: /repair|replace|wood replacement|carpentry/i,
+    text: {
+      simple: "Repairing damage caused by termites, rodents, or other pests is not included unless listed in the estimate.",
+      professional: "Repair or replacement of wood, insulation, wiring, or other materials damaged by termites, rodents, or other pests is excluded unless listed in the estimate.",
+      detailed: "Repair or replacement of structural wood, insulation, wiring, drywall, or other materials damaged by termites, rodents, wildlife, or other pests is excluded unless it is specifically listed in this estimate. Damage found during service will be reported so it can be repaired by the owner or a qualified contractor.",
+    },
+  },
+  {
+    category: "inaccessible_areas", title: "Inaccessible Areas", trades: PEST, keywords: /$^/,
+    text: {
+      simple: "Areas we can't reach, such as inside walls or under slabs, are not inspected or treated unless listed in the estimate.",
+      professional: "Areas that are concealed or inaccessible, such as wall voids, areas under slabs or finished floors, and crawlspaces without safe access, are not inspected or treated unless listed in the estimate.",
+      detailed: "Concealed or inaccessible areas, including wall voids, areas under slabs, finished floors, or stored items, attics and crawlspaces without safe access, and areas behind fixed equipment, are not inspected or treated unless they are specifically listed in this estimate. Gaining access, such as drilling or removing finishes, will be quoted separately.",
+    },
+  },
+  {
     category: "unforeseen", title: "Unforeseen Conditions", trades: "*", keywords: /$^/,
     text: {
       simple: "Hidden problems found during the work may need extra work, which we'll discuss with you first.",
@@ -374,6 +407,7 @@ export function canonicalCategory(raw: string): string {
     [/landscap|yard|site/, "landscaping"], [/demo|remov/, "demolition"], [/dispos|debris|haul/, "disposal"], [/paint|finish|stain/, "finishing"],
     [/engineer|drawing|survey|design/, "engineering"], [/appliance|fixture/, "appliances"], [/content|furniture/, "contents"],
     [/hazard|asbestos|lead|mold/, "hazardous"], [/unforeseen|concealed|hidden/, "unforeseen"], [/change|additional/, "change_orders"],
+    [/reentry|treatmentprep/, "pest_prep"], [/reinfest|pestresult|callback/, "pest_results"], [/inaccessib/, "inaccessible_areas"], [/termitedamage|pestdamage|rodentdamage/, "pest_damage"],
   ];
   return map.find(([re]) => re.test(k))?.[1] ?? "custom";
 }

@@ -288,6 +288,19 @@ export const TRADE_MODELS: Record<string, TradeModel> = {
     complexity: (m) => (m.condition === "heavy" ? "complex" : m.condition ? "standard" : null),
     complexityRule: "Complex = heavy condition (construction dust or neglect).",
   },
+  "pest-control": {
+    trade: "pest-control",
+    projectTypes: o(["general", "General pest"], ["service_plan", "Recurring service plan"], ["termite", "Termite / WDI"], ["rodent", "Rodent & exclusion"], ["specialty", "Bed bugs / wildlife / specialty"], ["commercial", "Commercial account"]),
+    primary: { key: "area_sqft", unit: "square foot", label: "Building area" },
+    fields: [
+      num("area_sqft", "Building area", "SF"),
+      num("perimeter_lf", "Treated perimeter", "LF"),
+      sel("frequency", "Service frequency", o(["one_time", "One time"], ["monthly", "Monthly"], ["bimonthly", "Every two months"], ["quarterly", "Quarterly"])),
+      sel("infestation", "Activity level", o(["preventive", "Preventive"], ["light", "Light activity"], ["heavy", "Heavy infestation"])),
+    ],
+    complexity: (m, projectType) => (m.infestation === "heavy" || projectType === "termite" || projectType === "specialty" ? "complex" : m.infestation || m.frequency ? "standard" : null),
+    complexityRule: "Complex = heavy infestation, termite work, or specialty services (bed bugs, wildlife).",
+  },
   "tree-removal": {
     trade: "tree-removal",
     projectTypes: o(["single", "Single tree"], ["multiple", "Multiple trees"], ["storm", "Storm / hazard"], ["lot_clearing", "Lot clearing"]),
