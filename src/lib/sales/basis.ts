@@ -20,7 +20,7 @@ export interface SalesPolicy {
 }
 
 export const DEFAULT_POLICY: SalesPolicy = {
-  annual_basis: "monthly_list", refund_policy: "month_end_clawback", value_scope: "all_items", commission_years: 3, attribution_window_days: 30,
+  annual_basis: "monthly_list", refund_policy: "hold_30_no_clawback", value_scope: "all_items", commission_years: 3, attribution_window_days: 90,
 };
 
 export interface BasisItem {

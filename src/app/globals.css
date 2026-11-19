@@ -435,3 +435,14 @@ html[data-theme="black"] .theme-icon-sun { display: block; }
 /* Universal search deep link (#r-<id>): the matching row is briefly highlighted (components/search/search-focus.tsx). */
 .search-target { outline: 3px solid var(--color-accent); outline-offset: 2px; border-radius: 0.5rem; box-shadow: 0 0 0 6px color-mix(in srgb, var(--color-accent) 22%, transparent); transition: outline-color var(--motion-slow), box-shadow var(--motion-slow); }
 @media (prefers-reduced-motion: reduce) { .search-target { transition: none; } }
+
+/* Sales milestone gift box (V8): shake, then the lid lifts. Off for reduced motion. */
+@keyframes gift-shake { 0%, 100% { transform: rotate(0); } 15% { transform: rotate(-7deg); } 30% { transform: rotate(6deg); } 45% { transform: rotate(-5deg); } 60% { transform: rotate(4deg); } 75% { transform: rotate(-2deg); } }
+@keyframes gift-lid { to { transform: translateY(-46px) rotate(-14deg); opacity: 0; } }
+@keyframes gift-pop { from { opacity: 0; transform: scale(.6) translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes gift-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+.gift-idle { animation: gift-bob 2.4s ease-in-out infinite; }
+.gift-shaking { animation: gift-shake .9s ease-in-out; transform-origin: 50% 90%; }
+.gift-open .gift-lid { animation: gift-lid .5s ease-out forwards; transform-origin: 20% 100%; }
+.gift-amount { animation: gift-pop .45s cubic-bezier(.2, .9, .3, 1.3) both; }
+@media (prefers-reduced-motion: reduce) { .gift-idle, .gift-shaking, .gift-open .gift-lid, .gift-amount { animation: none; } .gift-open .gift-lid { opacity: 0; } }

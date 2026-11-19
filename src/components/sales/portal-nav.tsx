@@ -8,6 +8,7 @@ const LINKS = [
   { href: "/sales/leads", label: "Leads" },
   { href: "/sales/customers", label: "Customers" },
   { href: "/sales/commissions", label: "Commissions" },
+  { href: "/sales/how-you-get-paid", label: "How you get paid" },
 ];
 
 export function PortalNav() {

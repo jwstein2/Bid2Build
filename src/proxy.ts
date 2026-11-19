@@ -4,6 +4,7 @@ import { ATTRIBUTION_COOKIE, ATTRIBUTION_MAX_AGE, captureAttribution, encodeAttr
 import { normalizeReferralCode, REFERRAL_COOKIE, REFERRAL_MAX_AGE } from "@/lib/growth/referral";
 import { TWO_STEP_REQUIRED, needsStepUp, stepUpExempt } from "@/lib/auth/mfa";
 import { DEMO_BLOCKED_MESSAGE, isDemoBlocked, parseDemoClaim } from "@/lib/demo/session";
+import { salesLoginRedirect } from "@/lib/sales/next";
 
 /** First-touch attribution: set once from UTM/ic/ref parameters, an ad click id or an outside referrer host; never overwritten. */
 function withAttribution(request: NextRequest, response: NextResponse): NextResponse {
@@ -41,6 +42,16 @@ export async function proxy(request: NextRequest) {
   // this runs on every page and prefetch without a call to the Auth server. With the legacy shared
   // secret it falls back to the Auth server, same as getUser(). Pages still authorize with getUser().
   const { data: claims } = await supabase.auth.getClaims();
+  // Sales portal: a signed-out visit to a private /sales page goes to the sales sign-in and comes back
+  // afterwards. The portal layout still authorizes; this only keeps the destination.
+  if (!claims?.claims && request.method === "GET") {
+    const login = salesLoginRedirect(request.nextUrl.pathname, request.nextUrl.search);
+    if (login) {
+      const redirect = NextResponse.redirect(new URL(login, request.url));
+      response.cookies.getAll().forEach((c) => redirect.cookies.set(c));
+      return redirect;
+    }
+  }
   // Demo / Practice Mode: actions that would charge money, change billing or reach a real person are
   // refused for demo logins before any route runs (the database has its own guards as a backstop).
   if (request.nextUrl.pathname.startsWith("/api/") && parseDemoClaim(claims?.claims?.app_metadata) && isDemoBlocked(request.nextUrl.pathname, request.method)) {
