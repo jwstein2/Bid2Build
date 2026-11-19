@@ -235,7 +235,7 @@ export const PAGE_GUIDES = {
     steps: [
       { target: "builder.section", title: "Estimate sections", body: "Sections group the work, such as {phases}. Each line has a quantity, unit and your internal cost.", hint: "Add {materials} as material lines and {labor} as labor lines." },
       { target: "builder.calculator", title: "Quantity calculators", body: "The calculator next to a quantity works out how much you need from measurements, with waste included, then fills in the quantity for you to confirm." },
-      { target: "builder.saved-items", title: "Saved items", body: "Add items you've saved, like \"{item}\", with your own prices instead of typing them again.", requires: { unlimited: true }, locked: "Saved items with your own prices are included with Unlimited. You can still type any item." },
+      { target: "builder.saved-items", title: "Saved Items", body: "Add items you've saved, like \"{item}\", with your own prices instead of typing them again.", requires: { unlimited: true }, locked: "Saved items with your own prices are included with Unlimited. You can still type any item." },
       // The quote panel lives inside a line's details; the step explains the visible ▸ toggle rather than opening it.
       { target: "builder.item-details", title: "Line details and sub quotes", body: "The ▸ next to a line opens its details, where you can add notes and record a quote from {sub} to compare with your cost. Prices only change when you choose to.", feature: "sub_quotes" },
       { target: "builder.add-trade", title: "Add sections or trades", body: "Add another section, or another trade with its own sections, to the same bid." },

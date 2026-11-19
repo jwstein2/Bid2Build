@@ -91,7 +91,7 @@ export function MobileNav({ items, groups = [], signedIn, primary, badge }: { it
           </div>
         ))}
         <Link href={signedIn ? "/dashboard" : "/login"} prefetch={prefetch} onClick={close} className="flex min-h-12 items-center border-b border-line font-medium active:bg-brand-tint">
-          {signedIn ? "My Bids" : "Log in"}
+          {signedIn ? "My Bids" : "Sign in"}
         </Link>
         {badge && <p className="pt-3 text-center text-sm text-ink-soft" data-testid="credit-badge-mobile">{badge}</p>}
         <Link href={primary.href} prefetch={prefetch} onClick={close} data-cta={primary.action} className="mt-3 flex min-h-12 items-center justify-center rounded-lg bg-accent text-center font-semibold text-navy transition-transform duration-(--motion-fast) active:scale-[0.98]">{primary.label}</Link>

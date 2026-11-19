@@ -49,7 +49,8 @@ export const loadMe = cache(async (): Promise<{ user: SessionUser | null; me: Ac
   const db = await createClient();
   const { data, error } = await db.rpc("academy_me");
   if (error) return { user, me: { signed_in: true, member: false }, migrated: !isMissing(error) };
-  return { user, me: data as AcademyMe, migrated: true };
+  // A null payload (no row yet) reads as a signed-in non-member instead of crashing every Academy page.
+  return { user, me: (data as AcademyMe | null) ?? { signed_in: true, member: false }, migrated: true };
 });
 
 export const isMigrated = cache(async (): Promise<boolean> => {
