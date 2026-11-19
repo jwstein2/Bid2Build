@@ -30,7 +30,7 @@ drop index if exists public.schedule_tasks_dates_idx;
 drop index if exists public.project_schedules_rep_idx;
 drop index if exists public.project_schedules_pm_idx;
 
--- The assigned-project-manager schedule access (20270107001000) depends on project_manager_id: put the
+-- The assigned-project-manager schedule access (20270108001000) depends on project_manager_id: put the
 -- earlier versions back first.
 create or replace function public.pm_estimate_access(p_estimate_id uuid) returns boolean
 language sql stable security definer set search_path = public as $$

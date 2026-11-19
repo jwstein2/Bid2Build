@@ -1,4 +1,4 @@
--- Rollback for 20270107001000_assigned_pm_schedule_access.sql: assigned project managers go back to needing
+-- Rollback for 20270108001000_assigned_pm_schedule_access.sql: assigned project managers go back to needing
 -- the bid to be visible to them and theirs (or created by them) to edit its schedule.
 create or replace function public.pm_estimate_access(p_estimate_id uuid) returns boolean
 language sql stable security definer set search_path = public as $$
