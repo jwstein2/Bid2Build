@@ -25,7 +25,7 @@ export function verificationSources(v: Lead["verification"]): { field: string; u
   });
 }
 export interface LeadTask { id: string; lead_id?: string; company_name?: string; title: string; due_at: string; done_at?: string | null }
-export interface LeadActivity { id: number; kind: string; body: string | null; occurred_at: string; rep_name: string | null }
+export interface LeadActivity { id: number; kind: string; body: string | null; occurred_at: string; rep_name: string | null; disposition?: string | null; evidence?: string }
 export interface Duplicate { id: string; company_name: string; zip: string | null; rep_name: string | null; stage: string }
 
 /** Parse pasted rows: one business per line, comma or tab separated, in COLUMNS order. A header row is skipped. */

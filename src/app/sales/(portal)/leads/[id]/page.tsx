@@ -5,7 +5,8 @@ import { Badge, Card, Notice } from "@/components/ui/misc";
 import { requireSalesRep } from "@/lib/sales/server";
 import { ACTIVITY_LABEL, SOURCE_LABEL, STAGES, STAGE_LABEL, verificationSources, type Duplicate, type Lead, type LeadActivity, type LeadTask } from "@/lib/sales/crm";
 import { dateLabel, TIER_LABEL } from "@/lib/sales/format";
-import { logActivity, recordDncCheck, saveTask, updateLead } from "../actions";
+import { logActivity, recordDncCheck, requestRecycleReview, returnLead, saveTask, updateLead } from "../actions";
+import { DISPOSITIONS, DISPOSITION_LABEL } from "@/lib/sales/leads-admin";
 import { callReadiness, DNC_REGISTRY_URL, localTimeLabel } from "@/lib/sales/calling";
 import { StarterScript } from "@/components/sales/starter-script";
 
@@ -92,9 +93,10 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
           </Card>
           <Card className="p-5">
             <h2 className="text-lg font-bold">Log an activity</h2>
-            <form action={logActivity} className="mt-3 grid gap-3 sm:grid-cols-[160px_1fr]">
+            <form action={logActivity} className="mt-3 grid gap-3 sm:grid-cols-[160px_160px_1fr]">
               <input type="hidden" name="id" value={l.id} />
-              <label className="text-sm">Type<select name="kind" className={input}><option value="call">Call</option><option value="email">Email</option><option value="text">Text</option><option value="meeting">Meeting / demo</option><option value="note">Note</option></select></label>
+              <label className="text-sm">Type<select name="kind" className={input}><option value="call">Call</option><option value="email">Email</option><option value="text">Text</option><option value="meeting">Meeting / demo</option><option value="reply">They replied</option><option value="note">Note</option></select></label>
+              <label className="text-sm">Outcome<select name="disposition" className={input}><option value="">No outcome</option>{Object.entries(DISPOSITIONS).map(([k, opts]) => <optgroup key={k} label={ACTIVITY_LABEL[k] ?? k}>{opts.map((o) => <option key={`${k}-${o.v}`} value={o.v}>{o.label}</option>)}</optgroup>)}</select></label>
               <label className="text-sm">What happened<textarea name="body" required maxLength={4000} rows={2} className={`${input} py-2`} /></label>
               <div><button className={btn}>Log it</button></div>
             </form>
@@ -105,7 +107,7 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
               {activities.length === 0 && <li className="text-ink-soft">Nothing yet.</li>}
               {activities.map((a) => (
                 <li key={a.id} className="border-l-2 border-line pl-3">
-                  <p className="text-xs text-muted">{ACTIVITY_LABEL[a.kind] ?? a.kind} · {when(a.occurred_at)}{a.rep_name ? ` · ${a.rep_name}` : ""}</p>
+                  <p className="text-xs text-muted">{ACTIVITY_LABEL[a.kind] ?? (a.kind === "reply" ? "Reply" : a.kind)}{a.disposition ? ` · ${DISPOSITION_LABEL[a.disposition] ?? a.disposition}` : ""} · {when(a.occurred_at)}{a.rep_name ? ` · ${a.rep_name}` : ""}</p>
                   {a.body && <p className="whitespace-pre-wrap">{a.body}</p>}
                 </li>
               ))}
@@ -150,6 +152,30 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
               <div><button className={btn}>Save details</button></div>
             </form>
           </Card>
+          {!l.customer_user_id && l.stage !== "paying" && l.stage !== "trial" && (
+            <Card className="p-5">
+              <h2 className="text-lg font-bold">Keeping this lead</h2>
+              <p className="mt-1 text-sm text-muted">Company leads stay with you while you work them: a call with an outcome, a sent email or text, a reply, or a booked meeting. Notes don&apos;t count.</p>
+              <details className="mt-3">
+                <summary className="cursor-pointer text-sm font-semibold">Got a recycling warning, but you did work it?</summary>
+                <form action={requestRecycleReview} className="mt-2 space-y-2">
+                  <input type="hidden" name="id" value={l.id} />
+                  <label className="text-sm">What happened<textarea name="note" required minLength={3} maxLength={1000} rows={2} className={`${input} py-2`} placeholder="e.g. Met the owner at the supply house on Tuesday" /></label>
+                  <button className={btn}>Ask for a review</button>
+                  <p className="text-xs text-muted">The lead won&apos;t move while an administrator looks. One request per assignment.</p>
+                </form>
+              </details>
+              <details className="mt-3">
+                <summary className="cursor-pointer text-sm font-semibold">Can&apos;t work this one? Hand it back</summary>
+                <form action={returnLead} className="mt-2 space-y-2">
+                  <input type="hidden" name="id" value={l.id} />
+                  <label className="text-sm">Why (optional)<input name="note" maxLength={300} className={input} /></label>
+                  <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="confirm" required className="h-5 w-5" /> Give it to the next rep on the team</label>
+                  <button className="min-h-11 rounded-lg border border-line bg-white px-3 text-sm font-semibold">Hand back</button>
+                </form>
+              </details>
+            </Card>
+          )}
         </div>
       </div>
     </div>

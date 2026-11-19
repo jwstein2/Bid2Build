@@ -36,9 +36,9 @@ export default async function SalesInvitePage({ params }: { params: Promise<{ to
           {user ? (
             <div className="mt-6 space-y-3">
               <p className="text-sm">You&apos;re signed in as <strong>{user.email}</strong>. If that&apos;s the invited email, open the portal to finish joining.</p>
-              <Link href="/sales" className="inline-flex min-h-11 items-center rounded-lg bg-ink px-4 text-sm font-semibold text-white">Open the sales portal</Link>
+              <Link href="/sales?welcome=1" className="inline-flex min-h-11 items-center rounded-lg bg-ink px-4 text-sm font-semibold text-white">Open the sales portal</Link>
             </div>
-          ) : <SalesLoginForm next="/sales" />}
+          ) : <SalesLoginForm next="/sales?welcome=1" />}
           {invite.expires_at && <p className="mt-6 text-xs text-muted">This link works until {new Date(invite.expires_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "America/Chicago" })}.</p>}
         </>
       ) : (

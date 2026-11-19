@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AttentionCard, type Attention } from "./leads/attention";
 import { Card, Notice } from "@/components/ui/misc";
 import { ShareLink } from "@/components/sales/share-link";
 import { cookies } from "next/headers";
@@ -25,7 +26,8 @@ export const metadata = { title: "Overview" };
 
 const pct = (n: number, d: number) => (d > 0 ? `${Math.round((n / d) * 100)}%` : "—");
 
-export default async function SalesOverview() {
+export default async function SalesOverview({ searchParams }: { searchParams: Promise<{ welcome?: string }> }) {
+  const welcome = (await searchParams).welcome === "1";
   // /sales opens the hub the person used last (or the only one they have).
   const access = await loadSalesAccess();
   if (access.kind === "staff" && landingView(access.caps, (await cookies()).get(VIEW_COOKIE)?.value) === "admin") redirect("/sales/admin");
@@ -34,6 +36,9 @@ export default async function SalesOverview() {
     db.rpc("sales_my_overview"), db.rpc("sales_my_team_goal"), db.rpc("sales_my_milestones"), db.rpc("sales_my_progress", {}),
     db.rpc("sales_my_accelerator", {}), db.rpc("sales_my_records", {}), db.rpc("sales_my_preferences"), db.rpc("sales_my_successes"),
   ]);
+  // V8.7 lead recycling (hidden until 20270122001000 is applied).
+  const attRes = await db.rpc("sales_my_attention");
+  const attention = attRes.error || !attRes.data ? null : (attRes.data as Attention);
   // V8.4 P3 (hidden until 20270119001000 is applied).
   const winsRes = await db.rpc("sales_team_wins", {});
   const wins = winsRes.error || !winsRes.data ? null : (winsRes.data as { rep: string; kind: string; at: string; mine: boolean }[]);
@@ -83,6 +88,18 @@ export default async function SalesOverview() {
         <p className="mt-1 text-ink-soft">Share your link. Anyone who signs up through it stays connected to you, even if they buy months later.</p>
       </div>
 
+      {welcome && (
+        <Card className="p-5">
+          <h2 className="text-lg font-bold">You&apos;re in. Here&apos;s where to start</h2>
+          <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm">
+            <li><Link className="text-brand underline" href="/sales/how-you-get-paid">How you get paid</Link>: commissions, the 30-day hold and milestone boxes.</li>
+            <li><Link className="text-brand underline" href="/sales/academy">Sales Academy</Link>: short lessons and quizzes. Passing them certifies you to sell.</li>
+            <li><Link className="text-brand underline" href="/sales/preferences">My preferences</Link>: optional, sets how we celebrate wins with you.</li>
+            <li><Link className="text-brand underline" href="/sales/leads">Leads</Link>: new company leads are shared out automatically; work each one with a call or email.</li>
+          </ol>
+        </Card>
+      )}
+      {attention && <AttentionCard data={attention} compact />}
       {successes && <SuccessCelebration items={successes} firstName={o.rep.full_name.split(" ")[0]} animate={prefs?.animations ?? true} />}
       {prefs && prefs.status === "not_started" && (
         <Card className="flex flex-wrap items-center justify-between gap-3 p-4 text-sm">

@@ -37,7 +37,11 @@ export async function POST(req: Request) {
   const reminders = await sendDayBeforeReminders(createAdminClient()).catch(() => 0);
   // V8.4 P3: the owner's weekly recognition digest (Monday or later, once a week, only when turned on).
   const digest = await sendWeeklyDigest(createAdminClient()).catch(() => false);
+  // V8.6: leads waiting only because nobody was eligible get shared out once someone is (missing until 20270121001000).
+  const { data: queue } = await createAdminClient().rpc("sales_allocate_queue", { p_actor: null });
+  // V8.7: daily lead recycling review (warnings first, then neglected leads move). Missing until 20270122001000.
+  const { data: recycle } = await createAdminClient().rpc("sales_recycle_run", { p_actor: null });
   // Imported leads whose sales brief didn't finish during the import.
   const briefs = await fillBriefs(createAdminClient(), { limit: 50, budgetMs: 8000 }).catch(() => 0);
-  return json({ ...(data as object), accelerators: accel, customer_successes: successes, reminders, digest, briefs_written: briefs });
+  return json({ ...(data as object), accelerators: accel, customer_successes: successes, reminders, digest, queue: queue ?? null, recycle: recycle ?? null, briefs_written: briefs });
 }
