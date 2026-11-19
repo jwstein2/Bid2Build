@@ -29,7 +29,7 @@ import type { Permission } from "@/lib/enterprise/permissions";
 import { getFeature, type FeatureId } from "./registry";
 
 /** Trade families with their own examples. Every trade slug maps to one (tradeGroup). */
-export type TradeGroup = "decks" | "electrical" | "service" | "landscaping" | "exterior" | "concrete" | "remodel" | "finishes" | "washing" | "general";
+export type TradeGroup = "decks" | "electrical" | "service" | "landscaping" | "exterior" | "concrete" | "remodel" | "finishes" | "washing" | "cleaning" | "general";
 
 interface Vocab {
   /** Name used in sentences ("deck builders"). */
@@ -55,6 +55,7 @@ export const TRADE_VOCAB: Record<TradeGroup, Vocab> = {
   remodel: { trade: "remodelers", job: "a kitchen remodel", materials: "cabinets, countertops and fixtures", labor: "demo, install and finish work", item: "Base cabinet, 36 in", sub: "a plumber or electrician", recurring: "warranty walk-throughs", phases: "demo, rough-ins, install and punch list" },
   finishes: { trade: "painting, flooring and tile contractors", job: "an interior repaint", materials: "paint, primer and supplies", labor: "prep and application", item: "Interior wall paint, per gallon", sub: "a drywall repair sub", recurring: "touch-ups and repeat rooms", phases: "prep, prime, finish coats and cleanup" },
   washing: { trade: "pressure and soft washing pros", job: "a house wash and driveway clean", materials: "detergents and surface cleaner time", labor: "wash time per surface", item: "House wash, per sq ft", sub: "a gutter-cleaning sub", recurring: "annual and seasonal repeat washes", phases: "setup, pre-treat, wash and rinse" },
+  cleaning: { trade: "cleaning companies", job: "a post-construction final clean", materials: "cleaning supplies and equipment", labor: "crew hours per area", item: "Final clean, per sq ft", sub: "a carpet or window-cleaning sub", recurring: "weekly and monthly recurring cleanings", phases: "rough clean, final clean and touch-up before walkthrough" },
   general: { trade: "contractors", job: "a garage addition", materials: "materials and allowances", labor: "your crew's labor", item: "Framing lumber package", sub: "your trade subcontractors", recurring: "repeat and referral work", phases: "site prep, framing, rough-ins and finish" },
 };
 
@@ -67,7 +68,7 @@ const GROUP_OF: Record<string, TradeGroup> = {
   concrete: "concrete", masonry: "concrete", foundations: "concrete", "asphalt-paving": "concrete", demolition: "concrete",
   kitchens: "remodel", bathrooms: "remodel", basements: "remodel", "cabinets-countertops": "remodel", "interior-remodeling": "remodel", "commercial-remodeling": "remodel", additions: "remodel",
   painting: "finishes", drywall: "finishes", flooring: "finishes", tile: "finishes", "finish-carpentry": "finishes",
-  "pressure-washing": "washing", "soft-washing": "washing",
+  "pressure-washing": "washing", "soft-washing": "washing", cleaning: "cleaning",
 };
 
 export function tradeGroup(slug: string | null | undefined): TradeGroup {
