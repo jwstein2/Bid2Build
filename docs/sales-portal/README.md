@@ -72,9 +72,11 @@ be attributed as customers.
 
 ## Phase 3a: weekly lead import (`20270109101000_sales_lead_import.sql`)
 
-A scheduled Claude agent posts found businesses to `POST /api/sales/leads/import` (Bearer
-`SALES_LEAD_IMPORT_SECRET`). Leads arrive unassigned with source "Weekly import"; duplicates and
-do-not-contact businesses are skipped, and each run is a batch with counts in the Hub Leads tab. Marking
+The owner sets the weekly target in the Hub Leads tab (ZIP, trade, 50-mile radius, 50 leads). A scheduled
+Claude agent reads it (`GET /api/sales/leads/import`) and posts verified leads (`POST`, Bearer
+`SALES_LEAD_IMPORT_SECRET`): owner name, email, phone, trade, business start date, with a source URL for
+each fact. Leads arrive unassigned with a Haiku 5.5 sales brief; duplicates and do-not-contact businesses
+are skipped, and each run is a batch with counts in the Hub Leads tab. Marking
 a lead do-not-contact adds it to a permanent suppression list. Format and agent prompt: `LEAD_IMPORT.md`.
 
 ## Next phase

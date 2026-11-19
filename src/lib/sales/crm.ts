@@ -11,6 +11,18 @@ export interface Lead {
   city: string | null; state: string | null; zip: string | null; trades: string[]; source: string; source_ref: string | null; discovered_at: string;
   stage: Stage; lost_reason: string | null; assigned_rep: string | null; rep_name: string | null; customer_user_id: string | null; customer_tier: string | null;
   do_not_contact: boolean; next_action_at: string | null; last_activity_at: string | null; notes: string | null; open_tasks: number; created_at: string; updated_at: string;
+  /** Weekly import only: business start date as published, where each fact was checked, Haiku sales brief. */
+  business_started?: string | null; verification?: Record<string, unknown> | null; sales_brief?: string | null;
+}
+
+/** Labels for the verification sources the weekly import records. */
+export const VERIFIED_LABEL: Record<string, string> = { owner_name: "Owner", email: "Email", phone: "Phone", business_started: "Start date" };
+export function verificationSources(v: Lead["verification"]): { field: string; urls: string[] }[] {
+  if (!v) return [];
+  return Object.entries(VERIFIED_LABEL).flatMap(([k, label]) => {
+    const urls = Array.isArray(v[k]) ? (v[k] as unknown[]).filter((u): u is string => typeof u === "string" && /^https?:\/\//.test(u)) : [];
+    return urls.length ? [{ field: label, urls }] : [];
+  });
 }
 export interface LeadTask { id: string; lead_id?: string; company_name?: string; title: string; due_at: string; done_at?: string | null }
 export interface LeadActivity { id: number; kind: string; body: string | null; occurred_at: string; rep_name: string | null }
