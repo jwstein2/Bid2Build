@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Stop trial emails", robots: { index:
 export const dynamic = "force-dynamic";
 
 /** Confirmation step for the check-in unsubscribe link (the POST does the work, never this GET). */
-export default async function Unsubscribe({ searchParams }: { searchParams: Promise<{ i?: string; s?: string; done?: string }> }) {
+export default async function Unsubscribe({ searchParams }: { searchParams: Promise<{ i?: string; s?: string; done?: string; invalid?: string }> }) {
   const sp = await searchParams;
   return (
     <main id="main" className="flex min-h-screen items-start justify-center bg-paper px-4 py-12">
@@ -15,6 +15,8 @@ export default async function Unsubscribe({ searchParams }: { searchParams: Prom
         <h1 className="mt-6 font-display text-2xl font-extrabold">Trial check-in emails</h1>
         {sp.done ? (
           <Notice tone="ok" className="mt-4">Done. You won&apos;t get any more trial check-in emails. Your account and trial aren&apos;t affected.</Notice>
+        ) : sp.invalid || !sp.i || !sp.s ? (
+          <Notice tone="warn" className="mt-4">This unsubscribe link is incomplete or has expired. Open it again from the email, or turn emails off any time in Account settings after you sign in.</Notice>
         ) : (
           <form method="post" action="/api/trial/unsubscribe" className="mt-4 space-y-4">
             <input type="hidden" name="i" value={(sp.i ?? "").slice(0, 64)} />

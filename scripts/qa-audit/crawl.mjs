@@ -12,7 +12,7 @@ const MAX_CLICKS = Number(process.env.MAX_CLICKS ?? 45);
 const CLICK = process.env.CLICK !== "0";
 const LOADONLY = new Set((process.env.LOADONLY ?? "").split(",").filter(Boolean));
 const seenFinal = new Set();
-const tag = `${ROLE}${MOBILE ? "-mobile" : ""}`;
+const tag = `${ROLE}${MOBILE ? "-mobile" : ""}${process.env.QA_CRAWL_PART ? `-${process.env.QA_CRAWL_PART}` : ""}`;
 const outFile = path.join(OUT, `crawl-${tag}.json`);
 // Never clicked by the generic pass (session-ending); covered by dedicated workflow tests instead.
 const SKIP = /^(sign out|log out|exit demo|delete (my|your) account|reset demo)/i;
@@ -128,7 +128,7 @@ for (const route of ROUTES) {
 
 async function clickOne(route, el) {
   // Fresh context from the role's saved session so one click's leftovers (local storage, open dialogs) never leak.
-  const cctx = await browser.newContext(ROLE === "anon" ? (MOBILE ? devices["iPhone 13"] : { viewport: { width: 1440, height: 900 } }) : { ...(MOBILE ? devices["iPhone 13"] : { viewport: { width: 1440, height: 900 } }), storageState: statePath(ROLE) });
+  const cctx = await browser.newContext({ ...(ROLE === "anon" ? (MOBILE ? devices["iPhone 13"] : { viewport: { width: 1440, height: 900 } }) : { ...(MOBILE ? devices["iPhone 13"] : { viewport: { width: 1440, height: 900 } }), storageState: statePath(ROLE) }), permissions: ["clipboard-read", "clipboard-write"] });
   const page = await cctx.newPage();
   const w = watch(page);
   try {
@@ -144,8 +144,9 @@ async function clickOne(route, el) {
     if (!el.inDialog && (await page.locator("[role=dialog]:visible").count())) { await page.keyboard.press("Escape"); await page.waitForTimeout(300); }
     const probe = () => page.evaluate((i) => { const x = document.querySelector(`[data-qa-idx="${i}"]`); const d = x?.closest("details"); let ls = ""; try { ls = JSON.stringify(localStorage); } catch {} return { root: document.documentElement.className + "|" + (document.documentElement.getAttribute("data-theme") ?? "") + "|" + document.documentElement.style.cssText, details: d ? d.open : null, ls, cookie: document.cookie }; }, el.idx).catch(() => ({}));
     const pb = await probe();
-    const before = { url: page.url(), dialogs: await page.locator("[role=dialog], [role=alertdialog], [role=menu], [role=listbox]").count(), html: (await page.content()).length, expanded: await loc.getAttribute("aria-expanded").catch(() => null), checked: await loc.isChecked().catch(() => null) };
+    const before = { url: page.url(), dialogs: await page.locator("[role=dialog], [role=alertdialog], [role=menu], [role=listbox]").count(), html: (await page.content()).length, expanded: await loc.getAttribute("aria-expanded").catch(() => null), pressed: await loc.getAttribute("aria-pressed").catch(() => null), selected: await loc.getAttribute("aria-selected").catch(() => null), checked: await loc.isChecked().catch(() => null) };
     let download = null; page.once("download", (d) => { download = d.suggestedFilename(); });
+    let chooser = false; page.once("filechooser", () => { chooser = true; });
     let popup = null; page.context().once("page", (p) => { popup = p; });
     try { await loc.click({ timeout: 5000 }); }
     catch (e) {
@@ -156,7 +157,7 @@ async function clickOne(route, el) {
     }
     await page.waitForTimeout(1500);
     await page.waitForLoadState("networkidle", { timeout: 6000 }).catch(() => {});
-    const after = { url: page.url(), dialogs: await page.locator("[role=dialog], [role=alertdialog], [role=menu], [role=listbox]").count(), html: (await page.content()).length, expanded: await loc.getAttribute("aria-expanded").catch(() => null), checked: await loc.isChecked().catch(() => null) };
+    const after = { url: page.url(), dialogs: await page.locator("[role=dialog], [role=alertdialog], [role=menu], [role=listbox]").count(), html: (await page.content()).length, expanded: await loc.getAttribute("aria-expanded").catch(() => null), pressed: await loc.getAttribute("aria-pressed").catch(() => null), selected: await loc.getAttribute("aria-selected").catch(() => null), checked: await loc.isChecked().catch(() => null) };
     const pa = await probe();
     const effects = [];
     if (pa.details !== pb.details) effects.push(`disclosure ${pa.details ? "opened" : "closed"}`);
@@ -166,8 +167,14 @@ async function clickOne(route, el) {
     if (after.url !== before.url) effects.push(`navigated ${after.url.replace(BASE, "")}`);
     if (after.dialogs !== before.dialogs) effects.push(`overlay ${before.dialogs}->${after.dialogs}`);
     if (after.expanded !== before.expanded) effects.push(`expanded ${after.expanded}`);
+    if (after.pressed !== before.pressed) effects.push(`pressed ${after.pressed}`);
+    if (after.selected !== before.selected) effects.push(`selected ${after.selected}`);
+    // An already-pressed toggle or selected tab staying put is its expected result.
+    if (!effects.length && (before.pressed === "true" || before.selected === "true")) effects.push("already active");
     if (after.checked !== before.checked) effects.push(`checked ${after.checked}`);
     if (download) effects.push(`download ${download}`);
+    if (chooser) effects.push("file picker opened");
+    if (!effects.length && (await loc.evaluate((x) => x.type === "color").catch(() => false))) effects.push("native color picker");
     if (popup) { effects.push(`new tab ${popup.url().slice(0, 80)}`); await popup.close().catch(() => {}); }
     const muts = [];
     for (const r of mutations) { const resp = await r.response().catch(() => null); muts.push(`${resp?.status() ?? "ERR"} ${r.method()} ${r.url().replace(BASE, "").slice(0, 90)}`); }

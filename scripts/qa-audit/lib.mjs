@@ -45,7 +45,7 @@ export async function latestCode(email, after = 0) {
 /** Signs in through the real login page with a 6-digit email code. Returns the page. */
 export async function uiLogin(page, email, { loginPath = "/login" } = {}) {
   const after = Date.now() - 1000;
-  await page.goto(BASE + loginPath);
+  if (loginPath) await page.goto(BASE + loginPath); // null: sign in on the page already open (a redirect to /login?next=…)
   const field = page.locator("#auth-email").first();
   await page.waitForTimeout(800);
   if (!(await field.isVisible().catch(() => false))) {
@@ -72,7 +72,7 @@ export function statePath(role) { const t = process.env.QA_STATE_TAG; return pat
 /** Browser context for a role, logging in once via the real UI and caching the session. */
 export async function contextFor(browser, role, opts = {}) {
   const viewport = opts.mobile ? undefined : { width: 1440, height: 900 };
-  const base = opts.mobile ? { ...devices["iPhone 13"] } : { viewport };
+  const base = { ...(opts.mobile ? { ...devices["iPhone 13"] } : { viewport }), permissions: ["clipboard-read", "clipboard-write"] };
   if (role === "anon") return browser.newContext(base);
   const sp = statePath(role);
   if (fs.existsSync(sp) && !opts.fresh) {

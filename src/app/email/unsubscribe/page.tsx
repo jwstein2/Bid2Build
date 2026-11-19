@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Unsubscribe", robots: { index: false
 export const dynamic = "force-dynamic";
 
 /** Confirmation step for the lifecycle email unsubscribe link (the POST does the work, never this GET). */
-export default async function Unsubscribe({ searchParams }: { searchParams: Promise<{ u?: string; s?: string; done?: string }> }) {
+export default async function Unsubscribe({ searchParams }: { searchParams: Promise<{ u?: string; s?: string; done?: string; invalid?: string }> }) {
   const sp = await searchParams;
   return (
     <main id="main" className="flex min-h-screen items-start justify-center bg-paper px-4 py-12">
@@ -15,6 +15,8 @@ export default async function Unsubscribe({ searchParams }: { searchParams: Prom
         <h1 className="mt-6 font-display text-2xl font-extrabold">Built2Bid tips and reminders</h1>
         {sp.done ? (
           <Notice tone="ok" className="mt-4">Done. You won&apos;t get any more tips or reminder emails. Your account, bids and sign-in emails aren&apos;t affected.</Notice>
+        ) : sp.invalid || !sp.u || !sp.s ? (
+          <Notice tone="warn" className="mt-4">This unsubscribe link is incomplete or has expired. Open it again from the email, or turn emails off any time in Account settings after you sign in.</Notice>
         ) : (
           <form method="post" action="/api/email/unsubscribe" className="mt-4 space-y-4">
             <input type="hidden" name="u" value={(sp.u ?? "").slice(0, 64)} />
