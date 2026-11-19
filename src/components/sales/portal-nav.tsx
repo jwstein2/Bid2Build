@@ -8,7 +8,9 @@ const MY_LINKS = [
   { href: "/sales/leads", label: "Leads" },
   { href: "/sales/customers", label: "Customers" },
   { href: "/sales/commissions", label: "Commissions" },
+  { href: "/sales/rewards", label: "Rewards" },
   { href: "/sales/academy", label: "Academy" },
+  { href: "/sales/preferences", label: "My preferences" },
   { href: "/sales/how-you-get-paid", label: "How you get paid" },
 ];
 

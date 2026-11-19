@@ -29,7 +29,9 @@ export async function POST(req: Request) {
   // Both are idempotent and do nothing before migration 20270116001000 is applied.
   const accel = await createAdminClient().rpc("sales_accelerators_evaluate", {}).then((r) => r.data ?? null, () => null);
   await createAdminClient().rpc("sales_achievements_evaluate", {}).then(() => null, () => null);
+  // V8.4 P1: customer success celebrations (and owner congratulation drafts, when the owner has them on).
+  const successes = await createAdminClient().rpc("sales_customer_successes_evaluate", {}).then((r) => r.data ?? null, () => null);
   // Imported leads whose sales brief didn't finish during the import.
   const briefs = await fillBriefs(createAdminClient(), { limit: 50, budgetMs: 8000 }).catch(() => 0);
-  return json({ ...(data as object), accelerators: accel, briefs_written: briefs });
+  return json({ ...(data as object), accelerators: accel, customer_successes: successes, briefs_written: briefs });
 }
