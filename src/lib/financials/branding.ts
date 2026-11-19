@@ -17,7 +17,7 @@ export interface PdfBranding {
  * book's owner. The book row is read with the caller's RLS client; only the owner's public business profile
  * and logo come from the admin client. A sandbox book borrows the branding of the real book it practises for.
  */
-export async function loadBranding(db: Db, bookId: string): Promise<PdfBranding> {
+export async function loadBranding(db: Db, bookId: string, opts: { logo?: boolean } = {}): Promise<PdfBranding> {
   const { data: book } = await db.from("fin_books").select("company_id, owner_user_id, sandbox_of").eq("id", bookId).maybeSingle();
   const admin = createAdminClient();
   const sandbox = Boolean((book as Row | null)?.sandbox_of);
@@ -31,7 +31,7 @@ export async function loadBranding(db: Db, bookId: string): Promise<PdfBranding>
   const { data: bizRow } = ownerId ? await admin.from("business_profiles").select("*").eq("user_id", ownerId).maybeSingle() : { data: null };
   const biz = rowToBusiness(bizRow);
   let logo: PdfBranding["logo"] = null;
-  if (biz.logoPath) {
+  if (biz.logoPath && opts.logo !== false) {
     const { data: file } = await admin.storage.from("logos").download(biz.logoPath);
     if (file) logo = { data: Buffer.from(await file.arrayBuffer()), format: "png" };
   }

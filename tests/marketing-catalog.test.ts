@@ -66,7 +66,9 @@ describe("marketing catalog", () => {
       expect(cellFor(f, "unlimited", ON)).toBe("addon");
       expect(cellFor(f, "enterprise", ON)).toBe("enterprise");
     }
-    expect(cellLabel("addon")).toBe("Add-on, $4.99/mo");
+    // One bundle price, shown once on the pricing page: rows never say "$4.99" per feature.
+    expect(cellLabel("addon")).toBe("In the add-on bundle");
+    expect(cellLabel("addon")).not.toMatch(/\$/);
   });
 
   it("explains that a PM editor seat is not a user license", () => {

@@ -25,19 +25,48 @@ const clampUsers = (n: number) => Math.min(MAX_ESTIMATE, Math.max(ENTERPRISE_INC
 /** Where verification returns to: the Enterprise card, with the seat estimate the visitor chose. */
 export const enterpriseReturnPath = (users: number) => `/pricing?plan=enterprise&users=${clampUsers(users)}#enterprise`;
 
+/** "Get Team" buttons elsewhere on the page fire this to start Team checkout in one click. */
+export const GET_TEAM_EVENT = "b2b:get-team";
+
+/**
+ * The Team choice, kept in this browser for an hour while the visitor verifies their email, so a
+ * refresh, a closed tab or an email-link sign-in still lands back on Team checkout.
+ */
+const TEAM_INTENT_KEY = "b2b.checkoutTeam";
+const TEAM_INTENT_TTL_MS = 60 * 60_000;
+export function parseTeamIntent(raw: string | null, now = Date.now()): { users: number } | null {
+  if (!raw) return null;
+  try {
+    const v = JSON.parse(raw) as { users?: unknown; at?: unknown };
+    if (typeof v.at !== "number" || now - v.at > TEAM_INTENT_TTL_MS || v.at > now + 60_000) return null;
+    return { users: clampUsers(Number(v.users)) };
+  } catch { return null; }
+}
+function saveTeamIntent(users: number) { try { window.localStorage.setItem(TEAM_INTENT_KEY, JSON.stringify({ users, at: Date.now() })); } catch { /* storage blocked: the return URL still carries it */ } }
+function readTeamIntent() { try { return parseTeamIntent(window.localStorage.getItem(TEAM_INTENT_KEY)); } catch { return null; } }
+function clearTeamIntent() { try { window.localStorage.removeItem(TEAM_INTENT_KEY); } catch { /* ignore */ } }
+
+/** What the signed-in visitor already has, so Team never asks them to buy something by mistake. */
+export interface ExistingAccess { kind: "paid" | "complimentary"; label: string }
+
 /**
  * Enterprise card: live seat estimate (same pricing module the server bills with) and checkout.
  * `mode` decides the action: open = checkout is live; contact = prices not configured yet;
  * member = already in a company; owner = already the owner (manage instead).
  */
-export function EnterprisePlan({ signedIn, mode, supportEmail, extraFeatures = [] }: { signedIn: boolean; mode: "open" | "contact" | "member" | "owner"; supportEmail: string; extraFeatures?: string[] }) {
+export function EnterprisePlan({ signedIn, mode, supportEmail, extraFeatures = [], existing = null }: { signedIn: boolean; mode: "open" | "contact" | "member" | "owner"; supportEmail: string; extraFeatures?: string[]; existing?: ExistingAccess | null }) {
   const params = useSearchParams();
   // The seat estimate survives sign-in (and a refresh) through the return URL.
   const [users, setUsers] = useState(() => clampUsers(Number(params.get("users") ?? ENTERPRISE_INCLUDED_USERS)));
   const [company, setCompany] = useState("");
-  const resumed = params.get("plan") === "enterprise" && signedIn && mode === "open";
+  const asked = params.get("plan") === "enterprise" || params.get("plan") === "team";
+  // A paid Unlimited subscription has to end before Team starts (the server refuses a second one).
+  const blocked = existing?.kind === "paid";
+  const resumed = asked && signedIn && mode === "open" && !blocked;
   const [open, setOpen] = useState(resumed);
-  const [authOpen, setAuthOpen] = useState(false);
+  // Signed-out visitor sent straight to Team (a "Get Team" link or an expired session): verify first.
+  const [authOpen, setAuthOpen] = useState(() => asked && !signedIn && mode === "open" && params.get("checkout") !== "cancelled");
+  const [resumedFromStorage, setResumedFromStorage] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const id = useId();
@@ -51,9 +80,32 @@ export function EnterprisePlan({ signedIn, mode, supportEmail, extraFeatures = [
     companyInput.current?.focus({ preventScroll: true });
   }, [resumed]);
 
+  // Verified somewhere that didn't come back here (another tab, an email link, a refresh): the Team
+  // choice saved in this browser brings them back to the company step instead of starting over.
+  useEffect(() => {
+    if (resumed || !signedIn || mode !== "open" || blocked) return;
+    const saved = readTeamIntent();
+    if (!saved) return;
+    /* eslint-disable react-hooks/set-state-in-effect -- browser storage is only readable after hydration */
+    setUsers(saved.users); setOpen(true); setResumedFromStorage(true);
+    /* eslint-enable react-hooks/set-state-in-effect */
+    document.getElementById("enterprise")?.scrollIntoView({ block: "start" });
+    companyInput.current?.focus({ preventScroll: true });
+  }, [resumed, signedIn, mode, blocked]);
+  useEffect(() => { if (mode === "owner" || mode === "member" || blocked) clearTeamIntent(); }, [mode, blocked]);
+
+  // "Get Team" on the plan cards: one click to verification (or the company step when signed in).
+  const startRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    const go = () => { document.getElementById("enterprise")?.scrollIntoView({ block: "start", behavior: "smooth" }); startRef.current(); };
+    window.addEventListener(GET_TEAM_EVENT, go);
+    return () => window.removeEventListener(GET_TEAM_EVENT, go);
+  }, []);
+
   async function start() {
-    if (!signedIn) { setAuthOpen(true); return; }
-    if (!open) { setOpen(true); return; }
+    if (mode !== "open" || blocked) return;
+    if (!signedIn) { saveTeamIntent(users); setAuthOpen(true); return; }
+    if (!open) { setOpen(true); setTimeout(() => companyInput.current?.focus(), 0); return; }
     if (!company.trim()) { setErr("Enter your company name."); return; }
     setBusy(true); setErr(null);
     const r = await fetch("/api/stripe/enterprise-checkout", {
@@ -61,13 +113,14 @@ export function EnterprisePlan({ signedIn, mode, supportEmail, extraFeatures = [
       body: JSON.stringify({ companyName: company.trim(), users, attempt: crypto.randomUUID() }),
     }).catch(() => null);
     const d = await r?.json().catch(() => null);
-    if (r?.ok && d?.url) { window.location.assign(d.url); return; }
+    if (r?.ok && d?.url) { clearTeamIntent(); window.location.assign(d.url); return; }
     setBusy(false);
     if (d?.error?.code === "not_authenticated") setAuthOpen(true);
     else setErr(d?.error?.message ?? "We couldn't start checkout. Please try again.");
   }
 
   const clamp = clampUsers;
+  useEffect(() => { startRef.current = () => { void start(); }; });
 
   return (
     <section id="enterprise" aria-labelledby={`${id}-h`} className="mx-auto mt-10 max-w-5xl rounded-2xl border border-navy/20 bg-surface p-4 shadow-sm sm:p-6 md:p-8" data-testid="enterprise-plan">
@@ -114,16 +167,29 @@ export function EnterprisePlan({ signedIn, mode, supportEmail, extraFeatures = [
           {mode === "open" && open && (
             <div className="mt-4">
               <label htmlFor={`${id}-co`} className="text-sm font-semibold">Company name</label>
-              {resumed && <p className="mt-1 text-xs text-ok" role="status">You&apos;re signed in. Add your company name to review checkout.</p>}
+              {(resumed || resumedFromStorage) && <p className="mt-1 text-xs text-ok" role="status">You&apos;re signed in. Add your company name to review checkout.</p>}
               <input ref={companyInput} id={`${id}-co`} value={company} maxLength={200} autoComplete="organization" onChange={(e) => setCompany(e.target.value)}
                 className="mt-1 h-11 w-full rounded-lg border border-line bg-surface px-3 text-base" />
             </div>
           )}
+          {existing && mode === "open" && (
+            <div className="mt-4 rounded-lg border border-line bg-surface p-3 text-sm" role="status" data-testid="team-existing-access">
+              {existing.kind === "paid" ? (
+                <>
+                  <p className="font-semibold">You&apos;re on {existing.label}.</p>
+                  <p className="mt-1 text-ink-soft">Team replaces Unlimited, so you won&apos;t be asked to pay for both. Turn off Unlimited&apos;s renewal in <a href="/settings/billing" className="font-semibold text-accent-ink underline">Subscription settings</a> (it stays active until the end of your paid period), then start Team here. Questions? <a href={`mailto:${supportEmail}?subject=${encodeURIComponent("Switching to Built2Bid Team")}`} className="font-semibold text-accent-ink underline">Email us</a>.</p>
+                </>
+              ) : (
+                <p><span className="font-semibold">You have {existing.label}.</span> <span className="text-ink-soft">It stays as it is. Team adds a company account with licensed users for your crew.</span></p>
+              )}
+            </div>
+          )}
           <div className="mt-5">
-            {mode === "owner" ? <ButtonLink href="/company/billing" variant="secondary" size="lg" className="w-full">Manage Team</ButtonLink>
-              : mode === "member" ? <p className="text-sm text-ink-soft">You&apos;re part of a company account. Ask your company owner about seats.</p>
+            {mode === "owner" ? <>{asked && <p className="mb-2 text-sm font-semibold text-ok" role="status" data-testid="team-already-owner">You already have Team. Manage users, seats and billing here.</p>}<ButtonLink href="/company/billing" variant="secondary" size="lg" className="w-full">Manage Team</ButtonLink></>
+              : mode === "member" ? <p className="text-sm text-ink-soft" role={asked ? "status" : undefined}>You&apos;re already on your company&apos;s Team plan. Ask your company owner about seats.</p>
+              : blocked ? <ButtonLink href="/settings/billing" variant="secondary" size="lg" className="w-full" data-cta="team-manage-unlimited">Manage your Unlimited subscription</ButtonLink>
               : mode === "contact" ? <ButtonLink href={`mailto:${supportEmail}?subject=${encodeURIComponent("Built2Bid Team")}`} size="lg" className="w-full">Contact us about Team</ButtonLink>
-              : <Button size="lg" className="h-auto min-h-12 w-full whitespace-normal py-3" onClick={start} disabled={busy}>{busy && <Loader2 className="h-4 w-4 animate-spin" />}{open ? `Continue to checkout · ${formatCents(q.monthlyCents)}/month` : "Get Started with Team"}</Button>}
+              : <Button size="lg" className="h-auto min-h-12 w-full whitespace-normal py-3" onClick={start} disabled={busy}>{busy && <Loader2 className="h-4 w-4 animate-spin" />}{open ? `Continue to checkout · ${formatCents(q.monthlyCents)}/month` : "Get Team"}</Button>}
             {err && <p role="alert" className="mt-2 text-sm text-danger">{err}</p>}
             <p className="mt-2 text-xs text-ink-soft">Billed monthly, no long-term contract. Added users are prorated; removed users lower your price from the next invoice, with no refund for the current month. Prices in USD; taxes may apply.</p>
           </div>

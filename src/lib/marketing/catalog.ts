@@ -191,8 +191,9 @@ export function cellLabel(c: Cell): string {
   if (typeof c === "object") return c.text;
   return {
     included: "Included",
-    addon: `Add-on, ${PRICES.pmMonthly}/mo`,
-    enterprise: `Included for ${PRICES.pmIncludedEnterpriseEditors} editor`,
+    // The add-on price is shown once, on the bundle row; each feature row only says it's part of it.
+    addon: "In the add-on bundle",
+    enterprise: "Included",
     soon: "Coming soon",
     no: "Not included",
   }[c];

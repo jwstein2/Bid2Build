@@ -80,7 +80,7 @@ describe("demo session blocklist", () => {
     for (const [p, m] of [
       ["/api/stripe/checkout", "POST"], ["/api/stripe/portal", "POST"], ["/api/billing/pm-addon", "POST"],
       ["/api/estimates/abc/signing", "POST"], ["/api/comms", "POST"], ["/api/comms/send", "POST"],
-      ["/api/financials/email", "POST"], ["/api/company/invitations", "POST"], ["/api/schedules/abc/updates", "POST"],
+      ["/api/company/invitations", "POST"], ["/api/schedules/abc/updates", "POST"],
       ["/api/account/delete", "POST"], ["/api/import-website", "POST"],
     ] as const) expect(isDemoBlocked(p, m), `${m} ${p}`).toBe(true);
   });
@@ -88,7 +88,9 @@ describe("demo session blocklist", () => {
   it("leaves the sample company usable", () => {
     for (const [p, m] of [
       ["/api/estimates/abc", "PATCH"], ["/api/estimates/abc/signing", "GET"], ["/api/comms/settings", "POST"], ["/api/comms/preview", "POST"],
-      ["/api/schedules/abc", "POST"], ["/api/guide", "POST"], ["/api/demo/exit", "POST"], ["/api/demo/reset", "POST"], ["/api/features", "GET"],
+      ["/api/schedules/abc", "POST"], ["/api/guide", "POST"],
+      // Invoice email drafts only render text (nothing can be sent), so demos can show them (Nov 18 demo failure).
+      ["/api/financials/email", "POST"], ["/api/demo/exit", "POST"], ["/api/demo/reset", "POST"], ["/api/features", "GET"],
     ] as const) expect(isDemoBlocked(p, m), `${m} ${p}`).toBe(false);
   });
 

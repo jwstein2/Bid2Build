@@ -26,9 +26,9 @@ import { AuthDialog } from "../auth/auth-dialog";
 import { useLibrary } from "./library";
 import { ProjectStep } from "./project-step";
 import { ProposalStep } from "./proposal-step";
-import { BuilderOpsProvider, useOpsLoader, type OwnerBrand } from "./ops-context";
+import { BuilderOpsProvider, useOpsLoader, type OwnerBrand, type PriceDisplay } from "./ops-context";
 import { ContractPanel } from "./contract-panel";
-import { resolveProposalStyle } from "@/lib/operations/proposal-style";
+import { canEditStyleKey, resolveProposalStyle } from "@/lib/operations/proposal-style";
 import { ScopeStep } from "./scope-step";
 import { reducer } from "./state";
 import { Workspace } from "./workspace";
@@ -455,9 +455,20 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
   const goTo = (s: Step) => { setStep(s); setCustomerView(false); window.scrollTo({ top: 0, behavior: "smooth" }); };
 
   const lastTrash = state.trash[state.trash.length - 1];
+  // Customer price display as the customer will see it. On a company-managed bid the contractor's own
+  // choice is recorded as a bid override so "Single project total" is honored wherever it's allowed.
+  const priceDisplay: PriceDisplay = {
+    displayMode: styled.estimate.displayMode,
+    defaultGroupVisibility: styled.estimate.defaultGroupVisibility,
+    canEdit: { displayMode: canEditStyleKey(ops?.stylePolicy, "displayMode"), defaultGroupVisibility: canEditStyleKey(ops?.stylePolicy, "defaultGroupVisibility") },
+    choose: (key) => {
+      if (!ops?.stylePolicy?.managed || config.styleOverrides?.includes(key)) return;
+      onConfig({ ...config, styleOverrides: [...(config.styleOverrides ?? []), key] });
+    },
+  };
 
   return (
-    <BuilderOpsProvider estimateId={cloudMode && user ? estimate.id : null} saved={save === "saved"} ops={ops} refresh={refreshOps}>
+    <BuilderOpsProvider estimateId={cloudMode && user ? estimate.id : null} saved={save === "saved"} ops={ops} refresh={refreshOps} priceDisplay={priceDisplay}>
     <div ref={rootRef} className="app-theme flex min-h-screen flex-col">
       {/* Universal search (V6.4): Ctrl/Cmd+K and the header icon, for signed-in builders. */}
       {user && <GlobalSearchHost />}

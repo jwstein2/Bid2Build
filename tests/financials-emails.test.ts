@@ -53,3 +53,29 @@ describe("financial email renderer", () => {
     expect(h).toMatch(/^[0-9a-f]{64}$/);
   });
 });
+
+describe("invoice email draft (Nov 18 demo fix)", () => {
+  it("fills invoice, customer, balance and the same 'How to pay' wording as the PDF", async () => {
+    const { payInstructionsText } = await import("@/lib/financials/emails");
+    const pay = payInstructionsText({ name: "Acme Concrete", phone: "(555) 555-0100", email: "office@acme.test" }, "INV-0007");
+    expect(pay).toBe("How to pay: make payment to Acme Concrete and include invoice number INV-0007 with your payment. Questions about this invoice? Reach us at (555) 555-0100 or office@acme.test.");
+    const r = render("progress", "professional", {
+      customerName: "Pat Lee", companyName: "Acme Concrete", projectName: "Driveway", invoiceNumber: "INV-0007",
+      amountDue: "1250", dueDate: "2026-12-01", milestone: "Pour complete", balance: "1250", payInstructions: pay,
+    });
+    expect(r.body).toContain("INV-0007");
+    expect(r.body).toContain("$1,250.00");
+    expect(r.body).toContain("December 1, 2026");
+    expect(r.body).toContain("How to pay: make payment to Acme Concrete");
+    expect(r.body).not.toMatch(/\{[a-z_]+\}/);
+    expect(payInstructionsText({ name: "" })).toBe("How to pay: make payment to us.");
+  });
+
+  it("the render route never sends: no mail client is imported and Demo Mode may call it", async () => {
+    const fs = await import("node:fs");
+    const src = fs.readFileSync("src/app/api/financials/email/route.ts", "utf8");
+    expect(src).not.toMatch(/resend|sendMail|nodemailer|gmail|outlook/i);
+    const { isDemoBlocked } = await import("@/lib/demo/session");
+    expect(isDemoBlocked("/api/financials/email", "POST")).toBe(false);
+  });
+});

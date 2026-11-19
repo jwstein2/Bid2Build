@@ -83,6 +83,8 @@ const LAYOUTS = new Set(["left", "center", "stacked"]);
 const HEADERS = new Set(["solid", "line", "minimal"]);
 const MODES = new Set(["by_group", "project_total"]);
 const VIS = new Set(["group_total", "names_only", "itemized"]);
+/** Customer price display keys: when the company leaves them unset ("Each bid decides"), the bid decides. */
+const BID_DECIDES_KEYS = new Set<StyleKey>(["displayMode", "defaultGroupVisibility"]);
 
 /** Platform rules: anything malformed is dropped (falls through to the next level). */
 export function sanitizeCompanyStyle(input: unknown): CompanyStyle {
@@ -168,6 +170,9 @@ export function resolveProposalStyle(input: {
     if (!policy) { v = bidVal; src = "bid"; }
     else if (locks.has(k)) { v = companyVal; src = "locked"; }
     else if (bidChoicesApply && bidVal !== undefined) { v = bidVal; src = "bid"; }
+    // "Each bid decides": the company left customer price display unset, so the bid's own pricing
+    // choice (Single project total / section detail) applies even when member customization is off.
+    else if (BID_DECIDES_KEYS.has(k) && (companyVal === undefined || companyVal === null) && raw !== undefined && raw !== null) { v = raw; src = "bid"; }
     else { v = companyVal; src = "company"; }
     if (v === undefined || v === null) { v = platform(k); src = policy ? "default" : "bid"; }
     // Platform rules always apply last: malformed values fall back to the platform default.
@@ -194,5 +199,6 @@ export function resolveProposalStyle(input: {
 export function canEditStyleKey(policy: StylePolicy | null | undefined, k: StyleKey): boolean {
   if (!policy?.managed) return true;
   if (sanitizeLocks(policy.locked).includes(k)) return false;
+  if (BID_DECIDES_KEYS.has(k) && read({ style: sanitizeCompanyStyle(policy.style) }, k) === undefined) return true;
   return Boolean(policy.allowCustomization && (policy.canCustomize || policy.canOverride));
 }

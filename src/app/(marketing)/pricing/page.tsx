@@ -15,7 +15,8 @@ import { ANNUAL, ANNUAL_MONTHLY_EQUIVALENT, ANNUAL_SAVINGS_PERCENT, MONTHLY, for
 import { UnlimitedCard } from "@/components/marketing/pricing/unlimited-card";
 import { PlanHelper } from "@/components/marketing/pricing/plan-helper";
 import { Suspense } from "react";
-import { EnterprisePlan } from "@/components/billing/enterprise-plan";
+import { EnterprisePlan, type ExistingAccess } from "@/components/billing/enterprise-plan";
+import { GetTeamButton } from "@/components/billing/get-team-button";
 import { isEnterpriseConfigured } from "@/lib/env";
 import { site } from "@/lib/site";
 import { createClient } from "@/lib/supabase/server";
@@ -79,6 +80,10 @@ export default async function PricingPage() {
     const { data: co } = await (await createClient()).rpc("my_company");
     if (co) entMode = (co as { isOwner?: boolean }).isOwner ? "owner" : "member";
   }
+  // What a signed-in visitor already has, so Team shows their real status instead of a new purchase.
+  const existing: ExistingAccess | null = subscribed
+    ? plan ? { kind: "paid", label: plan === "annual" ? "Unlimited Annual" : "Unlimited Monthly" } : { kind: "complimentary", label: "complimentary Unlimited access" }
+    : null;
   const manage = <ButtonLink href="/settings/billing" variant="secondary" size="lg" className="w-full">Manage subscription</ButtonLink>;
   return (
     <Container className="py-14">
@@ -100,19 +105,23 @@ export default async function PricingPage() {
                 note: <>Equivalent to {ANNUAL_MONTHLY_EQUIVALENT}/month. Save approximately {ANNUAL_SAVINGS_PERCENT}% compared with monthly billing.</>,
                 action: subscribed ? manage : <CheckoutButton plan="annual" signedIn={Boolean(user)} label="Choose Annual" /> }}
               features={UNLIMITED_FEATURES}
-              addon={<><b className="font-semibold">Add-on:</b> {PM_PRODUCT_NAME}{pmMarketedLive() ? <>, +{PRICES.pmMonthly}/month or +{PRICES.pmAnnual}/year.</> : <> (coming soon).</>} <Link href="#project-command-center" className="font-semibold text-navy underline">What it adds</Link></>}
+              addon={<><b className="font-semibold">Add-on:</b> {PM_PRODUCT_NAME}{pmMarketedLive() ? <>: one price, +{PRICES.pmMonthly}/month (or +{PRICES.pmAnnual}/year), for the whole scheduling, progress and customer-updates bundle.</> : <> (coming soon).</>} <Link href="#project-command-center" className="font-semibold text-navy underline">What it adds</Link></>}
             />
           </Suspense>
           <Plan name="Team" current={entMode === "owner" || entMode === "member"} price={PRICES.enterpriseBase} per="/month" billing={`${PRICES.enterpriseIncludedUsers} users included. More at volume pricing.`}
-            features={ENTERPRISE_CARD_FEATURES(pmMarketedLive())}>
-            <ButtonLink href="#enterprise" variant="secondary" size="lg" className="w-full" data-cta="enterprise">{entMode === "owner" ? "Manage your company" : entMode === "member" ? "See your company plan" : "See Team"}</ButtonLink>
+            features={ENTERPRISE_CARD_FEATURES(pmMarketedLive())} highlight="navy" badge="For crews of 2 or more">
+            {entMode === "owner" ? <ButtonLink href="/company/billing" variant="secondary" size="lg" className="w-full" data-cta="enterprise">Manage your company</ButtonLink>
+              : entMode === "member" ? <ButtonLink href="#enterprise" variant="secondary" size="lg" className="w-full" data-cta="enterprise">See your company plan</ButtonLink>
+              : entMode === "contact" || existing?.kind === "paid" ? <ButtonLink href="#enterprise" variant="secondary" size="lg" className="w-full" data-cta="enterprise">See Team</ButtonLink>
+              : <GetTeamButton />}
+            <a href="#enterprise" className="mt-2 block text-center text-xs font-semibold text-accent-ink underline">Team details and seat prices</a>
           </Plan>
         </div>
         <p className="mx-auto mt-5 max-w-2xl text-center text-sm text-ink-soft">Unlimited Monthly and Unlimited Annual include exactly the same features. Only the billing schedule is different.{subscribed && " You're on Unlimited."}</p>
       </CheckoutFlowProvider>
       <PlanHelper pccLive={pmMarketedLive()} pccName={PM_PRODUCT_NAME} />
       <PmAddonSection status={status} entMode={entMode} />
-      <Suspense><EnterprisePlan signedIn={Boolean(user)} mode={entMode} supportEmail={site.supportEmail}
+      <Suspense><EnterprisePlan signedIn={Boolean(user)} mode={entMode} supportEmail={site.supportEmail} existing={existing}
         extraFeatures={pmMarketedLive() ? [`${PM_PRODUCT_NAME}: ${PRICES.pmIncludedEnterpriseEditors} schedule editor included; extra editors ${PRICES.pmEditor}/month each (for licensed users)`] : []} /></Suspense>
 
       <ComparisonTable />
@@ -127,10 +136,11 @@ export default async function PricingPage() {
   );
 }
 
-function Plan({ name, current, price, per, billing, note, features, highlight, children }: { name: string; current?: boolean; price: string; per: string; billing: string; note?: React.ReactNode; features: string[]; highlight?: boolean; children: React.ReactNode }) {
+function Plan({ name, current, price, per, billing, note, features, highlight, badge = "Best value", children }: { name: string; current?: boolean; price: string; per: string; billing: string; note?: React.ReactNode; features: string[]; highlight?: boolean | "navy"; badge?: string; children: React.ReactNode }) {
+  const navy = highlight === "navy";
   return (
-    <div className={`relative flex flex-col rounded-2xl border bg-surface p-6 ${highlight ? "border-accent shadow-lg ring-2 ring-accent/30" : "border-line"}`}>
-      {highlight && <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-accent px-3 py-1 text-xs font-bold text-navy">Best value</span>}
+    <div className={`relative flex flex-col rounded-2xl border bg-surface p-6 ${navy ? "border-navy/50 shadow-lg ring-2 ring-navy/15" : highlight ? "border-accent shadow-lg ring-2 ring-accent/30" : "border-line"}`} data-plan={name.toLowerCase()}>
+      {highlight && <span className={`absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold ${navy ? "bg-navy text-white" : "bg-accent text-navy"}`}>{badge}</span>}
       <h2 className="flex items-center justify-between gap-2 font-display text-lg font-bold">{name}{current && <span className="shrink-0 whitespace-nowrap rounded-full bg-ok/10 px-2 py-0.5 text-xs font-semibold text-ok" data-testid="current-plan">Your plan</span>}</h2>
       <p className="mt-3 whitespace-nowrap"><span className="font-display text-4xl font-extrabold">{price}</span><span className={`font-semibold text-muted ${per.startsWith("/") ? "" : "ml-1.5"}`}>{per}</span></p>
       <p className="mt-1 text-sm font-semibold text-ink">{billing}</p>
@@ -196,6 +206,46 @@ function PmAddonSection({ status, entMode }: { status: AccountStatus; entMode: "
   );
 }
 
+/**
+ * The Project Command Center add-on as ONE bundle: the price appears once, on the bundle row, and every
+ * tool listed under it is included in that single price (not $4.99 per feature).
+ */
+function PmBundleRows({ th }: { th: string }) {
+  const list = MARKETING_FEATURES.filter((f) => f.tier === "pm");
+  if (!list.length) return null;
+  const live = pmMarketedLive();
+  return (
+    <>
+      <tr className="border-b border-line bg-accent-tint/50" data-group="pm-bundle" data-testid="pm-bundle-row">
+        <th scope="rowgroup" className={`${th} !bg-accent-tint/50`}>
+          <span className="block text-xs font-bold uppercase tracking-wide text-accent-ink">{PM_PRODUCT_NAME} add-on</span>
+          <span className="block text-xs font-normal text-ink-soft">One price for the whole bundle below: scheduling, progress, team assignments and customer updates.</span>
+        </th>
+        <td className="p-3 align-top text-ink-soft"><CellView c="no" /></td>
+        <td className="p-3 align-top">
+          {live
+            ? <><span className="font-display text-base font-extrabold">+{PRICES.pmMonthly}</span><span className="text-xs font-semibold text-muted">/month</span><span className="block text-xs text-ink-soft">for everything below, one editor (you). Or +{PRICES.pmAnnual}/year.</span></>
+            : <CellView c="soon" />}
+        </td>
+        <td className="p-3 align-top">
+          {live
+            ? <><span className="font-semibold">Included</span><span className="block text-xs text-ink-soft">{PRICES.pmIncludedEnterpriseEditors} editor included, extra editors {PRICES.pmEditor}/month</span></>
+            : <CellView c="soon" />}
+        </td>
+      </tr>
+      {list.map((f) => (
+        <tr key={f.id} className="border-b border-line" data-feature-id={f.id} data-bundle="pm">
+          <th scope="row" className={`${th} pl-6`}>
+            {f.name}
+            {f.hint && <span className="block text-xs font-normal text-muted">{f.hint}</span>}
+          </th>
+          {(["free", "unlimited", "enterprise"] as const).map((p) => <td key={p} className="p-3"><CellView c={cellFor(f, p)} /></td>)}
+        </tr>
+      ))}
+    </>
+  );
+}
+
 const CELL_ICON = { included: Check, addon: Gem, enterprise: Check, soon: Clock, no: Minus } as const;
 
 function CellView({ c }: { c: Cell | string }) {
@@ -227,6 +277,7 @@ function ComparisonTable() {
             {GROUP_ORDER.map((g) => (
               <GroupRows key={g} group={g} th={th} />
             ))}
+            <PmBundleRows th={th} />
           </tbody>
         </table>
       </div>
@@ -235,7 +286,9 @@ function ComparisonTable() {
 }
 
 function GroupRows({ group, th }: { group: CompareGroup; th: string }) {
-  const list = MARKETING_FEATURES.filter((f) => f.group === group);
+  // Add-on features are listed together under one bundle price (PmBundleRows), never priced per row.
+  const list = MARKETING_FEATURES.filter((f) => f.group === group && f.tier !== "pm");
+  if (!list.length) return null;
   return (
     <>
       <tr className="border-b border-line bg-paper" data-group={group}><th scope="colgroup" colSpan={4} className="p-3 text-left text-xs font-bold uppercase tracking-wide text-accent-ink">{GROUP_TITLES[group]}</th></tr>
