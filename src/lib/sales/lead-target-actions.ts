@@ -1,14 +1,14 @@
 "use server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { requireAdmin } from "@/lib/admin/server";
+import { requireSalesAdmin } from "@/lib/sales/server";
 
 /**
  * Save the weekly lead import's target from the Sales Hub (Leads tab): a state region (for example
  * Southeast Minnesota) or a ZIP + radius. Both database functions check the caller is a sales admin and
- * write the audit log. Kept apart from the Hub page's own actions so the form works wherever the Hub lives.
+ * write the audit log. Needs the same capability as assigning leads (reassign_leads).
  */
-const HUB_PATHS = ["/admin/sales-hub", "/sales/admin"];
+const HUB_PATHS = ["/sales/admin"];
 
 function back(path: string, result: { ok?: string; err?: string }): never {
   const q = new URLSearchParams({ tab: "leads", ...result });
@@ -17,8 +17,10 @@ function back(path: string, result: { ok?: string; err?: string }): never {
 }
 
 export async function saveLeadTargetForm(fd: FormData) {
-  const { user, db } = await requireAdmin();
+  const a = await requireSalesAdmin();
   const path = HUB_PATHS.includes(String(fd.get("back"))) ? String(fd.get("back")) : HUB_PATHS[0];
+  if (!a.has("reassign_leads")) back(path, { err: "not_authorized" });
+  const { user, db } = a;
   const trade = String(fd.get("trade") ?? "").slice(0, 40) || null;
   const count = Number(fd.get("count")) || 50;
   const paused = fd.get("paused") === "on";

@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
 import { Logo } from "@/components/layout/logo";
 import { Container } from "@/components/ui/misc";
+import { Suspense } from "react";
 import { PortalNav } from "@/components/sales/portal-nav";
+import { HubSwitcher } from "@/components/sales/hub-switcher";
+import { SalesNotifications, type SalesNotice } from "@/components/sales/notifications";
 import { loadSalesAccess } from "@/lib/sales/server";
+import { ADMIN_TABS, canAdmin, canMy, roleLabel } from "@/lib/sales/caps";
 
 export const metadata: Metadata = { title: { default: "Sales portal", template: "%s · Sales portal" }, robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -17,11 +21,12 @@ function SignOut() {
 
 /**
  * Sales portal shell. Separate from the contractor app (no contractor sidebar, no bids) and from the
- * owner admin area. Every page below re-checks access through the database (sales_me / sales_my_*).
+ * platform admin area. People with both a selling role and an admin role get the My/Admin switcher;
+ * everyone else sees only the hub they have. Every page below re-checks access through the database.
  */
 export default async function SalesPortalLayout({ children }: { children: React.ReactNode }) {
   const access = await loadSalesAccess();
-  if (access.kind !== "rep") {
+  if (access.kind !== "staff") {
     return (
       <main className="min-h-screen bg-paper">
         <Container className="max-w-lg py-16">
@@ -40,6 +45,9 @@ export default async function SalesPortalLayout({ children }: { children: React.
       </main>
     );
   }
+  const my = canMy(access.caps), admin = canAdmin(access.caps);
+  const notes = await access.db.rpc("sales_my_notifications");
+  const items = (notes.error ? [] : notes.data ?? []) as SalesNotice[];
   return (
     <div className="min-h-screen bg-paper">
       <header className="on-dark bg-navy text-white">
@@ -48,11 +56,13 @@ export default async function SalesPortalLayout({ children }: { children: React.
             <Logo tone="dark" href="/sales" />
             <span className="rounded bg-white/10 px-2 py-0.5 text-xs font-bold uppercase tracking-wide">Sales</span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="hidden text-sm text-white/75 sm:inline">{access.rep.full_name}</span>
+          {my && admin && <div className="order-last w-full sm:order-none sm:w-auto"><HubSwitcher /></div>}
+          <div className="flex items-center gap-1">
+            <span className="hidden text-right text-sm leading-tight text-white/75 md:block">{access.rep?.full_name ?? access.user.email}<br /><span className="text-xs text-white/55">{roleLabel(access.caps)}</span></span>
+            <SalesNotifications items={items} showGroups={my && admin} />
             <SignOut />
           </div>
-          <div className="w-full"><PortalNav /></div>
+          <div className="w-full"><Suspense fallback={null}><PortalNav adminTabs={admin ? [...ADMIN_TABS] : []} /></Suspense></div>
         </Container>
       </header>
       <main id="main"><Container className="py-6">{children}</Container></main>
