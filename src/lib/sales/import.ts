@@ -45,6 +45,16 @@ export const ImportBody = z.object({
   batch_id: z.string().trim().min(1).max(100),
   label: s(200),
   leads: z.array(z.unknown()).max(1000),
+  /**
+   * How far this run got through the target's license download, so the next run resumes after it.
+   * cursor = the last value of the source's cursor_field checked (rows are worked in ascending order);
+   * checked = rows looked at this run; exhausted = reached the end of the region's list.
+   */
+  progress: z.object({
+    cursor: z.string().trim().min(1).max(200),
+    checked: z.number().int().min(0).max(1_000_000),
+    exhausted: z.boolean().optional(),
+  }).optional(),
 });
 
 export type ImportResult = {

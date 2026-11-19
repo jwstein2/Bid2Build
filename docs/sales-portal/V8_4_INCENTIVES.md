@@ -1,6 +1,6 @@
 # Sales Hub V8.4 P0: accelerators, personal records, Recognition & Incentives
 
-Migration `20270114001000_sales_v84_accelerators.sql`, rollback in `supabase/rollback/`.
+Migration `20270116001000_sales_v84_accelerators.sql`, rollback in `supabase/rollback/`.
 
 ## Monthly accelerators
 

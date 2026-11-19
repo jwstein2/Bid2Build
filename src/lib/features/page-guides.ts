@@ -440,6 +440,25 @@ export const PAGE_GUIDES = {
       { target: "items.search", title: "Your saved prices", body: "Labor rates, material costs and frequent items, like \"{item}\". Search them here; in any bid, add them in a tap.", requires: { unlimited: true } },
       { target: "items.add", title: "Add an item", body: "Save a new item with its unit and your cost. Nothing is saved until you press Save.", requires: { unlimited: true } },
       { target: "items.locked", title: "Included with Unlimited", body: "Save your own labor rates and material costs, then add them to any bid. Included with Unlimited.", requires: { unlimited: false } },
+      { target: "items.generate", title: "Generate your price library", body: "Type your trade or a scope and get a draft list of items to review. The AI never sets a price, and nothing is saved until you approve it." },
+    ],
+  },
+  "library.generate": {
+    route: "/dashboard/items/generate",
+    label: "Generate My Price Library",
+    steps: [
+      { target: "generate.describe", title: "Describe your work", body: "A word like \"Concrete\" builds a catalog for your trade. A detailed scope builds the items that job needs. You can pick up to four trades." },
+    ],
+  },
+  "library.generate-review": {
+    route: "/dashboard/items/generate",
+    label: "Review your price library draft",
+    steps: [
+      { target: "generate.items", title: "Review by category", body: "Rename items, fix units and remove what you don't use. Changes save as you go, and the draft waits for you if you leave." },
+      { target: "generate.toolbar", title: "Find what needs you", body: "Filter to items with no cost or possible duplicates. Items that match something you already saved are flagged so nothing is overwritten by surprise." },
+      { target: "generate.more", title: "Add more when you need it", body: "Add labor, equipment, material options or stacks in small batches instead of one huge list." },
+      { target: "generate.stacks", title: "Check each stack", body: "Stacks scale with a measurement, like slab area. Check every ratio; saving items never saves a stack." },
+      { target: "generate.approve", title: "Approve what's ready", body: "You see exactly what will be added or changed before you confirm. Approved items show up in every bid under Suggested & Saved Items." },
     ],
   },
   "library.templates": {

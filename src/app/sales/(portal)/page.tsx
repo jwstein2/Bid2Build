@@ -31,7 +31,7 @@ export default async function SalesOverview() {
     db.rpc("sales_my_overview"), db.rpc("sales_my_team_goal"), db.rpc("sales_my_milestones"), db.rpc("sales_my_progress", {}),
     db.rpc("sales_my_accelerator", {}), db.rpc("sales_my_records", {}),
   ]);
-  // V8.4 (hidden until 20270114001000 is applied; the accelerator card shows once the owner turns it on).
+  // V8.4 (hidden until 20270116001000 is applied; the accelerator card shows once the owner turns it on).
   const acc = accRes.error || !accRes.data ? null : (accRes.data as MyAccelerator);
   const rec = recRes.error || !recRes.data ? null : (recRes.data as { months: MonthCounts[]; achievements: { kind: string; month: string; value: number | null; detail: Record<string, unknown> | null }[] });
   const bests = rec ? personalBests(rec.months) : null;

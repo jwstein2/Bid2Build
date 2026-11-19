@@ -5,14 +5,15 @@ import { ADMIN_TABS, rangeSince, RANGES, teamTotals, type AdminTab, type Analyti
 import { repLink } from "@/lib/sales/link";
 import { COMMISSION_STATUS, dateLabel, METHOD_LABEL, plural, monthLabel, reasonLabel, TIER_LABEL, usd, yearLabel } from "@/lib/sales/format";
 import type { Hub, HubRep, HubSettings } from "@/lib/sales/types";
-import { SOURCE_LABEL, STAGE_LABEL, TRADES, type Lead } from "@/lib/sales/crm";
+import { SOURCE_LABEL, STAGE_LABEL, type Lead } from "@/lib/sales/crm";
 import { CopyField } from "@/components/sales/copy-field";
 import { site } from "@/lib/site";
 import { DEFAULT_MILESTONES, nextMilestone, teamGoal, type GoalRaw, type MilestoneRules } from "@/lib/sales/goals";
 import { TeamGoalBoard } from "@/components/sales/team-goal-board";
+import { LeadTargetForm, type LeadRegionState, type LeadTarget } from "@/components/sales/lead-target-form";
 import { isCertified, TOPICS } from "@/lib/sales/academy";
 import { achievementText, DEFAULT_TIERS, type Tier } from "@/lib/sales/incentives";
-import { adjustCommission, approveStatement, assignCustomer, assignLeads, approveMilestone, congratulate, createInvite, saveAcceleratorRules, importLeads, saveMilestoneRules, saveTeamGoal, voidMilestone, saveLeadTarget, closeMonth, endAttribution, recordPayout, savePolicy, saveRep } from "./actions";
+import { adjustCommission, approveStatement, assignCustomer, assignLeads, approveMilestone, congratulate, createInvite, saveAcceleratorRules, importLeads, saveMilestoneRules, saveTeamGoal, voidMilestone, closeMonth, endAttribution, recordPayout, savePolicy, saveRep } from "./actions";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Admin Sales Hub" };
@@ -200,8 +201,11 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
   const leads = ((crm?.data as { leads?: Lead[] } | null)?.leads ?? []).filter((l) => (!sp.rep || (sp.rep === "none" ? !l.assigned_rep : l.assigned_rep === sp.rep)) && (sp.status !== "agent" || l.source === "agent"));
   // Weekly automated import history (Phase 3a). Missing until that migration is run: the panel is hidden.
   const imports = tab === "leads" ? await db.rpc("admin_sales_import_batches", { p_caller: user.id }) : null;
-  const importData = imports && !imports.error ? (imports.data as { batches: { id: string; label: string | null; received: number; added: number; duplicates: number; suppressed: number; invalid: number; unverified?: number; target_zip?: string | null; target_trade?: string | null; created_at: string }[]; unassigned_agent: number; suppressed: number;
-    target?: { zip: string | null; trade: string | null; radius_miles: number; count: number; paused: boolean }; zips?: { zip: string; leads: number }[] }) : null;
+  // State regions for the target picker. Missing until 20270114001000_sales_lead_regions.sql is run: ZIP only.
+  const regions = tab === "leads" ? await db.rpc("admin_sales_lead_regions", { p_caller: user.id }) : null;
+  const leadRegions = regions && !regions.error ? (regions.data as LeadRegionState[]) : [];
+  const importData = imports && !imports.error ? (imports.data as { batches: { id: string; label: string | null; received: number; added: number; duplicates: number; suppressed: number; invalid: number; unverified?: number; target_zip?: string | null; target_trade?: string | null; target_state?: string | null; target_region?: string | null; created_at: string }[]; unassigned_agent: number; suppressed: number;
+    target?: LeadTarget; zips?: { zip: string; leads: number }[] }) : null;
   const activeReps = h.reps.filter((r) => r.status !== "removed");
   // V8: invite links and policy versions (hidden until 20270110001000 is applied).
   const acadRes = tab === "team" ? await db.rpc("admin_sales_academy", { p_caller: user.id }) : null;
@@ -227,7 +231,7 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
   const analytics = (anRes && !anRes.error ? (anRes.data as { reps: AnalyticsRep[] }).reps : null);
   const compAcad = tab === "compliance" ? await db.rpc("admin_sales_academy", { p_caller: user.id }) : null;
   const compAcademy = (compAcad && !compAcad.error ? compAcad.data : null) as Record<string, string[] | null> | null;
-  // V8.4 Recognition & Incentives (hidden until 20270114001000 is applied).
+  // V8.4 Recognition & Incentives (hidden until 20270116001000 is applied).
   const incRes = tab === "recognition" ? await db.rpc("admin_sales_incentives", { p_caller: user.id }) : null;
   const inc = (incRes && !incRes.error ? incRes.data : null) as Incentives | null;
   const msForUpcoming = tab === "recognition" ? await db.rpc("admin_sales_milestones", { p_caller: user.id }) : null;
@@ -378,32 +382,14 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
                 </div>
                 {importData.unassigned_agent > 0 && <Link href="/sales/admin?tab=leads&rep=none&status=agent" className="text-sm font-semibold text-brand underline">{importData.unassigned_agent} new to assign</Link>}
               </div>
-              {importData.target && (
-                <form action={saveLeadTarget} className="mt-4 grid gap-3 rounded-lg border border-line bg-paper p-3 sm:grid-cols-[1fr_1fr_auto_auto] sm:items-end">
-                  <p className="text-sm font-semibold sm:col-span-4">Next run target{importData.target.zip ? `: ${importData.target.count} leads within ${importData.target.radius_miles} miles of ${importData.target.zip}${importData.target.trade ? `, ${importData.target.trade}` : ""}${importData.target.paused && importData.target.zip ? " (paused)" : ""}` : ": not set yet, so the weekly run is waiting"}</p>
-                  <label className="text-sm">Active ZIP code
-                    <input name="zip" required inputMode="numeric" pattern="[0-9]{5}" maxLength={5} list="lead-target-zips" defaultValue={importData.target.zip ?? ""} className={input} placeholder="55401" />
-                    <datalist id="lead-target-zips">{(importData.zips ?? []).map((z) => <option key={z.zip} value={z.zip}>{`${z.leads} lead${z.leads === 1 ? "" : "s"}`}</option>)}</datalist>
-                  </label>
-                  <label className="text-sm">Trade
-                    <select name="trade" defaultValue={importData.target.trade ?? ""} className={input}>
-                      <option value="">All trades</option>
-                      {TRADES.map((t) => <option key={t} value={t}>{t[0].toUpperCase() + t.slice(1)}</option>)}
-                    </select>
-                  </label>
-                  <label className="text-sm">Miles<input name="radius" type="number" min={5} max={250} defaultValue={importData.target.radius_miles} className={`${input} w-24`} /></label>
-                  <label className="text-sm">Leads per run<input name="count" type="number" min={1} max={200} defaultValue={importData.target.count} className={`${input} w-24`} /></label>
-                  <label className="flex items-center gap-2 text-sm sm:col-span-3"><input type="checkbox" name="paused" defaultChecked={importData.target.paused && !!importData.target.zip} /> Pause the weekly run</label>
-                  <button className={btn}>Save target</button>
-                </form>
-              )}
+              {importData.target && <LeadTargetForm target={importData.target} states={leadRegions} zips={importData.zips ?? []} back="/sales/admin" />}
               {importData.batches.length === 0 ? <p className="mt-3 text-sm text-muted">No imports yet. The first weekly run will show here.</p> : (
                 <div className="mt-3 overflow-x-auto">
                   <table className="w-full min-w-[560px] text-sm">
                     <thead className="text-left text-muted"><tr><th className="py-1 pr-3">Run</th><th className="py-1 pr-3">Received</th><th className="py-1 pr-3">Added</th><th className="py-1 pr-3">Already on file</th><th className="py-1 pr-3">Do not contact</th><th className="py-1">Not verified</th></tr></thead>
                     <tbody>
                       {importData.batches.map((b) => (
-                        <tr key={b.id} className="border-t border-line"><td className="py-1 pr-3">{dateLabel(b.created_at)}{b.target_zip ? ` · ${b.target_zip}${b.target_trade ? ` ${b.target_trade}` : ""}` : b.label ? ` · ${b.label}` : ""}</td><td className="py-1 pr-3">{b.received}</td><td className="py-1 pr-3 font-semibold">{b.added}</td><td className="py-1 pr-3">{b.duplicates}</td><td className="py-1 pr-3">{b.suppressed}</td><td className="py-1">{b.invalid + (b.unverified ?? 0)}</td></tr>
+                        <tr key={b.id} className="border-t border-line"><td className="py-1 pr-3">{dateLabel(b.created_at)}{b.target_zip || b.target_region ? ` · ${b.target_region ? `${b.target_state} ${b.target_region}` : b.target_zip}${b.target_trade ? ` ${b.target_trade}` : ""}` : b.label ? ` · ${b.label}` : ""}</td><td className="py-1 pr-3">{b.received}</td><td className="py-1 pr-3 font-semibold">{b.added}</td><td className="py-1 pr-3">{b.duplicates}</td><td className="py-1 pr-3">{b.suppressed}</td><td className="py-1">{b.invalid + (b.unverified ?? 0)}</td></tr>
                       ))}
                     </tbody>
                   </table>
@@ -616,7 +602,7 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
       )}
 
       {tab === "recognition" && (
-        !inc ? <Notice tone="warn">Run <code className="break-all">supabase/migrations/20270114001000_sales_v84_accelerators.sql</code> in the Supabase SQL Editor to see Recognition &amp; incentives.</Notice> : (() => {
+        !inc ? <Notice tone="warn">Run <code className="break-all">supabase/migrations/20270116001000_sales_v84_accelerators.sql</code> in the Supabase SQL Editor to see Recognition &amp; incentives.</Notice> : (() => {
         const rules: MilestoneRules = h.settings.milestone_every ? { every: h.settings.milestone_every, rates: h.settings.milestone_rates ?? [], min_cents: h.settings.milestone_min_cents ?? 0, flat: h.settings.milestone_flat ?? [] } : DEFAULT_MILESTONES;
         const tiers = [...inc.tiers, ...Array(Math.max(0, 6 - inc.tiers.length)).fill(null)] as (Tier | null)[];
         return (

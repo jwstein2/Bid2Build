@@ -1,4 +1,4 @@
--- Rollback for 20270114001000_sales_v84_accelerators.sql. Accelerator commission lines already created
+-- Rollback for 20270116001000_sales_v84_accelerators.sql. Accelerator commission lines already created
 -- are kept (they may be on approved or paid statements); only the program, ledger and achievements go.
 drop function if exists public.admin_sales_achievement_congratulate(uuid, uuid);
 drop function if exists public.admin_sales_accelerator_rules_save(uuid, boolean, jsonb, text);
