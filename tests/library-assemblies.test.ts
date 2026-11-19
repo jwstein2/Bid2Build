@@ -44,7 +44,7 @@ describe("scaling assemblies", () => {
   });
 
   it("starter assemblies use real trade sections, have no prices, and pass the stack schema", () => {
-    expect(STARTER_ASSEMBLIES.map((s) => s.trade)).toEqual(["roofing", "siding", "painting", "decks", "concrete"]);
+    expect(STARTER_ASSEMBLIES.map((s) => s.trade)).toEqual(["roofing", "siding", "painting", "decks", "concrete", "tree-removal", "tree-trimming"]);
     for (const s of STARTER_ASSEMBLIES) {
       const sections = getTrade(s.trade!)!.template.groups.map((g) => g.name);
       const stack = starterStack(s);

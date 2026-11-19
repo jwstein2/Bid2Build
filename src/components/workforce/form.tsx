@@ -9,7 +9,7 @@ import { tradeLabel } from "@/lib/projects/team";
 import type { WfResource, Workforce } from "@/lib/workforce/model";
 import { Drawer } from "./drawer";
 
-const COMMON_TRADES = ["general", "demolition", "framing", "roofing", "siding", "windows", "drywall", "painting", "flooring", "tile", "cabinets", "countertops", "plumbing", "electrical", "hvac", "concrete", "decking", "gutters", "landscaping", "cleaning"];
+const COMMON_TRADES = ["general", "demolition", "framing", "roofing", "siding", "windows", "drywall", "painting", "flooring", "tile", "cabinets", "countertops", "plumbing", "electrical", "hvac", "concrete", "decking", "gutters", "landscaping", "tree work", "cleaning"];
 type Type = "company" | "individual" | "worker" | "staff" | "crew";
 const TYPES: { key: Type; label: string; hint: string }[] = [
   { key: "company", label: "Subcontracting company", hint: "A business you hire, like Red's Electric. Add its workers after." },
