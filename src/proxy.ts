@@ -4,6 +4,9 @@ import { ATTRIBUTION_COOKIE, ATTRIBUTION_MAX_AGE, captureAttribution, encodeAttr
 import { normalizeReferralCode, REFERRAL_COOKIE, REFERRAL_MAX_AGE } from "@/lib/growth/referral";
 import { TWO_STEP_REQUIRED, needsStepUp, stepUpExempt } from "@/lib/auth/mfa";
 import { DEMO_BLOCKED_MESSAGE, isDemoBlocked, parseDemoClaim } from "@/lib/demo/session";
+import { salesLoginRedirect } from "@/lib/sales/next";
+import { canonicalHostRedirect } from "@/lib/config/deploy";
+import { appLoginRedirect } from "@/lib/auth/app-next";
 
 /** First-touch attribution: set once from UTM/ic/ref parameters, an ad click id or an outside referrer host; never overwritten. */
 function withAttribution(request: NextRequest, response: NextResponse): NextResponse {
@@ -22,6 +25,16 @@ function withAttribution(request: NextRequest, response: NextResponse): NextResp
 
 /** Refreshes the Supabase session cookie. Authorization happens in pages/routes, not here. */
 export async function proxy(request: NextRequest) {
+  // Stray netlify.app hosts (main--built2bid.netlify.app, built2bid.netlify.app) go to built2bid.org
+  // before anything else, so nobody signs in and works on the wrong host. GET/HEAD only: a form post
+  // or API call is never turned into a GET.
+  if (request.method === "GET" || request.method === "HEAD") {
+    const canonical = canonicalHostRedirect(request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? request.nextUrl.host, {
+      NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+      NEXT_PUBLIC_DEPLOY_CONTEXT: process.env.NEXT_PUBLIC_DEPLOY_CONTEXT,
+    });
+    if (canonical) return NextResponse.redirect(`${canonical}${request.nextUrl.pathname}${request.nextUrl.search}`, 301);
+  }
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   let response = NextResponse.next({ request });
@@ -41,6 +54,17 @@ export async function proxy(request: NextRequest) {
   // this runs on every page and prefetch without a call to the Auth server. With the legacy shared
   // secret it falls back to the Auth server, same as getUser(). Pages still authorize with getUser().
   const { data: claims } = await supabase.auth.getClaims();
+  // Sales portal: a signed-out visit to a private /sales page goes to the sales sign-in and comes back
+  // afterwards. The portal layout still authorizes; this only keeps the destination.
+  if (!claims?.claims && request.method === "GET") {
+    // App pages do the same with the main sign-in (the app layout alone could only send them to /dashboard).
+    const login = salesLoginRedirect(request.nextUrl.pathname, request.nextUrl.search) ?? appLoginRedirect(request.nextUrl.pathname, request.nextUrl.search);
+    if (login) {
+      const redirect = NextResponse.redirect(new URL(login, request.url));
+      response.cookies.getAll().forEach((c) => redirect.cookies.set(c));
+      return redirect;
+    }
+  }
   // Demo / Practice Mode: actions that would charge money, change billing or reach a real person are
   // refused for demo logins before any route runs (the database has its own guards as a backstop).
   if (request.nextUrl.pathname.startsWith("/api/") && parseDemoClaim(claims?.claims?.app_metadata) && isDemoBlocked(request.nextUrl.pathname, request.method)) {

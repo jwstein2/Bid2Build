@@ -140,7 +140,7 @@ export function GuidePanel({ onClose, onStartTour, onMinimize }: { onClose: () =
             <CirclePlay className="h-4 w-4 shrink-0 text-muted" aria-hidden /><span className="flex-1 font-semibold">{video.title}</span>
           </button>
         )}
-        <Link href="/academy" className={row} onClick={onClose}><BookOpen className="h-4 w-4 shrink-0 text-muted" aria-hidden /><span className="flex-1 font-semibold">Built2Bid Academy</span></Link>
+        <Link href="/academy" className={row} onClick={onClose}><BookOpen className="h-4 w-4 shrink-0 text-muted" aria-hidden /><span className="flex-1 font-semibold">Contractor Academy</span></Link>
         {ws !== "demo" && tours.some((t) => t.id === "first-estimate") && (
           <button type="button" className={row} onClick={() => onStartTour("first-estimate")} data-testid="guide-restart">
             <RotateCcw className="h-4 w-4 shrink-0 text-muted" aria-hidden /><span className="flex-1 font-semibold">Restart onboarding</span>

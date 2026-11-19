@@ -1,10 +1,14 @@
 import Link from "next/link";
+import { Fragment } from "react";
 import { notFound } from "next/navigation";
 import { Badge, Card, Notice } from "@/components/ui/misc";
 import { requireSalesRep } from "@/lib/sales/server";
-import { ACTIVITY_LABEL, STAGES, STAGE_LABEL, type Duplicate, type Lead, type LeadActivity, type LeadTask } from "@/lib/sales/crm";
+import { ACTIVITY_LABEL, SOURCE_LABEL, STAGES, STAGE_LABEL, verificationSources, type Duplicate, type Lead, type LeadActivity, type LeadTask } from "@/lib/sales/crm";
 import { dateLabel, TIER_LABEL } from "@/lib/sales/format";
-import { logActivity, saveTask, updateLead } from "../actions";
+import { logActivity, recordDncCheck, requestRecycleReview, returnLead, saveTask, updateLead } from "../actions";
+import { DISPOSITIONS, DISPOSITION_LABEL } from "@/lib/sales/leads-admin";
+import { callReadiness, DNC_REGISTRY_URL, localTimeLabel } from "@/lib/sales/calling";
+import { StarterScript } from "@/components/sales/starter-script";
 
 export const metadata = { title: "Lead" };
 const input = "min-h-11 w-full rounded-lg border border-line bg-white px-3 text-sm";
@@ -19,6 +23,8 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
   const { data, error } = await db.rpc("sales_crm_lead", { p_id: id });
   if (error || !data) notFound();
   const { lead: l, activities, tasks, duplicates } = data as { lead: Lead; activities: LeadActivity[]; tasks: LeadTask[]; duplicates: Duplicate[] };
+  const ready = callReadiness(l);
+  const dnc = l.dnc_status ?? "unchecked";
   return (
     <div className="space-y-6">
       <div>
@@ -26,7 +32,7 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
         <h1 className="mt-2 text-3xl font-extrabold">{l.company_name}</h1>
         <p className="mt-1 text-sm text-ink-soft">
           <Badge tone={l.stage === "paying" ? "ok" : "brand"}>{STAGE_LABEL[l.stage]}</Badge>{" "}
-          {[l.city, l.state, l.zip].filter(Boolean).join(", ")} · {l.trades.join(", ") || "no trade set"} · source: {l.source}, found {dateLabel(l.discovered_at)}
+          {[l.city, l.state, l.zip].filter(Boolean).join(", ")} · {l.trades.join(", ") || "no trade set"} · {SOURCE_LABEL[l.source] ?? l.source}, found {dateLabel(l.discovered_at)}
           {l.customer_tier && <> · Built2Bid account: {TIER_LABEL[l.customer_tier] ?? l.customer_tier}</>}
         </p>
       </div>
@@ -37,11 +43,60 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
 
       <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
         <div className="space-y-6">
+          {(l.sales_brief || l.business_started || l.verification) && (
+            <Card className="p-5">
+              <h2 className="text-lg font-bold">Sales brief</h2>
+              {l.sales_brief ? <p className="mt-2 text-sm">{l.sales_brief}</p> : <p className="mt-2 text-sm text-ink-soft">The brief is being written and will show here shortly.</p>}
+              <dl className="mt-3 grid gap-x-4 gap-y-1 text-sm sm:grid-cols-[auto_1fr]">
+                {l.contact_name && <><dt className="text-muted">Owner</dt><dd>{l.contact_name}</dd></>}
+                {l.business_started && <><dt className="text-muted">In business since</dt><dd>{l.business_started}</dd></>}
+                {verificationSources(l.verification).map((v) => (
+                  <Fragment key={v.field}><dt className="text-muted">{v.field} checked on</dt><dd className="break-all">{v.urls.map((u, i) => <Fragment key={u}>{i > 0 && ", "}<a href={u} target="_blank" rel="noopener noreferrer nofollow" className="text-brand underline">{hostOf(u)}</a></Fragment>)}</dd></Fragment>
+                ))}
+              </dl>
+            </Card>
+          )}
+          <Card className="p-5" data-testid="before-you-call">
+            <h2 className="text-lg font-bold">Before you call</h2>
+            <p className="mt-1 text-sm">
+              {ready.canCall ? <Badge tone="ok">OK to call now</Badge> : <Badge tone="warn">Not ready to call</Badge>}{" "}
+              <span className="text-ink-soft">Their time: {localTimeLabel(l.state)}{l.state ? "" : " (no state on file, Central assumed)"}</span>
+            </p>
+            {ready.reasons.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-ink-soft">{ready.reasons.map((r) => <li key={r}>{r}</li>)}</ul>}
+            <ul className="mt-3 space-y-1 text-xs text-muted">
+              <li>Dial by hand only. No autodialers, prerecorded or artificial-voice calls.</li>
+              <li>Say your name, that you&apos;re calling for Built2Bid, and why, at the start of the call.</li>
+              <li>If they ask not to be contacted, tick Do not contact right away.</li>
+              <li>Text only if they gave written consent (for example, they texted you first).</li>
+            </ul>
+            <p className="mt-3 text-sm">
+              Registry: <strong>{dnc === "clear" ? "not listed" : dnc === "listed" ? "LISTED" : "not checked"}</strong>
+              {l.dnc_checked_at && <> · checked {dateLabel(l.dnc_checked_at)}</>}
+              {l.text_consent_at && <> · text consent on file</>}
+            </p>
+            {!l.do_not_contact && (
+              <form action={recordDncCheck} className="mt-3 grid gap-2 rounded-lg bg-paper p-3 sm:grid-cols-2">
+                <input type="hidden" name="id" value={l.id} />
+                <p className="text-sm sm:col-span-2">Look up {l.phone ? <strong>{l.phone}</strong> : "the phone number"} in the <a href={DNC_REGISTRY_URL} target="_blank" rel="noopener noreferrer" className="text-brand underline">National Do Not Call Registry</a> (the owner sets up the company&apos;s access), then record what you found.</p>
+                <label className="text-sm">Result<select name="dnc" defaultValue={dnc === "listed" ? "listed" : "clear"} className={input}><option value="clear">Not on the registry</option><option value="listed">On the registry</option></select></label>
+                <label className="text-sm">Line type<select name="line" defaultValue={l.phone_line ?? "unknown"} className={input}><option value="unknown">Don&apos;t know</option><option value="landline">Business landline</option><option value="mobile">Mobile</option><option value="voip">VoIP</option></select></label>
+                <label className="flex items-start gap-2 text-sm sm:col-span-2"><input type="checkbox" name="text_consent" className="mt-1" defaultChecked={Boolean(l.text_consent_at)} /> They gave written consent to receive texts</label>
+                <label className="text-sm sm:col-span-2">How consent was given (if any)<input name="consent_note" maxLength={300} placeholder="e.g. Texted us first on Nov 19" className={input} /></label>
+                <label className="flex items-start gap-2 text-sm font-semibold sm:col-span-2"><input type="checkbox" name="confirm" required className="mt-1" /> I checked this number in the registry today.</label>
+                <div><button className={btn}>Record check</button></div>
+              </form>
+            )}
+          </Card>
+          <Card className="p-5">
+            <h2 className="text-lg font-bold">Starter script</h2>
+            <div className="mt-2"><StarterScript leadId={l.id} disabled={!!l.do_not_contact} /></div>
+          </Card>
           <Card className="p-5">
             <h2 className="text-lg font-bold">Log an activity</h2>
-            <form action={logActivity} className="mt-3 grid gap-3 sm:grid-cols-[160px_1fr]">
+            <form action={logActivity} className="mt-3 grid gap-3 sm:grid-cols-[160px_160px_1fr]">
               <input type="hidden" name="id" value={l.id} />
-              <label className="text-sm">Type<select name="kind" className={input}><option value="call">Call</option><option value="email">Email</option><option value="text">Text</option><option value="meeting">Meeting / demo</option><option value="note">Note</option></select></label>
+              <label className="text-sm">Type<select name="kind" className={input}><option value="call">Call</option><option value="email">Email</option><option value="text">Text</option><option value="meeting">Meeting / demo</option><option value="reply">They replied</option><option value="note">Note</option></select></label>
+              <label className="text-sm">Outcome<select name="disposition" className={input}><option value="">No outcome</option>{Object.entries(DISPOSITIONS).map(([k, opts]) => <optgroup key={k} label={ACTIVITY_LABEL[k] ?? k}>{opts.map((o) => <option key={`${k}-${o.v}`} value={o.v}>{o.label}</option>)}</optgroup>)}</select></label>
               <label className="text-sm">What happened<textarea name="body" required maxLength={4000} rows={2} className={`${input} py-2`} /></label>
               <div><button className={btn}>Log it</button></div>
             </form>
@@ -52,7 +107,7 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
               {activities.length === 0 && <li className="text-ink-soft">Nothing yet.</li>}
               {activities.map((a) => (
                 <li key={a.id} className="border-l-2 border-line pl-3">
-                  <p className="text-xs text-muted">{ACTIVITY_LABEL[a.kind] ?? a.kind} · {when(a.occurred_at)}{a.rep_name ? ` · ${a.rep_name}` : ""}</p>
+                  <p className="text-xs text-muted">{ACTIVITY_LABEL[a.kind] ?? (a.kind === "reply" ? "Reply" : a.kind)}{a.disposition ? ` · ${DISPOSITION_LABEL[a.disposition] ?? a.disposition}` : ""} · {when(a.occurred_at)}{a.rep_name ? ` · ${a.rep_name}` : ""}</p>
                   {a.body && <p className="whitespace-pre-wrap">{a.body}</p>}
                 </li>
               ))}
@@ -97,8 +152,36 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
               <div><button className={btn}>Save details</button></div>
             </form>
           </Card>
+          {!l.customer_user_id && l.stage !== "paying" && l.stage !== "trial" && (
+            <Card className="p-5">
+              <h2 className="text-lg font-bold">Keeping this lead</h2>
+              <p className="mt-1 text-sm text-muted">Company leads stay with you while you work them: a call with an outcome, a sent email or text, a reply, or a booked meeting. Notes don&apos;t count.</p>
+              <details className="mt-3">
+                <summary className="cursor-pointer text-sm font-semibold">Got a recycling warning, but you did work it?</summary>
+                <form action={requestRecycleReview} className="mt-2 space-y-2">
+                  <input type="hidden" name="id" value={l.id} />
+                  <label className="text-sm">What happened<textarea name="note" required minLength={3} maxLength={1000} rows={2} className={`${input} py-2`} placeholder="e.g. Met the owner at the supply house on Tuesday" /></label>
+                  <button className={btn}>Ask for a review</button>
+                  <p className="text-xs text-muted">The lead won&apos;t move while an administrator looks. One request per assignment.</p>
+                </form>
+              </details>
+              <details className="mt-3">
+                <summary className="cursor-pointer text-sm font-semibold">Can&apos;t work this one? Hand it back</summary>
+                <form action={returnLead} className="mt-2 space-y-2">
+                  <input type="hidden" name="id" value={l.id} />
+                  <label className="text-sm">Why (optional)<input name="note" maxLength={300} className={input} /></label>
+                  <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="confirm" required className="h-5 w-5" /> Give it to the next rep on the team</label>
+                  <button className="min-h-11 rounded-lg border border-line bg-white px-3 text-sm font-semibold">Hand back</button>
+                </form>
+              </details>
+            </Card>
+          )}
         </div>
       </div>
     </div>
   );
+}
+
+function hostOf(u: string): string {
+  try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return u; }
 }

@@ -110,7 +110,7 @@ d("Supplier pricing: connections and price cross-check (database)", () => {
     await pool.query(readFileSync("docs/supplier-pricing/rollback_20261211001000.sql", "utf8"));
     expect((await pool.query("select to_regclass('public.supplier_connections') as t")).rows[0].t).toBeNull();
     expect((await pool.query("select to_regprocedure('public.supplier_price_cross_check(text)') as f")).rows[0].f).toBeNull();
-    await applyMigration(pool, "20261211001000_supplier_pricing.sql");
+    await applyMigration(pool, "20261211001001_supplier_pricing.sql");
     expect((await pool.query("select to_regclass('public.supplier_connections') as t")).rows[0].t).not.toBeNull();
   });
 });

@@ -334,7 +334,8 @@ describe("cash-flow forecast", () => {
     expect(detectTransfers([{ id: "a", accountId: "chk", date: "2026-11-15", amount: "-1000.00" }, { id: "b", accountId: "sav", date: "2026-11-16", amount: "1000.00" }, { id: "c", accountId: "chk", date: "2026-11-16", amount: "1000.00" }])).toEqual([["a", "b"]]);
   });
   it("no double count: an expected deposit linked to an invoice replaces it; payments already in the balance are skipped", () => {
-    const f = buildForecast({ ...base, invoices: [{ id: "i", number: "INV-3", balance: "2000.00", dueDate: "2026-11-25", customerId: null }],
+    // Balance pinned to Nov 18 so the Nov 19 check is "after the bank balance" on any run date (was relative to today).
+    const f = buildForecast({ ...base, accounts: [{ ...base.accounts[0], asOf: "2026-11-18T13:00:00.000Z" }], invoices: [{ id: "i", number: "INV-3", balance: "2000.00", dueDate: "2026-11-25", customerId: null }],
       planned: [pl("d", "expected_deposit", "2000.00", "2026-11-27", { invoiceId: "i" })],
       depositsInTransit: [{ id: "old", label: "Check from Pat", amount: "900.00", receivedOn: "2026-11-01" }, { id: "new", label: "Check from Lee", amount: "400.00", receivedOn: "2026-11-19" }] });
     expect(f.events.filter((e) => e.label.includes("INV-3"))).toHaveLength(0);

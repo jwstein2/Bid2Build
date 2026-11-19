@@ -1,7 +1,7 @@
 /**
  * Referral program ("Refer a contractor, get a month free"). Pure helpers shared by the proxy,
  * the /r/<code> redirect, the dashboard card and tests. Rules and guards live in Postgres
- * (supabase/migrations/20261115003000_referrals.sql).
+ * (supabase/migrations/20261115003001_referrals.sql).
  */
 import { site } from "../site";
 

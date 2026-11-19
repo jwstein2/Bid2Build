@@ -120,6 +120,7 @@ interface Candidate {
 const OUTDOOR = ["decks", "fencing", "concrete", "landscaping", "excavation", "foundations", "masonry", "asphalt-paving", "roofing", "siding", "gutters", "exterior-remodeling", "additions", "garages", "pole-barns", "demolition"];
 const INTERIOR = ["kitchens", "bathrooms", "interior-remodeling", "drywall", "painting", "flooring", "tile", "finish-carpentry", "cabinets-countertops", "basements", "insulation", "commercial-remodeling", "windows-doors", "handyman"];
 const WASHING = ["pressure-washing", "soft-washing"];
+const TREE = ["tree-removal", "tree-trimming"];
 const STRUCTURAL = ["decks", "additions", "framing", "foundations", "garages", "pole-barns", "basements", "concrete", "exterior-remodeling", "general-contracting"];
 
 const CANDIDATES: Candidate[] = [
@@ -160,7 +161,7 @@ const CANDIDATES: Candidate[] = [
     },
   },
   {
-    category: "landscaping", title: "Landscaping", trades: OUTDOOR, notFor: ["landscaping"],
+    category: "landscaping", title: "Landscaping", trades: [...OUTDOOR, ...TREE], notFor: ["landscaping"],
     keywords: /landscap|\bsod\b|irrigation|sprinkler|seed|mulch|plant(ing)?s?\b|lawn|topsoil|grading|restor/i,
     text: {
       simple: "Landscaping repair or restoration is not included unless listed in the estimate.",
@@ -169,7 +170,7 @@ const CANDIDATES: Candidate[] = [
     },
   },
   {
-    category: "demolition", title: "Demolition & Removal", trades: "*", notFor: ["demolition", ...WASHING],
+    category: "demolition", title: "Demolition & Removal", trades: "*", notFor: ["demolition", ...WASHING, ...TREE],
     keywords: /demo(lition)?\b|tear[- ]?(off|out)|remov(e|al)|rip[- ]?out|strip/i,
     text: {
       simple: "Removing existing materials or structures is not included unless listed in the estimate.",
@@ -281,6 +282,38 @@ const CANDIDATES: Candidate[] = [
     },
   },
   {
+    category: "stump_grinding", title: "Stumps & Roots", trades: ["tree-removal"], keywords: /stump|root grind|surface root/i,
+    text: {
+      simple: "Stump grinding and root removal are not included unless listed in the estimate.",
+      professional: "Stump grinding, root removal, and backfill of the stump area are excluded unless listed in the estimate.",
+      detailed: "Stump grinding, removal of surface or buried roots, haul-away of grindings, and backfill or seeding of the stump area are excluded unless they are specifically listed in this estimate.",
+    },
+  },
+  {
+    category: "wood_left", title: "Logs, Brush & Wood Chips", trades: TREE, keywords: /haul|log|firewood|wood chip|\bchips?\b|brush/i,
+    text: {
+      simple: "Logs, brush and wood chips are left on site unless haul-away is listed in the estimate.",
+      professional: "Logs, brush, and wood chips remain on the property unless haul-away is listed in the estimate. Cutting wood to firewood lengths or splitting is not included unless listed.",
+      detailed: "Unless haul-away is specifically listed in this estimate, logs, brush, and wood chips remain on the property in a location agreed on site. Cutting wood to firewood lengths, splitting, and stacking are not included unless listed.",
+    },
+  },
+  {
+    category: "utility_lines", title: "Power Lines & Utilities", trades: TREE, keywords: /$^/, clarify: true,
+    text: {
+      simple: "Trees touching or near power lines may need the utility to clear or shut off the line first.",
+      professional: "Branches touching or near power lines may need to be cleared by the utility, or the line de-energized, before work begins. Underground utilities are located before any stump or root grinding.",
+      detailed: "Work on trees touching or near overhead power lines is done only by qualified line-clearance workers or after the utility clears or de-energizes the line, which may change the schedule. Underground utilities will be located before any stump or root grinding, and the owner should disclose private lines such as irrigation, lighting, or invisible fencing.",
+    },
+  },
+  {
+    category: "hidden_hazards", title: "Hidden Hazards in Wood", trades: TREE, keywords: /$^/,
+    text: {
+      simple: "Hidden metal, concrete, or decay found while cutting may add cost, which we'll discuss with you first.",
+      professional: "Embedded metal, concrete, or hidden decay discovered during cutting or grinding may require a change in method or price, approved in writing before work continues.",
+      detailed: "Nails, wire, fencing, concrete, or hidden decay inside a tree or stump cannot be seen before cutting. If they are found, any change in method, equipment, or price will be documented and approved in writing before the work continues.",
+    },
+  },
+  {
     category: "unforeseen", title: "Unforeseen Conditions", trades: "*", keywords: /$^/,
     text: {
       simple: "Hidden problems found during the work may need extra work, which we'll discuss with you first.",
@@ -337,6 +370,7 @@ export function canonicalCategory(raw: string): string {
   if (CANDIDATES.some((c) => c.category.replace(/_/g, "") === k)) return CANDIDATES.find((c) => c.category.replace(/_/g, "") === k)!.category;
   const map: [RegExp, string][] = [
     [/permit|inspect/, "permits"], [/electric/, "electrical"], [/plumb/, "plumbing"], [/hvac|heat|cool|mechanical/, "hvac"],
+    [/stump|root/, "stump_grinding"], [/powerline|utilit/, "utility_lines"], [/log|firewood|woodchip|brush/, "wood_left"],
     [/landscap|yard|site/, "landscaping"], [/demo|remov/, "demolition"], [/dispos|debris|haul/, "disposal"], [/paint|finish|stain/, "finishing"],
     [/engineer|drawing|survey|design/, "engineering"], [/appliance|fixture/, "appliances"], [/content|furniture/, "contents"],
     [/hazard|asbestos|lead|mold/, "hazardous"], [/unforeseen|concealed|hidden/, "unforeseen"], [/change|additional/, "change_orders"],

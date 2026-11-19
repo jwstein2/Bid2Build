@@ -29,7 +29,7 @@ import type { Permission } from "@/lib/enterprise/permissions";
 import { getFeature, type FeatureId } from "./registry";
 
 /** Trade families with their own examples. Every trade slug maps to one (tradeGroup). */
-export type TradeGroup = "decks" | "electrical" | "service" | "landscaping" | "exterior" | "concrete" | "remodel" | "finishes" | "washing" | "cleaning" | "general";
+export type TradeGroup = "decks" | "electrical" | "service" | "landscaping" | "exterior" | "concrete" | "remodel" | "finishes" | "washing" | "cleaning" | "trees" | "general";
 
 interface Vocab {
   /** Name used in sentences ("deck builders"). */
@@ -56,6 +56,7 @@ export const TRADE_VOCAB: Record<TradeGroup, Vocab> = {
   finishes: { trade: "painting, flooring and tile contractors", job: "an interior repaint", materials: "paint, primer and supplies", labor: "prep and application", item: "Interior wall paint, per gallon", sub: "a drywall repair sub", recurring: "touch-ups and repeat rooms", phases: "prep, prime, finish coats and cleanup" },
   washing: { trade: "pressure and soft washing pros", job: "a house wash and driveway clean", materials: "detergents and surface cleaner time", labor: "wash time per surface", item: "House wash, per sq ft", sub: "a gutter-cleaning sub", recurring: "annual and seasonal repeat washes", phases: "setup, pre-treat, wash and rinse" },
   cleaning: { trade: "cleaning companies", job: "a post-construction final clean", materials: "cleaning supplies and equipment", labor: "crew hours per area", item: "Final clean, per sq ft", sub: "a carpet or window-cleaning sub", recurring: "weekly and monthly recurring cleanings", phases: "rough clean, final clean and touch-up before walkthrough" },
+  trees: { trade: "tree service companies", job: "a large tree removal with stump grinding", materials: "equipment time, disposal and haul-away", labor: "crew and climber hours", item: "Stump grinding, per stump", sub: "a crane service", recurring: "yearly and multi-year pruning cycles", phases: "setup, takedown, chipping, stump grinding and cleanup" },
   general: { trade: "contractors", job: "a garage addition", materials: "materials and allowances", labor: "your crew's labor", item: "Framing lumber package", sub: "your trade subcontractors", recurring: "repeat and referral work", phases: "site prep, framing, rough-ins and finish" },
 };
 
@@ -69,6 +70,7 @@ const GROUP_OF: Record<string, TradeGroup> = {
   kitchens: "remodel", bathrooms: "remodel", basements: "remodel", "cabinets-countertops": "remodel", "interior-remodeling": "remodel", "commercial-remodeling": "remodel", additions: "remodel",
   painting: "finishes", drywall: "finishes", flooring: "finishes", tile: "finishes", "finish-carpentry": "finishes",
   "pressure-washing": "washing", "soft-washing": "washing", cleaning: "cleaning",
+  "tree-removal": "trees", "tree-trimming": "trees",
 };
 
 export function tradeGroup(slug: string | null | undefined): TradeGroup {
@@ -235,7 +237,7 @@ export const PAGE_GUIDES = {
     steps: [
       { target: "builder.section", title: "Estimate sections", body: "Sections group the work, such as {phases}. Each line has a quantity, unit and your internal cost.", hint: "Add {materials} as material lines and {labor} as labor lines." },
       { target: "builder.calculator", title: "Quantity calculators", body: "The calculator next to a quantity works out how much you need from measurements, with waste included, then fills in the quantity for you to confirm." },
-      { target: "builder.saved-items", title: "Saved items", body: "Add items you've saved, like \"{item}\", with your own prices instead of typing them again.", requires: { unlimited: true }, locked: "Saved items with your own prices are included with Unlimited. You can still type any item." },
+      { target: "builder.saved-items", title: "Saved Items", body: "Add items you've saved, like \"{item}\", with your own prices instead of typing them again.", requires: { unlimited: true }, locked: "Saved items with your own prices are included with Unlimited. You can still type any item." },
       // The quote panel lives inside a line's details; the step explains the visible ▸ toggle rather than opening it.
       { target: "builder.item-details", title: "Line details and sub quotes", body: "The ▸ next to a line opens its details, where you can add notes and record a quote from {sub} to compare with your cost. Prices only change when you choose to.", feature: "sub_quotes" },
       { target: "builder.add-trade", title: "Add sections or trades", body: "Add another section, or another trade with its own sections, to the same bid." },
@@ -440,6 +442,25 @@ export const PAGE_GUIDES = {
       { target: "items.search", title: "Your saved prices", body: "Labor rates, material costs and frequent items, like \"{item}\". Search them here; in any bid, add them in a tap.", requires: { unlimited: true } },
       { target: "items.add", title: "Add an item", body: "Save a new item with its unit and your cost. Nothing is saved until you press Save.", requires: { unlimited: true } },
       { target: "items.locked", title: "Included with Unlimited", body: "Save your own labor rates and material costs, then add them to any bid. Included with Unlimited.", requires: { unlimited: false } },
+      { target: "items.generate", title: "Generate your price library", body: "Type your trade or a scope and get a draft list of items to review. The AI never sets a price, and nothing is saved until you approve it." },
+    ],
+  },
+  "library.generate": {
+    route: "/dashboard/items/generate",
+    label: "Generate My Price Library",
+    steps: [
+      { target: "generate.describe", title: "Describe your work", body: "A word like \"Concrete\" builds a catalog for your trade. A detailed scope builds the items that job needs. You can pick up to four trades." },
+    ],
+  },
+  "library.generate-review": {
+    route: "/dashboard/items/generate",
+    label: "Review your price library draft",
+    steps: [
+      { target: "generate.items", title: "Review by category", body: "Rename items, fix units and remove what you don't use. Changes save as you go, and the draft waits for you if you leave." },
+      { target: "generate.toolbar", title: "Find what needs you", body: "Filter to items with no cost or possible duplicates. Items that match something you already saved are flagged so nothing is overwritten by surprise." },
+      { target: "generate.more", title: "Add more when you need it", body: "Add labor, equipment, material options or stacks in small batches instead of one huge list." },
+      { target: "generate.stacks", title: "Check each stack", body: "Stacks scale with a measurement, like slab area. Check every ratio; saving items never saves a stack." },
+      { target: "generate.approve", title: "Approve what's ready", body: "You see exactly what will be added or changed before you confirm. Approved items show up in every bid under Suggested & Saved Items." },
     ],
   },
   "library.templates": {

@@ -5,7 +5,9 @@ import { CheckCircle2, Clock, Download, FileSignature, ShieldCheck, XCircle } fr
 import { ProposalView } from "@/components/proposal/proposal-view";
 import { createAdminClient } from "@/lib/supabase/server";
 import { acceptanceText, consentText, CONSENT_VERSION, isEsignEnabled } from "@/lib/esign/config";
-import { loadLogo, loadRequestByToken } from "@/lib/esign/server";
+import { loadLogo, loadRequestByToken, requestEvidence } from "@/lib/esign/server";
+import { recordSigningEvent } from "@/lib/esign/events";
+import Link from "next/link";
 import { PrintButton } from "@/components/esign/print-button";
 import { site } from "@/lib/site";
 import { SignForm } from "./sign-form";
@@ -44,6 +46,8 @@ export default async function SignPage({ params }: PageProps<"/sign/[token]">) {
     );
   }
 
+  // Audit trail: each open of an unsigned link is recorded (best effort, never blocks the page).
+  if (r.phase === "open") await recordSigningEvent(admin, r.id, "viewed", await requestEvidence());
   const logo = await loadLogo(admin, r.logoPath);
   const view = { ...doc, brand: { ...doc.brand, logoUrl: logo ? `data:image/png;base64,${logo.data.toString("base64")}` : null } };
   const proposalExpires = doc.meta.expires ? doc.meta.expires : null;
@@ -111,7 +115,10 @@ export default async function SignPage({ params }: PageProps<"/sign/[token]">) {
       </section>
       <p className="mt-6 flex items-start gap-2 text-xs text-muted no-print">
         <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-        <span>This link is private to you. Signing records your name, email, signature, the time, and your device&apos;s IP address and browser with this exact version of the proposal. Signing does not process any payment. Questions about the proposal go to {doc.brand.companyName}.</span>
+        <span>This link is private to you. Opening, downloading and signing are recorded with the time, your device&apos;s IP address and browser, and signing also records your name, email and signature with this exact version of the proposal. Signing does not process any payment. Questions about the proposal go to {doc.brand.companyName}.</span>
+      </p>
+      <p className="mt-2 text-xs text-muted no-print" data-testid="esign-provider-notice">
+        {site.name} provides this signing service for {doc.brand.companyName}. {site.name} is not a party to this proposal and does not guarantee the work, the price or the terms in it. Read the <Link href="/esign-disclosure" className="underline" target="_blank">electronic signature disclosure</Link>, our <Link href="/terms" className="underline" target="_blank">Terms</Link> and <Link href="/privacy" className="underline" target="_blank">Privacy Policy</Link>. You can confirm a signed copy hasn&apos;t been changed on our <Link href="/verify" className="underline" target="_blank">document check page</Link>.
       </p>
     </Shell>
   );

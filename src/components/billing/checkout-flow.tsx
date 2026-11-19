@@ -156,6 +156,9 @@ export function CheckoutFlowProvider({ signedIn: signedInProp, subscribed, userE
     return () => window.removeEventListener("pageshow", onShow);
   }, []);
 
+  // Closing the dialog is a "not now": keep the plan saved (banner offers to continue) but stop reopening the
+  // dialog by itself on every later visit. Choosing a plan or Continue sets it back to pending.
+  const closeToBanner = useCallback((plan: PlanId) => { updateIntent({ status: "cancelled" }); setPhase({ k: "resume", plan, reason: "closed" }); }, []);
   const ctx = useMemo(() => ({ choose }), [choose]);
   const name = (p: PlanId) => planDisplay(p).name;
 
@@ -184,7 +187,7 @@ export function CheckoutFlowProvider({ signedIn: signedInProp, subscribed, userE
         <AuthDialog
           key={`auth-${phase.email ?? ""}-${phase.phone ?? ""}`}
           open
-          onOpenChange={(o) => { if (!o) setPhase({ k: "resume", plan: phase.plan, reason: "closed" }); }}
+          onOpenChange={(o) => { if (!o) { closeToBanner(phase.plan); } }}
           next={resumePath(phase.plan)}
           initialEmail={phase.email}
           initialPhone={phase.phone}
@@ -213,7 +216,7 @@ export function CheckoutFlowProvider({ signedIn: signedInProp, subscribed, userE
       {(phase.k === "redirecting" || phase.k === "failed") && (
         <Modal
           open
-          onOpenChange={(o) => { if (!o) setPhase({ k: "resume", plan: phase.plan, reason: "closed" }); }}
+          onOpenChange={(o) => { if (!o) { closeToBanner(phase.plan); } }}
           title={phase.k === "redirecting" ? "Taking you to secure checkout" : "Checkout didn't open"}
           description={phase.k === "redirecting" ? "One moment while we open Stripe's secure payment page." : "Your plan is still selected. Nothing has been charged."}
         >

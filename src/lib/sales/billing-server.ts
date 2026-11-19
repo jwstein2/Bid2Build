@@ -32,7 +32,7 @@ async function loadPolicy(db: SupabaseClient): Promise<SalesPolicy | null> {
   return { ...DEFAULT_POLICY, ...(data as Partial<SalesPolicy>) };
 }
 
-type InvoiceLike = { id?: string; amount_paid?: number | null; status?: string | null; status_transitions?: { paid_at?: number | null } | null; created?: number };
+type InvoiceLike = { id?: string; amount_paid?: number | null; total?: number | null; total_excluding_tax?: number | null; status?: string | null; status_transitions?: { paid_at?: number | null } | null; created?: number };
 
 /**
  * Keep the attributed customer's plan, status and commission basis current, and (for a paid invoice)
@@ -64,11 +64,37 @@ export async function syncSalesBilling(db: SupabaseClient, stripe: Stripe, sub: 
       p_paid_at: paid && paidAtSec ? new Date(paidAtSec * 1000).toISOString() : null,
     });
     if (error) throw error;
+    // Collected revenue (before tax) for milestone bonuses.
+    if (paid && inv!.id) {
+      await db.rpc("sales_record_revenue", {
+        p_user: userId, p_invoice_id: inv!.id, p_gross_cents: inv!.amount_paid ?? 0, p_revenue_cents: revenueBeforeTax(inv!),
+        p_paid_at: paidAtSec ? new Date(paidAtSec * 1000).toISOString() : null,
+      });
+    }
+    // First-month cancellation rule (V8): a cancel request, or a canceled subscription, is reported so the
+    // database can cancel an unpaid sale-month commission when it came within the first month.
+    const canceledAt = cancellationTime(sub);
+    if (canceledAt) await db.rpc("sales_customer_canceled", { p_user: userId, p_canceled_at: canceledAt });
     return String((data as { action?: string })?.action ?? "synced");
   } catch (err) {
     logError("sales.sync_billing", err, { user: userId, subscription: sub.id });
     return "failed";
   }
+}
+
+/** What the customer paid before tax: amount paid scaled by the invoice's pre-tax share of its total. */
+export function revenueBeforeTax(inv: Pick<InvoiceLike, "amount_paid" | "total" | "total_excluding_tax">): number {
+  const paid = Math.max(0, inv.amount_paid ?? 0);
+  const total = inv.total ?? null, pre = inv.total_excluding_tax ?? null;
+  if (total == null || pre == null || total <= 0 || pre >= total) return paid;
+  return Math.max(0, Math.round((paid * pre) / total));
+}
+
+/** When the customer asked to cancel (Stripe canceled_at), or now if the subscription is set to cancel. */
+export function cancellationTime(sub: Pick<Stripe.Subscription, "status" | "cancel_at_period_end" | "cancel_at" | "canceled_at">): string | null {
+  if (sub.canceled_at) return new Date(sub.canceled_at * 1000).toISOString();
+  if (sub.status === "canceled" || sub.cancel_at_period_end || sub.cancel_at) return new Date().toISOString();
+  return null;
 }
 
 /**
@@ -89,6 +115,7 @@ export async function salesChargeRefunded(db: SupabaseClient, stripe: Stripe, ch
     if (!invoiceId) return "none";
     const full = charge.refunded === true || (charge.amount_refunded ?? 0) >= (charge.amount ?? 0);
     const { data, error } = await db.rpc("sales_invoice_refunded", { p_invoice_id: invoiceId, p_full: full, p_refunded_at: new Date().toISOString() });
+    await db.rpc("sales_revenue_refunded", { p_invoice_id: invoiceId, p_refunded_gross_cents: charge.amount_refunded ?? 0 });
     if (error) return "none";
     return String((data as { action?: string })?.action ?? "none");
   } catch (err) {

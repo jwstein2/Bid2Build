@@ -38,6 +38,7 @@ export const REASON_LABEL: Record<string, string> = {
   attribution_ended: "Attribution ended",
   rep_removed: "Rep removed",
   basis_missing: "Plan price unknown: owner review",
+  customer_canceled_first_month: "Customer canceled in their first month",
 };
 export const reasonLabel = (r: string | null | undefined) => (r ? REASON_LABEL[r] ?? r.replace(/_/g, " ") : "");
-export const yearLabel = (n: number, kind = "commission") => (kind === "clawback" ? `Deduction (year ${n})` : n === 1 ? "Sale month" : `Year ${n} anniversary`);
+export const yearLabel = (n: number, kind = "commission") => (kind === "bonus" ? "Milestone bonus" : kind === "accelerator" ? "Monthly accelerator" : kind === "reward" ? "Cash reward" : kind === "clawback" ? `Deduction (year ${n})` : n === 1 ? "Sale month" : `Year ${n} anniversary`);

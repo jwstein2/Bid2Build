@@ -8,7 +8,7 @@ import { safeNext } from "@/lib/http/redirect";
 import { isSmsSignInEnabled } from "@/lib/auth/phone";
 import { emailOtpLength } from "@/lib/auth/config";
 
-export const metadata: Metadata = { title: "Log in", robots: { index: false }, alternates: { canonical: "/login" } };
+export const metadata: Metadata = { title: "Sign in", robots: { index: false }, alternates: { canonical: "/login" } };
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const sp = await searchParams;
@@ -16,7 +16,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   if (await getUser()) redirect(next);
   return (
     <Container className="max-w-md py-16">
-      <h1 className="text-3xl font-extrabold">Log in or create an account</h1>
+      <h1 className="text-3xl font-extrabold">Sign in or create an account</h1>
       <p className="mt-2 text-ink-soft">{isSmsSignInEnabled() ? "No password needed. We'll text a 6-digit code to your phone. You can still use email if you prefer." : `No password needed. We'll email you a ${emailOtpLength()}-digit code to enter here.`}</p>
       {sp.error === "link" && <p role="alert" className="mt-4 rounded-lg bg-danger-tint px-4 py-3 text-sm text-danger">That sign-in link expired or was already used. Enter your email below and we&apos;ll send you a new code.</p>}
       {!isSupabaseConfigured() ? (

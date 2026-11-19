@@ -16,7 +16,7 @@ export const HELP_RESOURCES: readonly HelpResource[] = [
   { id: "article.first-bid", kind: "article", title: "Your first bid, step by step", description: "Pick a trade, price line items, preview and send.", href: "/learn" },
   { id: "article.projects", kind: "article", title: "Project Command Center basics", description: "Turning won bids into scheduled projects.", href: "/projects" },
   { id: "article.enterprise", kind: "article", title: "Company setup", description: "Seats, roles, teams and billing for Team.", href: "/company" },
-  { id: "academy", kind: "link", title: "Built2Bid Academy", description: "Courses and a community of contractors.", href: "/academy" },
+  { id: "academy", kind: "link", title: "Contractor Academy", description: "Courses and a community of contractors.", href: "/academy" },
   { id: "whats-new", kind: "link", title: "What's new", description: "Recent releases and feature tours.", href: "/whats-new" },
 ];
 

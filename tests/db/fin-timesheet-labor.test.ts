@@ -78,6 +78,16 @@ d("timesheet labor in job costing (database)", () => {
     expect((await pool.query("select action from public.fin_audit_log where action = 'book.timesheet_labor'")).rowCount).toBe(2);
   });
 
+  it("the view is security_invoker over a non-API function, so the advisor finding is gone and rows are unchanged (20270118001000)", async () => {
+    const opts = (await pool.query("select reloptions::text as o from pg_class where oid = 'public.fin_timesheet_labor_v'::regclass")).rows[0].o;
+    expect(opts).toContain("security_invoker=true");
+    const fn = (await pool.query("select prosecdef, has_function_privilege('anon', p.oid, 'execute') as anon from pg_proc p where p.oid = 'private.fin_timesheet_labor_rows()'::regprocedure")).rows[0];
+    expect(fn).toEqual({ prosecdef: true, anon: false });
+    expect((await labor()).amount).toBe("260.00");
+    expect(await rows(w.rival, "select * from public.fin_timesheet_labor_v")).toHaveLength(0);
+    expect(await rows(w.rival, "select * from private.fin_timesheet_labor_rows()")).toHaveLength(0);
+  });
+
   it("rollback restores the earlier views and re-apply works", async () => {
     await pool.query(readFileSync("docs/financials/rollback_20270103001000.sql", "utf8"));
     expect((await pool.query("select to_regclass('public.fin_timesheet_labor_v') as v")).rows[0].v).toBeNull();

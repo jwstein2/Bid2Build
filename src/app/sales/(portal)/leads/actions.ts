@@ -3,7 +3,9 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireSalesRep } from "@/lib/sales/server";
-import { STAGES, TRADES } from "@/lib/sales/crm";
+import { parseLeadRows, STAGES, TRADES } from "@/lib/sales/crm";
+import { csvToRows, DISPOSITIONS } from "@/lib/sales/leads-admin";
+import { activityErrorMessage } from "@/lib/sales/calling";
 
 /**
  * Rep CRM actions. Every call runs with the rep's own session through sales_crm_* functions, which
@@ -49,11 +51,34 @@ export async function updateLead(fd: FormData) {
 export async function logActivity(fd: FormData) {
   const { db } = await requireSalesRep();
   const id = z.string().uuid().parse(fd.get("id"));
-  const p = z.object({ kind: z.enum(["call", "email", "text", "meeting", "note"]), body: t(4000).min(1) }).safeParse(Object.fromEntries(fd));
+  const p = z.object({ kind: z.enum(["call", "email", "text", "meeting", "note", "reply"]), body: t(4000).min(1), disposition: t(40).optional() }).safeParse(Object.fromEntries(fd));
   if (!p.success) back(`/sales/leads/${id}`, { err: "Write a short note about what happened." });
-  const { error } = await db.rpc("sales_crm_activity_add", { p_lead: id, p_kind: p.data.kind, p_body: p.data.body, p_occurred_at: new Date().toISOString() });
-  if (error) back(`/sales/leads/${id}`, { err: "That couldn't be logged." });
-  back(`/sales/leads/${id}`, { ok: "Logged." });
+  const disposition = p.data.disposition && DISPOSITIONS[p.data.kind]?.some((d) => d.v === p.data.disposition) ? p.data.disposition : null;
+  const { error } = await db.rpc("sales_crm_activity_log", { p_lead: id, p_kind: p.data.kind, p_body: p.data.body, p_disposition: disposition });
+  if (error) back(`/sales/leads/${id}`, { err: activityErrorMessage(error.message) });
+  const counts = p.data.kind === "reply" || (disposition && !["failed", "bounced"].includes(disposition) && p.data.kind !== "note");
+  back(`/sales/leads/${id}`, { ok: counts || p.data.kind === "note" ? "Logged." : "Logged. Pick an outcome (like Sent or Voicemail) next time so it counts as working the lead." });
+}
+
+/** V8.7: hand a company lead back to the team pool. It goes to the next rep in turn. */
+export async function returnLead(fd: FormData) {
+  const { db } = await requireSalesRep();
+  const id = z.string().uuid().parse(fd.get("id"));
+  if (fd.get("confirm") !== "on") back(`/sales/leads/${id}`, { err: "Tick the box to confirm you're handing this lead back." });
+  const { error } = await db.rpc("sales_crm_return_lead", { p_lead: id, p_note: String(fd.get("note") ?? "").slice(0, 300) || null });
+  if (error) back(`/sales/leads/${id}`, { err: /cannot_return/.test(error.message) ? "Customers, trials and your own leads can't be handed back." : "That didn't work. Try again." });
+  back("/sales/leads", { ok: "Lead handed back to the team. Thanks for letting it go to someone who can work it." });
+}
+
+/** V8.7: ask an administrator to review a recycling warning (once per assignment). */
+export async function requestRecycleReview(fd: FormData) {
+  const { db } = await requireSalesRep();
+  const id = z.string().uuid().parse(fd.get("id"));
+  const note = String(fd.get("note") ?? "").trim().slice(0, 1000);
+  if (note.length < 3) back(`/sales/leads/${id}`, { err: "Add a short note about what happened with this lead." });
+  const { error } = await db.rpc("sales_recycle_dispute", { p_lead: id, p_note: note });
+  if (error) back(`/sales/leads/${id}`, { err: /already_disputed/.test(error.message) ? "You've already asked for a review on this lead." : "That didn't work. Try again." });
+  back(`/sales/leads/${id}`, { ok: "Review requested. The lead won't move until an administrator looks at it." });
 }
 
 export async function saveTask(fd: FormData) {
@@ -68,4 +93,33 @@ export async function saveTask(fd: FormData) {
   const { error } = await db.rpc("sales_crm_task_save", { p_lead: id, p_task: task || null, p_title: title || null, p_due_at: dueAt, p_done: done });
   if (error) back(`/sales/leads/${id}`, { err: "That task couldn't be saved." });
   back(`/sales/leads/${id}`, { ok: done ? "Task done." : "Task saved." });
+}
+
+/** Record a National Do Not Call Registry check (and the line type, and text consent if given). */
+export async function recordDncCheck(fd: FormData) {
+  const { db } = await requireSalesRep();
+  const id = z.string().uuid().parse(fd.get("id"));
+  const p = z.object({ dnc: z.enum(["clear", "listed"]), line: z.enum(["unknown", "landline", "mobile", "voip"]), text_consent: z.string().optional(), consent_note: t(300).optional(), confirm: z.literal("on") }).safeParse(Object.fromEntries(fd));
+  if (!p.success) back(`/sales/leads/${id}`, { err: "Choose the registry result and tick the box to confirm you checked it." });
+  const { error } = await db.rpc("sales_crm_dnc_record", { p_lead: id, p_status: p.data.dnc, p_line: p.data.line, p_text_consent: p.data.text_consent === "on", p_consent_note: p.data.consent_note ?? null });
+  if (error) back(`/sales/leads/${id}`, { err: "That check couldn't be saved. If this keeps happening, the database update may not be installed yet." });
+  back(`/sales/leads/${id}`, { ok: p.data.dnc === "listed" ? "Recorded. This number is on the registry: no calls or texts." : "Recorded." });
+}
+
+/** A rep imports their own list (CSV or pasted rows). Their new leads stay theirs; anything already on file stays with its owner. */
+export async function importMyLeads(fd: FormData) {
+  const { db } = await requireSalesRep();
+  const file = fd.get("file");
+  let text = String(fd.get("rows") ?? "").slice(0, 300_000);
+  if (file instanceof File && file.size > 0) {
+    if (file.size > 1_000_000) back("/sales/leads", { err: "That file is too big. Split it into lists of 500 or fewer." });
+    text = await file.text();
+  }
+  const rows = csvToRows(text, 500).length ? csvToRows(text, 500) : parseLeadRows(text, 500);
+  if (rows.length === 0) back("/sales/leads", { err: "Add a CSV with a header row, or paste one business per line." });
+  const { data, error } = await db.rpc("sales_crm_import", { p_rows: rows, p_label: String(fd.get("label") ?? "").slice(0, 200) || null });
+  if (error) back("/sales/leads", { err: /not_authorized/.test(error.message) ? "Your account can't import leads." : "That list couldn't be imported. Try again." });
+  const r = data as { added: number; duplicates: number; possible: number; suppressed: number; invalid: number; existing_customers: number };
+  const skipped = r.duplicates + r.possible + r.existing_customers;
+  back("/sales/leads", { ok: `Added ${r.added} lead${r.added === 1 ? "" : "s"} to your list.${skipped ? ` ${skipped} were already on file or are customers, so they stay where they are (an admin can review them).` : ""}${r.suppressed ? ` ${r.suppressed} asked not to be contacted.` : ""}${r.invalid ? ` ${r.invalid} were missing a name or a way to reach them.` : ""}` });
 }

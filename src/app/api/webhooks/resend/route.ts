@@ -64,7 +64,14 @@ export async function POST(req: Request) {
     const providerId = String(d.email_id ?? "");
     const { data: m } = providerId ? await admin.from("comm_messages").select("id, account_id, to_email, status").eq("provider_id", providerId).maybeSingle() : { data: null };
     const msg = m as Row | null;
-    if (!msg) return json({ matched: false });
+    if (!msg) {
+      // V8.6: a sales team invitation (only the provider can say delivered or bounced).
+      if (providerId && (evt.type === "email.delivered" || evt.type === "email.bounced")) {
+        const { data: inv } = await admin.rpc("sales_invite_delivery", { p_message_id: providerId, p_status: evt.type === "email.delivered" ? "delivered" : "bounced" });
+        if (inv === true) return json({ ok: true, sales_invite: true });
+      }
+      return json({ matched: false });
+    }
     const fresh = await logEvent(admin, { accountId: String(msg.account_id), messageId: String(msg.id), kind: evt.type === "email.delivered" ? "delivered" : evt.type === "email.complained" ? "complaint" : "bounce", details: { type: evt.type, bounce: d.bounce ?? null }, providerEventId: eventId });
     if (!fresh) return json({ duplicate: true });
     const to = String(msg.to_email ?? "");

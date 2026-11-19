@@ -19,7 +19,7 @@ d("creator partner program rollback", () => {
       const linked = (await pool.query(
         "insert into public.complimentary_grants (email, plan, duration_days, status, starts_at, expires_at, creator_program_id) values ('g@x.test', 'unlimited', 30, 'active', now(), now() + interval '30 days', $1) returning id", [prog])).rows[0].id;
 
-      await pool.query(rollback("20261117002000_creator_outreach_crm_down.sql"));
+      await pool.query(rollback("20261117002001_creator_outreach_crm_down.sql"));
       await pool.query(rollback("20261117001000_creator_partner_program_down.sql"));
 
       const left = (await pool.query("select id, status from public.complimentary_grants order by created_at")).rows;

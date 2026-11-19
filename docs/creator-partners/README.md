@@ -20,7 +20,7 @@ SQL, in `mentorship_share_view`).
 ## Architecture
 
 - **Database**: `supabase/migrations/20261117001000_creator_partner_program.sql` (programs, gifts,
-  mentorship consent/shares/comments, resources) and `20261117002000_creator_outreach_crm.sql` (prospects,
+  mentorship consent/shares/comments, resources) and `20261117002001_creator_outreach_crm.sql` (prospects,
   cohort slots, outreach messages/events, suppressions, settings). RLS is on for every table with no
   direct grants; all access goes through `security definer` functions that check the caller.
 - **Entitlement reuse**: the creator's Enterprise and each gift's Unlimited are ordinary rows in
@@ -98,7 +98,7 @@ Gift invitations are never emailed by Built2Bid; the creator copies a private li
 1. Turn sending off (Settings) and unset `CREATOR_OUTREACH_SEND_ENABLED`.
 2. Revert the app deploy (the rest of the app does not depend on these tables).
 3. If the schema must go: export the CRM CSV, then run
-   `supabase/rollback/20261117002000_creator_outreach_crm_down.sql` followed by
+   `supabase/rollback/20261117002001_creator_outreach_crm_down.sql` followed by
    `supabase/rollback/20261117001000_creator_partner_program_down.sql`. The second script revokes the
    complimentary grants that belong to creator programs (accounts and bids are untouched) and leaves
    regular Complimentary Access grants alone.

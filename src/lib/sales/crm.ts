@@ -3,16 +3,29 @@ export const STAGES = ["new", "contacted", "engaged", "demo", "trial", "paying",
 export type Stage = (typeof STAGES)[number];
 export const STAGE_LABEL: Record<Stage, string> = { new: "New lead", contacted: "Contacted", engaged: "Engaged", demo: "Demo", trial: "Trial / free account", paying: "Paying", lost: "Lost" };
 export const ACTIVITY_LABEL: Record<string, string> = { call: "Call", email: "Email", text: "Text", meeting: "Meeting", note: "Note", stage: "Stage change", assignment: "Assignment", system: "System" };
+export const SOURCE_LABEL: Record<string, string> = { manual: "Added by rep", import: "Imported", places: "Places search", link: "Rep link", owner: "Added by owner", agent: "Weekly import" };
 export const TRADES = ["general contracting", "roofing", "siding", "decks", "painting", "concrete", "electrical", "plumbing", "hvac", "drywall", "fencing", "landscaping", "remodeling", "windows", "gutters", "flooring"] as const;
 
 export interface Lead {
   id: string; company_name: string; contact_name: string | null; email: string | null; phone: string | null; website: string | null;
   city: string | null; state: string | null; zip: string | null; trades: string[]; source: string; source_ref: string | null; discovered_at: string;
   stage: Stage; lost_reason: string | null; assigned_rep: string | null; rep_name: string | null; customer_user_id: string | null; customer_tier: string | null;
-  do_not_contact: boolean; next_action_at: string | null; last_activity_at: string | null; notes: string | null; open_tasks: number; created_at: string; updated_at: string;
+  do_not_contact: boolean; dnc_status?: "unchecked" | "clear" | "listed"; dnc_checked_at?: string | null; phone_line?: "unknown" | "landline" | "mobile" | "voip"; text_consent_at?: string | null; next_action_at: string | null; last_activity_at: string | null; notes: string | null; open_tasks: number; created_at: string; updated_at: string;
+  /** Weekly import only: business start date as published, where each fact was checked, Haiku sales brief. */
+  business_started?: string | null; verification?: Record<string, unknown> | null; sales_brief?: string | null;
+}
+
+/** Labels for the verification sources the weekly import records. */
+export const VERIFIED_LABEL: Record<string, string> = { owner_name: "Owner", email: "Email", phone: "Phone", business_started: "Start date" };
+export function verificationSources(v: Lead["verification"]): { field: string; urls: string[] }[] {
+  if (!v) return [];
+  return Object.entries(VERIFIED_LABEL).flatMap(([k, label]) => {
+    const urls = Array.isArray(v[k]) ? (v[k] as unknown[]).filter((u): u is string => typeof u === "string" && /^https?:\/\//.test(u)) : [];
+    return urls.length ? [{ field: label, urls }] : [];
+  });
 }
 export interface LeadTask { id: string; lead_id?: string; company_name?: string; title: string; due_at: string; done_at?: string | null }
-export interface LeadActivity { id: number; kind: string; body: string | null; occurred_at: string; rep_name: string | null }
+export interface LeadActivity { id: number; kind: string; body: string | null; occurred_at: string; rep_name: string | null; disposition?: string | null; evidence?: string }
 export interface Duplicate { id: string; company_name: string; zip: string | null; rep_name: string | null; stage: string }
 
 /** Parse pasted rows: one business per line, comma or tab separated, in COLUMNS order. A header row is skipped. */

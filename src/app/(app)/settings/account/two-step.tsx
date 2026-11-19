@@ -50,7 +50,7 @@ export function TwoStepSignIn() {
     for (const f of (factors ?? []).filter((x) => x.status !== "verified")) await supabase.auth.mfa.unenroll({ factorId: f.id }).catch(() => null);
     const { data, error } = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName: `Authenticator ${new Date().toISOString().slice(0, 10)}` });
     setBusy(false);
-    if (error || !data) { setMsg({ tone: "danger", text: friendly(error) }); return; }
+    if (error || !data?.totp) { setMsg({ tone: "danger", text: friendly(error) }); return; }
     setEnrolling({ factorId: data.id, qr: data.totp.qr_code, secret: data.totp.secret });
     setCode("");
   }

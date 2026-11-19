@@ -45,7 +45,7 @@ const INTENTS: Intent[] = [
   { words: ["tasks", "task"], kinds: ["task"], label: "Tasks" },
   { words: ["customers", "customer", "clients", "client"], kinds: ["customer"], label: "Customers" },
   { words: ["photos", "photo", "pictures", "picture", "pics"], kinds: ["photo"], label: "Photos" },
-  { words: ["saved items", "saved item", "skus", "sku", "products", "product", "items", "item"], kinds: ["saved_item"], label: "Saved items" },
+  { words: ["saved items", "saved item", "skus", "sku", "products", "product", "items", "item"], kinds: ["saved_item"], label: "Saved Items" },
   { words: ["assemblies", "assembly"], kinds: ["assembly"], label: "Assemblies" },
   { words: ["trade scope", "scopes", "scope"], kinds: ["scope"], label: "Trade scope" },
   { words: ["messages", "message", "emails", "email"], kinds: ["message"], label: "Messages" },

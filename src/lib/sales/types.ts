@@ -38,5 +38,10 @@ export interface HubStatement {
 export interface HubSettings {
   annual_basis: string; refund_policy: string; value_scope: string; commission_years: number; attribution_window_days: number;
   time_zone: string; policy_confirmed_at: string | null; updated_at: string;
+  /** V8 addendum: a customer who cancels within a month of first paying earns the rep nothing. Missing before 20270110001000. */
+  first_month_cancel_voids?: boolean;
+  /** Milestone gift boxes (20270111001000). */
+  milestone_every?: number; milestone_rates?: { from: number; pct: number }[]; milestone_min_cents?: number;
+  milestone_flat?: { at: number; cents: number; badge?: string }[]; team_goal_floor?: number;
 }
 export interface Hub { settings: HubSettings; reps: HubRep[]; attributions: HubAttribution[]; commissions: HubCommission[]; statements: HubStatement[] }

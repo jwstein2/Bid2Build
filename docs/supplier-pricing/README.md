@@ -13,7 +13,7 @@ Projects → Team & Subcontractors → **Supplier pricing** (`/projects/team/pri
   can mark one `connected`, once a real partner integration exists. No live connector ships
   (`SUPPLIER_CONNECTORS` in `src/lib/pricing/connectors.ts` is empty).
 
-SQL: `supabase/migrations/20261211001000_supplier_pricing.sql` (copy for the SQL Editor:
+SQL: `supabase/migrations/20261211001001_supplier_pricing.sql` (copy for the SQL Editor:
 `/mnt/project-files/supplier-pricing/run-supplier-pricing.sql`). Rollback: `rollback_20261211001000.sql`.
 
 ## Research (November 2026)

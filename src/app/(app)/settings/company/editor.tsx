@@ -21,7 +21,7 @@ export function CompanyEditor({ initial }: { initial: Biz }) {
   return (
     <div data-guide-page="settings.company">
       <p className="mx-auto mb-2 max-w-3xl text-right text-sm text-muted" role="status" data-guide="company.saved">{status === "saving" ? "Saving…" : status === "saved" ? "All changes saved" : status === "error" ? "Couldn't save. Check required fields and your connection." : "Changes save automatically"}</p>
-      <CompanyStep business={b} onChange={setB} signedIn />
+      <CompanyStep business={b} onChange={setB} signedIn asPage />
     </div>
   );
 }

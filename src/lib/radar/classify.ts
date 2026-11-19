@@ -84,6 +84,8 @@ const TRADES: [string, RegExp][] = [
   ["plumbing", /\bplumb(ing|er|ers)\b/i],
   ["hvac", /\bhvac\b|\bfurnace\b|\bmini ?split/i],
   ["gutters", /\bgutters?\b/i],
+  ["tree-removal", /\btree (removal|removals|service|services|company|companies)\b|\bstump (grinding|removal)\b|\barborists?\b/i],
+  ["tree-trimming", /\btree (trimming|pruning|trimmers?)\b|\bprun(e|ing) (the )?trees?\b/i],
   ["landscaping", /\blandscap(e|ing|er)\b|\blawn care\b|\bhardscap/i],
   ["general-contracting", /\bgeneral contractor\b|\b\bGC\b/],
   ["handyman", /\bhandyman\b/i],
