@@ -31,10 +31,10 @@ const art = (over: Partial<ArticleWithTerms> = {}): ArticleWithTerms => ({
   articleType: "news", authority: "industry", snippet: "desc", summary: null, summaryStatus: "not_permitted", effectiveOn: null, jurisdiction: null, imageUrl: null, verified: true, ...over,
 });
 
-// ---- 7. All 39 trade mappings ---------------------------------------------------------------------------
+// ---- 7. All 41 trade mappings ---------------------------------------------------------------------------
 describe("trade registry", () => {
-  it("maps every trade in the repository (39) and nothing else", () => {
-    expect(tradeSeeds).toHaveLength(39);
+  it("maps every trade in the repository (41) and nothing else", () => {
+    expect(tradeSeeds).toHaveLength(41);
     expect(TRADE_NEWS.map((t) => t.slug).sort()).toEqual(tradeSeeds.map((t) => t.slug).sort());
   });
   it("gives every trade associations, keywords, sources and topics that exist", () => {

@@ -39,11 +39,11 @@ d("contractor academy", () => {
   }, 120_000);
   afterAll(async () => { await drop?.(); });
 
-  it("seeds the catalog: 38 trades, Sales Academy published with 12 lessons, the rest upcoming", async () => {
+  it("seeds the catalog: 40 trades, Sales Academy published with 12 lessons, the rest upcoming", async () => {
     const r = (await pool.query(`select (select count(*) from public.academy_trades) t, (select count(*) from public.academy_courses where status = 'published') pub,
       (select count(*) from public.academy_courses where status = 'upcoming') up,
       (select count(*) from public.academy_lessons l join public.academy_courses c on c.id = l.course_id where c.slug = 'contractor-sales-academy') sales`)).rows[0];
-    expect(Number(r.t)).toBe(38);
+    expect(Number(r.t)).toBe(40);
     expect(Number(r.pub)).toBeGreaterThanOrEqual(7);
     expect(Number(r.up)).toBeGreaterThan(250);
     expect(Number(r.sales)).toBe(12);
