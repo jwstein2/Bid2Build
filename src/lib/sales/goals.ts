@@ -53,9 +53,21 @@ export function teamGoal(raw: GoalRaw): TeamGoal {
 }
 
 
-/** Milestone bonus rules (owner policy): early flat boxes, then a percentage box every `every` accounts. */
+/**
+ * Milestone bonus rules (owner policy): early flat boxes, then a percentage box every `every` qualifying
+ * customers from the first rate's threshold on. Mirrors public.sales_milestone_rule in the database, which
+ * is the only place awards are actually calculated; these helpers are for display and tests.
+ */
 export interface MilestoneRules { every: number; rates: { from: number; pct: number }[]; min_cents: number; flat: { at: number; cents: number; badge?: string }[] }
+export type MilestoneModel = "v2_window" | "v3_active_mrr";
+
+/** Compensation Model V3 (James, 2026-11-19). */
 export const DEFAULT_MILESTONES: MilestoneRules = {
+  every: 25, rates: [{ from: 50, pct: 3 }, { from: 100, pct: 4 }, { from: 250, pct: 5 }], min_cents: 0,
+  flat: [{ at: 10, cents: 2500, badge: "First 10" }, { at: 25, cents: 7500, badge: "25 Club" }],
+};
+/** The previous (V2) curve, kept for reference and for owners who switch back. */
+export const V2_MILESTONES: MilestoneRules = {
   every: 50, rates: [{ from: 50, pct: 3 }, { from: 100, pct: 4 }, { from: 250, pct: 5 }], min_cents: 15000,
   flat: [{ at: 10, cents: 2500, badge: "First 10" }, { at: 25, cents: 7500, badge: "25 Club" }],
 };
@@ -64,20 +76,60 @@ export function milestoneRate(rules: MilestoneRules, accounts: number): number {
   return [...rules.rates].sort((a, b) => b.from - a.from).find((r) => r.from <= accounts)?.pct ?? 0;
 }
 
-export function isMilestone(rules: MilestoneRules, n: number): boolean {
-  return rules.flat.some((f) => f.at === n) || (n >= rules.every && n % rules.every === 0);
+function firstPctAt(rules: MilestoneRules): number {
+  const first = rules.rates.length ? Math.min(...rules.rates.map((r) => r.from)) : rules.every;
+  return Math.max(first, rules.every);
 }
 
-/** The next box after `accounts` sold, the previous box (for the progress bar) and what the next one pays. */
-export function nextMilestone(rules: MilestoneRules, accounts: number): { at: number; label: string; prev: number } {
-  let at = accounts + 1;
+export function isMilestone(rules: MilestoneRules, n: number): boolean {
+  if (n < 1) return false;
+  return rules.flat.some((f) => f.at === n) || (n >= firstPctAt(rules) && n % rules.every === 0);
+}
+
+export type MilestoneRule = { at: number; flat_cents: number; badge?: string | null } | { at: number; pct: number };
+
+export function milestoneRule(rules: MilestoneRules, n: number): MilestoneRule | null {
+  if (!isMilestone(rules, n)) return null;
+  const flat = rules.flat.find((f) => f.at === n);
+  return flat ? { at: n, flat_cents: flat.cents, badge: flat.badge ?? null } : { at: n, pct: milestoneRate(rules, n) };
+}
+
+/** Every threshold from 1 to `upTo`, in order. */
+export function milestoneSchedule(rules: MilestoneRules, upTo: number): MilestoneRule[] {
+  const out: MilestoneRule[] = [];
+  for (let n = 1; n <= upTo; n++) { const r = milestoneRule(rules, n); if (r) out.push(r); }
+  return out;
+}
+
+export function ruleLabel(r: MilestoneRule, rules: MilestoneRules, model: MilestoneModel = "v3_active_mrr"): string {
+  if ("flat_cents" in r) return `$${(r.flat_cents / 100).toFixed(0)} bonus`;
+  const min = rules.min_cents > 0 ? ` (at least $${(rules.min_cents / 100).toFixed(0)})` : "";
+  return model === "v3_active_mrr" ? `${r.pct}% of active MRR${min}` : `${r.pct}% bonus${min}`;
+}
+
+/** The next box after `accounts`, the previous box (for the progress bar) and what the next one pays. */
+export function nextMilestone(rules: MilestoneRules, accounts: number, model: MilestoneModel = "v3_active_mrr"): { at: number; label: string; prev: number } {
+  let at = Math.max(0, accounts) + 1;
   while (!isMilestone(rules, at)) at++;
   let prev = accounts;
   while (prev > 0 && !isMilestone(rules, prev)) prev--;
-  const flat = rules.flat.find((f) => f.at === at);
-  return { at, prev, label: flat ? `$${(flat.cents / 100).toFixed(0)} bonus` : `${milestoneRate(rules, at)}% bonus (at least $${(rules.min_cents / 100).toFixed(0)})` };
+  return { at, prev, label: ruleLabel(milestoneRule(rules, at)!, rules, model) };
 }
 
+/** Round half up to the cent (amounts are never negative). Matches Postgres round(numeric). */
+export function roundCents(x: number): number {
+  return Math.sign(x) * Math.round(Math.abs(x) + 1e-9);
+}
+
+/** V3: one-time bonus at threshold n = qualifying active attributed MRR x rate (flat boxes pay their amount). */
+export function v3Bonus(rules: MilestoneRules, n: number, mrrCents: number): number | null {
+  const r = milestoneRule(rules, n);
+  if (!r) return null;
+  if ("flat_cents" in r) return r.flat_cents;
+  return Math.max(rules.min_cents, roundCents((mrrCents * r.pct) / 100));
+}
+
+/** V2: rate x still-active revenue since the previous percentage box, with a minimum. */
 export function milestoneBonus(rules: MilestoneRules, accounts: number, revenueCents: number): number {
   const flat = rules.flat.find((f) => f.at === accounts);
   if (flat) return flat.cents;
@@ -88,11 +140,11 @@ export interface ExampleBox { milestone: number; pct: number; flat: boolean; rev
 export interface PayExample { accounts: number; months: number; perMonth: number; monthlyCents: number; activeShare: number; boxes: ExampleBox[]; totalBonusCents: number; commissionCents: number }
 
 /**
- * Illustrative only: a rep sells `perMonth` accounts a month at `monthlyCents`; `activeShare` of customers
- * stay active (only active accounts' revenue counts). Each percentage box covers what active customers
- * paid since the previous percentage box. Commission shown = sale-month commission on every account.
+ * Illustrative only. V3: at each percentage box the rep's active MRR is round(qualifying customers x
+ * `activeShare`) x `monthlyCents` (that MRR is the row's revenueCents). V2: what active customers paid
+ * since the previous percentage box. Commission shown = sale-month commission on every account.
  */
-export function payExample(rules: MilestoneRules, accounts = 300, perMonth = 25, monthlyCents = 1999, activeShare = 0.8): PayExample {
+export function payExample(rules: MilestoneRules, accounts = 300, perMonth = 25, monthlyCents = 1999, activeShare = 0.8, model: MilestoneModel = "v3_active_mrr"): PayExample {
   const months = Math.ceil(accounts / perMonth);
   const boxes: ExampleBox[] = [];
   let prevMonth = 0;
@@ -101,10 +153,11 @@ export function payExample(rules: MilestoneRules, accounts = 300, perMonth = 25,
     const month = Math.ceil(n / perMonth);
     const flat = rules.flat.find((f) => f.at === n);
     if (flat) { boxes.push({ milestone: n, pct: 0, flat: true, revenueCents: 0, bonusCents: flat.cents, minApplied: false }); continue; }
-    let revenue = 0;
-    for (let m = prevMonth + 1; m <= month; m++) revenue += Math.round(Math.min(m * perMonth, accounts) * monthlyCents * activeShare);
     const pct = milestoneRate(rules, n);
-    const raw = Math.round((revenue * pct) / 100);
+    let revenue = 0;
+    if (model === "v3_active_mrr") revenue = Math.round(n * activeShare) * monthlyCents;
+    else for (let m = prevMonth + 1; m <= month; m++) revenue += Math.round(Math.min(m * perMonth, accounts) * monthlyCents * activeShare);
+    const raw = model === "v3_active_mrr" ? roundCents((revenue * pct) / 100) : Math.round((revenue * pct) / 100);
     boxes.push({ milestone: n, pct, flat: false, revenueCents: revenue, bonusCents: Math.max(rules.min_cents, raw), minApplied: raw < rules.min_cents });
     prevMonth = month;
   }

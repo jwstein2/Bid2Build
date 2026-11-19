@@ -1,11 +1,12 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { openMilestone } from "@/app/sales/(portal)/milestone-actions";
+import { disputeMilestone, openMilestone } from "@/app/sales/(portal)/milestone-actions";
 
 export interface MilestoneAward {
   id: string; milestone: number; pct: number; reached_at: string; unlocks_at: string;
-  status: "locked" | "ready" | "opened" | "approved" | "paid" | "void"; amount_cents: number | null; revenue_cents: number | null;
-  flat?: boolean; badge?: string | null;
+  status: "locked" | "ready" | "opened" | "approved" | "paid" | "void" | "disputed" | "ineligible"; amount_cents: number | null; revenue_cents: number | null;
+  flat?: boolean; badge?: string | null; rule_set?: "v2_window" | "v3_active_mrr"; mrr_cents?: number | null; qualifying_customers?: number | null;
+  snapshot_hash?: string | null; void_reason?: string | null;
 }
 
 const usd = (c: number) => (c / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
@@ -63,8 +64,32 @@ function Box({ award, onOpened }: { award: MilestoneAward; onOpened: (a: Milesto
       )}
       <p className="mt-2 font-bold">{isOpen ? `${award.milestone} accounts bonus${award.badge ? ` · ${award.badge} badge` : ""}` : "Click the box"}</p>
       {isOpen && <p className="text-sm text-ink-soft">Added to your next statement once the owner approves it.</p>}
+      {isOpen && award.rule_set === "v3_active_mrr" && !award.flat && award.mrr_cents != null && (
+        <p className="text-xs text-muted">{award.pct}% of {usd(award.mrr_cents)} qualifying active MRR on {new Date(award.reached_at).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "America/Chicago" })}</p>
+      )}
       {error && <p role="alert" className="mt-1 text-sm text-danger">{error}</p>}
     </div>
+  );
+}
+
+/** "Something looks wrong" on an award: the owner reviews it; the award itself is never edited. */
+function DisputeForm({ id }: { id: string }) {
+  const [state, setState] = useState<"idle" | "open" | "sending" | "sent">("idle");
+  const [note, setNote] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  if (state === "sent") return <p className="mt-1 text-xs text-ok">Sent to the owner for review.</p>;
+  if (state === "idle") return <button type="button" onClick={() => setState("open")} className="mt-1 text-xs font-semibold text-brand underline">Question this bonus</button>;
+  return (
+    <form className="mt-2 flex flex-wrap gap-2" onSubmit={async (e) => {
+      e.preventDefault(); setState("sending"); setError(null);
+      const r = await disputeMilestone(id, note);
+      if (r.ok) setState("sent"); else { setState("open"); setError(r.message); }
+    }}>
+      <label className="sr-only" htmlFor={`dispute-${id}`}>What looks wrong?</label>
+      <input id={`dispute-${id}`} value={note} onChange={(e) => setNote(e.target.value)} required minLength={3} maxLength={1000} placeholder="What looks wrong?" className="min-h-11 flex-1 rounded-lg border border-line bg-white px-3 text-sm" />
+      <button type="submit" disabled={state === "sending"} className="min-h-11 rounded-lg border border-line bg-white px-3 text-sm font-semibold">Send</button>
+      {error && <p role="alert" className="w-full text-xs text-danger">{error}</p>}
+    </form>
   );
 }
 
@@ -90,19 +115,28 @@ export function MilestoneBoxes({ awards: initial, accounts, next }: { awards: Mi
   const label = (a: MilestoneAward) =>
     a.status === "locked" ? `Unlocks ${new Date(a.unlocks_at).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "America/Chicago" })} (30-day refund hold)`
       : a.status === "ready" ? "Ready to open" : a.status === "paid" ? `${usd(a.amount_cents ?? 0)} paid` : a.status === "approved" ? `${usd(a.amount_cents ?? 0)} on your next statement`
-      : a.status === "void" ? "Canceled by the owner" : `${usd(a.amount_cents ?? 0)} waiting for owner approval`;
+      : a.status === "void" ? "Canceled by the owner" : a.status === "ineligible" ? "Not eligible (program unavailable for your work location)"
+      : a.status === "disputed" ? "Under review (you disputed it)" : `${usd(a.amount_cents ?? 0)} waiting for owner approval`;
+  const explain = (a: MilestoneAward) =>
+    a.amount_cents == null ? null : a.flat ? "Flat amount" : a.rule_set === "v3_active_mrr" && a.mrr_cents != null ? `${a.pct}% × ${usd(a.mrr_cents)} active MRR = ${usd(a.amount_cents)}` : a.revenue_cents != null ? `${a.pct}% of ${usd(a.revenue_cents)} active revenue` : null;
   return (
     <section aria-labelledby="milestones-h" className="rounded-xl border border-line bg-surface p-5">
       <h2 id="milestones-h" className="text-lg font-bold">Milestone bonuses</h2>
-      <p className="mt-1 text-sm text-ink-soft">Hit an account milestone and a Built2Bid gift box opens with a cash bonus. <a href="/sales/how-you-get-paid" className="font-semibold text-brand underline">How it works</a></p>
-      <p className="mt-3 text-sm"><strong>Next reward:</strong> {accounts} of {next.at} accounts · {toNext} to go · {next.label}</p>
+      <p className="mt-1 text-sm text-ink-soft">Each milestone opens a Built2Bid gift box with a one-time cash bonus, once per milestone. <a href="/sales/how-you-get-paid" className="font-semibold text-brand underline">How it works</a></p>
+      <p className="mt-3 text-sm"><strong>Next reward:</strong> {accounts} of {next.at} customers · {toNext} to go · {next.label}</p>
       <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-line" role="progressbar" aria-valuemin={next.prev} aria-valuemax={next.at} aria-valuenow={accounts} aria-label="Progress to your next reward">
         <div className="h-full rounded-full bg-accent" style={{ width: `${progress}%` }} />
       </div>
       {ready.length > 0 && <div className="mt-5 flex flex-wrap justify-center gap-6">{ready.map((a) => <Box key={a.id} award={a} onOpened={update} />)}</div>}
       {awards.length > 0 && (
         <ul className="mt-4 divide-y divide-line text-sm">
-          {awards.map((a) => <li key={a.id} className="flex flex-wrap justify-between gap-2 py-2"><span className="font-semibold">{a.milestone} accounts · {a.flat ? `${a.badge ?? "Badge"} box` : `${a.pct}%`}</span><span className="text-ink-soft">{label(a)}</span></li>)}
+          {awards.map((a) => (
+            <li key={a.id} className="py-2">
+              <div className="flex flex-wrap justify-between gap-2"><span className="font-semibold">{a.milestone} customers · {a.flat ? `${a.badge ?? "Badge"} box` : `${a.pct}%`}</span><span className="text-ink-soft">{label(a)}</span></div>
+              {explain(a) && <p className="text-xs text-muted">{explain(a)}{a.snapshot_hash ? ` · record ${a.snapshot_hash.slice(0, 10)}` : ""}</p>}
+              {a.amount_cents != null && !["disputed", "void", "paid"].includes(a.status) && <DisputeForm id={a.id} />}
+            </li>
+          ))}
         </ul>
       )}
       <dialog ref={dialog} onClose={() => setPopup(false)} aria-labelledby="gift-pop-h" className="m-auto w-[min(92vw,26rem)] rounded-2xl border border-line bg-surface p-6 text-ink backdrop:bg-black/60">

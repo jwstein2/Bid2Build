@@ -21,6 +21,8 @@ import { RecyclingPanel, type RecycleFilters, type RecycleOverview } from "./rec
 import { LeadsPanel, type AdminLeads, type PendingAssign, type PossibleDup } from "./leads-panel";
 import { ADMIN_LEAD_ERRORS, cleanFilters, LIFECYCLE, lifecycle } from "@/lib/sales/leads-admin";
 import { cookies } from "next/headers";
+import { CompensationPanel } from "./compensation-panel";
+import { COMP_ERRORS, type AdminCompensation, type AdminPrograms } from "@/lib/sales/compensation";
 import { sendInvite } from "./rep-actions";
 import { inviteEmailsOn, } from "@/lib/sales/invite-email";
 import { DELIVERY_LABEL } from "@/lib/sales/leads-admin";
@@ -74,7 +76,7 @@ function PolicySummary({ s }: { s: HubSettings }) {
     s.first_month_cancel_voids ? "If the customer cancels within their first month, the rep is not paid for that sale." : "A customer who cancels in their first month still counts once the hold passes.",
     `A rep's link counts for accounts created within ${s.attribution_window_days} days of the visit.`,
     "Earned commission is paid on the next month-end statement after the owner approves it. Rep tools are paid for by the company.",
-    ...(s.milestone_every ? [`Milestone gift boxes: ${(s.milestone_flat ?? []).map((f) => `${usd(f.cents)} at ${f.at}`).join(", ")}${(s.milestone_flat ?? []).length ? ", then " : ""}every ${s.milestone_every} accounts ${(s.milestone_rates ?? []).map((r) => `${r.pct}% from ${r.from}`).join(", ")} of still-active customers' payments since the last percentage box (at least ${usd(s.milestone_min_cents ?? 0)}). Owner approves; paid on the next statement.`] : []),
+    ...(s.milestone_model === "v3_active_mrr" ? [`One-time milestone bonuses (Compensation V3): ${(s.milestone_flat ?? []).map((f) => `${usd(f.cents)} at ${f.at}`).join(", ")}, then every ${s.milestone_every} qualifying customers ${(s.milestone_rates ?? []).map((r) => `${r.pct}% from ${r.from}`).join(", ")} of qualifying active attributed MRR, calculated once when reached. ${s.milestone_qualification === "second_cycle" ? "Customers count at their second billing cycle (annual: one month after paying)." : "Customers count at first payment."} Owner approves; paid on the next statement.`] : s.milestone_every ? [`Milestone gift boxes: ${(s.milestone_flat ?? []).map((f) => `${usd(f.cents)} at ${f.at}`).join(", ")}${(s.milestone_flat ?? []).length ? ", then " : ""}every ${s.milestone_every} accounts ${(s.milestone_rates ?? []).map((r) => `${r.pct}% from ${r.from}`).join(", ")} of still-active customers' payments since the last percentage box (at least ${usd(s.milestone_min_cents ?? 0)}). Owner approves; paid on the next statement.`] : []),
   ];
   return <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-sm">{rules.map((r) => <li key={r}>{r}</li>)}</ol>;
 }
@@ -270,7 +272,7 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
   const goal = goalRes && !goalRes.error && goalRes.data ? teamGoal(goalRes.data as GoalRaw) : null;
   const goalFloor = goalRes && !goalRes.error && goalRes.data ? (goalRes.data as GoalRaw).floor : 5;
   const msRes = tab === "commissions" ? await db.rpc("admin_sales_milestones", { p_caller: user.id }) : null;
-  const awards = (msRes && !msRes.error ? msRes.data : null) as { id: string; rep_id: string; rep_name: string; milestone: number; pct: number; flat_cents: number | null; badge: string | null; min_cents: number; reached_at: string; unlocks_at: string; revenue_cents: number | null; amount_cents: number | null; status: string; opened_at: string | null; void_reason: string | null; commission_status: string | null }[] | null;
+  const awards = (msRes && !msRes.error ? msRes.data : null) as { id: string; rep_id: string; rep_name: string; milestone: number; pct: number; flat_cents: number | null; badge: string | null; min_cents: number; reached_at: string; unlocks_at: string; revenue_cents: number | null; mrr_cents?: number | null; disputed?: boolean; amount_cents: number | null; status: string; opened_at: string | null; void_reason: string | null; commission_status: string | null }[] | null;
   // V8.3: who sells, who administers, which row is mine (hidden until 20270113001000 is applied).
   const memRes = await db.rpc("admin_sales_members", { p_caller: user.id });
   const members = (memRes.error ? {} : memRes.data ?? {}) as Record<string, Member>;
@@ -293,6 +295,11 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
   const recog = (recRes && !recRes.error ? recRes.data : null) as Recognition | null;
   const dgRes = tab === "recognition" ? await db.rpc("admin_sales_digest_preview", { p_caller: user.id }) : null;
   const digest = (dgRes && !dgRes.error ? dgRes.data : null) as DigestPreview | null;
+  // Compensation V3 (hidden until 20270202001000 is applied). Totals and payroll are owner-only.
+  const compRes = tab === "compensation" && has("payout_operations") ? await db.rpc("admin_sales_compensation", { p_caller: user.id }) : null;
+  const compData = compRes && !compRes.error ? (compRes.data as AdminCompensation) : null;
+  const progRes = tab === "compensation" ? await db.rpc("admin_sales_programs", { p_caller: user.id }) : null;
+  const progData = progRes && !progRes.error ? (progRes.data as AdminPrograms) : null;
   const msForUpcoming = tab === "recognition" ? await db.rpc("admin_sales_milestones", { p_caller: user.id }) : null;
   const recentBoxes = (msForUpcoming && !msForUpcoming.error ? msForUpcoming.data : []) as { id: string; rep_name: string; milestone: number; amount_cents: number | null; status: string; reached_at: string; commission_status: string | null }[];
   // A just-created invite link arrives in a two-minute cookie (never in the URL); it shows on the rep it was made for.
@@ -314,6 +321,7 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
     cannot_edit_self: "You can't change your own team record. Ask the platform owner.",
     cannot_approve_own: "You can't approve or cancel your own pay. Another administrator or the owner has to.",
     ...(tab === "recognition" ? RECOGNITION_ERRORS : {}),
+    ...(tab === "compensation" ? Object.fromEntries(Object.entries(COMP_ERRORS).map(([k, v]) => [`comp_${k}`, v])) : {}),
     ...(tab === "leads" || tab === "team" || tab === "recycling" ? ADMIN_LEAD_ERRORS : {}),
   } as Record<string, string>)[sp.err] ?? "That didn't work. Check the form and try again." : null;
 
@@ -545,14 +553,14 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
           {awards && awards.length > 0 && (
             <Card className="p-5">
               <h2 className="text-lg font-bold">Milestone gift boxes</h2>
-              <p className="mt-1 text-sm text-ink-soft">Boxes unlock after a 30-day refund hold. Approving adds the bonus to the rep&apos;s next month-end statement; nothing is paid automatically.</p>
+              <p className="mt-1 text-sm text-ink-soft">{h.settings.milestone_model === "v3_active_mrr" ? "V3 awards are calculated once, when the milestone is reached (see Compensation & payroll for each calculation)." : "Boxes unlock after a 30-day refund hold."} Approving adds the bonus to the rep&apos;s next month-end statement; nothing is paid automatically.</p>
               <ul className="mt-3 divide-y divide-line text-sm">
                 {awards.map((a) => (
                   <li key={a.id} className="flex flex-wrap items-start justify-between gap-3 py-3">
                     <div>
-                      <p className="font-semibold">{a.rep_name} · {a.milestone} accounts · {a.flat_cents != null ? `flat ${usd(a.flat_cents)}` : `${a.pct}% (min ${usd(a.min_cents)})`}</p>
+                      <p className="font-semibold">{a.rep_name} · {a.milestone} customers · {a.flat_cents != null ? `flat ${usd(a.flat_cents)}` : `${a.pct}%${a.min_cents ? ` (min ${usd(a.min_cents)})` : ""}`}</p>
                       <p className="text-xs text-muted">
-                        Reached {dateLabel(a.reached_at)} · {a.status === "locked" ? `unlocks ${dateLabel(a.unlocks_at)}` : a.status === "void" ? `canceled: ${a.void_reason ?? ""}` : `${usd(a.amount_cents ?? 0)}${a.flat_cents == null ? ` from ${usd(a.revenue_cents ?? 0)} active revenue` : ""} · ${a.opened_at ? "opened by rep" : "not opened yet"}${a.status === "approved" ? ` · ${a.commission_status === "paid" ? "paid" : "approved"}` : ""}`}
+                        Reached {dateLabel(a.reached_at)} · {a.status === "locked" ? `unlocks ${dateLabel(a.unlocks_at)}` : a.status === "void" || a.status === "ineligible" ? `${a.status === "void" ? "canceled" : "not eligible"}: ${a.void_reason ?? ""}` : `${a.disputed ? "DISPUTED by rep (resolve on Compensation & payroll) · " : ""}${usd(a.amount_cents ?? 0)}${a.flat_cents == null ? (a.mrr_cents != null ? ` from ${usd(a.mrr_cents)} active MRR` : ` from ${usd(a.revenue_cents ?? 0)} active revenue`) : ""} · ${a.opened_at ? "opened by rep" : "not opened yet"}${a.status === "approved" ? ` · ${a.commission_status === "paid" ? "paid" : "approved"}` : ""}`}
                       </p>
                     </div>
                     {a.status === "ready" && isMine(a.rep_id) && <p className="text-xs text-muted">Your own box: another administrator or the owner approves it.</p>}
@@ -611,6 +619,13 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
           </Card>
         </div>
       )}
+
+      {tab === "compensation" && (progData || compData ? (
+        <CompensationPanel c={compData} p={progData} owner={has("edit_commission_policies")} canStop={has("approve_commissions")} canLocate={has("manage_reps")} canAdjust={has("adjust_commissions")}
+          model={h.settings.milestone_model ?? "v2_window"} qualification={h.settings.milestone_qualification ?? "first_payment"} />
+      ) : (
+        <Notice tone="warn" title="Compensation V3 isn't installed yet">Run <code className="break-all">supabase/migrations/20270202001000_sales_comp_v3.sql</code> in the Supabase SQL Editor, then reload.</Notice>
+      ))}
 
       {tab === "statements" && (
         <div className="space-y-4">

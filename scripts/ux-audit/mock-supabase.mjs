@@ -761,7 +761,7 @@ http.createServer((req, res) => {
       if (req.method === "POST" || req.method === "PUT") { finStorage.set(key, bodyBuf); return send(res, 200, { Key: key }); }
     }
     // Financials walk: switch the database user the real-SQL bridge runs as (owner / bookkeeper / PM / view only).
-    if (u.pathname === "/__as") { process.env.PG_REST_AS_USER = u.searchParams.get("user") ?? ""; return send(res, 200, { as: process.env.PG_REST_AS_USER }); }
+    if (u.pathname === "/__as") { process.env.PG_REST_AS_USER = u.searchParams.get("user") ?? ""; process.env.PG_REST_OWNER_CLAIM = u.searchParams.get("claim") ?? ""; return send(res, 200, { as: process.env.PG_REST_AS_USER, claim: process.env.PG_REST_OWNER_CLAIM }); }
     if (u.pathname.startsWith("/storage/v1/")) return send(res, 400, { error: "not available in mock" });
     // Opportunity Radar walk (scripts/radar/walk.mjs) and bid check walk (scripts/bid-check/walk.mjs): tables and
     // RPCs with the PG_REST_PREFIXES prefixes (default radar_) run real SQL when RADAR_PG_URL is set.

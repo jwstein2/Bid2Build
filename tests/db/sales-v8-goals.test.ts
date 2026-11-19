@@ -15,6 +15,8 @@ d("sales hub V8 goals + milestone boxes (database)", () => {
 
   beforeAll(async () => {
     ({ pool, drop } = await freshDb("byb_test_sales_v8_goals"));
+    // These tests cover the V2 rules, which stay available (Compensation V3 is covered in sales-comp-v3.test.ts).
+    await pool.query(`update public.sales_settings set milestone_model = 'v2_window', milestone_qualification = 'first_payment', milestone_every = 50, milestone_min_cents = 15000 where id`);
     owner = await createUser(pool, "owner@built2bid.org");
     await pool.query("insert into public.admin_roles (user_id, role) values ($1, 'admin')", [owner]);
     const r = await q1("select public.admin_sales_rep_save($1, null, 'rita@sales.com', 'Rita Rep', null, 'rep', 'active', null) as r", [owner]);
@@ -35,16 +37,17 @@ d("sales hub V8 goals + milestone boxes (database)", () => {
   afterAll(async () => { await drop?.(); });
 
   it("creates boxes at 10, 25 and 50 that stay locked through the 30-day hold", async () => {
-    await val("select public.sales_milestones_evaluate(null, '2026-02-01T00:00:00Z')");
+    // Only accounts that have paid by the evaluation time count (39 by Feb 8; the 50th pays Feb 19).
+    await val("select public.sales_milestones_evaluate(null, '2026-02-08T00:00:00Z')");
     const locked = (await pool.query("select status from public.sales_milestone_awards order by milestone")).rows.map((r) => r.status);
-    expect(locked).toEqual(["locked", "locked", "locked"]); // box 10 reached Jan 10, unlocks Feb 9
-    await val("select public.sales_milestones_evaluate(null, '2026-02-15T00:00:00Z')");
+    expect(locked).toEqual(["locked", "locked"]); // box 10 reached Jan 10, unlocks Feb 9
+    await val("select public.sales_milestones_evaluate(null, '2026-02-20T00:00:00Z')");
     const rows = (await pool.query("select milestone, status, flat_cents, pct, badge from public.sales_milestone_awards order by milestone")).rows;
     expect(rows.map((r) => [r.milestone, r.status])).toEqual([[10, "ready"], [25, "locked"], [50, "locked"]]);
     expect(rows[0]).toMatchObject({ flat_cents: 2500, badge: "First 10" });
     expect(Number(rows[2].pct)).toBe(3);
     // Re-running is idempotent.
-    await val("select public.sales_milestones_evaluate(null, '2026-02-15T00:00:00Z')");
+    await val("select public.sales_milestones_evaluate(null, '2026-02-20T00:00:00Z')");
     expect(await val("select count(*)::int from public.sales_milestone_awards")).toBe(3);
   });
 

@@ -49,6 +49,7 @@ export const ADMIN_TABS = [
   { id: "commissions", label: "Commission approvals" },
   { id: "recognition", label: "Recognition & incentives" },
   { id: "statements", label: "Statements & payouts" },
+  { id: "compensation", label: "Compensation & payroll" },
   { id: "compliance", label: "Compliance" },
   { id: "policy", label: "Policies" },
 ] as const;

@@ -3,7 +3,7 @@ import type Stripe from "stripe";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { logError } from "../http/api";
 import { serverEnv } from "../env";
-import { commissionBasis, DEFAULT_POLICY, type BasisItem, type SalesPolicy } from "./basis";
+import { commissionBasis, DEFAULT_POLICY, invoicePeriodMonths, listMrr, type BasisItem, type SalesPolicy } from "./basis";
 import { decodeRepCookie } from "./link";
 
 /**
@@ -32,7 +32,7 @@ async function loadPolicy(db: SupabaseClient): Promise<SalesPolicy | null> {
   return { ...DEFAULT_POLICY, ...(data as Partial<SalesPolicy>) };
 }
 
-type InvoiceLike = { id?: string; amount_paid?: number | null; total?: number | null; total_excluding_tax?: number | null; status?: string | null; status_transitions?: { paid_at?: number | null } | null; created?: number };
+type InvoiceLike = { id?: string; billing_reason?: string | null; amount_paid?: number | null; total?: number | null; total_excluding_tax?: number | null; status?: string | null; status_transitions?: { paid_at?: number | null } | null; created?: number };
 
 /**
  * Keep the attributed customer's plan, status and commission basis current, and (for a paid invoice)
@@ -50,10 +50,12 @@ export async function syncSalesBilling(db: SupabaseClient, stripe: Stripe, sub: 
     if (policy.annual_basis === "monthly_list" && e.stripePriceMonthly) {
       monthlyListCents = (await stripe.prices.retrieve(e.stripePriceMonthly).catch(() => null))?.unit_amount ?? null;
     }
-    const basis = commissionBasis(sub.items.data as unknown as BasisItem[], policy, {
+    const items = sub.items.data as unknown as BasisItem[];
+    const prices = {
       monthly: e.stripePriceMonthly, annual: e.stripePriceAnnual, enterpriseBase: e.stripePriceEnterpriseBase || undefined,
       enterpriseSeat: e.stripePriceEnterpriseSeat || undefined, monthlyListCents,
-    });
+    };
+    const basis = commissionBasis(items, policy, prices);
     const inv = opts.invoice;
     const paid = inv && (inv.amount_paid ?? 0) > 0 && (inv.status == null || inv.status === "paid");
     const paidAtSec = inv?.status_transitions?.paid_at ?? inv?.created ?? null;
@@ -64,12 +66,18 @@ export async function syncSalesBilling(db: SupabaseClient, stripe: Stripe, sub: 
       p_paid_at: paid && paidAtSec ? new Date(paidAtSec * 1000).toISOString() : null,
     });
     if (error) throw error;
-    // Collected revenue (before tax) for milestone bonuses.
+    // Compensation V3: list MRR (annual / 12, every recurring item). Missing before 20270202001000: ignored.
+    const mrr = listMrr(items, prices);
+    await db.rpc("sales_set_mrr", { p_user: userId, p_mrr_cents: mrr.cents, p_detail: mrr }).then(() => null, () => null);
+    // Collected revenue (before tax) for milestone bonuses, with the billing period and reason so the
+    // database can tell a second billing cycle from a mid-period proration.
     if (paid && inv!.id) {
-      await db.rpc("sales_record_revenue", {
+      const rev = {
         p_user: userId, p_invoice_id: inv!.id, p_gross_cents: inv!.amount_paid ?? 0, p_revenue_cents: revenueBeforeTax(inv!),
         p_paid_at: paidAtSec ? new Date(paidAtSec * 1000).toISOString() : null,
-      });
+      };
+      const v3 = await db.rpc("sales_record_revenue_v3", { ...rev, p_period_months: invoicePeriodMonths(items), p_billing_reason: inv!.billing_reason ?? null });
+      if (v3.error) await db.rpc("sales_record_revenue", rev);
     }
     // First-month cancellation rule (V8): a cancel request, or a canceled subscription, is reported so the
     // database can cancel an unpaid sale-month commission when it came within the first month.
@@ -120,6 +128,36 @@ export async function salesChargeRefunded(db: SupabaseClient, stripe: Stripe, ch
     return String((data as { action?: string })?.action ?? "none");
   } catch (err) {
     logError("sales.refund", err, { charge: charge.id });
+    return "failed";
+  }
+}
+
+/**
+ * Chargebacks (charge.dispute.created / charge.dispute.closed): a disputed invoice stops counting toward
+ * milestone qualification and MRR; a won dispute restores it. Already-earned awards are never changed.
+ * (Add both events to the Stripe webhook for this to run.)
+ */
+export async function salesChargeDispute(db: SupabaseClient, stripe: Stripe, dispute: Pick<Stripe.Dispute, "id" | "charge" | "status">, closed: boolean): Promise<string> {
+  try {
+    const chargeId = typeof dispute.charge === "string" ? dispute.charge : dispute.charge?.id;
+    if (!chargeId) return "none";
+    const charge = await stripe.charges.retrieve(chargeId);
+    let invoiceId: string | null = null;
+    const legacy = (charge as unknown as { invoice?: string | { id: string } | null }).invoice;
+    if (legacy) invoiceId = typeof legacy === "string" ? legacy : legacy.id;
+    const pi = typeof charge.payment_intent === "string" ? charge.payment_intent : charge.payment_intent?.id;
+    if (!invoiceId && pi) {
+      const list = await stripe.invoicePayments.list({ payment: { type: "payment_intent", payment_intent: pi }, limit: 1 });
+      const inv = list.data[0]?.invoice;
+      invoiceId = inv ? (typeof inv === "string" ? inv : inv.id ?? null) : null;
+    }
+    if (!invoiceId) return "none";
+    const disputed = !closed || dispute.status !== "won";
+    const { data, error } = await db.rpc("sales_revenue_disputed", { p_invoice_id: invoiceId, p_disputed: disputed });
+    if (error) return "none";
+    return String((data as { action?: string })?.action ?? "none");
+  } catch (err) {
+    logError("sales.dispute", err, { dispute: dispute.id });
     return "failed";
   }
 }

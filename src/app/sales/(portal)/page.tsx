@@ -18,6 +18,7 @@ import { AcceleratorCard, PersonalBestsCard, type MyAccelerator } from "@/compon
 import { TeamGoalBoard } from "@/components/sales/team-goal-board";
 import { QuestCard } from "@/components/sales/quest-card";
 import { MilestoneBoxes, type MilestoneAward } from "@/components/sales/gift-box";
+import { CompensationCard, type Compensation } from "@/components/sales/compensation-card";
 import { TeamWins } from "@/components/sales/team-wins";
 import { CustomerSuccessCard, SuccessCelebration, type Success } from "@/components/sales/success-celebration";
 import { recommendedLayout, sectionOrder, type Answers, type Layout } from "@/lib/sales/preferences";
@@ -36,6 +37,9 @@ export default async function SalesOverview({ searchParams }: { searchParams: Pr
     db.rpc("sales_my_overview"), db.rpc("sales_my_team_goal"), db.rpc("sales_my_milestones"), db.rpc("sales_my_progress", {}),
     db.rpc("sales_my_accelerator", {}), db.rpc("sales_my_records", {}), db.rpc("sales_my_preferences"), db.rpc("sales_my_successes"),
   ]);
+  // Compensation V3 dashboard (hidden until 20270202001000 is applied).
+  const compRes = await db.rpc("sales_my_compensation");
+  const comp = compRes.error || !compRes.data ? null : (compRes.data as Compensation);
   // V8.7 lead recycling (hidden until 20270122001000 is applied).
   const attRes = await db.rpc("sales_my_attention");
   const attention = attRes.error || !attRes.data ? null : (attRes.data as Attention);
@@ -111,7 +115,8 @@ export default async function SalesOverview({ searchParams }: { searchParams: Pr
         if (sec === "team") return goal || wins ? <div key="team" className="space-y-8">{goal && <TeamGoalBoard g={goal} />}{wins && <TeamWins wins={wins} optedIn={!!(prefRes.data as { public_recognition?: boolean } | null)?.public_recognition} />}</div> : null;
         if (sec === "progress") return (
           <div key="progress" className="space-y-8">
-      {ms && <MilestoneBoxes awards={ms.awards} accounts={ms.accounts} next={nextMilestone(rules, ms.accounts)} />}
+      {comp && <CompensationCard c={comp} />}
+      {ms && <MilestoneBoxes awards={ms.awards} accounts={ms.accounts} next={nextMilestone(rules, ms.accounts, comp?.model ?? "v3_active_mrr")} />}
       {acc?.enabled && <AcceleratorCard a={acc} />}
       {prog && bests && <QuestCard xp={bests[0]} quests={quests(prog)} />}
       {bests && rec && <PersonalBestsCard bests={bests} achievements={rec.achievements} />}
@@ -164,7 +169,7 @@ export default async function SalesOverview({ searchParams }: { searchParams: Pr
         <ul className="mt-2 list-disc space-y-1 pl-5">
           <li>One month of the customer&apos;s plan (before tax) for each sale, paid on the month-end statement after a 30-day refund hold.</li>
           <li>The same again on each anniversary while the customer is active and paid, {o.policy.commission_years} payments in total.</li>
-          <li>Milestone gift boxes at 10, 25, 50 and every 50 accounts after that.</li>
+          <li>{comp?.model === "v2_window" ? "Milestone gift boxes at 10, 25, 50 and every 50 accounts after that." : "One-time milestone bonuses at 10 ($25) and 25 ($75) qualifying customers, then every 25 customers a bonus of 3% to 5% of your qualifying active MRR. Each milestone pays once."}</li>
         </ul>
         <Link href="/sales/how-you-get-paid" className="mt-3 inline-block font-semibold text-brand underline">See the full walkthrough</Link>
       </Card>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { autoTarget, DEFAULT_MILESTONES, isMilestone, milestoneBonus, milestoneRate, nextMilestone, payExample, teamGoal } from "@/lib/sales/goals";
+import { autoTarget, isMilestone, milestoneBonus, milestoneRate, nextMilestone, payExample, teamGoal, V2_MILESTONES } from "@/lib/sales/goals";
 import { monthXp, quests } from "@/lib/sales/quests";
 
 describe("team goal", () => {
@@ -26,8 +26,8 @@ describe("team goal", () => {
   });
 });
 
-describe("milestone boxes", () => {
-  const r = DEFAULT_MILESTONES;
+describe("milestone boxes (V2 rules, still selectable)", () => {
+  const r = V2_MILESTONES;
   it("follows the progressive curve 10, 25, 50, 100, 150 ...", () => {
     const boxes = Array.from({ length: 300 }, (_, i) => i + 1).filter((n) => isMilestone(r, n));
     expect(boxes).toEqual([10, 25, 50, 100, 150, 200, 250, 300]);
@@ -44,10 +44,10 @@ describe("milestone boxes", () => {
   it("always shows the next reward", () => {
     expect(nextMilestone(r, 0)).toMatchObject({ at: 10, prev: 0, label: "$25 bonus" });
     expect(nextMilestone(r, 38)).toMatchObject({ at: 50, prev: 25 });
-    expect(nextMilestone(r, 50).label).toBe("4% bonus (at least $150)");
+    expect(nextMilestone(r, 50, "v2_window").label).toBe("4% bonus (at least $150)");
   });
   it("account 300 example is reasonable", () => {
-    const e = payExample(r);
+    const e = payExample(r, 300, 25, 1999, 0.8, "v2_window");
     expect(e.boxes.map((b) => b.milestone)).toEqual([10, 25, 50, 100, 150, 200, 250, 300]);
     // Bonuses stay a small share of what those customers paid.
     const revenue = e.boxes.reduce((t, b) => t + b.revenueCents, 0);
