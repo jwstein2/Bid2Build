@@ -49,7 +49,12 @@ await rec.test("AUTH-05", "Auth", "Resend code", "Requesting again sends a new c
 });
 await rec.test("AUTH-06", "Auth", "Sign out", "Sign out ends the session; protected pages redirect to login", async () => {
   const ctx = await b.newContext(vp); const p = await ctx.newPage(); await uiLogin(p, USERS.outsider);
-  await p.goto(BASE + "/dashboard"); await dismissPopups(p); await p.getByRole("button", { name: /^Sign out$/ }).first().click();
+  await p.goto(BASE + "/dashboard"); await p.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {}); await dismissPopups(p);
+  // Other tests sign this same user in and out; if that ended this session first, sign in again (once).
+  const so = p.getByRole("button", { name: /^Sign out$/ }).first();
+  if (!(await so.isVisible().catch(() => false))) { await uiLogin(p, USERS.outsider); await p.goto(BASE + "/dashboard"); await p.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {}); await dismissPopups(p); }
+  if (!(await so.isVisible().catch(() => false))) return { fail: `no Sign out button at ${p.url()}` };
+  await so.click();
   await p.waitForTimeout(2000); await p.goto(BASE + "/dashboard");
   return /\/login/.test(p.url()) || { fail: `after sign out at ${p.url()}` };
 });

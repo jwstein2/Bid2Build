@@ -9,6 +9,9 @@ const b = await chromium.launch();
 const ctx = await contextFor(b, ROLE);
 const p = await ctx.newPage(); const w = watch(p);
 const [{ id: uid }] = await q("select id from auth.users where email=$1", [USERS[ROLE]]);
+// Fixture (local DB only): repeated runs spend the free account's starter credits; top it up to 1 so the
+// export is not blocked by the paywall (paywall itself is covered by the crawl and credit tests).
+if (ROLE === "free") await q("update public.credit_accounts set starter_balance = greatest(starter_balance, 1) where user_id=$1", [uid]);
 const T = (id, name, exp, fn) => rec.test(`BID-${ROLE}-${id}`, "Bids & estimates", name, exp, fn);
 let estId;
 const errs = () => [...w.pageErrors, ...w.failed.filter((f) => /^5/.test(f))];

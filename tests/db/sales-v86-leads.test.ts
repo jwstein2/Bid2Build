@@ -261,4 +261,12 @@ d("sales hub V8.6 allocation, master CRM, invitations and offboarding (database)
     expect(Object.keys(all.r.queue)).toEqual(expect.arrayContaining(["existing_customer"]));
     await expect(pool.query("select public.admin_sales_leads($1, '{}'::jsonb)", [anaU])).rejects.toThrow(/not_authorized/);
   });
+
+  it("a rep's typed-in lead is checked against the owner email too (QA F12)", async () => {
+    const add = (u: string, lead: Record<string, unknown>) =>
+      asUser(pool, u, (q) => q("select public.sales_crm_lead_create($1::jsonb) r", [JSON.stringify(lead)])).then((x) => x.rows[0].r as { ok: boolean; error?: string });
+    expect(await add(anaU, { company_name: "Email Key Roofing", email: "boss@emailkey-roof.com", trades: [] })).toMatchObject({ ok: true });
+    const dup = await add(benU, { company_name: "Email-Key Roofing Co", email: "Boss@EmailKey-Roof.com", trades: [] });
+    expect(dup).toMatchObject({ ok: false, error: "duplicate" });
+  });
 });

@@ -98,7 +98,10 @@ await T("11", "Settings", "Company profile edit persists", "Tagline saved on /se
 });
 await T("12", "Settings", "Theme preference (Light/Dark/Black) saved to the account", "Choice persists in a new browser session", async () => {
   const { p } = await open("/dashboard");
-  const t = p.getByRole("button", { name: /^Theme: Light/ }).first(); await t.click(); await p.waitForTimeout(2000);
+  // Crawls click the theme toggle too, so start from Light whatever the saved choice is (Light -> Dark -> Black -> Light).
+  const tog = () => p.getByRole("button", { name: /^Theme: / }).first();
+  for (let i = 0; i < 3 && !/^Theme: Light/.test(await tog().getAttribute("aria-label")); i++) { await tog().click(); await p.waitForTimeout(1200); }
+  await tog().click(); await p.waitForTimeout(2000);
   const c2 = await b.newContext({ storageState: await ctx.storageState() }); const p2 = await c2.newPage(); await p2.goto(BASE + "/dashboard"); await p2.waitForLoadState("networkidle");
   const cls = await p2.evaluate(() => document.documentElement.className + " " + (document.documentElement.dataset.theme ?? ""));
   for (let i = 0; i < 3; i++) { const n = await p.getByRole("button", { name: /^Theme: / }).first().getAttribute("aria-label"); if (/^Theme: Light/.test(n)) break; await p.getByRole("button", { name: /^Theme: / }).first().click(); await p.waitForTimeout(1200); }

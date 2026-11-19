@@ -45,6 +45,13 @@ await T("02b", "Leads", "Duplicate check by email (same owner email, different s
 });
 await T("03", "Leads", "Lead details: log a call note", "Activity saved and shown on the lead timeline", async () => {
   const ctx = await as("rep1"); const p = await ctx.newPage(); await p.goto(`${BASE}/sales/leads/${leadId}`); await p.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {});
+  // Compliance first (V8.4): a call can't be logged until the number's Do Not Call check is recorded.
+  const dnc = p.locator("form").filter({ has: p.getByRole("button", { name: "Record check" }) });
+  if (await dnc.count()) {
+    await dnc.locator("select[name=dnc]").selectOption("clear"); await dnc.locator("input[name=confirm]").check();
+    const from = p.url(); await dnc.getByRole("button", { name: "Record check" }).click();
+    await p.waitForURL((u) => u.href !== from && /[?&](ok|err)=/.test(u.search), { timeout: 15000 }).catch(() => {}); await p.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {});
+  }
   const f = p.locator("form").filter({ has: p.getByRole("button", { name: "Log it" }) });
   await f.locator("select[name=kind]").selectOption("call"); await f.locator("[name=body]").fill("QA: called, interested in a demo Tuesday");
   await f.getByRole("button", { name: "Log it" }).click(); await p.waitForTimeout(1500); await p.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {}); await p.reload();
@@ -93,12 +100,15 @@ await T("08", "Isolation", "A contractor customer cannot read any sales data", "
 await T("09", "Leads", "Owner sees the lead in All leads and reassigns it to rep2", "Assignment saved; lead moves to rep2; rep1 no longer sees it", async () => {
   const ctx = await contextFor(b, "owner"); const p = await ctx.newPage(); await p.goto(BASE + "/sales/admin?tab=leads"); await p.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {});
   const t = await p.locator("main").innerText(); if (!t.includes(lead.company)) return { fail: "lead not in All leads" };
-  const form = p.locator("form").filter({ has: p.locator("input[name=lead]") });
-  await form.getByRole("checkbox", { name: `Select ${lead.company}` }).check();
-  const sel = form.locator("select[name=rep]");
+  // V8.6 table: each row has an owner picker and a Reassign button; a warning may ask to confirm the move.
+  const sel = p.getByLabel(`Owner for ${lead.company}`).first();
   if (!(await sel.count())) return { fail: "no assign control found" };
-  const val = r2.id;
-  await sel.selectOption(val); await form.getByRole("button", { name: /assign|update|move/i }).first().click(); await p.waitForTimeout(1500); await p.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {});
+  await sel.selectOption(r2.id);
+  const row = p.locator("form").filter({ has: sel });
+  let from = p.url(); await row.getByRole("button", { name: /Reassign|Assign/ }).first().click();
+  await p.waitForURL((u) => u.href !== from, { timeout: 15000 }).catch(() => {}); await p.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {});
+  const anyway = p.getByRole("button", { name: /anyway/ }).first();
+  if (await anyway.isVisible().catch(() => false)) { from = p.url(); await anyway.click(); await p.waitForURL((u) => u.href !== from, { timeout: 15000 }).catch(() => {}); await p.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {}); }
   const l = (await q("select assigned_rep as rep_id from public.sales_leads where id=$1", [leadId]))[0];
   return l.rep_id === r2.id ? "reassigned to rep2" : { fail: `rep_id now ${l.rep_id}` };
 });
