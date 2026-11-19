@@ -8,7 +8,6 @@ import type { Hub, HubRep, HubSettings } from "@/lib/sales/types";
 import { SOURCE_LABEL, STAGE_LABEL, type Lead } from "@/lib/sales/crm";
 import { CopyField } from "@/components/sales/copy-field";
 import { site } from "@/lib/site";
-import { cookies } from "next/headers";
 import { INVITE_FLASH, parseInviteFlash } from "@/lib/sales/invite";
 import { DEFAULT_MILESTONES, nextMilestone, teamGoal, type GoalRaw, type MilestoneRules } from "@/lib/sales/goals";
 import { TeamGoalBoard } from "@/components/sales/team-goal-board";

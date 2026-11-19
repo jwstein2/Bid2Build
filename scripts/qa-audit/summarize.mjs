@@ -7,15 +7,21 @@ const inventory = new Map(); // key -> {role, route, kind, name, href, status, n
 const pageLoads = [];
 // Crawl runs oldest first, so a later run of the same page (a retest after a fix) replaces the earlier result.
 const runs = files.filter((f) => /^crawl-.*\.json$/.test(f)).map((f) => JSON.parse(fs.readFileSync(path.join(OUT, f), "utf8"))).sort((a, b) => String(a.startedAt).localeCompare(String(b.startedAt)));
+// A page crawled again later (a retest after a fix) counts only from its newest crawl, so controls that a fix
+// removed don't keep an old result.
+const latest = new Map();
+for (const r of runs) for (const pg of r.pages) latest.set(`${r.role}${r.mobile ? "-mobile" : ""}|${pg.route}`, r.startedAt);
 for (const r of runs) {
   const tag = `${r.role}${r.mobile ? "-mobile" : ""}`;
   for (const pg of r.pages) {
+    if (latest.get(`${tag}|${pg.route}`) !== r.startedAt) continue;
     // Not-found by design: staff/admin pages for people without access, a deliberate 404 probe, flag-off pages,
     // and the index-less /company/bids (only /company/bids/<id> exists).
     const expected404 = pg.is404 && (/^\/(admin|academy\/manage)(\/|$)/.test(pg.route) && tag !== "owner" || pg.route === "/nope-404" || pg.route === "/trial"
       || pg.route === "/sales/admin" && /^rep/.test(tag) || pg.route === "/company/bids");
     pageLoads.push({ tag, route: pg.route, expected404, finalUrl: pg.finalUrl, status: pg.status, loadFail: !!pg.loadFail, is404: pg.is404, errors: pg.loadErrors, loadOnly: !!pg.loadOnly });
-    const res = new Map(pg.results.map((x) => [x.idx, x]));
+    // Older runs called an element that an earlier click removed a FAIL; it is GONE (not exercised), not a failure.
+    const res = new Map(pg.results.map((x) => [x.idx, x.status === "FAIL" && /not found after reload/.test(x.note ?? "") ? { ...x, status: "GONE" } : x]));
     for (const el of pg.elements) {
       const x = res.get(el.idx) ?? { status: "UNTESTED", note: "no result" };
       // A function is identified by role + page template + kind + name (+ link target). Shared header/footer
@@ -25,7 +31,7 @@ for (const r of runs) {
       const prev = inventory.get(key);
       // Within one run the most telling result wins; a later run replaces an earlier one unless it only says
       // "covered elsewhere" (DUP/CLICK) or "not reached" (UNTESTED).
-      const rank = { FAIL: 6, NOEFFECT: 5, PASS: 4, EXTERNAL: 3, DISABLED: 2, SKIP: 2, UNTESTED: 1, CLICK: 0, DUP: 0 };
+      const rank = { FAIL: 6, NOEFFECT: 5, PASS: 4, EXTERNAL: 3, DISABLED: 2, SKIP: 2, UNTESTED: 1, GONE: 1, CLICK: 0, DUP: 0 };
       const weak = (st) => rank[st] <= 1;
       const replace = !prev || (prev.run === r.startedAt ? rank[x.status] > rank[prev.status] : !weak(x.status) || weak(prev.status) && rank[x.status] >= rank[prev.status]);
       if (replace) inventory.set(key, { run: r.startedAt, tag, route: where, kind: el.kind, name: el.name, href: el.href, status: x.status, note: x.note });

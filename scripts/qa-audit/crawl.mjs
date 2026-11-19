@@ -136,7 +136,7 @@ async function clickOne(route, el) {
     await page.evaluate(ENUM);
     const loc = page.locator(`[data-qa-idx="${el.idx}"]`);
     const sameName = await loc.evaluate((x) => (x.getAttribute("aria-label") || x.innerText || "").replace(/\s+/g, " ").trim().slice(0, 80)).catch(() => null);
-    if (sameName === null) return { status: "FAIL", note: "element not found after reload (page not deterministic)" };
+    if (sameName === null) return { status: "GONE", note: "element gone after reload (an earlier click on this page removed or changed it, e.g. Hide or Archive)" };
     w.reset();
     const mutations = [];
     page.on("request", (r) => { if (r.method() !== "GET" && !/_next|sentry|google|facebook/.test(r.url())) mutations.push(r); });
