@@ -1,7 +1,7 @@
 import { resolveMx } from "node:dns/promises";
 import { createAdminClient } from "@/lib/supabase/server";
 import { fail, json, logError } from "@/lib/http/api";
-import { cleanRows, ImportBody, importSecretMatches, type ImportLeadRow, type ImportResult } from "@/lib/sales/import";
+import { cleanRows, ImportBody, importAuthCheck, type ImportLeadRow, type ImportResult } from "@/lib/sales/import";
 import { fillBriefs, type BriefLead } from "@/lib/sales/brief";
 
 export const runtime = "nodejs";
@@ -14,12 +14,16 @@ export const runtime = "nodejs";
  *          skipped in the database, and each new lead gets a Haiku sales brief.
  * Body format: docs/sales-portal/LEAD_IMPORT.md.
  */
-function authorized(req: Request): boolean {
-  return importSecretMatches(req.headers.get("authorization"), process.env.SALES_LEAD_IMPORT_SECRET);
+/** null when allowed; otherwise a 401 that says which side is missing (never anything about the value). */
+function denied(req: Request): Response | null {
+  const r = importAuthCheck(req.headers.get("authorization"), process.env.SALES_LEAD_IMPORT_SECRET);
+  if (r === "ok") return null;
+  const why = { not_configured: "The server has no import secret of 24+ characters for this deploy.", no_credentials: "No Authorization header arrived.", mismatch: "The Authorization header doesn't match the server's import secret." }[r];
+  return fail(401, r, why);
 }
 
 export async function GET(req: Request) {
-  if (!authorized(req)) return fail(401, "unauthorized", "Not allowed.");
+  const no = denied(req); if (no) return no;
   const { data, error } = await createAdminClient().rpc("sales_import_target", {});
   if (error) { logError("sales.lead_target", error); return fail(500, "target_failed", "Could not read the target."); }
   return json(data);
@@ -39,7 +43,7 @@ async function mailDomainsOk(rows: ImportLeadRow[]): Promise<Set<string>> {
 }
 
 export async function POST(req: Request) {
-  if (!authorized(req)) return fail(401, "unauthorized", "Not allowed.");
+  const no = denied(req); if (no) return no;
   const raw = await req.text();
   if (raw.length > 2_000_000) return fail(413, "too_large", "Send at most 1,000 leads per request.");
   let body: unknown;
