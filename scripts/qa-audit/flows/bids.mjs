@@ -1,7 +1,8 @@
 // Batch: contractor bid lifecycle with persistence checks (real database).
 // ROLE=pro (Unlimited) or ROLE=free (credits). Creates a deck bid end to end.
 import fs from "node:fs";
-import { chromium, contextFor, watch, recorder, BASE, USERS, q, closeDb, shot, dismissPopups } from "../lib.mjs";
+import path from "node:path";
+import { chromium, contextFor, watch, recorder, BASE, USERS, q, closeDb, shot, dismissPopups, OUT } from "../lib.mjs";
 const ROLE = process.env.ROLE ?? "pro";
 const rec = recorder(`bids-${ROLE}`);
 const b = await chromium.launch();
@@ -104,7 +105,7 @@ await T("08", "Proposal step and customer preview", "Preview dialog shows the pr
 await T("09", "Download PDF (finalize)", "A PDF downloads; version 1 is saved; status finalized", async () => {
   const dl = p.waitForEvent("download", { timeout: 45000 });
   await p.getByRole("button", { name: "Download PDF" }).click();
-  const d = await dl; const file = `/tmp/qa-${ROLE}-bid.pdf`; await d.saveAs(file);
+  const d = await dl; const file = path.join(OUT, `bid-${ROLE}.pdf`); await d.saveAs(file);
   const head = fs.readFileSync(file).subarray(0, 5).toString(); const size = fs.statSync(file).size;
   const v = await q("select version_number, total from public.estimate_versions where estimate_id=$1", [estId]);
   const e = await q("select status from public.estimates where id=$1", [estId]);
@@ -127,5 +128,5 @@ await T("12", "Credit accounting for the finalized bid", ROLE === "free" ? "One 
 });
 if (errs().length) rec(`BID-${ROLE}-ERR`, "Bids & estimates", "No page errors or server errors during the bid flow", "none", "FAIL", errs().join(" | ").slice(0, 400));
 else rec(`BID-${ROLE}-ERR`, "Bids & estimates", "No page errors or server errors during the bid flow", "none", "PASS", "none");
-fs.writeFileSync(`/tmp/qa-${ROLE}-estid`, estId ?? "");
+fs.mkdirSync(OUT, { recursive: true }); fs.writeFileSync(path.join(OUT, `estid-${ROLE}`), estId ?? "");
 console.log(rec.counts); await b.close(); await closeDb();

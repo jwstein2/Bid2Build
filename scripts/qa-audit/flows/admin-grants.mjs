@@ -13,7 +13,10 @@ async function grant(email, plan, label) {
   const invite = p.getByRole("checkbox", { name: /Send invitation email/i }); if (await invite.isChecked()) await invite.uncheck();
   await p.getByRole("button", { name: "Grant access…" }).click();
   await p.getByRole("dialog").getByRole("button", { name: "Grant access" }).click();
-  await p.getByText("Done", { exact: true }).waitFor({ timeout: 15000 });
+  // Re-runs: an account that already has an open grant is refused ("Extend that one instead"), which is the rule.
+  const dup = p.getByRole("alert").filter({ hasText: "already has an open complimentary grant" });
+  await Promise.race([p.getByText("Done", { exact: true }).waitFor({ timeout: 15000 }), dup.waitFor({ timeout: 15000 })]);
+  if (await dup.isVisible().catch(() => false)) { await p.close(); return ["DUP"]; }
   await shot(p, `admin-grant-${label}`);
   const errs = [...w.pageErrors, ...w.failed.filter((f) => /^5/.test(f))];
   await p.close();
@@ -22,6 +25,7 @@ async function grant(email, plan, label) {
 
 await rec.test("ADM-01", "Admin / Complimentary", "Grant Unlimited (30 days) to an existing account", "Grant row active, starts now, user gains premium", async () => {
   const errs = await grant(USERS.pro, "unlimited", "pro");
+  if (errs[0] === "DUP") { const a = await q("select status from public.complimentary_grants where email=$1 and status in ('active','paused','pending') limit 1", [USERS.pro]); return a.length ? `already granted in an earlier run (${a[0].status}); a second grant is refused` : { fail: "refused but no open grant" }; }
   const g = await q("select plan, status, starts_at, expires_at from public.complimentary_grants where email=$1 order by created_at desc limit 1", [USERS.pro]);
   if (!g.length) return { fail: "no grant row" };
   const prem = await q("select public.has_premium_access(u.id) as p from auth.users u where email=$1", [USERS.pro]).catch((e) => [{ p: `n/a ${e.message}` }]);
@@ -30,6 +34,7 @@ await rec.test("ADM-01", "Admin / Complimentary", "Grant Unlimited (30 days) to 
 });
 await rec.test("ADM-02", "Admin / Complimentary", "Grant Team (Enterprise) to an existing account", "Grant row active with 3 licensed users", async () => {
   const errs = await grant(USERS.entOwner, "enterprise", "ent");
+  if (errs[0] === "DUP") { const a = await q("select status, plan from public.complimentary_grants where email=$1 and status in ('active','paused','pending') limit 1", [USERS.entOwner]); return a[0]?.plan === "enterprise" ? `already granted in an earlier run (${a[0].status}); a second grant is refused` : { fail: JSON.stringify(a) }; }
   const g = await q("select plan, status, included_seats from public.complimentary_grants where email=$1 order by created_at desc limit 1", [USERS.entOwner]);
   if (errs.length) return { fail: errs.join("; ") };
   return g[0]?.plan === "enterprise" ? `status ${g[0].status}, seats ${g[0].included_seats}` : { fail: JSON.stringify(g) };
