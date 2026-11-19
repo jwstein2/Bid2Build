@@ -281,7 +281,11 @@ function GroupCard(props: {
   const items = itemsForGroup(estimate, g.id);
   const gt = totals.groups[g.id];
   const examples = props.examples.length ? props.examples : props.fallbackExamples;
-  const projectTotalMode = (useBuilderOps().priceDisplay?.displayMode ?? estimate.displayMode) === "project_total";
+  const pd = useBuilderOps().priceDisplay;
+  const projectTotalMode = (pd?.displayMode ?? estimate.displayMode) === "project_total";
+  // The default the customer actually gets (the company style may set it), not just this bid's raw value.
+  const defaultVis = pd?.defaultGroupVisibility ?? estimate.defaultGroupVisibility;
+  const defaultFromCompany = Boolean(pd && pd.defaultGroupVisibility !== estimate.defaultGroupVisibility);
   const panelId = `gp-${g.id}`;
   const sectionName = g.name || "untitled section";
   // Fade the rows in only when the contractor opens the section, not on page load.
@@ -331,7 +335,7 @@ function GroupCard(props: {
               onChange={(e) => dispatch({ type: "updateGroup", id: g.id, patch: { visibility: e.target.value === "inherit" ? null : (e.target.value as GroupVisibility) } })}
               className="field field-sm w-auto max-w-full py-1 text-xs"
             >
-              <option value="inherit">Estimate default ({VISIBILITY_LABEL[estimate.defaultGroupVisibility]})</option>
+              <option value="inherit">{defaultFromCompany ? "Company default" : "Estimate default"} ({VISIBILITY_LABEL[defaultVis]})</option>
               {Object.entries(VISIBILITY_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
             </select>
             {projectTotalMode && <span className="text-muted">Single project total is on; sections are hidden from the customer.</span>}

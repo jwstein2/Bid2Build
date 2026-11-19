@@ -142,3 +142,27 @@ describe("company-managed bids (Team) and Single project total", () => {
     expect(canEditStyleKey(p, "displayMode")).toBe(false);
   });
 });
+
+describe("per-section 'Customer sees' choices", () => {
+  // The demo company's real style on Nov 18: company default "names_only", customization allowed.
+  const demo: StylePolicy = { managed: true, style: { displayMode: "by_group", defaultGroupVisibility: "names_only", template: "premium" }, locked: ["template"], allowCustomization: true, canCustomize: true, canOverride: true };
+  const sections = (e: Estimate, p: StylePolicy | null, cfg = config) => {
+    const r = resolveProposalStyle({ policy: p, estimate: e, business, config: cfg });
+    return buildProposal(r.estimate, r.business, r.config).pricing.sections.map((s) => ({ mode: s.mode, amount: s.amount ?? null, lines: s.lines.map((l) => l.amount ?? null) }));
+  };
+
+  it("each section's own choice shows on the proposal, with and without a company style", () => {
+    const e: Estimate = { ...base, groups: base.groups.map((g, i) => ({ ...g, visibility: (["itemized", "group_total"] as const)[i] })) };
+    for (const p of [null, demo]) {
+      expect(sections(e, p)).toEqual([{ mode: "itemized", amount: "$250.00", lines: ["$250.00"] }, { mode: "group_total", amount: "$375.00", lines: [] }]);
+    }
+    const names: Estimate = { ...base, groups: base.groups.map((g) => ({ ...g, visibility: "names_only" as const })) };
+    expect(sections(names, demo).map((s) => s.lines)).toEqual([[null], [null]]);
+  });
+
+  it("sections left on the default follow the company default until the bid picks its own", () => {
+    const e = withMode(base, "by_group", "group_total");
+    expect(sections(e, demo).map((s) => s.mode)).toEqual(["names_only", "names_only"]);
+    expect(sections(e, demo, { ...config, styleOverrides: ["defaultGroupVisibility"] }).map((s) => s.mode)).toEqual(["group_total", "group_total"]);
+  });
+});
