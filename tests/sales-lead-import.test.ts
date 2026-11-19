@@ -28,6 +28,10 @@ describe("sales lead import payload", () => {
     expect(ImportBody.safeParse({ leads: [] }).success).toBe(false);
     expect(ImportBody.safeParse({ batch_id: "2026-W47", leads: [] }).success).toBe(true);
     expect(ImportBody.safeParse({ batch_id: "2026-W47", leads: Array(1001).fill({}) }).success).toBe(false);
+    // Where the run stopped in the region's license list (optional; the next run resumes after it).
+    expect(ImportBody.safeParse({ batch_id: "2026-W48", leads: [], progress: { cursor: "CR700120", checked: 140, exhausted: false } }).success).toBe(true);
+    expect(ImportBody.safeParse({ batch_id: "2026-W48", leads: [], progress: { cursor: "", checked: 1 } }).success).toBe(false);
+    expect(ImportBody.safeParse({ batch_id: "2026-W48", leads: [], progress: { cursor: "CR1", checked: -1 } }).success).toBe(false);
   });
 
   it("lists verification sources by field, ignoring anything that isn't a web link", () => {
