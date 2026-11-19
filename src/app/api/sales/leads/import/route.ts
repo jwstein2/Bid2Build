@@ -9,7 +9,8 @@ export const runtime = "nodejs";
 /**
  * Weekly automated lead import. Authorization: Bearer $SALES_LEAD_IMPORT_SECRET (set in Netlify and in
  * the agent's environment; never in code or chat). Without the secret configured the route is closed.
- *   GET  → this week's target (ZIP, trade, radius, how many) set by the owner in the Sales Hub.
+ *   GET  → this week's target set by the owner in the Sales Hub: a state region (counties, ZIPs, the
+ *          free license download to work through and where the last run stopped) or a ZIP + radius.
  *   POST → import verified leads. They arrive unassigned; duplicates and do-not-contact businesses are
  *          skipped in the database, and each new lead gets a Haiku sales brief.
  * Body format: docs/sales-portal/LEAD_IMPORT.md.
@@ -69,7 +70,17 @@ export async function POST(req: Request) {
     const { data: missing } = await admin.rpc("sales_leads_missing_brief", { p_limit: 200 });
     briefs = await fillBriefs(admin, { leads: ((missing ?? []) as BriefLead[]).filter((l) => added.has(l.id)), budgetMs: 8000 });
   }
+  // Where this run stopped in the target's list, so the next run resumes after it (once per batch).
+  let progress: unknown = null;
+  if (p.data.progress) {
+    const { data: pr, error: pe } = await admin.rpc("sales_import_progress_save", {
+      p_batch: p.data.batch_id, p_cursor: p.data.progress.cursor, p_checked: p.data.progress.checked, p_exhausted: p.data.progress.exhausted ?? false,
+    });
+    if (pe) logError("sales.lead_progress", pe, { batch: p.data.batch_id });
+    else progress = pr;
+  }
   return json({
+    progress,
     batch_id: p.data.batch_id, received: p.data.leads.length, added: r.added, duplicates: r.duplicates, suppressed: r.suppressed,
     invalid: r.invalid, unverified: r.unverified, unverified_fields: noMx ? [...reasons, "email (domain has no mail server)"] : reasons,
     briefs_written: briefs, replayed: r.replayed,
