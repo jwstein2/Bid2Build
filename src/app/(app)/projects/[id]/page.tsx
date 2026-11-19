@@ -29,20 +29,24 @@ export default async function SchedulePage({ params, searchParams }: { params: P
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const supabase = await createClient();
-  const [data, pm, publications, account, comm] = await Promise.all([loadSchedule(supabase, id), loadPmAccess(supabase), listPublications(supabase, id), getAccountStatus(), loadCommAccess(supabase)]);
-  if (!data) notFound();
-  const editHint = data.canEdit ? null : pm?.scope === "company" || data.schedule.companyId ? "seat" : account.kind === "unlimited" ? "addon" : "upgrade";
-  const { created, tab } = await searchParams;
-  // V4.1 summary (people, closeout, activity). Absent before the V4.1 SQL runs: the editor still works.
-  const [{ data: row }, activity, { data: peopleRaw }, { data: sig }, { data: est }] = await Promise.all([
+  // Performance: everything keyed only by the schedule id loads in one parallel round (it used to wait for
+  // the schedule first, then the summary, then the crew). Only the two estimate lookups wait for the schedule.
+  // V4.1 summary (people, closeout, activity) is absent before the V4.1 SQL runs: the editor still works.
+  // V7.3 crew (who's assigned) is skipped quietly before the V4.2 / V7.3 SQL.
+  const [data, pm, publications, account, comm, { data: row }, activity, { data: peopleRaw }, crew] = await Promise.all([
+    loadSchedule(supabase, id), loadPmAccess(supabase), listPublications(supabase, id), getAccountStatus(), loadCommAccess(supabase),
     supabase.from("project_schedules").select("sales_rep_id, project_manager_id, actual_finish, closeout_note").eq("id", id).maybeSingle(),
     loadActivity(supabase, id),
     supabase.rpc("pm_people"),
+    loadCrew(supabase, id),
+  ]);
+  if (!data) notFound();
+  const editHint = data.canEdit ? null : pm?.scope === "company" || data.schedule.companyId ? "seat" : account.kind === "unlimited" ? "addon" : "upgrade";
+  const { created, tab } = await searchParams;
+  const [{ data: sig }, { data: est }] = await Promise.all([
     supabase.from("signatures").select("id").eq("estimate_id", data.schedule.estimateId).order("signed_at", { ascending: false }).limit(1),
     supabase.from("estimates").select("pipeline_stage, customer_id").eq("id", data.schedule.estimateId).maybeSingle(),
   ]);
-  // V7.3: who's assigned (same task rows as the Gantt). Skipped quietly before the V4.2 / V7.3 SQL.
-  const crew = await loadCrew(supabase, id);
   const leaves = data.tasks.filter((t) => !data.tasks.some((c) => c.parentId === t.id));
   const summary = row && activity ? {
     id, estimateId: data.schedule.estimateId, companyId: data.schedule.companyId, status: data.schedule.status, revision: data.schedule.revision,

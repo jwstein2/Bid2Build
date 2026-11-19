@@ -1,7 +1,7 @@
 import type { Category } from "./types";
 
 /**
- * Trade → news mapping for every trade in src/lib/trades/data.ts (38 today; a test fails if a trade is
+ * Trade → news mapping for every trade in src/lib/trades/data.ts (39 today; a test fails if a trade is
  * added there without a mapping here).
  *
  * associations: recognized organizations for the trade, listed for reference and for the "where this
@@ -230,6 +230,13 @@ export const TRADE_NEWS: TradeNewsDef[] = [
     topics: ["licensing_regulations", "safety"],
     keywords: ["soft washing", "soft wash", "roof cleaning", "house washing", "sodium hypochlorite", "exterior cleaning"],
     related: ["stormwater", "runoff", "chemical safety", "algae"], exclude: [], geo: "local_heavy", market: "residential",
+  }),
+  T("cleaning", {
+    associations: [A("ISSA, The Worldwide Cleaning Industry Association", "ISSA", "https://www.issa.com"), A("Association of Residential Cleaning Services International", "ARCSI", "https://www.arcsi.org", "secondary")],
+    publications: GENERAL_PRESS, official: [...OFFICIAL_SAFETY, ...OFFICIAL_LABOR, ...OFFICIAL_ENV],
+    topics: ["labor_workforce", "safety", "business_taxes"],
+    keywords: ["janitorial", "commercial cleaning", "residential cleaning", "house cleaning", "post-construction cleaning", "cleaning company", "cleaning companies", "cleaning crews", "custodial", "maid service"],
+    related: ["cleaning chemicals", "disinfectant", "green cleaning", "hazard communication", "silica dust"], exclude: ["dry cleaning", "data cleaning", "spring cleaning sale", "ethnic cleansing"], geo: "balanced", market: "both",
   }),
   T("excavation", {
     associations: [A("National Utility Contractors Association", "NUCA", "https://www.nuca.com"), AGC],

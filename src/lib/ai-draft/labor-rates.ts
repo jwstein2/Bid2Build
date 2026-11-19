@@ -53,7 +53,7 @@ export const TRADE_DEFAULT_LABOR: Record<string, LaborTrade> = {
   painting: "painter", electrical: "electrician", plumbing: "plumber", hvac: "hvac", flooring: "flooring", tile: "tile",
   framing: "carpenter", "finish-carpentry": "carpenter", "cabinets-countertops": "carpenter", "windows-doors": "carpenter",
   insulation: "insulation", gutters: "sheet_metal", fencing: "fence", landscaping: "landscaping", "pressure-washing": "laborer",
-  "soft-washing": "laborer", excavation: "laborer", foundations: "concrete", masonry: "mason", "asphalt-paving": "laborer",
+  "soft-washing": "laborer", cleaning: "laborer", excavation: "laborer", foundations: "concrete", masonry: "mason", "asphalt-paving": "laborer",
   demolition: "laborer", basements: "carpenter", additions: "carpenter", garages: "carpenter", "pole-barns": "carpenter",
   "commercial-remodeling": "carpenter", "general-contracting": "carpenter", handyman: "handyman", other: "handyman",
 };

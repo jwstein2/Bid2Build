@@ -9,6 +9,7 @@ export function ContractorNav({ company }: { company: boolean }) {
     { label: "Customer balances", href: "/financials/receivables" },
     { label: "Job profitability", href: company ? "/financials/reports" : "/financials/records?view=jobs" },
     { label: "Cash received", href: "/financials/records?view=payments" },
+    { label: "Overhead & bills", href: "/financials/overhead" },
   ];
   return (
     <nav aria-label="Financials" className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0" data-guide="fin.contractor-nav" data-testid="fin-contractor-nav">

@@ -25,6 +25,7 @@ const GROUPS: { title: string; tools: Tool[] }[] = [
   { title: "Job costs", tools: [
     { label: "Expenses & receipts", href: "/financials/records?view=costs", needs: "view_project_financials" },
     { label: "Vendor bills", href: "/financials/records?view=costs&filter=bills_pending", needs: "view_company_financials" },
+    { label: "Overhead & company bills (rent, insurance, software)", href: "/financials/overhead", needs: "record_bills" },
     { label: "Commitments (subcontracts & POs)", href: "/financials/records?view=commitments", needs: "view_project_financials" },
     { label: "Budget vs actual by job", href: "/financials/records?view=jobs", needs: "view_project_financials" },
   ] },

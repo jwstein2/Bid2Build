@@ -275,6 +275,19 @@ export const TRADE_MODELS: Record<string, TradeModel> = {
     complexity: (m) => (n(m, "stories") >= 3 || m.access === "difficult" || m.roof_included === true ? "complex" : m.stories || m.access ? "standard" : null),
     complexityRule: "Complex = 3+ stories, difficult access, or roof cleaning included.",
   },
+  cleaning: {
+    trade: "cleaning",
+    projectTypes: o(["post_construction", "Post-construction"], ["move_in_out", "Move-in / move-out"], ["deep_clean", "Deep clean"], ["recurring", "Recurring service"], ["commercial", "Commercial / janitorial"]),
+    primary: { key: "area_sqft", unit: "square foot", label: "Cleaned area" },
+    fields: [
+      num("area_sqft", "Cleaned area", "SF"),
+      num("bathrooms", "Bathrooms", "count"),
+      sel("condition", "Condition", o(["light", "Light / maintained"], ["moderate", "Moderate"], ["heavy", "Heavy (construction dust, neglect)"])),
+      sel("frequency", "Frequency", o(["one_time", "One time"], ["weekly", "Weekly"], ["biweekly", "Every two weeks"], ["monthly", "Monthly"])),
+    ],
+    complexity: (m) => (m.condition === "heavy" ? "complex" : m.condition ? "standard" : null),
+    complexityRule: "Complex = heavy condition (construction dust or neglect).",
+  },
   landscaping: {
     trade: "landscaping",
     projectTypes: o(["install", "New install"], ["maintenance", "Maintenance"], ["hardscape", "Hardscape"]),

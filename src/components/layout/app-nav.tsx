@@ -207,7 +207,8 @@ export function AppSidebar({ isAdmin, email, company, access = null, projects = 
         </form>
         {email && <p className="truncate px-3 pt-2 text-xs text-[#B8C6D4] md:hidden">{email}</p>}
       </nav>
-      <p className="mt-auto hidden truncate border-t border-white/10 px-5 py-4 text-xs text-[#B8C6D4] md:block">{email}</p>
+      {/* md:pb-20 reserves room under the email for the fixed Guide button, so it never covers Sign out. */}
+      <p className="mt-auto hidden truncate border-t border-white/10 px-5 pb-20 pt-4 text-xs text-[#B8C6D4] md:block">{email}</p>
     </>
   );
 }
