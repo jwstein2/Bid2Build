@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cleanRows, ImportBody, importSecretMatches } from "@/lib/sales/import";
+import { cleanRows, ImportBody, importAuthCheck, importSecretMatches } from "@/lib/sales/import";
 import { verificationSources } from "@/lib/sales/crm";
 
 const good = {
@@ -42,5 +42,8 @@ describe("sales lead import payload", () => {
     expect(importSecretMatches(null, secret)).toBe(false);
     expect(importSecretMatches("Bearer short", "short")).toBe(false);
     expect(importSecretMatches("Bearer ", undefined)).toBe(false);
+    expect(importAuthCheck(`Bearer ${secret}`, "short")).toBe("not_configured");
+    expect(importAuthCheck(null, secret)).toBe("no_credentials");
+    expect(importAuthCheck("Bearer nope", secret)).toBe("mismatch");
   });
 });

@@ -71,8 +71,19 @@ export function cleanRows(rows: unknown[]): { valid: ImportLeadRow[]; unverified
  * all). A secret under 24 characters keeps the route closed.
  */
 export function importSecretMatches(header: string | null, secret: string | undefined): boolean {
+  return importAuthCheck(header, secret) === "ok";
+}
+
+/**
+ * Why a request was or wasn't let in, without revealing anything about the secret's value:
+ * "not_configured" (server has no secret of 24+ characters), "no_credentials" (no Authorization
+ * header reached us), "mismatch" (a header arrived but doesn't match), or "ok".
+ */
+export function importAuthCheck(header: string | null, secret: string | undefined): "ok" | "not_configured" | "no_credentials" | "mismatch" {
   const want = (secret ?? "").trim();
+  if (want.length < 24) return "not_configured";
   const got = (header ?? "").trim().replace(/^bearer\s+/i, "").trim();
+  if (!got) return "no_credentials";
   const a = Buffer.from(got), b = Buffer.from(want);
-  return want.length >= 24 && a.length === b.length && timingSafeEqual(a, b);
+  return a.length === b.length && timingSafeEqual(a, b) ? "ok" : "mismatch";
 }
