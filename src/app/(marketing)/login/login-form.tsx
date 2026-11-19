@@ -14,7 +14,7 @@ export function loginCopy(next: string): AuthDialogCopy {
   const enterprise = /[?&]plan=enterprise\b/.test(next);
   const goal = enterprise ? "continue with Team" : "sign in";
   return {
-    title: enterprise ? "Verify your email to continue with Team" : "Log in or sign up",
+    title: enterprise ? "Verify your email to continue with Team" : "Sign in or create an account",
     emailDescription: enterprise
       ? "No password needed. Your Team selection stays selected, and nothing is charged until you review checkout."
       : "No password needed. New here? Entering your email creates your free account.",

@@ -23,7 +23,7 @@ const IMPORT_FIELDS: { key: keyof Imported; label: string; target: keyof Biz }[]
   { key: "secondaryColor", label: "Secondary color", target: "secondaryColor" },
 ];
 
-export function CompanyStep({ business, onChange, signedIn, onDone, missing }: { business: Biz; onChange: (b: Biz) => void; signedIn: boolean; onDone?: () => void; /** Readiness codes still blocking download (shown inline). */ missing?: ReadonlySet<string> }) {
+export function CompanyStep({ business, onChange, signedIn, onDone, missing, asPage = false }: { business: Biz; onChange: (b: Biz) => void; signedIn: boolean; onDone?: () => void; /** Readiness codes still blocking download (shown inline). */ missing?: ReadonlySet<string>; /** Settings page: the heading is the page's h1 and matches the "Company profile" menu item. */ asPage?: boolean }) {
   const [hasSite, setHasSite] = useState<boolean | null>(business.website ? true : null);
   const [url, setUrl] = useState(business.website ?? "");
   const [importing, setImporting] = useState(false);
@@ -84,7 +84,7 @@ export function CompanyStep({ business, onChange, signedIn, onDone, missing }: {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <h2 className="text-2xl font-extrabold">Your company</h2>
+        {asPage ? <h1 className="text-3xl font-extrabold text-navy">Company profile</h1> : <h2 className="text-2xl font-extrabold">Your company</h2>}
         <p className="mt-1 text-ink-soft">This appears on every proposal. {signedIn ? "It's saved to your account and reused on future bids." : "It's saved on this device until you create an account."}</p>
       </div>
 

@@ -34,7 +34,7 @@ export async function Header() {
           {status.signedIn ? (
             <ButtonLink href="/dashboard" variant="secondary" size="sm" data-cta="bids">My Bids</ButtonLink>
           ) : (
-            <Link href="/login" className="rounded-md px-3 py-2 text-sm font-medium text-ink-soft hover:text-ink">Log in</Link>
+            <Link href="/login" className="rounded-md px-3 py-2 text-sm font-medium text-ink-soft hover:text-ink">Sign in</Link>
           )}
           <ButtonLink href={primary.href} variant="accent" size="sm" data-cta={primary.action}>{primary.label}</ButtonLink>
         </div>
