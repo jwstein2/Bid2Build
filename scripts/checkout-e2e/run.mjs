@@ -107,8 +107,8 @@ await test("Annual selected → OTP → automatic checkout (and plan switch insi
   await dialog(page).getByText("Verify your email to continue with Unlimited Annual.").waitFor();
   await page.mouse.move(0, 0);
   await page.waitForTimeout(300);
-  expect(await dialog(page).getByText("Equivalent to $12.42/month.").isVisible(), "annual equivalent in modal");
-  expect(await dialog(page).getByText(/Billed annually: \$149 charged once a year/).isVisible(), "annual billing line");
+  expect(await dialog(page).getByText("Equivalent to $16.58/month.").isVisible(), "annual equivalent in modal");
+  expect(await dialog(page).getByText(/Billed annually: \$199 charged once a year/).isVisible(), "annual billing line");
   await shot(page, "desktop-modal-annual-email");
   await page.getByLabel("Business email").fill("annual@example.test");
   await page.getByRole("button", { name: /Email me a verification code/ }).click();
@@ -266,12 +266,12 @@ await test("Delayed webhook → 'Confirming your payment' state, still Free", as
 });
 
 // 14. Pricing copy.
-await test("Pricing copy: $19.99/month billed monthly; $149/year billed annually; ≈38% savings", async () => {
+await test("Pricing copy: $19.99/month billed monthly; $199/year billed annually; ≈17% savings", async () => {
   const { ctx, page } = await setup();
   await page.goto(`${BASE}/pricing`);
   const text = await page.textContent("main");
-  for (const s of ["$19.99/month", "Billed monthly. Cancel anytime", "$149/year", "Billed annually", "Equivalent to $12.42/month. Save approximately 38% compared with monthly billing.", "include exactly the same features"]) expect(text.includes(s), `missing "${s}"`);
-  expect(!text.includes("Just $12.42"), "old copy removed");
+  for (const s of ["$19.99/month", "Billed monthly. Cancel anytime", "$199/year", "Billed annually", "Equivalent to $16.58/month. Save approximately 17% compared with monthly billing.", "include exactly the same features"]) expect(text.includes(s), `missing "${s}"`);
+  expect(!text.includes("Just $16.58"), "old copy removed");
   await ctx.close();
 });
 
@@ -289,7 +289,7 @@ for (const width of [320, 375, 390, 430]) {
     const btn = page.getByRole("button", { name: "Choose Annual" });
     const box = await btn.boundingBox();
     expect(box && box.height >= 44, `tap target ${box?.height}px`);
-    const priceLine = annualCard.locator("p", { hasText: "$149/year" }).first();
+    const priceLine = annualCard.locator("p", { hasText: "$199/year" }).first();
     const lh = await priceLine.evaluate((el) => el.getBoundingClientRect().height);
     expect(lh < 60, `price line wraps (${lh}px)`);
     await btn.click();

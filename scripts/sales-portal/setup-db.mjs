@@ -39,7 +39,7 @@ const customers = [
   // email, business, rep, months since first paid (null = free), basis cents, sub status, has bid
   ["office@summitroofing.biz", "Summit Roofing Co.", jordan, 13, 4999, "active", true],
   ["hello@brightdeck.biz", "Bright Deck & Fence", jordan, 8, 1999, "active", true],
-  ["jobs@clearviewpaint.biz", "Clearview Painting", jordan, 1, 1242, "active", true],
+  ["jobs@clearviewpaint.biz", "Clearview Painting", jordan, 1, 1658, "active", true],
   ["team@northstarhvac.biz", "North Star HVAC", jordan, 0, 1999, "active", true],
   ["info@ironcladconcrete.biz", "Ironclad Concrete", jordan, 5, 1999, "canceled", true],
   ["owner@greenleafland.biz", "Greenleaf Landscaping", jordan, null, null, null, true],
@@ -53,8 +53,8 @@ for (const [email, biz, rep, back, basis, status, bid] of customers) {
   if (bid) await q("insert into public.estimates (user_id, title) values ($1, 'Sample bid')", [u]);
   await q(`insert into public.sales_attributions (user_id, rep_id, source, code, attributed_at, plan, sub_status, basis_cents, first_paid_at, first_paid_month, last_paid_at)
            values ($1, $2, 'link', 'X', now() - interval '1 day' * $3, $4, $5, $6, ${back == null ? "null" : `${monthStart(back)} + interval '9 days'`}, ${back == null ? "null" : monthStart(back)}, ${back == null ? "null" : "now() - interval '5 days'"})`,
-    [u, rep, (back ?? 0) * 30 + 10, back == null ? null : basis === 1242 ? "annual" : basis === 7797 ? "enterprise" : "monthly", status, basis]);
-  if (status) await q("insert into public.subscriptions (stripe_subscription_id, user_id, stripe_customer_id, status, plan, source_event_created) values ($1, $2, $3, $4, $5, now())", [`sub_${u}`, u, `cus_${u}`, status, basis === 1242 ? "annual" : basis === 7797 ? "enterprise" : "monthly"]);
+    [u, rep, (back ?? 0) * 30 + 10, back == null ? null : basis === 1658 ? "annual" : basis === 7797 ? "enterprise" : "monthly", status, basis]);
+  if (status) await q("insert into public.subscriptions (stripe_subscription_id, user_id, stripe_customer_id, status, plan, source_event_created) values ($1, $2, $3, $4, $5, now())", [`sub_${u}`, u, `cus_${u}`, status, basis === 1658 ? "annual" : basis === 7797 ? "enterprise" : "monthly"]);
   if (back != null) {
     await q(`insert into public.sales_commissions (rep_id, user_id, year_no, period_month, amount_cents, status, stripe_invoice_id, created_at)
              values ($1, $2, 1, ${monthStart(back)}, $3, 'pending', $4, ${monthStart(back)} + interval '9 days')`, [rep, u, back >= 12 ? 1999 : basis, `in_${email.split("@")[0]}`]);

@@ -26,7 +26,7 @@ describe("referral links", () => {
   });
   it("prices one free month from the referrer's own plan", () => {
     expect(oneMonthCents({ unit_amount: 1999, recurring: { interval: "month" } })).toBe(1999);
-    expect(oneMonthCents({ unit_amount: 14900, recurring: { interval: "year" } })).toBe(1242);
+    expect(oneMonthCents({ unit_amount: 19900, recurring: { interval: "year" } })).toBe(1658);
     expect(oneMonthCents({ unit_amount: 4999, recurring: { interval: "month", interval_count: 1 } })).toBe(4999);
     expect(oneMonthCents({ unit_amount: 0, recurring: { interval: "month" } })).toBeNull();
     expect(oneMonthCents({ unit_amount: 1999, recurring: null })).toBeNull();

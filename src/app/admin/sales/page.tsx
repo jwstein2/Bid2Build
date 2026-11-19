@@ -17,7 +17,7 @@ interface Funnel {
 
 const RANGES = { "30": "Last 30 days", "90": "Last 90 days", "365": "Last 12 months" } as const;
 // List prices, used only for a run-rate estimate. Stripe is the source of truth for collected revenue.
-const MONTHLY = 19.99, ANNUAL = 149;
+const MONTHLY = 19.99, ANNUAL = 199;
 
 const daysAgoIso = (days: number) => new Date(Date.now() - days * 86_400_000).toISOString();
 const pct = (n: number, d: number) => (d > 0 ? `${((n / d) * 100).toFixed(1)}%` : "—");

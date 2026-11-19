@@ -8,7 +8,7 @@
 ## Unlimited indicators and gating
 - A small diamond (lucide `Gem`) marks **Saved Items & Pricing** and **Proposal Templates** in the sidebar (also in the mobile menu and current-page label), on their dashboard cards and page titles. Hover/screen readers: "Unlimited feature".
 - Dashboard: Saved Items and Proposal Templates cards side by side. Free accounts see the approved one-line pitch and "See Unlimited plans".
-- Free accounts opening either page see the shared upgrade panel (`components/billing/premium.tsx`): what it does, both plans ($19.99/month, $149/year) through the existing Stripe checkout, and Not now.
+- Free accounts opening either page see the shared upgrade panel (`components/billing/premium.tsx`): what it does, both plans ($19.99/month, $199/year) through the existing Stripe checkout, and Not now.
 - One entitlement check, `hasPremiumAccess()` (`lib/billing/entitlement.ts`), wraps the database's `library_access()` (Unlimited in good standing or admin). Used by the library API, templates page and save action, dashboard, `/api/business` and new-bid start.
 
 ## Server-side enforcement

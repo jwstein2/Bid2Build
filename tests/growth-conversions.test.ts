@@ -69,7 +69,7 @@ describe("queue and delivery", () => {
   });
   it("queues once-keyed rows with consent", async () => {
     const a = fakeAdmin({ consent: { granted: true, at: "x", fbp: "fb.1.1.2" } });
-    expect(await queueMetaConversion(a, { userId: "u1", event: "subscribed", eventId: "subscribed:sub_1", value: 149 }, metaConfig(ON))).toBe("queued");
+    expect(await queueMetaConversion(a, { userId: "u1", event: "subscribed", eventId: "subscribed:sub_1", value: 199 }, metaConfig(ON))).toBe("queued");
     expect(a.upserts[0]).toMatchObject({ platform: "meta", event_id: "subscribed:sub_1", event_name: "Subscribe" });
   });
   it("delivers with the token server-side, records failures without leaking the token", async () => {

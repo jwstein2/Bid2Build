@@ -47,7 +47,7 @@ Server-side and atomic in Postgres (`20261112000500_two_balance_credits.sql`):
 5. `has_unlimited()` = status active/trialing/past_due and period not ended.
 6. Portal: `POST /api/stripe/portal` for cards, invoices, plan switch, cancel.
 
-Prices: $19.99/month, $149/year (`npm run stripe:setup`). Live keys refused unless `STRIPE_ALLOW_LIVE=true`.
+Prices: $19.99/month, $199/year (`npm run stripe:setup`). Live keys refused unless `STRIPE_ALLOW_LIVE=true`.
 
 ## 4. Professional proposal generation
 

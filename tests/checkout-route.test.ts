@@ -16,7 +16,7 @@ const state = {
   sessions: [] as Sess[],
   prices: {
     price_month: { unit_amount: 1999, currency: "usd", recurring: { interval: "month", interval_count: 1 }, active: true },
-    price_year: { unit_amount: 14900, currency: "usd", recurring: { interval: "year", interval_count: 1 }, active: true },
+    price_year: { unit_amount: 19900, currency: "usd", recurring: { interval: "year", interval_count: 1 }, active: true },
   } as Record<string, unknown>,
   created: [] as { params: Record<string, unknown>; key?: string }[],
   expired: [] as string[],

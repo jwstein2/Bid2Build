@@ -52,7 +52,7 @@ export default async function HomePage() {
     offers: [
       { "@type": "Offer", price: "0", priceCurrency: "USD", name: "Free" },
       { "@type": "Offer", price: "19.99", priceCurrency: "USD", name: "Unlimited Monthly" },
-      { "@type": "Offer", price: "149", priceCurrency: "USD", name: "Unlimited Annual" },
+      { "@type": "Offer", price: "199", priceCurrency: "USD", name: "Unlimited Annual" },
       ...(pm ? [{ "@type": "Offer", price: PRICES.pmMonthly.replace("$", ""), priceCurrency: "USD", name: `${PM_PRODUCT_NAME} add-on (monthly)` }] : []),
       { "@type": "Offer", price: PRICES.enterpriseBase.replace("$", ""), priceCurrency: "USD", name: `Team (${PRICES.enterpriseIncludedUsers} users, monthly)` },
     ],

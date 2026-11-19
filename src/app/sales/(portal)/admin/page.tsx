@@ -48,7 +48,7 @@ const REP_STATUS: Record<string, { label: string; tone: "neutral" | "ok" | "warn
 };
 
 const POLICY = {
-  annual_basis: { divide_12: "Annual price ÷ 12 ($149 → $12.42)", monthly_list: "Monthly list price ($19.99)", full_payment: "Full annual payment ($149)" },
+  annual_basis: { divide_12: "Annual price ÷ 12 ($199 → $16.58)", monthly_list: "Monthly list price ($19.99)", full_payment: "Full annual payment ($199)" },
   refund_policy: {
     month_end_clawback: "Hold to month end; refund before payout voids it, after payout it's deducted from the next statement",
     hold_30_no_clawback: "Hold 30 days after payment; refunds inside the window void it, later refunds never affect the rep",

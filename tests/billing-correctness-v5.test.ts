@@ -93,9 +93,9 @@ describe("Scenario matrix: monthly list value of each subscription shape", () =>
 
   it.each([
     ["Standard monthly", [std(1999)], 1999],
-    ["Standard annual (per year)", [std(14900)], 14900],
+    ["Standard annual (per year)", [std(19900)], 19900],
     ["Standard + PM monthly", [std(1999), { quantity: 1, price: { id: "pm", unit_amount: PM_ADDON_CENTS } }], 2498],
-    ["Standard annual + PM annual (per year)", [std(14900), { quantity: 1, price: { id: "pma", unit_amount: PM_ADDON_ANNUAL_CENTS } }], 19899],
+    ["Standard annual + PM annual (per year)", [std(19900), { quantity: 1, price: { id: "pma", unit_amount: PM_ADDON_ANNUAL_CENTS } }], 24899],
     ["Enterprise 3 users", ent(3), 4999],
     ["Enterprise 5 users", ent(5), 8997],
     ["Enterprise 10 users", ent(10), 17992],
@@ -136,7 +136,7 @@ describe("Referral reward prices the plan item, not an add-on or tiered seat", (
   it("Standard + PM: the $19.99 plan, not the $4.99 add-on", () => {
     expect(pickPlanItem([m(499), m(1999)])?.price.unit_amount).toBe(1999);
   });
-  it("Annual: the $149 plan", () => {
-    expect(pickPlanItem([m(4999, "year"), m(14900, "year")])?.price.unit_amount).toBe(14900);
+  it("Annual: the $199 plan", () => {
+    expect(pickPlanItem([m(4999, "year"), m(19900, "year")])?.price.unit_amount).toBe(19900);
   });
 });
