@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cleanRows, ImportBody } from "@/lib/sales/import";
+import { cleanRows, ImportBody, importSecretMatches } from "@/lib/sales/import";
 import { verificationSources } from "@/lib/sales/crm";
 
 const good = {
@@ -33,5 +33,14 @@ describe("sales lead import payload", () => {
   it("lists verification sources by field, ignoring anything that isn't a web link", () => {
     expect(verificationSources({ owner_name: ["https://mn.gov/x", "javascript:alert(1)"], phone: "nope", email_domain_mx: true }))
       .toEqual([{ field: "Owner", urls: ["https://mn.gov/x"] }]);
+  });
+
+  it("matches the import secret despite common paste slips, and stays closed without one", () => {
+    const secret = "a".repeat(32);
+    for (const h of [`Bearer ${secret}`, `bearer ${secret}`, `Bearer  ${secret} `, secret, ` Bearer ${secret}\n`]) expect(importSecretMatches(h, `${secret}\n`)).toBe(true);
+    expect(importSecretMatches(`Bearer ${secret}x`, secret)).toBe(false);
+    expect(importSecretMatches(null, secret)).toBe(false);
+    expect(importSecretMatches("Bearer short", "short")).toBe(false);
+    expect(importSecretMatches("Bearer ", undefined)).toBe(false);
   });
 });

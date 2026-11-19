@@ -1,8 +1,7 @@
-import { timingSafeEqual } from "node:crypto";
 import { resolveMx } from "node:dns/promises";
 import { createAdminClient } from "@/lib/supabase/server";
 import { fail, json, logError } from "@/lib/http/api";
-import { cleanRows, ImportBody, type ImportLeadRow, type ImportResult } from "@/lib/sales/import";
+import { cleanRows, ImportBody, importSecretMatches, type ImportLeadRow, type ImportResult } from "@/lib/sales/import";
 import { fillBriefs, type BriefLead } from "@/lib/sales/brief";
 
 export const runtime = "nodejs";
@@ -16,10 +15,7 @@ export const runtime = "nodejs";
  * Body format: docs/sales-portal/LEAD_IMPORT.md.
  */
 function authorized(req: Request): boolean {
-  const secret = process.env.SALES_LEAD_IMPORT_SECRET ?? "";
-  const got = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
-  const a = Buffer.from(got), b = Buffer.from(secret);
-  return secret.length >= 24 && a.length === b.length && timingSafeEqual(a, b);
+  return importSecretMatches(req.headers.get("authorization"), process.env.SALES_LEAD_IMPORT_SECRET);
 }
 
 export async function GET(req: Request) {
