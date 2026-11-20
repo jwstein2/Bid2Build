@@ -5,6 +5,7 @@ import { fromHeader, newRfcMessageId, sendCommEmail } from "@/lib/comms/send";
 import { logError } from "@/lib/http/api";
 import { site } from "@/lib/site";
 import { complianceDigest, type ExpiryItem } from "@/lib/team/sub-requests";
+import { isDemoTenant } from "@/lib/demo/guard";
 
 type Admin = ReturnType<typeof createAdminClient>;
 type Due = { doc_id: string; stage: ExpiryItem["stage"]; company_id: string | null; owner_id: string | null; resource_id: string; sub_name: string; doc_type: string; expires_on: string };
@@ -35,6 +36,8 @@ export async function runComplianceNotices(admin: Admin, today: string, cfg: Com
       companyName = (c as { name?: string } | null)?.name ?? null;
     }
     if (!ownerId) { out.skipped++; continue; }
+    // Demo / practice sample companies never get email (their subs and documents are fictional).
+    if (await isDemoTenant(admin, ownerId) || (k.startsWith("c:") && await isDemoTenant(admin, k.slice(2)))) { out.skipped++; continue; }
     const { data: bp } = await admin.from("business_profiles").select("company_name, email").eq("user_id", ownerId).maybeSingle();
     let to = String((bp as { email?: string } | null)?.email ?? "").trim().toLowerCase();
     if (!to) { const { data: u } = await admin.auth.admin.getUserById(ownerId); to = String(u?.user?.email ?? "").toLowerCase(); }

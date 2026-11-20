@@ -12,6 +12,8 @@ export default async function MySignaturePage() {
   if (!isContractorSigningEnabled()) notFound();
   const user = await getUser();
   if (!user) redirect("/login?next=/settings/account/signature");
+  // Demo / Practice Mode: signing re-checks send a real code by email, so this page isn't part of the sample.
+  if (user.demo) redirect("/settings/account");
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <Breadcrumbs items={[{ label: "Account settings", href: "/settings/account" }, { label: "My signature" }]} />
