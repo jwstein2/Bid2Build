@@ -37,7 +37,7 @@ const setMode = async (mode) => {
 await fetch(`${M}/__onboarding?status=completed`).catch(() => {});
 await fetch(`${M}/__features?created=${encodeURIComponent(new Date().toISOString())}`).catch(() => {});
 
-const PHONES = [320, 360, 375, 390, 430];
+const PHONES = process.env.ONLY_INTERACTION ? [] : [320, 360, 375, 390, 430];
 const SIZES = [...PHONES.map((w) => ({ w, h: w <= 320 ? 568 : w <= 375 ? 667 : w <= 390 ? 844 : 932, phone: true })), { w: 768, h: 1024 }, { w: 1024, h: 768 }, { w: 1440, h: 900 }];
 const browser = await chromium.launch();
 const errors = [];
