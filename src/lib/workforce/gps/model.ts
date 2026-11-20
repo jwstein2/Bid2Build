@@ -2,7 +2,7 @@
  * V8.2 customer GPS timekeeping: types, mappers and labels (pure). SQL: 20270208001000_gps_timekeeping.sql.
  * Customer-facing only (a contractor company's own W-2 employees); unrelated to Built2Bid's internal staff.
  */
-import { mapEntry, num, type TimeEntry, type WorkType } from "@/lib/team/records";
+import { isWorkCategory, mapEntry, num, type TimeEntry, type WorkCategory, type WorkType } from "@/lib/team/records";
 import type { OvertimeRule } from "./overtime";
 
 const str = (v: unknown) => (typeof v === "string" && v.trim() ? v : null);
@@ -125,6 +125,7 @@ export interface Correction {
   id: string; resourceId: string; entryId: string | null; kind: "fix" | "missing"; clockIn: string; clockOut: string; breakMinutes: number; paidBreakMinutes: number;
   scheduleId: string | null; locationId: string | null; workType: WorkType; reason: string; status: "pending" | "approved" | "denied" | "withdrawn";
   requestedAt: string; decidedAt: string | null; decisionNote: string | null; current: TimeEntry | null;
+  workCategory: WorkCategory | null; issue: string | null;
 }
 export function mapCorrections(raw: unknown): Correction[] {
   return arr(raw).map((k) => ({
@@ -133,6 +134,7 @@ export function mapCorrections(raw: unknown): Correction[] {
     workType: (["travel", "offsite"].includes(String(k.workType)) ? k.workType : "regular") as WorkType, reason: String(k.reason ?? ""),
     status: (["approved", "denied", "withdrawn"].includes(String(k.status)) ? k.status : "pending") as Correction["status"],
     requestedAt: String(k.requestedAt), decidedAt: str(k.decidedAt), decisionNote: str(k.decisionNote), current: k.current ? mapEntry(k.current as Record<string, unknown>) : null,
+    workCategory: isWorkCategory(k.workCategory) ? k.workCategory : null, issue: str(k.issue),
   }));
 }
 

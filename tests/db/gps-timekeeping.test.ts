@@ -346,6 +346,7 @@ d("GPS timekeeping for contractor crews (database)", () => {
   });
 
   it("rollback removes everything and restores the original time clock", async () => {
+    await pool.query(readFileSync("docs/worker-hub/rollback_20270210001000.sql", "utf8"));
     await pool.query(readFileSync("docs/workforce-gps/rollback_20270208001000.sql", "utf8"));
     const left = (await pool.query("select table_name from information_schema.tables where table_name in ('pm_work_locations','pm_geofence_events','pm_gps_settings','pm_time_corrections','pm_gps_enrollments','pm_time_supervisors','pm_gps_audit','pm_timesheet_signoffs','pm_work_location_assignments')")).rows;
     expect(left).toEqual([]);

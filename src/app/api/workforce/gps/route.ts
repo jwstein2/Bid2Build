@@ -2,6 +2,7 @@ import { z } from "zod";
 import { fail, json } from "@/lib/http/api";
 import { dbFail, guardRead, guardWrite } from "@/lib/team/route-helpers";
 import { mapAdmin, mapCorrections, mapEvents, mapExceptions } from "@/lib/workforce/gps/model";
+import { mapClassifications } from "@/lib/workforce/hub/model";
 
 export const runtime = "nodejs";
 
@@ -23,11 +24,12 @@ export async function GET(req: Request) {
   const { data, error } = await g.supabase.rpc("pm_gps_admin_overview");
   if (error) return dbFail("gps.overview", error);
   const admin = mapAdmin(data);
-  const [ex, corr] = await Promise.all([
+  const [ex, corr, cls] = await Promise.all([
     admin.canSupervise ? g.supabase.rpc("pm_gps_exceptions") : Promise.resolve({ data: null, error: null }),
     g.supabase.rpc("pm_time_corrections_list", { p_status: "pending" }),
+    g.supabase.rpc("pm_worker_classifications"),
   ]);
-  return json({ admin, exceptions: ex.data ? mapExceptions(ex.data) : null, corrections: corr.error ? [] : mapCorrections(corr.data) });
+  return json({ admin, exceptions: ex.data ? mapExceptions(ex.data) : null, corrections: corr.error ? [] : mapCorrections(corr.data), classifications: cls.error ? null : mapClassifications(cls.data) });
 }
 
 const hhmm = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);

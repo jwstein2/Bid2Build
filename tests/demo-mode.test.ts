@@ -163,6 +163,7 @@ describe("Practice Mode for everyone", () => {
       "src/lib/trial/delivery.ts",        // Facebook trial invites (public funnel, not a signed-in session)
       "src/lib/sales/invite-email.ts", "src/lib/sales/booking-email.ts", "src/lib/sales/congrats-email.ts", "src/lib/sales/digest.ts", // staff Sales Hub (/api/sales blocked)
       "src/app/api/webhooks/resend/route.ts", // inbound mail webhook (reads only)
+      "src/lib/payouts/notify.ts",        // Built2Bid staff payouts: staff_members only, payment emails for live payouts only
     ]);
     const root = path.join(__dirname, "..");
     const found: string[] = [];

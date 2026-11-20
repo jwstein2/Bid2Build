@@ -64,7 +64,7 @@ const PROJECTS: NavItem = { href: "/projects", label: "Projects", icon: Calendar
 const WORKFORCE: NavItem = { href: "/projects/workforce", label: "Contractors & Workforce", icon: HardHat };
 const HOME: NavItem = { href: "/home", label: "Home", icon: House, exact: true };
 /** V8.2: employees linked to a Staff entry get the time clock right under Home. */
-const CLOCK: NavItem = { href: "/clock", label: "Time clock", icon: Clock };
+const CLOCK: NavItem = { href: "/clock", label: "My work", icon: Clock };
 /** V6.8 Industry Intelligence: free for every plan. */
 const INDUSTRY: NavItem = { href: "/industry", label: "Industry News", icon: Newspaper };
 

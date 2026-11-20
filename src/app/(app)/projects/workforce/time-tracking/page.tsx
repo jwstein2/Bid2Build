@@ -6,11 +6,12 @@ import { createClient } from "@/lib/supabase/server";
 import { isPmEnabled } from "@/lib/env";
 import { loadClockProjects } from "@/lib/team/server";
 import { mapAdmin, mapCorrections, mapExceptions } from "@/lib/workforce/gps/model";
+import { mapClassifications } from "@/lib/workforce/hub/model";
 import { TimeTrackingAdmin } from "@/components/workforce/gps/time-tracking-admin";
 import { Notice } from "@/components/ui/misc";
 
 export const metadata: Metadata = { title: "Time tracking", robots: { index: false } };
-const TABS = ["overview", "locations", "employees", "settings", "corrections", "payroll"] as const;
+const TABS = ["overview", "locations", "employees", "settings", "corrections", "payroll", "schedules", "report", "pay"] as const;
 
 /**
  * Projects → Contractors & Workforce → Time tracking (V8.2): automatic GPS clock-in/out for the company's own W-2
@@ -24,7 +25,7 @@ export default async function TimeTrackingPage({ searchParams }: { searchParams:
     <div>
       <Link href="/projects/workforce" className="inline-flex items-center gap-1 text-sm font-semibold text-accent-ink hover:underline"><ChevronLeft className="h-4 w-4" aria-hidden /> Contractors &amp; Workforce</Link>
       <h1 className="mt-1 flex items-center gap-2 text-3xl font-extrabold text-navy"><LocateFixed className="h-7 w-7 text-accent-ink" aria-hidden /> Time tracking</h1>
-      <p className="mt-1 text-ink-soft">GPS clock-in at your shop and jobsites, timesheet approvals and payroll-ready exports for your W-2 crew.</p>
+      <p className="mt-1 text-ink-soft">GPS clock-in at your shop and jobsites, schedules, timesheet approvals, labor cost by job and payroll-ready exports for your W-2 crew.</p>
     </div>
   );
   if (ov.error || !ov.data) {
@@ -38,15 +39,16 @@ export default async function TimeTrackingPage({ searchParams }: { searchParams:
     );
   }
   const admin = mapAdmin(ov.data);
-  const [ex, corr] = await Promise.all([
+  const [ex, corr, cls] = await Promise.all([
     admin.canSupervise ? supabase.rpc("pm_gps_exceptions") : Promise.resolve({ data: null }),
     supabase.rpc("pm_time_corrections_list", { p_status: "pending" }),
+    supabase.rpc("pm_worker_classifications"),
   ]);
   const tab = TABS.find((t) => t === sp.tab);
   return (
     <div className="mx-auto max-w-6xl space-y-5" data-guide-page="projects.workforce.time-tracking">
       {header}
-      <TimeTrackingAdmin initial={{ admin, exceptions: ex.data ? mapExceptions(ex.data) : null, corrections: "error" in corr && corr.error ? [] : mapCorrections(corr.data) }}
+      <TimeTrackingAdmin initial={{ admin, exceptions: ex.data ? mapExceptions(ex.data) : null, corrections: "error" in corr && corr.error ? [] : mapCorrections(corr.data), classifications: cls.error ? null : mapClassifications(cls.data) }}
         projects={Object.fromEntries(projects.map((p) => [p.id, p.name]))} initialTab={tab} />
     </div>
   );
