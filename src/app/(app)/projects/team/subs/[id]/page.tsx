@@ -43,7 +43,7 @@ export default async function SubRecordPage({ params }: { params: Promise<{ id: 
       <TeamNav active="subs" />
       {record && requests && <RequestDocsCard resourceId={record.resourceId} requests={requests} defaultEmail={String((res?.data as { email?: string | null } | null)?.email ?? "")} now={now} />}
       {record && tinStatus && <FullTinCard resourceId={record.resourceId} status={tinStatus} ready={piiReady()} tinType={record.tax?.tinType ?? null} />}
-      {record ? <SubRecordView record={record} today={new Date().toISOString().slice(0, 10)} />
+      {record ? <SubRecordView record={record} today={new Date().toISOString().slice(0, 10)} piiReady={piiReady()} />
         : forbidden ? <Notice tone="warn" title="Restricted">Only the company owner and people allowed to “Manage subcontractor compliance” can see W-9s and certificates.</Notice>
         : <Notice tone="warn" title="Subcontractor records are being set up">The database update for this page hasn&apos;t been applied yet.</Notice>}
     </div>

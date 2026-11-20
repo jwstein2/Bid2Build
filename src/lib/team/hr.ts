@@ -24,6 +24,14 @@ export const HR_DOC_TYPES = [
 export type HrDocType = (typeof HR_DOC_TYPES)[number]["value"];
 export const hrDocLabel = (t: string) => HR_DOC_TYPES.find((d) => d.value === t)?.label ?? t;
 
+/** Common trade licenses and certifications, offered as suggestions (any name can be typed). */
+export const CERT_PRESETS = [
+  "Driver's license", "CDL Class A", "CDL Class B", "OSHA 10 Construction", "OSHA 30 Construction", "First Aid/CPR/AED", "EPA Lead-Safe (RRP) Renovator",
+  "EPA Section 608 (HVAC refrigerant)", "Forklift operator", "Aerial / scissor lift operator", "Fall protection", "Confined space", "Silica competent person",
+  "Scaffold competent person", "NCCCO crane operator", "Journeyman electrician license", "Master electrician license", "Journeyman plumber license",
+  "Master plumber license", "HVAC license", "Backflow tester", "Pesticide applicator license", "Asbestos worker", "Flagger", "NATE (HVAC)",
+] as const;
+
 export const EMPLOYMENT_TYPES = { full_time: "Full-time", part_time: "Part-time", seasonal: "Seasonal", temporary: "Temporary", intern: "Intern" } as const;
 export const EMPLOYMENT_STATUSES = { applicant: "Applicant", active: "Active", on_leave: "On leave", separated: "No longer employed" } as const;
 export const SEPARATION_REASONS = { resigned: "Resigned", laid_off: "Laid off", terminated: "Terminated", retired: "Retired", contract_ended: "Job / season ended", other: "Other" } as const;
@@ -38,7 +46,37 @@ export const HR_FIELDS = {
   employmentType: "employment_type", employmentStatus: "employment_status", department: "department", supervisorId: "supervisor_id", workLocation: "work_location",
   separationDate: "separation_date", separationReason: "separation_reason", rehireEligible: "rehire_eligible", i9CompletedOn: "i9_completed_on",
   i9ReverifyOn: "i9_reverify_on", ptoHoursPerYear: "pto_hours_per_year", sickHoursPerYear: "sick_hours_per_year", notes: "notes",
+  // 20270205001000: pay, classification, withholding, direct deposit.
+  employeeNumber: "employee_number", payRate: "pay_rate", payRateUnit: "pay_rate_unit", payFrequency: "pay_frequency", flsaStatus: "flsa_status",
+  wcClassCode: "wc_class_code", tradeClassification: "trade_classification", unionLocal: "union_local", newHireReportedOn: "new_hire_reported_on",
+  w4FilingStatus: "w4_filing_status", w4MultipleJobs: "w4_multiple_jobs", w4DependentsAmount: "w4_dependents_amount", w4OtherIncome: "w4_other_income",
+  w4Deductions: "w4_deductions", w4ExtraWithholding: "w4_extra_withholding", w4Exempt: "w4_exempt", w4SignedOn: "w4_signed_on",
+  stateWithholdingState: "state_withholding_state", stateAllowances: "state_allowances", stateExtraWithholding: "state_extra_withholding", stateExempt: "state_exempt",
+  ddBankName: "dd_bank_name", ddAccountType: "dd_account_type", ddRouting: "dd_routing",
 } as const;
+
+/** Fields saved as numbers, and as yes/no. Everything else is text or a date. */
+export const HR_NUMBER_FIELDS = new Set<HrField>(["ptoHoursPerYear", "sickHoursPerYear", "payRate", "w4DependentsAmount", "w4OtherIncome", "w4Deductions",
+  "w4ExtraWithholding", "stateAllowances", "stateExtraWithholding"]);
+export const HR_BOOLEAN_FIELDS = new Set<HrField>(["rehireEligible", "w4MultipleJobs", "w4Exempt", "stateExempt"]);
+
+export const PAY_RATE_UNITS = { hour: "Per hour", year: "Per year (salary)" } as const;
+export const PAY_FREQUENCIES = { weekly: "Weekly", biweekly: "Every 2 weeks", semimonthly: "Twice a month", monthly: "Monthly" } as const;
+export const FLSA_STATUSES = { non_exempt: "Non-exempt (gets overtime)", exempt: "Exempt (salaried, no overtime)" } as const;
+export const W4_FILING_STATUSES = { single: "Single or married filing separately", married_jointly: "Married filing jointly", head_of_household: "Head of household" } as const;
+export const ACCOUNT_TYPES = { checking: "Checking", savings: "Savings" } as const;
+
+/** ABA routing number checksum (3-7-1 weights). The database checks the same. */
+export function routingOk(v: string): boolean {
+  if (!/^\d{9}$/.test(v)) return false;
+  const n = v.split("").map(Number);
+  return (3 * (n[0] + n[3] + n[6]) + 7 * (n[1] + n[4] + n[7]) + (n[2] + n[5] + n[8])) % 10 === 0;
+}
+/** 4 to 17 digits (US bank account numbers), or null. */
+export const normalizeAccountNumber = (v: unknown): string | null => {
+  const d = String(v ?? "").replace(/[\s-]/g, "");
+  return /^\d{4,17}$/.test(d) ? d : null;
+};
 export type HrField = keyof typeof HR_FIELDS;
 export type HrValues = Partial<Record<HrField, string | number | boolean | null>>;
 
@@ -51,12 +89,17 @@ export const HR_FIELD_LABEL: Record<string, string> = {
   employment_type: "employment type", employment_status: "status", department: "department", supervisor_id: "supervisor", work_location: "work location",
   separation_date: "separation date", separation_reason: "separation reason", rehire_eligible: "rehire eligibility", i9_completed_on: "I-9 date",
   i9_reverify_on: "I-9 reverification", pto_hours_per_year: "PTO allowance", sick_hours_per_year: "sick allowance", notes: "notes",
+  employee_number: "employee ID", pay_rate: "pay rate", pay_rate_unit: "pay rate", pay_frequency: "pay frequency", flsa_status: "overtime status",
+  wc_class_code: "workers' comp class", trade_classification: "trade classification", union_local: "union local", new_hire_reported_on: "new-hire report date",
+  w4_filing_status: "W-4", w4_multiple_jobs: "W-4", w4_dependents_amount: "W-4", w4_other_income: "W-4", w4_deductions: "W-4", w4_extra_withholding: "W-4",
+  w4_exempt: "W-4", w4_signed_on: "W-4", state_withholding_state: "state withholding", state_allowances: "state withholding",
+  state_extra_withholding: "state withholding", state_exempt: "state withholding", dd_bank_name: "direct deposit", dd_account_type: "direct deposit", dd_routing: "direct deposit",
 };
 
 export function describeHistory(action: string, fields: string[]): string {
   if (action === "hr_file.updated") return `Updated ${[...new Set(fields.map((f) => HR_FIELD_LABEL[f] ?? f))].join(", ")}`;
   const [what, verb] = action.split(".");
-  const subject = what === "ssn" ? "Social Security number" : what === "document" ? hrDocLabel(fields[0] ?? "") : what === "certification" ? `Certification ${fields[0] ?? ""}`.trim() : what === "time_off" ? "Time off" : action;
+  const subject = what === "ssn" ? "Social Security number" : what === "bank" ? "Bank account number" : what === "document" ? hrDocLabel(fields[0] ?? "") : what === "certification" ? `Certification ${fields[0] ?? ""}`.trim() : what === "time_off" ? "Time off" : action;
   const v = { saved: "saved", revealed: "viewed", removed: "removed", exported: "exported", added: "added", opened: "opened", approved: "approved", denied: "denied", canceled: "canceled" }[verb ?? ""] ?? verb;
   return `${subject} ${v}`;
 }
@@ -66,6 +109,7 @@ export interface HrFile {
   profile: { title: string | null; payType: string | null; hireDate: string | null } | null;
   hr: Record<string, string | number | boolean | null> | null;
   ssn: { onFile: boolean; last4: string | null };
+  bank: { onFile: boolean; last4: string | null };
   documents: { id: string; docType: HrDocType; title: string | null; signedOn: string | null; expiresOn: string | null; note: string | null; fileName: string | null; hasFile: boolean; recordedAt: string }[];
   certifications: { id: string; name: string; issuer: string | null; number: string | null; issuedOn: string | null; expiresOn: string | null; note: string | null }[];
   timeOff: { id: string; kind: keyof typeof TIME_OFF_KINDS; startDate: string; endDate: string; hours: number; status: "requested" | "approved" | "denied" | "canceled"; note: string | null }[];
@@ -88,6 +132,7 @@ export function mapHrFile(raw: unknown): HrFile {
     profile: p ? { title: str(p.title), payType: str(p.payType), hireDate: str(p.hireDate) } : null,
     hr: (r.hr as HrFile["hr"]) ?? null,
     ssn: { onFile: s.onFile === true, last4: str(s.last4) },
+    bank: { onFile: (r.bank as Record<string, unknown> | undefined)?.onFile === true, last4: str((r.bank as Record<string, unknown> | undefined)?.last4) },
     documents: arr(r.documents).map((d) => ({ id: String(d.id), docType: String(d.docType) as HrDocType, title: str(d.title), signedOn: str(d.signedOn), expiresOn: str(d.expiresOn),
       note: str(d.note), fileName: str(d.fileName), hasFile: d.hasFile === true, recordedAt: String(d.recordedAt ?? "") })),
     certifications: arr(r.certifications).map((c) => ({ id: String(c.id), name: String(c.name ?? ""), issuer: str(c.issuer), number: str(c.number), issuedOn: str(c.issuedOn), expiresOn: str(c.expiresOn), note: str(c.note) })),
@@ -117,8 +162,8 @@ export function hrChanges(before: Record<HrField, string>, after: Record<HrField
   for (const k of Object.keys(HR_FIELDS) as HrField[]) {
     if ((before[k] ?? "") === (after[k] ?? "")) continue;
     const v = (after[k] ?? "").trim();
-    if (k === "rehireEligible") out[k] = v === "" ? null : v === "yes";
-    else if (k === "ptoHoursPerYear" || k === "sickHoursPerYear") out[k] = v === "" ? null : Number(v);
+    if (HR_BOOLEAN_FIELDS.has(k)) out[k] = v === "" ? null : v === "yes";
+    else if (HR_NUMBER_FIELDS.has(k)) out[k] = v === "" ? null : Number(v.replace(/[$,\s]/g, ""));
     else out[k] = v;
   }
   return out;
@@ -128,6 +173,7 @@ export function hrDbError(e: { message?: string; code?: string } | null): { stat
   const m = e?.message ?? "";
   if (m.includes("unknown_field")) return { status: 400, code: "invalid", message: "Something on the form isn't recognized. Reload and try again." };
   if (m.includes("bad_supervisor")) return { status: 400, code: "invalid", message: "Pick another employee as supervisor." };
+  if (m.includes("bad_routing")) return { status: 400, code: "invalid", message: "That routing number isn't valid. Check the 9 digits on the check or bank letter." };
   if (m.includes("bad_email")) return { status: 400, code: "invalid", message: "Check the personal email address." };
   if (m.includes("not_member")) return { status: 400, code: "invalid", message: "Only active members of your company can be HR managers." };
   if (m.includes("forbidden") || e?.code === "42501") return { status: 403, code: "forbidden", message: "Only the owner and HR managers can open HR files." };
@@ -137,7 +183,7 @@ export function hrDbError(e: { message?: string; code?: string } | null): { stat
 export interface HrOverview {
   canManage: boolean; isOwner: boolean;
   managers: { userId: string; name: string; hr: boolean }[];
-  people: { resourceId: string; name: string; resourceStatus: string; employmentStatus: keyof typeof EMPLOYMENT_STATUSES; hrStarted: boolean; ssnOnFile: boolean; emergencyOnFile: boolean; i9OnFile: boolean; w4OnFile: boolean; nextExpiry: string | null; expired: number }[];
+  people: { resourceId: string; name: string; resourceStatus: string; employmentStatus: keyof typeof EMPLOYMENT_STATUSES; hrStarted: boolean; ssnOnFile: boolean; emergencyOnFile: boolean; i9OnFile: boolean; w4OnFile: boolean; bankOnFile: boolean; nextExpiry: string | null; expired: number }[];
 }
 export function mapHrOverview(raw: unknown): HrOverview {
   const r = (raw ?? {}) as Record<string, unknown>;
@@ -146,6 +192,6 @@ export function mapHrOverview(raw: unknown): HrOverview {
     managers: arr(r.managers).map((m) => ({ userId: String(m.userId), name: String(m.name ?? ""), hr: m.hr === true })),
     people: arr(r.people).map((p) => ({ resourceId: String(p.resourceId), name: String(p.name ?? ""), resourceStatus: String(p.resourceStatus ?? "active"),
       employmentStatus: (String(p.employmentStatus ?? "active") as HrOverview["people"][number]["employmentStatus"]), hrStarted: p.hrStarted === true, ssnOnFile: p.ssnOnFile === true,
-      emergencyOnFile: p.emergencyOnFile === true, i9OnFile: p.i9OnFile === true, w4OnFile: p.w4OnFile === true, nextExpiry: str(p.nextExpiry), expired: Number(p.expired ?? 0) })),
+      emergencyOnFile: p.emergencyOnFile === true, i9OnFile: p.i9OnFile === true, w4OnFile: p.w4OnFile === true, bankOnFile: p.bankOnFile === true, nextExpiry: str(p.nextExpiry), expired: Number(p.expired ?? 0) })),
   };
 }

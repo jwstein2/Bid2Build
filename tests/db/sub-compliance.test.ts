@@ -129,6 +129,7 @@ d("subcontractor compliance (database)", () => {
   });
 
   it("rollback removes everything and re-apply works", async () => {
+    await pool.query(readFileSync("docs/hr-records/rollback_20270205001000.sql", "utf8"));
     await pool.query(readFileSync("docs/team-records/rollback_20270105001000.sql", "utf8"));
     await pool.query(readFileSync("docs/team-records/rollback_20270104001000.sql", "utf8"));
     expect((await pool.query("select to_regclass('public.pm_sensitive_ids') as a, to_regclass('public.pm_sub_doc_requests') as b")).rows[0]).toEqual({ a: null, b: null });

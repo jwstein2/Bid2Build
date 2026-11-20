@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Badge, Notice } from "@/components/ui/misc";
 import { api } from "@/components/schedule/client";
 import {
-  describeHistory, EMPLOYMENT_STATUSES, EMPLOYMENT_TYPES, HR_DOC_TYPES, hrChanges, hrDocLabel, hrFormValues, SEPARATION_REASONS, TIME_OFF_KINDS,
+  ACCOUNT_TYPES, CERT_PRESETS, describeHistory, EMPLOYMENT_STATUSES, EMPLOYMENT_TYPES, FLSA_STATUSES, HR_DOC_TYPES, hrChanges, hrDocLabel, hrFormValues,
+  PAY_FREQUENCIES, PAY_RATE_UNITS, routingOk, SEPARATION_REASONS, TIME_OFF_KINDS, W4_FILING_STATUSES,
   type HrDocType, type HrField, type HrFile,
 } from "@/lib/team/hr";
+import { BankAccountCard } from "@/components/team/bank-account";
 
 const fmt = (d: string | null) => (d ? new Date(`${d.slice(0, 10)}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) : "");
 const hrs = (n: number) => `${Number.isInteger(n) ? n : n.toFixed(1)} h`;
@@ -28,6 +30,7 @@ export function HrFileView({ file, piiReady, today }: { file: HrFile; piiReady: 
       {msg && <Notice tone={msg.ok ? "ok" : "danger"}>{msg.text}</Notice>}
       <DetailsForm file={file} onSaved={() => done("HR file saved.")} onError={err} />
       <SsnCard file={file} ready={piiReady} onDone={done} onError={err} />
+      <BankAccountCard resourceId={file.resourceId} status={file.bank} ready={piiReady} purpose="direct deposit" onDone={done} onError={err} />
       <Documents file={file} today={today} onDone={done} onError={err} />
       <Certifications file={file} today={today} onDone={done} onError={err} />
       <TimeOff file={file} onDone={done} onError={err} />
@@ -62,7 +65,9 @@ function DetailsForm({ file, onSaved, onError }: { file: HrFile; onSaved: () => 
     <label className="block"><span className="label">{label}</span>
       <select className="field" value={f[k]} onChange={(e) => setF({ ...f, [k]: e.target.value })}><option value="">{blank}</option>{Object.entries(opts).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
   );
+  const yesNo = { yes: "Yes", no: "No" };
   async function save() {
+    if (f.ddRouting.trim() && !routingOk(f.ddRouting.trim())) { onError("That routing number isn't valid. Check the 9 digits on the check or bank letter."); return; }
     setBusy(true);
     const r = await api(`/api/team/hr/${file.resourceId}`, { method: "POST", body: JSON.stringify({ values: changes }) });
     setBusy(false);
@@ -108,6 +113,42 @@ function DetailsForm({ file, onSaved, onError }: { file: HrFile; onSaved: () => 
         {input("ptoHoursPerYear", "Paid time off per year (hours)", { inputMode: "decimal", maxLength: 7 })}
         {input("sickHoursPerYear", "Sick time per year (hours)", { inputMode: "decimal", maxLength: 7 })}
       </div>
+      <h3 className="font-semibold text-navy">Pay and classification</h3>
+      <div className="grid gap-3 sm:grid-cols-3" data-testid="hr-pay">
+        {input("employeeNumber", "Employee ID", { maxLength: 40 })}
+        <div className="grid grid-cols-2 gap-2">{input("payRate", "Pay rate ($)", { inputMode: "decimal", maxLength: 12 })}{select("payRateUnit", "Per", PAY_RATE_UNITS as unknown as Record<string, string>)}</div>
+        {select("payFrequency", "Pay frequency", PAY_FREQUENCIES as unknown as Record<string, string>)}
+        {select("flsaStatus", "Overtime (FLSA)", FLSA_STATUSES as unknown as Record<string, string>)}
+        {input("tradeClassification", "Trade classification", { maxLength: 100, placeholder: "e.g. Electrician - Journeyman" })}
+        {input("wcClassCode", "Workers' comp class code", { maxLength: 20, placeholder: "e.g. 5190" })}
+        {input("unionLocal", "Union local (if any)", { maxLength: 100 })}
+        {input("newHireReportedOn", "Reported to state new-hire registry on", { type: "date" })}
+      </div>
+      <p className="text-xs text-muted">Pay rate is what you pay the employee. The loaded hourly cost used for job costing stays on Employees &amp; time. Trade classification and class code are what prevailing-wage (certified payroll) reports and your workers&apos; comp audit ask for.</p>
+      <h3 className="font-semibold text-navy">Tax withholding (W-4 and state)</h3>
+      <div className="grid gap-3 sm:grid-cols-3" data-testid="hr-w4">
+        {select("w4FilingStatus", "W-4 filing status (step 1c)", W4_FILING_STATUSES as unknown as Record<string, string>)}
+        {select("w4MultipleJobs", "Multiple jobs or spouse works (step 2)", yesNo)}
+        {input("w4DependentsAmount", "Dependents amount, step 3 ($)", { inputMode: "decimal", maxLength: 12 })}
+        {input("w4OtherIncome", "Other income, step 4a ($)", { inputMode: "decimal", maxLength: 12 })}
+        {input("w4Deductions", "Deductions, step 4b ($)", { inputMode: "decimal", maxLength: 12 })}
+        {input("w4ExtraWithholding", "Extra withholding per pay, step 4c ($)", { inputMode: "decimal", maxLength: 12 })}
+        {select("w4Exempt", "Claims exempt", yesNo)}
+        {input("w4SignedOn", "W-4 signed on", { type: "date" })}
+        <span />
+        {input("stateWithholdingState", "Withholding state", { maxLength: 2, placeholder: "MN" })}
+        {input("stateAllowances", "State allowances", { inputMode: "numeric", maxLength: 2 })}
+        {input("stateExtraWithholding", "State extra withholding ($)", { inputMode: "decimal", maxLength: 12 })}
+        {select("stateExempt", "State exempt", yesNo)}
+      </div>
+      <p className="text-xs text-muted">Record what the employee wrote on their W-4 and state form so your payroll service can be set up from it. Keep the signed form under Documents below.</p>
+      <h3 className="font-semibold text-navy">Direct deposit</h3>
+      <div className="grid gap-3 sm:grid-cols-3" data-testid="hr-dd">
+        {input("ddBankName", "Bank name", { maxLength: 100 })}
+        {select("ddAccountType", "Account type", ACCOUNT_TYPES as unknown as Record<string, string>)}
+        {input("ddRouting", "Routing number (9 digits)", { inputMode: "numeric", maxLength: 9, autoComplete: "off" })}
+      </div>
+      <p className="text-xs text-muted">The account number itself is saved separately, encrypted, in the Bank account card.</p>
       {f.employmentStatus === "separated" && (
         <div className="grid gap-3 sm:grid-cols-3">
           {input("separationDate", "Last day", { type: "date" })}
@@ -272,7 +313,8 @@ function Certifications({ file, today, onDone, onError }: { file: HrFile; today:
       )}
       {f ? (
         <div className="grid gap-3 rounded-xl border border-line bg-paper p-3 sm:grid-cols-3">
-          <label className="block sm:col-span-2"><span className="label">Name</span><input className="field" maxLength={200} placeholder="e.g. OSHA 30, CDL Class A, First Aid/CPR" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></label>
+          <label className="block sm:col-span-2"><span className="label">Name</span><input className="field" maxLength={200} list="hr-cert-presets" placeholder="e.g. OSHA 30, CDL Class A, First Aid/CPR" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
+            <datalist id="hr-cert-presets">{CERT_PRESETS.map((c) => <option key={c} value={c} />)}</datalist></label>
           <label className="block"><span className="label">Number</span><input className="field" maxLength={80} value={f.number} onChange={(e) => setF({ ...f, number: e.target.value })} /></label>
           <label className="block"><span className="label">Issued by</span><input className="field" maxLength={200} value={f.issuer} onChange={(e) => setF({ ...f, issuer: e.target.value })} /></label>
           <label className="block"><span className="label">Issued on</span><input type="date" className="field" value={f.issuedOn} onChange={(e) => setF({ ...f, issuedOn: e.target.value })} /></label>

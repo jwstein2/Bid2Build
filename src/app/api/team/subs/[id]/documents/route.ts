@@ -9,11 +9,17 @@ export const runtime = "nodejs";
 
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional();
 const schema = z.object({
-  docType: z.enum(["w9", "coi_general_liability", "workers_comp", "auto_liability", "umbrella", "license", "subcontract_agreement", "master_agreement", "lien_waiver", "other"]),
+  docType: z.enum(["w9", "coi_general_liability", "workers_comp", "auto_liability", "umbrella", "license", "subcontract_agreement", "master_agreement", "lien_waiver", "other",
+    "wc_exemption", "bond", "safety_program", "prequalification"]),
   title: z.string().trim().max(200).optional(),
   issuer: z.string().trim().max(200).optional(),
   policyNumber: z.string().trim().max(80).optional(),
   coverageAmount: z.string().trim().regex(/^\d{1,12}(\.\d{1,2})?$/).optional(),
+  aggregateAmount: z.string().trim().regex(/^\d{1,12}(\.\d{1,2})?$/).optional(),
+  // COI endorsements, sent as "yes" / "no" from the form (left out = not recorded).
+  additionalInsured: z.enum(["yes", "no"]).optional(),
+  waiverOfSubrogation: z.enum(["yes", "no"]).optional(),
+  primaryNoncontributory: z.enum(["yes", "no"]).optional(),
   effectiveOn: date, expiresOn: date, signedOn: date,
   note: z.string().trim().max(1000).optional(),
 });
@@ -45,6 +51,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   if (!folder || !/^[0-9a-f-]{36}\/[0-9a-f-]{36}$/i.test(folder)) return fail(404, "not_found", "Not found.");
 
   const payload: Record<string, unknown> = { ...p.data };
+  for (const k of ["additionalInsured", "waiverOfSubrogation", "primaryNoncontributory"] as const) if (p.data[k]) payload[k] = p.data[k] === "yes";
   const f = form.get("file");
   if (f instanceof File && f.size > 0) {
     if (f.size > MAX_QUOTE_FILE_BYTES) return fail(413, "too_large", "Files must be 15 MB or smaller.");
