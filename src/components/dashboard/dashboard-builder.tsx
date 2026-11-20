@@ -10,7 +10,7 @@
  * server; after a save that adds or reconfigures a widget the page refreshes to fetch just those widgets' data.
  */
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { ArrowDown, ArrowUp, Check, GripVertical, LayoutTemplate, Lock, Plus, RotateCcw, Settings2, Sparkles, Trash2, TriangleAlert, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Notice } from "@/components/ui/misc";
@@ -22,6 +22,7 @@ import { DATASET_INFO, chartTypesFor, isDataset } from "@/lib/dashboard/charts";
 import { add as addWidget, configure, fitSize, move, newInstance, remove, resize, type DashboardMode, type WidgetInstance } from "@/lib/dashboard/schema";
 import { TEMPLATES, TEMPLATE_KEYS, INTERESTS, availableInterests, buildTemplate, suggestLayout, type InterestKey, type TemplateKey } from "@/lib/dashboard/templates";
 import type { DashboardAccess } from "@/lib/dashboard/access";
+import { phoneHalfWidth } from "@/lib/dashboard/phone";
 
 export interface BuilderProps {
   mode: DashboardMode;
@@ -53,6 +54,12 @@ const SPAN_MD = { 1: "md:col-span-1", 2: "md:col-span-2", 3: "md:col-span-2", 4:
 const PENDING_KEY = (m: DashboardMode) => `b2b.dashboard.pending.${m}`;
 const WIDTH_LABEL = { 1: "Small", 2: "Medium", 3: "Large", 4: "Full width" } as const;
 
+// "Set Up My Dashboard" nudge, dismissed on this device per mode.
+const OFFER_KEY = (m: DashboardMode) => `b2b.dashboard.setupOffer.hidden.${m}`;
+const offerListeners = new Set<() => void>();
+const subscribeOffer = (cb: () => void) => { offerListeners.add(cb); return () => { offerListeners.delete(cb); }; };
+function offerDismissed(mode: DashboardMode) { try { return localStorage.getItem(OFFER_KEY(mode)) === "1"; } catch { return false; } }
+
 function readPending(mode: DashboardMode): { widgets: WidgetInstance[]; template: string | null; base: number | null; at: number } | null {
   try { const v = localStorage.getItem(PENDING_KEY(mode)); return v ? JSON.parse(v) : null; } catch { return null; }
 }
@@ -72,6 +79,8 @@ export function DashboardBuilder(p: BuilderProps) {
   const [companyOpen, setCompanyOpen] = useState(false);
   const [recovered, setRecovered] = useState<ReturnType<typeof readPending>>(null);
   const [announce, setAnnounce] = useState("");
+  const offerHidden = useSyncExternalStore(subscribeOffer, () => offerDismissed(p.mode), () => false);
+  const hideOffer = () => { try { localStorage.setItem(OFFER_KEY(p.mode), "1"); } catch { /* storage blocked: hidden for this visit only */ } offerListeners.forEach((f) => f()); };
   const revision = useRef(p.revision);
   const dirty = useRef(false);
   const inFlight = useRef(false);
@@ -255,22 +264,25 @@ export function DashboardBuilder(p: BuilderProps) {
   const done = () => { flushNow(); setEditing(false); setSettingsFor(null); if (needsRefresh.current && !dirty.current && !inFlight.current) { needsRefresh.current = false; router.refresh(); } };
 
   const shown = widgets.filter((w) => allowedSet.has(w.type) || p.nodes[w.id] !== undefined);
+  const compact = phoneHalfWidth(shown, editing);
   const hidden = widgets.filter((w) => !shown.includes(w));
   const settingsInst = settingsFor ? widgets.find((w) => w.id === settingsFor) ?? null : null;
 
   return (
     <div className="space-y-4" data-testid="dashboard-builder" data-editing={editing || undefined} data-mode={p.mode}>
-      <header className="flex flex-wrap items-end gap-3">
-        <div className="min-w-0 flex-1">
-          <h1 className="text-3xl font-extrabold">Home</h1>
-          <p className="text-ink-soft">{editing ? "Drag the handles, resize, add or remove widgets. Changes save automatically." : "Your dashboard. Every number opens the records behind it."}</p>
+      {/* Phones: title and subtitle get the full width with Customize beside them; the mode switch is its own
+          full-width row. Wide screens (xl): one row (title, mode switch, Customize). The heading is never squeezed. */}
+      <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-3 xl:flex xl:items-end" data-testid="dash-header">
+        <div className="min-w-0 xl:flex-1">
+          <h1 className="text-2xl font-extrabold sm:text-3xl">Home</h1>
+          <p className="text-sm text-ink-soft sm:text-base" data-testid="dash-subtitle">{editing ? "Drag the handles, resize, add or remove widgets. Changes save automatically." : "Your business at a glance."}</p>
         </div>
-        {p.accountantModeAllowed && !editing && <ModeToggle mode={p.mode} />}
         {!editing ? (
-          <Button variant="secondary" onClick={() => setEditing(true)} data-testid="dash-customize"><Settings2 className="h-4 w-4" aria-hidden /> Customize Dashboard</Button>
+          <Button variant="secondary" onClick={() => setEditing(true)} className="min-w-11 px-3 max-[359px]:px-0 sm:px-4 xl:order-last" data-testid="dash-customize"><Settings2 className="h-4 w-4" aria-hidden /><span className="max-[359px]:sr-only">Customize<span className="max-sm:sr-only"> Dashboard</span></span></Button>
         ) : (
-          <Button onClick={done} data-testid="dash-done"><Check className="h-4 w-4" aria-hidden /> Done Editing</Button>
+          <Button onClick={done} className="px-3 sm:px-4 xl:order-last" data-testid="dash-done"><Check className="h-4 w-4" aria-hidden /><span>Done<span className="max-sm:sr-only"> Editing</span></span></Button>
         )}
+        {p.accountantModeAllowed && !editing && <ModeToggle mode={p.mode} className="col-span-2 grid w-full grid-cols-2 sm:inline-flex sm:w-auto sm:justify-self-start xl:shrink-0" />}
       </header>
 
       <p className="sr-only" role="status" aria-live="polite">{announce}</p>
@@ -285,14 +297,6 @@ export function DashboardBuilder(p: BuilderProps) {
           </div>
         </Notice>
       )}
-      {!editing && p.offerSetup && widgets.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-line bg-surface px-4 py-3 text-sm" data-testid="dash-setup-offer">
-          <Sparkles className="h-4 w-4 text-accent-ink" aria-hidden />
-          <span className="min-w-0 flex-1">{p.origin === "company" ? "This is your company's starting dashboard." : "This is a starting dashboard."} Make it yours in a minute, or keep it.</span>
-          <Button size="sm" variant="secondary" onClick={() => setSetup(true)} data-testid="dash-setup-open">Set Up My Dashboard</Button>
-        </div>
-      )}
-
       {editing && (
         <div className="sticky top-2 z-20 flex flex-wrap items-center gap-2 rounded-xl border border-line bg-surface/95 p-2 shadow-card backdrop-blur" role="toolbar" aria-label="Customize dashboard" data-testid="dash-toolbar">
           <Button size="sm" onClick={() => setLibrary(true)} data-testid="dash-add"><Plus className="h-4 w-4" aria-hidden /> Add widget</Button>
@@ -312,15 +316,16 @@ export function DashboardBuilder(p: BuilderProps) {
           </div>
         </div>
       ) : (
-        <ul className="grid grid-cols-1 gap-3 [grid-auto-rows:minmax(9.5rem,auto)] md:grid-cols-2 lg:grid-cols-4" aria-label="Dashboard widgets" data-testid="dash-grid">
+        <ul className="grid grid-cols-2 gap-3 md:[grid-auto-rows:minmax(9.5rem,auto)] lg:grid-cols-4" aria-label="Dashboard widgets" data-testid="dash-grid">
           {shown.map((w, i) => {
             const def = widgetDef(w.type);
             const node = p.nodes[w.id];
             const title = titleOf(w);
+            const half = compact.has(w.id);
             return (
               <li key={w.id} ref={(el) => { if (el) cells.current.set(w.id, el); else cells.current.delete(w.id); }}
-                className={cn("relative min-w-0", SPAN_MD[w.w], SPAN_LG[w.w], w.h === 2 && "row-span-2", dragId === w.id && "z-10 scale-[1.02] rounded-xl shadow-lg ring-2 ring-accent", editing && "rounded-xl ring-1 ring-line")}
-                data-widget={w.type} data-widget-id={w.id} data-w={w.w} data-h={w.h}>
+                className={cn("dash-cell relative min-w-0", half ? "col-span-1" : "col-span-2", SPAN_MD[w.w], SPAN_LG[w.w], w.h === 2 && "md:row-span-2", dragId === w.id && "z-10 scale-[1.02] rounded-xl shadow-lg ring-2 ring-accent", editing && "rounded-xl ring-1 ring-line")}
+                data-widget={w.type} data-widget-id={w.id} data-w={w.w} data-h={w.h} data-compact={half || undefined}>
                 {editing && (
                   <div className="absolute inset-x-0 top-0 z-10 flex items-center gap-1 rounded-t-xl border-b border-line bg-surface/95 p-1 backdrop-blur">
                     <button type="button" ref={(el) => { if (el) handles.current.set(w.id, el); else handles.current.delete(w.id); }}
@@ -359,6 +364,17 @@ export function DashboardBuilder(p: BuilderProps) {
             ))}
           </ul>
         </section>
+      )}
+
+      {/* The optional "make it yours" nudge sits under the widgets so the numbers come first; it can be dismissed
+          on this device, and Customize Dashboard (top) and Templates stay available either way. */}
+      {!editing && p.offerSetup && widgets.length > 0 && !offerHidden && (
+        <div className="flex items-center gap-2 rounded-xl border border-dashed border-line bg-surface py-2 pl-3 pr-1 text-sm" data-testid="dash-setup-offer">
+          <Sparkles className="h-4 w-4 shrink-0 text-accent-ink" aria-hidden />
+          <span className="min-w-0 flex-1">{p.origin === "company" ? "This is your company's starting dashboard." : "This is a starting dashboard."} Make it yours in a minute, or keep it.</span>
+          <Button size="sm" variant="secondary" className="min-h-11 shrink-0 sm:min-h-9" onClick={() => setSetup(true)} data-testid="dash-setup-open"><span>Set Up<span className="max-sm:sr-only"> My Dashboard</span></span></Button>
+          <IconBtn label="Hide this suggestion" onClick={hideOffer} testId="dash-setup-dismiss"><X className="h-4 w-4" aria-hidden /></IconBtn>
+        </div>
       )}
 
       <LibraryDialog open={library} onOpenChange={setLibrary} allowed={p.allowedTypes} counts={counts} onAdd={addType} />

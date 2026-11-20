@@ -1,4 +1,5 @@
 "use client";
+import { cn } from "@/lib/cn";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ArrowDown, ArrowUp, Lock, RotateCcw, SlidersHorizontal } from "lucide-react";
@@ -181,7 +182,7 @@ export function CustomizeDashboard({ cards: initial, kpis: initialKpis, allKpis,
 }
 
 /** Contractor Mode (default) / Accountant Mode. Offered only to people authorized for accounting work. */
-export function ModeToggle({ mode }: { mode: "contractor" | "accountant" }) {
+export function ModeToggle({ mode, className }: { mode: "contractor" | "accountant"; /** Layout overrides, e.g. full width on phones. */ className?: string }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const set = async (m: "contractor" | "accountant") => {
@@ -192,11 +193,11 @@ export function ModeToggle({ mode }: { mode: "contractor" | "accountant" }) {
     if (r.ok) router.refresh();
   };
   return (
-    <div role="group" aria-label="View mode" className="inline-flex rounded-lg border border-line bg-surface p-0.5" data-testid="fin-mode" data-guide="fin.mode">
+    <div role="group" aria-label="View mode" className={cn("inline-flex rounded-lg border border-line bg-surface p-0.5", className)} data-testid="fin-mode" data-guide="fin.mode">
       {(["contractor", "accountant"] as const).map((m) => (
         <button key={m} type="button" disabled={busy} aria-pressed={mode === m} onClick={() => set(m)}
-          className={`min-h-10 rounded-md px-3 text-sm font-semibold ${mode === m ? "bg-brand text-white" : "text-ink-soft hover:text-ink"}`}>
-          {m === "contractor" ? "Contractor Mode" : "Accountant Mode"}
+          className={`min-h-10 whitespace-nowrap rounded-md px-3 text-sm font-semibold max-[359px]:px-2 ${mode === m ? "bg-brand text-white" : "text-ink-soft hover:text-ink"}`}>
+          {m === "contractor" ? "Contractor" : "Accountant"} Mode
         </button>
       ))}
     </div>

@@ -272,6 +272,17 @@ a[data-card-link]:focus-visible { outline: none; }
 .cc .metric-action .metric-cta { color: var(--cc-blue); font-family: var(--font-mono, ui-monospace, monospace); text-transform: uppercase; letter-spacing: 0.08em; font-size: 10px; }
 .cc .metric-action:focus-visible { outline-color: var(--cc-green); }
 @media (prefers-reduced-motion: reduce) { .metric-action, .metric-action .metric-arrow { transition: none; } .metric-action:hover, .metric-action:active { transform: none; } .metric-action:hover .metric-arrow { transform: none; } }
+/*
+ * Home dashboard cells (src/components/dashboard/dashboard-builder.tsx) are inline-size containers, so a metric's
+ * number scales with its tile: two-up phone tiles show every digit instead of truncating, and wide desktop tiles
+ * keep the usual text-3xl size. Narrow tiles also tighten their padding and let the status badge wrap under the title.
+ */
+.dash-cell { container-type: inline-size; }
+.dash-cell .metric-value { font-size: clamp(1.125rem, 13cqi, 1.875rem); white-space: normal; overflow-wrap: anywhere; }
+@container (max-width: 15rem) {
+  .dash-cell > div > .rounded-xl { padding: 0.75rem; }
+  .dash-cell .metric-head { flex-wrap: wrap; row-gap: 0.25rem; }
+}
 .metric-action.metric-pressed { border-color: var(--color-accent-ink); box-shadow: inset 0 0 0 1px var(--color-accent-ink); }
 .cc .metric-value.text-navy { color: var(--color-ink); }
 .cc .metric-drawer { background: var(--cc-panel); border-color: var(--cc-line); }

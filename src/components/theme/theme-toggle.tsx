@@ -42,7 +42,7 @@ function saveToAccount(pref: ThemePref) {
  * on this device and, when signed in, to the account so it follows the user to other devices.
  * The icon is chosen by CSS from <html data-theme>, so it is right on the very first paint.
  */
-export function ThemeToggle({ signedIn = false, account = null, tone = "light", className }: { signedIn?: boolean; account?: ThemePref | null; tone?: "light" | "dark"; className?: string }) {
+export function ThemeToggle({ signedIn = false, account = null, tone = "light", className, label = false }: { signedIn?: boolean; account?: ThemePref | null; tone?: "light" | "dark"; className?: string; /** Show "Theme: Light" beside the icon (menu row). */ label?: boolean }) {
   const mode = useSyncExternalStore(subscribe, current, () => "light" as ThemeMode);
   const next = nextThemeMode(mode);
 
@@ -79,6 +79,7 @@ export function ThemeToggle({ signedIn = false, account = null, tone = "light", 
       <Moon className="theme-icon-moon h-5 w-5" aria-hidden />
       <MoonStar className="theme-icon-star h-5 w-5" aria-hidden />
       <Sun className="theme-icon-sun h-5 w-5" aria-hidden />
+      {label && <span aria-hidden>Theme: {THEME_LABEL[mode]}</span>}
     </button>
   );
 }
