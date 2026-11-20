@@ -1,5 +1,6 @@
 import "server-only";
 import type { createAdminClient } from "@/lib/supabase/server";
+import { isDemoLogin } from "@/lib/demo/session";
 import type { EstimateRow } from "./metrics";
 import type { ProductData } from "./product";
 import type {
@@ -36,7 +37,8 @@ async function authUsers(db: Db): Promise<UserRow[] | null> {
       const { data, error } = await db.auth.admin.listUsers({ page, perPage: PAGE });
       if (error) return null;
       const users = data?.users ?? [];
-      for (const u of users) out.push({ id: u.id, email: u.email ?? null, created_at: u.created_at, email_confirmed_at: u.email_confirmed_at ?? null, last_sign_in_at: u.last_sign_in_at ?? null });
+      // Demo / practice logins are sample accounts, not customers.
+      for (const u of users) if (!isDemoLogin(u)) out.push({ id: u.id, email: u.email ?? null, created_at: u.created_at, email_confirmed_at: u.email_confirmed_at ?? null, last_sign_in_at: u.last_sign_in_at ?? null });
       if (users.length < PAGE) break;
     }
     return out;

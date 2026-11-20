@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Referral Program Terms", alternates:
 /** Mirrors the rules enforced in supabase/migrations/20261115003000_referrals.sql. Keep them in step. */
 export default function ReferralTerms() {
   return (
-    <LegalPage title="Referral Program Terms" updated={LEGAL_UPDATED}>
+    <LegalPage title="Referral Program Terms" updated={LEGAL_UPDATED} docKey="referral-terms">
       <p>&quot;Refer a contractor, get a month free&quot; is run by Built2Bid L.L.C. These terms add to our <A href="/terms">Terms of Service</A>.</p>
       <H2>How it works</H2>
       <UL>

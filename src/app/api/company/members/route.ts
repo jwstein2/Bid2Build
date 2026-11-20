@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { demoBlockedMessage } from "@/lib/demo/session";
 import { createAdminClient, createClient, getUser } from "@/lib/supabase/server";
 import { site } from "@/lib/site";
 import { fail, json, logError, rateLimit, sameOrigin } from "@/lib/http/api";
@@ -21,7 +22,8 @@ const Body = z.discriminatedUnion("action", [
 export async function POST(req: Request) {
   if (!(await sameOrigin())) return fail(403, "bad_origin", "Cross-site request refused.");
   if (!(await rateLimit("company-members", 60, 10 * 60_000))) return fail(429, "rate_limited", "Please wait a moment and try again.");
-  if (!(await getUser())) return fail(401, "not_authenticated", "Sign in required.");
+  const user = await getUser();
+  if (!user) return fail(401, "not_authenticated", "Sign in required.");
   const p = Body.safeParse(await req.json().catch(() => null));
   if (!p.success) return fail(400, "invalid", "That change isn't valid.");
   const supabase = await createClient();
@@ -38,6 +40,8 @@ export async function POST(req: Request) {
       case "team_create": return json({ id: await call("create_company_team", { p_name: b.name, p_trade: b.trade ?? null }) });
       case "team_member": await call("set_company_team_member", { p_team_id: b.teamId, p_user_id: b.userId, p_is_manager: b.isManager, p_remove: b.remove }); break;
       case "recovery": {
+        // Demo / Practice Mode never emails anyone.
+        if (user.demo) return fail(403, "demo_blocked", demoBlockedMessage(user.demo.kind));
         // Sends the normal sign-in email to the member's own verified address. The admin sees nothing secret.
         const email = (await call("company_member_recovery_email", { p_user_id: b.userId })) as string;
         const { error } = await createAdminClient().auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo: `${site.url}/auth/callback?next=/dashboard` } });

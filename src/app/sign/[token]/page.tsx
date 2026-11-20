@@ -13,6 +13,7 @@ import { site } from "@/lib/site";
 import { SignForm } from "./sign-form";
 import { isContractorSigningEnabled } from "@/lib/esign/contractor/config";
 import { executionFor, viewSignature } from "@/lib/esign/contractor/server";
+import { LegalStatusCompact } from "@/components/legal/legal-status";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -120,6 +121,7 @@ export default async function SignPage({ params }: PageProps<"/sign/[token]">) {
       <p className="mt-2 text-xs text-muted no-print" data-testid="esign-provider-notice">
         {site.name} provides this signing service for {doc.brand.companyName}. {site.name} is not a party to this proposal and does not guarantee the work, the price or the terms in it. Read the <Link href="/esign-disclosure" className="underline" target="_blank">electronic signature disclosure</Link>, our <Link href="/terms" className="underline" target="_blank">Terms</Link> and <Link href="/privacy" className="underline" target="_blank">Privacy Policy</Link>. You can confirm a signed copy hasn&apos;t been changed on our <Link href="/verify" className="underline" target="_blank">document check page</Link>.
       </p>
+      <LegalStatusCompact className="mt-2 no-print" />
     </Shell>
   );
 }

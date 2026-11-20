@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { ATTRIBUTION_COOKIE, ATTRIBUTION_MAX_AGE, captureAttribution, encodeAttribution } from "@/lib/growth/attribution";
 import { normalizeReferralCode, REFERRAL_COOKIE, REFERRAL_MAX_AGE } from "@/lib/growth/referral";
 import { TWO_STEP_REQUIRED, needsStepUp, stepUpExempt } from "@/lib/auth/mfa";
-import { DEMO_BLOCKED_MESSAGE, isDemoBlocked, parseDemoClaim } from "@/lib/demo/session";
+import { demoBlockedMessage, isDemoBlocked, parseDemoClaim } from "@/lib/demo/session";
 import { SALES_JOIN_COOKIE, SALES_JOIN_MAX_AGE, inviteTokenFromPath, salesLoginRedirect } from "@/lib/sales/next";
 import { canonicalHostRedirect } from "@/lib/config/deploy";
 import { appLoginRedirect } from "@/lib/auth/app-next";
@@ -77,8 +77,9 @@ export async function proxy(request: NextRequest) {
   }
   // Demo / Practice Mode: actions that would charge money, change billing or reach a real person are
   // refused for demo logins before any route runs (the database has its own guards as a backstop).
-  if (request.nextUrl.pathname.startsWith("/api/") && parseDemoClaim(claims?.claims?.app_metadata) && isDemoBlocked(request.nextUrl.pathname, request.method)) {
-    return Response.json({ error: { code: "demo_blocked", message: DEMO_BLOCKED_MESSAGE } }, { status: 403 }) as unknown as NextResponse;
+  const demoClaim = request.nextUrl.pathname.startsWith("/api/") ? parseDemoClaim(claims?.claims?.app_metadata) : null;
+  if (demoClaim && isDemoBlocked(request.nextUrl.pathname, request.method)) {
+    return Response.json({ error: { code: "demo_blocked", message: demoBlockedMessage(demoClaim.kind) } }, { status: 403 }) as unknown as NextResponse;
   }
   // Two-step sign-in: a session that passed only the email code (aal1) on an account with an authenticator
   // must enter the authenticator code before using the app. Only checked for signed-in aal1 sessions; reads

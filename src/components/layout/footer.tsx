@@ -38,6 +38,7 @@ export async function Footer() {
           <li><Link href="/security" className="inline-block py-1 hover:text-white hover:underline">Security</Link></li>
           <li><Link href="/cookies" className="inline-block py-1 hover:text-white hover:underline">Cookie policy and choices</Link></li>
           <li><Link href="/esign-disclosure" className="inline-block py-1 hover:text-white hover:underline">E-signature disclosure</Link></li>
+          <li><Link href="/legal" className="inline-block py-1 hover:text-white hover:underline">Legal Document Status</Link></li>
         </FooterCol>
       </div>
       <div className="border-t border-white/10 py-5 text-center text-xs text-[#B8C6D4]">© {new Date().getFullYear()} {site.name}. All rights reserved.</div>

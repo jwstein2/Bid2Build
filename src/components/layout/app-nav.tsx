@@ -14,7 +14,8 @@ import type { FeatureId } from "@/lib/features/registry";
 import type { ThemePref } from "@/lib/theme";
 import { ThemeToggle } from "../theme/theme-toggle";
 import { SearchIconButton } from "../search/global-search";
-import { DemoNavItem } from "../demo/demo-controls";
+import { DemoNavItem, PracticeNavToggle } from "../demo/demo-controls";
+import type { DemoSessionKind } from "@/lib/demo/session";
 
 type NavItem = { href: string; label: string; icon: typeof Library; exact?: boolean; premium?: boolean; feature?: FeatureId };
 const NAV: NavItem[] = [
@@ -73,7 +74,7 @@ export type SidebarAccess = { hidden: string[]; other: { href: string; label: st
 /** V8.10 workspace switches ("Switch to Sales Hub"), chosen on the server from the person's permissions. */
 export type WorkspaceSwitch = { href: string; label: string };
 
-export function AppSidebar({ isAdmin, email, company, access = null, projects = false, clock = false, financials = false, home = false, theme = null, learning, switches = [], bell = null }: { isAdmin: boolean; email: string | null; company?: CompanyNav | null; access?: SidebarAccess | null; projects?: boolean; clock?: boolean; financials?: boolean; home?: boolean; theme?: ThemePref | null; learning?: LearningNav | null; switches?: WorkspaceSwitch[]; /** Phone top bar notifications (the desktop copy sits in the page header). */ bell?: ReactNode }) {
+export function AppSidebar({ isAdmin, email, company, access = null, projects = false, clock = false, financials = false, home = false, theme = null, learning, switches = [], bell = null, practice = false, demo = null }: { isAdmin: boolean; /** Practice Mode switch in the Help section (on for everyone unless PRACTICE_MODE=off). */ practice?: boolean; /** Active demo / practice session, if any. */ demo?: DemoSessionKind | null; email: string | null; company?: CompanyNav | null; access?: SidebarAccess | null; projects?: boolean; clock?: boolean; financials?: boolean; home?: boolean; theme?: ThemePref | null; learning?: LearningNav | null; switches?: WorkspaceSwitch[]; /** Phone top bar notifications (the desktop copy sits in the page header). */ bell?: ReactNode }) {
   // In a company, say whose bids and whose subscription each link is ("Team bids" is in the Company section).
   const own = (n: NavItem): NavItem => (!company ? n : n.href === "/dashboard" ? { ...n, label: "My bids" } : n.href === "/settings/billing" ? { ...n, label: "My subscription" } : n);
   const shown = (href: string) => !access?.hidden.includes(href);
@@ -213,7 +214,8 @@ export function AppSidebar({ isAdmin, email, company, access = null, projects = 
         <FeatureTourButton className={cn(item, "w-full text-left text-[#C9D6E3] hover:bg-white/5 hover:text-white")} />
         <Link href="/academy" className={cn(item, "text-[#C9D6E3] hover:bg-white/5 hover:text-white")} data-testid="nav-academy"><GraduationCap className="h-4 w-4" aria-hidden /> Contractor Academy</Link>
         <Link href="/whats-new" aria-current={active("/whats-new") ? "page" : undefined} className={cn(item, active("/whats-new") ? "bg-white/10 text-white" : "text-[#C9D6E3] hover:bg-white/5 hover:text-white")} data-testid="nav-whats-new"><Sparkles className="h-4 w-4" aria-hidden /> What&apos;s New</Link>
-        {isAdmin && <DemoNavItem className={cn(item, "w-full text-left text-[#C9D6E3] hover:bg-white/5 hover:text-white")} />}
+        {(practice || demo) && <PracticeNavToggle active={demo} className={cn(item, "w-full text-left text-[#C9D6E3] hover:bg-white/5 hover:text-white")} />}
+        {isAdmin && !demo && <DemoNavItem className={cn(item, "w-full text-left text-[#C9D6E3] hover:bg-white/5 hover:text-white")} />}
         {isAdmin && (
           <Link href="/admin" className={cn(item, "text-[#C9D6E3] hover:bg-white/5 hover:text-white")}><Shield className="h-4 w-4" aria-hidden /> Admin</Link>
         )}

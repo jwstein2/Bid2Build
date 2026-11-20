@@ -9,7 +9,7 @@ describe("two-step sign-in", () => {
     expect(needsStepUp(null)).toBe(false);
   });
   it("keeps sign-in, customer signing links and legal pages open", () => {
-    for (const p of ["/auth/mfa", "/auth/signout", "/login", "/sign/abc", "/exempt/xyz", "/privacy", "/security", "/api/health"]) expect(stepUpExempt(p)).toBe(true);
+    for (const p of ["/auth/mfa", "/auth/signout", "/login", "/sign/abc", "/exempt/xyz", "/privacy", "/security", "/legal", "/api/health"]) expect(stepUpExempt(p)).toBe(true);
     for (const p of ["/dashboard", "/financials/banks", "/api/financials/tax-banking", "/settings/account", "/signed/1"]) expect(stepUpExempt(p)).toBe(false);
   });
 });

@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Academy Terms and Community Rules", 
 
 export default function AcademyTerms() {
   return (
-    <LegalPage title="Academy Terms and Community Rules" updated={LEGAL_UPDATED}>
+    <LegalPage title="Academy Terms and Community Rules" updated={LEGAL_UPDATED} docKey="academy-terms">
       <p>The {site.name} Contractor Academy (courses, resources and the community) is run by Built2Bid L.L.C. These terms add to our <A href="/terms">Terms of Service</A> and apply when you join or post.</p>
       <H2>Community rules</H2>
       <p>The current rules are shown on the <A href="/academy/about">About page</A> and when you join. In short: be professional, share real experience, no spam or lead selling, protect customer privacy, and confirm local rules with the authority that covers your area.</p>

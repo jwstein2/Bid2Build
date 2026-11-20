@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "Electronic Signature Disclosure", al
  */
 export default function EsignDisclosure() {
   return (
-    <LegalPage title="Electronic Signature Disclosure" updated={LEGAL_UPDATED}>
+    <LegalPage title="Electronic Signature Disclosure" updated={LEGAL_UPDATED} docKey="esign-disclosure">
       <p>Contractors use {site.name} to send proposals for you to review and sign online. Before you sign, you are asked to agree to use electronic records and signatures. This page explains what that means. The contractor who sent you the proposal is the other party to it; {site.name} only provides the signing service and is not a party to your proposal.</p>
       <H2>What you agree to</H2>
       <p>If you tick the consent box, you agree to receive, review and sign that proposal electronically, and that your electronic signature (typed or drawn) has the same legal effect as a handwritten signature. The consent covers that proposal and the records about signing it.</p>

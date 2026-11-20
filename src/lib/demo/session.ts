@@ -66,6 +66,12 @@ export const DEMO_BLOCKED: readonly { prefix: string; write?: boolean }[] = [
   { prefix: "/api/onboarding/discover", write: true },
   { prefix: "/api/team/supplier-pricing/connections", write: true },
   { prefix: "/api/auth/phone-abandon" },
+  // Emails a subcontractor a document request link.
+  { prefix: "/api/team/subs/", write: true /* request only, see matcher */ },
+  // Change order send / customer signing link / approval: customer-facing.
+  { prefix: "/api/change-orders/", write: true },
+  // Staff-only Sales Hub (Google mail/calendar, lead imports): never from a sample login.
+  { prefix: "/api/sales/" },
 ];
 
 /** Paths under a broad prefix that are blocked; the rest of that prefix stays usable in a demo. */
@@ -75,6 +81,7 @@ const NARROW: Record<string, RegExp> = {
   "/api/scope/": /^\/api\/scope\/[^/]+\/share(\/|$)/,
   "/api/comms/": /^\/api\/comms\/(?!settings$|preview$)/,
   "/api/comms": /^\/api\/comms$/,
+  "/api/team/subs/": /^\/api\/team\/subs\/[^/]+\/request(\/|$)/,
 };
 
 export function isDemoBlocked(pathname: string, method: string): boolean {
@@ -90,3 +97,12 @@ export function isDemoBlocked(pathname: string, method: string): boolean {
 }
 
 export const DEMO_BLOCKED_MESSAGE = "This action is turned off in Demo Mode, so nothing reaches real customers, payments or billing.";
+export const PRACTICE_BLOCKED_MESSAGE = "This is turned off in Practice Mode because the data here is fake. Nothing is emailed, texted or charged. Turn off Practice Mode to do this for real.";
+export const demoBlockedMessage = (kind: DemoSessionKind | null | undefined) => (kind === "practice" ? PRACTICE_BLOCKED_MESSAGE : DEMO_BLOCKED_MESSAGE);
+
+/** Reserved addresses demo and practice logins are created with (never a real mailbox). */
+export const DEMO_LOGIN_EMAIL = /^(demo|practice)-[0-9a-f]+@(example\.com|demo\.built2bid\.org)$/i;
+/** True for a demo / practice login, current (claim) or retired (claim cleared, reserved address kept). */
+export function isDemoLogin(u: { email?: string | null; app_metadata?: unknown } | null | undefined): boolean {
+  return Boolean(u && (parseDemoClaim(u.app_metadata) || DEMO_LOGIN_EMAIL.test(u.email ?? "")));
+}

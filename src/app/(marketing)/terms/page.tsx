@@ -10,12 +10,12 @@ export const metadata: Metadata = { title: "Terms of Service", alternates: { can
 
 /**
  * Terms of Service. The 2026-11-19 revision (legal review) adds liability, disputes, e-signature, AI,
- * Team, auto-renewal and records sections. Draft for the owner's attorney: do not merge or publish until
- * the owner approves (see /mnt/project-files/legal-review/).
+ * Team, auto-renewal and records sections. Published 2026-11-19 (PR #175); independent legal review pending.
+ * Review status is shown by LegalPage from src/lib/legal/registry.ts; don't add status wording here.
  */
 export default function Terms() {
   return (
-    <LegalPage title="Terms of Service" updated={LEGAL_UPDATED}>
+    <LegalPage title="Terms of Service" updated={LEGAL_UPDATED} docKey="terms">
       <p>These terms are an agreement between you and Built2Bid L.L.C., a Minnesota limited liability company (&quot;{site.name}&quot;, &quot;we&quot;, &quot;us&quot;). They cover your use of built2bid.org and the {site.name} apps (the &quot;service&quot;). By creating an account or using the service, you agree to them. If you use the service for a company, you agree for that company and confirm you may do so. The service is for businesses and people working in a trade; you must be at least 18.</p>
 
       <H2>1. The service</H2>

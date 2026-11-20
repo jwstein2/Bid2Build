@@ -1,5 +1,6 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
+import { inDemoSession } from "../demo/guard";
 
 /** Customer email through Resend (the provider already used for Built2Bid email). */
 export interface CommEmail {
@@ -23,6 +24,8 @@ export function fromHeader(name: string, address: string): string {
 }
 
 export async function sendCommEmail(apiKey: string, m: CommEmail, fetchImpl: typeof fetch = fetch): Promise<SendResult> {
+  // Demo / Practice Mode never emails anyone, whichever route got here (the proxy refuses these routes first).
+  if (await inDemoSession()) return { ok: false, retry: false, error: "demo_mode_no_send" };
   const headers: Record<string, string> = { "Message-ID": m.messageId };
   if (m.unsubscribe) { headers["List-Unsubscribe"] = `<${m.unsubscribe.oneClick}>`; headers["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click"; }
   try {

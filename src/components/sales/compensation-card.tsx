@@ -30,7 +30,7 @@ function Stat({ label, value, sub }: { label: string; value: string; sub?: strin
 
 /**
  * Rep dashboard: customers, milestone progress, and money, with standard commissions (recurring, up to
- * three years) kept visibly separate from one-time milestone bonuses.
+ * ten years, once a year) kept visibly separate from one-time milestone bonuses.
  */
 export function CompensationCard({ c }: { c: Compensation }) {
   const prev = c.current?.at ?? 0;
@@ -84,7 +84,7 @@ export function CompensationCard({ c }: { c: Compensation }) {
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="border-l-4 border-l-brand p-5">
           <h3 className="font-bold">Standard subscription commissions</h3>
-          <p className="mt-1 text-xs text-muted">Recurring: one month of each customer&apos;s plan at the sale and on up to two anniversaries.</p>
+          <p className="mt-1 text-xs text-muted">Recurring: one month of each customer&apos;s plan at the sale and once a year on each anniversary, for up to 10 years.</p>
           <dl className="mt-3 grid grid-cols-2 gap-3">
             <Stat label="Earned" value={usd(c.commission_earned_cents)} sub="Earned, approved and paid" />
             <Stat label="Pending" value={usd(c.commission_pending_cents)} sub="In the 30-day hold" />

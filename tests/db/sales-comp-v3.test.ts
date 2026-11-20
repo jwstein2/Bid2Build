@@ -80,7 +80,8 @@ d("sales compensation V3 (database)", () => {
     const s = await q1("select milestone_model, milestone_qualification, milestone_every, milestone_min_cents, milestone_rates, milestone_flat from public.sales_settings where id");
     expect(s).toMatchObject({ milestone_model: "v3_active_mrr", milestone_qualification: "second_cycle", milestone_every: 25, milestone_min_cents: 0 });
     expect(s.milestone_rates).toEqual([{ from: 50, pct: 3 }, { from: 100, pct: 4 }, { from: 250, pct: 5 }]);
-    const v = await q1("select policy, note from public.sales_policy_versions order by version desc limit 1");
+    // The newest version is the ten-year term (20270209001000); V3 is the one before it.
+    const v = await q1("select policy, note from public.sales_policy_versions where note like '%Compensation Model V3%' order by version desc limit 1");
     expect(v.policy).toMatchObject({ milestone_model: "v3_active_mrr", milestone_every: 25 });
     expect(v.note).toMatch(/Compensation Model V3/);
   });

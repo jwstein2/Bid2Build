@@ -18,6 +18,7 @@ import { can, loadMyCompany } from "@/lib/enterprise/server";
 import Link from "next/link";
 import { AnnualNudge, CancelStep } from "@/components/offers/billing-offers";
 import { annualNudgeEligible, annualSavings } from "@/lib/offers/policy";
+import { LegalStatusCompact } from "@/components/legal/legal-status";
 
 export const metadata: Metadata = { title: "Subscription", robots: { index: false } };
 
@@ -101,7 +102,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
           </div>
           {seatOnly ? <Badge tone="ok">company plan</Badge> : compOnly ? <Badge tone="ok">complimentary</Badge> : current && <Badge tone={q?.unlimited ? "ok" : "neutral"}>{current.status.replace("_", " ")}</Badge>}
         </div>
-        {bc && <div className="mt-5 border-t border-line pt-4" data-guide="billing.manage"><PortalButton label="Manage subscription, payment method & billing history" /><p className="mt-2 text-xs text-muted">Opens Stripe&apos;s secure customer portal, where you can change plans, cancel, update your card, and download invoices.</p>
+        {bc && <div className="mt-5 border-t border-line pt-4" data-guide="billing.manage"><PortalButton label="Manage subscription, payment method & billing history" /><p className="mt-2 text-xs text-muted">Opens Stripe&apos;s secure customer portal, where you can change plans, cancel, update your card, and download invoices.</p><LegalStatusCompact className="mt-1" />
           {personalPaid && !current?.cancel_at_period_end && <CancelStep monthly={current?.plan === "monthly"} annualSavings={savings} />}</div>}
       </Card>
 

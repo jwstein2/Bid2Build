@@ -2,7 +2,7 @@
  * Demo Mode building blocks that don't need a database: the sample dataset (deterministic, the
  * documented counts, fictional contacts only) and the API blocklist for demo sessions.
  */
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 import { DEMO_SEED_VERSION, buildDemoDataset, datasetSummary, demoId } from "@/lib/demo/dataset";
@@ -82,6 +82,8 @@ describe("demo session blocklist", () => {
       ["/api/estimates/abc/signing", "POST"], ["/api/comms", "POST"], ["/api/comms/send", "POST"],
       ["/api/company/invitations", "POST"], ["/api/schedules/abc/updates", "POST"],
       ["/api/account/delete", "POST"], ["/api/import-website", "POST"],
+      // Practice Mode for everyone (Nov 20): sub document request emails, change order links, Sales Hub.
+      ["/api/team/subs/abc/request", "POST"], ["/api/change-orders/abc", "POST"], ["/api/sales/leads/import", "POST"], ["/api/sales/google/connect", "GET"],
     ] as const) expect(isDemoBlocked(p, m), `${m} ${p}`).toBe(true);
   });
 
@@ -91,6 +93,7 @@ describe("demo session blocklist", () => {
       ["/api/schedules/abc", "POST"], ["/api/guide", "POST"],
       // Invoice email drafts only render text (nothing can be sent), so demos can show them (Nov 18 demo failure).
       ["/api/financials/email", "POST"], ["/api/demo/exit", "POST"], ["/api/demo/reset", "POST"], ["/api/features", "GET"],
+      ["/api/team/subs/abc", "PATCH"], ["/api/team/subs/abc/documents", "POST"], ["/api/change-orders/abc", "GET"],
     ] as const) expect(isDemoBlocked(p, m), `${m} ${p}`).toBe(false);
   });
 
@@ -108,5 +111,70 @@ describe("demo session blocklist", () => {
     expect(parseDemoClaim({ b2b_demo: { kind: "admin", owner: NS, workspace: NS } })).toBeNull();
     expect(parseDemoClaim({ b2b_demo: { kind: "practice", owner: "nope", workspace: NS } })).toBeNull();
     expect(parseDemoClaim(null)).toBeNull();
+  });
+});
+
+describe("Practice Mode for everyone", () => {
+  it("is on unless PRACTICE_MODE=off", async () => {
+    const { isPracticeEnabled } = await import("@/lib/demo/server");
+    const prev = process.env.PRACTICE_MODE;
+    try {
+      delete process.env.PRACTICE_MODE; expect(isPracticeEnabled()).toBe(true);
+      process.env.PRACTICE_MODE = "on"; expect(isPracticeEnabled()).toBe(true);
+      process.env.PRACTICE_MODE = "off"; expect(isPracticeEnabled()).toBe(false);
+    } finally { if (prev === undefined) delete process.env.PRACTICE_MODE; else process.env.PRACTICE_MODE = prev; }
+  });
+
+  it("says plainly that practice data is fake when an action is blocked", async () => {
+    const { demoBlockedMessage } = await import("@/lib/demo/session");
+    expect(demoBlockedMessage("practice")).toMatch(/fake/i);
+    expect(demoBlockedMessage("practice")).toMatch(/turn off practice mode/i);
+    expect(demoBlockedMessage("owner_demo")).toMatch(/Demo Mode/);
+  });
+
+  it("recognises demo and practice logins, current or retired", async () => {
+    const { isDemoLogin } = await import("@/lib/demo/session");
+    expect(isDemoLogin({ email: "someone@gmail.com", app_metadata: { b2b_demo: { kind: "practice", owner: NS, workspace: NS } } })).toBe(true);
+    expect(isDemoLogin({ email: "practice-a1b2c3d4e5@example.com", app_metadata: { b2b_demo: null } })).toBe(true);
+    expect(isDemoLogin({ email: "demo-a1b2c3d4e5@demo.built2bid.org", app_metadata: {} })).toBe(true);
+    expect(isDemoLogin({ email: "practice@gmail.com", app_metadata: {} })).toBe(false);
+    expect(isDemoLogin({ email: "james@example.com", app_metadata: {} })).toBe(false);
+  });
+
+  it("the email sender refuses to send from a demo or practice session", async () => {
+    vi.resetModules();
+    vi.doMock("@/lib/supabase/server", () => ({ getAuthUser: async () => ({ id: NS, app_metadata: { b2b_demo: { kind: "practice", owner: NS, workspace: NS } } }) }));
+    const { sendCommEmail } = await import("@/lib/comms/send");
+    const fetchImpl = vi.fn();
+    const r = await sendCommEmail("key", { idempotencyKey: "k", from: "a@b.c", to: "real@person.com", replyTo: null, subject: "s", text: "t", messageId: "<m>" }, fetchImpl as unknown as typeof fetch);
+    expect(r).toEqual({ ok: false, retry: false, error: "demo_mode_no_send" });
+    expect(fetchImpl).not.toHaveBeenCalled();
+    vi.doUnmock("@/lib/supabase/server");
+    vi.resetModules();
+  });
+
+  it("every outbound email sender is reviewed for Demo / Practice Mode", () => {
+    // Adding a new place that calls Resend? Make sure a demo or practice session can't reach it, then add it here.
+    const reviewed = new Set([
+      "src/lib/comms/send.ts",            // refuses demo sessions itself (customer comms, sub requests, compliance, signer copy)
+      "src/lib/email/outbox.ts",          // founder welcome: paid subscriptions only, demo tenants blocked in SQL
+      "src/lib/email/lifecycle-run.ts",   // demo logins filtered out; email_outbox SQL guard
+      "src/lib/creator/outreach/send.ts", // staff creator outreach cron
+      "src/lib/trial/delivery.ts",        // Facebook trial invites (public funnel, not a signed-in session)
+      "src/lib/sales/invite-email.ts", "src/lib/sales/booking-email.ts", "src/lib/sales/congrats-email.ts", "src/lib/sales/digest.ts", // staff Sales Hub (/api/sales blocked)
+      "src/app/api/webhooks/resend/route.ts", // inbound mail webhook (reads only)
+    ]);
+    const root = path.join(__dirname, "..");
+    const found: string[] = [];
+    const walk = (dir: string) => {
+      for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, e.name);
+        if (e.isDirectory()) walk(full);
+        else if (/\.(ts|tsx)$/.test(e.name) && /api\.resend\.com|api\.twilio\.com|inviteUserByEmail/.test(fs.readFileSync(full, "utf8"))) found.push(path.relative(root, full).split(path.sep).join("/"));
+      }
+    };
+    walk(path.join(root, "src"));
+    const unreviewed = found.filter((f) => !reviewed.has(f) && f !== "src/lib/comp/server.ts" /* owner-only complimentary invites */ && f !== "src/lib/admin/costs.ts" /* text only */);
+    expect(unreviewed).toEqual([]);
   });
 });

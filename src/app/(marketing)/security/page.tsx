@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/ui/misc";
+import { LegalStatusNotice } from "@/components/legal/legal-status";
+import { legalDocument } from "@/lib/legal/registry";
+import { getLegalStatus } from "@/lib/legal/status.server";
 
 export const metadata: Metadata = {
   title: "Security",
@@ -11,12 +14,14 @@ export const metadata: Metadata = {
 const SECURITY_EMAIL = "privacy@built2bid.org";
 const LAST_UPDATED = "November 18, 2026";
 
-export default function Security() {
+export default async function Security() {
+  const record = await getLegalStatus("security");
   return (
     <Container className="py-12">
       <div className="mx-auto max-w-2xl space-y-4 leading-relaxed text-ink-soft">
         <h1 className="text-4xl font-extrabold text-ink">Security</h1>
         <p className="text-sm">Last updated {LAST_UPDATED}</p>
+        <LegalStatusNotice record={record} version={legalDocument("security")?.version} />
         <p>
           Built2Bid L.L.C. keeps a written Information Security Policy, owned by our founder and reviewed at least once a year and
           after any major change or incident. This page summarizes how we protect your account, your bids and customers, and any

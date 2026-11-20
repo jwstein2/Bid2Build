@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Free Trial and Pass Terms", alternat
 
 export default function TrialTerms() {
   return (
-    <LegalPage title="Free Trial, Pass and Gift Terms" updated={LEGAL_UPDATED}>
+    <LegalPage title="Free Trial, Pass and Gift Terms" updated={LEGAL_UPDATED} docKey="trial-terms">
       <p>These terms cover free trials and passes (such as the {TRIAL_DAYS}-day Unlimited pass from Facebook or the Bid Check), gift links, and complimentary access from Built2Bid L.L.C. They add to our <A href="/terms">Terms of Service</A>.</p>
       <H2>Trials and passes</H2>
       <UL>

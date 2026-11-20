@@ -3,6 +3,7 @@ import { requireSalesRep } from "@/lib/sales/server";
 import { DEFAULT_MILESTONES, payExample, type MilestoneModel, type MilestoneRules } from "@/lib/sales/goals";
 import type { Compensation } from "@/components/sales/compensation-card";
 import { usd } from "@/lib/sales/format";
+import { LegalStatusCompact } from "@/components/legal/legal-status";
 
 export const metadata = { title: "How you get paid" };
 
@@ -23,17 +24,18 @@ export default async function HowYouGetPaid() {
     ["2. They pay", "When the customer's first payment goes through, a commission line appears: one month of their plan at the monthly list price ($19.99), before tax. Taxes, refunds, chargebacks and anything not actually collected are never commissionable."],
     ["3. 30-day hold", "The commission waits 30 days. If the customer is refunded or cancels in their first month, that sale doesn't pay. After the hold, it's yours: later refunds never take money back."],
     ["4. Month-end statement", "Earned commission goes on your next month-end statement. The owner approves it and you're paid."],
-    ["5. Anniversaries", "On the customer's 1-year and 2-year anniversaries you're paid again if they're still active and paid (3 payments in total). Upgrades count at the anniversary."],
+    ["5. Anniversaries, for up to 10 years", "On each anniversary of the customer's first payment you're paid again, one month of their plan at that time, if they're still active and paid that month. That's up to 10 payments in total (the sale plus 9 anniversaries), once a year, never monthly. Upgrades and downgrades count at the next anniversary. The 10 years start at the first payment and don't restart if the customer changes plans, cancels or comes back."],
     ["6. Milestone bonuses", v3
       ? `At ${rules.flat.map((f) => f.at).join(" and ")} qualifying customers, then at ${rules.rates[0]?.from ?? 50} and every ${rules.every} after that, you earn a one-time bonus. Each milestone pays once and never raises your commission rate. A gift box pops up on your dashboard; it goes on your next statement once the owner approves it.`
       : `At ${rules.flat.map((f) => f.at).join(", ")}, ${rules.every} and every ${rules.every} accounts after that, a Built2Bid gift box pops up on your dashboard. Click the box to open it and see your bonus. It goes on your next statement once the owner approves it.`],
-    ["7. If you leave", "You're paid for every sale whose customer paid before your last day, including sales still in the 30-day hold and gift boxes you already unlocked. Payments that come in after you leave (including 1-year and 2-year anniversaries) don't earn commission. Your written sales agreement has the details."],
+    ["7. If you leave", "You're paid for every sale whose customer paid before your last day, including sales still in the 30-day hold and gift boxes you already unlocked. Payments that come in after you leave (including later anniversaries) don't earn commission. Your written sales agreement has the details."],
   ];
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-extrabold">How you get paid</h1>
         <p className="mt-1 text-ink-soft">Everything that happens from the first click to your paycheck. Fixed rules, no luck involved.</p>
+        <LegalStatusCompact className="mt-2" />
       </div>
 
       <ol className="grid gap-3 md:grid-cols-2">
