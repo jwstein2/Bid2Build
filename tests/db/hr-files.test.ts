@@ -110,6 +110,7 @@ d("employee HR files (database)", () => {
   });
 
   it("rollback removes everything and re-apply works", async () => {
+    await pool.query(readFileSync("docs/workforce-gps/rollback_20270208001000.sql", "utf8"));
     await pool.query(readFileSync("docs/hr-records/rollback_20270205001000.sql", "utf8"));
     await pool.query(readFileSync("docs/team-records/rollback_20270105001000.sql", "utf8"));
     expect((await pool.query("select to_regclass('public.pm_employee_hr') as a, to_regclass('public.pm_hr_audit') as b")).rows[0]).toEqual({ a: null, b: null });

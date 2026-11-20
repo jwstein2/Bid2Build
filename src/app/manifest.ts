@@ -15,6 +15,8 @@ export default function manifest(): MetadataRoute.Manifest {
     display: "standalone",
     background_color: "#F5F8FB",
     theme_color: "#0B2D4D",
+    // Long-press shortcut on the Home Screen icon (Android; iPhone ignores it). Crews go straight to the time clock.
+    shortcuts: [{ name: "Time clock", short_name: "Clock", url: "/clock", icons: [{ src: "/brand/icon-192.png", sizes: "192x192", type: "image/png" }] }],
     icons: [
       { src: "/brand/icon-192.png", sizes: "192x192", type: "image/png" },
       { src: "/brand/icon-512.png", sizes: "512x512", type: "image/png" },

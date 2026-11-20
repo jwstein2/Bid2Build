@@ -415,6 +415,7 @@ d("Project operations V4.3 + proposal style V4.4 (database)", () => {
   it("rollbacks remove everything and the migrations re-apply", async () => {
     const { readFileSync } = await import("node:fs");
     // The Financial Command Center points at change orders / quotes / the directory: roll it back first (newest first).
+    await pool.query(readFileSync("docs/workforce-gps/rollback_20270208001000.sql", "utf8"));
     await pool.query(readFileSync("docs/hr-records/rollback_20270205001000.sql", "utf8"));
     await pool.query(readFileSync("docs/team-records/rollback_20270105001000.sql", "utf8"));
     await pool.query(readFileSync("docs/team-records/rollback_20270104001000.sql", "utf8"));

@@ -47,13 +47,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // app's own onboarding can take over. /sales/join forgets the invite once it's used or no longer open.
   if (isInviteToken((await cookies()).get(SALES_JOIN_COOKIE)?.value ?? "")) redirect("/sales/join");
   const supabase = await createClient();
-  const [{ data: isAdmin }, company, premium, learning, access, workspaces] = await Promise.all([
+  const [{ data: isAdmin }, company, premium, learning, access, workspaces, clockRes] = await Promise.all([
     supabase.rpc("is_admin", { p_user_id: user.id }), loadMyCompany(supabase), hasPremiumAccess(supabase), loadLearningNav(supabase),
     // V6.7: which workspace links this person sees (company members only; solo accounts and owners see everything).
     loadEffectiveAccess(supabase).catch(() => null),
     // V8.10: "Switch to Sales Hub" in the account menu for sales reps and sales admins.
     loadWorkspaces().catch(() => NO_WORKSPACES),
+    // V8.2: "Time clock" in the sidebar for anyone linked to a Staff entry (employees clock in there).
+    isPmEnabled() ? supabase.from("pm_resources").select("id").eq("linked_user_id", user.id).eq("kind", "staff").eq("status", "active").limit(1) : Promise.resolve({ data: [] }),
   ]);
+  const clock = ((clockRes.data as unknown[] | null) ?? []).length > 0;
   // Link the account to its lead + first-touch attribution (best effort, one indexed lookup when already linked).
   // Runs after the page is sent (next/server after()), so this bookkeeping never delays a signed-in page.
   // Demo / Practice logins are sample tenants: no lead, attribution or referral bookkeeping.
@@ -78,7 +81,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     {user.demo && <DemoBanner kind={user.demo.kind} company={company?.name ?? null} />}
     <div className="app-theme flex min-h-screen flex-col md:flex-row">
       <aside className="on-dark bg-navy text-white md:sticky md:top-0 md:flex md:h-screen md:w-64 md:shrink-0 md:flex-col md:overflow-y-auto md:overscroll-contain no-print">
-        <AppSidebar isAdmin={Boolean(isAdmin)} projects={isPmEnabled()} financials={isFinancialsEnabled()} home={isUnifiedHomeEnabled()} company={companyNav(company)} access={sidebarAccess(access)} learning={learning} switches={switchLinks(workspaces, "contractor")} email={user.email ?? (user.phone ? formatPhone(user.phone) : null)} theme={user.theme ?? null} bell={isPmEnabled() ? <NotificationBell only="phone" tone="dark" /> : null} />
+        <AppSidebar isAdmin={Boolean(isAdmin)} projects={isPmEnabled()} clock={clock} financials={isFinancialsEnabled()} home={isUnifiedHomeEnabled()} company={companyNav(company)} access={sidebarAccess(access)} learning={learning} switches={switchLinks(workspaces, "contractor")} email={user.email ?? (user.phone ? formatPhone(user.phone) : null)} theme={user.theme ?? null} bell={isPmEnabled() ? <NotificationBell only="phone" tone="dark" /> : null} />
       </aside>
       {/* Bottom padding keeps the last controls on every page clear of the fixed Guide button (bottom left). */}
       <main id="main" className="min-w-0 flex-1 px-4 pb-24 pt-4 sm:px-8 md:pt-2">

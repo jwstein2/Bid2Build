@@ -100,6 +100,7 @@ d("complete HR records (database)", () => {
   });
 
   it("rollback restores the earlier definitions and re-apply works", async () => {
+    await pool.query(readFileSync("docs/workforce-gps/rollback_20270208001000.sql", "utf8"));
     await pool.query(readFileSync("docs/hr-records/rollback_20270205001000.sql", "utf8"));
     await pool.query(readFileSync("docs/hr-records/rollback_20270205001000.sql", "utf8"));
     expect((await pool.query("select to_regclass('public.pm_sub_profiles') as a")).rows[0].a).toBeNull();

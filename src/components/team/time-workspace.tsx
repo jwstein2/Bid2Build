@@ -89,7 +89,7 @@ export function TimeWorkspace({ employees, projects, me }: { employees: Employee
         {sheet && <SheetView key={week} sheet={sheet} week={week} tz={tz} names={names} employees={employees.employees} projects={projects}
           onChanged={(t) => { setMsg({ ok: true, text: t }); refresh(); }} onError={(t) => setMsg({ ok: false, text: t })} />}
       </section>
-      <p className="text-xs text-muted">Location is saved only at the moment someone clocks in or out, only when they tick “Include my location”, and is cleared after 90 days. There&apos;s no tracking in between. Built2Bid doesn&apos;t calculate payroll or taxes: export the hours for whoever runs your payroll.</p>
+      <p className="text-xs text-muted">Here, location is saved only at the moment someone clocks in or out, only when they tick “Include my location”, and is cleared after 90 days. Automatic GPS clock-in (off unless your company sets it up in <Link href="/projects/workforce/time-tracking" className="underline">Time tracking</Link>) records arrivals and departures at work sites only, never a trail. Employees can also use <Link href="/clock" className="underline">Time clock</Link> on their phone. Built2Bid doesn&apos;t calculate payroll or taxes: export the hours for whoever runs your payroll.</p>
     </div>
   );
 }

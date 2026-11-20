@@ -75,12 +75,33 @@ export function mapEmployees(raw: unknown): EmployeeList {
 export type TimeStatus = "open" | "pending" | "approved" | "rejected";
 export const TIME_STATUS_LABEL: Record<TimeStatus, string> = { open: "Clocked in", pending: "Waiting for approval", approved: "Approved", rejected: "Sent back" };
 export interface Punch { lat: number; lng: number; accuracyM: number | null }
+export type TimeSource = "clock" | "manual" | "gps" | "gps_confirmed" | "travel" | "correction";
+export const TIME_SOURCE_LABEL: Record<TimeSource, string> = {
+  clock: "Time clock", manual: "Added by manager", gps: "GPS (automatic)", gps_confirmed: "GPS (employee confirmed)", travel: "Travel between sites (GPS)", correction: "Employee correction",
+};
+export type WorkType = "regular" | "travel" | "offsite";
+export const WORK_TYPE_LABEL: Record<WorkType, string> = { regular: "On site", travel: "Travel between sites", offsite: "Paid offsite work" };
+export type ReviewFlag = "auto_clock_out" | "travel" | "away_no_answer" | "travel_gap" | "long_shift";
+export const REVIEW_FLAG_LABEL: Record<ReviewFlag, string> = {
+  auto_clock_out: "Clocked out automatically when they left. Check the time.",
+  travel: "Travel between two sites, recorded automatically.",
+  away_no_answer: "Left the site and didn't answer.",
+  travel_gap: "Long gap between two sites. Travel wasn't added; check with the employee.",
+  long_shift: "Shift of 16 hours or more.",
+};
 export interface TimeEntry {
   id: string; resourceId: string; scheduleId: string | null; clockIn: string; clockOut: string | null; breakMinutes: number;
-  note: string | null; status: TimeStatus; source: "clock" | "manual"; inLocation: Punch | null; outLocation: Punch | null;
+  note: string | null; status: TimeStatus; source: TimeSource; inLocation: Punch | null; outLocation: Punch | null;
   edited: boolean; decisionNote: string | null;
+  /** V8.2 GPS timekeeping (absent until that SQL runs). */
+  locationId?: string | null; workType?: WorkType; paidBreakMinutes?: number; shiftId?: string | null; awaySince?: string | null;
+  reviewFlag?: ReviewFlag | null; originalClockIn?: string | null; originalClockOut?: string | null;
 }
-export interface Timesheet { canManage: boolean; entries: TimeEntry[]; projects: Record<string, string>; rates: Record<string, number> }
+export interface Signoff { resourceId: string; week: string; signedAt: string; hours: number | null }
+export interface Timesheet {
+  canManage: boolean; entries: TimeEntry[]; projects: Record<string, string>; rates: Record<string, number>;
+  locations?: Record<string, string>; exempt?: string[]; signoffs?: Signoff[]; overtimeRule?: string; timezone?: string;
+}
 
 const punch = (v: unknown): Punch | null => {
   const p = v as Record<string, unknown> | null;
@@ -92,8 +113,12 @@ export function mapEntry(x: Record<string, unknown>): TimeEntry {
     id: String(x.id), resourceId: String(x.resourceId), scheduleId: str(x.scheduleId), clockIn: String(x.clockIn), clockOut: str(x.clockOut),
     breakMinutes: num(x.breakMinutes) ?? 0, note: str(x.note),
     status: (["open", "pending", "approved", "rejected"].includes(String(x.status)) ? x.status : "pending") as TimeStatus,
-    source: x.source === "manual" ? "manual" : "clock", inLocation: punch(x.inLocation), outLocation: punch(x.outLocation),
+    source: (Object.keys(TIME_SOURCE_LABEL).includes(String(x.source)) ? x.source : "clock") as TimeSource, inLocation: punch(x.inLocation), outLocation: punch(x.outLocation),
     edited: x.edited === true, decisionNote: str(x.decisionNote),
+    locationId: str(x.locationId), workType: (["travel", "offsite"].includes(String(x.workType)) ? x.workType : "regular") as WorkType,
+    paidBreakMinutes: num(x.paidBreakMinutes) ?? 0, shiftId: str(x.shiftId), awaySince: str(x.awaySince),
+    reviewFlag: (Object.keys(REVIEW_FLAG_LABEL).includes(String(x.reviewFlag)) ? x.reviewFlag : null) as ReviewFlag | null,
+    originalClockIn: str(x.originalClockIn), originalClockOut: str(x.originalClockOut),
   };
 }
 export function mapTimesheet(raw: unknown): Timesheet {
@@ -102,10 +127,14 @@ export function mapTimesheet(raw: unknown): Timesheet {
   for (const [k, v] of Object.entries((r.rates ?? {}) as Record<string, unknown>)) { const n = num(v); if (n !== null) rates[k] = n; }
   const projects: Record<string, string> = {};
   for (const [k, v] of Object.entries((r.projects ?? {}) as Record<string, unknown>)) if (typeof v === "string") projects[k] = v;
+  const locations: Record<string, string> = {};
+  for (const [k, v] of Object.entries((r.locations ?? {}) as Record<string, unknown>)) if (typeof v === "string") locations[k] = v;
+  const signoffs = (Array.isArray(r.signoffs) ? (r.signoffs as Record<string, unknown>[]) : []).map((x) => ({
+    resourceId: String(x.resourceId), week: String(x.week), signedAt: String(x.signedAt), hours: num(x.hours) }));
   return {
     canManage: r.canManage === true,
     entries: (Array.isArray(r.entries) ? (r.entries as Record<string, unknown>[]) : []).map(mapEntry),
-    projects, rates,
+    projects, rates, locations, exempt: strs(r.exempt), signoffs, overtimeRule: str(r.overtimeRule) ?? undefined, timezone: str(r.timezone) ?? undefined,
   };
 }
 
@@ -207,7 +236,7 @@ export function timeEntriesCsv(entries: TimeEntry[], names: Record<string, strin
   const head = ["Employee", "Project", "Clock in", "Clock out", "Break (min)", "Hours", "Status", "Source", "Edited", "Note"];
   const rows = [...entries].sort((a, b) => a.clockIn.localeCompare(b.clockIn)).map((e) => [
     names[e.resourceId] ?? "Unknown", e.scheduleId ? projects[e.scheduleId] ?? "" : "", fmt(e.clockIn), fmt(e.clockOut), e.breakMinutes,
-    entryHours(e, now).toFixed(2), TIME_STATUS_LABEL[e.status], e.source === "manual" ? "Added by manager" : "Time clock", e.edited ? "Yes" : "", e.note ?? "",
+    entryHours(e, now).toFixed(2), TIME_STATUS_LABEL[e.status], TIME_SOURCE_LABEL[e.source] ?? "Time clock", e.edited ? "Yes" : "", e.note ?? "",
   ]);
   return [head, ...rows].map((r) => r.map(csvCell).join(",")).join("\r\n") + "\r\n";
 }
@@ -400,6 +429,20 @@ export function recordsDbError(e: { message?: string; code?: string } | null): {
   if (m.includes("bad_routing")) return { status: 400, code: "bad_routing", message: "That routing number isn't valid. Check the 9 digits on the check or bank letter." };
   if (m.includes("bad_supplier")) return { status: 400, code: "bad_supplier", message: "Pick one of your own suppliers." };
   if (m.includes("forbidden_own")) return { status: 403, code: "forbidden_own", message: "Someone else needs to approve your own time." };
+  if (m.includes("disclosure_required")) return { status: 400, code: "disclosure_required", message: "Confirm that your employees were told how GPS time tracking works before switching it on." };
+  if (m.includes("location_required")) return { status: 400, code: "location_required", message: "Add and confirm at least one work location before switching GPS time tracking on." };
+  if (m.includes("w2_required")) return { status: 400, code: "w2_required", message: "Confirm this person is a W-2 employee whose hours you track before turning on GPS time tracking for them." };
+  if (m.includes("staff_only")) return { status: 400, code: "staff_only", message: "GPS time tracking is only for your own employees, not subcontractors, vendors or crews." };
+  if (m.includes("bad_radius")) return { status: 400, code: "bad_radius", message: "Pick a radius between 30 m and 0.2 miles (322 m)." };
+  if (m.includes("pin_required")) return { status: 400, code: "pin_required", message: "Set the pin on the map first (find the address or use your current location)." };
+  if (m.includes("stale_disclosure")) return { status: 409, code: "stale_disclosure", message: "Your company updated its notice. Read it again and accept." };
+  if (m.includes("not_enrolled")) return { status: 400, code: "not_enrolled", message: "Your company hasn't turned on GPS time tracking for you." };
+  if (m.includes("already_requested")) return { status: 409, code: "already_requested", message: "You already asked for a fix to this entry. Wait for a decision or withdraw it." };
+  if (m.includes("not_pending")) return { status: 409, code: "not_pending", message: "That request was already decided." };
+  if (m.includes("still_open")) return { status: 409, code: "still_open", message: "Clock out before confirming this week." };
+  if (m.includes("bad_location")) return { status: 400, code: "bad_location", message: "Pick one of your company's work locations." };
+  if (m.includes("bad_time")) return { status: 400, code: "bad_time", message: "That location event is too old to use." };
+  if (m.includes("not_member")) return { status: 400, code: "not_member", message: "Pick an active member of your company." };
   if (m.includes("not_found")) return { status: 404, code: "not_found", message: "That record no longer exists." };
   if (m.includes("forbidden") || e?.code === "42501") return { status: 403, code: "forbidden", message: "You don't have permission to do that." };
   if (m.includes("bad_") || e?.code === "22023" || e?.code === "22P02" || e?.code === "23514") return { status: 400, code: "invalid", message: "Check the details and try again." };

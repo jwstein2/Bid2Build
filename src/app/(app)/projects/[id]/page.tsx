@@ -17,6 +17,8 @@ import { ProjectTabs } from "@/components/operations/project-tabs";
 import { ProjectUpdatesPanel } from "@/components/comms/project-updates-panel";
 import { loadCommAccess } from "@/lib/comms/server";
 import { ProjectCrew, type CrewRow } from "@/components/workforce/project-crew";
+import { ProjectLabor } from "@/components/workforce/gps/project-labor";
+import { mapProjectLabor } from "@/lib/workforce/gps/model";
 
 export const metadata: Metadata = { title: "Project schedule", robots: { index: false } };
 
@@ -33,13 +35,16 @@ export default async function SchedulePage({ params, searchParams }: { params: P
   // the schedule first, then the summary, then the crew). Only the two estimate lookups wait for the schedule.
   // V4.1 summary (people, closeout, activity) is absent before the V4.1 SQL runs: the editor still works.
   // V7.3 crew (who's assigned) is skipped quietly before the V4.2 / V7.3 SQL.
-  const [data, pm, publications, account, comm, { data: row }, activity, { data: peopleRaw }, crew] = await Promise.all([
+  const [data, pm, publications, account, comm, { data: row }, activity, { data: peopleRaw }, crew, laborRes] = await Promise.all([
     loadSchedule(supabase, id), loadPmAccess(supabase), listPublications(supabase, id), getAccountStatus(), loadCommAccess(supabase),
     supabase.from("project_schedules").select("sales_rep_id, project_manager_id, actual_finish, closeout_note").eq("id", id).maybeSingle(),
     loadActivity(supabase, id),
     supabase.rpc("pm_people"),
     loadCrew(supabase, id),
+    // V8.2 labor estimate vs actual (skipped quietly before that SQL runs).
+    supabase.rpc("pm_project_labor", { p_schedule_id: id }),
   ]);
+  const labor = laborRes.error || !laborRes.data ? null : mapProjectLabor(laborRes.data);
   if (!data) notFound();
   const editHint = data.canEdit ? null : pm?.scope === "company" || data.schedule.companyId ? "seat" : account.kind === "unlimited" ? "addon" : "upgrade";
   const { created, tab } = await searchParams;
@@ -65,6 +70,7 @@ export default async function SchedulePage({ params, searchParams }: { params: P
       <Breadcrumbs className="mb-3" items={[{ label: "Projects", href: "/projects" }, { label: data.schedule.name }]} />
       {summary && <ProjectSummary {...summary} />}
       {crew && <ProjectCrew scheduleId={id} rows={crew} canEdit={data.permissions.edit} today={todayIn(data.schedule.calendar.timezone)} projectStatus={data.schedule.status} />}
+      {labor && (labor.estimatedHours !== null || labor.actualHours > 0 || (labor.estimatedCost ?? 0) > 0) && <ProjectLabor labor={labor} />}
       {comm?.pm && comm.perms.includes("view_communications") && (
         <ProjectUpdatesPanel scheduleId={id} canConfigure={comm.perms.includes("configure_project_updates")} canAuto={comm.perms.includes("enable_auto_project_updates")} />
       )}
