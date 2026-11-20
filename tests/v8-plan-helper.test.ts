@@ -21,6 +21,6 @@ describe("pricing plan helper", () => {
     expect(recommendPlan({ bids: "many", people: "team", schedule: true }, false).why).not.toMatch(/schedule/);
   });
   it("annual savings in dollars come from the approved prices", () => {
-    expect(formatUsd(MONTHLY.amountCents * 12 - ANNUAL.amountCents)).toBe("$90.88");
+    expect(formatUsd(MONTHLY.amountCents * 12 - ANNUAL.amountCents)).toBe("$40.88");
   });
 });

@@ -11,7 +11,7 @@ const PLANS = ["free", "unlimited", "enterprise"] as const;
 describe("marketing catalog", () => {
   it("shows only the approved prices", () => {
     expect(PRICES).toMatchObject({
-      unlimitedMonthly: "$19.99", unlimitedAnnual: "$149", pmMonthly: "$4.99", pmAnnual: "$49.99", pmEditor: "$1.99",
+      unlimitedMonthly: "$19.99", unlimitedAnnual: "$199", pmMonthly: "$4.99", pmAnnual: "$49.99", pmEditor: "$1.99",
       pmIncludedEnterpriseEditors: 1, enterpriseBase: "$49.99", enterpriseIncludedUsers: 3,
     });
     expect(PM_PRODUCT_NAME).toBe("Project Command Center");
@@ -93,7 +93,7 @@ describe("marketing catalog", () => {
   it("sends each account to the right purchase path", () => {
     const free = pmUpgradeCopy("free");
     expect(free.href).toBe("/pricing#project-command-center");
-    expect(free.body).toMatch(/Start Unlimited \(\$19\.99\/month or \$149\/year\), then add Project Command Center for \$4\.99\/month/);
+    expect(free.body).toMatch(/Start Unlimited \(\$19\.99\/month or \$199\/year\), then add Project Command Center for \$4\.99\/month/);
     const unl = pmUpgradeCopy("unlimited");
     expect(unl.href).toBe("/settings/billing#project-command-center");
     expect(unl.title).toBe("Unlock Project Command Center");

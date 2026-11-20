@@ -1,7 +1,7 @@
 import type { Category } from "./types";
 
 /**
- * Trade → news mapping for every trade in src/lib/trades/data.ts (39 today; a test fails if a trade is
+ * Trade → news mapping for every trade in src/lib/trades/data.ts (42 today; a test fails if a trade is
  * added there without a mapping here).
  *
  * associations: recognized organizations for the trade, listed for reference and for the "where this
@@ -41,6 +41,9 @@ const NKBA = A("National Kitchen & Bath Association", "NKBA", "https://nkba.org"
 const ACI = A("American Concrete Institute", "ACI", "https://www.concrete.org");
 const ASCC = A("American Society of Concrete Contractors", "ASCC", "https://www.ascconline.org");
 const PWNA = A("Power Washers of North America", "PWNA", "https://www.pwna.org");
+const TCIA = A("Tree Care Industry Association", "TCIA", "https://www.tcia.org");
+const ISA = A("International Society of Arboriculture", "ISA", "https://www.isa-arbor.com", "secondary");
+const NPMA = A("National Pest Management Association", "NPMA", "https://www.npmapestworld.org");
 const NRCA = A("National Roofing Contractors Association", "NRCA", "https://www.nrca.net");
 
 const OFFICIAL_SAFETY = ["fr-osha", "osha-news"];
@@ -217,6 +220,20 @@ export const TRADE_NEWS: TradeNewsDef[] = [
     keywords: ["landscaping", "landscaper", "landscapers", "landscape", "lawn", "lawn care", "hardscape", "hardscaping", "irrigation", "turf", "nursery", "h-2b"],
     related: ["heat illness", "seasonal workers", "water restrictions", "mowers", "pesticide"], exclude: ["political landscape", "competitive landscape", "media landscape", "threat landscape", "regulatory landscape"], geo: "local_heavy", market: "both",
   }),
+  T("tree-removal", {
+    associations: [TCIA, ISA],
+    publications: ["landscape-management", "lawn-landscape", ...GENERAL_PRESS], official: [...OFFICIAL_SAFETY, ...OFFICIAL_STORM, ...OFFICIAL_LABOR],
+    topics: ["safety", "disaster_recovery", "labor_workforce", "business_taxes"],
+    keywords: ["tree removal", "tree service", "tree services", "tree care", "arborist", "arborists", "stump grinding", "stump removal", "storm cleanup", "emerald ash borer"],
+    related: ["chainsaw", "chipper", "crane", "storm damage", "power lines", "invasive pests", "tree permit"], exclude: ["family tree", "decision tree", "christmas tree sale", "tree of life"], geo: "local_heavy", market: "both",
+  }),
+  T("tree-trimming", {
+    associations: [TCIA, ISA],
+    publications: ["landscape-management", "lawn-landscape", ...GENERAL_PRESS], official: [...OFFICIAL_SAFETY, ...OFFICIAL_LABOR, ...OFFICIAL_ENV],
+    topics: ["safety", "labor_workforce", "business_taxes", "disaster_recovery"],
+    keywords: ["tree trimming", "tree pruning", "tree trimmers", "tree care", "arborist", "arborists", "line clearance", "vegetation management", "hedge trimming"],
+    related: ["chainsaw", "aerial lift", "power lines", "storm damage", "oak wilt", "pruning season"], exclude: ["family tree", "decision tree", "budget trimming", "christmas tree sale"], geo: "local_heavy", market: "both",
+  }),
   T("pressure-washing", {
     associations: [PWNA, A("United Association of Mobile Contract Cleaners", "UAMCC", "https://www.uamcc.org", "secondary")],
     publications: ["lawn-landscape", "construction-dive"], official: [...OFFICIAL_ENV, ...OFFICIAL_SAFETY],
@@ -237,6 +254,13 @@ export const TRADE_NEWS: TradeNewsDef[] = [
     topics: ["labor_workforce", "safety", "business_taxes"],
     keywords: ["janitorial", "commercial cleaning", "residential cleaning", "house cleaning", "post-construction cleaning", "cleaning company", "cleaning companies", "cleaning crews", "custodial", "maid service"],
     related: ["cleaning chemicals", "disinfectant", "green cleaning", "hazard communication", "silica dust"], exclude: ["dry cleaning", "data cleaning", "spring cleaning sale", "ethnic cleansing"], geo: "balanced", market: "both",
+  }),
+  T("pest-control", {
+    associations: [NPMA],
+    publications: GENERAL_PRESS, official: [...OFFICIAL_ENV, ...OFFICIAL_SAFETY, ...OFFICIAL_LABOR],
+    topics: ["licensing_regulations", "safety", "labor_workforce", "business_taxes"],
+    keywords: ["pest control", "pest management", "exterminator", "exterminators", "termite", "termites", "bed bugs", "rodent control", "pest control company", "pest control companies", "pesticide applicator"],
+    related: ["pesticide", "pesticides", "fifra", "mosquito", "ticks", "rodenticide", "invasive species", "fumigation"], exclude: ["computer bug", "software bug", "bug bounty", "stomach bug"], geo: "balanced", market: "both",
   }),
   T("excavation", {
     associations: [A("National Utility Contractors Association", "NUCA", "https://www.nuca.com"), AGC],

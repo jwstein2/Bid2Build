@@ -1,6 +1,6 @@
 "use client";
-import { useRef, useState, useSyncExternalStore } from "react";
-import { Download, ExternalLink, Share, SquarePlus, X } from "lucide-react";
+import { useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { Check, Copy, Download, Ellipsis, ExternalLink, Share, SquarePlus, X } from "lucide-react";
 import { useDismiss } from "@/components/ui/use-dismiss";
 import { cn } from "@/lib/cn";
 
@@ -9,7 +9,10 @@ import { cn } from "@/lib/cn";
  * shows its one-time install prompt:
  * - Chrome/Edge/Samsung (Android + desktop): keeps the browser's install event and opens the
  *   native install dialog when tapped.
- * - iPhone/iPad Safari and browsers without the event: opens short Add to Home Screen steps.
+ * - iPhone/iPad: Apple never fires the install event, so it opens Add to Home Screen steps written
+ *   for the browser in use (Safari, Chrome, Firefox, Edge, or an in-app browser such as Facebook's,
+ *   which can't add to the home screen and has to hand the page to Safari first).
+ * - Other browsers without the event: opens short Add to Home Screen steps.
  * - Already running as the installed app: hidden. Installed on this device (we saw it install):
  *   becomes "Open App", which opens the app's start page.
  */
@@ -40,6 +43,23 @@ if (typeof window !== "undefined") {
 
 type Mode = "hidden" | "native" | "ios" | "manual" | "open";
 
+/** Which iPhone/iPad browser the steps are written for. Exported for tests. */
+export type IosBrowser = "safari" | "chrome" | "firefox" | "edge" | "inapp" | "old";
+
+export function iosBrowser(ua: string): IosBrowser {
+  // In-app browsers (Facebook, Instagram, Messenger, TikTok, LinkedIn, X, Snapchat, Pinterest, Line,
+  // the Google app) have no Add to Home Screen at all.
+  if (/GSA\/|FBAN|FBAV|FB_IAB|FBIOS|Instagram|MessengerForiOS|musical_ly|BytedanceWebview|TikTok|LinkedInApp|Twitter|Snapchat|Pinterest|\bLine\//i.test(ua)) return "inapp";
+  const other = /CriOS/.test(ua) ? "chrome" : /FxiOS/.test(ua) ? "firefox" : /EdgiOS/.test(ua) ? "edge" : null;
+  if (other) {
+    // Browsers other than Safari gained Add to Home Screen in iOS 16.4.
+    const m = ua.match(/OS (\d+)_(\d+)/);
+    if (m && (+m[1] < 16 || (+m[1] === 16 && +m[2] < 4))) return "old";
+    return other;
+  }
+  return "safari";
+}
+
 function currentMode(): Mode {
   const standalone = window.matchMedia?.("(display-mode: standalone)").matches || (navigator as Navigator & { standalone?: boolean }).standalone === true;
   if (standalone) return "hidden";
@@ -60,6 +80,7 @@ function subscribe(l: () => void) {
 export function InstallAppButton({ className, tone = "dark" }: { className?: string; tone?: "dark" | "light" }) {
   const mode = useSyncExternalStore(subscribe, currentMode, () => "hidden" as Mode);
   const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const btn = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
   useDismiss(open, () => setOpen(false), { inside: [btn, panel], returnFocus: btn });
@@ -94,6 +115,8 @@ export function InstallAppButton({ className, tone = "dark" }: { className?: str
       return;
     }
     setOpen((o) => !o);
+    // Keep the steps on screen on a phone, where they open below the fold.
+    requestAnimationFrame(() => panel.current?.scrollIntoView({ block: "nearest", behavior: "smooth" }));
   };
 
   return (
@@ -114,22 +137,71 @@ export function InstallAppButton({ className, tone = "dark" }: { className?: str
             </button>
           </div>
           {mode === "ios" ? (
-            <ol className="mt-3 space-y-2 text-sm text-ink-soft">
-              <li className="flex gap-2"><span className="font-bold text-navy">1.</span><span>Open this page in <b>Safari</b>.</span></li>
-              <li className="flex gap-2"><span className="font-bold text-navy">2.</span><span>Tap the <b>Share</b> button <Share className="inline h-4 w-4 align-[-3px] text-accent-ink" aria-label="Share icon" /> at the bottom (top right on iPad).</span></li>
-              <li className="flex gap-2"><span className="font-bold text-navy">3.</span><span>Scroll down and tap <b>Add to Home Screen</b> <SquarePlus className="inline h-4 w-4 align-[-3px] text-accent-ink" aria-label="Add icon" />.</span></li>
-              <li className="flex gap-2"><span className="font-bold text-navy">4.</span><span>Tap <b>Add</b>. Built2Bid opens from your home screen like any other app.</span></li>
-            </ol>
+            <IosSteps browser={iosBrowser(navigator.userAgent)} copied={copied} onCopy={async () => {
+              try { await navigator.clipboard.writeText(window.location.origin + "/"); setCopied(true); } catch { /* clipboard blocked: the steps still say what to do */ }
+            }} />
           ) : (
             <ul className="mt-3 space-y-2 text-sm text-ink-soft">
               <li><b>Android (Chrome):</b> tap the <b>⋮</b> menu, then <b>Install app</b> or <b>Add to Home screen</b>.</li>
               <li><b>Computer (Chrome or Edge):</b> click the install icon at the right end of the address bar, or open the menu and choose <b>Install Built2Bid</b>.</li>
-              <li><b>iPhone or iPad:</b> open this page in Safari, tap <b>Share</b>, then <b>Add to Home Screen</b>.</li>
+              <li><b>iPhone or iPad:</b> open this page in Safari, tap <b>Share</b> (or <b>⋯</b>, then <b>Share</b>), then <b>Add to Home Screen</b>.</li>
             </ul>
           )}
           <p className="mt-3 text-xs text-muted">Free, no app store needed. Your bids stay in your account.</p>
         </div>
       )}
     </span>
+  );
+}
+
+function Step({ n, children }: { n: number; children: ReactNode }) {
+  return <li className="flex gap-2"><span className="font-bold text-navy">{n}.</span><span>{children}</span></li>;
+}
+
+const ShareIcon = () => <Share className="inline h-4 w-4 align-[-3px] text-accent-ink" aria-label="Share icon" />;
+const MoreIcon = () => <Ellipsis className="inline h-4 w-4 align-[-3px] text-accent-ink" aria-label="More icon" />;
+const AddIcon = () => <SquarePlus className="inline h-4 w-4 align-[-3px] text-accent-ink" aria-label="Add icon" />;
+
+/** Add to Home Screen steps for the iPhone/iPad browser in use. */
+function IosSteps({ browser, copied, onCopy }: { browser: IosBrowser; copied: boolean; onCopy: () => void }) {
+  const finish = (n: number) => (
+    <>
+      <Step n={n}>Tap <b>Add to Home Screen</b> <AddIcon />. Don&apos;t see it? Scroll down or tap <b>View More</b>.</Step>
+      <Step n={n + 1}>Leave <b>Open as Web App</b> on if you see it, then tap <b>Add</b>. Built2Bid opens from your home screen like any other app.</Step>
+    </>
+  );
+  if (browser === "inapp" || browser === "old") {
+    return (
+      <div data-testid="install-ios" data-browser={browser}>
+        <p className="mt-3 text-sm text-ink-soft">
+          {browser === "inapp"
+            ? "This page is open inside another app's browser, which can't add apps to your home screen. Open it in Safari first:"
+            : "This browser can't add apps to your home screen on your version of iOS. Open the page in Safari first:"}
+        </p>
+        <ol className="mt-2 space-y-2 text-sm text-ink-soft">
+          <Step n={1}>{browser === "inapp"
+            ? <>Tap the <b>⋯</b> or <ShareIcon /> menu (usually top or bottom right) and choose <b>Open in Safari</b> or <b>Open in browser</b>.</>
+            : <>Copy the link below, open <b>Safari</b>, and paste it in the address bar.</>}</Step>
+          <Step n={2}>In Safari, tap <b>Share</b> <ShareIcon /> (on newer iPhones, tap <b>More</b> <MoreIcon /> first, then <b>Share</b>).</Step>
+          {finish(3)}
+        </ol>
+        <button type="button" onClick={onCopy} data-testid="install-copy-link"
+          className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-lg border border-line px-3 text-sm font-semibold text-navy hover:bg-black/5">
+          {copied ? <><Check className="h-4 w-4" aria-hidden /> Link copied</> : <><Copy className="h-4 w-4" aria-hidden /> Copy link to paste in Safari</>}
+        </button>
+      </div>
+    );
+  }
+  const first = {
+    safari: <>Tap <b>Share</b> <ShareIcon /> at the bottom of the screen (top right on iPad). On newer iPhones, tap <b>More</b> <MoreIcon /> at the bottom right first, then <b>Share</b>.</>,
+    chrome: <>Tap <b>Share</b> <ShareIcon /> at the right end of the address bar. Don&apos;t see it? Tap <b>More</b> <MoreIcon />, then <b>Share</b>.</>,
+    edge: <>Tap the menu <b>More</b> <MoreIcon /> at the bottom, then <b>Share</b> <ShareIcon />.</>,
+    firefox: <>Tap the menu <b>☰</b> at the bottom right, then <b>Share</b> <ShareIcon />.</>,
+  }[browser];
+  return (
+    <ol className="mt-3 space-y-2 text-sm text-ink-soft" data-testid="install-ios" data-browser={browser}>
+      <Step n={1}>{first}</Step>
+      {finish(2)}
+    </ol>
   );
 }

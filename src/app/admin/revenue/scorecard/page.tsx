@@ -73,7 +73,7 @@ export default async function Scorecard({ searchParams }: { searchParams: Promis
             <Row k="ARR run rate">{usd(s.revenue.arrCents)}</Row>
             <Row k={`MRR growth vs ${range.label} ago`}>{s.revenue.mrrStartCents ? `${s.revenue.growth.change >= 0 ? "+" : "−"}${usd(Math.abs(s.revenue.growth.change))}${s.revenue.growth.pctChange != null ? ` (${s.revenue.growth.pctChange}%)` : ""}` : s.revenue.mrrCents ? "New (no MRR at start)" : "–"}</Row>
           </dl>
-          <p className="mt-2 text-xs text-muted">Cash received, recurring run rate and recognized revenue are different: an annual plan pays $149 once, counts $12.42/month in MRR, and is recognized monthly in accounting. Complimentary access is never revenue.</p>
+          <p className="mt-2 text-xs text-muted">Cash received, recurring run rate and recognized revenue are different: an annual plan pays $199 once, counts $16.58/month in MRR, and is recognized monthly in accounting. Complimentary access is never revenue.</p>
         </Metric>
 
         <Metric id="profit" n={2} title="Profit (provisional)" conf={s.profit.confidence}

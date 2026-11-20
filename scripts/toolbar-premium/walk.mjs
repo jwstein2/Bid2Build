@@ -104,7 +104,7 @@ for (const scenario of ["unlimited", "starter"]) {
     if (plan === "free") {
       check(T("templates page shows the upgrade options, Not now, and keeps save locked"),
         /Proposal Templates is an Unlimited feature/.test(tplMain) && (await page.getByRole("button", { name: /Upgrade to Unlimited · \$19\.99\/month/ }).count()) === 1 &&
-        (await page.getByRole("button", { name: /Go Annual · \$149\/year/ }).count()) === 1 && (await page.getByRole("link", { name: "Not now" }).count()) === 1 &&
+        (await page.getByRole("button", { name: /Go Annual · \$199\/year/ }).count()) === 1 && (await page.getByRole("link", { name: "Not now" }).count()) === 1 &&
         (await page.getByRole("button", { name: "Save as my defaults" }).isDisabled()));
     } else {
       check(T("templates page works for Unlimited"), !/is an Unlimited feature/.test(tplMain) && (await page.getByRole("button", { name: "Save as my defaults" }).isEnabled()));
@@ -142,7 +142,7 @@ for (const scenario of ["unlimited", "starter"]) {
       const dlg = page.getByRole("dialog");
       await dlg.waitFor();
       const t = await dlg.innerText();
-      check(T("Save Item on free opens the Unlimited upgrade dialog with Not now"), /Unlimited/.test(t) && /\$19\.99/.test(t) && /\$149/.test(t) && (await dlg.getByRole("button", { name: "Not now" }).count()) === 1);
+      check(T("Save Item on free opens the Unlimited upgrade dialog with Not now"), /Unlimited/.test(t) && /\$19\.99/.test(t) && /\$199/.test(t) && (await dlg.getByRole("button", { name: "Not now" }).count()) === 1);
       if (vp.id !== "tablet") await shot(page, `${plan}__save-item-upsell__${vp.id}`);
       await dlg.getByRole("button", { name: "Not now" }).click();
       check(T("Not now closes the dialog and keeps the selection"), (await page.getByRole("dialog").count()) === 0 && (await bar(page).count()) === 1);

@@ -54,7 +54,7 @@ with these keys talks to production data. See PRODUCTION_LAUNCH_CHECKLIST.md ite
 | `STRIPE_SECRET_KEY` | **secret** | Production (test key on previews) | Yes for billing | `sk_test_…` until launch approval, then `sk_live_…`. |
 | `STRIPE_WEBHOOK_SECRET` | **secret** | Production | Yes for billing | Signing secret of the endpoint `https://<domain>/api/stripe/webhook`. One per endpoint, so it changes when the domain changes if you create a new endpoint. |
 | `STRIPE_PRICE_MONTHLY` | server | All | Yes for billing | Price id for $19.99/month. |
-| `STRIPE_PRICE_ANNUAL` | server | All | Yes for billing | Price id for $149/year. |
+| `STRIPE_PRICE_ANNUAL` | server | All | Yes for billing | Price id for $199/year. |
 | `STRIPE_ALLOW_LIVE` | server | Production only | Launch decision | Must be `true` or live keys are refused (`src/lib/billing/stripe.ts`). |
 
 ## AI writing (Scope of Work, Exclusions)

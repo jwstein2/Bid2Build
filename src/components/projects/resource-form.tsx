@@ -6,7 +6,7 @@ import { api } from "@/components/schedule/client";
 import { isIsoDate } from "@/lib/schedule/calendar";
 import { KIND_LABEL, tradeLabel, type ResourceKind, type TeamResource } from "@/lib/projects/team";
 
-const COMMON_TRADES = ["general", "demolition", "framing", "roofing", "siding", "windows", "drywall", "painting", "flooring", "tile", "cabinets", "countertops", "plumbing", "electrical", "hvac", "concrete", "decking", "gutters", "landscaping", "cleaning"];
+const COMMON_TRADES = ["general", "demolition", "framing", "roofing", "siding", "windows", "drywall", "painting", "flooring", "tile", "cabinets", "countertops", "plumbing", "electrical", "hvac", "concrete", "decking", "gutters", "landscaping", "tree work", "cleaning", "pest control"];
 
 /**
  * Add / edit one directory entry. Also used for quick-add from the Schedule Now assign step and the task

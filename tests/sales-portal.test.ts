@@ -13,10 +13,10 @@ describe("commission basis", () => {
     expect(commissionBasis([item("price_m", 1999)], { annual_basis: "divide_12", value_scope: "plan_seats" }, P).cents).toBe(1999);
   });
   it("annual Unlimited follows the owner's annual rule", () => {
-    const items = [item("price_a", 14900, year)];
-    expect(commissionBasis(items, { annual_basis: "divide_12", value_scope: "plan_seats" }, P).cents).toBe(1242);
+    const items = [item("price_a", 19900, year)];
+    expect(commissionBasis(items, { annual_basis: "divide_12", value_scope: "plan_seats" }, P).cents).toBe(1658);
     expect(commissionBasis(items, { annual_basis: "monthly_list", value_scope: "plan_seats" }, P).cents).toBe(1999);
-    expect(commissionBasis(items, { annual_basis: "full_payment", value_scope: "plan_seats" }, P).cents).toBe(14900);
+    expect(commissionBasis(items, { annual_basis: "full_payment", value_scope: "plan_seats" }, P).cents).toBe(19900);
   });
   it("Enterprise counts base + graduated seats; add-ons only when the policy says so", () => {
     const items = [item("price_eb", 4999), item("price_es", null, month, 3), item("price_pm", 499)];

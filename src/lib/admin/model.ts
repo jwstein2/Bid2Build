@@ -115,7 +115,7 @@ export function scope(snap: Snapshot, includeTest: boolean): Scoped {
 // Subscriptions and complimentary access
 // ---------------------------------------------------------------------------------------------
 /** List-price monthly equivalent of one subscription, by product, in cents (V4 Phase 10).
- *   core:      the plan itself. Annual = $149 / 12 (never counted twice); Enterprise from its licensed seats.
+ *   core:      the plan itself. Annual = $199 / 12 (never counted twice); Enterprise from its licensed seats.
  *   pmAddon:   Standard project-scheduling add-on, $4.99/month, while it's on the subscription. A removed
  *              add-on (editing kept until period end, pm_addon_until) is no longer billed, so it's 0.
  *   pmEditors: Enterprise scheduling editors beyond the included one, $1.99/month each.
@@ -123,7 +123,7 @@ export function scope(snap: Snapshot, includeTest: boolean): Scoped {
  */
 export function mrrParts(s: Pick<SubscriptionRow, "plan" | "seat_quantity" | "pm_addon" | "pm_extra_editors">): { core: number; pmAddon: number; pmEditors: number; total: number } {
   const core = s.plan === "monthly" ? 1999
-    : s.plan === "annual" ? Math.round(14900 / 12)
+    : s.plan === "annual" ? Math.round(19900 / 12)
       : s.plan === "enterprise" ? enterpriseMonthlyCents(Math.max(ENTERPRISE_INCLUDED_USERS, s.seat_quantity ?? ENTERPRISE_INCLUDED_USERS)) : 0;
   const pmAddon = s.plan !== "enterprise" && core > 0 && s.pm_addon ? (s.plan === "annual" ? Math.round(PM_ADDON_ANNUAL_CENTS / 12) : PM_ADDON_CENTS) : 0;
   const pmEditors = s.plan === "enterprise" ? editorMonthlyCents(s.pm_extra_editors ?? 0) : 0;

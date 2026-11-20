@@ -15,10 +15,10 @@ type PlanDef = { id: PlanId; name: string; amountCents: number; currency: "usd";
 
 const DEFS: Record<PlanId, PlanDef> = {
   monthly: { id: "monthly", name: "Unlimited Monthly", amountCents: 1999, currency: "usd", interval: "month" },
-  annual: { id: "annual", name: "Unlimited Annual", amountCents: 14900, currency: "usd", interval: "year" },
+  annual: { id: "annual", name: "Unlimited Annual", amountCents: 19900, currency: "usd", interval: "year" },
 };
 
-/** "$19.99", "$149" (whole dollars drop the cents). */
+/** "$19.99", "$199" (whole dollars drop the cents). */
 export function formatUsd(cents: number): string {
   const dollars = cents / 100;
   return Number.isInteger(dollars) ? `$${dollars}` : `$${dollars.toFixed(2)}`;

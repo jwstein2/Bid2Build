@@ -95,7 +95,7 @@ type Starter = Omit<SavedStack, "id" | "items"> & { key: string; summary: string
 const mat = { costType: "material" as const }, lab = { costType: "labor" as const };
 
 /**
- * Built-in starting points for the first five trades. Ratios are common rules of thumb, shown as
+ * Built-in starting points for the first five trades, plus per-tree stacks for tree removal and trimming and a perimeter-based pest control plan. Ratios are common rules of thumb, shown as
  * "starting ratios" for the contractor to check and change. No prices: rates come from the contractor.
  */
 export const STARTER_ASSEMBLIES: Starter[] = [
@@ -157,6 +157,37 @@ export const STARTER_ASSEMBLIES: Starter[] = [
       { ...lab, name: "Placing and finishing", category: "Finishing", unit: "square foot", quantity: "1", per: "1" },
       { ...lab, name: "Control joints", category: "Finishing", unit: "linear foot", quantity: "1", per: "0.2" },
       { ...mat, name: "Curing compound", category: "Finishing", unit: "gallon", quantity: "1", per: "0.005", roundUp: true },
+    ],
+  },
+  {
+    key: "tree-removal-per-tree", name: "Tree removal with stump grinding", trade: "tree-removal", summary: "Removal, stump grinding, log and chip haul-away and cleanup, scaled by the number of trees.",
+    scale: { unit: "each", label: "Trees" },
+    items: [
+      { ...lab, name: "Medium tree removal (30 to 60 ft)", category: "Tree Removal", unit: "each", quantity: "1", per: "1" },
+      { ...lab, name: "Stump grinding", category: "Stump Work", unit: "each", quantity: "1", per: "1" },
+      { costType: "other", name: "Log hauling", category: "Wood & Debris", unit: "load", quantity: "1", per: "0.5", roundUp: true },
+      { costType: "other", name: "Wood chip haul-away", category: "Wood & Debris", unit: "load", quantity: "1", per: "0.5", roundUp: true },
+      { ...lab, name: "Site cleanup and raking", category: "Wood & Debris", unit: "lump sum", quantity: "1" },
+    ],
+  },
+  {
+    key: "tree-trimming-per-tree", name: "Tree pruning visit", trade: "tree-trimming", summary: "Crown cleaning, brush haul-away and cleanup, scaled by the number of trees.",
+    scale: { unit: "each", label: "Trees" },
+    items: [
+      { ...lab, name: "Crown cleaning (deadwood removal)", category: "Pruning", unit: "each", quantity: "1", per: "1" },
+      { costType: "other", name: "Brush and debris haul-away", category: "Cleanup & Haul-Away", unit: "load", quantity: "1", per: "0.25", roundUp: true },
+      { ...lab, name: "Site cleanup and raking", category: "Cleanup & Haul-Away", unit: "lump sum", quantity: "1" },
+    ],
+  },
+  {
+    key: "pest-control-initial-quarterly", name: "Initial treatment + quarterly plan", trade: "pest-control", summary: "Inspection, perimeter and crack-and-crevice treatment, products and four quarterly visits, scaled by the treated perimeter.",
+    scale: { unit: "linear foot", label: "Treated perimeter", calc: "perimeter" },
+    items: [
+      { ...lab, name: "Pest inspection", category: "Inspection", unit: "each", quantity: "1" },
+      { ...lab, name: "Exterior perimeter treatment", category: "General Pest Treatment", unit: "linear foot", quantity: "1", per: "1" },
+      { ...lab, name: "Crack and crevice treatment", category: "General Pest Treatment", unit: "each", quantity: "1" },
+      { ...mat, name: "Treatment products", category: "General Pest Treatment", unit: "lump sum", quantity: "1" },
+      { ...lab, name: "Quarterly service visit", category: "Service Plans", unit: "each", quantity: "4" },
     ],
   },
 ];

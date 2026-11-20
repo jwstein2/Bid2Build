@@ -12,7 +12,7 @@ Status key: **Live** = renders and works locally · **BLOCKED** = needs a signed
 | `/` | Visitors | Homepage: promise, trade picker, how it works, profit, visibility modes, pricing band, FAQ | Live |
 | `/bids` | Visitors | Directory of all 36 trades | Live |
 | `/bids/[trade]` (36 SSG pages, e.g. `/bids/roofing`) | Visitors / SEO | Trade landing page with sections, examples, CTA into `/start/[trade]` | Live |
-| `/pricing` | Visitors | Free / $19.99 mo / $149 yr plans, comparison table, credit rules | Live |
+| `/pricing` | Visitors | Free / $19.99 mo / $199 yr plans, comparison table, credit rules | Live |
 | `/learn` | Visitors / SEO | Guide index (4 articles) | Live |
 | `/learn/[slug]` (4 SSG pages) | Visitors / SEO | Articles: markup vs margin, writing estimates, proposals, sales tax | Live |
 | `/login` | Visitors | Passwordless email link + 6-digit code | Live (sending needs Supabase) |

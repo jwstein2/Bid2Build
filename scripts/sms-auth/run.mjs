@@ -178,7 +178,7 @@ for (const plan of ["monthly", "annual"]) {
     if (plan === "monthly") await page.getByRole("radio", { name: "Monthly" }).click(); // card opens on Annual (V8 MKT-4)
     await page.getByRole("button", { name: plan === "monthly" ? "Choose Monthly" : "Choose Annual" }).click();
     await dialog(page).getByText("You're almost there!").waitFor();
-    expect(await dialog(page).getByText(plan === "monthly" ? "$19.99" : "$149").first().isVisible(), "plan price in modal");
+    expect(await dialog(page).getByText(plan === "monthly" ? "$19.99" : "$199").first().isVisible(), "plan price in modal");
     expect(await dialog(page).getByText(/Verify your mobile number to continue/).isVisible(), "phone copy");
     await shot(page, `desktop-checkout-${plan}-phone`);
     await enterPhone(page, KNOWN);
@@ -200,7 +200,7 @@ await test("Checkout: refresh while waiting for the text reopens the code step w
   await page.getByLabel("Verification code").waitFor();
   await page.reload();
   await dialog(page).getByLabel("Verification code").waitFor();
-  expect(await dialog(page).getByText("$149").first().isVisible(), "annual kept after refresh");
+  expect(await dialog(page).getByText("$199").first().isVisible(), "annual kept after refresh");
   expect(await dialog(page).getByText(/\(555\) 234-5678/).first().isVisible(), "number kept after refresh");
   expect(await page.getByRole("button", { name: /Resend code in \d+s/ }).isDisabled(), "cooldown survives the refresh");
   await enterCode(page);

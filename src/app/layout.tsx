@@ -26,6 +26,8 @@ export const metadata: Metadata = {
   openGraph: { siteName: site.name, type: "website", locale: "en_US", title: `${site.name}: ${site.tagline}`, description: site.description, images: [OG_IMAGE] },
   twitter: { card: "summary_large_image" },
   alternates: { canonical: "/" },
+  // iPhone/iPad home screen app: opens full screen, labeled "Built2Bid" under the icon.
+  appleWebApp: { capable: true, title: site.name, statusBarStyle: "default" },
   // Optional: Search Console "HTML tag" verification. Not needed when the domain is verified by DNS.
   ...(googleVerification ? { verification: { google: googleVerification } } : {}),
   // impact.com publisher site verification (Home Depot affiliate application). Public, not a secret.

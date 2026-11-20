@@ -6,8 +6,11 @@ export default function manifest(): MetadataRoute.Manifest {
     name: site.name,
     short_name: site.name,
     description: site.description,
+    // id stays "/" so phones that already installed the app keep the same app.
     id: "/",
-    start_url: "/",
+    // The installed app opens to the dashboard (sign-in first when signed out), not the marketing homepage.
+    start_url: "/dashboard",
+    scope: "/",
     display: "standalone",
     background_color: "#F5F8FB",
     theme_color: "#0B2D4D",

@@ -116,7 +116,7 @@ Spend; landing-page visits; CTR; landing-page conversion (visit to signup); cost
 Optimize for activated and paying contractors, never for the cheapest signups.
 
 ### Economics (assumptions labeled; not forecasts)
-- Price $19.99/month or $149/year. Net of card fees (about 2.9% + $0.30) a monthly subscriber brings about **$19.12/month**.
+- Price $19.99/month or $199/year. Net of card fees (about 2.9% + $0.30) a monthly subscriber brings about **$19.12/month**.
 - Assumed gross margin after hosting, email and AI costs: **85%** (assumption; replace with Tech Stack & Costs actuals). That is about **$16.25/month gross profit**.
 - Gross-profit payback = CAC ÷ $16.25: CAC $50 → about 3 months, $100 → about 6, $200 → about 12, $325 → about 20.
 - Lifetime value at an assumed monthly churn *c*: $16.25 ÷ *c*. At 5% that's about $325, at 10% about $163 (assumptions, not data).
