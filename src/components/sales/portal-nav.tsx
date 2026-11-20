@@ -8,6 +8,7 @@ const MY_LINKS = [
   { href: "/sales/leads", label: "Leads" },
   { href: "/sales/business", label: "My Business" },
   { href: "/sales/customers", label: "Customers" },
+  { href: "/sales/portfolio", label: "10-year portfolio" },
   { href: "/sales/calendar", label: "Calendar" },
   { href: "/sales/commissions", label: "Commissions" },
   { href: "/sales/rewards", label: "Rewards" },

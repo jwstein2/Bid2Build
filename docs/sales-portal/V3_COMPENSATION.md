@@ -12,7 +12,7 @@ affect.
 
 | Area | Where | Kept as is? |
 |---|---|---|
-| Standard commissions: one month of plan at monthly list price, sale month + 2 anniversaries, 30-day hold, no clawback, first-month cancel pays nothing, upgrades at the anniversary | `sales_sync_billing`, `sales_close_month`, `basis.ts`, policy v2 | Yes, unchanged |
+| Standard commissions: one month of plan at monthly list price, sale month + anniversaries (2 at the time; 9 since the ten-year term, TEN_YEAR_TERM.md), 30-day hold, no clawback, first-month cancel pays nothing, upgrades at the anniversary | `sales_sync_billing`, `sales_close_month`, `basis.ts`, policy v2 | Yes, unchanged |
 | Referral attribution: `/s/<code>` 90-day cookie + server-side `sales_attributions` (one row per customer, primary key = customer), history table, owner reassign/end | `sales_record_attribution`, `sales_attribution_history` | Yes, unchanged |
 | Revenue facts per paid invoice (pre-tax, net of refunds) | `sales_revenue`, `sales_record_revenue`, `sales_revenue_refunded` | Extended (period, billing reason, dispute) |
 | Milestone boxes V2: every 50, rate × still-active revenue since last box, $150 minimum, 30-day hold | `sales_milestones_evaluate`, `sales_milestone_awards` | V2 code path kept; V3 is now the default |
