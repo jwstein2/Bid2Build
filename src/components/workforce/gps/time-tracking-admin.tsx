@@ -14,13 +14,16 @@ import {
   EVENT_KIND_LABEL, LOCATION_KIND_LABEL, OUTCOME_LABEL, PERMISSION_LABEL, setupSteps, WEEKDAYS,
   type Correction, type Exceptions, type GeoEventRow, type GpsAdmin, type GpsSettings, type LocationKind, type WorkLocation,
 } from "@/lib/workforce/gps/model";
+import { CLASSIFICATION_LABEL, type Classification } from "@/lib/workforce/hub/model";
+import { LaborReportPanel, PayPanel, SchedulesPanel } from "@/components/workforce/hub/admin-panels";
 
-type Tab = "overview" | "locations" | "employees" | "settings" | "corrections" | "payroll";
+export type Tab = "overview" | "locations" | "employees" | "settings" | "corrections" | "payroll" | "schedules" | "report" | "pay";
 const TABS: { key: Tab; label: string }[] = [
   { key: "overview", label: "Overview" }, { key: "locations", label: "Work locations" }, { key: "employees", label: "Employees" },
-  { key: "corrections", label: "Corrections" }, { key: "payroll", label: "Timesheets & export" }, { key: "settings", label: "Settings" },
+  { key: "schedules", label: "Schedules" }, { key: "corrections", label: "Corrections" }, { key: "payroll", label: "Timesheets & export" },
+  { key: "report", label: "Labor report" }, { key: "pay", label: "Projected pay" }, { key: "settings", label: "Settings" },
 ];
-type Data = { admin: GpsAdmin; exceptions: Exceptions | null; corrections: Correction[] };
+type Data = { admin: GpsAdmin; exceptions: Exceptions | null; corrections: Correction[]; classifications?: Record<string, Classification | null> | null };
 const fmtTime = (iso: string | null, tz: string) => (iso ? new Intl.DateTimeFormat("en-US", { timeZone: tz, weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(iso)) : "—");
 const fmtDate = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—");
 function download(name: string, text: string) {
@@ -55,12 +58,18 @@ export function TimeTrackingAdmin({ initial, projects, initialTab }: { initial: 
     await reload();
     return true;
   }, [reload]);
+  const setClass = useCallback(async (resourceId: string, classification: string, name: string) => {
+    const r = await api<{ ok: true }>("/api/workforce/hub/admin", { method: "POST", body: JSON.stringify({ action: "classification", resourceId, classification }) });
+    if (!r.ok) { setMsg({ ok: false, text: r.message }); return; }
+    setMsg({ ok: true, text: classification === "w2" ? `${name} set as a W-2 employee.` : `${name} saved${classification ? ` as ${CLASSIFICATION_LABEL[classification as Classification]}` : ""}. GPS time tracking is off for anyone who isn't W-2.` });
+    await reload();
+  }, [reload]);
 
   return (
     <div className="space-y-5" data-testid="gps-admin">
       <nav aria-label="Time tracking sections" className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
         <ul className="flex min-w-max gap-1 border-b border-line">
-          {TABS.filter((t) => t.key !== "settings" || a.canAdmin).map((t) => (
+          {TABS.filter((t) => (t.key !== "settings" || a.canAdmin) && (t.key !== "schedules" || a.canSupervise) && (t.key !== "report" || a.canSupervise)).map((t) => (
             <li key={t.key}>
               <button type="button" onClick={() => { setTab(t.key); setMsg(null); }} aria-current={tab === t.key ? "page" : undefined} data-testid={`gps-tab-${t.key}`}
                 className={`inline-flex min-h-11 items-center gap-1.5 border-b-2 px-3 text-sm font-semibold ${tab === t.key ? "border-accent-ink text-navy" : "border-transparent text-ink-soft hover:text-navy"}`}>
@@ -73,7 +82,10 @@ export function TimeTrackingAdmin({ initial, projects, initialTab }: { initial: 
       {msg && <Notice tone={msg.ok ? "ok" : "danger"}>{msg.text}</Notice>}
       {tab === "overview" && <Overview data={data} tz={tz} names={names} locNames={locNames} post={post} go={setTab} />}
       {tab === "locations" && <Locations a={a} projects={projects} post={post} onError={(t) => setMsg({ ok: false, text: t })} />}
-      {tab === "employees" && <Employees a={a} tz={tz} locNames={locNames} post={post} />}
+      {tab === "employees" && <Employees a={a} tz={tz} locNames={locNames} post={post} classes={data.classifications ?? null} setClass={setClass} />}
+      {tab === "schedules" && a.canSupervise && <SchedulesPanel staff={a.employees.filter((e) => e.kind === "staff" && e.status === "active").map((e) => ({ id: e.id, name: e.name }))} locations={a.locations} projects={projects} tz={tz} canEdit={a.canSupervise} />}
+      {tab === "report" && a.canSupervise && <LaborReportPanel tz={tz} />}
+      {tab === "pay" && <PayPanel />}
       {tab === "corrections" && <Corrections list={data.corrections} names={names} locNames={locNames} projects={projects} tz={tz} post={post} />}
       {tab === "payroll" && <Payroll a={a} names={names} />}
       {tab === "settings" && a.canAdmin && <SettingsForm a={a} post={post} />}
@@ -341,7 +353,7 @@ function LocationEditor({ a, draft, setDraft, post, onError }: { a: GpsAdmin; dr
 }
 
 // -------------------------------------------------------------------------------------------------------------------
-function Employees({ a, tz, locNames, post }: { a: GpsAdmin; tz: string; locNames: Record<string, string>; post: (b: Record<string, unknown>, t: string) => Promise<boolean> }) {
+function Employees({ a, tz, locNames, post, classes, setClass }: { a: GpsAdmin; tz: string; locNames: Record<string, string>; post: (b: Record<string, unknown>, t: string) => Promise<boolean>; classes: Record<string, Classification | null> | null; setClass: (id: string, c: string, name: string) => Promise<void> }) {
   const [events, setEvents] = useState<{ id: string; name: string; rows: GeoEventRow[] } | null>(null);
   const staff = a.employees.filter((e) => e.kind === "staff" && e.status === "active");
   const subs = a.employees.filter((e) => e.kind === "subcontractor" && e.status === "active");
@@ -356,14 +368,21 @@ function Employees({ a, tz, locNames, post }: { a: GpsAdmin; tz: string; locName
       <div className="overflow-x-auto rounded-xl border border-line bg-surface">
         <table className="w-full min-w-[46rem] text-left text-sm" data-testid="gps-employees">
           <thead className="bg-paper text-xs uppercase tracking-wide text-muted">
-            <tr><th className="px-3 py-2">Employee</th><th className="px-3 py-2">W-2, hours tracked</th><th className="px-3 py-2">GPS time</th><th className="px-3 py-2">Accepted notice</th><th className="px-3 py-2">Phone location</th><th className="px-3 py-2"></th></tr>
+            <tr><th className="px-3 py-2">Employee</th><th className="px-3 py-2">{classes ? "Classification" : "W-2, hours tracked"}</th><th className="px-3 py-2">GPS time</th><th className="px-3 py-2">Accepted notice</th><th className="px-3 py-2">Phone location</th><th className="px-3 py-2"></th></tr>
           </thead>
           <tbody className="divide-y divide-line">
             {staff.map((e) => (
               <tr key={e.id}>
                 <td className="px-3 py-2"><span className="font-semibold">{e.name}</span>{!e.linked && <span className="block text-xs text-muted">No login linked: manual clock by a manager</span>}{e.flsa === "exempt" && <span className="block text-xs text-muted">FLSA exempt (no overtime split)</span>}</td>
-                <td className="px-3 py-2"><input type="checkbox" aria-label={`${e.name} is a W-2 employee whose hours we track`} checked={Boolean(e.w2ConfirmedAt)} disabled={!a.canAdmin}
-                  onChange={(ev) => post({ action: "enroll", resourceId: e.id, w2Confirmed: ev.target.checked, enrolled: ev.target.checked ? e.enrolled : false }, ev.target.checked ? `${e.name} confirmed as a W-2 employee.` : `${e.name} removed from GPS time tracking.`)} /></td>
+                <td className="px-3 py-2">{classes ? (
+                  <select className="rounded-lg border border-line bg-surface px-2 py-1.5 text-sm" aria-label={`${e.name}: employment classification`} value={classes[e.id] ?? ""} disabled={!a.canAdmin} data-testid={`hub-class-${e.id}`}
+                    onChange={(ev) => setClass(e.id, ev.target.value, e.name)}>
+                    <option value="">Not set</option>{(Object.keys(CLASSIFICATION_LABEL) as Classification[]).map((c) => <option key={c} value={c}>{CLASSIFICATION_LABEL[c]}</option>)}
+                  </select>
+                ) : (
+                  <input type="checkbox" aria-label={`${e.name} is a W-2 employee whose hours we track`} checked={Boolean(e.w2ConfirmedAt)} disabled={!a.canAdmin}
+                  onChange={(ev) => post({ action: "enroll", resourceId: e.id, w2Confirmed: ev.target.checked, enrolled: ev.target.checked ? e.enrolled : false }, ev.target.checked ? `${e.name} confirmed as a W-2 employee.` : `${e.name} removed from GPS time tracking.`)} />
+                )}</td>
                 <td className="px-3 py-2"><label className="inline-flex items-center gap-2"><input type="checkbox" checked={e.enrolled} disabled={!a.canAdmin || !e.w2ConfirmedAt || !e.linked} data-testid={`gps-enroll-${e.id}`}
                   onChange={(ev) => post({ action: "enroll", resourceId: e.id, enrolled: ev.target.checked, w2Confirmed: true }, ev.target.checked ? `GPS time tracking turned on for ${e.name}. They'll be asked to accept the notice.` : `GPS time tracking turned off for ${e.name}.`)} />{e.active ? <Badge tone="ok">Active</Badge> : e.enrolled ? <Badge>Waiting for them</Badge> : null}</label></td>
                 <td className="px-3 py-2">{e.consentAt ? fmtDate(e.consentAt) : e.consentWithdrawnAt ? <Badge tone="warn">Turned off {fmtDate(e.consentWithdrawnAt)}</Badge> : "—"}</td>

@@ -4,11 +4,14 @@ import { BellRing, Clock, LocateFixed, LogIn, LogOut, MapPin, Pause, Play, Shiel
 import { Button } from "@/components/ui/button";
 import { Badge, Notice } from "@/components/ui/misc";
 import { api } from "@/components/schedule/client";
-import { addDays, entryHours, fmtHours, localDay, TIME_SOURCE_LABEL, TIME_STATUS_LABEL, weekStart, WORK_TYPE_LABEL, type Timesheet, type TimeEntry, type WorkType } from "@/lib/team/records";
+import { addDays, entryHours, fmtHours, localDay, TIME_SOURCE_LABEL, TIME_STATUS_LABEL, weekStart, WORK_CATEGORY_LABEL, WORK_TYPE_LABEL, type Timesheet, type TimeEntry, type WorkCategory, type WorkType } from "@/lib/team/records";
+import { ISSUE_LABEL } from "@/lib/workforce/hub/model";
 import { clientEventId, GeofenceTracker, type GeoEvent } from "@/lib/workforce/gps/geofence";
 import { disclosureText, type Correction, type MyStaff, type MyStatus, type Permission } from "@/lib/workforce/gps/model";
 
 type Project = { id: string; name: string };
+/** Paid work that isn't a customer project, plus unpaid time; a project is never required for paid work. */
+const INTERNAL: WorkCategory[] = ["shop", "office", "training", "admin", "travel", "other_paid"];
 type Data = { status: MyStatus; corrections: Correction[] };
 type EventReply = { ok: true; outcome: string; message?: string | null; prompt?: "start_shift" | "left_site" | null; locationName?: string; entry: TimeEntry | null };
 const hm = (iso: string | null | undefined, tz: string) => (iso ? new Intl.DateTimeFormat("en-US", { timeZone: tz, hour: "numeric", minute: "2-digit" }).format(new Date(iso)) : "—");
@@ -69,7 +72,9 @@ function StaffClock({ me, status, tz, projects, corrections, reload, say }: { me
 
   // ---- manual clock ---------------------------------------------------------------------------------------------
   const [loc, setLoc] = useState(open?.locationId ?? "");
-  const [workType, setWorkType] = useState<WorkType>("regular");
+  const [cat, setCat] = useState<WorkCategory>("shop");
+  const locChoice = me.choices.find((c) => c.id === loc);
+  const atProject = Boolean(locChoice?.scheduleId);
   const [unpaid, setUnpaid] = useState(0);
   const [paid, setPaid] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -77,7 +82,8 @@ function StaffClock({ me, status, tz, projects, corrections, reload, say }: { me
     setBusy(true);
     const r = open
       ? await post({ action: "clock_out", entryId: open.id, breakMinutes: unpaid, paidBreakMinutes: paid })
-      : await post({ action: "clock_in", resourceId: me.resourceId, locationId: loc || null, workType });
+      : await post({ action: "clock_in", resourceId: me.resourceId, locationId: loc || null, workType: !atProject && cat === "travel" ? "travel" : "regular",
+          ...(atProject ? {} : { workCategory: cat }) });
     setBusy(false);
     if (!r.ok) { say(false, r.message); return; }
     setUnpaid(0); setPaid(0);
@@ -127,10 +133,13 @@ function StaffClock({ me, status, tz, projects, corrections, reload, say }: { me
                   <option value="">Somewhere else / not listed</option>
                   {me.choices.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select></label>
-              <label className="block"><span className="label">Type of work</span>
-                <select className="field" value={workType} onChange={(e) => setWorkType(e.target.value as WorkType)}>
-                  {(Object.keys(WORK_TYPE_LABEL) as WorkType[]).map((w) => <option key={w} value={w}>{WORK_TYPE_LABEL[w]}</option>)}
-                </select></label>
+              <label className="block"><span className="label">What you&apos;re working on</span>
+                {atProject
+                  ? <p className="field flex items-center bg-paper" data-testid="clock-category-project">Customer project: {locChoice?.name}</p>
+                  : <select className="field" value={cat} onChange={(e) => setCat(e.target.value as WorkCategory)} data-testid="clock-category">
+                      {INTERNAL.map((c) => <option key={c} value={c}>{WORK_CATEGORY_LABEL[c]}</option>)}
+                    </select>}
+              </label>
             </>
           )}
           {open && (
@@ -318,7 +327,7 @@ function GpsCard({ me, status, post, reload, say, setBanner, onPrompt }: {
 function MyWeek({ me, tz, projects, corrections, post, reload, say }: { me: MyStaff; tz: string; projects: Project[]; corrections: Correction[]; post: (b: Record<string, unknown>) => Promise<{ ok: true; data: EventReply } | { ok: false; message: string }>; reload: () => Promise<void>; say: (ok: boolean, t: string) => void }) {
   const [week, setWeek] = useState(() => weekStart(localDay(new Date().toISOString(), tz)));
   const [sheet, setSheet] = useState<Timesheet | null>(null);
-  const [fix, setFix] = useState<{ entryId: string | null; clockIn: string; clockOut: string; breakMinutes: number; workType: WorkType; locationId: string; scheduleId: string; reason: string } | null>(null);
+  const [fix, setFix] = useState<{ entryId: string | null; clockIn: string; clockOut: string; breakMinutes: number; workType: WorkType; locationId: string; scheduleId: string; reason: string; workCategory: WorkCategory; issue: string } | null>(null);
   const [n, setN] = useState(0);
   useEffect(() => {
     let live = true;
@@ -334,7 +343,8 @@ function MyWeek({ me, tz, projects, corrections, post, reload, say }: { me: MySt
   async function submitFix() {
     if (!fix) return;
     const r = await post({ action: "correction", resourceId: me.resourceId, entryId: fix.entryId, clockIn: new Date(fix.clockIn).toISOString(), clockOut: new Date(fix.clockOut).toISOString(),
-      breakMinutes: fix.breakMinutes, workType: fix.workType, locationId: fix.locationId || null, scheduleId: fix.scheduleId || null, reason: fix.reason });
+      breakMinutes: fix.breakMinutes, workType: fix.workType, locationId: fix.locationId || null, scheduleId: fix.scheduleId || null, reason: fix.reason,
+      workCategory: fix.scheduleId ? "project" : fix.workCategory === "project" ? "other_paid" : fix.workCategory, ...(fix.issue ? { issue: fix.issue } : {}) });
     if (!r.ok) { say(false, r.message); return; }
     setFix(null); say(true, "Sent to your manager. Your original time stays on record until they decide."); setN((x) => x + 1); await reload();
   }
@@ -353,16 +363,16 @@ function MyWeek({ me, tz, projects, corrections, post, reload, say }: { me: MySt
               <span className="font-semibold">{dayTime(e.clockIn, tz)} – {e.clockOut ? hm(e.clockOut, tz) : "now"}</span>
               <span>{fmtHours(entryHours(e))}</span>
               {e.locationId && sheet.locations?.[e.locationId] && <span className="text-ink-soft">{sheet.locations[e.locationId]}</span>}
-              {e.workType && e.workType !== "regular" && <Badge>{WORK_TYPE_LABEL[e.workType]}</Badge>}
+              {e.workCategory && e.workCategory !== "project" ? <Badge>{WORK_CATEGORY_LABEL[e.workCategory]}</Badge> : e.workType && e.workType !== "regular" && <Badge>{WORK_TYPE_LABEL[e.workType]}</Badge>}
               <Badge tone={e.status === "approved" ? "ok" : e.status === "rejected" ? "danger" : "neutral"}>{TIME_STATUS_LABEL[e.status]}</Badge>
               <span className="ml-auto">{e.status !== "open" && (pendingFor.has(e.id) ? <span className="text-xs text-muted">Fix requested</span> :
-                <Button size="sm" variant="link" onClick={() => setFix({ entryId: e.id, clockIn: toLocalInput(e.clockIn), clockOut: toLocalInput(e.clockOut ?? new Date().toISOString()), breakMinutes: e.breakMinutes, workType: e.workType ?? "regular", locationId: e.locationId ?? "", scheduleId: e.scheduleId ?? "", reason: "" })}>Request a fix</Button>)}</span>
+                <Button size="sm" variant="link" onClick={() => setFix({ entryId: e.id, clockIn: toLocalInput(e.clockIn), clockOut: toLocalInput(e.clockOut ?? new Date().toISOString()), breakMinutes: e.breakMinutes, workType: e.workType ?? "regular", locationId: e.locationId ?? "", scheduleId: e.scheduleId ?? "", reason: "", workCategory: e.workCategory ?? "other_paid", issue: e.source === "gps" || e.source === "gps_confirmed" ? "dispute_auto" : "" })}>Request a fix</Button>)}</span>
             </li>
           ))}
         </ul>
       )}
       <div className="flex flex-wrap gap-2">
-        <Button size="sm" variant="secondary" onClick={() => { const d = new Date(); d.setHours(7, 0, 0, 0); const e = new Date(d); e.setHours(15, 30); setFix({ entryId: null, clockIn: toLocalInput(d.toISOString()), clockOut: toLocalInput(e.toISOString()), breakMinutes: 0, workType: "regular", locationId: "", scheduleId: "", reason: "" }); }}>Add missing time</Button>
+        <Button size="sm" variant="secondary" onClick={() => { const d = new Date(); d.setHours(7, 0, 0, 0); const e = new Date(d); e.setHours(15, 30); setFix({ entryId: null, clockIn: toLocalInput(d.toISOString()), clockOut: toLocalInput(e.toISOString()), breakMinutes: 0, workType: "regular", locationId: "", scheduleId: "", reason: "", workCategory: "shop", issue: "missed_event" }); }}>Add missing time</Button>
         {sheet && sheet.entries.length > 0 && (
           <Button size="sm" variant="secondary" disabled={Boolean(me.open)} onClick={async () => { const r = await post({ action: "signoff", resourceId: me.resourceId, week }); if (!r.ok) say(false, r.message); else { say(true, "Week confirmed. You can still ask for fixes."); setN((x) => x + 1); } }}>
             {signed ? `Confirmed ${new Date(signed.signedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })} · confirm again` : "My hours are right: confirm this week"}</Button>
@@ -381,6 +391,16 @@ function MyWeek({ me, tz, projects, corrections, post, reload, say }: { me: MySt
               <option value="">Not listed</option>{me.choices.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
             <label className="block"><span className="label">Project</span><select className="field" value={fix.scheduleId} onChange={(e) => setFix({ ...fix, scheduleId: e.target.value })}>
               <option value="">No project</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <label className="block"><span className="label">Paid for</span><select className="field" value={fix.scheduleId ? "project" : fix.workCategory} disabled={Boolean(fix.scheduleId)}
+              onChange={(e) => setFix({ ...fix, workCategory: e.target.value as WorkCategory })} data-testid="fix-category">
+              {fix.scheduleId ? <option value="project">{WORK_CATEGORY_LABEL.project}</option> : [...INTERNAL, "unpaid" as WorkCategory].map((c) => <option key={c} value={c}>{WORK_CATEGORY_LABEL[c]}</option>)}
+            </select></label>
+            <label className="block"><span className="label">Why it needs a fix</span><select className="field" value={fix.issue} onChange={(e) => setFix({ ...fix, issue: e.target.value })} data-testid="fix-issue">
+              <option value="">Choose…</option>
+              {Object.entries(ISSUE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            </select></label>
           </div>
           <label className="block"><span className="label">What happened?</span><input className="field" maxLength={500} value={fix.reason} onChange={(e) => setFix({ ...fix, reason: e.target.value })} placeholder="e.g. Phone died, I started at 7:00" /></label>
           <div className="flex gap-2"><Button size="sm" onClick={submitFix} disabled={!fix.reason.trim()}>Send to my manager</Button><Button size="sm" variant="ghost" onClick={() => setFix(null)}>Cancel</Button></div>

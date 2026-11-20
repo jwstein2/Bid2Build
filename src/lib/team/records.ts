@@ -81,6 +81,14 @@ export const TIME_SOURCE_LABEL: Record<TimeSource, string> = {
 };
 export type WorkType = "regular" | "travel" | "offsite";
 export const WORK_TYPE_LABEL: Record<WorkType, string> = { regular: "On site", travel: "Travel between sites", offsite: "Paid offsite work" };
+/** What the time was spent on (job costing / overhead). Unpaid time is recorded but never paid or costed. */
+export type WorkCategory = "project" | "shop" | "office" | "training" | "admin" | "travel" | "other_paid" | "unpaid";
+export const WORK_CATEGORY_LABEL: Record<WorkCategory, string> = {
+  project: "Customer project", shop: "Shop / warehouse", office: "Company office", training: "Training", admin: "Administrative work",
+  travel: "Paid travel", other_paid: "Other paid work", unpaid: "Unpaid (break / non-working)",
+};
+export const WORK_CATEGORIES = Object.keys(WORK_CATEGORY_LABEL) as WorkCategory[];
+export const isWorkCategory = (v: unknown): v is WorkCategory => typeof v === "string" && v in WORK_CATEGORY_LABEL;
 export type ReviewFlag = "auto_clock_out" | "travel" | "away_no_answer" | "travel_gap" | "long_shift";
 export const REVIEW_FLAG_LABEL: Record<ReviewFlag, string> = {
   auto_clock_out: "Clocked out automatically when they left. Check the time.",
@@ -95,7 +103,7 @@ export interface TimeEntry {
   edited: boolean; decisionNote: string | null;
   /** V8.2 GPS timekeeping (absent until that SQL runs). */
   locationId?: string | null; workType?: WorkType; paidBreakMinutes?: number; shiftId?: string | null; awaySince?: string | null;
-  reviewFlag?: ReviewFlag | null; originalClockIn?: string | null; originalClockOut?: string | null;
+  reviewFlag?: ReviewFlag | null; originalClockIn?: string | null; originalClockOut?: string | null; workCategory?: WorkCategory;
 }
 export interface Signoff { resourceId: string; week: string; signedAt: string; hours: number | null }
 export interface Timesheet {
@@ -119,6 +127,7 @@ export function mapEntry(x: Record<string, unknown>): TimeEntry {
     paidBreakMinutes: num(x.paidBreakMinutes) ?? 0, shiftId: str(x.shiftId), awaySince: str(x.awaySince),
     reviewFlag: (Object.keys(REVIEW_FLAG_LABEL).includes(String(x.reviewFlag)) ? x.reviewFlag : null) as ReviewFlag | null,
     originalClockIn: str(x.originalClockIn), originalClockOut: str(x.originalClockOut),
+    workCategory: isWorkCategory(x.workCategory) ? x.workCategory : (x.scheduleId ? "project" : "other_paid"),
   };
 }
 export function mapTimesheet(raw: unknown): Timesheet {
@@ -431,6 +440,17 @@ export function recordsDbError(e: { message?: string; code?: string } | null): {
   if (m.includes("forbidden_own")) return { status: 403, code: "forbidden_own", message: "Someone else needs to approve your own time." };
   if (m.includes("disclosure_required")) return { status: 400, code: "disclosure_required", message: "Confirm that your employees were told how GPS time tracking works before switching it on." };
   if (m.includes("location_required")) return { status: 400, code: "location_required", message: "Add and confirm at least one work location before switching GPS time tracking on." };
+  if (m.includes("not_w2")) return { status: 400, code: "not_w2", message: "This person is set as a 1099 contractor, owner or other. Change their classification to W-2 first." };
+  if (m.includes("bad_classification")) return { status: 400, code: "bad_classification", message: "Pick W-2, 1099, owner or other." };
+  if (m.includes("bad_category")) return { status: 400, code: "bad_category", message: "Pick what the time was for: a project, shop, office, training, admin, travel, other paid work or unpaid." };
+  if (m.includes("project_required")) return { status: 400, code: "project_required", message: "Pick the project for project work, or choose shop, office, training or another category." };
+  if (m.includes("shift_overlap")) return { status: 409, code: "shift_overlap", message: "That overlaps another shift on the same day." };
+  if (m.includes("bad_break")) return { status: 400, code: "bad_break", message: "The unpaid break has to be shorter than the shift." };
+  if (m.includes("date_required") || m.includes("bad_date")) return { status: 400, code: "bad_date", message: "Pick a date within the next year." };
+  if (m.includes("too_many_dates")) return { status: 400, code: "too_many_dates", message: "Schedule up to 62 days at a time." };
+  if (m.includes("bad_range")) return { status: 400, code: "bad_range", message: "Pick a shorter date range." };
+  if (m.includes("bad_rates") || m.includes("bad_differentials")) return { status: 400, code: "bad_rates", message: "Rates must be numbers of zero or more." };
+  if (m.includes("bad_issue")) return { status: 400, code: "bad_issue", message: "Pick what went wrong." };
   if (m.includes("w2_required")) return { status: 400, code: "w2_required", message: "Confirm this person is a W-2 employee whose hours you track before turning on GPS time tracking for them." };
   if (m.includes("staff_only")) return { status: 400, code: "staff_only", message: "GPS time tracking is only for your own employees, not subcontractors, vendors or crews." };
   if (m.includes("bad_radius")) return { status: 400, code: "bad_radius", message: "Pick a radius between 30 m and 0.2 miles (322 m)." };

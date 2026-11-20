@@ -68,7 +68,7 @@ export function splitWeek(perDay: { day: string; hours: number }[], rule: Overti
 export function overtimeByWeek(entries: TimeEntry[], tz: string, rule: OvertimeRule, exempt: Set<string> = new Set(), now: Date = new Date()): WeekSplit[] {
   const map = new Map<string, Map<string, number>>();
   for (const e of entries) {
-    if (e.status === "rejected") continue;
+    if (e.status === "rejected" || e.workCategory === "unpaid") continue;
     const day = localDay(e.clockIn, tz);
     const key = `${e.resourceId}|${weekStart(day)}`;
     const m = map.get(key) ?? new Map<string, number>();

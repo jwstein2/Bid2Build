@@ -16,6 +16,8 @@ export async function GET() {
 }
 
 const iso = z.string().datetime({ offset: true });
+const category = z.enum(["project", "shop", "office", "training", "admin", "travel", "other_paid", "unpaid"]);
+const issue = z.enum(["gps_unavailable", "forgot_phone", "missed_event", "wrong_location", "dispute_auto", "other"]);
 const ops = z.discriminatedUnion("action", [
   // Same contract for the browser clock today and a native app later.
   z.object({ action: z.literal("event"), resourceId: z.string().uuid(), locationId: z.string().uuid(), kind: z.enum(["enter", "dwell", "exit", "exit_confirmed"]),
@@ -26,12 +28,13 @@ const ops = z.discriminatedUnion("action", [
     appMode: z.enum(["browser", "pwa", "native_ios", "native_android"]).optional(), device: z.string().max(60).optional() }),
   z.object({ action: z.literal("resolve"), entryId: z.string().uuid(), answer: z.enum(["working", "clock_out"]), note: z.string().trim().max(200).nullish() }),
   z.object({ action: z.literal("clock_in"), resourceId: z.string().uuid(), locationId: z.string().uuid().nullish(), scheduleId: z.string().uuid().nullish(),
-    workType: z.enum(["regular", "travel", "offsite"]).optional(), note: z.string().trim().max(500).nullish() }),
+    workType: z.enum(["regular", "travel", "offsite"]).optional(), workCategory: category.optional(), note: z.string().trim().max(500).nullish() }),
   z.object({ action: z.literal("clock_out"), entryId: z.string().uuid(), breakMinutes: z.number().int().min(0).max(720).optional(), paidBreakMinutes: z.number().int().min(0).max(720).optional(),
     note: z.string().trim().max(500).nullish() }),
   z.object({ action: z.literal("correction"), resourceId: z.string().uuid(), entryId: z.string().uuid().nullish(), clockIn: iso, clockOut: iso,
     breakMinutes: z.number().int().min(0).max(720).optional(), paidBreakMinutes: z.number().int().min(0).max(720).optional(), scheduleId: z.string().uuid().nullish(),
-    locationId: z.string().uuid().nullish(), workType: z.enum(["regular", "travel", "offsite"]).optional(), reason: z.string().trim().min(1).max(500) }),
+    locationId: z.string().uuid().nullish(), workType: z.enum(["regular", "travel", "offsite"]).optional(), workCategory: category.optional(), issue: issue.optional(),
+    reason: z.string().trim().min(1).max(500) }),
   z.object({ action: z.literal("withdraw"), id: z.string().uuid() }),
   z.object({ action: z.literal("signoff"), resourceId: z.string().uuid(), week: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }),
 ]);
