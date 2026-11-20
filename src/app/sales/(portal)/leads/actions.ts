@@ -6,6 +6,14 @@ import { requireSalesRep } from "@/lib/sales/server";
 import { parseLeadRows, STAGES, TRADES } from "@/lib/sales/crm";
 import { csvToRows, DISPOSITIONS } from "@/lib/sales/leads-admin";
 import { activityErrorMessage } from "@/lib/sales/calling";
+import { createAdminClient } from "@/lib/supabase/server";
+import { applyEmailChecks, markEmailBounced } from "@/lib/sales/email-check";
+
+/** Check a lead's email can receive mail (DNS only) and store the result. Never blocks the save. */
+async function checkLeadEmail(id: string, email: string | null | undefined) {
+  if (!email) return;
+  await applyEmailChecks(createAdminClient(), [{ id, email: email.toLowerCase() }]).catch(() => null);
+}
 
 /**
  * Rep CRM actions. Every call runs with the rep's own session through sales_crm_* functions, which
@@ -32,6 +40,7 @@ export async function createLead(fd: FormData) {
     const who = r.duplicates?.map((d) => `${d.company_name}${d.rep_name ? ` (${d.rep_name})` : " (unassigned)"}`).join(", ");
     back("/sales/leads", { err: r.error === "owned_by_other" ? `Already being worked by another rep: ${who}. Ask the owner if it should move to you.` : `Possible duplicate: ${who}. Tick "It's a different business" to add it anyway.` });
   }
+  await checkLeadEmail(r.lead!.id, p.data.email);
   redirect(`/sales/leads/${r.lead!.id}`);
 }
 
@@ -45,17 +54,24 @@ export async function updateLead(fd: FormData) {
   if (!p.success) back(`/sales/leads/${id}`, { err: "Check the form and try again." });
   const { error } = await db.rpc("sales_crm_lead_update", { p_id: id, p: { ...p.data, do_not_contact: p.data.do_not_contact === "on" } });
   if (error) back(`/sales/leads/${id}`, { err: "That change couldn't be saved." });
+  // A new or edited email starts as "not checked" (database trigger); check it now.
+  if (p.data.email) {
+    const { data: row } = await createAdminClient().from("sales_leads").select("email_status").eq("id", id).maybeSingle();
+    if ((row as { email_status?: string } | null)?.email_status === "unchecked") await checkLeadEmail(id, p.data.email);
+  }
   back(`/sales/leads/${id}`, { ok: "Saved." });
 }
 
 export async function logActivity(fd: FormData) {
-  const { db } = await requireSalesRep();
+  const { db, user } = await requireSalesRep();
   const id = z.string().uuid().parse(fd.get("id"));
   const p = z.object({ kind: z.enum(["call", "email", "text", "meeting", "note", "reply"]), body: t(4000).min(1), disposition: t(40).optional() }).safeParse(Object.fromEntries(fd));
   if (!p.success) back(`/sales/leads/${id}`, { err: "Write a short note about what happened." });
   const disposition = p.data.disposition && DISPOSITIONS[p.data.kind]?.some((d) => d.v === p.data.disposition) ? p.data.disposition : null;
   const { error } = await db.rpc("sales_crm_activity_log", { p_lead: id, p_kind: p.data.kind, p_body: p.data.body, p_disposition: disposition });
   if (error) back(`/sales/leads/${id}`, { err: activityErrorMessage(error.message) });
+  // Logging an email as bounced marks the address bad, so nobody keeps emailing it.
+  if (p.data.kind === "email" && disposition === "bounced") await markEmailBounced(createAdminClient(), id, p.data.body, user.id).catch(() => false);
   const counts = p.data.kind === "reply" || (disposition && !["failed", "bounced"].includes(disposition) && p.data.kind !== "note");
   back(`/sales/leads/${id}`, { ok: counts || p.data.kind === "note" ? "Logged." : "Logged. Pick an outcome (like Sent or Voicemail) next time so it counts as working the lead." });
 }
@@ -122,4 +138,15 @@ export async function importMyLeads(fd: FormData) {
   const r = data as { added: number; duplicates: number; possible: number; suppressed: number; invalid: number; existing_customers: number };
   const skipped = r.duplicates + r.possible + r.existing_customers;
   back("/sales/leads", { ok: `Added ${r.added} lead${r.added === 1 ? "" : "s"} to your list.${skipped ? ` ${skipped} were already on file or are customers, so they stay where they are (an admin can review them).` : ""}${r.suppressed ? ` ${r.suppressed} asked not to be contacted.` : ""}${r.invalid ? ` ${r.invalid} were missing a name or a way to reach them.` : ""}` });
+}
+
+/** A rep saw a real bounce for this lead's email. Marks it bad (and on the known-bounce list). */
+export async function markLeadEmailBounced(fd: FormData) {
+  const { db, user } = await requireSalesRep();
+  const id = z.string().uuid().parse(fd.get("id"));
+  // Only for a lead this rep can see (the database function enforces that).
+  const { error } = await db.rpc("sales_crm_lead", { p_id: id });
+  if (error) back(`/sales/leads/${id}`, { err: "That lead isn't yours." });
+  const ok = await markEmailBounced(createAdminClient(), id, String(fd.get("note") ?? ""), user.id);
+  back(`/sales/leads/${id}`, ok ? { ok: "Email marked as bounced. Reach them by phone." } : { err: "That lead has no email to mark." });
 }

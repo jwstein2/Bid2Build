@@ -5,10 +5,11 @@ import { Badge, Card, Notice } from "@/components/ui/misc";
 import { requireSalesRep } from "@/lib/sales/server";
 import { ACTIVITY_LABEL, SOURCE_LABEL, STAGES, STAGE_LABEL, verificationSources, type Duplicate, type Lead, type LeadActivity, type LeadTask } from "@/lib/sales/crm";
 import { dateLabel, TIER_LABEL } from "@/lib/sales/format";
-import { logActivity, recordDncCheck, requestRecycleReview, returnLead, saveTask, updateLead } from "../actions";
+import { logActivity, markLeadEmailBounced, recordDncCheck, requestRecycleReview, returnLead, saveTask, updateLead } from "../actions";
 import { DISPOSITIONS, DISPOSITION_LABEL } from "@/lib/sales/leads-admin";
 import { callReadiness, DNC_REGISTRY_URL, localTimeLabel } from "@/lib/sales/calling";
 import { StarterScript } from "@/components/sales/starter-script";
+import { EmailStatusPanel } from "@/components/sales/email-status";
 
 export const metadata = { title: "Lead" };
 const input = "min-h-11 w-full rounded-lg border border-line bg-white px-3 text-sm";
@@ -39,6 +40,7 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
       {sp.ok && <Notice tone="ok">{sp.ok}</Notice>}
       {sp.err && <Notice tone="warn">{sp.err}</Notice>}
       {l.do_not_contact && <Notice tone="danger" title="Do not contact">This business asked not to be contacted. Don&apos;t reach out.</Notice>}
+      <EmailStatusPanel lead={l} action={markLeadEmailBounced} />
       {duplicates.length > 0 && <Notice tone="warn" title="Similar businesses on file">{duplicates.map((d) => `${d.company_name}${d.zip ? ` (${d.zip})` : ""}: ${d.rep_name ?? "unassigned"}`).join("; ")}</Notice>}
 
       <div className="grid gap-6 lg:grid-cols-[1fr_380px]">

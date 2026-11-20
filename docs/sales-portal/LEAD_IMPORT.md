@@ -96,7 +96,10 @@ Content-Type: application/json
 **Required for every lead** (otherwise counted as "not verified" and not stored): business name, owner
 name, business email, 10-digit phone, ZIP, at least one trade, business start date (YYYY, YYYY-MM or
 YYYY-MM-DD), and at least one public source URL each for the owner name, email and phone. The server
-also checks the email's domain has a mail server (MX record) and turns the lead away if it doesn't.
+also checks the email can receive mail and turns the lead away if it can't: the domain must publish an
+MX record **and** that mail server's host name must resolve (an MX pointing at a server that no longer
+exists bounces every message). Addresses on the known-bounce list (`sales_bad_emails`) are turned away
+too. If DNS times out the row is counted as not verified; resend it next run.
 
 Optional, for region targets (and ZIP targets that work through a list): where this run stopped, so the
 next run resumes after it. `cursor` is the last value of `source.cursor_field` the run checked (rows are
@@ -112,8 +115,12 @@ Response:
 
 ```json
 { "batch_id": "2026-W47", "received": 55, "added": 48, "duplicates": 4, "suppressed": 1, "invalid": 0,
-  "unverified": 2, "unverified_fields": ["verification.email"], "briefs_written": 48, "replayed": false }
+  "unverified": 2, "unverified_fields": ["verification.email"], "briefs_written": 48, "replayed": false,
+  "email_rejected": [{ "company_name": "Decks by Ryan", "email": "decksbyryan@decksbyryan.com", "reason": "Bounced before." }] }
 ```
+
+`email_rejected` lists every lead turned away by the mail check, with the reason, so the agent can look
+for another published address (never a guessed one) or move on.
 
 - Re-sending the same `batch_id` returns the first result and adds nothing (safe retries).
 - Skipped: businesses already on file (domain, phone, or name + ZIP) and anyone ever marked
@@ -125,7 +132,9 @@ Response:
 Each fact is matched to a public page the agent read, and the page is stored with the lead so a rep can
 click through. Good sources: the state contractor licensing board (license holder, business phone),
 the Secretary of State business filing (owners/organizers, formation date), and the company's own
-website (published business email and phone). It does **not** mean the email inbox was confirmed to
+website (published business email and phone). The email's domain is confirmed to have a working mail
+server (DNS only; nothing is sent), and each lead's email status shows in the CRM ("Can receive mail",
+"Can't receive mail", "Bounced"). It does **not** mean the individual inbox was confirmed to
 exist or that the person will answer: that needs a paid email-verification service, which we haven't
 added. Expect fewer than 50 some weeks; the agent must not pad the list with unverified leads.
 

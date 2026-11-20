@@ -6,7 +6,8 @@ import { ACTIVITY_LABEL, SOURCE_LABEL, STAGE_LABEL, verificationSources, type Du
 import { dateLabel } from "@/lib/sales/format";
 import { ADMIN_LEAD_ERRORS, DISPOSITIONS, DISPOSITION_LABEL, HOLD_LABEL, METHOD_LABEL, ORIGIN_LABEL } from "@/lib/sales/leads-admin";
 import { cookies } from "next/headers";
-import { adminLogActivity, adminScheduleFollowUp, assignLeadsV86, cancelAssign, confirmAssign, holdLeads } from "../../lead-actions";
+import { EmailStatusPanel } from "@/components/sales/email-status";
+import { adminLogActivity, adminMarkEmailBounced, adminScheduleFollowUp, assignLeadsV86, cancelAssign, confirmAssign, holdLeads } from "../../lead-actions";
 import type { PendingAssign } from "../../leads-panel";
 import { CONTACT_LEVEL, RECYCLE_OUTCOME, RECYCLE_PROTECTED, RECYCLE_REASON, RECYCLE_RULE, untilLabel, WARNING_LABEL } from "@/lib/sales/leads-admin";
 import { extendDeadline, holdFromRecycling, recycleNow } from "../../recycle-actions";
@@ -77,6 +78,7 @@ export default async function AdminLead({ params, searchParams }: { params: Prom
           </div>
         </Notice>
       )}
+      <EmailStatusPanel lead={l} action={adminMarkEmailBounced} idField="lead" back={back} />
       {d.duplicates.length > 0 && <Notice tone="warn" title="Similar businesses on file">{d.duplicates.map((x) => `${x.company_name}${x.zip ? ` (${x.zip})` : ""}: ${x.rep_name ?? "unassigned"}`).join("; ")}</Notice>}
 
       <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">

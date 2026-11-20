@@ -1,16 +1,17 @@
 import Link from "next/link";
 import { Badge, Card, Notice } from "@/components/ui/misc";
-import { STAGES, STAGE_LABEL, SOURCE_LABEL, type Stage } from "@/lib/sales/crm";
+import { isBadEmail, STAGES, STAGE_LABEL, SOURCE_LABEL, type Stage } from "@/lib/sales/crm";
+import { EmailStatusBadge } from "@/components/sales/email-status";
 import { dateLabel } from "@/lib/sales/format";
 import { ageLabel, filterQuery, HOLD_LABEL, ORIGIN_LABEL, WARNING_LABEL, type LeadFilters } from "@/lib/sales/leads-admin";
-import { allocateQueue, assignLeadsV86, cancelAssign, confirmAssign, decideDuplicate, importLeadsV86 } from "./lead-actions";
+import { allocateQueue, assignLeadsV86, cancelAssign, confirmAssign, decideDuplicate, importLeadsV86, recheckAllLeadEmails } from "./lead-actions";
 
 export interface AdminLeadRow {
   id: string; company_name: string; contact_name: string | null; email: string | null; phone: string | null; website: string | null;
   city: string | null; state: string | null; zip: string | null; trades: string[]; stage: Stage; source: string; lead_origin: string;
   assigned_rep: string | null; rep_name: string | null; assigned_at: string | null; hold_reason: string | null;
   last_activity_at: string | null; next_action_at: string | null; discovered_at: string; do_not_contact: boolean;
-  customer_user_id: string | null; sales_brief: string | null; business_started: string | null; notes: string | null; dnc_status?: string;
+  customer_user_id: string | null; sales_brief: string | null; business_started: string | null; notes: string | null; dnc_status?: string; email_status?: string; email_check_note?: string | null;
   seen_again: number; beneficiary: string | null;
 }
 export interface AdminLeads { total: number; leads: AdminLeadRow[]; trades: string[]; states: string[]; queue: Record<string, { count: number; oldest: string }>; possible_pending: number }
@@ -120,6 +121,11 @@ export function LeadsPanel({ data, filters, reps, canAssign, pending, dups, view
                 <button className={btn}>Import</button>
               </div>
             </form>
+            <form action={recheckAllLeadEmails} className="mt-4 flex flex-wrap items-center gap-3 border-t border-line pt-4">
+              <input type="hidden" name="back" value={back} />
+              <p className="text-sm text-ink-soft">Every lead&apos;s email is checked for a working mail server (DNS only, nothing is sent) when it&apos;s added and daily for new ones. Leads that can&apos;t receive mail are flagged.</p>
+              <button className={btn}>Recheck all lead emails</button>
+            </form>
           </details>
         </Card>
       )}
@@ -157,6 +163,7 @@ export function LeadsPanel({ data, filters, reps, canAssign, pending, dups, view
                     {l.do_not_contact && <Badge tone="danger">Do not contact</Badge>}
                     {l.customer_user_id && <Badge tone="ok">Customer</Badge>}
                     {l.seen_again > 0 && <Badge>Seen again ×{l.seen_again}</Badge>}
+                    {l.email && isBadEmail(l.email_status) && <span title={l.email_check_note ?? undefined}><EmailStatusBadge status={l.email_status} /></span>}
                   </div>
                   {(l.contact_name || l.sales_brief || l.notes || l.email || l.phone) && (
                     <details className="mt-1 max-w-sm">
@@ -170,7 +177,7 @@ export function LeadsPanel({ data, filters, reps, canAssign, pending, dups, view
                           <Link className="underline" href={`/sales/admin/leads/${l.id}#log`}>Log call or email</Link>
                           <Link className="underline" href={`/sales/admin/leads/${l.id}#follow-up`}>Schedule follow-up</Link>
                           <Link className="underline" href={`/sales/admin/leads/${l.id}#history`}>History</Link>
-                          {l.email && !l.do_not_contact && <a className="underline" href={`mailto:${l.email}`}>Email</a>}
+                          {l.email && !l.do_not_contact && !isBadEmail(l.email_status) && <a className="underline" href={`mailto:${l.email}`}>Email</a>}
                         </p>
                       </div>
                     </details>
