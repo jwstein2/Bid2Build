@@ -53,6 +53,7 @@ for (const route of ROUTES) {
   const resp = await openRoute(page, route);
   const status = resp?.status?.() ?? resp?.err ?? null;
   const finalUrl = page.url().replace(BASE, "");
+  if (ROLE !== "anon") fs.writeFileSync(statePath(ROLE), JSON.stringify(await ctx.storageState()));
   const h1 = await page.locator("h1").first().innerText({ timeout: 1500 }).catch(() => "");
   const is404 = /could not be found|page not found|404/i.test(h1) || status === 404;
   const pageRec = { route, status, finalUrl, h1, is404, loadErrors: { pageErrors: [...w.pageErrors], console: [...w.console], failed: [...w.failed] }, elements: [], results: [] };
@@ -197,7 +198,12 @@ async function clickOne(route, el) {
     return { status: "PASS", note: effects.join(" | ").slice(0, 300), console: w.console.slice(0, 3) };
   } catch (e) {
     return { status: "FAIL", note: `click: ${String(e.message).split("\n")[0].slice(0, 200)}`, pageErrors: w.pageErrors.slice(0, 3) };
-  } finally { await cctx.close().catch(() => {}); }
+  } finally {
+    // Supabase rotates the refresh token when a session renews (hourly). Copy the newest cookies back to the saved
+    // session and the main context, or the next fresh context reuses a spent token and Supabase signs the user out.
+    if (ROLE !== "anon") { const st = await cctx.storageState().catch(() => null); if (st) { await ctx.addCookies(st.cookies).catch(() => {}); fs.writeFileSync(statePath(ROLE), JSON.stringify(st)); } }
+    await cctx.close().catch(() => {});
+  }
 }
 
 function flush() { fs.writeFileSync(outFile, JSON.stringify(report, null, 1)); }
