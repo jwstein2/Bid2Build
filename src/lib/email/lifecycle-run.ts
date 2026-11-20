@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { logError } from "../http/api";
+import { isDemoLogin } from "../demo/session";
 import { classifyAccount } from "../admin/classify";
 import { site } from "../site";
 import { FOUNDER_ADDRESS } from "./founder-welcome";
@@ -99,7 +100,8 @@ export async function loadLifecycleFacts(db: Db, now = new Date()): Promise<Load
     const { data, error } = await db.auth.admin.listUsers({ page, perPage: PAGE });
     if (error) throw new Error(`auth: ${error.message}`);
     const list = data?.users ?? [];
-    for (const u of list) users.push({ id: u.id, email: u.email ?? null, created_at: u.created_at });
+    // Demo / practice logins are sample accounts with reserved addresses: never in the lifecycle program.
+    for (const u of list) if (!isDemoLogin(u)) users.push({ id: u.id, email: u.email ?? null, created_at: u.created_at });
     if (list.length < PAGE) break;
   }
   const since = new Date(now.getTime() - 45 * 86_400_000).toISOString();

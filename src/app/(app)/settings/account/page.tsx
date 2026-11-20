@@ -33,8 +33,18 @@ export default async function AccountPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6" data-guide-page="settings.account">
       <h1 className="text-3xl font-extrabold">Account settings</h1>
-      <div data-guide="account.signin"><SignInMethods email={user.email} emailVerified={user.emailVerified} phone={user.phone} phoneVerified={user.phoneVerified} smsEnabled={isSmsSignInEnabled()} /></div>
-      <TwoStepSignIn />
+      {user.demo ? (
+        // A sample login: sign-in methods would send real codes to a reserved address, so they stay hidden.
+        <Card className="p-5" data-testid="demo-signin-note">
+          <h2 className="font-bold">Sign-in settings</h2>
+          <p className="text-sm text-ink-soft">You&apos;re in {user.demo.kind === "practice" ? "Practice Mode" : "Demo Mode"}, which uses a fake sample account. Turn it off to change how you sign in to your real account.</p>
+        </Card>
+      ) : (
+        <>
+          <div data-guide="account.signin"><SignInMethods email={user.email} emailVerified={user.emailVerified} phone={user.phone} phoneVerified={user.phoneVerified} smsEnabled={isSmsSignInEnabled()} /></div>
+          <TwoStepSignIn />
+        </>
+      )}
       {hasSales(workspaces) && <LandingPreference ws={workspaces} />}
       {!user.demo && (isAdmin === true || isPracticeEnabled()) && (
         <Card className="p-5" data-testid="demo-settings-card">
@@ -42,12 +52,12 @@ export default async function AccountPage() {
           <p className="text-sm text-ink-soft">
             {isAdmin === true
               ? "Show Built2Bid with a fully populated sample company. It opens in a separate demo workspace: your real customers, bids, billing and settings are never changed, and nothing in the demo reaches a real person or payment system."
-              : "Try Built2Bid with sample customers and a sample estimate in a separate practice workspace. Your real account stays exactly as it is."}
+              : "Try Built2Bid with fake sample customers and bids in a separate practice workspace. Nothing there is real: no emails or texts are sent and nothing is charged. Your real account stays exactly as it is. You can also turn it on and off from the menu."}
           </p>
           <DemoEnterButton kind={isAdmin === true ? "owner_demo" : "practice"} className="mt-3" variant="primary" />
         </Card>
       )}
-      {isContractorSigningEnabled() && (
+      {isContractorSigningEnabled() && !user.demo && (
         <Card className="p-5" data-testid="my-signature-link">
           <h2 className="font-bold">My signature</h2>
           <p className="text-sm text-ink-soft">Draw, upload or type the signature you use on proposals and contracts, and review your signing authorization.</p>

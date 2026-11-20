@@ -50,6 +50,50 @@ export function DemoNavItem({ className }: { className: string }) {
 }
 
 /**
+ * Sidebar "Practice Mode" switch (Help section, next to What's New), for every signed-in user.
+ * Off → a short explanation and "Turn on" (fake sample data, nothing real happens). On → turns it off and
+ * returns to the real account. While any demo session is active this is the way back out.
+ */
+export function PracticeNavToggle({ className, active }: { className: string; active: DemoSessionKind | null }) {
+  const s = useDemoSwitch();
+  const [asking, setAsking] = useState(false);
+  const panel = useRef<HTMLDivElement>(null);
+  // Keep "Turn on" clear of the fixed Guide button at the bottom of the menu.
+  useEffect(() => { if (asking) panel.current?.scrollIntoView({ block: "center", behavior: "smooth" }); }, [asking]);
+  const busy = s.phase === "preparing" || s.phase === "switching";
+  const on = active !== null;
+  const label = active === "owner_demo" ? "Demo Mode" : "Practice Mode";
+  return (
+    <div>
+      <button type="button" role="switch" aria-checked={on} className={cn(className, "items-center")} disabled={busy}
+        onClick={() => (on ? void s.exit() : setAsking((v) => !v))} data-testid="nav-practice-toggle" aria-describedby="nav-practice-help">
+        <FlaskConical className="h-4 w-4" aria-hidden />
+        <span className="flex-1">{label}</span>
+        <span aria-hidden className={cn("relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors", on ? "bg-[#14B8A6]" : "bg-white/20")}>
+          <span className={cn("absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all", on ? "left-[18px]" : "left-0.5")} />
+        </span>
+        <span className="sr-only">{on ? "On" : "Off"}</span>
+      </button>
+      <span id="nav-practice-help" className="sr-only">
+        {on ? "Turns off the fake sample data and goes back to your real account." : "Opens a separate workspace with fake sample data. Nothing you do there is real."}
+      </span>
+      {asking && !on && (
+        <div ref={panel} className="mx-2 mb-2 mt-1 rounded-lg bg-white/10 p-3 text-xs text-[#E6EDF4]" role="group" aria-label="Turn on Practice Mode" data-testid="practice-confirm">
+          <p className="font-bold text-white">Practice with fake sample data</p>
+          <p className="mt-1">Practice Mode opens a separate workspace with a few made-up customers and bids. Nothing there is real: no emails or texts are sent, nothing is charged, and your real bids aren&apos;t touched.</p>
+          <p className="mt-1">Turn Practice Mode off to get back to your real account.</p>
+          <div className="mt-2 flex gap-2">
+            <Button type="button" size="sm" variant="primary" disabled={busy} onClick={() => void s.enter("practice")} data-testid="practice-enter">Turn on</Button>
+            <Button type="button" size="sm" variant="ghost" className="text-[#E6EDF4] hover:bg-white/10" onClick={() => setAsking(false)}>Cancel</Button>
+          </div>
+        </div>
+      )}
+      {s.phase !== "idle" && <div className="px-3 text-[#C9D6E3] [&_p]:text-[#C9D6E3]"><SwitchStatus phase={s.phase} progress={s.progress} error={s.error} /></div>}
+    </div>
+  );
+}
+
+/**
  * Persistent DEMO MODE / PRACTICE MODE bar at the top of every signed-in page of a demo session. Exit
  * returns to the real account; Reset (with confirmation) re-seeds only this demo workspace.
  */
@@ -64,11 +108,18 @@ export function DemoBanner({ kind, company, sticky = true, anywhere = false }: {
   return (
     <div role="region" aria-label={practice ? "Practice Mode" : "Demo Mode"} data-testid="demo-banner" data-kind={kind} data-anywhere={anywhere ? "" : undefined}
       className={cn(sticky ? "sticky top-0 z-40" : "relative z-40", "flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 text-sm no-print", practice ? "bg-[#14B8A6] text-[#06231F]" : "bg-[#F59E0B] text-[#2B1600]")}>
-      <span className="rounded bg-black/15 px-2 py-0.5 text-xs font-extrabold tracking-[0.12em]">{practice ? "PRACTICE MODE" : "DEMO MODE"}</span>
-      <span className="min-w-0 flex-1 truncate font-semibold">
-        {company ?? (practice ? "Sample data" : "Sample company")}
-        <span className="hidden font-normal sm:inline"> · Sample data only. Nothing here reaches real customers, payments or billing.</span>
-      </span>
+      <span className="rounded bg-black/15 px-2 py-0.5 text-xs font-extrabold tracking-[0.12em]">{practice ? "PRACTICE MODE · FAKE DATA" : "DEMO MODE"}</span>
+      {practice ? (
+        <span className="min-w-0 basis-full font-semibold sm:basis-0 sm:flex-1" data-testid="practice-banner-text">
+          Everything here is fake sample data. No emails or texts are sent and nothing is charged.
+          <span className="font-normal"> Turn off Practice Mode to use your real account.</span>
+        </span>
+      ) : (
+        <span className="min-w-0 flex-1 truncate font-semibold">
+          {company ?? "Sample company"}
+          <span className="hidden font-normal sm:inline"> · Sample data only. Nothing here reaches real customers, payments or billing.</span>
+        </span>
+      )}
       {confirming ? (
         <span className="flex flex-wrap items-center gap-2" role="group" aria-label="Confirm reset">
           <span className="font-semibold">{practice ? "Start the practice over?" : "Reset the demo workspace to fresh sample data?"}</span>
@@ -81,7 +132,7 @@ export function DemoBanner({ kind, company, sticky = true, anywhere = false }: {
             <RotateCcw className="h-4 w-4" aria-hidden /> {practice ? "Start over" : "Reset demo"}
           </Button>
           <Button size="sm" variant="primary" className="min-h-9" onClick={() => void s.exit()} disabled={busy} data-testid="demo-exit">
-            <LogOut className="h-4 w-4" aria-hidden /> {practice ? "Back to my account" : "Exit Demo Mode"}
+            <LogOut className="h-4 w-4" aria-hidden /> {practice ? "Turn off Practice Mode" : "Exit Demo Mode"}
           </Button>
         </span>
       )}

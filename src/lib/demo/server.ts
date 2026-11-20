@@ -9,8 +9,11 @@ import { DEMO_HINT_COOKIE, DEMO_META_KEY, DEMO_RETURN_COOKIE, DEMO_RETURN_MAX_AG
 
 type Admin = ReturnType<typeof createAdminClient>;
 
-/** Practice Mode is off until the owner turns it on (it creates a small sample login per person). */
-export const isPracticeEnabled = () => process.env.PRACTICE_MODE === "on";
+/**
+ * Practice Mode is on for every verified user (it creates a small sample login per person the first time
+ * they turn it on). PRACTICE_MODE=off is an emergency switch that hides it everywhere.
+ */
+export const isPracticeEnabled = () => process.env.PRACTICE_MODE !== "off";
 
 /** How long one request keeps seeding before it hands back "still preparing" (the browser calls again). */
 const SEED_BUDGET_MS = 6_000;

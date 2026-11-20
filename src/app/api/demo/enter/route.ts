@@ -9,7 +9,7 @@ export const maxDuration = 26;
 const body = z.object({ kind: z.enum(["owner_demo", "practice"]) });
 
 /**
- * Enter Demo Mode (platform owner) or Practice Mode (anyone, when PRACTICE_MODE=on).
+ * Enter Demo Mode (platform owner) or Practice Mode (any verified user; PRACTICE_MODE=off turns it off).
  * The first call may answer { status: "seeding", progress } while the sample company is prepared; the
  * browser calls again until { status: "ready" }, at which point this browser is switched to the demo
  * login. Authorization is server-side: the owner check uses the existing admin process by user id.

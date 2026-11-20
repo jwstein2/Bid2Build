@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { logError } from "../http/api";
+import { inDemoSession } from "../demo/guard";
 import { inActivationWindow } from "./activation";
 import { META_EVENT_FOR, queueMetaConversion } from "./conversions";
 
@@ -38,6 +39,8 @@ const badEventName = (e: { code?: string; message?: string } | null) => Boolean(
 /** Record an event once. Returns true if this call stored it (false: already recorded, or unavailable). */
 export async function recordEvent(admin: SupabaseClient, ev: EventInput): Promise<boolean> {
   try {
+    // Practice / demo activity is not real product use: no funnel events and no ad conversions from it.
+    if (await inDemoSession()) return false;
     const row = { user_id: ev.userId, event: ev.event, trade: ev.trade ?? null, event_id: ev.eventId, estimate_id: ev.estimateId ?? null };
     const { data, error } = await admin.from("analytics_events").upsert(row, { onConflict: "event_id", ignoreDuplicates: true }).select("id");
     if (!error) {
