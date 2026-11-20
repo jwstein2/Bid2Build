@@ -9,12 +9,14 @@ import { ATTRIBUTION_COOKIE, decodeAttribution } from "@/lib/growth/attribution"
 import { syncSignedInUser } from "@/lib/growth/leads";
 import { REFERRAL_COOKIE } from "@/lib/growth/referral";
 import { recordReferral } from "@/lib/growth/referral-server";
-import { SALES_COOKIE } from "@/lib/sales/link";
+import { decodeRepCookie, SALES_COOKIE } from "@/lib/sales/link";
 import { SALES_JOIN_COOKIE } from "@/lib/sales/next";
 import { isInviteToken } from "@/lib/sales/invite";
 import { NO_WORKSPACES, switchLinks } from "@/lib/workspaces";
 import { loadWorkspaces } from "@/lib/workspaces-server";
 import { recordRepAttribution } from "@/lib/sales/billing-server";
+import { recordAffiliateAttribution } from "@/lib/affiliates/billing-server";
+import { AFFILIATE_COOKIE, attributionOrder, decodeAffiliateCookie } from "@/lib/affiliates/link";
 import { AppSidebar } from "@/components/layout/app-nav";
 import { FeatureHost } from "@/components/features/feature-host";
 import { formatPhone } from "@/lib/auth/phone";
@@ -68,11 +70,18 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     const ref = jar.get(REFERRAL_COOKIE)?.value;
     // Arrived through a sales rep's /s/<code> link: attach the rep to this account (new, never-paid accounts only).
     const rep = jar.get(SALES_COOKIE)?.value;
+    // Arrived through an affiliate's /a/<code> link. With both cookies the earlier visit records first; the
+    // database keeps one owner per customer either way (sales_record_attribution / affiliate_record_attribution).
+    const aff = jar.get(AFFILIATE_COOKIE)?.value;
+    const order = attributionOrder(decodeRepCookie(rep), decodeAffiliateCookie(aff));
     after(async () => {
       const admin = createAdminClient();
       await syncSignedInUser(admin, user, attribution);
       if (ref) await recordReferral(admin, user.id, ref);
-      if (rep) await recordRepAttribution(admin, user.id, rep);
+      for (const program of order) {
+        if (program === "sales") await recordRepAttribution(admin, user.id, rep);
+        else await recordAffiliateAttribution(admin, user.id, aff);
+      }
     });
   }
   return (

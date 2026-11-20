@@ -20,6 +20,9 @@ export async function runPayouts(db: SupabaseClient, opts: { provider?: (name: P
   const plan = await db.rpc("payout_plan", opts.now ? { p_now: opts.now.toISOString() } : {});
   if (plan.error) return { plan: null, claimed: 0, submitted: 0, retry: 0, failed: 0, error: plan.error.message };
   const planned = plan.data as { skipped?: string } | null;
+  // Affiliate Hub: payable annual commissions -> one payout per affiliate on the same ledger (off unless the owner
+  // enabled affiliate payouts). Missing before 20270210001000: ignored.
+  await db.rpc("affiliate_payout_plan", opts.now ? { p_now: opts.now.toISOString() } : {}).then(() => null, () => null);
   if (planned?.skipped === "automation_off") return { plan: planned, claimed: 0, submitted: 0, retry: 0, failed: 0, skipped: "automation_off" };
 
   const { data: settings } = await db.from("payout_settings").select("mode, provider, paused, live_activated_at").eq("id", true).maybeSingle();
@@ -77,11 +80,18 @@ export async function runPayouts(db: SupabaseClient, opts: { provider?: (name: P
 /** After a verified provider event: notify the person (live only) and the owner on failures. */
 export async function afterPayoutEvent(db: SupabaseClient, applied: { status: string; payout_id?: string; kind?: string; mode?: string }) {
   if (applied.status !== "applied" || !applied.payout_id) return;
-  const { data: p } = await db.from("payouts").select("ref, net_cents, gross_cents, fee_cents, fee_bearer, mode, staff_members(email, display_name, preferred_name)").eq("id", applied.payout_id).maybeSingle();
+  const { data: p } = await db.from("payouts").select("ref, net_cents, gross_cents, fee_cents, fee_bearer, mode, affiliate_id, staff_members(email, display_name, preferred_name)").eq("id", applied.payout_id).maybeSingle();
   if (!p) return;
-  const m = (p as unknown as { staff_members: { email: string; display_name: string; preferred_name: string | null } }).staff_members;
   const kind = applied.kind === "posted" ? "paid" : applied.kind === "returned" ? "returned" : applied.kind === "failed" ? "failed" : null;
   if (!kind) return;
+  if ((p as { affiliate_id?: string | null }).affiliate_id) {
+    // Affiliate payouts: the affiliate's own notice (live only) + the owner alert on problems.
+    const { afterAffiliatePayoutEvent } = await import("@/lib/affiliates/payouts");
+    await afterAffiliatePayoutEvent(db, p as never, kind);
+    return;
+  }
+  const m = (p as unknown as { staff_members: { email: string; display_name: string; preferred_name: string | null } | null }).staff_members;
+  if (!m) return;
   if (p.mode === "live") await emailPayoutResult(m.email, m.preferred_name ?? m.display_name, kind, p as never);
   if (kind !== "paid") await emailOwnerAlert(`Payout ${kind}: ${p.ref}`, `${p.ref} to ${m.display_name} (${(p.net_cents as number) / 100} USD) was ${kind}.`, `payout-${kind}/${p.ref}`);
 }

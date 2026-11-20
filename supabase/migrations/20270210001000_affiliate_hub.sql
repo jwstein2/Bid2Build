@@ -13,6 +13,8 @@
 --     covers that date ("paid-through" rule), so annual plans, monthly plans and a switch between them all work.
 --     A missed anniversary (no covering payment within the grace days) is ineligible; the term never restarts
 --     after upgrades, billing-cycle changes, cancellation or reactivation.
+--     If a covering invoice is recorded late (webhook delay, backfill), the daily job turns that ineligible line
+--     into a commission with reason 'late_invoice' (only while it is still ineligible for 'not_paid_on_anniversary').
 --   * Amount = the covering invoice's eligible monthly value, from actual billing data:
 --       round(L * least(1, P / (Ld * M)))  [half-up, to the cent, once per invoice]
 --       P  = pre-tax amount actually paid, net of refunds (no sales tax, no failed/unpaid amounts)
@@ -541,13 +543,16 @@ language sql stable as $$ select (p_now at time zone 'America/Chicago')::date $$
 -- Eligible monthly value of one invoice under the annual-plan rule (see header). Half-up rounding to the cent.
 create or replace function public.affiliate_invoice_value(i public.affiliate_invoices, p_annual_basis text) returns integer
 language sql immutable as $$
+  -- Net pre-tax paid: a refund (stated against the gross, tax included) reduces the pre-tax amount proportionally.
+  with n as (select case when i.gross_cents > 0 then i.pretax_cents::numeric * greatest(i.gross_cents - i.refunded_cents, 0) / i.gross_cents else 0 end as net)
   select case
     when i.dispute_status in ('open', 'lost') then 0
-    when greatest(i.pretax_cents - i.refunded_cents, 0) = 0 then 0
-    when i.list_divide_cents <= 0 then round(greatest(i.pretax_cents - i.refunded_cents, 0)::numeric / i.period_months)::integer
+    when n.net <= 0 then 0
+    when i.list_divide_cents <= 0 then round(n.net / i.period_months)::integer
     else round((case when p_annual_basis = 'monthly_list' and i.list_monthly_cents > 0 then i.list_monthly_cents else i.list_divide_cents end)::numeric
-      * least(1::numeric, greatest(i.pretax_cents - i.refunded_cents, 0)::numeric / (i.list_divide_cents::numeric * i.period_months)))::integer
+      * least(1::numeric, n.net / (i.list_divide_cents::numeric * i.period_months)))::integer
   end
+  from n
 $$;
 
 -- A qualifying invoice: paid, a full billing period (not a proration), value > 0.
@@ -1652,6 +1657,14 @@ begin
   return v;
 end $$;
 
+-- Owner: find a customer account by email (for opening a review on a specific customer).
+create or replace function public.admin_affiliate_user_by_email(p_caller uuid, p_email text) returns uuid
+language plpgsql stable security definer set search_path = public as $$
+begin
+  perform public.affiliate_require_admin(p_caller);
+  return (select id from auth.users where lower(email) = lower(btrim(coalesce(p_email, ''))) limit 1);
+end $$;
+
 create or replace function public.admin_affiliate_commission_set(p_caller uuid, p_id uuid, p_status text, p_reason text) returns void
 language plpgsql security definer set search_path = public as $$
 declare c public.affiliate_commissions;
@@ -1848,7 +1861,7 @@ begin
     'public.admin_affiliates_overview(uuid)', 'public.admin_affiliate_decide(uuid, uuid, text, text)', 'public.admin_affiliate_set_status(uuid, uuid, text, text, text)',
     'public.admin_affiliate_correction_review(uuid, uuid, boolean, text)', 'public.admin_affiliate_channel_verify(uuid, uuid)',
     'public.admin_affiliate_dispute_resolve(uuid, uuid, text, text, uuid, uuid)', 'public.admin_affiliate_dispute_open(uuid, uuid, text, text, text)',
-    'public.admin_affiliate_commission_set(uuid, uuid, text, text)', 'public.admin_affiliate_settings_save(uuid, jsonb, text)', 'public.admin_affiliate_agreement_legal(uuid, uuid, text)',
+    'public.admin_affiliate_commission_set(uuid, uuid, text, text)', 'public.admin_affiliate_user_by_email(uuid, text)', 'public.admin_affiliate_settings_save(uuid, jsonb, text)', 'public.admin_affiliate_agreement_legal(uuid, uuid, text)',
     'public.admin_affiliate_prospect_save(uuid, uuid, jsonb)', 'public.admin_affiliate_prospect_event(uuid, uuid, text, text)', 'public.admin_affiliate_prospects(uuid)',
     'public.admin_affiliate_compliance_save(uuid, uuid, jsonb)', 'public.affiliate_email_record(text, text, text, uuid, uuid, text, text, text)', 'public.admin_affiliate_reports(uuid, integer)'
   ] loop

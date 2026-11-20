@@ -11,6 +11,7 @@ import { deliverFounderEmails, enqueueFounderWelcome } from "@/lib/email/outbox"
 import { rewardReferrer } from "@/lib/growth/referral-server";
 import { recordEvent } from "@/lib/growth/events";
 import { salesChargeDispute, salesChargeRefunded, syncSalesBilling } from "@/lib/sales/billing-server";
+import { affiliateChargeDispute, affiliateChargeRefunded, syncAffiliateBilling } from "@/lib/affiliates/billing-server";
 
 /** List value of a new subscription's first period, in USD, from its price (for ad conversion value only). */
 function listValueUsd(sub: Stripe.Subscription): number | null {
@@ -32,6 +33,10 @@ const HANDLED = new Set([
   // Sales Portal: a refund can reverse a rep's commission. Only arrives once the event is added to the
   // webhook endpoint in Stripe; nothing else depends on it.
   "charge.refunded",
+  // Chargebacks: stop an unpaid sales milestone / affiliate commission (a won dispute restores it). The handler
+  // below existed but these events were never let through.
+  "charge.dispute.created",
+  "charge.dispute.closed",
 ]);
 
 /**
@@ -68,8 +73,10 @@ export async function POST(req: Request) {
     const obj = event.data.object as unknown as Record<string, unknown>;
     if (event.type === "charge.refunded") {
       await salesChargeRefunded(admin, stripe, obj as unknown as Stripe.Charge);
+      await affiliateChargeRefunded(admin, stripe, obj as unknown as Stripe.Charge);
     } else if (event.type === "charge.dispute.created" || event.type === "charge.dispute.closed") {
       await salesChargeDispute(admin, stripe, obj as unknown as Stripe.Dispute, event.type === "charge.dispute.closed");
+      await affiliateChargeDispute(admin, stripe, obj as unknown as Stripe.Dispute, event.type === "charge.dispute.closed");
     } else if (event.type.startsWith("customer.subscription.")) {
       // Re-fetch so we always store the latest state, not a possibly stale event payload.
       subscriptionId = obj.id as string;
@@ -94,6 +101,10 @@ export async function POST(req: Request) {
       await syncSalesBilling(admin, stripe, sub, res.userId, {
         plan: res.plan ?? null, companyId: res.companyId ?? null,
         invoice: event.type === "invoice.paid" ? (obj as { id?: string; billing_reason?: string | null; amount_paid?: number | null; status?: string | null; status_transitions?: { paid_at?: number | null } | null; created?: number }) : null,
+      });
+      // Affiliate Hub: same for an affiliate-referred customer (annual ledger from actual paid invoices). Never throws.
+      await syncAffiliateBilling(admin, stripe, sub, res.userId, {
+        plan: res.plan ?? null, invoice: event.type === "invoice.paid" ? (obj as never) : null,
       });
       if (event.type === "checkout.session.completed") {
         // Once per subscription (webhook retries and duplicate events can't double count).

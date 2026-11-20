@@ -9,6 +9,7 @@ const ROWS: [string, string, string, string][] = [
   ["Supabase sign-in (sb-…)", "Necessary", "Keeps you signed in", "Until you sign out or the session ends"],
   ["b2b_ref", "Necessary for the program", "Remembers the referral link you arrived from", "90 days"],
   ["b2b_rep", "Necessary for the program", "Remembers the sales representative link you arrived from", "90 days"],
+  ["b2b_aff", "Necessary for the program", "Remembers the affiliate (creator partner) link you arrived from", "90 days"],
   ["b2b_attr", "Measurement (first party)", "Remembers which campaign link brought you here, so we can count sign-ups by source", "90 days"],
   ["b2b_ad_consent", "Necessary", "Remembers your ad measurement choice", "1 year"],
   ["b2b_ga_optout", "Necessary", "Remembers that you turned Google Analytics off", "1 year"],
