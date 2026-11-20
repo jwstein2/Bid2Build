@@ -17,7 +17,7 @@ import { PlanHelper } from "@/components/marketing/pricing/plan-helper";
 import { Suspense } from "react";
 import { EnterprisePlan, type ExistingAccess } from "@/components/billing/enterprise-plan";
 import { GetTeamButton } from "@/components/billing/get-team-button";
-import { isEnterpriseConfigured } from "@/lib/env";
+import { isEnterpriseConfigured, isPmBillingConfigured } from "@/lib/env";
 import { site } from "@/lib/site";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -122,7 +122,8 @@ export default async function PricingPage() {
       <PlanHelper pccLive={pmMarketedLive()} pccName={PM_PRODUCT_NAME} />
       <PmAddonSection status={status} entMode={entMode} />
       <Suspense><EnterprisePlan signedIn={Boolean(user)} mode={entMode} supportEmail={site.supportEmail} existing={existing}
-        extraFeatures={pmMarketedLive() ? [`${PM_PRODUCT_NAME}: ${PRICES.pmIncludedEnterpriseEditors} schedule editor included; extra editors ${PRICES.pmEditor}/month each (for licensed users)`] : []} /></Suspense>
+        scheduling={pmMarketedLive() ? { productName: PM_PRODUCT_NAME, checkout: isPmBillingConfigured("editor") } : null}
+        extraFeatures={pmMarketedLive() ? [`${PM_PRODUCT_NAME} with ${PRICES.pmIncludedEnterpriseEditors} schedule editor included (optional extra editors below)`] : []} /></Suspense>
 
       <ComparisonTable />
       <div className="mx-auto mt-8 max-w-3xl space-y-3 text-sm text-ink-soft">
