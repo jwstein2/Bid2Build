@@ -26,7 +26,7 @@ import {
 } from "@/lib/marketing/catalog";
 
 const pageTitle = `Pricing: Free, then ${MONTHLY.price}/month`;
-const pageDescription = `Free: ${plans.starterCredits} bids to start, plus ${plans.monthlyCredits} free bid every month. Unlimited: ${MONTHLY.price}/month or ${ANNUAL.price}/year. ${PM_PRODUCT_NAME} scheduling add-on: ${PRICES.pmMonthly}/month. Team: ${PRICES.enterpriseBase}/month for ${PRICES.enterpriseIncludedUsers} users.`;
+const pageDescription = `Free: ${plans.starterCredits} bids to start, plus ${plans.monthlyCredits} free bid every month. Individual Unlimited: ${MONTHLY.price}/month or ${ANNUAL.price}/year. ${PM_PRODUCT_NAME} scheduling add-on: ${PRICES.pmMonthly}/month. Team: ${PRICES.enterpriseBase}/month for ${PRICES.enterpriseIncludedUsers} users.`;
 
 export const metadata: Metadata = {
   title: pageTitle,
@@ -82,7 +82,7 @@ export default async function PricingPage() {
   }
   // What a signed-in visitor already has, so Team shows their real status instead of a new purchase.
   const existing: ExistingAccess | null = subscribed
-    ? plan ? { kind: "paid", label: plan === "annual" ? "Unlimited Annual" : "Unlimited Monthly" } : { kind: "complimentary", label: "complimentary Unlimited access" }
+    ? plan ? { kind: "paid", label: plan === "annual" ? "Individual Unlimited Annual" : "Individual Unlimited Monthly" } : { kind: "complimentary", label: "complimentary Individual Unlimited access" }
     : null;
   const manage = <ButtonLink href="/settings/billing" variant="secondary" size="lg" className="w-full">Manage subscription</ButtonLink>;
   return (
@@ -117,7 +117,7 @@ export default async function PricingPage() {
             <a href="#enterprise" className="mt-2 block text-center text-xs font-semibold text-accent-ink underline">Team details and seat prices</a>
           </Plan>
         </div>
-        <p className="mx-auto mt-5 max-w-2xl text-center text-sm text-ink-soft">Unlimited Monthly and Unlimited Annual include exactly the same features. Only the billing schedule is different.{subscribed && " You're on Unlimited."}</p>
+        <p className="mx-auto mt-5 max-w-2xl text-center text-sm text-ink-soft">Individual Unlimited Monthly and Individual Unlimited Annual include exactly the same features. Only the billing schedule is different.{subscribed && " You're on Individual Unlimited."}</p>
       </CheckoutFlowProvider>
       <PlanHelper pccLive={pmMarketedLive()} pccName={PM_PRODUCT_NAME} />
       <PmAddonSection status={status} entMode={entMode} />
@@ -128,7 +128,7 @@ export default async function PricingPage() {
       <div className="mx-auto mt-8 max-w-3xl space-y-3 text-sm text-ink-soft">
         <p><b>What counts as a bid?</b> One credit is used when you finalize a new bid. Editing, re-finalizing, or re-downloading a bid you already finalized is free, and drafts and previews never use credits.</p>
         <p><b>How do free credits work?</b> Every verified account gets {plans.starterCredits} starter credits that never expire. From your second month, you also get {plans.monthlyCredits} free monthly bid on your signup anniversary each month. Monthly credits don&apos;t roll over, and they&apos;re always used before starter credits.</p>
-        <p><b>Is {PM_PRODUCT_NAME} a separate plan?</b> No. It&apos;s an add-on to Unlimited ({PRICES.pmMonthly}/month, or {PRICES.pmAnnual}/year on annual plans) and includes one schedule editor: you. Team includes one editor for a licensed user; each extra editor is {PRICES.pmEditor}/month and doesn&apos;t include a user license.</p>
+        <p><b>Is {PM_PRODUCT_NAME} a separate plan?</b> No. It&apos;s an add-on to Individual Unlimited ({PRICES.pmMonthly}/month, or {PRICES.pmAnnual}/year on annual plans) and includes one schedule editor: you. Team includes one editor for a licensed user; each extra editor is {PRICES.pmEditor}/month and doesn&apos;t include a user license.</p>
         <p data-testid="pricing-no-contracts"><b>Can I cancel?</b> Yes, any time. There are no long-term contracts, and you can export everything in your account whenever you like. Subscriptions are non-refundable: when you cancel, your plan stays active until the end of the period you&apos;ve paid for, and there&apos;s no refund or credit for that period. See the <Link href="/terms" className="font-semibold text-accent-ink underline">Terms</Link>.</p>
         <p>*Unlimited archived bids are subject to reasonable storage and fair-use policies. Prices in USD; applicable taxes may be added at checkout.</p>
       </div>
@@ -155,8 +155,8 @@ function pricingIntro(s: AccountStatus): string {
   switch (s.kind) {
     case "signed_out": return `Start with ${plans.starterCredits} free bids, then get ${plans.monthlyCredits} free bid every month. Upgrade when you are bidding regularly.`;
     case "free": return `You're on the Free plan${s.creditsLeft !== null ? ` with ${creditBadge(s)}` : ""}. Upgrade when you are bidding regularly.`;
-    case "no_credits": return `You've used your free bids${s.nextCycleAt ? `. Your next one arrives ${formatCycleDate(s.nextCycleAt, { month: "long", day: "numeric" })}` : ""}. Go Unlimited to finalize as many bids as you need.`;
-    case "unlimited": return "You're on Unlimited. Change plans, update your card, or cancel any time from Manage subscription.";
+    case "no_credits": return `You've used your free bids${s.nextCycleAt ? `. Your next one arrives ${formatCycleDate(s.nextCycleAt, { month: "long", day: "numeric" })}` : ""}. Get Individual Unlimited to finalize as many bids as you need.`;
+    case "unlimited": return "You're on Individual Unlimited. Change plans, update your card, or cancel any time from Manage subscription.";
   }
 }
 
@@ -173,21 +173,21 @@ function PmAddonSection({ status, entMode }: { status: AccountStatus; entMode: "
   const included = MARKETING_FEATURES.filter((f) => f.tier === "pm" && featureStatus(f) === "live");
   const soon = MARKETING_FEATURES.filter((f) => f.tier === "pm" && featureStatus(f) === "coming_soon");
   let action: React.ReactNode;
-  if (!live) action = <p className="text-sm text-ink-soft" data-testid="pm-coming-soon">Coming soon as an add-on for Unlimited.</p>;
+  if (!live) action = <p className="text-sm text-ink-soft" data-testid="pm-coming-soon">Coming soon as an add-on for Individual Unlimited.</p>;
   else if (entMode === "owner") action = <ButtonLink href="/company/billing" variant="secondary" size="lg" className="w-full" data-cta="pm-manage">Manage editor seats</ButtonLink>;
   else if (entMode === "member") action = <p className="text-sm text-ink-soft">Your company admin assigns schedule editor seats.</p>;
   else if (status.kind === "unlimited") action = <ButtonLink href="/settings/billing#project-command-center" size="lg" className="w-full" data-cta="pm-unlock">Unlock {PM_PRODUCT_NAME}</ButtonLink>;
   else action = (
     <>
-      <ButtonLink href="#plans" variant="secondary" size="lg" className="w-full" data-cta="pm-plans">Start with Unlimited</ButtonLink>
-      <p className="mt-2 text-xs text-ink-soft">{PM_PRODUCT_NAME} is added to an Unlimited plan from Subscription after you subscribe.</p>
+      <ButtonLink href="#plans" variant="secondary" size="lg" className="w-full" data-cta="pm-plans">Start with Individual Unlimited</ButtonLink>
+      <p className="mt-2 text-xs text-ink-soft">{PM_PRODUCT_NAME} is added to an Individual Unlimited plan from Subscription after you subscribe.</p>
     </>
   );
   return (
     <section id="project-command-center" aria-labelledby="pcc-h" className="mx-auto mt-10 max-w-5xl scroll-mt-20 rounded-2xl border border-accent-ink/40 bg-surface p-4 shadow-sm ring-1 ring-accent/30 sm:p-6 md:p-8" data-testid="pm-addon-plan">
       <div className="grid gap-8 md:grid-cols-2">
         <div className="min-w-0">
-          <p className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-accent-ink"><CalendarRange className="h-4 w-4" aria-hidden /> Add-on for Unlimited</p>
+          <p className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-accent-ink"><CalendarRange className="h-4 w-4" aria-hidden /> Add-on for Individual Unlimited</p>
           <h2 id="pcc-h" className="mt-1 font-display text-2xl font-extrabold">{PM_PRODUCT_NAME}</h2>
           <p className="mt-3 whitespace-nowrap"><span className="font-display text-4xl font-extrabold">+{PRICES.pmMonthly}</span><span className="font-semibold text-muted">/month</span></p>
           <p className="mt-1 text-sm font-semibold text-ink">Or +{PRICES.pmAnnual}/year on annual plans. Includes one schedule editor.</p>
@@ -264,11 +264,11 @@ function ComparisonTable() {
     <div id="compare" className="mx-auto mt-14 max-w-5xl scroll-mt-20">
       <h2 className="text-2xl font-extrabold">Compare plans</h2>
       {MARKETING_FEATURES.some((f) => featureStatus(f) === "coming_soon") && <p className="mt-1 text-sm text-ink-soft">Coming soon means it&apos;s in development and not part of any plan yet.</p>}
-      <p className="mt-1 text-xs text-muted sm:hidden" aria-hidden>Swipe the table sideways to see Unlimited and Team.</p>
+      <p className="mt-1 text-xs text-muted sm:hidden" aria-hidden>Swipe the table sideways to see Individual Unlimited and Team.</p>
       <div className="mt-4 overflow-x-auto rounded-xl border border-line bg-surface" role="region" aria-label="Plan comparison" tabIndex={0}>
         <table className="w-full min-w-[600px] text-sm">
           <caption className="sr-only">Plan comparison</caption>
-          <thead><tr className="border-b border-line text-left"><th scope="col" className={`${th} font-bold`}>Feature</th><th scope="col" className="p-3">Free</th><th scope="col" className="p-3">Unlimited<span className="block text-xs font-normal text-muted">monthly or annual</span></th><th scope="col" className="p-3">Team</th></tr></thead>
+          <thead><tr className="border-b border-line text-left"><th scope="col" className={`${th} font-bold`}>Feature</th><th scope="col" className="p-3">Free</th><th scope="col" className="p-3">Individual Unlimited<span className="block text-xs font-normal text-muted">monthly or annual</span></th><th scope="col" className="p-3">Team</th></tr></thead>
           <tbody>
             <tr className="border-b border-line bg-paper"><th scope="colgroup" colSpan={4} className="p-3 text-left text-xs font-bold uppercase tracking-wide text-accent-ink">Plan basics</th></tr>
             {BASICS.map(([f, a, b, c]) => (

@@ -61,7 +61,7 @@ export default async function LearningPage({ searchParams }: PageProps<"/learnin
           <p className="font-semibold">Before you invite anyone, please confirm the program terms ({program.terms_version ?? "pilot"}):</p>
           <ul className="mt-3 list-disc space-y-1.5 pl-5">
             <li>Your Team access is complimentary for 12 months, through {fmtDate(program.expires_at)}. No payment details are needed and nothing renews automatically.</li>
-            <li>You can gift up to {program.gift_allowance} complimentary Unlimited memberships. Gifts end no later than your program.</li>
+            <li>You can gift up to {program.gift_allowance} complimentary Individual Unlimited memberships. Gifts end no later than your program.</li>
             <li>Each person you invite gets their own independent account and company profile. They are not part of your company, and you never own or access their data.</li>
             <li>You only see a bid when the participant chooses to share it, with the details they choose. Customer names and contact details are never shared.</li>
             <li>Comments and suggestions are notes. Nothing you write ever changes a participant&apos;s bid.</li>
@@ -115,7 +115,7 @@ export default async function LearningPage({ searchParams }: PageProps<"/learnin
             <h2 className="font-bold">Get started</h2>
             <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm">
               <li><Link className="underline" href="/welcome">Set up your company branding</Link> for your own proposals.</li>
-              <li><Link className="underline" href={href("team")}>Invite up to {dash.program.gift_allowance} people</Link> to their own complimentary Unlimited account.</li>
+              <li><Link className="underline" href={href("team")}>Invite up to {dash.program.gift_allowance} people</Link> to their own complimentary Individual Unlimited account.</li>
               <li><Link className="underline" href={href("resources")}>Add resources</Link> (links, notes, checklists) your team can see.</li>
               <li>Review the <Link className="underline" href={href("shares")}>bids participants share</Link> with you.</li>
             </ol>
@@ -152,7 +152,7 @@ export default async function LearningPage({ searchParams }: PageProps<"/learnin
                             <input type="hidden" name="programId" value={program.id} />
                             <input type="hidden" name="giftId" value={g.id} />
                             <input name="reason" maxLength={300} placeholder="Reason (optional, private)" className={input} />
-                            <label className="flex items-start gap-2 text-xs"><input type="checkbox" name="confirm" required className="mt-0.5" />{g.claimed_at ? "End their complimentary Unlimited now. They keep their account and bids. They can't be re-gifted in this program." : "Cancel this invitation. The link stops working."}</label>
+                            <label className="flex items-start gap-2 text-xs"><input type="checkbox" name="confirm" required className="mt-0.5" />{g.claimed_at ? "End their complimentary Individual Unlimited now. They keep their account and bids. They can't be re-gifted in this program." : "Cancel this invitation. The link stops working."}</label>
                             <button className={btnSecondary}>Confirm</button>
                           </form>
                         </details>

@@ -198,7 +198,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
       </div>
       {gift && (
         <Card className="flex flex-wrap items-center justify-between gap-3 p-4" data-testid="gift-banner">
-          <p className="text-sm">Complimentary Unlimited from <span className="font-semibold">{gift.channel_name ?? gift.workspace_name}</span>{gift.expires_at ? ` through ${new Date(gift.expires_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "America/Chicago" })}` : ""}. No payment needed.</p>
+          <p className="text-sm">Complimentary Individual Unlimited from <span className="font-semibold">{gift.channel_name ?? gift.workspace_name}</span>{gift.expires_at ? ` through ${new Date(gift.expires_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "America/Chicago" })}` : ""}. No payment needed.</p>
           <div className="flex gap-3 text-sm font-semibold"><Link href="/welcome" className="underline">Branding setup</Link><Link href="/mentorship" className="underline">Mentorship</Link></div>
         </Card>
       )}

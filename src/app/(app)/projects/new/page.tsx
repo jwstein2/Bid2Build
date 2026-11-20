@@ -47,7 +47,7 @@ export default async function NewSchedulePage({ searchParams }: { searchParams: 
         <h1 className="text-2xl font-extrabold text-navy">Schedule Now</h1>
         {pm?.scope === "company" || isPmBillingConfigured("addon")
           ? <PmLockNotice tone="warn" title="You can't create schedules yet" kind={pm?.scope === "company" ? "company" : (await getAccountStatus()).kind === "unlimited" ? "unlimited" : "free"} />
-          : <Notice tone="warn" title="You can't create schedules yet">Project Command Center for Unlimited is coming soon as an add-on.</Notice>}
+          : <Notice tone="warn" title="You can't create schedules yet">Project Command Center for Individual Unlimited is coming soon as an add-on.</Notice>}
         <Link href="/projects" className="font-semibold text-accent-ink underline">Back to Projects</Link>
       </div>
     );

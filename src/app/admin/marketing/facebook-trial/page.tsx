@@ -41,7 +41,7 @@ export default async function FacebookTrialAdmin() {
   return (
     <div className="space-y-6">
       <PageHead kicker="Marketing · Facebook comment-to-trial" title="Comment BID → free week"
-        intro={`Comment BID on the Built2Bid post → private Messenger reply → email invite → ${TRIAL_DAYS} free days of Unlimited after verified sign-in. No card, no charge.`}
+        intro={`Comment BID on the Built2Bid post → private Messenger reply → email invite → ${TRIAL_DAYS} free days of Individual Unlimited after verified sign-in. No card, no charge.`}
         right={<Chip tone={cfg.enabled ? "green" : "amber"}>{cfg.enabled ? "Campaign ON" : "Campaign paused"}</Chip>} />
 
       {!f ? <Empty>Funnel numbers unavailable: run the migration 20261116008000_facebook_trial_funnel.sql.</Empty> : (

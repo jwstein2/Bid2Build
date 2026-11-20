@@ -109,7 +109,7 @@ d("Facebook BID trial end to end", () => {
     await processMetaPayload(msg("psid-new", "mid-2", { text: "it's NewPerson@Example.com thanks" }), deps());
     const [mail] = resendCalls();
     expect(mail.body.to).toEqual(["newperson@example.com"]);
-    expect(mail.body.subject).toBe("Your 7 free days of Built2Bid Unlimited");
+    expect(mail.body.subject).toBe("Your 7 free days of Built2Bid Individual Unlimited");
     expect(mail.headers["idempotency-key"]).toMatch(/^trial-email\//);
     expect(String(mail.body.html)).toMatch(/\/trial\/activate#t=/);
     expect(String(mail.body.html)).not.toMatch(/\?t=|token=/);

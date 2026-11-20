@@ -239,7 +239,7 @@ export const PAGE_GUIDES = {
     steps: [
       { target: "builder.section", title: "Estimate sections", body: "Sections group the work, such as {phases}. Each line has a quantity, unit and your internal cost.", hint: "Add {materials} as material lines and {labor} as labor lines." },
       { target: "builder.calculator", title: "Quantity calculators", body: "The calculator next to a quantity works out how much you need from measurements, with waste included, then fills in the quantity for you to confirm." },
-      { target: "builder.saved-items", title: "Saved Items", body: "Add items you've saved, like \"{item}\", with your own prices instead of typing them again.", requires: { unlimited: true }, locked: "Saved items with your own prices are included with Unlimited. You can still type any item." },
+      { target: "builder.saved-items", title: "Saved Items", body: "Add items you've saved, like \"{item}\", with your own prices instead of typing them again.", requires: { unlimited: true }, locked: "Saved items with your own prices are included with Individual Unlimited. You can still type any item." },
       // The quote panel lives inside a line's details; the step explains the visible ▸ toggle rather than opening it.
       { target: "builder.item-details", title: "Line details and sub quotes", body: "The ▸ next to a line opens its details, where you can add notes and record a quote from {sub} to compare with your cost. Prices only change when you choose to.", feature: "sub_quotes" },
       { target: "builder.add-trade", title: "Add sections or trades", body: "Add another section, or another trade with its own sections, to the same bid." },
@@ -263,7 +263,7 @@ export const PAGE_GUIDES = {
       { target: "builder.payment-schedule", title: "Payment schedule", body: "Set the deposit and progress payments the proposal shows, such as a deposit up front and the balance on completion." },
       { target: "builder.preview", title: "Proposal preview", body: "Preview customer proposal shows the finished proposal before you download or send it." },
       { target: "builder.send", title: "Send or download", body: "Send via My Email opens a message for you to review first, and Download PDF saves the proposal. Neither happens until you click." },
-      { target: "builder.internal-report", title: "Internal report", body: "A private PDF of costs, markup, margin and profit by section. Never shown to customers.", feature: "internal_report", locked: "The Internal Estimate Report is included with Unlimited and Team." },
+      { target: "builder.internal-report", title: "Internal report", body: "A private PDF of costs, markup, margin and profit by section. Never shown to customers.", feature: "internal_report", locked: "The Internal Estimate Report is included with Individual Unlimited and Team." },
     ],
   },
 
@@ -443,7 +443,7 @@ export const PAGE_GUIDES = {
     steps: [
       { target: "items.search", title: "Your saved prices", body: "Labor rates, material costs and frequent items, like \"{item}\". Search them here; in any bid, add them in a tap.", requires: { unlimited: true } },
       { target: "items.add", title: "Add an item", body: "Save a new item with its unit and your cost. Nothing is saved until you press Save.", requires: { unlimited: true } },
-      { target: "items.locked", title: "Included with Unlimited", body: "Save your own labor rates and material costs, then add them to any bid. Included with Unlimited.", requires: { unlimited: false } },
+      { target: "items.locked", title: "Included with Individual Unlimited", body: "Save your own labor rates and material costs, then add them to any bid. Included with Individual Unlimited.", requires: { unlimited: false } },
       { target: "items.generate", title: "Generate your price library", body: "Type your trade or a scope and get a draft list of items to review. The AI never sets a price, and nothing is saved until you approve it." },
     ],
   },
@@ -469,7 +469,7 @@ export const PAGE_GUIDES = {
     route: "/dashboard/templates",
     label: "Proposal Templates",
     steps: [
-      { target: "templates.editor", title: "Your proposal defaults", body: "Choose your default style, wording and payment schedule. New bids start with these; you can still change anything per bid.", requires: { unlimited: true }, locked: "Saving your own proposal defaults is included with Unlimited. You can preview the styles here." },
+      { target: "templates.editor", title: "Your proposal defaults", body: "Choose your default style, wording and payment schedule. New bids start with these; you can still change anything per bid.", requires: { unlimited: true }, locked: "Saving your own proposal defaults is included with Individual Unlimited. You can preview the styles here." },
     ],
   },
 

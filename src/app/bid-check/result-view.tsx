@@ -291,7 +291,7 @@ function PassCard({ sid, invitesOpen, primary, trade, goal }: { sid: string; inv
 
   return (
     <div className={cn("rounded-2xl bg-surface p-5", primary ? "border-2 border-accent" : "border border-line")} data-testid="bc-pass">
-      <h2 className="font-display text-xl font-extrabold text-ink">{primary ? `Email me my ${TRIAL_DAYS}-day Unlimited pass` : `Bidding more soon? Get ${TRIAL_DAYS} days of Unlimited`}</h2>
+      <h2 className="font-display text-xl font-extrabold text-ink">{primary ? `Email me my ${TRIAL_DAYS}-day Individual Unlimited pass` : `Bidding more soon? Get ${TRIAL_DAYS} days of Individual Unlimited`}</h2>
       {done ? (
         <div className="mt-3" role="status" data-testid="bc-pass-sent">
           <p className="font-semibold text-ink">Check your email.</p>

@@ -12,7 +12,7 @@ type Supa = Awaited<ReturnType<typeof createClient>>;
 const hasAccess = (supabase: Supa) => hasPremiumAccess(supabase);
 /** Saved Items for every plan (V8 batch 5): true once SQL 20270106001000 has been run. */
 const freeItemsOk = async (supabase: Supa) => (await supabase.rpc("saved_items_free_ok")).data === true;
-const FREE_LIMIT_MESSAGE = `Free accounts can keep up to ${FREE_SAVED_ITEMS_LIMIT} saved items. Unlimited has no limit, and everything you've saved comes with you.`;
+const FREE_LIMIT_MESSAGE = `Free accounts can keep up to ${FREE_SAVED_ITEMS_LIMIT} saved items. Individual Unlimited has no limit, and everything you've saved comes with you.`;
 
 const mapItem = (r: any): SavedItem => ({
   id: r.id, name: r.name, description: r.description ?? undefined, trade: r.trade ?? null, category: r.category ?? undefined,
@@ -111,8 +111,8 @@ export async function POST(req: Request) {
   const freeItemOp = o.kind === "item" && (o.action === "add" || o.action === "update");
   if (o.action !== "remove" && !(await hasAccess(supabase)) && !(freeItemOp && (await freeItemsOk(supabase)))) {
     return fail(402, "premium_required", freeItemOp
-      ? "Saved Items are part of Unlimited. Upgrade to save and reuse your pricing."
-      : "Saved Stacks and favorites are part of Unlimited. Your saved items stay with you when you upgrade.");
+      ? "Saved Items are part of Individual Unlimited. Upgrade to save and reuse your pricing."
+      : "Saved Stacks and favorites are part of Individual Unlimited. Your saved items stay with you when you upgrade.");
   }
 
   let error: { message: string } | null = null;
@@ -176,7 +176,7 @@ export async function POST(req: Request) {
   if (error) {
     if (/free_item_limit/i.test(error.message)) return fail(402, "free_item_limit", FREE_LIMIT_MESSAGE);
     if (/company_template_locked/i.test(error.message)) return fail(403, "company_template_locked", "Only people who manage company pricing can change company templates.");
-    if (/row-level security/i.test(error.message)) return fail(402, "premium_required", "Saved Items are part of Unlimited. Upgrade to save and reuse your pricing.");
+    if (/row-level security/i.test(error.message)) return fail(402, "premium_required", "Saved Items are part of Individual Unlimited. Upgrade to save and reuse your pricing.");
     return fail(500, "save_failed", "Could not update your Saved Items. Please try again.");
   }
   if (!affected) return fail(404, "not_found", "That saved item no longer exists.");

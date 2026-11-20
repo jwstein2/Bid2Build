@@ -71,7 +71,7 @@ export default async function JoinCompanyPage({ searchParams }: PageProps<"/comp
             {err && <Notice tone="danger" className="mt-4">{err}</Notice>}
             {paysPersonally && (
               <Notice tone="warn" className="mt-4" title="You still have your own paid plan">
-                Joining doesn&apos;t cancel your personal Unlimited subscription. Your company seat includes everything it does, so after you join, cancel it in <a className="underline" href="/settings/billing">Subscription settings</a> to avoid paying twice. Your bids and customers stay with you either way.
+                Joining doesn&apos;t cancel your personal Individual Unlimited subscription. Your company seat includes everything it does, so after you join, cancel it in <a className="underline" href="/settings/billing">Subscription settings</a> to avoid paying twice. Your bids and customers stay with you either way.
               </Notice>
             )}
             {!user ? (

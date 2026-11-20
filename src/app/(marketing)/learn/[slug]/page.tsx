@@ -79,7 +79,7 @@ export default async function ArticlePage({ params }: PageProps<"/learn/[slug]">
         )}
         <div className="mt-10 rounded-xl border border-line bg-surface p-5">
           <p className="font-bold">Put it into practice</p>
-          <p className="mt-1 text-sm text-ink-soft">{status.kind === "no_credits" ? "Drafts are always free. Go Unlimited to finalize as many bids as you need." : status.signedIn ? "Open a new bid and apply it to your next estimate." : `Build an estimate and proposal free. ${plans.starterCredits} free bids to start, plus ${plans.monthlyCredits} every month.`}</p>
+          <p className="mt-1 text-sm text-ink-soft">{status.kind === "no_credits" ? "Drafts are always free. Get Individual Unlimited to finalize as many bids as you need." : status.signedIn ? "Open a new bid and apply it to your next estimate." : `Build an estimate and proposal free. ${plans.starterCredits} free bids to start, plus ${plans.monthlyCredits} every month.`}</p>
           <AccountCtas status={status} size="md" secondary={false} className="mt-3" />
         </div>
       </article>

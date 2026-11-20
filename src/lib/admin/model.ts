@@ -409,7 +409,7 @@ export function activityFeed(sc: Scoped, facts: AccountFact[], now: Date, limit 
   for (const s of sc.d.signatures) if (!signedFirst.has(s.estimate_id) || t(s.signed_at) < t(signedFirst.get(s.estimate_id)!.at)) signedFirst.set(s.estimate_id, { at: s.signed_at, user: s.user_id });
   for (const s of signedFirst.values()) items.push({ kind: "signed", at: s.at, title: "Proposal signed by a customer", who: who(byId.get(s.user)), href: link(s.user) });
   for (const g of sc.d.grants) {
-    items.push({ kind: "comp_granted", at: g.created_at, title: `Complimentary ${g.plan === "enterprise" ? "Team" : "Unlimited"} granted`, who: byId.get(g.user_id ?? "")?.business ?? g.email.replace(/^(.).*(@.*)$/, "$1…$2"), href: "/admin/complimentary" });
+    items.push({ kind: "comp_granted", at: g.created_at, title: `Complimentary ${g.plan === "enterprise" ? "Team" : "Individual Unlimited"} granted`, who: byId.get(g.user_id ?? "")?.business ?? g.email.replace(/^(.).*(@.*)$/, "$1…$2"), href: "/admin/complimentary" });
     if (g.status === "active" && g.expires_at && t(g.expires_at) <= nowMs) items.push({ kind: "comp_expired", at: g.expires_at, title: "Complimentary access expired", who: byId.get(g.user_id ?? "")?.business ?? g.email.replace(/^(.).*(@.*)$/, "$1…$2"), href: "/admin/complimentary?state=expired" });
   }
   return items.filter((i) => t(i.at) <= nowMs).sort((a, b) => t(b.at) - t(a.at)).slice(0, limit);

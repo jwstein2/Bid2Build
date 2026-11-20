@@ -32,7 +32,7 @@ export function UnlimitedCard({ currentPlan, monthly, annual, features, addon, f
     <div className="relative flex flex-col rounded-2xl border border-accent bg-surface p-6 shadow-lg ring-2 ring-accent/30" data-testid="unlimited-plan">
       <span className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-accent px-3 py-1 text-xs font-bold text-navy">Bid as often as you need</span>
       <h2 id={`${id}-h`} className="flex items-center justify-between gap-2 font-display text-lg font-bold">
-        Unlimited
+        Individual Unlimited
         {currentPlan && <span className="shrink-0 whitespace-nowrap rounded-full bg-ok/10 px-2 py-0.5 text-xs font-semibold text-ok" data-testid="current-plan">Your plan</span>}
       </h2>
       <div role="radiogroup" aria-label="Billing schedule" className="mt-3 flex gap-1 rounded-full border border-line bg-paper p-1">

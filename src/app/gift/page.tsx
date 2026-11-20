@@ -34,7 +34,7 @@ export default async function GiftPage({ searchParams }: { searchParams: Promise
         <div className="on-dark bg-navy px-6 py-6 text-white sm:px-8">
           <Logo tone="dark" />
           <p className="mt-6 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm"><Gift className="h-4 w-4 text-cyan" aria-hidden /> A gift{from ? ` from ${from}` : ""}</p>
-          <h1 className="mt-3 font-display text-3xl font-extrabold leading-tight">Built2Bid Unlimited, on us{until ? ` until ${until}` : ""}</h1>
+          <h1 className="mt-3 font-display text-3xl font-extrabold leading-tight">Built2Bid Individual Unlimited, on us{until ? ` until ${until}` : ""}</h1>
           <p className="mt-2 text-[#C9D6E3]">Estimating and proposal software for your own contracting business.</p>
         </div>
         <div className="space-y-5 px-6 py-6 sm:px-8">

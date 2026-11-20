@@ -130,7 +130,7 @@ export function WelcomeWizard({ existing, giftUntil }: { existing: ExistingBrand
         <section className="rounded-2xl border border-line bg-surface p-5 shadow-card sm:p-8">
           {step === "intro" && (
             <div className="space-y-5">
-              <p className="inline-flex items-center gap-2 rounded-full bg-accent-tint px-3 py-1 text-sm font-semibold text-accent-dark"><Sparkles className="h-4 w-4" aria-hidden /> Your Built2Bid Unlimited membership is active{until ? ` until ${until}` : ""}</p>
+              <p className="inline-flex items-center gap-2 rounded-full bg-accent-tint px-3 py-1 text-sm font-semibold text-accent-dark"><Sparkles className="h-4 w-4" aria-hidden /> Your Built2Bid Individual Unlimited membership is active{until ? ` until ${until}` : ""}</p>
               <h1 ref={heading} tabIndex={-1} className="font-display text-3xl font-extrabold text-navy sm:text-4xl">Welcome to Built2Bid</h1>
               <p className="text-lg text-ink-soft">Let&apos;s get your contracting business ready to send professional bids. It takes about a minute.</p>
               <Button variant="accent" size="lg" onClick={() => setStep("website")}>Get started <ArrowRight className="h-4 w-4" aria-hidden /></Button>

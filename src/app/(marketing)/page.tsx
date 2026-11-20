@@ -25,7 +25,7 @@ const faqs: { q: string; a: string; visitorOnly?: boolean; freePlanOnly?: boolea
   { q: "Will my customer see my costs or markup?", a: "Never. Customer-facing proposals are built only from customer prices. Internal costs, margins, and notes are not included in the preview or the PDF." },
   { q: "Do you provide local material prices?", a: "Only when a licensed pricing source is connected. We never show made-up prices. Until then, you enter your own costs, which is what accurate bids are built on anyway." },
   { q: "Where is my draft saved?", a: "Before you sign in, drafts are saved in this browser on this device. After you sign in, they autosave to your account so you can pick them up on any device." },
-  { q: `What is ${PM_PRODUCT_NAME}?`, a: `An add-on for Unlimited that turns won bids into job schedules: a Gantt timeline built from your estimate, a company calendar, staff and subcontractor assignments, progress tracking, and customer progress updates you review and share. It's ${PRICES.pmMonthly}/month (${PRICES.pmAnnual}/year on annual plans). Team includes ${PRICES.pmIncludedEnterpriseEditors} schedule editor, and extra editors are ${PRICES.pmEditor}/month each.`, pmOnly: true },
+  { q: `What is ${PM_PRODUCT_NAME}?`, a: `An add-on for Individual Unlimited that turns won bids into job schedules: a Gantt timeline built from your estimate, a company calendar, staff and subcontractor assignments, progress tracking, and customer progress updates you review and share. It's ${PRICES.pmMonthly}/month (${PRICES.pmAnnual}/year on annual plans). Team includes ${PRICES.pmIncludedEnterpriseEditors} schedule editor, and extra editors are ${PRICES.pmEditor}/month each.`, pmOnly: true },
   { q: "Does Built2Bid work for a team?", a: `Yes. The Team plan is ${PRICES.enterpriseBase}/month for ${PRICES.enterpriseIncludedUsers} licensed users, each with their own login and unlimited bidding, plus roles and permissions, a company dashboard, and one proposal style for the whole company. More users are added at volume pricing.` },
   { freePlanOnly: true, q: "What counts as one of my free bids?", a: "A credit is used when you finalize a new bid. Editing, re-finalizing, or re-downloading a bid you already finalized is free, and drafts never use a credit. Your monthly bid is used first, then starter credits." },
 ];
@@ -51,8 +51,8 @@ export default async function HomePage() {
     description: site.description,
     offers: [
       { "@type": "Offer", price: "0", priceCurrency: "USD", name: "Free" },
-      { "@type": "Offer", price: "19.99", priceCurrency: "USD", name: "Unlimited Monthly" },
-      { "@type": "Offer", price: "199", priceCurrency: "USD", name: "Unlimited Annual" },
+      { "@type": "Offer", price: "19.99", priceCurrency: "USD", name: "Individual Unlimited Monthly" },
+      { "@type": "Offer", price: "199", priceCurrency: "USD", name: "Individual Unlimited Annual" },
       ...(pm ? [{ "@type": "Offer", price: PRICES.pmMonthly.replace("$", ""), priceCurrency: "USD", name: `${PM_PRODUCT_NAME} add-on (monthly)` }] : []),
       { "@type": "Offer", price: PRICES.enterpriseBase.replace("$", ""), priceCurrency: "USD", name: `Team (${PRICES.enterpriseIncludedUsers} users, monthly)` },
     ],
@@ -238,18 +238,18 @@ function PlanBand({ status }: { status: AccountStatus }) {
   const copy = {
     signed_out: {
       h: `Free to start. ${plans.monthlyPriceLabel}/month when you need more.`,
-      p: `${plans.starterCredits} free bids to start, plus ${plans.monthlyCredits} free bid every month. Unlimited for ${plans.monthlyPriceLabel}/month, or ${plans.annualPriceLabel}/year billed annually.`,
+      p: `${plans.starterCredits} free bids to start, plus ${plans.monthlyCredits} free bid every month. Individual Unlimited for ${plans.monthlyPriceLabel}/month, or ${plans.annualPriceLabel}/year billed annually.`,
     },
     free: {
-      h: "Bidding regularly? Go Unlimited.",
+      h: "Bidding regularly? Get Individual Unlimited.",
       p: `Finalize as many bids as you need for ${plans.monthlyPriceLabel}/month, or ${plans.annualPriceLabel}/year billed annually.`,
     },
     no_credits: {
-      h: "Keep bidding with Unlimited.",
-      p: `Your bids and drafts are all still here. Go Unlimited for ${plans.monthlyPriceLabel}/month, or ${plans.annualPriceLabel}/year, to finalize as many as you need.`,
+      h: "Keep bidding with Individual Unlimited.",
+      p: `Your bids and drafts are all still here. Get Individual Unlimited for ${plans.monthlyPriceLabel}/month, or ${plans.annualPriceLabel}/year, to finalize as many as you need.`,
     },
     unlimited: {
-      h: "You're on Unlimited.",
+      h: "You're on Individual Unlimited.",
       p: pmMarketedLive()
         ? `Finalize as many bids as you need. Add ${PM_PRODUCT_NAME} for ${PRICES.pmMonthly}/month to schedule won jobs and keep customers updated.`
         : "Finalize as many bids as you need. Your company details and branding carry over to every proposal.",

@@ -14,8 +14,8 @@ export const isPlanId = (v: unknown): v is PlanId => typeof v === "string" && (P
 type PlanDef = { id: PlanId; name: string; amountCents: number; currency: "usd"; interval: "month" | "year" };
 
 const DEFS: Record<PlanId, PlanDef> = {
-  monthly: { id: "monthly", name: "Unlimited Monthly", amountCents: 1999, currency: "usd", interval: "month" },
-  annual: { id: "annual", name: "Unlimited Annual", amountCents: 19900, currency: "usd", interval: "year" },
+  monthly: { id: "monthly", name: "Individual Unlimited Monthly", amountCents: 1999, currency: "usd", interval: "month" },
+  annual: { id: "annual", name: "Individual Unlimited Annual", amountCents: 19900, currency: "usd", interval: "year" },
 };
 
 /** "$19.99", "$199" (whole dollars drop the cents). */

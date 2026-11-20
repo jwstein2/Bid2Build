@@ -112,7 +112,7 @@ export default async function LessonPage({ params, searchParams }: PageProps<"/a
             <h1 className="font-display text-3xl font-extrabold">{r.title}</h1>
             <div className="mt-5 max-w-2xl">
               {premium ? (
-                <Notice title="This is a premium lesson">Premium lessons are included with Built2Bid Unlimited, or when an Academy admin grants premium access.{" "}
+                <Notice title="This is a premium lesson">Premium lessons are included with Built2Bid Individual Unlimited, or when an Academy admin grants premium access.{" "}
                   <Link href="/pricing" className="font-semibold underline">See plans</Link></Notice>
               ) : (
                 <Notice title="Join the Academy to read this lesson">Membership is free. Joining saves your progress, unlocks member lessons and lets you ask questions in the community.{" "}

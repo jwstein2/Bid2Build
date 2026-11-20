@@ -21,6 +21,9 @@ import { MilestoneBoxes, type MilestoneAward } from "@/components/sales/gift-box
 import { TeamWins } from "@/components/sales/team-wins";
 import { CustomerSuccessCard, SuccessCelebration, type Success } from "@/components/sales/success-celebration";
 import { recommendedLayout, sectionOrder, type Answers, type Layout } from "@/lib/sales/preferences";
+import { onboardingComplete, onboardingSteps } from "@/lib/sales/onboarding";
+import { isCertified } from "@/lib/sales/academy";
+import { CheckCircle2, Circle } from "lucide-react";
 
 export const metadata = { title: "Overview" };
 
@@ -37,7 +40,7 @@ export default async function SalesOverview({ searchParams }: { searchParams: Pr
     db.rpc("sales_my_accelerator", {}), db.rpc("sales_my_records", {}), db.rpc("sales_my_preferences"), db.rpc("sales_my_successes"),
   ]);
   // V8.7 lead recycling (hidden until 20270122001000 is applied).
-  const attRes = await db.rpc("sales_my_attention");
+  const [attRes, acadRes] = await Promise.all([db.rpc("sales_my_attention"), db.rpc("sales_my_academy")]);
   const attention = attRes.error || !attRes.data ? null : (attRes.data as Attention);
   // V8.4 P3 (hidden until 20270119001000 is applied).
   const winsRes = await db.rpc("sales_team_wins", {});
@@ -68,6 +71,16 @@ export default async function SalesOverview({ searchParams }: { searchParams: Pr
     .flatMap((c) => projectedCommissions(c.first_paid_at ? `${c.first_paid_at.slice(0, 7)}-01` : null, c.basis_cents, o.policy.commission_years, month));
   const projectedCents = projected.reduce((t, p) => t + p.cents, 0);
   const f = o.funnel;
+  // V8.9 onboarding checklist, worked out from records (not only on the first visit).
+  const academy = acadRes.error ? null : ((acadRes.data ?? []) as { topic: string; passed_at: string | null }[]);
+  const allMonths = rec?.months ?? [];
+  const steps = onboardingSteps({
+    visits: f.visits,
+    certified: academy ? isCertified(academy.filter((a) => a.passed_at).map((a) => a.topic)) : null,
+    prefsStatus: prefs ? prefs.status : null,
+    touches: allMonths.reduce((t, m) => t + m.calls + m.follow_ups + m.meetings, 0) + (prog ? prog.periods.month.calls + prog.periods.month.follow_ups + prog.periods.month.meetings : 0),
+    paidAccounts: allMonths.reduce((t, m) => t + m.paid_accounts, 0) + f.purchased,
+  });
   const funnel: [string, number, string?][] = [
     ["Link visits", f.visits, `${f.visits_30d} in the last 30 days`],
     ["Free accounts", f.signups, `${pct(f.signups, f.visits)} of visits`],
@@ -88,20 +101,34 @@ export default async function SalesOverview({ searchParams }: { searchParams: Pr
         <p className="mt-1 text-ink-soft">Share your link. Anyone who signs up through it stays connected to you, even if they buy months later.</p>
       </div>
 
-      {welcome && (
-        <Card className="p-5">
-          <h2 className="text-lg font-bold">You&apos;re in. Here&apos;s where to start</h2>
-          <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm">
-            <li><Link className="text-brand underline" href="/sales/how-you-get-paid">How you get paid</Link>: commissions, the 30-day hold and milestone boxes.</li>
-            <li><Link className="text-brand underline" href="/sales/academy">Sales Academy</Link>: short lessons and quizzes. Passing them certifies you to sell.</li>
-            <li><Link className="text-brand underline" href="/sales/preferences">My preferences</Link>: optional, sets how we celebrate wins with you.</li>
-            <li><Link className="text-brand underline" href="/sales/leads">Leads</Link>: new company leads are shared out automatically; work each one with a call or email.</li>
+      <Card id="referral-link" className="scroll-mt-24 p-5" data-testid="referral-link">
+        <h2 className="text-lg font-bold">Your referral link</h2>
+        <p className="mb-3 mt-1 text-sm text-ink-soft">This link is permanent and always yours. A visit or free signup doesn&apos;t earn a commission by itself; the customer&apos;s paid subscription does.</p>
+        <ShareLink link={link} qrSvg={qr.svg} qrDataUrl={qr.png} />
+      </Card>
+
+      {(welcome || !onboardingComplete(steps)) && (
+        <Card className="p-5" data-testid="sales-onboarding">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="text-lg font-bold">{welcome ? "You're in. Here's where to start" : "Finish getting set up"}</h2>
+            <p className="text-sm text-muted">{steps.filter((x) => x.done).length} of {steps.length} done</p>
+          </div>
+          <p className="mt-1 text-sm text-ink-soft">Everything in your Sales Hub is open now. These steps help you start selling.</p>
+          <ol className="mt-3 grid gap-2 sm:grid-cols-2">
+            {steps.map((st) => (
+              <li key={st.id}>
+                <Link href={st.href} className="flex min-h-11 items-start gap-2.5 rounded-lg border border-line p-3 transition hover:border-brand hover:bg-brand-tint/40 active:scale-[0.99]">
+                  {st.done ? <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-ok" aria-label="Done" /> : <Circle className="mt-0.5 h-5 w-5 shrink-0 text-muted" aria-label="Not done yet" />}
+                  <span><span className={st.done ? "font-semibold text-ink-soft line-through decoration-1" : "font-semibold"}>{st.label}</span><br /><span className="text-xs text-ink-soft">{st.detail}</span></span>
+                </Link>
+              </li>
+            ))}
           </ol>
         </Card>
       )}
       {attention && <AttentionCard data={attention} compact />}
       {successes && <SuccessCelebration items={successes} firstName={o.rep.full_name.split(" ")[0]} animate={prefs?.animations ?? true} />}
-      {prefs && prefs.status === "not_started" && (
+      {prefs && prefs.status === "not_started" && onboardingComplete(steps) && !welcome && (
         <Card className="flex flex-wrap items-center justify-between gap-3 p-4 text-sm">
           <p><span className="font-semibold">Make the Sales Hub yours.</span> A short, optional survey sets how we celebrate wins with you and which rewards to suggest.</p>
           <Link href="/sales/preferences" className="font-semibold text-brand underline">Set my preferences</Link>
@@ -120,12 +147,6 @@ export default async function SalesOverview({ searchParams }: { searchParams: Pr
         );
         if (sec === "portfolio") return (
           <div key="portfolio" className="space-y-8">
-      <Card className="p-5">
-        <h2 className="text-lg font-bold">Your referral link</h2>
-        <p className="mb-3 mt-1 text-sm text-ink-soft">This link is permanent. A visit or free signup doesn&apos;t earn a commission by itself; the customer&apos;s paid subscription does.</p>
-        <ShareLink link={link} qrSvg={qr.svg} qrDataUrl={qr.png} />
-      </Card>
-
       <section aria-labelledby="funnel-h">
         <h2 id="funnel-h" className="mb-3 text-lg font-bold">Your funnel</h2>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-5">

@@ -42,7 +42,7 @@ export default async function MentorshipPage({ searchParams }: PageProps<"/mento
       <p className="text-xs font-bold uppercase tracking-[0.14em] text-ink-soft">Gifted by {m.channel_name ?? m.workspace_name}</p>
       <h1 className="text-2xl font-extrabold">Mentorship</h1>
       <p className="mt-1 text-sm text-ink-soft">
-        {active ? `Your complimentary Unlimited membership runs through ${fmtDate(m.expires_at)}${days !== null ? ` (${days} days left)` : ""}. ` : "This gifted membership has ended. Your account and bids are still yours. "}
+        {active ? `Your complimentary Individual Unlimited membership runs through ${fmtDate(m.expires_at)}${days !== null ? ` (${days} days left)` : ""}. ` : "This gifted membership has ended. Your account and bids are still yours. "}
         This is your own account. Your mentor only sees the bids you share, with the details you choose, and never your customers&apos; names or contact details.
       </p>
       <div className="mt-4"><Flash msg={msg} err={err} /></div>

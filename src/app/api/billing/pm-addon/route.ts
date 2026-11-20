@@ -49,7 +49,7 @@ export async function POST(req: Request) {
       const pm = await loadPmAccess(supabase);
       return fail(409, "no_subscription", pm?.source === "complimentary"
         ? "Scheduling is included in your complimentary access."
-        : "Project Command Center is for Unlimited subscribers. Complimentary plans don't include it; contact Built2Bid if you'd like it added.");
+        : "Project Command Center is for Individual Unlimited subscribers. Complimentary plans don't include it; contact Built2Bid if you'd like it added.");
     }
     if (row.status !== "active" && row.status !== "trialing") return fail(409, "subscription_not_active", "Update your payment method before changing add-ons.");
     if (row.cancel_at_period_end && p.data.action !== "remove") return fail(409, "subscription_ending", "Your subscription is set to end. Resume it before adding scheduling.");

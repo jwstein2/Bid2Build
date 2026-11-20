@@ -29,7 +29,7 @@ const opSchema = z.discriminatedUnion("action", [
 ]);
 
 const MESSAGES: Record<string, [number, string]> = {
-  premium_required: [402, "Supplier price imports are part of Unlimited."],
+  premium_required: [402, "Supplier price imports are part of Individual Unlimited."],
   item_not_found: [409, "A saved item in this file was deleted. Reload the preview and try again."],
   already_undone: [409, "That import was already undone."],
   import_not_found: [404, "That import no longer exists."],
