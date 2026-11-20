@@ -20,7 +20,7 @@ import {
   type Feature, type FeatureId, type LevelKey, type License, type SectionId, type WorkspaceId,
 } from "@/lib/access/capabilities";
 import {
-  ACCESS_PROFILE_VERSION, ROLE_TEMPLATES, TEMPLATE_BY_ID, applyTemplate, compilePerms, memberPermSet, resolveAccess, roleDefaults, setLevel, setLevelWithDeps,
+  ACCESS_PROFILE_VERSION, HOME_PAGES, HOME_PAGE_KEYS, isHomePage, ROLE_TEMPLATES, TEMPLATE_BY_ID, applyTemplate, compilePerms, memberPermSet, resolveAccess, roleDefaults, setLevel, setLevelWithDeps,
   type AccessPolicy, type AccessProfile, type EffectiveAccess,
 } from "@/lib/access/effective";
 import { buildNav } from "@/lib/access/nav";
@@ -68,7 +68,7 @@ export function AccessEditor({ member, licenses, policy, premium, actor, flags, 
   // What the person holds now; policy restrictions are shown as such, not as the admin's choice.
   const initialPerms = useMemo(() => memberPermSet(member.role, member.granted, member.revoked.filter((k) => !member.policyRevoked.includes(k)), member.finRole), [member]);
   const initialProfile: AccessProfile = useMemo(() => ({
-    v: ACCESS_PROFILE_VERSION, template: member.profile?.template ?? null,
+    v: ACCESS_PROFILE_VERSION, template: member.profile?.template ?? null, home: member.profile?.home ?? null,
     workspaces: Object.fromEntries(WORKSPACES.map((w) => [w, member.profile?.workspaces?.[w] !== false])),
     app: { ...(member.profile?.app ?? {}) },
   }), [member]);
@@ -137,12 +137,13 @@ export function AccessEditor({ member, licenses, policy, premium, actor, flags, 
   }
   function resetDefaults() {
     const r = roleDefaults(role, member.finRole);
-    setPerms(r.perms); setProfile(r.profile); setNotes({});
+    setPerms(r.perms); setProfile({ ...r.profile, home: profile.home ?? null }); setNotes({});
   }
 
   const changes = (FEATURES as readonly Feature[]).filter((f) => levelOf(f) !== initialLevelOf(f));
   const wsChanges = WORKSPACES.filter((w) => (profile.workspaces?.[w] !== false) !== (initialProfile.workspaces?.[w] !== false));
-  const dirty = role !== initialRole || changes.length > 0 || wsChanges.length > 0;
+  const homeChanged = (profile.home ?? null) !== (initialProfile.home ?? null);
+  const dirty = role !== initialRole || changes.length > 0 || wsChanges.length > 0 || homeChanged;
 
   async function save() {
     setBusy(true); setMsg(null);
@@ -233,7 +234,7 @@ export function AccessEditor({ member, licenses, policy, premium, actor, flags, 
       <div className="flex flex-wrap items-end gap-3">
         <div>
           <label htmlFor={`${id}-role`} className="text-sm font-semibold">Role</label>
-          <select id={`${id}-role`} value={role} onChange={(e) => { const r = e.target.value as typeof role; setRole(r); const d = roleDefaults(r, member.finRole); setPerms(d.perms); setProfile(d.profile); }}
+          <select id={`${id}-role`} value={role} onChange={(e) => { const r = e.target.value as typeof role; setRole(r); const d = roleDefaults(r, member.finRole); setPerms(d.perms); setProfile({ ...d.profile, home: profile.home ?? null }); }}
             className="mt-1 block h-11 w-full min-w-44 rounded-lg border border-line bg-surface px-2 text-base" data-testid="access-role">
             {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
           </select>
@@ -245,9 +246,20 @@ export function AccessEditor({ member, licenses, policy, premium, actor, flags, 
             {ROLE_TEMPLATES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
           </select>
         </div>
+        <div>
+          <label htmlFor={`${id}-home`} className="text-sm font-semibold">Home page</label>
+          <select id={`${id}-home`} value={profile.home ?? ""} onChange={(e) => setProfile({ ...profile, home: isHomePage(e.target.value) ? e.target.value : null })}
+            className="mt-1 block h-11 w-full min-w-52 rounded-lg border border-line bg-surface px-2 text-base" data-testid="access-home">
+            <option value="">Automatic (based on their access)</option>
+            {HOME_PAGE_KEYS.map((k) => <option key={k} value={k}>{HOME_PAGES[k].label}</option>)}
+          </select>
+        </div>
         <Button type="button" variant="secondary" size="sm" onClick={resetDefaults} data-testid="access-reset"><RotateCcw className="h-4 w-4" aria-hidden />Reset to role defaults</Button>
       </div>
       {profile.template && <p className="text-xs text-ink-soft">{TEMPLATE_BY_ID[profile.template]?.blurb} Templates are starting points: change anything below.</p>}
+      <p className="text-xs text-ink-soft" data-testid="access-home-note">
+        <b>Home page:</b> {profile.home ? HOME_PAGES[profile.home].blurb : "picked from what they can access (sales reps get Sales & estimating, project managers get Project manager, accountants get Financial)."} It&apos;s the page they land on after signing in. Widgets they can&apos;t access stay hidden, and if they customize their own Home, theirs is kept.
+      </p>
       <p className="text-xs text-ink-soft"><b>Visibility vs. authorization:</b> turning something off hides it from their menu, dashboard and search <i>and</i> blocks it on the server. Turning something on only works within your plan, their seats and the records they&apos;re allowed to see (for example, their own or assigned projects).</p>
 
       <div className="relative">
@@ -269,6 +281,7 @@ export function AccessEditor({ member, licenses, policy, premium, actor, flags, 
           <p className="font-semibold">Review changes for {member.name}</p>
           <ul className="mt-1 list-disc space-y-0.5 pl-5 text-sm">
             {role !== initialRole && <li>Role: {ROLE_LABELS[initialRole]} → {ROLE_LABELS[role]}</li>}
+            {homeChanged && <li>Home page: {initialProfile.home ? HOME_PAGES[initialProfile.home].label : "Automatic"} → {profile.home ? HOME_PAGES[profile.home].label : "Automatic"}</li>}
             {wsChanges.map((w) => <li key={w}>{WORKSPACE_INFO[w].label}: {profile.workspaces?.[w] === false ? "turned off" : "turned on"}</li>)}
             {changes.map((f) => <li key={f.id}>{f.label}: {levelLabel(f, initialLevelOf(f))} → {levelLabel(f, levelOf(f))}</li>)}
           </ul>

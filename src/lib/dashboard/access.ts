@@ -42,6 +42,8 @@ export interface DashboardAccess {
   company: { id: string; role: "owner" | "manager" | "estimator" | "viewer"; isOwner: boolean } | null;
   /** Financials: the viewer's book role and whether recording is open (add-on active, not read-only, not lapsed). */
   fin: { role: string; canWrite: boolean; sandbox: boolean; accountantMode: boolean } | null;
+  /** Home page an admin assigned this person in Team & Access (a template key); null/absent = automatic. */
+  home?: string | null;
 }
 
 export function hasCapability(a: DashboardAccess, req: CapabilityRequirement): boolean {
@@ -118,5 +120,5 @@ export function withEffectiveAccess(base: DashboardAccess, eff: EffectiveAccess 
     const level = eff.features[id]?.level;
     if (level && level !== "none") features[id] = level;
   }
-  return { features, company: base.company, fin: features.fin_visibility ? base.fin : null };
+  return { features, company: base.company, fin: features.fin_visibility ? base.fin : null, home: eff.home ?? null };
 }

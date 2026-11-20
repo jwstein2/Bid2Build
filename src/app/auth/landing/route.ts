@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { getUser } from "@/lib/supabase/server";
-import { isSupabaseConfigured } from "@/lib/env";
+import { contractorHomePath, isSupabaseConfigured } from "@/lib/env";
 import { isInviteToken } from "@/lib/sales/invite";
 import { SALES_JOIN_COOKIE } from "@/lib/sales/next";
 import { VIEW_COOKIE } from "@/lib/sales/caps";
@@ -19,13 +19,14 @@ export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
   const to = (path: string) => NextResponse.redirect(new URL(path, req.url), 303);
   if (!isSupabaseConfigured()) return to("/dashboard");
+  const home = contractorHomePath();
   const user = await getUser();
   if (!user) return to("/login");
   const jar = await cookies();
   const pendingInvite = isInviteToken(jar.get(SALES_JOIN_COOKIE)?.value ?? "");
   try {
-    return to(landingPath(await loadWorkspaces(), { pendingInvite, lastView: jar.get(VIEW_COOKIE)?.value ?? null }));
+    return to(landingPath(await loadWorkspaces(), { pendingInvite, lastView: jar.get(VIEW_COOKIE)?.value ?? null, contractorHome: home }));
   } catch {
-    return to(pendingInvite ? "/sales/join" : "/dashboard");
+    return to(pendingInvite ? "/sales/join" : home);
   }
 }

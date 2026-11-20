@@ -41,13 +41,14 @@ export function salesHubPath(w: Workspaces, lastView?: string | null): string | 
  *  - Both: the preference, else the workspace used last, else the contractor dashboard.
  *  - A preference for a workspace the person no longer has falls back to one they do have.
  */
-export function landingPath(w: Workspaces, opts: { pendingInvite?: boolean; lastView?: string | null } = {}): string {
+export function landingPath(w: Workspaces, opts: { pendingInvite?: boolean; lastView?: string | null; contractorHome?: string } = {}): string {
+  const home = opts.contractorHome ?? "/dashboard";
   if (opts.pendingInvite) return "/sales/join";
   const sales = salesHubPath(w, opts.lastView);
-  if (!sales) return "/dashboard";
+  if (!sales) return home;
   if (!w.contractor) return sales;
   const want = w.landing !== "auto" ? w.landing : w.last_workspace ?? "contractor";
-  return want === "sales" ? sales : "/dashboard";
+  return want === "sales" ? sales : home;
 }
 
 export type SwitchTo = "contractor" | "sales" | "sales-my" | "sales-admin";
@@ -58,16 +59,16 @@ export const parseSwitchTo = (v: string | null | undefined): SwitchTo | null =>
  * The account-menu switch. Returns the page to open and what to remember, or the safest page the person
  * can open when the requested one isn't theirs (permissions changed since the menu was drawn).
  */
-export function switchTarget(w: Workspaces, to: SwitchTo, lastView?: string | null): { path: string; remember: { last?: Workspace; view?: SalesView } } {
+export function switchTarget(w: Workspaces, to: SwitchTo, lastView?: string | null, contractorHome = "/dashboard"): { path: string; remember: { last?: Workspace; view?: SalesView } } {
   if (to === "contractor") {
     // Contractor access: anyone with an account may open their dashboard; the app layout and billing gate the rest.
-    return { path: "/dashboard", remember: { last: "contractor" } };
+    return { path: contractorHome, remember: { last: "contractor" } };
   }
   if (to === "sales-admin" && w.sales_admin) return { path: "/sales/admin", remember: { last: "sales", view: "admin" } };
   if (to === "sales-my" && w.sales_my) return { path: "/sales", remember: { last: "sales", view: "my" } };
   const hub = salesHubPath(w, lastView);
   if (hub) return { path: hub, remember: { last: "sales", view: hub === "/sales/admin" ? "admin" : "my" } };
-  return { path: "/dashboard", remember: {} };
+  return { path: contractorHome, remember: {} };
 }
 
 /** The menu entries to show: "Switch to Sales Hub" in the contractor app, "Switch to Contractor Dashboard" in the Sales Hub. */

@@ -179,8 +179,18 @@ describe("templates and compile", () => {
   });
   it("parses stored profiles defensively (unknown keys, templates and features dropped)", () => {
     expect(parseProfile({ v: 9, template: "hacker", workspaces: { win: false, nope: true }, app: { customers: "none", bids: "none", evil: "use" } }))
-      .toEqual({ v: 9, template: null, workspaces: { win: false }, app: { customers: "none" } });
+      .toEqual({ v: 9, template: null, home: null, workspaces: { win: false }, app: { customers: "none" } });
     expect(parseProfile(null)).toBeNull();
+    expect(parseProfile({ v: 1, home: "sales" })?.home).toBe("sales");
+    expect(parseProfile({ v: 1, home: "admin" })?.home).toBeNull();
+  });
+  it("role templates assign a matching Home page, and effective access carries it", () => {
+    expect(applyTemplate(TEMPLATE_BY_ID.sales_rep, null).profile.home).toBe("sales");
+    expect(applyTemplate(TEMPLATE_BY_ID.project_manager, null).profile.home).toBe("job");
+    expect(applyTemplate(TEMPLATE_BY_ID.accountant, null).profile.home).toBe("financial");
+    expect(applyTemplate(TEMPLATE_BY_ID.company_admin, null).profile.home).toBeNull();
+    expect(resolveAccess(member("estimator", roleDefaults("estimator", null).perms, { profile: { v: 1, home: "sales" } })).home).toBe("sales");
+    expect(resolveAccess(member("estimator", roleDefaults("estimator", null).perms)).home).toBeNull();
   });
 });
 

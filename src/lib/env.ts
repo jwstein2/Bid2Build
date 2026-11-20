@@ -74,3 +74,5 @@ export const isFinBillingConfigured = () => {
 
 /** One home for every pillar (owner decision 2026-11-17). Off: /dashboard stays the landing page. */
 export const isUnifiedHomeEnabled = () => process.env.NEXT_PUBLIC_UNIFIED_HOME === "on";
+/** The contractor app's start page: Home (the dashboard builder) when it is on, else My bids. */
+export const contractorHomePath = () => (isUnifiedHomeEnabled() ? "/home" : "/dashboard");

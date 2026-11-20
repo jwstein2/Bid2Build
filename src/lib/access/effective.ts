@@ -20,10 +20,26 @@ import {
 
 export const ACCESS_PROFILE_VERSION = 1;
 
+/**
+ * Home pages an admin can assign a person (Team & Access). Each is a starting Home layout
+ * (src/lib/dashboard/templates.ts uses the same keys). The person's own customized Home still wins.
+ */
+export const HOME_PAGES = {
+  sales: { label: "Sales & estimating", blurb: "Bids awaiting signature, drafts, win rate, pipeline and recent estimates." },
+  job: { label: "Project manager", blurb: "Active jobs, schedule, overdue tasks, crew time and job costs." },
+  financial: { label: "Financial", blurb: "Bank and projected balance, AR and AP, P&L, reconciliation and alerts." },
+  simple: { label: "Everything (simple)", blurb: "A little of everything: bids, projects, invoices and cash." },
+} as const;
+export type HomePage = keyof typeof HOME_PAGES;
+export const HOME_PAGE_KEYS = Object.keys(HOME_PAGES) as HomePage[];
+export const isHomePage = (v: unknown): v is HomePage => typeof v === "string" && Object.hasOwn(HOME_PAGES, v);
+
 /** Stored per member (company_members.access_profile). UI intent only; permissions stay in granted/revoked. */
 export interface AccessProfile {
   v: number;
   template?: string | null;
+  /** Assigned Home page (HOME_PAGES); null/absent = pick automatically from their access. */
+  home?: HomePage | null;
   /** false = master toggle off (the workspace's navigation is hidden except labelled exceptions). */
   workspaces?: Partial<Record<WorkspaceId, boolean>>;
   /** App-gated features switched off (no permission backs them). */
@@ -65,6 +81,8 @@ export interface EffectiveAccess {
   workspaces: Record<WorkspaceId, { state: WorkspaceState; visible: boolean; exceptions: FeatureId[] }>;
   /** Template the admin last applied (shown in the editor; dashboards may use it to pick a starting layout). */
   template: string | null;
+  /** Home page the admin assigned (null = automatic). */
+  home: HomePage | null;
 }
 
 const FIN = new Set<string>(FIN_PERMISSION_KEYS);
@@ -128,7 +146,7 @@ export function resolveAccess(input: AccessInput): EffectiveAccess {
   return {
     version: 1,
     company: c ? { id: c.id, name: c.name, role: c.role, isOwner: c.isOwner } : null,
-    features, workspaces, template: profile?.template ?? null,
+    features, workspaces, template: profile?.template ?? null, home: profile?.home ?? null,
   };
 }
 
@@ -194,6 +212,8 @@ export interface RoleTemplate {
   levels: Partial<Record<FeatureId, LevelKey>>;
   off?: WorkspaceId[];
   app?: Partial<Record<FeatureId, "none" | "use">>;
+  /** Home page the template assigns. */
+  home?: HomePage;
 }
 
 const ALL_NONE = (section: SectionId): Partial<Record<FeatureId, LevelKey>> =>
@@ -209,7 +229,7 @@ export const ROLE_TEMPLATES: RoleTemplate[] = [
       bids: "create", bid_visibility: NONE, costs: "view", internal_reports: "view", company_pricing: NONE, proposal_style: "edit",
       schedule: "view", communications: "replies",
     },
-    off: ["financials"], app: { team_directory: "none" },
+    off: ["financials"], app: { team_directory: "none" }, home: "sales",
   },
   {
     id: "project_manager", label: "Project Manager", role: "manager", blurb: "Run the Job on; bids view only; project-level Financials.",
@@ -219,7 +239,7 @@ export const ROLE_TEMPLATES: RoleTemplate[] = [
       ...MAX("run"), communications: "replies", analytics: NONE,
       fin_visibility: "project", expenses: "create", sub_compliance: "manage",
     },
-    app: { customers: "use", pricing_library: "none", proposal_templates: "none" },
+    app: { customers: "use", pricing_library: "none", proposal_templates: "none" }, home: "job",
   },
   {
     id: "accountant", label: "Accountant / Bookkeeper", role: "viewer", blurb: "Financials on; read-only elsewhere.",
@@ -229,7 +249,7 @@ export const ROLE_TEMPLATES: RoleTemplate[] = [
       schedule: "view", project_costs: "view", analytics: "view",
       ...MAX("financials"),
     },
-    app: { customers: "use", pricing_library: "none", proposal_templates: "none", team_directory: "none" },
+    app: { customers: "use", pricing_library: "none", proposal_templates: "none", team_directory: "none" }, home: "financial",
   },
   {
     id: "operations_manager", label: "Operations Manager", role: "manager", blurb: "Win, Run and Grow on; limited Financials.",
@@ -237,6 +257,7 @@ export const ROLE_TEMPLATES: RoleTemplate[] = [
       ...ALL_NONE("admin"), ...MAX("win"), ...MAX("run"), ...MAX("grow"), ...ALL_NONE("financials"),
       fin_visibility: "company", expenses: "approve", bills: "create", manage_teams: "manage",
     },
+    home: "job",
   },
   {
     id: "company_admin", label: "Company Administrator", role: "manager", blurb: "Everything your plan includes, except rights only the primary account holder can grant.",
@@ -251,7 +272,7 @@ export function applyTemplate(t: RoleTemplate, finRole: FinRole | null): { role:
   for (const [fid, lvl] of Object.entries(t.levels) as [FeatureId, LevelKey][]) perms = setLevel(perms, fid, lvl);
   return {
     role: t.role, perms,
-    profile: { v: ACCESS_PROFILE_VERSION, template: t.id, workspaces: Object.fromEntries(WORKSPACES.map((w) => [w, !(t.off ?? []).includes(w)])), app: { ...(t.app ?? {}) } },
+    profile: { v: ACCESS_PROFILE_VERSION, template: t.id, home: t.home ?? null, workspaces: Object.fromEntries(WORKSPACES.map((w) => [w, !(t.off ?? []).includes(w)])), app: { ...(t.app ?? {}) } },
   };
 }
 
@@ -269,6 +290,7 @@ export function parseProfile(raw: unknown): AccessProfile | null {
   return {
     v: Number(r.v) || ACCESS_PROFILE_VERSION,
     template: typeof r.template === "string" && r.template in TEMPLATE_BY_ID ? r.template : null,
+    home: isHomePage(r.home) ? r.home : null,
     workspaces: Object.fromEntries(WORKSPACES.filter((w) => typeof ws[w] === "boolean").map((w) => [w, ws[w] as boolean])),
     app: Object.fromEntries(Object.entries(app).filter(([k, v]) => k in FEATURE_BY_ID && FEATURE_BY_ID[k as FeatureId].appGated && (v === "none" || v === "use"))) as AccessProfile["app"],
   };
