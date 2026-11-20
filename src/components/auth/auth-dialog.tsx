@@ -2,6 +2,7 @@
 import { isNewAccount, track } from "@/lib/analytics/track";
 import { Inbox, Loader2, Mail, MessageSquareText } from "lucide-react";
 import Link from "next/link";
+import { LegalStatusCompact } from "@/components/legal/legal-status";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { getBrowserClient, getOtpClient } from "@/lib/supabase/client";
 import { plans } from "@/lib/site";
@@ -284,12 +285,21 @@ export function AuthDialog({ open, onOpenChange, next, onVerified, title, copy, 
     }
   })();
 
+  // The agreement wording is unchanged; the legal-status line follows it and never replaces it.
   const smsTerms = (
-    <p className="text-center text-xs text-muted">
-      By continuing you agree to the <Link href="/terms" className="underline" target="_blank">Terms</Link> and <Link href="/privacy" className="underline" target="_blank">Privacy Policy</Link>, and to receive a one-time verification text from Built2Bid. Msg &amp; data rates may apply.
-    </p>
+    <div className="space-y-1">
+      <p className="text-center text-xs text-muted">
+        By continuing you agree to the <Link href="/terms" className="underline" target="_blank">Terms</Link> and <Link href="/privacy" className="underline" target="_blank">Privacy Policy</Link>, and to receive a one-time verification text from Built2Bid. Msg &amp; data rates may apply.
+      </p>
+      <LegalStatusCompact center />
+    </div>
   );
-  const emailTerms = <p className="text-center text-xs text-muted">By continuing you agree to the <Link href="/terms" className="underline" target="_blank">Terms</Link> and <Link href="/privacy" className="underline" target="_blank">Privacy Policy</Link>.</p>;
+  const emailTerms = (
+    <div className="space-y-1">
+      <p className="text-center text-xs text-muted">By continuing you agree to the <Link href="/terms" className="underline" target="_blank">Terms</Link> and <Link href="/privacy" className="underline" target="_blank">Privacy Policy</Link>.</p>
+      <LegalStatusCompact center />
+    </div>
+  );
   const marketingBox = (
     <label className="flex items-start gap-2 text-sm text-ink-soft">
       <input type="checkbox" checked={marketing} onChange={(ev) => setMarketing(ev.target.checked)} className="mt-1 accent-[var(--color-brand)]" />

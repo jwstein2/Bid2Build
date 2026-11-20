@@ -27,6 +27,7 @@ export const TOOLS = [
   { href: "/admin/news", label: "Industry news sources" },
   { href: "/admin/templates", label: "Trade templates" },
   { href: "/admin/proposal-text", label: "Scope & exclusions" },
+  { href: "/admin/legal", label: "Legal documents" },
   { href: "/admin/flags", label: "Feature flags" },
   { href: "/admin/logs", label: "Import & PDF errors" },
   { href: "/admin/audit", label: "Audit log" },
