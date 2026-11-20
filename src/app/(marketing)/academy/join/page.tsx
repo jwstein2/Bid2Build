@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import { listTrades, loadMe } from "@/lib/academy/server";
 import { US_STATES } from "@/lib/academy/types";
 import { joinAcademy } from "../actions";
+import { LegalStatusCompact } from "@/components/legal/legal-status";
 
 export const metadata: Metadata = { title: "Join the Contractor Academy", robots: { index: false } };
 const input = "w-full rounded-md border border-line-strong bg-surface px-3 py-2 text-sm";
@@ -71,6 +72,7 @@ export default async function JoinPage({ searchParams }: PageProps<"/academy/joi
           <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="accept_rules" required className="mt-1" /> <span>I agree to the community rules and the <Link href="/academy-terms" className="underline" target="_blank">Academy terms</Link>.</span></label>
           <p className="text-xs text-muted">Your email, phone number and billing details are never shown. You choose what appears in the directory and leaderboards in <b>My profile</b>, and you can leave the community at any time.</p>
           <div className="flex items-center gap-3"><Submit variant="accent" pending="Joining…">Join the community</Submit><Link href="/academy/classroom" className="text-sm font-semibold text-accent-ink hover:underline">Just browse the Classroom</Link></div>
+          <LegalStatusCompact />
         </form>
       )}
     </Container>

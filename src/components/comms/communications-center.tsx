@@ -10,6 +10,7 @@ import { cn } from "@/lib/cn";
 import { AUDIENCE_GROUPS, CONTACT_STATUS_LABEL, FREQUENCY_LABEL, MESSAGE_STATUS_LABEL, OFFER_TYPE_LABEL, type AudienceGroup, type CommAccess, type CommSettings, type ContactStatus, type MessageStatus, type Offer, type OfferType, type UpdateFrequency } from "@/lib/comms/types";
 import { DEFAULT_BODY, DEFAULT_SUBJECT, PLACEHOLDERS, PLACEHOLDER_HELP } from "@/lib/comms/template";
 import { COMM_TERMS, COMM_TERMS_VERSION, RECOMMENDED, RECOMMENDED_NOTES, termsCurrent } from "@/lib/comms/rollout";
+import { LegalStatusCompact } from "@/components/legal/legal-status";
 
 interface Msg {
   id: string; kind: "nurture" | "project_update"; trigger: string; contact_id: string | null; schedule_id: string | null; to_email: string | null; to_name: string | null;
@@ -250,6 +251,7 @@ function TermsCard({ canAccept, busy, run }: { canAccept: boolean; busy: string 
         <label className="flex items-start gap-2 text-sm font-semibold"><input type="checkbox" className="mt-0.5 h-4 w-4" checked={ok} onChange={(e) => setOk(e.target.checked)} data-testid="terms-check" /> I&apos;ve read this, I&apos;ll only email people we have a real relationship with, and I accept the customer email terms for our company.</label>
         <Button disabled={!ok || busy !== null} onClick={() => run("terms", () => call("/api/comms/terms", "POST", { accept: true, version: COMM_TERMS_VERSION }), "Thanks. You can now set up follow-ups and project updates.")} data-testid="terms-accept">Accept and continue</Button>
       </>) : <p className="text-xs text-muted">Someone allowed to turn on customer emails (usually your company owner) needs to accept this first.</p>}
+      <LegalStatusCompact />
     </Card>
   );
 }

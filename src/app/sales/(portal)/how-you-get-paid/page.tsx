@@ -3,6 +3,7 @@ import { requireSalesRep } from "@/lib/sales/server";
 import { DEFAULT_MILESTONES, payExample, type MilestoneModel, type MilestoneRules } from "@/lib/sales/goals";
 import type { Compensation } from "@/components/sales/compensation-card";
 import { usd } from "@/lib/sales/format";
+import { LegalStatusCompact } from "@/components/legal/legal-status";
 
 export const metadata = { title: "How you get paid" };
 
@@ -34,6 +35,7 @@ export default async function HowYouGetPaid() {
       <div>
         <h1 className="text-3xl font-extrabold">How you get paid</h1>
         <p className="mt-1 text-ink-soft">Everything that happens from the first click to your paycheck. Fixed rules, no luck involved.</p>
+        <LegalStatusCompact className="mt-2" />
       </div>
 
       <ol className="grid gap-3 md:grid-cols-2">

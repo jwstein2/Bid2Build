@@ -24,6 +24,7 @@ import {
   GROUP_TITLES, MARKETING_FEATURES, PM_PRODUCT_NAME, PRICES, cellFor, cellLabel, featureStatus, pmMarketedLive,
   type Cell, type CompareGroup,
 } from "@/lib/marketing/catalog";
+import { LegalStatusCompact } from "@/components/legal/legal-status";
 
 const pageTitle = `Pricing: Free, then ${MONTHLY.price}/month`;
 const pageDescription = `Free: ${plans.starterCredits} bids to start, plus ${plans.monthlyCredits} free bid every month. Individual Unlimited: ${MONTHLY.price}/month or ${ANNUAL.price}/year. ${PM_PRODUCT_NAME} scheduling add-on: ${PRICES.pmMonthly}/month. Team: ${PRICES.enterpriseBase}/month for ${PRICES.enterpriseIncludedUsers} users.`;
@@ -132,6 +133,7 @@ export default async function PricingPage() {
         <p><b>Is {PM_PRODUCT_NAME} a separate plan?</b> No. It&apos;s an add-on to Individual Unlimited ({PRICES.pmMonthly}/month, or {PRICES.pmAnnual}/year on annual plans) and includes one schedule editor: you. Team includes one editor for a licensed user; each extra editor is {PRICES.pmEditor}/month and doesn&apos;t include a user license.</p>
         <p data-testid="pricing-no-contracts"><b>Can I cancel?</b> Yes, any time. There are no long-term contracts, and you can export everything in your account whenever you like. Subscriptions are non-refundable: when you cancel, your plan stays active until the end of the period you&apos;ve paid for, and there&apos;s no refund or credit for that period. See the <Link href="/terms" className="font-semibold text-accent-ink underline">Terms</Link>.</p>
         <p>*Unlimited archived bids are subject to reasonable storage and fair-use policies. Prices in USD; applicable taxes may be added at checkout.</p>
+        <LegalStatusCompact />
       </div>
     </Container>
   );

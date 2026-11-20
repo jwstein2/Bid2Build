@@ -7,6 +7,7 @@ import { Flash, btn, btnSecondary, fmtDate, input } from "@/components/creator/f
 import { GIFT_STATE_LABELS, GIFT_STATE_TONES, PROGRAM_NAME, PROGRAM_STATE_LABELS, daysRemaining, type GiftState, type ProgramState } from "@/lib/creator/program";
 import { confirmTerms, deleteResource, revokeGift, saveResource } from "./actions";
 import { InviteForm, RotateButton } from "./gift-forms";
+import { LegalStatusCompact } from "@/components/legal/legal-status";
 
 export const metadata: Metadata = { title: "Learning Team", robots: { index: false } };
 
@@ -72,6 +73,7 @@ export default async function LearningPage({ searchParams }: PageProps<"/learnin
             <label className="flex items-start gap-2"><input type="checkbox" name="agree" className="mt-1" required /> I&apos;ve read and agree to these terms.</label>
             <div><button className={btn}>Confirm and open my workspace</button></div>
           </form>
+          <LegalStatusCompact className="mt-3" />
         </Card>
       </div>
     );
