@@ -57,19 +57,19 @@ const EMAIL_QR = [{ content_type: "user_email" as const }];
 
 export const COPY = {
   privateReply: {
-    text: `Thanks for commenting BID! Want ${TRIAL_DAYS} free days of Built2Bid Unlimited? Tap "Send my invite" and I'll email you a link. No card needed and nothing is charged automatically.`,
+    text: `Thanks for commenting BID! Want ${TRIAL_DAYS} free days of Built2Bid Individual Unlimited? Tap "Send my invite" and I'll email you a link. No card needed and nothing is charged automatically.`,
     quick_replies: [{ content_type: "text" as const, title: "Send my invite", payload: PAYLOAD_SEND_INVITE }],
   },
   /** Used only if Meta rejects quick replies on a private reply. */
   privateReplyTextOnly: {
-    text: `Thanks for commenting BID! Want ${TRIAL_DAYS} free days of Built2Bid Unlimited? Reply "INVITE" and I'll email you a link. No card needed and nothing is charged automatically.`,
+    text: `Thanks for commenting BID! Want ${TRIAL_DAYS} free days of Built2Bid Individual Unlimited? Reply "INVITE" and I'll email you a link. No card needed and nothing is charged automatically.`,
   },
   askEmail: {
     text: `Great! Which email should I send your invite to? I'll send one email from Built2Bid with a link that turns on ${TRIAL_DAYS} free days of Unlimited bids after you sign in. No card, no automatic charge. Reply STOP any time to stop messages.`,
     quick_replies: EMAIL_QR,
   },
   badEmail: { text: "That doesn't look like an email address. Type the email you'd like the invite sent to, or tap your email below.", quick_replies: EMAIL_QR },
-  reminder: { text: `Still want your ${TRIAL_DAYS} free days of Built2Bid Unlimited? Just send the email you'd like the invite sent to. Reply STOP to stop messages.`, quick_replies: EMAIL_QR },
+  reminder: { text: `Still want your ${TRIAL_DAYS} free days of Built2Bid Individual Unlimited? Just send the email you'd like the invite sent to. Reply STOP to stop messages.`, quick_replies: EMAIL_QR },
   sent: (email: string): OutMessage => ({
     text: `Done! Your invite is on its way to ${maskEmail(email)}. Open it, tap "Activate my ${TRIAL_DAYS} days", and sign in with that email. Your ${TRIAL_DAYS} days start when you activate.\n\nWant two short emails during your trial (a quick walkthrough on day 2 and a reminder before it ends)?`,
     quick_replies: [

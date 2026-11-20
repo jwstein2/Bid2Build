@@ -11,7 +11,7 @@ import { claimPath, hashInviteToken } from "@/lib/comp/server";
 export const metadata: Metadata = { title: "Complimentary access", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
 
-const PLAN_NAMES = { unlimited: "Built2Bid Unlimited", enterprise: "Built2Bid Team" } as const;
+const PLAN_NAMES = { unlimited: "Built2Bid Individual Unlimited", enterprise: "Built2Bid Team" } as const;
 
 /**
  * Lands here from a complimentary-access invitation. Signing in first is required; the grant is only

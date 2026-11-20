@@ -276,7 +276,7 @@ export function DraftReview({ id, reused = false }: { id: string; reused?: boole
             <h2 id="gen-stacks-h" className="font-display text-xl font-bold text-navy">Suggested stacks</h2>
             <p className="text-sm text-ink-soft">Stacks add a group of rows scaled by one measurement. Check each ratio against how you build; they&apos;re starting points, not rules. Approving items never saves a stack. Save each one on its own.</p>
           </div>
-          {!d.stacksAccess && <Notice tone="neutral">Saved Stacks are part of Unlimited. You can still review them here, and approve the items.</Notice>}
+          {!d.stacksAccess && <Notice tone="neutral">Saved Stacks are part of Individual Unlimited. You can still review them here, and approve the items.</Notice>}
           {liveStacks.map((s) => (
             <StackCard key={`${s.id}:${JSON.stringify(s.components)}`} stack={s} items={items} canSave={d.stacksAccess && !archived}
               onSave={async (patch) => { const r = await patchStack(id, s.id, patch); if (!r.ok) say(r.message, "warn"); await reload(); return r.ok; }}

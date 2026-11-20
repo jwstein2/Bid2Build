@@ -180,7 +180,7 @@ export function tierBadge(f: MarketingFeature, env?: Record<string, string | und
   if (featureStatus(f, env) === "coming_soon") return { label: "Coming soon", tone: "soon" };
   switch (f.tier) {
     case "core": return { label: "Included free", tone: "core" };
-    case "unlimited": return { label: "Unlimited", tone: "premium" };
+    case "unlimited": return { label: "Individual Unlimited", tone: "premium" };
     case "pm": return { label: PM_PRODUCT_NAME, tone: "premium" };
     case "enterprise": return { label: "Team", tone: "premium" };
   }
@@ -204,15 +204,15 @@ export function pmUpgradeCopy(kind: "free" | "unlimited" | "company"): { title: 
   if (kind === "company") return { title: `${PM_PRODUCT_NAME} needs an editor seat`, body: "Ask your company admin to assign you a schedule editor seat.", href: "/company", cta: "" };
   if (kind === "free") {
     return {
-      title: `${PM_PRODUCT_NAME} is an add-on for Unlimited`,
-      body: `Schedule jobs, manage subcontractors, track progress and keep customers informed. Start Unlimited (${PRICES.unlimitedMonthly}/month or ${PRICES.unlimitedAnnual}/year), then add ${PM_PRODUCT_NAME} for ${PRICES.pmMonthly}/month.`,
+      title: `${PM_PRODUCT_NAME} is an add-on for Individual Unlimited`,
+      body: `Schedule jobs, manage subcontractors, track progress and keep customers informed. Start Individual Unlimited (${PRICES.unlimitedMonthly}/month or ${PRICES.unlimitedAnnual}/year), then add ${PM_PRODUCT_NAME} for ${PRICES.pmMonthly}/month.`,
       href: pmUpgrade,
       cta: "See plans",
     };
   }
   return {
     title: `Unlock ${PM_PRODUCT_NAME}`,
-    body: `Schedule jobs, manage subcontractors, track progress and keep customers informed. ${PRICES.pmMonthly}/month added to your Unlimited plan (${PRICES.pmAnnual}/year on annual plans).`,
+    body: `Schedule jobs, manage subcontractors, track progress and keep customers informed. ${PRICES.pmMonthly}/month added to your Individual Unlimited plan (${PRICES.pmAnnual}/year on annual plans).`,
     href: "/settings/billing#project-command-center",
     cta: `Unlock ${PM_PRODUCT_NAME}`,
   };

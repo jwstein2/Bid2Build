@@ -82,7 +82,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
       "Set markup or target margin, plus adjustments and sales tax.",
       "Mark each line as Labor, Material, or combined Labor / Material.",
     ],
-    note: "Unlimited subscribers can save frequently used items and rates to reuse on future bids.",
+    note: "Individual Unlimited subscribers can save frequently used items and rates to reuse on future bids.",
     media: { kind: "image", src: "/media/onboarding/estimate.webp", alt: "Estimate line items with quantity, unit cost, extended cost and price, plus suggested items" },
   },
   {

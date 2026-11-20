@@ -58,7 +58,7 @@ export default async function ComplimentaryAccess({ searchParams }: { searchPara
   const current = converted ? "converted" : followOnly ? "follow_up" : filters.state || (filters.plan && !filters.q ? `plan:${filters.plan}` : "");
   const EMPTY: Record<string, string> = {
     active: "No active complimentary grants.", pending: "No pending invitations.", expiring_soon: "No grants expire within 7 days.", expired: "No expired grants.",
-    converted: "No one has converted to paid after a grant yet.", follow_up: "No one needs a follow-up right now.", "plan:unlimited": "No Standard Unlimited grants.", "plan:enterprise": "No Team grants.",
+    converted: "No one has converted to paid after a grant yet.", follow_up: "No one needs a follow-up right now.", "plan:unlimited": "No Individual Unlimited grants.", "plan:enterprise": "No Team grants.",
     invite_expired: "No expired invitations.", paused: "No paused grants.", revoked: "No revoked grants.",
   };
   const emptyText = filters.q || filters.from || filters.to ? undefined : EMPTY[current];
@@ -69,7 +69,7 @@ export default async function ComplimentaryAccess({ searchParams }: { searchPara
         <p className="text-sm"><Link href="/admin/customers" className="text-ink-soft underline">Customers</Link> <span className="text-muted">/</span></p>
         <h1 className="text-3xl font-extrabold">Complimentary Access</h1>
         <p className="mt-1 max-w-3xl text-sm text-ink-soft">
-          Give a prospect or customer free, time-limited Unlimited or Team access. Grants never create Stripe customers,
+          Give a prospect or customer free, time-limited Individual Unlimited or Team access. Grants never create Stripe customers,
           subscriptions or charges, and never change a paid plan. Access ends automatically on the expiry date; their bids and
           account stay. Every action is recorded in the audit log.
         </p>
@@ -80,7 +80,7 @@ export default async function ComplimentaryAccess({ searchParams }: { searchPara
         <Stat k="Pending invitations" v={metrics.pending} sub={`${metrics.invite_expired} invitation${metrics.invite_expired === 1 ? "" : "s"} expired`} href={drill({ state: "pending" })} action="View pending invitations" on={current === "pending"} />
         <Stat k="Expiring within 7 days" v={metrics.expiring_soon} href={drill({ state: "expiring_soon" })} action="View expiring grants" on={current === "expiring_soon"} warn={metrics.expiring_soon > 0} />
         <Stat k="Expired" v={metrics.expired} sub={`${metrics.revoked} revoked`} href={drill({ state: "expired" })} action="View expired grants" on={current === "expired"} />
-        <Stat k="Unlimited grants" v={metrics.unlimited} href={drill({ plan: "unlimited" })} action="Filter: Standard Unlimited" on={current === "plan:unlimited"} />
+        <Stat k="Individual Unlimited grants" v={metrics.unlimited} href={drill({ plan: "unlimited" })} action="Filter: Individual Unlimited" on={current === "plan:unlimited"} />
         <Stat k="Team grants" v={metrics.enterprise} href={drill({ plan: "enterprise" })} action="Filter: Team" on={current === "plan:enterprise"} />
         <Stat k="Converted to paid" v={metrics.converted} sub="Subscribed after a grant (excludes people who were already paying)" href={drill({ state: "converted" })} action="View converted customers" on={current === "converted"} />
         <Stat k="Needs follow-up" v={followCount} sub="Not accepted, no bid started, inactive, or ending soon" href={drill({ state: "follow_up" })} action="View who needs a follow-up" on={current === "follow_up"} warn={followCount > 0} />
@@ -104,7 +104,7 @@ export default async function ComplimentaryAccess({ searchParams }: { searchPara
                   return (
                     <tr key={r.id} className={`border-t border-line ${a.followUp ? "bg-warn-tint/40" : ""}`} data-follow-up={a.followUp ? "true" : "false"}>
                       <td className="px-3 py-2"><span className="block font-semibold">{r.account_name ?? r.email}</span>{r.account_name && <span className="block text-xs text-muted">{r.email}</span>}</td>
-                      <td className="px-3 py-2">{r.plan === "enterprise" ? "Team" : "Unlimited"} · {r.paid_now ? "Paid" : "Complimentary"}</td>
+                      <td className="px-3 py-2">{r.plan === "enterprise" ? "Team" : "Individual Unlimited"} · {r.paid_now ? "Paid" : "Complimentary"}</td>
                       <td className="px-3 py-2 tabular-nums">{a.daysLeft ?? "—"}</td>
                       <td className="px-3 py-2">{a.inviteStatus === "accepted" ? "Accepted" : a.inviteStatus === "expired" ? <Badge tone="danger">Expired</Badge> : <Badge tone="warn">Pending</Badge>}</td>
                       <td className="px-3 py-2">{fmtDay(r.last_activity_at)}</td>
@@ -129,7 +129,7 @@ export default async function ComplimentaryAccess({ searchParams }: { searchPara
             <input name="q" defaultValue={filters.q} placeholder="Email or company" className="w-full rounded-md border border-line-strong px-2.5 py-2" /></label>
           <label className="text-sm"><span className="mb-1 block font-medium text-ink-soft">Plan</span>
             <select name="plan" defaultValue={filters.plan} className="w-full rounded-md border border-line-strong px-2.5 py-2">
-              <option value="">All plans</option><option value="unlimited">Unlimited</option><option value="enterprise">Team</option>
+              <option value="">All plans</option><option value="unlimited">Individual Unlimited</option><option value="enterprise">Team</option>
             </select></label>
           <label className="text-sm"><span className="mb-1 block font-medium text-ink-soft">Status</span>
             <select name="state" defaultValue={converted ? "converted" : filters.state} className="w-full rounded-md border border-line-strong px-2.5 py-2">

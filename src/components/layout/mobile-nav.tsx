@@ -13,7 +13,7 @@ import { cn } from "@/lib/cn";
  * Motion is CSS only (tokens in globals.css), so the public site ships no animation JavaScript. The
  * panel stays mounted and is `invisible` when closed, which also takes it out of the tab order.
  */
-export function MobileNav({ items, groups = [], signedIn, primary, badge }: { items: { href: string; label: string }[]; groups?: { label: string; links: readonly { href: string; label: string }[] }[]; signedIn: boolean; primary: Cta; badge: string | null }) {
+export function MobileNav({ items, groups = [], signedIn, primary, badge, home = { href: "/dashboard", label: "My Bids" } }: { items: { href: string; label: string }[]; groups?: { label: string; links: readonly { href: string; label: string }[] }[]; signedIn: boolean; primary: Cta; badge: string | null; home?: { href: string; label: string } }) {
   const [open, setOpen] = useState(false);
   const toggle = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLElement>(null);
@@ -90,8 +90,8 @@ export function MobileNav({ items, groups = [], signedIn, primary, badge }: { it
             ))}
           </div>
         ))}
-        <Link href={signedIn ? "/dashboard" : "/login"} prefetch={prefetch} onClick={close} className="flex min-h-12 items-center border-b border-line font-medium active:bg-brand-tint">
-          {signedIn ? "My Bids" : "Sign in"}
+        <Link href={signedIn ? home.href : "/login"} prefetch={prefetch} onClick={close} className="flex min-h-12 items-center border-b border-line font-medium active:bg-brand-tint">
+          {signedIn ? home.label : "Sign in"}
         </Link>
         {badge && <p className="pt-3 text-center text-sm text-ink-soft" data-testid="credit-badge-mobile">{badge}</p>}
         <Link href={primary.href} prefetch={prefetch} onClick={close} data-cta={primary.action} className="mt-3 flex min-h-12 items-center justify-center rounded-lg bg-accent text-center font-semibold text-navy transition-transform duration-(--motion-fast) active:scale-[0.98]">{primary.label}</Link>

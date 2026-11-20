@@ -31,7 +31,7 @@ export function inviteEmail(o: { activateUrl: string; inviteExpiresAt: string })
   ];
   const footer = ["You're getting this because someone asked for a Built2Bid invite for this address in Facebook Messenger or on built2bid.org. If that wasn't you, ignore this email and nothing will happen.", "Built2Bid · built2bid.org"];
   return {
-    subject: `Your ${TRIAL_DAYS} free days of Built2Bid Unlimited`,
+    subject: `Your ${TRIAL_DAYS} free days of Built2Bid Individual Unlimited`,
     text: [...paras, `Activate: ${o.activateUrl}`, ...footer].join("\n\n") + "\n",
     html: layout(paras, { href: o.activateUrl, label: `Activate my ${TRIAL_DAYS} days` }, footer),
   };

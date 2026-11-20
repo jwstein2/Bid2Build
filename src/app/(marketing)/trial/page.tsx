@@ -8,7 +8,7 @@ import { ClaimForm } from "./claim-form";
 export function generateMetadata(): Metadata {
   if (!trialConfig().claimPage) return { title: "Page not found", robots: { index: false, follow: false } };
   return {
-    title: `${TRIAL_DAYS} free days of Unlimited`,
+    title: `${TRIAL_DAYS} free days of Individual Unlimited`,
     description: `Get a Built2Bid invite for ${TRIAL_DAYS} free days of Unlimited bids. No card needed.`,
     robots: { index: false, follow: false },
   };
@@ -25,7 +25,7 @@ export default function TrialClaimPage() {
   if (!trialConfig().claimPage) notFound();
   return (
     <Container className="max-w-md py-16">
-      <h1 className="text-3xl font-extrabold">Get {TRIAL_DAYS} free days of Built2Bid Unlimited</h1>
+      <h1 className="text-3xl font-extrabold">Get {TRIAL_DAYS} free days of Built2Bid Individual Unlimited</h1>
       <p className="mt-2 text-ink-soft">
         Enter your email and we&apos;ll send you an invite. Your {TRIAL_DAYS} days start when you open it, sign in and tap Activate.
       </p>

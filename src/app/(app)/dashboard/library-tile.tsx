@@ -25,7 +25,7 @@ export function PremiumTile({ feature, unlocked, itemsFree }: { feature: TileFea
           <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-brand-tint text-brand"><t.icon className="h-5 w-5" aria-hidden /></span>
           <span className="min-w-0 flex-1">
             <span className="block font-display font-bold text-navy">Saved Items</span>
-            <span className="block text-sm text-ink-soft">Save your own rates and items free. They stay with you when you upgrade to Unlimited.</span>
+            <span className="block text-sm text-ink-soft">Save your own rates and items free. They stay with you when you upgrade to Individual Unlimited.</span>
           </span>
           <ChevronRight className="h-5 w-5 shrink-0 text-muted" aria-hidden />
         </Card>
@@ -36,7 +36,7 @@ export function PremiumTile({ feature, unlocked, itemsFree }: { feature: TileFea
   return (
     <Link
       href={t.href}
-      aria-label={`${f.title}${unlocked ? "" : " (Unlimited feature)"}`}
+      aria-label={`${f.title}${unlocked ? "" : " (Individual Unlimited feature)"}`}
       className="group block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)]"
     >
       <Card className="flex h-full items-center gap-3 p-4 transition-colors group-hover:border-brand/40">
@@ -46,7 +46,7 @@ export function PremiumTile({ feature, unlocked, itemsFree }: { feature: TileFea
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-1.5 font-display font-bold text-navy">{f.title} <PremiumDiamond /></span>
           <span className="block text-sm text-ink-soft">{unlocked ? t.unlockedText : f.pitch}</span>
-          {!unlocked && <span className="mt-1 block text-sm font-semibold text-accent-ink">See Unlimited plans</span>}
+          {!unlocked && <span className="mt-1 block text-sm font-semibold text-accent-ink">See Individual Unlimited plans</span>}
         </span>
         <ChevronRight className="h-5 w-5 shrink-0 text-muted" aria-hidden />
       </Card>

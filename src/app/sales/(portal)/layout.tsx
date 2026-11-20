@@ -7,6 +7,9 @@ import { HubSwitcher } from "@/components/sales/hub-switcher";
 import { SalesNotifications, type SalesNotice } from "@/components/sales/notifications";
 import { loadSalesAccess } from "@/lib/sales/server";
 import { ADMIN_TABS, canAdmin, canMy, roleLabel } from "@/lib/sales/caps";
+import { ArrowLeftRight } from "lucide-react";
+import { NO_WORKSPACES, switchLinks } from "@/lib/workspaces";
+import { loadWorkspaces } from "@/lib/workspaces-server";
 
 export const metadata: Metadata = { title: { default: "Sales portal", template: "%s · Sales portal" }, robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -46,7 +49,9 @@ export default async function SalesPortalLayout({ children }: { children: React.
     );
   }
   const my = canMy(access.caps), admin = canAdmin(access.caps);
-  const notes = await access.db.rpc("sales_my_notifications");
+  const [notes, workspaces] = await Promise.all([access.db.rpc("sales_my_notifications"), loadWorkspaces().catch(() => NO_WORKSPACES)]);
+  // V8.10: back to the contractor dashboard, only for people who use it (a sales-only rep doesn't see it).
+  const switches = switchLinks(workspaces, "sales");
   const items = (notes.error ? [] : notes.data ?? []) as SalesNotice[];
   return (
     <div className="min-h-screen bg-paper">
@@ -59,6 +64,11 @@ export default async function SalesPortalLayout({ children }: { children: React.
           {my && admin && <div className="order-last w-full sm:order-none sm:w-auto"><HubSwitcher /></div>}
           <div className="flex items-center gap-1">
             <span className="hidden text-right text-sm leading-tight text-white/75 md:block">{access.rep?.full_name ?? access.user.email}<br /><span className="text-xs text-white/55">{roleLabel(access.caps)}</span></span>
+            {switches.map((w) => (
+              <a key={w.href} href={w.href} data-testid="switch-workspace" title={w.label} className="inline-flex min-h-11 items-center gap-1.5 rounded-md px-3 text-sm font-semibold text-white/80 hover:bg-white/10 hover:text-white active:scale-[0.98] motion-safe:transition">
+                <ArrowLeftRight className="h-4 w-4 text-cyan" aria-hidden /><span className="max-sm:sr-only">{w.label}</span>
+              </a>
+            ))}
             <SalesNotifications items={items} showGroups={my && admin} />
             <SignOut />
           </div>

@@ -17,7 +17,7 @@ export function UpgradeLink({ className, compact }: { className?: string; compac
       )}
     >
       <InfinityIcon className="h-4 w-4" aria-hidden />
-      {compact ? <><span className="sm:hidden">Upgrade</span><span className="hidden sm:inline">Upgrade to Unlimited</span></> : "Upgrade to Unlimited"}
+      {compact ? <><span className="sm:hidden">Upgrade</span><span className="hidden sm:inline">Upgrade to Individual Unlimited</span></> : "Upgrade to Individual Unlimited"}
     </Link>
   );
 }
@@ -46,7 +46,7 @@ function CreditHelp({ children }: { children: React.ReactNode }) {
       <MetricFormula>{children}<p className="mt-2">One credit finalizes one new bid. Updates, new versions and re-downloads of a finalized bid are free. Your monthly credit is used before starter credits.</p></MetricFormula>
       <MetricRecords title="Next steps" empty="" rows={[
         { key: "bids", label: "Your finalized bids", detail: "See which bids used a credit", href: "/dashboard?view=table" },
-        { key: "unlimited", label: "Go Unlimited", detail: "Finalize as many bids as you like", href: "/pricing" },
+        { key: "unlimited", label: "Get Individual Unlimited", detail: "Finalize as many bids as you like", href: "/pricing" },
       ]} />
     </>
   );
@@ -98,7 +98,7 @@ export function CreditBalances({ credits, className, showUpgrade = true, enterpr
       )}
       {empty && credits.emailVerified && (
         <p className="mt-3 text-sm text-ink-soft" suppressHydrationWarning>
-          Out of free credits. Drafts and previews still work. <Link href="/pricing" className="font-semibold text-accent-ink underline">Go Unlimited</Link> or wait for your next free bid on {formatCycleDate(credits.nextCycleAt, { month: "long", day: "numeric" })}.
+          Out of free credits. Drafts and previews still work. <Link href="/pricing" className="font-semibold text-accent-ink underline">Get Individual Unlimited</Link> or wait for your next free bid on {formatCycleDate(credits.nextCycleAt, { month: "long", day: "numeric" })}.
         </p>
       )}
       {showUpgrade && <UpgradeLink className="mt-3 w-full justify-center sm:hidden" />}
@@ -108,7 +108,7 @@ export function CreditBalances({ credits, className, showUpgrade = true, enterpr
 
 /** One-line balance for tight spaces such as the builder header. */
 export function CreditSummary({ credits }: { credits: CreditStatus }) {
-  if (credits.unlimited) return <span className="text-[11px] text-ok">Unlimited plan</span>;
+  if (credits.unlimited) return <span className="text-[11px] text-ok">Individual Unlimited plan</span>;
   return (
     <span className="text-[11px] text-muted tabular" title={monthlyHint(credits)}>
       Monthly {credits.monthly} · Starter {credits.starter}

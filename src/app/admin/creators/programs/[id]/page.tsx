@@ -75,7 +75,7 @@ export default async function ProgramDetail({ params, searchParams }: { params: 
             <h2 className="font-display text-lg font-bold">End program</h2>
             <form action={endProgram} className="mt-2 space-y-2"><input type="hidden" name="id" value={p.id} />
               <input name="reason" placeholder="Reason" maxLength={500} className={input} />
-              <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="end_gifts" className="mt-1" /> Also end the gifted Unlimited memberships now</label>
+              <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="end_gifts" className="mt-1" /> Also end the gifted Individual Unlimited memberships now</label>
               <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="end_creator_grant" className="mt-1" /> Also end the creator&apos;s complimentary Team now</label>
               <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="confirm" className="mt-1" /> End this program. Mentorship access stops immediately; nobody loses business data.</label>
               <button className="min-h-10 rounded-md bg-danger px-3 py-2 text-sm font-semibold text-white">End program</button></form>

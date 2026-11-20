@@ -16,7 +16,7 @@ const STACKS_TITLE = "Saved Stacks, favorites and supplier price lists";
 /** Shown when a free account taps Save Item / Save Stack in the builder. */
 export function LibraryUpgradeDialog({ open, onOpenChange, signedIn, lockedCount = 0, itemsFree }: { open: boolean; onOpenChange: (o: boolean) => void; signedIn: boolean; lockedCount?: number; itemsFree?: boolean }) {
   return (
-    <Modal open={open} onOpenChange={onOpenChange} title="Save it to reuse on every bid" description={itemsFree ? "Saved Items are free. Saved Stacks and favorites are part of Built2Bid Unlimited." : "Saving items and stacks to your own library is part of Built2Bid Unlimited."}>
+    <Modal open={open} onOpenChange={onOpenChange} title="Save it to reuse on every bid" description={itemsFree ? "Saved Items are free. Saved Stacks and favorites are part of Built2Bid Individual Unlimited." : "Saving items and stacks to your own library is part of Built2Bid Individual Unlimited."}>
       <PremiumUpgrade feature="library" signedIn={signedIn} title={itemsFree ? STACKS_TITLE : undefined} note={itemsFree ? FREE_ITEMS_KEPT_NOTE : keptNote(lockedCount)} onNotNow={() => onOpenChange(false)} className="border-0 bg-transparent p-0 sm:p-0" />
     </Modal>
   );

@@ -261,7 +261,7 @@ export function AuthDialog({ open, onOpenChange, next, onVerified, title, copy, 
   // ---- Copy ---------------------------------------------------------------------------------
   const shown = formatPhone(stage === "link-code" ? linkPhone : phone);
   // Builder gate: say exactly what happens next, so nobody is surprised by a credit or a sign-up.
-  const defaultLead = `No password needed, and your bid stays saved on this device. Downloading or sending finalizes the bid: that uses 1 bid credit (new accounts get ${plans.starterCredits} free, plus ${plans.monthlyCredits} every month; Unlimited plans never use credits). Editing and downloading it again is free.`;
+  const defaultLead = `No password needed, and your bid stays saved on this device. Downloading or sending finalizes the bid: that uses 1 bid credit (new accounts get ${plans.starterCredits} free, plus ${plans.monthlyCredits} every month; Individual Unlimited plans never use credits). Editing and downloading it again is free.`;
   const heading = (() => {
     if (stage === "phone-new") return "Is this your first time here?";
     if (stage === "link-code") return linkFailed ? "We couldn't add your phone yet" : "Confirm your phone";

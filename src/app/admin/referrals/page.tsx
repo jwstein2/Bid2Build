@@ -69,7 +69,7 @@ export default async function ReferralsPage() {
                 <td className="px-4 py-2">{r.referee_email ?? "(deleted)"}</td>
                 <td className="px-4 py-2"><Badge tone={STATUS[r.status]?.tone ?? "neutral"}>{STATUS[r.status]?.label ?? r.status}</Badge>{r.ineligible_reason && <div className="mt-1 text-xs text-muted">{reason(r.ineligible_reason)}</div>}{r.error && <div className="mt-1 text-xs text-danger">{r.error}</div>}</td>
                 <td className="px-4 py-2 whitespace-nowrap">{date(r.converted_at)}</td>
-                <td className="px-4 py-2 whitespace-nowrap">{r.reward_kind === "stripe_credit" ? `${usd(r.reward_cents ?? 0)} Stripe credit` : r.reward_kind === "comp_days" ? "30 days Unlimited" : "—"}</td>
+                <td className="px-4 py-2 whitespace-nowrap">{r.reward_kind === "stripe_credit" ? `${usd(r.reward_cents ?? 0)} Stripe credit` : r.reward_kind === "comp_days" ? "30 days Individual Unlimited" : "—"}</td>
               </tr>
             ))}
           </tbody>

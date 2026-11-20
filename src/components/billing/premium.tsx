@@ -26,9 +26,9 @@ export function PremiumAccessProvider({ unlocked, children }: { unlocked: boolea
 export function PremiumDiamond({ tone = "light", className }: { tone?: "light" | "dark"; className?: string }) {
   if (useContext(PremiumAccess) === true) return null;
   return (
-    <span title="Unlimited feature" className={cn("inline-flex shrink-0 items-center", className)}>
+    <span title="Individual Unlimited feature" className={cn("inline-flex shrink-0 items-center", className)}>
       <Gem className={cn("h-3.5 w-3.5", tone === "dark" ? "text-cyan" : "text-accent-ink")} aria-hidden />
-      <span className="sr-only">(Unlimited feature)</span>
+      <span className="sr-only">(Individual Unlimited feature)</span>
     </span>
   );
 }
@@ -43,11 +43,11 @@ export function PremiumUpgrade({
   const f = { ...PREMIUM_FEATURES[feature], ...(title ? { title } : {}) };
   return (
     <div className={cn("rounded-xl border border-line bg-paper p-4 sm:p-5", className)}>
-      <p className="flex items-center gap-2 font-display font-bold text-navy"><Gem className="h-4 w-4 text-accent-ink" aria-hidden /> {f.title} {title ? "are" : "is"} an Unlimited feature</p>
+      <p className="flex items-center gap-2 font-display font-bold text-navy"><Gem className="h-4 w-4 text-accent-ink" aria-hidden /> {f.title} {title ? "are" : "is"} an Individual Unlimited feature</p>
       <p className="mt-1 text-sm text-ink-soft">{f.pitch}</p>
       {note && <p className="mt-2 text-sm text-ink-soft">{note}</p>}
       <div className="mt-4 grid gap-2 sm:grid-cols-2">
-        <CheckoutButton plan="monthly" signedIn={signedIn} label={`Upgrade to Unlimited · ${MONTHLY.price}${MONTHLY.per}`} className="min-w-0 [&_button]:h-auto [&_button]:min-h-11 [&_button]:whitespace-normal [&_button]:py-2" />
+        <CheckoutButton plan="monthly" signedIn={signedIn} label={`Upgrade to Individual Unlimited · ${MONTHLY.price}${MONTHLY.per}`} className="min-w-0 [&_button]:h-auto [&_button]:min-h-11 [&_button]:whitespace-normal [&_button]:py-2" />
         <CheckoutButton plan="annual" signedIn={signedIn} label={`Go Annual · ${ANNUAL.price}${ANNUAL.per}`} variant="secondary" className="min-w-0 [&_button]:h-auto [&_button]:min-h-11 [&_button]:whitespace-normal [&_button]:py-2" />
       </div>
       <p className="mt-3 text-xs text-muted">

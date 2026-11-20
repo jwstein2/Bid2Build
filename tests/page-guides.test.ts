@@ -130,7 +130,7 @@ describe("permission and entitlement filtering", () => {
     const free = resolveGuide("builder.estimate", ctx({ unlimited: false }));
     const saved = free.find((s) => s.targets.includes("builder.saved-items"))!;
     expect(saved.locked).toBe(true);
-    expect(saved.body).toMatch(/included with Unlimited/i);
+    expect(saved.body).toMatch(/included with Individual Unlimited/i);
     expect(saved.hint).toBeUndefined();
     const paid = resolveGuide("builder.estimate", ctx({ unlimited: true })).find((s) => s.targets.includes("builder.saved-items"))!;
     expect(paid.locked).toBe(false);

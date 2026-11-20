@@ -6,8 +6,8 @@ import { plans } from "@/lib/site";
 
 describe("plan prices", () => {
   it("shows the configured Stripe amounts", () => {
-    expect(MONTHLY).toMatchObject({ name: "Unlimited Monthly", price: "$19.99", per: "/month", billing: "Billed monthly", amountCents: 1999, interval: "month" });
-    expect(ANNUAL).toMatchObject({ name: "Unlimited Annual", price: "$199", per: "/year", billing: "Billed annually", amountCents: 19900, interval: "year" });
+    expect(MONTHLY).toMatchObject({ name: "Individual Unlimited Monthly", price: "$19.99", per: "/month", billing: "Billed monthly", amountCents: 1999, interval: "month" });
+    expect(ANNUAL).toMatchObject({ name: "Individual Unlimited Annual", price: "$199", per: "/year", billing: "Billed annually", amountCents: 19900, interval: "year" });
   });
   it("computes the annual monthly equivalent and savings honestly", () => {
     // 199 / 12 = 16.5833… → $16.58

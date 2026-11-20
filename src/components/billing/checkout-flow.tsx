@@ -172,7 +172,7 @@ export function CheckoutFlowProvider({ signedIn: signedInProp, subscribed, userE
         )}
         {phase.k === "subscribed" && (
           <div className="mx-auto mt-6 max-w-xl rounded-xl border border-ok/30 bg-ok-tint px-4 py-3 text-sm" role="status">
-            <p className="font-semibold">You already have Unlimited</p>
+            <p className="font-semibold">You already have Individual Unlimited</p>
             <p className="mt-1 text-ink-soft">We didn&apos;t start a new checkout, so you won&apos;t be charged twice. <Link href="/settings/billing" className="font-semibold text-brand underline">Manage your subscription</Link></p>
           </div>
         )}

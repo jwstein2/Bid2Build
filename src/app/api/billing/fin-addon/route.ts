@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     assertModeAllowed();
     const admin = createAdminClient();
     const row = await individualSubscription(admin, user.id);
-    if (!row) return fail(409, "no_subscription", "The Financials add-on is for Unlimited subscribers. Start a plan first.");
+    if (!row) return fail(409, "no_subscription", "The Financials add-on is for Individual Unlimited subscribers. Start a plan first.");
     if (row.status !== "active" && row.status !== "trialing") return fail(409, "subscription_not_active", "Update your payment method before changing add-ons.");
     if (row.cancel_at_period_end && p.data.action !== "remove") return fail(409, "subscription_ending", "Your subscription is set to end. Resume it before adding Financials.");
 

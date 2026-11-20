@@ -22,7 +22,7 @@ export default async function AboutPage() {
         </header>
         <section>
           <h2 className="text-lg font-bold">What&apos;s free</h2>
-          <p className="mt-1 text-ink-soft">Joining is free with any Built2Bid account, including the free plan. The first lessons of each course are open to everyone; the rest are free for members. Some later material may be marked Premium; it&apos;s included with Built2Bid Unlimited.</p>
+          <p className="mt-1 text-ink-soft">Joining is free with any Built2Bid account, including the free plan. The first lessons of each course are open to everyone; the rest are free for members. Some later material may be marked Premium; it&apos;s included with Built2Bid Individual Unlimited.</p>
         </section>
         <section>
           <h2 className="text-lg font-bold">How courses are made</h2>

@@ -11,7 +11,7 @@ const REASONS: Record<string, string> = {
   invalid: "This invite link isn't valid anymore. Request a new one at built2bid.org/bid-check or in the Built2Bid Messenger chat, or email support@built2bid.org.",
   invite_expired: "This invite expired. Request it again at built2bid.org/bid-check (or send your email in the Built2Bid Messenger chat) and we'll send a fresh link.",
   email_unverified: "Please confirm your email address first: sign out, then sign in again with the 6-digit code we email you.",
-  already_has_access: "Good news: your account already has Unlimited access, so there's nothing to activate. Your current plan stays exactly as it is.",
+  already_has_access: "Good news: your account already has Individual Unlimited access, so there's nothing to activate. Your current plan stays exactly as it is.",
   already_used: "This account has already used its free week.",
   error: "Something went wrong on our side. Please try again in a minute.",
 };
@@ -60,7 +60,7 @@ export function ActivateTrial({ signedInAs }: { signedInAs: string | null | unde
     return (
       <>
         <h1 className="mt-6 font-display text-2xl font-extrabold">Your free week is on</h1>
-        <p className="mt-2 text-ink-soft">Built2Bid Unlimited is active until <strong>{when}</strong>. No card is on file and nothing will be charged.</p>
+        <p className="mt-2 text-ink-soft">Built2Bid Individual Unlimited is active until <strong>{when}</strong>. No card is on file and nothing will be charged.</p>
         <p className="mt-3 text-sm text-muted">When it ends your account goes back to its normal plan. Your bids, customers and any remaining free credits stay right where they are.</p>
         <div className="mt-6 flex flex-wrap gap-2">
           <ButtonLink href="/bids" variant="accent">Create a bid</ButtonLink>
@@ -81,7 +81,7 @@ export function ActivateTrial({ signedInAs }: { signedInAs: string | null | unde
 
   return (
     <>
-      <h1 className="mt-6 font-display text-2xl font-extrabold">Activate 7 free days of Unlimited</h1>
+      <h1 className="mt-6 font-display text-2xl font-extrabold">Activate 7 free days of Individual Unlimited</h1>
       <p className="mt-2 text-ink-soft">Unlimited bids, Saved Items &amp; Pricing, and Proposal Templates. Your 7 days start when you tap Activate. No card, no automatic charge.</p>
       {signedInAs === undefined ? (
         <>
