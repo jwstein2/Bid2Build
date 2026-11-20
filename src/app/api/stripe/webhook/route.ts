@@ -4,6 +4,7 @@ import { applySubscription } from "@/lib/billing/apply";
 import { subscriptionListCents } from "@/lib/billing/sync";
 import { createAdminClient } from "@/lib/supabase/server";
 import { serverEnv } from "@/lib/env";
+import { isLiveKey } from "@/lib/billing/test-mode";
 import { logError } from "@/lib/http/api";
 import { markChurned, markCustomer } from "@/lib/growth/leads";
 import { isFirstPaidSubscriptionInvoice } from "@/lib/email/founder-welcome";
@@ -58,6 +59,11 @@ export async function POST(req: Request) {
     return new Response("Invalid signature", { status: 400 });
   }
   if (!HANDLED.has(event.type)) return new Response("ignored", { status: 200 });
+  // A test-mode event must never change a live deploy's data, and the other way round (every Netlify context
+  // shares one database). Signing secrets are per endpoint, so this only trips on a misconfigured secret.
+  if (typeof event.livemode === "boolean" && event.livemode !== isLiveKey(serverEnv().stripeSecretKey)) {
+    return new Response("ignored: mode mismatch", { status: 200 });
+  }
 
   const admin = createAdminClient();
   const { data: existing } = await admin.from("stripe_events").select("processed_at").eq("id", event.id).maybeSingle();
