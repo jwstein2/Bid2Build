@@ -104,3 +104,20 @@ export function projectedCommissions(firstPaidMonth: string | null, basisCents: 
   if (!firstPaidMonth || !basisCents) return [];
   return commissionMonths(firstPaidMonth, years).slice(1).filter((m) => m > currentMonth).map((month) => ({ month, cents: basisCents }));
 }
+
+/**
+ * List MRR for Compensation V3 (one definition across the compensation engine): every recurring item on
+ * the subscription (plan, Enterprise seats, add-ons) at its price divided by the months in its billing
+ * period, so $199/yr = $16.58/mo. The database then takes the smaller of this and what the latest
+ * full-period invoice actually collected (pre-tax, net of refunds), which removes discounts and unpaid
+ * amounts. Unlike the commission basis, annual plans are never valued at the monthly list price here.
+ */
+export function listMrr(items: BasisItem[], p: BasisPrices): Basis {
+  return commissionBasis(items, { annual_basis: "divide_12", value_scope: "all_items" }, { ...p, monthlyListCents: null });
+}
+
+/** Months covered by an invoice's subscription lines (the longest recurring period on it), or null. */
+export function invoicePeriodMonths(items: BasisItem[]): number | null {
+  const m = items.map((i) => periodMonths(i.price?.recurring)).filter((x): x is number => x != null);
+  return m.length ? Math.max(...m) : null;
+}

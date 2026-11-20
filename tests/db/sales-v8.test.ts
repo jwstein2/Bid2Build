@@ -38,20 +38,23 @@ d("sales hub V8 foundation (database)", () => {
     expect(await q1("select refund_policy, attribution_window_days, first_month_cancel_voids from public.sales_settings where id"))
       .toEqual({ refund_policy: "hold_30_no_clawback", attribution_window_days: 90, first_month_cancel_voids: true });
     const versions = await val("select public.admin_sales_policy_versions($1)", [owner]) as { version: number; policy: Record<string, unknown>; note: string }[];
-    expect(versions.map((v) => v.version)).toEqual([2, 1]);
-    expect(versions[1].policy).toMatchObject({ refund_policy: "month_end_clawback", attribution_window_days: 30, first_month_cancel_voids: false });
-    expect(versions[0].note).toMatch(/V8 rules/);
+    // Version 3 is Compensation Model V3 (20270202001000), which changes only the milestone rules.
+    expect(versions.map((v) => v.version)).toEqual([3, 2, 1]);
+    expect(versions[2].policy).toMatchObject({ refund_policy: "month_end_clawback", attribution_window_days: 30, first_month_cancel_voids: false });
+    expect(versions[1].note).toMatch(/V8 rules/);
+    expect(versions[0].note).toMatch(/Compensation Model V3/);
+    expect(versions[0].policy).toMatchObject({ refund_policy: "hold_30_no_clawback", commission_years: 3, attribution_window_days: 90 });
   });
 
   it("writes a new version only when a rule changes, and stamps each new commission with the version in force", async () => {
     await val("select public.admin_sales_settings_save($1, 'monthly_list', 'hold_30_no_clawback', 'all_items', 3, 90, true, 'just confirming', true)", [owner]);
-    expect(await val("select public.sales_policy_current_version()")).toBe(2);
+    expect(await val("select public.sales_policy_current_version()")).toBe(3);
     const u = await attribute("summit@roof.com");
     await pay(u, "in_1", new Date().toISOString());
-    expect(await line(u)).toMatchObject({ status: "pending", policy_version: 2 });
+    expect(await line(u)).toMatchObject({ status: "pending", policy_version: 3 });
     await val("select public.admin_sales_settings_save($1, 'monthly_list', 'hold_30_no_clawback', 'all_items', 3, 60, false, 'shorter window', true)", [owner]);
-    expect(await val("select public.sales_policy_current_version()")).toBe(3);
-    expect(await line(u)).toMatchObject({ policy_version: 2 }); // earlier line keeps its version
+    expect(await val("select public.sales_policy_current_version()")).toBe(4);
+    expect(await line(u)).toMatchObject({ policy_version: 3 }); // earlier line keeps its version
     await val("select public.admin_sales_settings_save($1, 'monthly_list', 'hold_30_no_clawback', 'all_items', 3, 90, false, null, true)", [owner]);
   });
 

@@ -43,5 +43,7 @@ export interface HubSettings {
   /** Milestone gift boxes (20270111001000). */
   milestone_every?: number; milestone_rates?: { from: number; pct: number }[]; milestone_min_cents?: number;
   milestone_flat?: { at: number; cents: number; badge?: string }[]; team_goal_floor?: number;
+  /** Compensation V3 (20270202001000). */
+  milestone_model?: "v2_window" | "v3_active_mrr"; milestone_qualification?: "first_payment" | "second_cycle";
 }
 export interface Hub { settings: HubSettings; reps: HubRep[]; attributions: HubAttribution[]; commissions: HubCommission[]; statements: HubStatement[] }

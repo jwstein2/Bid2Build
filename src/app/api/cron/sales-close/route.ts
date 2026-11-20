@@ -25,7 +25,9 @@ export async function POST(req: Request) {
     logError("sales.close_month", error);
     return fail(500, "close_failed", "Month-end close failed.");
   }
-  // Milestone gift boxes: create reached boxes and fix amounts whose 30-day hold has passed.
+  // Compensation V3: log incentive-program approvals that expired (they stop applying on their own).
+  await createAdminClient().rpc("sales_programs_sweep", {}).then(() => null, () => null);
+  // Milestone awards: create every milestone reached (V3 snapshots the amount now; V2 boxes wait out the hold).
   await createAdminClient().rpc("sales_milestones_evaluate", {}).then(() => null, () => null);
   // V8.4: monthly accelerators (finalize months whose sales cleared the hold) and achievements.
   // Both are idempotent and do nothing before migration 20270116001000 is applied.

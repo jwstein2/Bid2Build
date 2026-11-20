@@ -24,9 +24,22 @@ async function columnTypes() {
 /**
  * PG_REST_AS_USER=<auth user id>: every request runs as that signed-in user (role authenticated, RLS on),
  * like real PostgREST. Without it requests run as the database owner (the radar / bid check walks).
+ * PG_REST_OWNER_CLAIM=<auth user id>: database-owner requests also carry that user's id as auth.uid(), so a
+ * page that checks the signed-in person's capabilities and then uses a service-role client can be walked.
  */
 async function exec(sql, params) {
   const asUser = process.env.PG_REST_AS_USER;
+  const claim = process.env.PG_REST_OWNER_CLAIM;
+  if (!asUser && claim) {
+    const c = await pool.connect();
+    try {
+      await c.query("begin");
+      await c.query("select set_config('request.jwt.claim.sub', $1, true)", [claim]);
+      const r = await c.query(sql, params);
+      await c.query("commit");
+      return r;
+    } catch (e) { await c.query("rollback").catch(() => {}); throw e; } finally { c.release(); }
+  }
   if (!asUser) return pool.query(sql, params);
   const c = await pool.connect();
   try {

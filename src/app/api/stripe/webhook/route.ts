@@ -10,7 +10,7 @@ import { isFirstPaidSubscriptionInvoice } from "@/lib/email/founder-welcome";
 import { deliverFounderEmails, enqueueFounderWelcome } from "@/lib/email/outbox";
 import { rewardReferrer } from "@/lib/growth/referral-server";
 import { recordEvent } from "@/lib/growth/events";
-import { salesChargeRefunded, syncSalesBilling } from "@/lib/sales/billing-server";
+import { salesChargeDispute, salesChargeRefunded, syncSalesBilling } from "@/lib/sales/billing-server";
 
 /** List value of a new subscription's first period, in USD, from its price (for ad conversion value only). */
 function listValueUsd(sub: Stripe.Subscription): number | null {
@@ -68,6 +68,8 @@ export async function POST(req: Request) {
     const obj = event.data.object as unknown as Record<string, unknown>;
     if (event.type === "charge.refunded") {
       await salesChargeRefunded(admin, stripe, obj as unknown as Stripe.Charge);
+    } else if (event.type === "charge.dispute.created" || event.type === "charge.dispute.closed") {
+      await salesChargeDispute(admin, stripe, obj as unknown as Stripe.Dispute, event.type === "charge.dispute.closed");
     } else if (event.type.startsWith("customer.subscription.")) {
       // Re-fetch so we always store the latest state, not a possibly stale event payload.
       subscriptionId = obj.id as string;
@@ -91,7 +93,7 @@ export async function POST(req: Request) {
       // sale-month / anniversary commission from a paid invoice. Idempotent in the database; never throws.
       await syncSalesBilling(admin, stripe, sub, res.userId, {
         plan: res.plan ?? null, companyId: res.companyId ?? null,
-        invoice: event.type === "invoice.paid" ? (obj as { id?: string; amount_paid?: number | null; status?: string | null; status_transitions?: { paid_at?: number | null } | null; created?: number }) : null,
+        invoice: event.type === "invoice.paid" ? (obj as { id?: string; billing_reason?: string | null; amount_paid?: number | null; status?: string | null; status_transitions?: { paid_at?: number | null } | null; created?: number }) : null,
       });
       if (event.type === "checkout.session.completed") {
         // Once per subscription (webhook retries and duplicate events can't double count).
