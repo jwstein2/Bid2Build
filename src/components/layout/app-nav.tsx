@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { REVEAL_FEATURE_EVENT, START_TOUR_EVENT } from "@/lib/features/state";
-import { Sparkles, CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, HardHat, LayoutTemplate, LogOut, ArrowLeftRight, X, UserCog, Receipt, Gauge, SquareKanban, CalendarRange, GraduationCap, Palette, Landmark, Shapes, Bot, House, Newspaper } from "lucide-react";
+import { Sparkles, CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, HardHat, LayoutTemplate, LogOut, ArrowLeftRight, X, UserCog, Clock, Receipt, Gauge, SquareKanban, CalendarRange, GraduationCap, Palette, Landmark, Shapes, Bot, House, Newspaper } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ButtonLink } from "@/components/ui/button";
 import { Logo } from "./logo";
@@ -63,6 +63,8 @@ const PROJECTS: NavItem = { href: "/projects", label: "Projects", icon: Calendar
 /** V7.3: Contractors & Workforce sits right under Projects (PM Hub). It replaced the retired "Pricing data" link. */
 const WORKFORCE: NavItem = { href: "/projects/workforce", label: "Contractors & Workforce", icon: HardHat };
 const HOME: NavItem = { href: "/home", label: "Home", icon: House, exact: true };
+/** V8.2: employees linked to a Staff entry get the time clock right under Home. */
+const CLOCK: NavItem = { href: "/clock", label: "Time clock", icon: Clock };
 /** V6.8 Industry Intelligence: free for every plan. */
 const INDUSTRY: NavItem = { href: "/industry", label: "Industry News", icon: Newspaper };
 
@@ -72,11 +74,11 @@ export type SidebarAccess = { hidden: string[]; other: { href: string; label: st
 /** V8.10 workspace switches ("Switch to Sales Hub"), chosen on the server from the person's permissions. */
 export type WorkspaceSwitch = { href: string; label: string };
 
-export function AppSidebar({ isAdmin, email, company, access = null, projects = false, financials = false, home = false, theme = null, learning, switches = [], bell = null, practice = false, demo = null }: { isAdmin: boolean; /** Practice Mode switch in the Help section (on for everyone unless PRACTICE_MODE=off). */ practice?: boolean; /** Active demo / practice session, if any. */ demo?: DemoSessionKind | null; email: string | null; company?: CompanyNav | null; access?: SidebarAccess | null; projects?: boolean; financials?: boolean; home?: boolean; theme?: ThemePref | null; learning?: LearningNav | null; switches?: WorkspaceSwitch[]; /** Phone top bar notifications (the desktop copy sits in the page header). */ bell?: ReactNode }) {
+export function AppSidebar({ isAdmin, email, company, access = null, projects = false, clock = false, financials = false, home = false, theme = null, learning, switches = [], bell = null, practice = false, demo = null }: { isAdmin: boolean; /** Practice Mode switch in the Help section (on for everyone unless PRACTICE_MODE=off). */ practice?: boolean; /** Active demo / practice session, if any. */ demo?: DemoSessionKind | null; email: string | null; company?: CompanyNav | null; access?: SidebarAccess | null; projects?: boolean; clock?: boolean; financials?: boolean; home?: boolean; theme?: ThemePref | null; learning?: LearningNav | null; switches?: WorkspaceSwitch[]; /** Phone top bar notifications (the desktop copy sits in the page header). */ bell?: ReactNode }) {
   // In a company, say whose bids and whose subscription each link is ("Team bids" is in the Company section).
   const own = (n: NavItem): NavItem => (!company ? n : n.href === "/dashboard" ? { ...n, label: "My bids" } : n.href === "/settings/billing" ? { ...n, label: "My subscription" } : n);
   const shown = (href: string) => !access?.hidden.includes(href);
-  const work: NavItem[] = [...(home ? [HOME] : []), ...(projects ? [NAV[0], PROJECTS, WORKFORCE, ...NAV.slice(1)] : NAV)].map(own).filter((n) => shown(n.href));
+  const work: NavItem[] = [...(home ? [HOME] : []), ...(projects && clock ? [CLOCK] : []), ...(projects ? [NAV[0], PROJECTS, WORKFORCE, ...NAV.slice(1)] : NAV)].map(own).filter((n) => shown(n.href));
   const finLinks = financials && shown(FINANCIALS.href);
   const finSettings = financials ? FIN_SETTINGS.filter((n) => shown(n.href)) : [];
   const companyLinks = company?.links.filter((l) => shown(l.href)) ?? [];

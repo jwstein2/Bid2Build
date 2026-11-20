@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, HardHat } from "lucide-react";
+import { ChevronLeft, HardHat, LocateFixed } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { isPmEnabled } from "@/lib/env";
 import { todayIn } from "@/lib/schedule/calendar";
@@ -31,6 +31,8 @@ export default async function WorkforceRoute({ searchParams }: { searchParams: P
         <Link href="/projects" className="inline-flex items-center gap-1 text-sm font-semibold text-accent-ink hover:underline"><ChevronLeft className="h-4 w-4" aria-hidden /> Projects</Link>
         <h1 className="mt-1 flex items-center gap-2 text-3xl font-extrabold text-navy"><HardHat className="h-7 w-7 text-accent-ink" aria-hidden /> Contractors &amp; Workforce</h1>
         <p className="mt-1 text-ink-soft">Find the right sub, worker or crew, see where they&apos;re booked, and put them on another job without leaving PM Hub.</p>
+        <Link href="/projects/workforce/time-tracking" className="mt-2 inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-line-strong bg-surface px-3 text-sm font-semibold text-navy hover:border-accent-ink" data-testid="workforce-time-tracking-link">
+          <LocateFixed className="h-4 w-4 text-accent-ink" aria-hidden /> Time tracking: GPS clock-in, timesheets &amp; payroll export</Link>
       </div>
       {wf
         ? <WorkforcePage wf={wf} today={todayIn("America/Chicago")} people={people}

@@ -10,7 +10,8 @@ const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "DENY" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  // geolocation=(self): the time clock asks for location once, at a punch, only when the person ticks the box.
+  // geolocation=(self): the time clock asks for location at a punch when the person ticks the box, and (V8.2) the
+  // Time clock screen watches it while open when the employee accepted automatic GPS clock-in. Own origin only.
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(self)" },
   // HTTPS-only on real deploys. No includeSubDomains/preload until the production domain is settled.
   ...(deployContext === "local" ? [] : [{ key: "Strict-Transport-Security", value: "max-age=31536000" }]),
