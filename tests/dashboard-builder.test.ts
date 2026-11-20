@@ -165,10 +165,28 @@ describe("templates and setup", () => {
   });
   it("the default template follows role and mode", () => {
     expect(defaultTemplate(solo, "contractor")).toBe("simple");
-    expect(defaultTemplate(salesRep, "contractor")).toBe("job");
+    expect(defaultTemplate(salesRep, "contractor")).toBe("sales");
+    expect(defaultTemplate(projectFin, "contractor")).toBe("job");
     expect(defaultTemplate(accountant, "contractor")).toBe("financial");
     expect(defaultTemplate(soloFin, "accountant")).toBe("financial");
     expect(defaultTemplate(soloFin, "contractor")).toBe("simple");
+  });
+  it("a Home page assigned in Team & Access wins over the automatic pick", () => {
+    expect(defaultTemplate({ ...salesRep, home: "job" }, "contractor")).toBe("job");
+    expect(defaultTemplate({ ...projectFin, home: "sales" }, "contractor")).toBe("sales");
+    expect(defaultTemplate({ ...accountant, home: "financial" }, "contractor")).toBe("financial");
+    // A financial Home without company financials would be empty: fall back to the automatic pick.
+    expect(defaultTemplate({ ...salesRep, home: "financial" }, "contractor")).toBe("sales");
+    // Unknown keys and solo accounts are ignored; Accountant Mode always shows financial.
+    expect(defaultTemplate({ ...salesRep, home: "nope" }, "contractor")).toBe("sales");
+    expect(defaultTemplate({ ...solo, home: "job" }, "contractor")).toBe("simple");
+    expect(defaultTemplate({ ...accountant, home: "sales" }, "accountant")).toBe("financial");
+  });
+  it("the sales & estimating Home leads with bids and has no financial widgets for a rep", () => {
+    const types = buildTemplate("sales", salesRep).widgets.map((w) => w.type);
+    expect(types.slice(0, 3)).toEqual(["quick_actions", "sales_awaiting", "sales_drafts"]);
+    expect(types).toContain("sales_pipeline");
+    expect(types.some((t) => t.startsWith("fin_"))).toBe(false);
   });
   it("setup suggests a layout from interests, without duplicates or inaccessible widgets", () => {
     expect(availableInterests(salesRep)).not.toContain("accounting");

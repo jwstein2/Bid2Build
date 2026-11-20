@@ -90,4 +90,12 @@ describe("workspace switching (V8.10)", () => {
     expect(parseSwitchTo("admin")).toBeNull();
     expect(parseSwitchTo(null)).toBeNull();
   });
+  it("sends contractors to Home when it is the contractor start page", () => {
+    expect(landingPath(customer, { contractorHome: "/home" })).toBe("/home");
+    expect(landingPath(NO_WORKSPACES, { contractorHome: "/home" })).toBe("/home");
+    expect(landingPath(everything, { contractorHome: "/home" })).toBe("/home");
+    expect(landingPath(rep, { contractorHome: "/home" })).toBe("/sales");
+    expect(landingPath(customer, { pendingInvite: true, contractorHome: "/home" })).toBe("/sales/join");
+    expect(switchTarget(everything, "contractor", null, "/home").path).toBe("/home");
+  });
 });

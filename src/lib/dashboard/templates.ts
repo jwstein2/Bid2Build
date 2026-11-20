@@ -21,8 +21,20 @@ export const TEMPLATES = {
       ["industry_briefing", 2, 2],
     ] as Entry[],
   },
+  sales: {
+    label: "Sales & estimating", audience: "Sales reps and estimators",
+    description: "Bids awaiting signature, drafts, wins, win rate, pipeline, recent estimates and customers.",
+    widgets: [
+      ["quick_actions", 2, 1, { actions: ["create_bid", "customers"] }],
+      ["sales_awaiting"], ["sales_drafts"], ["sales_won"], ["sales_win_rate"],
+      ["sales_pipeline", 2, 1], ["sales_recent", 2, 1],
+      ["sales_avg_value"], ["customers"],
+      ["pm_upcoming", 2, 1],
+      ["industry_briefing", 2, 2],
+    ] as Entry[],
+  },
   job: {
-    label: "Job-focused", audience: "Project managers",
+    label: "Project manager", audience: "Project managers",
     description: "Active jobs, upcoming tasks, delayed work, crew time and project financials.",
     widgets: [
       ["pm_active"], ["pm_scheduled"], ["team_on_clock"], ["team_hours"],
@@ -33,7 +45,7 @@ export const TEMPLATES = {
     ] as Entry[],
   },
   financial: {
-    label: "Financial overview", audience: "Owners and accountants",
+    label: "Financial", audience: "Owners and accountants",
     description: "Bank and projected balance, AR and AP, expenses, P&L, reconciliation and alerts.",
     widgets: [
       ["fin_bank_balance"], ["fin_projected_balance"], ["fin_ar"], ["fin_ap"],
@@ -65,14 +77,21 @@ export function buildTemplate(key: TemplateKey, access: DashboardAccess): Layout
 }
 
 /**
- * The most relevant starting template: Accountant Mode and accounting roles get the financial overview; project
- * managers and estimators with scheduling get job-focused; everyone else (most solo contractors) gets simple.
+ * The most relevant starting template. A Home page assigned in Team & Access comes first (Accountant Mode
+ * always shows financial). Otherwise: Accountant Mode and accounting roles get financial; managers with
+ * scheduling get project manager; estimators get sales & estimating; everyone else (most solo contractors)
+ * gets simple.
  */
 export function defaultTemplate(access: DashboardAccess, mode: DashboardMode): TemplateKey {
   const finCompany = access.features.fin_visibility === "company";
   if (mode === "accountant" && finCompany) return "financial";
+  if (access.company && isTemplate(access.home)) {
+    // A financial Home without company financials would be nearly empty: fall through to the automatic pick.
+    if (access.home !== "financial" || finCompany) return access.home;
+  }
   if (access.fin && ["accountant", "bookkeeper", "financial_admin"].includes(access.fin.role) && finCompany) return "financial";
-  if (access.company && (access.company.role === "manager" || access.company.role === "estimator") && access.features.schedule) return "job";
+  if (access.company?.role === "manager" && access.features.schedule) return "job";
+  if (access.company?.role === "estimator") return access.features.bids ? "sales" : access.features.schedule ? "job" : "simple";
   return "simple";
 }
 

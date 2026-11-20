@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getUser, createClient } from "@/lib/supabase/server";
-import { isSupabaseConfigured } from "@/lib/env";
+import { contractorHomePath, isSupabaseConfigured } from "@/lib/env";
 import { VIEW_COOKIE } from "@/lib/sales/caps";
 import { parseSwitchTo, switchTarget } from "@/lib/workspaces";
 import { loadWorkspaces } from "@/lib/workspaces-server";
@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
   if (!(await getUser())) return go("/login");
   const want = parseSwitchTo(req.nextUrl.searchParams.get("to")) ?? "sales";
   const ws = await loadWorkspaces();
-  const { path, remember } = switchTarget(ws, want, req.cookies.get(VIEW_COOKIE)?.value ?? null);
+  const { path, remember } = switchTarget(ws, want, req.cookies.get(VIEW_COOKIE)?.value ?? null, contractorHomePath());
   if (remember.last || remember.view) {
     const db = await createClient();
     await db.rpc("set_my_workspace", { p_last: remember.last ?? null, p_sales_view: remember.view ?? null }).then(() => null, () => null);

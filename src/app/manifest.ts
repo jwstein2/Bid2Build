@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { site } from "@/lib/site";
+import { contractorHomePath } from "@/lib/env";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
@@ -8,8 +9,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: site.description,
     // id stays "/" so phones that already installed the app keep the same app.
     id: "/",
-    // The installed app opens to the dashboard (sign-in first when signed out), not the marketing homepage.
-    start_url: "/dashboard",
+    // The installed app opens to the contractor start page (Home when it is on, sign-in first when signed out), not the marketing homepage.
+    start_url: contractorHomePath(),
     scope: "/",
     display: "standalone",
     background_color: "#F5F8FB",

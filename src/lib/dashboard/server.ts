@@ -70,7 +70,7 @@ export interface LoadedLayout {
   companyDefaultRole: string | null | undefined;
 }
 
-/** The person's layout for the mode, else their company's default, else the best built-in template. */
+/** The person's layout for the mode, else their assigned Home, else their company's default, else the best built-in template. */
 export async function loadLayout(db: Db, viewer: DashboardViewer, mode: DashboardMode): Promise<LoadedLayout> {
   const { data, error } = await db.rpc("dashboard_layout_get", { p_mode: mode });
   const fallback = (): Layout => buildTemplate(defaultTemplate(viewer.access, mode), viewer.access);
@@ -83,7 +83,8 @@ export async function loadLayout(db: Db, viewer: DashboardViewer, mode: Dashboar
   if (d.mine) {
     return { layout: parseLayout(d.mine as never), revision: Number(d.mine.revision), origin: "mine", ready: true, isCompanyOwner, companyDefaultRole: d.companyDefault ? (d.companyDefault.role as string | null) : undefined };
   }
-  if (d.companyDefault) {
+  // A Home page assigned to this person (Team & Access) is more specific than the company's per-role default.
+  if (d.companyDefault && !viewer.access.home) {
     const parsed = parseLayout(d.companyDefault as never);
     // A company default applies within the person's own access: widgets they can't see are left out.
     const widgets = parsed.widgets.filter((w) => { const def = widgetDef(w.type); return def && allowed(viewer.access, def.requires); });
