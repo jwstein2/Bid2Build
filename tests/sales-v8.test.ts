@@ -9,7 +9,7 @@ describe("V8 commission defaults", () => {
     expect(DEFAULT_POLICY.refund_policy).toBe("hold_30_no_clawback");
     expect(DEFAULT_POLICY.attribution_window_days).toBe(90);
     expect(DEFAULT_POLICY.annual_basis).toBe("monthly_list");
-    expect(DEFAULT_POLICY.commission_years).toBe(3);
+    expect(DEFAULT_POLICY.commission_years).toBe(10);
   });
 });
 

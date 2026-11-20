@@ -11,7 +11,7 @@ Owner decisions (James, 2026-11-19) and how the ledger enforces them. Migration
 | 2 | **30-day hold.** Commission waits 30 days after the payment. A refund inside the window cancels it; a refund after that never takes money back. | `refund_policy = hold_30_no_clawback`, `sales_close_month` |
 | 3 | Earned commission is paid on the **next month-end statement** after owner approval. | `sales_close_month`, statements |
 | 4 | All eligible recurring items count (plan, seats, add-ons). | `value_scope = all_items` |
-| 5 | **3 payments total**: the sale month plus two anniversaries. | `commission_years = 3` |
+| 5 | **3 payments total**: the sale month plus two anniversaries. **Superseded 2026-11-20: 10 payments (sale month + 9 anniversaries), see TEN_YEAR_TERM.md.** | `commission_years = 3` (now 10) |
 | 6 | Upgrades are picked up at the next anniversary (the anniversary uses the then-current monthly value). | anniversary job |
 | 7 | An anniversary pays only if the customer is still active and paid that month. | `no_paid_invoice_in_anniversary_month` |
 | 8 | A rep's link counts for accounts created within **90 days** of the visit. | `attribution_window_days = 90`, 90-day cookie |

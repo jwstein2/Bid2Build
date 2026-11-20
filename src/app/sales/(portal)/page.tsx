@@ -48,6 +48,9 @@ export default async function SalesOverview({ searchParams }: { searchParams: Pr
   const attention = attRes.error || !attRes.data ? null : (attRes.data as Attention);
   // V8.4 P3 (hidden until 20270119001000 is applied).
   const winsRes = await db.rpc("sales_team_wins", {});
+  // Ten-year term amendment (hidden until 20270209001000 is applied).
+  const amendRes = await db.rpc("sales_my_amendments");
+  const pendingAmendments = amendRes.error ? 0 : ((amendRes.data ?? []) as { accepted_at: string | null }[]).filter((a) => !a.accepted_at).length;
   const wins = winsRes.error || !winsRes.data ? null : (winsRes.data as { rep: string; kind: string; at: string; mine: boolean }[]);
   // V8.4 P1 (hidden until 20270117001000 is applied): layout order and customer success celebrations.
   const prefs = prefRes.error || !prefRes.data ? null : (prefRes.data as { status: string; answers: Answers; dashboard_layout: Layout | null; animations: boolean });
@@ -104,6 +107,14 @@ export default async function SalesOverview({ searchParams }: { searchParams: Pr
         <h1 className="text-3xl font-extrabold">Welcome, {o.rep.full_name.split(" ")[0]}</h1>
         <p className="mt-1 text-ink-soft">Share your link. Anyone who signs up through it stays connected to you, even if they buy months later.</p>
       </div>
+
+      {pendingAmendments > 0 && (
+        <Card className="border-l-4 border-l-accent p-5" data-testid="amendment-banner">
+          <h2 className="text-lg font-bold">Your commission term is now 10 years</h2>
+          <p className="mt-1 text-sm text-ink-soft">Customers you bring in can now pay you once a year for up to 10 years instead of 3. Nothing else about your pay changed. Please read and accept the agreement update.</p>
+          <Link href="/sales/amendments" className="mt-3 inline-flex min-h-11 items-center rounded-lg bg-brand px-4 font-semibold text-white">Review the update</Link>
+        </Card>
+      )}
 
       <Card id="referral-link" className="scroll-mt-24 p-5" data-testid="referral-link">
         <h2 className="text-lg font-bold">Your referral link</h2>
@@ -189,7 +200,7 @@ export default async function SalesOverview({ searchParams }: { searchParams: Pr
         <h2 className="text-base font-bold text-ink">How you&apos;re paid</h2>
         <ul className="mt-2 list-disc space-y-1 pl-5">
           <li>One month of the customer&apos;s plan (before tax) for each sale, paid on the month-end statement after a 30-day refund hold.</li>
-          <li>The same again on each anniversary while the customer is active and paid, {o.policy.commission_years} payments in total.</li>
+          <li>The same again once a year, in each anniversary month while the customer is active and paid, for up to {o.policy.commission_years} years ({o.policy.commission_years} annual payments at most, never monthly). <Link href="/sales/portfolio" className="font-semibold text-brand underline">See your 10-year portfolio</Link></li>
           <li>{comp?.model === "v2_window" ? "Milestone gift boxes at 10, 25, 50 and every 50 accounts after that." : "One-time milestone bonuses at 10 ($25) and 25 ($75) qualifying customers, then every 25 customers a bonus of 3% to 5% of your qualifying active MRR. Each milestone pays once."}</li>
         </ul>
         <Link href="/sales/how-you-get-paid" className="mt-3 inline-block font-semibold text-brand underline">See the full walkthrough</Link>

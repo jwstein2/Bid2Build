@@ -71,7 +71,7 @@ function PolicySummary({ s }: { s: HubSettings }) {
   const rules = [
     `Each sale pays one month of the customer's plan, before tax. On the $19.99 plan that's ${usd(month)}.`,
     s.annual_basis === "monthly_list" ? "Annual customers count at the monthly list price, not the discounted annual price." : s.annual_basis === "divide_12" ? "Annual customers count at their annual price divided by 12." : "Annual customers count at the full annual payment.",
-    `The rep is paid again on each anniversary while the customer is still active and paid, for ${s.commission_years} year${s.commission_years === 1 ? "" : "s"} in total (${s.commission_years} payments).`,
+    `The rep is paid again once a year, in each anniversary month while the customer is still active and paid, for up to ${s.commission_years} year${s.commission_years === 1 ? "" : "s"} (${s.commission_years} payments at most, never monthly). Each customer keeps the term in force when they first paid.`,
     hold ? "Commission waits 30 days after the customer pays. A refund inside those 30 days cancels it; a refund after that never takes money back from the rep." : s.refund_policy === "never_reverse" ? "Commission is earned when the customer pays and is never reversed." : "Commission waits until month end. A refund before payout cancels it; after payout it comes off the next statement.",
     s.first_month_cancel_voids ? "If the customer cancels within their first month, the rep is not paid for that sale." : "A customer who cancels in their first month still counts once the hold passes.",
     `A rep's link counts for accounts created within ${s.attribution_window_days} days of the visit.`,
@@ -266,6 +266,9 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
   const invRes = tab === "team" ? await db.rpc("admin_sales_invites", { p_caller: user.id }) : null;
   const invites = (invRes && !invRes.error ? invRes.data : {}) as Record<string, { created_at: string; expires_at: string; opened_at: string | null; accepted_at: string | null; revoked_at: string | null; delivery_status?: string; sent_at?: string | null }>;
   const verRes = tab === "policy" ? await db.rpc("admin_sales_policy_versions", { p_caller: user.id }) : null;
+  // Ten-year term amendment acceptances (hidden until 20270209001000 is applied).
+  const amendRes = tab === "policy" ? await db.rpc("admin_sales_amendments", { p_caller: user.id }) : null;
+  const amendments = (amendRes && !amendRes.error ? amendRes.data : null) as { id: string; title: string; version: number; legal_status: string; accepted: { rep: string; typed_name: string; accepted_at: string }[]; pending: { rep: string; email: string }[] }[] | null;
   const versions = (verRes && !verRes.error ? verRes.data : null) as { version: number; policy: Record<string, string | number | boolean>; note: string | null; created_at: string; lines: number }[] | null;
   // V8 goals + milestone boxes (hidden until 20270111001000 is applied).
   const goalRes = tab === "overview" ? await db.rpc("admin_sales_team_goal", { p_caller: user.id }) : null;
@@ -872,6 +875,19 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
             <p className="mt-4 text-xs text-muted">Months close in Central time. Discounts and coupons aren&apos;t subtracted automatically; adjust a line before approving if needed. Payouts stay manual: nothing here moves money.</p>
           </Card>}
           {has("edit_commission_policies") && <MilestoneRulesForm s={h.settings} />}
+          {amendments && amendments.length > 0 && (
+            <Card className="p-5" data-testid="amendment-acceptances">
+              <h2 className="text-lg font-bold">Rep agreement amendments</h2>
+              {amendments.map((a) => (
+                <div key={a.id} className="mt-3 text-sm">
+                  <p className="font-semibold">{a.title} v{a.version} {a.legal_status !== "counsel_approved" && <span className="text-xs font-normal text-warn">(draft, legal review pending)</span>}</p>
+                  <p className="text-ink-soft">Accepted: {a.accepted.length ? a.accepted.map((x) => `${x.rep} (${dateLabel(x.accepted_at)})`).join(", ") : "nobody yet"}</p>
+                  <p className="text-ink-soft">Not yet accepted: {a.pending.length ? a.pending.map((x) => x.rep).join(", ") : "none"}</p>
+                </div>
+              ))}
+              <p className="mt-2 text-xs text-muted">Acceptance is a record only: the 10-year term applies to every rep&apos;s customers either way, and it never holds back pay.</p>
+            </Card>
+          )}
           {versions && (
             <Card className="p-5">
               <h2 className="text-lg font-bold">Version history</h2>
