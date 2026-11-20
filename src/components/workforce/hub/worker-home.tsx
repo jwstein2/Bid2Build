@@ -154,7 +154,7 @@ function ItemDetail({ i, onClose }: { i: ScheduleItem; onClose: () => void }) {
     ["What", categoryLabel(i.category)], ["Project", i.project], ["Task", i.task], ["When", `${dayLabel(i.date, { weekday: "long", month: "long", day: "numeric" })} · ${timeRange(i)}`],
     ["Hours", `${fmtHours(i.hours)}${i.estimated ? " (estimated)" : ""}${i.unpaidBreakMinutes ? ` after a ${i.unpaidBreakMinutes}-minute unpaid break` : ""}`],
     ["Where", i.location], ["Address", i.address], ["Assigned through", i.via], ["Your responsibilities", i.responsibilities], ["Notes", i.notes],
-    ["Status", i.kind === "task" ? i.status.replace(/_/g, " ") : null],
+    ["Status", i.kind === "task" ? i.status.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase()) : null],
   ];
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="assignment-title" onClick={onClose}>

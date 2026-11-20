@@ -24,9 +24,9 @@ const ops = z.discriminatedUnion("action", [
   z.object({ action: z.literal("settings"), enabled: z.boolean().optional(), workersCanSee: z.boolean().optional(), displayPeriod: z.enum(["week", "pay_period"]).optional(),
     payFrequency: z.enum(["weekly", "biweekly", "semimonthly", "monthly"]).optional(), periodAnchor: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
     overtimeRule: z.enum(["federal", "california", "colorado", "alaska", "nevada", "none", ""]).optional(), otMultiplier: z.number().min(1).max(3).optional(),
-    dtMultiplier: z.number().min(1).max(4).optional(), differentials: z.record(z.enum(["project", "shop", "office", "training", "admin", "travel", "other_paid", "night", "weekend"]), z.number().min(0).max(200)).optional() }),
+    dtMultiplier: z.number().min(1).max(4).optional(), differentials: z.partialRecord(z.enum(["project", "shop", "office", "training", "admin", "travel", "other_paid", "night", "weekend"]), z.number().min(0).max(200)).optional() }),
   z.object({ action: z.literal("worker"), resourceId: z.string().uuid(), projectionEnabled: z.boolean().optional(), workerCanSee: z.boolean().nullable().optional(),
-    rates: z.record(cat, z.number().min(0).max(2000)).optional() }),
+    rates: z.partialRecord(cat, z.number().min(0).max(2000)).optional() }),
   z.object({ action: z.literal("classification"), resourceId: z.string().uuid(), classification: z.enum(["w2", "1099", "owner", "other", ""]) }),
 ]);
 
