@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { REVEAL_FEATURE_EVENT, START_TOUR_EVENT } from "@/lib/features/state";
 import { Sparkles, CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, HardHat, LayoutTemplate, LogOut, ArrowLeftRight, X, UserCog, Receipt, Gauge, SquareKanban, CalendarRange, GraduationCap, Palette, Landmark, Shapes, Bot, House, Newspaper } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -71,7 +71,7 @@ export type SidebarAccess = { hidden: string[]; other: { href: string; label: st
 /** V8.10 workspace switches ("Switch to Sales Hub"), chosen on the server from the person's permissions. */
 export type WorkspaceSwitch = { href: string; label: string };
 
-export function AppSidebar({ isAdmin, email, company, access = null, projects = false, financials = false, home = false, theme = null, learning, switches = [] }: { isAdmin: boolean; email: string | null; company?: CompanyNav | null; access?: SidebarAccess | null; projects?: boolean; financials?: boolean; home?: boolean; theme?: ThemePref | null; learning?: LearningNav | null; switches?: WorkspaceSwitch[] }) {
+export function AppSidebar({ isAdmin, email, company, access = null, projects = false, financials = false, home = false, theme = null, learning, switches = [], bell = null }: { isAdmin: boolean; email: string | null; company?: CompanyNav | null; access?: SidebarAccess | null; projects?: boolean; financials?: boolean; home?: boolean; theme?: ThemePref | null; learning?: LearningNav | null; switches?: WorkspaceSwitch[]; /** Phone top bar notifications (the desktop copy sits in the page header). */ bell?: ReactNode }) {
   // In a company, say whose bids and whose subscription each link is ("Team bids" is in the Company section).
   const own = (n: NavItem): NavItem => (!company ? n : n.href === "/dashboard" ? { ...n, label: "My bids" } : n.href === "/settings/billing" ? { ...n, label: "My subscription" } : n);
   const shown = (href: string) => !access?.hidden.includes(href);
@@ -136,7 +136,9 @@ export function AppSidebar({ isAdmin, email, company, access = null, projects = 
             <FileText className="h-4 w-4 max-[440px]:hidden max-[359px]:block" aria-hidden /><span className="max-[359px]:sr-only">New bid</span>
           </ButtonLink>
           <SearchIconButton tone="dark" />
-          <ThemeToggle signedIn account={theme} tone="dark" />
+          {bell}
+          {/* With notifications on, the phone bar has no room for the theme switch: it moves to the top of the Menu. */}
+          <ThemeToggle signedIn account={theme} tone="dark" className={bell ? "hidden" : undefined} />
           <button
             ref={menuButton}
             type="button"
@@ -151,8 +153,10 @@ export function AppSidebar({ isAdmin, email, company, access = null, projects = 
         </div>
       </div>
       <div className="hidden px-3 md:block"><ButtonLink href="/bids" variant="accent" className="w-full"><FileText className="h-4 w-4" aria-hidden /> Create New Bid</ButtonLink></div>
-      {!open && current && <p className="flex items-center gap-1.5 px-4 pb-2 text-xs text-[#B8C6D4] md:hidden">{current.label}{"premium" in current && current.premium && <PremiumDiamond tone="dark" />}</p>}
+      {/* Phone "you are here" label; Home's own heading already says it, so it is left out there. */}
+      {!open && current && current.href !== "/home" && <p className="flex items-center gap-1.5 px-4 pb-2 text-xs text-[#B8C6D4] md:hidden" data-testid="nav-current">{current.label}{"premium" in current && current.premium && <PremiumDiamond tone="dark" />}</p>}
       <nav id="account-nav" aria-label="Account" className={cn("flex-col gap-1 px-2 pb-3 md:mt-4 md:flex", open ? "flex max-md:motion-drop-in" : "hidden")}>
+        {bell && <ThemeToggle signedIn account={theme} tone="dark" label className={cn(item, "w-full justify-start text-[#C9D6E3] hover:text-white md:hidden")} />}
         {work.map((n) => link(n))}
         {finLinks && (
           <>

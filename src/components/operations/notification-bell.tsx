@@ -1,7 +1,7 @@
 "use client";
 import { Bell, CalendarClock, CheckCircle2, Clock, Gauge, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { cn } from "@/lib/cn";
 import { useDismiss } from "@/components/ui/use-dismiss";
 
@@ -18,11 +18,21 @@ interface Notice {
 const REASON: Record<Notice["reason"], string> = { end_date: "Reached its planned finish", progress_100: "Marked 100% complete", both: "100% and past its planned finish" };
 const day = (d?: string) => (d ? new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" }).format(new Date(`${d}T00:00:00Z`)) : "");
 
+const PHONE = "(max-width: 767px)";
+const subscribePhone = (cb: () => void) => { const m = window.matchMedia(PHONE); m.addEventListener("change", cb); return () => m.removeEventListener("change", cb); };
+const isPhone = () => window.matchMedia(PHONE).matches;
+
 /**
  * Task review notices for the responsible PM (V4.3). In-app only: the homeowner is never notified, a
  * task is never completed automatically, and each task/finish date produces at most one notice.
  */
-export function NotificationBell() {
+export function NotificationBell({ only, tone = "light" }: {
+  /** Mounted twice (phone top bar + desktop header): each copy loads and shows only at its own screen size. */
+  only?: "phone" | "desktop";
+  tone?: "light" | "dark";
+} = {}) {
+  const phone = useSyncExternalStore(subscribePhone, isPhone, () => null);
+  const active = !only || (phone !== null && (only === "phone") === phone);
   const [items, setItems] = useState<Notice[] | null>(null);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
@@ -32,19 +42,20 @@ export function NotificationBell() {
   // server function every 5 minutes for nothing. A focus after sign-in again reloads the page anyway.
   const signedOut = useRef(false);
   const load = useCallback(() => {
-    if (signedOut.current || document.hidden) return;
+    if (!active || signedOut.current || document.hidden) return;
     fetch("/api/notifications", { cache: "no-store" }).then((r) => { if (r.status === 401) signedOut.current = true; return r.ok ? r.json() : null; }).then((d) => { if (d?.available) setItems(d.items); else setItems(null); }).catch(() => {});
-  }, []);
+  }, [active]);
   useEffect(() => {
+    if (!active) return;
     load();
     const t = setInterval(load, 5 * 60_000);
     const onFocus = () => load();
     window.addEventListener("focus", onFocus);
     return () => { clearInterval(t); window.removeEventListener("focus", onFocus); };
-  }, [load]);
+  }, [load, active]);
   const bell = useRef<HTMLButtonElement>(null);
   useDismiss(open, () => setOpen(false), { inside: [ref], returnFocus: bell });
-  if (items === null) return null;
+  if (items === null || !active) return null;
   const act = async (n: Notice, action: "confirm" | "later" | "read") => {
     setBusy(n.id); setErr(null);
     try {
@@ -58,12 +69,12 @@ export function NotificationBell() {
   return (
     <div className="relative" ref={ref}>
       <button ref={bell} type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-haspopup="dialog" data-testid="notification-bell"
-        className="relative grid min-h-9 min-w-9 place-items-center rounded-md text-ink-soft hover:bg-black/5" aria-label={`Task review notices${items.length ? `, ${items.length} open` : ""}`}>
+        className={cn("relative grid place-items-center rounded-md", tone === "dark" ? "min-h-11 min-w-11 text-white hover:bg-white/10" : "min-h-9 min-w-9 text-ink-soft hover:bg-black/5")} aria-label={`Task review notices${items.length ? `, ${items.length} open` : ""}`}>
         <Bell className="h-5 w-5" aria-hidden />
-        {items.length > 0 && <span className={cn("absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full px-1 text-[10px] font-bold", unread ? "bg-danger text-white" : "bg-black/10 text-ink")}>{items.length}</span>}
+        {items.length > 0 && <span className={cn("absolute grid h-4 min-w-4 place-items-center rounded-full px-1 text-[10px] font-bold", tone === "dark" ? "right-1 top-1" : "-right-0.5 -top-0.5", unread ? "bg-danger text-white" : tone === "dark" ? "bg-white/20 text-white" : "bg-black/10 text-ink")}>{items.length}</span>}
       </button>
       {open && (
-        <div role="dialog" aria-label="Task review notices" className="absolute right-0 z-50 mt-2 w-[min(92vw,24rem)] rounded-xl border border-line bg-surface p-2 shadow-xl">
+        <div role="dialog" aria-label="Task review notices" className={cn("z-50 rounded-xl border border-line bg-surface p-2 text-ink shadow-xl", only === "phone" ? "fixed inset-x-2 top-16" : "absolute right-0 mt-2 w-[min(92vw,24rem)]")}>
           <p className="px-2 py-1 text-sm font-bold">Notices</p>
           {err && <p className="px-2 text-xs text-danger" role="alert">{err}</p>}
           {items.length === 0 && <p className="px-2 py-3 text-sm text-muted">You&apos;re all caught up. When a task you manage reaches its finish date or 100%, it shows up here for you to confirm.</p>}

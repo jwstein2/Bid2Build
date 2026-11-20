@@ -10,6 +10,7 @@ import { formatCurrency } from "@/lib/estimate/money";
 import { MetricCard } from "@/components/ui/metric-card";
 import { BasisBadge } from "@/components/financials/basis";
 import { ButtonLink } from "@/components/ui/button";
+import { cn } from "@/lib/cn";
 import { FOCUS, COLUMN_LABELS, SALES_COLUMNS, resolveRange, type Column, type RangeKey } from "@/lib/pipeline/board";
 import { arDates, arTotals, filterAr, type ArFilters } from "@/lib/financials/receivables";
 import { add, cmp } from "@/lib/financials/money";
@@ -422,7 +423,12 @@ export async function WidgetBody({ inst, data, viewer }: { inst: WidgetInstance;
       });
       return (
         <Frame title="Quick actions" testId={tid}>
-          {usable.length ? <div className="flex flex-wrap gap-2">{usable.map((k) => <ButtonLink key={k} href={QUICK_ACTIONS[k].href} variant={k === "create_bid" ? "accent" : "secondary"} size="sm">{QUICK_ACTIONS[k].label}</ButtonLink>)}</div>
+          {/* Phones: two-up, 44px buttons. Create bid is left out there when other actions exist, because New bid is
+              always in the phone top bar; on larger screens it stays, secondary, beside the sidebar's Create New Bid. */}
+          {usable.length ? <div className="flex flex-wrap gap-2">{usable.map((k) => (
+            <ButtonLink key={k} href={QUICK_ACTIONS[k].href} variant="secondary" size="sm"
+              className={cn("min-h-11 flex-1 basis-[calc(50%-0.25rem)] sm:min-h-9 sm:flex-none sm:basis-auto", k === "create_bid" && usable.length > 1 && "max-md:hidden")}>{QUICK_ACTIONS[k].label}</ButtonLink>
+          ))}</div>
             : <p className="text-sm text-ink-soft">Pick your actions in Customize Dashboard.</p>}
         </Frame>
       );

@@ -83,7 +83,7 @@ export function MetricCard({ title, value, sub, status, tone = "default", loadin
   return (
     <MetricShell {...action} testId={testId} title={hint}
       className={cn("rounded-xl border border-line bg-surface shadow-card", size === "sm" ? "p-3" : "p-4", className)}>
-      <span className="flex items-start justify-between gap-2">
+      <span className="metric-head flex items-start justify-between gap-2">
         <span className={cn("font-semibold text-ink-soft", size === "sm" ? "text-xs" : "text-sm")}>{title}</span>
         {status}
       </span>
