@@ -21,7 +21,7 @@ export async function runPayouts(db: SupabaseClient, opts: { provider?: (name: P
   if (plan.error) return { plan: null, claimed: 0, submitted: 0, retry: 0, failed: 0, error: plan.error.message };
   const planned = plan.data as { skipped?: string } | null;
   // Affiliate Hub: payable annual commissions -> one payout per affiliate on the same ledger (off unless the owner
-  // enabled affiliate payouts). Missing before 20270210001000: ignored.
+  // enabled affiliate payouts). Missing before 20270211001000: ignored.
   await db.rpc("affiliate_payout_plan", opts.now ? { p_now: opts.now.toISOString() } : {}).then(() => null, () => null);
   if (planned?.skipped === "automation_off") return { plan: planned, claimed: 0, submitted: 0, retry: 0, failed: 0, skipped: "automation_off" };
 

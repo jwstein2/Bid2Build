@@ -1,4 +1,4 @@
--- Rollback for 20270210001000_affiliate_hub.sql (Affiliate Hub).
+-- Rollback for 20270211001000_affiliate_hub.sql (Affiliate Hub).
 -- Removes every affiliate object and restores the V8.1 payout functions and Sales attribution exactly as they were.
 -- WARNING: deletes affiliate payouts (test or live) and all affiliate records. Export first if any exist.
 begin;

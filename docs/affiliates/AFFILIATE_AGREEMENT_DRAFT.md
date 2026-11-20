@@ -1,6 +1,6 @@
 # Built2Bid Affiliate Program Agreement (Draft v1)
 
-> **DRAFT FOR ATTORNEY REVIEW. NOT FINAL.** This text is seeded as version 1 in `affiliate_agreement_templates` by migration `20270210001000_affiliate_hub.sql` and shown to affiliates with a "Legal review pending" label. After counsel review, the owner publishes the revised text as a new version from **Admin → Affiliate Hub → Compliance**; every affiliate must accept the new version, and each acceptance stores the version, time, typed name and a SHA-256 fingerprint of the exact text.
+> **DRAFT FOR ATTORNEY REVIEW. NOT FINAL.** This text is seeded as version 1 in `affiliate_agreement_templates` by migration `20270211001000_affiliate_hub.sql` and shown to affiliates with a "Legal review pending" label. After counsel review, the owner publishes the revised text as a new version from **Admin → Affiliate Hub → Compliance**; every affiliate must accept the new version, and each acceptance stores the version, time, typed name and a SHA-256 fingerprint of the exact text.
 
 Items marked **[COUNSEL]** need a decision before launch. The matching program switches live in `affiliate_settings`:
 

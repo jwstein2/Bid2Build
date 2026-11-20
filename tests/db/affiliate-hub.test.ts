@@ -354,7 +354,7 @@ d("Affiliate Hub (database)", () => {
     expect(o).toBeTruthy();
   });
   it("rollback removes the Affiliate Hub, restores the payout + attribution functions, and the migration re-applies", async () => {
-    await pool.query(readFileSync("docs/affiliates/rollback_20270210001000.sql", "utf8"));
+    await pool.query(readFileSync("docs/affiliates/rollback_20270211001000.sql", "utf8"));
     expect(await val("select count(*)::int from pg_class where relname like 'affiliate\\_%' and relnamespace = 'public'::regnamespace")).toBe(0);
     expect(await val("select count(*)::int from pg_proc where (proname like 'affiliate\\_%' or proname like 'admin\\_affiliate%') and pronamespace = 'public'::regnamespace")).toBe(0);
     expect(await val("select count(*)::int from information_schema.columns where table_name = 'payouts' and column_name like 'affiliate%'")).toBe(0);
@@ -362,7 +362,7 @@ d("Affiliate Hub (database)", () => {
     expect(await val("select prosrc from pg_proc where proname = 'payout_apply_event'")).not.toContain("affiliate");
     // Staff payouts still plan and claim after rollback.
     expect(await val("select public.payout_claim_due(25, now()) ->> 'mode'")).toBe("test");
-    await pool.query(readFileSync("supabase/migrations/20270210001000_affiliate_hub.sql", "utf8"));
+    await pool.query(readFileSync("supabase/migrations/20270211001000_affiliate_hub.sql", "utf8"));
     expect(await val("select commission_years from public.affiliate_settings")).toBe(10);
   });
 });
