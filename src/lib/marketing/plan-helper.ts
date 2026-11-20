@@ -19,5 +19,5 @@ export function recommendPlan(a: HelperAnswers, pccLive: boolean): HelperResult 
   }
   return { plan: "unlimited", addPcc: pcc, anchor: "#plans", why: pcc
     ? "Unlimited bids, plus the Project Command Center add-on to schedule crews and subcontractors."
-    : "You'd run out of free bids quickly. Unlimited lets you finalize as many as you need." };
+    : "You'd run out of free bids quickly. Individual Unlimited lets you finalize as many as you need." };
 }

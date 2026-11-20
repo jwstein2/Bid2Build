@@ -54,11 +54,11 @@ export async function POST(req: Request) {
     // complimentary-access migration hasn't been applied yet.
     const paid = await admin.rpc("has_paid_subscription", { p_user_id: user.id });
     const active = paid.error ? (await admin.rpc("has_unlimited", { p_user_id: user.id })).data : paid.data;
-    if (active) return fail(409, "already_subscribed", "You already have Unlimited. Manage it from Subscription settings.");
+    if (active) return fail(409, "already_subscribed", "You already have Individual Unlimited. Manage it from Subscription settings.");
     // A licensed member of an Enterprise company already has everything Unlimited includes through the
     // company seat. Selling them a personal plan would bill them twice for the same access.
     if (await holdsCompanySeat(admin, user.id)) {
-      return fail(409, "company_seat", "Your company's Team license already includes Unlimited, so there's nothing to buy. Ask your company owner about add-ons.");
+      return fail(409, "company_seat", "Your company's Team license already includes everything in Individual Unlimited, so there's nothing to buy. Ask your company owner about add-ons.");
     }
 
     let { data: bc } = await admin.from("billing_customers").select("stripe_customer_id").eq("user_id", user.id).maybeSingle();
@@ -76,7 +76,7 @@ export async function POST(req: Request) {
     const existing = subs.data.find((s) => BLOCKING_SUBSCRIPTION_STATUSES.has(s.status));
     if (existing) {
       await applySubscription(admin, existing, Math.floor(Date.now() / 1000)).catch(() => null);
-      return fail(409, "already_subscribed", "You already have Unlimited. Manage it from Subscription settings.");
+      return fail(409, "already_subscribed", "You already have Individual Unlimited. Manage it from Subscription settings.");
     }
 
     const env = serverEnv();

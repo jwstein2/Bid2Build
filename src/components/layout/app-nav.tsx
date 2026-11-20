@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { REVEAL_FEATURE_EVENT, START_TOUR_EVENT } from "@/lib/features/state";
-import { Sparkles, CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, HardHat, LayoutTemplate, LogOut, X, UserCog, Receipt, Gauge, SquareKanban, CalendarRange, GraduationCap, Palette, Landmark, Shapes, Bot, House, Newspaper } from "lucide-react";
+import { Sparkles, CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, HardHat, LayoutTemplate, LogOut, ArrowLeftRight, X, UserCog, Receipt, Gauge, SquareKanban, CalendarRange, GraduationCap, Palette, Landmark, Shapes, Bot, House, Newspaper } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ButtonLink } from "@/components/ui/button";
 import { Logo } from "./logo";
@@ -68,7 +68,10 @@ const INDUSTRY: NavItem = { href: "/industry", label: "Industry News", icon: New
 /** V6.7 workspace access: links this company member can't use, and features kept from a workspace that is off. */
 export type SidebarAccess = { hidden: string[]; other: { href: string; label: string }[] };
 
-export function AppSidebar({ isAdmin, email, company, access = null, projects = false, financials = false, home = false, theme = null, learning }: { isAdmin: boolean; email: string | null; company?: CompanyNav | null; access?: SidebarAccess | null; projects?: boolean; financials?: boolean; home?: boolean; theme?: ThemePref | null; learning?: LearningNav | null }) {
+/** V8.10 workspace switches ("Switch to Sales Hub"), chosen on the server from the person's permissions. */
+export type WorkspaceSwitch = { href: string; label: string };
+
+export function AppSidebar({ isAdmin, email, company, access = null, projects = false, financials = false, home = false, theme = null, learning, switches = [] }: { isAdmin: boolean; email: string | null; company?: CompanyNav | null; access?: SidebarAccess | null; projects?: boolean; financials?: boolean; home?: boolean; theme?: ThemePref | null; learning?: LearningNav | null; switches?: WorkspaceSwitch[] }) {
   // In a company, say whose bids and whose subscription each link is ("Team bids" is in the Company section).
   const own = (n: NavItem): NavItem => (!company ? n : n.href === "/dashboard" ? { ...n, label: "My bids" } : n.href === "/settings/billing" ? { ...n, label: "My subscription" } : n);
   const shown = (href: string) => !access?.hidden.includes(href);
@@ -178,6 +181,12 @@ export function AppSidebar({ isAdmin, email, company, access = null, projects = 
           );
         })}
         <p className="mt-3 px-3 pb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#B8C6D4]">Account</p>
+        {/* A full page load (not client navigation): unsaved-change warnings fire, and no contractor-app state carries into the Sales Hub. */}
+        {switches.map((w) => (
+          <a key={w.href} href={w.href} data-testid="switch-workspace" className={cn(item, "text-[#C9D6E3] hover:bg-white/5 hover:text-white active:scale-[0.98] motion-safe:transition")}>
+            <ArrowLeftRight className="h-4 w-4 shrink-0 text-cyan" aria-hidden /> {w.label}
+          </a>
+        ))}
         {ACCOUNT_NAV.map(own).map((n) => link(n))}
         {learning && (learning.creator || learning.participant) && (
           <>

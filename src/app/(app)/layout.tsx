@@ -10,6 +10,10 @@ import { syncSignedInUser } from "@/lib/growth/leads";
 import { REFERRAL_COOKIE } from "@/lib/growth/referral";
 import { recordReferral } from "@/lib/growth/referral-server";
 import { SALES_COOKIE } from "@/lib/sales/link";
+import { SALES_JOIN_COOKIE } from "@/lib/sales/next";
+import { isInviteToken } from "@/lib/sales/invite";
+import { NO_WORKSPACES, switchLinks } from "@/lib/workspaces";
+import { loadWorkspaces } from "@/lib/workspaces-server";
 import { recordRepAttribution } from "@/lib/sales/billing-server";
 import { AppSidebar } from "@/components/layout/app-nav";
 import { FeatureHost } from "@/components/features/feature-host";
@@ -39,11 +43,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
   const user = await getUser();
   if (!user) redirect("/login?next=/dashboard");
+  // A sales invite opened before signing in some other way: finish (or confirm) it before the contractor
+  // app's own onboarding can take over. /sales/join forgets the invite once it's used or no longer open.
+  if (isInviteToken((await cookies()).get(SALES_JOIN_COOKIE)?.value ?? "")) redirect("/sales/join");
   const supabase = await createClient();
-  const [{ data: isAdmin }, company, premium, learning, access] = await Promise.all([
+  const [{ data: isAdmin }, company, premium, learning, access, workspaces] = await Promise.all([
     supabase.rpc("is_admin", { p_user_id: user.id }), loadMyCompany(supabase), hasPremiumAccess(supabase), loadLearningNav(supabase),
     // V6.7: which workspace links this person sees (company members only; solo accounts and owners see everything).
     loadEffectiveAccess(supabase).catch(() => null),
+    // V8.10: "Switch to Sales Hub" in the account menu for sales reps and sales admins.
+    loadWorkspaces().catch(() => NO_WORKSPACES),
   ]);
   // Link the account to its lead + first-touch attribution (best effort, one indexed lookup when already linked).
   // Runs after the page is sent (next/server after()), so this bookkeeping never delays a signed-in page.
@@ -69,7 +78,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     {user.demo && <DemoBanner kind={user.demo.kind} company={company?.name ?? null} />}
     <div className="app-theme flex min-h-screen flex-col md:flex-row">
       <aside className="on-dark bg-navy text-white md:sticky md:top-0 md:flex md:h-screen md:w-64 md:shrink-0 md:flex-col md:overflow-y-auto md:overscroll-contain no-print">
-        <AppSidebar isAdmin={Boolean(isAdmin)} projects={isPmEnabled()} financials={isFinancialsEnabled()} home={isUnifiedHomeEnabled()} company={companyNav(company)} access={sidebarAccess(access)} learning={learning} email={user.email ?? (user.phone ? formatPhone(user.phone) : null)} theme={user.theme ?? null} />
+        <AppSidebar isAdmin={Boolean(isAdmin)} projects={isPmEnabled()} financials={isFinancialsEnabled()} home={isUnifiedHomeEnabled()} company={companyNav(company)} access={sidebarAccess(access)} learning={learning} switches={switchLinks(workspaces, "contractor")} email={user.email ?? (user.phone ? formatPhone(user.phone) : null)} theme={user.theme ?? null} />
       </aside>
       {/* Bottom padding keeps the last controls on every page clear of the fixed Guide button (bottom left). */}
       <main id="main" className="min-w-0 flex-1 px-4 pb-24 pt-6 sm:px-8 md:pt-2">

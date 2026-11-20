@@ -8,7 +8,7 @@ export const COMP_PLANS = ["unlimited", "enterprise"] as const;
 export type CompPlan = (typeof COMP_PLANS)[number];
 
 export const COMP_PLAN_LABELS: Record<CompPlan, string> = {
-  unlimited: "Unlimited (individual)",
+  unlimited: "Individual Unlimited",
   enterprise: "Team (company)",
 };
 
@@ -70,7 +70,7 @@ export const SeatsInput = z.object({ id: z.string().uuid(), extraSeats: z.coerce
 const ERRORS: Record<string, string> = {
   forbidden: "Only Built2Bid platform admins can do this.",
   invalid_email: "Enter a valid email address.",
-  invalid_plan: "Choose Unlimited or Team.",
+  invalid_plan: "Choose Individual Unlimited or Team.",
   invalid_duration: `Choose between 1 and ${MAX_GRANT_DAYS} days.`,
   invalid_seats: `Extra seats must be 0 to ${MAX_EXTRA_SEATS}, and only on Team grants.`,
   grant_exists: "This email already has an open complimentary grant. Extend that one instead.",

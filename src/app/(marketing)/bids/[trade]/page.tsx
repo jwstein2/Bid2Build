@@ -260,7 +260,7 @@ function tradeNote(s: AccountStatus): string {
   switch (s.kind) {
     case "signed_out": return `No signup to start. ${plans.starterCredits} free bids to start, plus ${plans.monthlyCredits} every month.`;
     case "free": return s.creditsLeft !== null ? `You have ${creditBadge(s)}. Drafts never use a credit.` : "Drafts never use a credit.";
-    case "no_credits": return "You're out of free bids. Drafts and previews still work; go Unlimited to finalize.";
-    case "unlimited": return "Unlimited plan: finalize as many bids as you need.";
+    case "no_credits": return "You're out of free bids. Drafts and previews still work; get Individual Unlimited to finalize.";
+    case "unlimited": return "Individual Unlimited plan: finalize as many bids as you need.";
   }
 }

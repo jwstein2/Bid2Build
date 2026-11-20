@@ -86,7 +86,7 @@ export const EMPTY_LIBRARY: LibraryData = { access: false, itemsAccess: false, l
 /** Free accounts may keep this many saved items (enforced in the database). Unlimited has no cap. */
 export const FREE_SAVED_ITEMS_LIMIT = 250;
 /** Shown wherever a free account saves an item. */
-export const FREE_ITEMS_KEPT_NOTE = "Your saved items stay with you when you upgrade to Unlimited.";
+export const FREE_ITEMS_KEPT_NOTE = "Your saved items stay with you when you upgrade to Individual Unlimited.";
 
 export const LIBRARY_LOCKED_MESSAGE = "Premium Only — Save your preferred labor rates, material prices, and frequently used estimating items.";
 

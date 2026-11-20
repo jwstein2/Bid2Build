@@ -30,7 +30,7 @@ export function ConfirmingPayment({ planName }: { planName: string }) {
       <p className="flex items-center gap-2 font-semibold">{waiting && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}{waiting ? `Confirming your ${planName} payment…` : "Still confirming your payment"}</p>
       <p className="mt-1 text-ink-soft">
         {waiting
-          ? "Stripe usually confirms within a few seconds. This page updates on its own. Unlimited turns on as soon as Stripe confirms."
+          ? "Stripe usually confirms within a few seconds. This page updates on its own. Individual Unlimited turns on as soon as Stripe confirms."
           : "Stripe hasn't confirmed yet. You won't be charged twice. Refresh in a minute, and check your email for Stripe's receipt."}
       </p>
       {!waiting && <button type="button" className="mt-2 min-h-11 font-semibold text-brand underline" onClick={() => setTries(0)}>Check again</button>}

@@ -1,5 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
+import { goAfterSignIn } from "@/lib/http/redirect";
 import { useState } from "react";
 import { AuthDialog, type AuthDialogCopy } from "@/components/auth/auth-dialog";
 import { Button } from "@/components/ui/button";
@@ -31,7 +32,7 @@ export function LoginForm({ next }: { next: string }) {
   return (
     <div className="mt-6">
       <Button size="lg" className="w-full" onClick={() => setOpen(true)}>{isSmsSignInEnabled() ? "Continue with phone" : "Continue with email"}</Button>
-      <AuthDialog open={open} onOpenChange={setOpen} next={next} copy={loginCopy(next)} onVerified={() => { router.replace(next); router.refresh(); }} />
+      <AuthDialog open={open} onOpenChange={setOpen} next={next} copy={loginCopy(next)} onVerified={() => goAfterSignIn(next, router)} />
     </div>
   );
 }

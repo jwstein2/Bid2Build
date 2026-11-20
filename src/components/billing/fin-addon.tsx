@@ -77,7 +77,7 @@ export function FinAddonCard({ active, periodEnd, annual, purchasable, hasPlan }
         )}
         {!active && !preview && (
           !purchasable ? <p className="text-sm text-ink-soft">Coming soon. You&apos;ll be able to add Financials here shortly.</p>
-          : !hasPlan ? <p className="text-sm text-ink-soft">Financials is added to the Unlimited plan. <a href="/pricing" className="font-semibold underline">See plans</a></p>
+          : !hasPlan ? <p className="text-sm text-ink-soft">Financials is added to the Individual Unlimited plan. <a href="/pricing" className="font-semibold underline">See plans</a></p>
           : <Button onClick={() => call("preview")} disabled={busy !== null}>{busy === "preview" && <Loader2 className="h-4 w-4 animate-spin" />}Add Financials, {price}</Button>
         )}
         {preview && (

@@ -26,7 +26,7 @@ export function UpgradeDialog({ open, onOpenChange, nextCycleAt }: { open: boole
   const next = nextCycleAt ? new Date(nextCycleAt).toLocaleDateString(undefined, { month: "long", day: "numeric" }) : null;
   const perks = ["Unlimited finalized bids", "Reusable proposal templates", "Full proposal customization", "Same features on monthly or annual"];
   return (
-    <Modal open={open} onOpenChange={onOpenChange} title="You've used your free bids" description="Your estimate is saved. Go Unlimited to finalize it now and every bid after it." wide>
+    <Modal open={open} onOpenChange={onOpenChange} title="You've used your free bids" description="Your estimate is saved. Get Individual Unlimited to finalize it now and every bid after it." wide>
       <div className="relative overflow-hidden rounded-xl bg-navy p-5 text-white on-dark">
         <div aria-hidden className="blueprint-grid-dark pointer-events-none absolute inset-0 opacity-60" />
         <div className="relative grid gap-4 sm:grid-cols-[1.2fr_1fr] sm:items-center">
@@ -48,8 +48,8 @@ export function UpgradeDialog({ open, onOpenChange, nextCycleAt }: { open: boole
         </div>
       </div>
       <div className="mt-4 grid gap-2 sm:grid-cols-2">
-        <CheckoutButton plan="annual" signedIn label="Go Unlimited Annual" />
-        <CheckoutButton plan="monthly" signedIn label="Go Unlimited Monthly" variant="secondary" />
+        <CheckoutButton plan="annual" signedIn label="Get Individual Unlimited Annual" />
+        <CheckoutButton plan="monthly" signedIn label="Get Individual Unlimited Monthly" variant="secondary" />
       </div>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm">
         <p className="text-muted">{next ? `Or wait: your next free monthly bid arrives ${next}.` : "Drafts and previews stay free."}</p>

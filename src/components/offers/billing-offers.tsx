@@ -30,7 +30,7 @@ export function AnnualNudge({ bids, savings, annualPrice }: { bids: number; savi
     <div role="status" className="flex items-start gap-3 rounded-xl border border-accent/40 bg-brand-tint p-4 text-sm" data-testid="offer-t5">
       <CalendarCheck className="mt-0.5 h-5 w-5 shrink-0 text-accent-ink" aria-hidden />
       <div className="min-w-0 flex-1">
-        <p className="font-semibold text-ink">You&apos;ve finalized {bids} bids on Unlimited. Switching to annual saves {savings} a year.</p>
+        <p className="font-semibold text-ink">You&apos;ve finalized {bids} bids on Individual Unlimited. Switching to annual saves {savings} a year.</p>
         <p className="mt-0.5 text-ink-soft">Same features, {annualPrice} once a year. Stripe shows the exact amount and date before anything changes.</p>
         <div className="mt-2 flex flex-wrap items-center gap-3">
           <Button size="sm" disabled={busy} onClick={async () => { setBusy(true); setErr(null); reportOffer("t5_annual", "clicked", "portal_annual"); const e = await openPortal("annual"); if (e) { setErr(e); setBusy(false); } }}>
@@ -89,7 +89,7 @@ export function CancelStep({ monthly, annualSavings }: { monthly: boolean; annua
       <ul className="mt-3 space-y-1 text-sm text-ink-soft">
         <li>Your bids, customers and settings stay in your account, and your free credits apply again.</li>
         <li>Want a copy first? <Link href="/settings/account#export" onClick={() => reportOffer("ret1_cancel", "clicked", "export")} className="font-semibold text-accent-ink underline">Export all your data</Link>.</li>
-        <li>Paid periods aren&apos;t refunded. You keep Unlimited until the end of the period you paid for.</li>
+        <li>Paid periods aren&apos;t refunded. You keep Individual Unlimited until the end of the period you paid for.</li>
       </ul>
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <Button variant="secondary" disabled={busy !== null} onClick={() => go("cancel")} data-testid="cancel-continue">

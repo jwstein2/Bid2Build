@@ -177,7 +177,7 @@ export function EnterprisePlan({ signedIn, mode, supportEmail, extraFeatures = [
               {existing.kind === "paid" ? (
                 <>
                   <p className="font-semibold">You&apos;re on {existing.label}.</p>
-                  <p className="mt-1 text-ink-soft">Team replaces Unlimited, so you won&apos;t be asked to pay for both. Turn off Unlimited&apos;s renewal in <a href="/settings/billing" className="font-semibold text-accent-ink underline">Subscription settings</a> (it stays active until the end of your paid period), then start Team here. Questions? <a href={`mailto:${supportEmail}?subject=${encodeURIComponent("Switching to Built2Bid Team")}`} className="font-semibold text-accent-ink underline">Email us</a>.</p>
+                  <p className="mt-1 text-ink-soft">Team replaces Individual Unlimited, so you won&apos;t be asked to pay for both. Turn off Individual Unlimited&apos;s renewal in <a href="/settings/billing" className="font-semibold text-accent-ink underline">Subscription settings</a> (it stays active until the end of your paid period), then start Team here. Questions? <a href={`mailto:${supportEmail}?subject=${encodeURIComponent("Switching to Built2Bid Team")}`} className="font-semibold text-accent-ink underline">Email us</a>.</p>
                 </>
               ) : (
                 <p><span className="font-semibold">You have {existing.label}.</span> <span className="text-ink-soft">It stays as it is. Team adds a company account with licensed users for your crew.</span></p>
@@ -187,7 +187,7 @@ export function EnterprisePlan({ signedIn, mode, supportEmail, extraFeatures = [
           <div className="mt-5">
             {mode === "owner" ? <>{asked && <p className="mb-2 text-sm font-semibold text-ok" role="status" data-testid="team-already-owner">You already have Team. Manage users, seats and billing here.</p>}<ButtonLink href="/company/billing" variant="secondary" size="lg" className="w-full">Manage Team</ButtonLink></>
               : mode === "member" ? <p className="text-sm text-ink-soft" role={asked ? "status" : undefined}>You&apos;re already on your company&apos;s Team plan. Ask your company owner about seats.</p>
-              : blocked ? <ButtonLink href="/settings/billing" variant="secondary" size="lg" className="w-full" data-cta="team-manage-unlimited">Manage your Unlimited subscription</ButtonLink>
+              : blocked ? <ButtonLink href="/settings/billing" variant="secondary" size="lg" className="w-full" data-cta="team-manage-unlimited">Manage your Individual Unlimited subscription</ButtonLink>
               : mode === "contact" ? <ButtonLink href={`mailto:${supportEmail}?subject=${encodeURIComponent("Built2Bid Team")}`} size="lg" className="w-full">Contact us about Team</ButtonLink>
               : <Button size="lg" className="h-auto min-h-12 w-full whitespace-normal py-3" onClick={start} disabled={busy}>{busy && <Loader2 className="h-4 w-4 animate-spin" />}{open ? `Continue to checkout · ${formatCents(q.monthlyCents)}/month` : "Get Team"}</Button>}
             {err && <p role="alert" className="mt-2 text-sm text-danger">{err}</p>}

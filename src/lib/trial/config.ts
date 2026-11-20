@@ -24,7 +24,7 @@
  *   META_POST_TRADES                 optional trade hint per post: "<page>_<post>:painting,<page>_<post>:decks"
  */
 export const TRIAL_DAYS = 7;
-export const TRIAL_PLAN_NAME = "Built2Bid Unlimited";
+export const TRIAL_PLAN_NAME = "Built2Bid Individual Unlimited";
 export const CAMPAIGN_KEY = "fb_bid_7day";
 export const DEFAULT_GRAPH_VERSION = "v26.0";
 /** Messenger quick-reply payloads. */

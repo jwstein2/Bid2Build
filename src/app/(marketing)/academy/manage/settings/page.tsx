@@ -35,7 +35,7 @@ export default async function ManageSettings({ searchParams }: PageProps<"/acade
           <legend className="px-1 text-sm font-semibold">Access</legend>
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="free_members_can_post" defaultChecked={st.free_members_can_post} /> Free members can post</label>
           <label className="mt-2 flex items-center gap-2 text-sm"><input type="checkbox" name="premium_enabled" defaultChecked={st.premium_enabled} /> Premium content is enabled</label>
-          <label className="mt-2 flex items-center gap-2 text-sm"><input type="checkbox" name="bundle_unlimited" defaultChecked={st.premium_bundles.includes("unlimited")} /> Built2Bid Unlimited subscribers get Academy premium</label>
+          <label className="mt-2 flex items-center gap-2 text-sm"><input type="checkbox" name="bundle_unlimited" defaultChecked={st.premium_bundles.includes("unlimited")} /> Built2Bid Individual Unlimited subscribers get Academy premium</label>
           <p className="mt-2 text-xs text-muted">This only reads the plan people already have. It creates no Stripe products, prices or charges, and doesn&apos;t change anyone&apos;s subscription. Admins can also grant premium to a member by hand.</p>
         </fieldset>
         <div className="flex justify-end"><Submit>Save settings</Submit></div>

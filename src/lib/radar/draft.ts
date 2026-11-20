@@ -206,7 +206,7 @@ export function draftFollowUpReply(ctx: FollowUpContext): DraftResult {
   const parts: string[] = [pick(ctx.seed, "f-open", ["Good question.", "Thanks for asking.", "Sure thing."])];
   let answered = false;
   if (/\b(how much|price|pricing|cost|costs|expensive|subscription|per month|monthly)\b/i.test(q)) {
-    parts.push(`It's free for your first ${plans.starterCredits} bids and ${plans.monthlyCredits} bid a month after that. Unlimited is ${plans.monthlyPriceLabel}/month, or ${plans.annualPriceLabel}/year if you pay annually.`);
+    parts.push(`It's free for your first ${plans.starterCredits} bids and ${plans.monthlyCredits} bid a month after that. Individual Unlimited is ${plans.monthlyPriceLabel}/month, or ${plans.annualPriceLabel}/year if you pay annually.`);
     answered = true;
   }
   if (/\b(phone|mobile|ipad|tablet|app store|android|iphone)\b/i.test(q)) {

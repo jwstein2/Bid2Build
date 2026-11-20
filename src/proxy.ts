@@ -4,7 +4,7 @@ import { ATTRIBUTION_COOKIE, ATTRIBUTION_MAX_AGE, captureAttribution, encodeAttr
 import { normalizeReferralCode, REFERRAL_COOKIE, REFERRAL_MAX_AGE } from "@/lib/growth/referral";
 import { TWO_STEP_REQUIRED, needsStepUp, stepUpExempt } from "@/lib/auth/mfa";
 import { DEMO_BLOCKED_MESSAGE, isDemoBlocked, parseDemoClaim } from "@/lib/demo/session";
-import { salesLoginRedirect } from "@/lib/sales/next";
+import { SALES_JOIN_COOKIE, SALES_JOIN_MAX_AGE, inviteTokenFromPath, salesLoginRedirect } from "@/lib/sales/next";
 import { canonicalHostRedirect } from "@/lib/config/deploy";
 import { appLoginRedirect } from "@/lib/auth/app-next";
 
@@ -23,6 +23,16 @@ function withAttribution(request: NextRequest, response: NextResponse): NextResp
   return response;
 }
 
+/**
+ * Opening a sales invite link remembers its token (httpOnly) so the invite survives sign-up, email
+ * verification in another tab and any redirect. Validity is always checked on the server when used.
+ */
+function withSalesInvite(request: NextRequest, response: NextResponse): NextResponse {
+  const token = request.method === "GET" ? inviteTokenFromPath(request.nextUrl.pathname) : null;
+  if (token) response.cookies.set(SALES_JOIN_COOKIE, token, { maxAge: SALES_JOIN_MAX_AGE, httpOnly: true, sameSite: "lax", secure: request.nextUrl.protocol === "https:", path: "/" });
+  return response;
+}
+
 /** Refreshes the Supabase session cookie. Authorization happens in pages/routes, not here. */
 export async function proxy(request: NextRequest) {
   // Stray netlify.app hosts (main--built2bid.netlify.app, built2bid.netlify.app) go to built2bid.org
@@ -38,7 +48,7 @@ export async function proxy(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   let response = NextResponse.next({ request });
-  if (!url || !key) return withAttribution(request, response);
+  if (!url || !key) return withSalesInvite(request, withAttribution(request, response));
   const supabase = createServerClient(url, key, {
     cookies: {
       getAll: () => request.cookies.getAll(),
@@ -87,7 +97,7 @@ export async function proxy(request: NextRequest) {
       return redirect;
     }
   }
-  return withAttribution(request, response);
+  return withSalesInvite(request, withAttribution(request, response));
 }
 
 export const config = {

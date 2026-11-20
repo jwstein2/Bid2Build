@@ -77,7 +77,7 @@ export function LibraryManager() {
       {!full && (
         <Card className="p-4 text-sm" data-testid="free-items-note">
           <p className="font-semibold text-ink">Saved Items are free: keep up to {FREE_SAVED_ITEMS_LIMIT} of your own rates and items.</p>
-          <p className="mt-1 text-ink-soft">{FREE_ITEMS_KEPT_NOTE} Unlimited adds Saved Stacks, favorites, supplier price lists and no item limit. <Link href="/pricing#plans" className="font-semibold text-navy underline">See Unlimited</Link></p>
+          <p className="mt-1 text-ink-soft">{FREE_ITEMS_KEPT_NOTE} Individual Unlimited adds Saved Stacks, favorites, supplier price lists and no item limit. <Link href="/pricing#plans" className="font-semibold text-navy underline">See Individual Unlimited</Link></p>
         </Card>
       )}
 

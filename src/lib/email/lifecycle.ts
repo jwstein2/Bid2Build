@@ -144,7 +144,7 @@ export const SUBJECTS: Record<LifecycleStep, (trade: string | null) => string> =
   a: () => "Ready to create your first professional bid?",
   b: (t) => (t ? `Your ${t} estimate is ready when you are` : "Your estimate is ready when you are"),
   c: () => "Your bid is priced. Here's how to send it.",
-  d: () => "You've sent your first bid. Here's what Unlimited adds.",
+  d: () => "You've sent your first bid. Here's what Individual Unlimited adds.",
   e: () => "Three Built2Bid features worth setting up",
 };
 
@@ -185,7 +185,7 @@ export function renderLifecycle(c: CopyContext): Rendered {
     case "d":
       paras = [
         "Nice work getting your first bid out the door with Built2Bid.",
-        "If you're bidding regularly, Unlimited removes the bid limit and adds Saved Items & Pricing, so your usual materials and labor rates are one tap away, plus Proposal Templates for your standard terms.",
+        "If you're bidding regularly, Individual Unlimited removes the bid limit and adds Saved Items & Pricing, so your usual materials and labor rates are one tap away, plus Proposal Templates for your standard terms.",
         "It's optional. The Free plan keeps working and your bids stay where they are.",
       ];
       cta = { href: `${base}/pricing`, label: "See plans" };

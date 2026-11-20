@@ -13,9 +13,9 @@ export function CreditsLowNote({ onClose, className }: { onClose: () => void; cl
     <div role="status" className={cn("flex items-start gap-3 rounded-lg border border-accent/40 bg-brand-tint px-4 py-3 text-sm", className)} data-testid="offer-t1">
       <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-accent-ink" aria-hidden />
       <div className="min-w-0 flex-1">
-        <p className="text-ink">You have <span className="font-semibold">1 free bid left</span>. Bidding regularly? Unlimited is {MONTHLY.price}/month, and drafts stay free either way.</p>
+        <p className="text-ink">You have <span className="font-semibold">1 free bid left</span>. Bidding regularly? Individual Unlimited is {MONTHLY.price}/month, and drafts stay free either way.</p>
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
-          <Link href="/settings/billing" onClick={() => reportOffer("t1_credits_low", "clicked", "checkout")} className="inline-flex min-h-9 items-center font-semibold text-navy underline underline-offset-2">See Unlimited</Link>
+          <Link href="/settings/billing" onClick={() => reportOffer("t1_credits_low", "clicked", "checkout")} className="inline-flex min-h-9 items-center font-semibold text-navy underline underline-offset-2">See Individual Unlimited</Link>
           <button type="button" onClick={dismiss} className="inline-flex min-h-9 items-center text-ink-soft hover:text-ink">Not now</button>
         </div>
       </div>

@@ -48,7 +48,7 @@ export function InviteForm({ programId, seatsLeft, replaces }: { programId: stri
         </label>
       </div>
       <p className="text-xs text-ink-soft">
-        They get their own Built2Bid Unlimited account and company profile until your program ends. They are never added to your company, and you never see their bids unless they choose to share one.
+        They get their own Built2Bid Individual Unlimited account and company profile until your program ends. They are never added to your company, and you never see their bids unless they choose to share one.
         {replaces ? ` Replaces ${replaces.label}; the membership end date stays the same.` : ""}
       </p>
       <div><button className={btn} disabled={pending || seatsLeft <= 0}>{pending ? "Creating…" : seatsLeft > 0 ? "Create private invitation" : "No gift memberships left"}</button></div>

@@ -8,7 +8,7 @@ export type { SavedItem, SavedStack } from "@/lib/library/saved-items";
 
 export type LibraryResult = { ok: true } | { ok: false; code: string; message: string };
 
-const PREMIUM: LibraryResult = { ok: false, code: "premium_required", message: "Saved Items are part of Unlimited." };
+const PREMIUM: LibraryResult = { ok: false, code: "premium_required", message: "Saved Items are part of Individual Unlimited." };
 
 /**
  * Saved Items & Pricing Library for the signed-in contractor. Every signed-in plan gets `itemsAccess`

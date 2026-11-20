@@ -225,14 +225,14 @@ export function SavedItemsPicker({ group, estimate, suggestions, lib, dispatch }
                 {!lib.access && (
                   <button type="button" onClick={() => { setOpen(false); lib.upgrade(); }} className="mt-2 flex w-full items-start gap-2 rounded-md border border-dashed border-line-strong px-2 py-2 text-left hover:bg-paper" data-testid="picker-stacks-locked">
                     <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-navy" aria-hidden />
-                    <span><span className="block text-xs font-bold uppercase tracking-wider text-muted">Saved Stacks and favorites · Unlimited</span><span className="block text-xs text-ink-soft">{FREE_ITEMS_KEPT_NOTE} <span className="font-semibold text-navy underline">See Unlimited</span></span></span>
+                    <span><span className="block text-xs font-bold uppercase tracking-wider text-muted">Saved Stacks and favorites · Individual Unlimited</span><span className="block text-xs text-ink-soft">{FREE_ITEMS_KEPT_NOTE} <span className="font-semibold text-navy underline">See Individual Unlimited</span></span></span>
                   </button>
                 )}
               </>
             ) : (
               <button type="button" onClick={() => { setOpen(false); lib.upgrade(); }} className="mt-1 flex w-full items-start gap-2 rounded-md border border-dashed border-line-strong px-2 py-2 text-left hover:bg-paper">
                 <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent-ink" aria-hidden />
-                <span><span className="block text-xs font-bold uppercase tracking-wider text-muted">Saved Items · Premium</span><span className="block text-xs text-ink-soft">Save your own rates and items to reuse on every bid. <span className="font-semibold text-accent-ink">Upgrade to Unlimited</span></span></span>
+                <span><span className="block text-xs font-bold uppercase tracking-wider text-muted">Saved Items · Premium</span><span className="block text-xs text-ink-soft">Save your own rates and items to reuse on every bid. <span className="font-semibold text-accent-ink">Upgrade to Individual Unlimited</span></span></span>
               </button>
             )}
             {sug.length > 0 && <p className={heading}>Suggested Items · {estimate.trades.map((t) => getTrade(t)?.name ?? t).join(", ")}</p>}

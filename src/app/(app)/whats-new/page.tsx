@@ -14,7 +14,7 @@ import { ButtonLink, buttonClass } from "@/components/ui/button";
 export const metadata: Metadata = { title: "What's New", robots: { index: false } };
 
 /** The plan a locked feature actually needs (V8: add-on features are no longer labelled "Unlimited"). */
-const PLAN_LABEL: Record<Exclude<Entitlement, "free">, string> = { unlimited: "Unlimited", pm: `${PM_PRODUCT_NAME} add-on` };
+const PLAN_LABEL: Record<Exclude<Entitlement, "free">, string> = { unlimited: "Individual Unlimited", pm: `${PM_PRODUCT_NAME} add-on` };
 
 /** Where to get a locked feature: Unlimited members add the add-on from billing; others compare plans. */
 function planHref(e: Exclude<Entitlement, "free">, unlimited: boolean): string {
@@ -76,7 +76,7 @@ export default async function WhatsNewPage() {
           {lockedPlans.length > 0 && (
             <p className="mt-2 border-t border-line pt-3 text-sm text-ink-soft" data-testid="whats-new-plan-note">
               {lockedPlans.map((e, i) => (
-                <span key={e}>{i > 0 && " "}{e === "pm" ? `${PM_PRODUCT_NAME} features need the add-on.` : "Unlimited features need the Unlimited plan."}{" "}
+                <span key={e}>{i > 0 && " "}{e === "pm" ? `${PM_PRODUCT_NAME} features need the add-on.` : "Individual Unlimited features need the Individual Unlimited plan."}{" "}
                   <Link href={planHref(e, access.unlimited)} className="font-semibold text-accent-ink underline-offset-4 hover:underline">{e === "pm" ? (access.unlimited ? "Add it in Billing" : "See add-on pricing") : "Compare plans"}</Link></span>
               ))}
             </p>

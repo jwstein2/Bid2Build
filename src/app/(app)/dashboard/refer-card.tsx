@@ -20,7 +20,7 @@ export function ReferCard({ link, signedUp, paying, monthsEarned, eligible }: { 
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="flex items-center gap-2 text-lg font-extrabold text-navy"><Gift className="h-5 w-5 text-accent-ink" aria-hidden />Refer a contractor, get a month free</h2>
-          <p className="mt-1 text-sm text-ink-soft">Share your link. When a contractor signs up with it and starts a paid plan, you get 1 month free: a credit on your next bill if you&apos;re subscribed, or 30 days of Unlimited if you&apos;re not. Up to 12 rewards a year. <a href="/referral-terms" className="underline" target="_blank" rel="noopener">Program terms</a></p>
+          <p className="mt-1 text-sm text-ink-soft">Share your link. When a contractor signs up with it and starts a paid plan, you get 1 month free: a credit on your next bill if you&apos;re subscribed, or 30 days of Individual Unlimited if you&apos;re not. Up to 12 rewards a year. <a href="/referral-terms" className="underline" target="_blank" rel="noopener">Program terms</a></p>
         </div>
         {(signedUp > 0 || monthsEarned > 0) && (
           <p className="text-sm text-muted" data-testid="refer-counts">{plural(signedUp, "signup", "signups")} · {paying} paying · <span className="font-semibold text-ok">{plural(monthsEarned, "free month", "free months")} earned</span></p>
