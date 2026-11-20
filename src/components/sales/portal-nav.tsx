@@ -14,6 +14,7 @@ const MY_LINKS = [
   { href: "/sales/academy", label: "Academy" },
   { href: "/sales/preferences", label: "My preferences" },
   { href: "/sales/how-you-get-paid", label: "How you get paid" },
+  { href: "/staff/payouts", label: "Payouts" },
 ];
 
 const item = (active: boolean) => cn("whitespace-nowrap rounded-md px-3 py-2 font-semibold", active ? "bg-white/15 text-white" : "text-white/75 hover:bg-white/10 hover:text-white");

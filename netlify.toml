@@ -7,6 +7,8 @@
 [build.environment]
   NODE_VERSION = "22"
   NEXT_TELEMETRY_DISABLED = "1"
+  # The type check in `next build` needs a little over 2 GB of heap; Node's default limit can stop it.
+  NODE_OPTIONS = "--max-old-space-size=4096"
 
 # Welcome video, poster and tour stills (public/media). Served straight from Netlify's CDN with
 # byte-range support, so the MP4 (faststart: index at the front) streams instead of downloading
