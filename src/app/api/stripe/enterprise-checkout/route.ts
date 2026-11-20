@@ -6,7 +6,9 @@ import { checkoutTaxParams } from "@/lib/billing/tax";
 import { BLOCKING_SUBSCRIPTION_STATUSES } from "@/lib/billing/checkout-sessions";
 import { ENTERPRISE_INCLUDED_USERS, ENTERPRISE_MAX_USERS, enterpriseBaseMismatch, enterpriseSeatMismatch } from "@/lib/enterprise/pricing";
 import { createAdminClient, getUser } from "@/lib/supabase/server";
-import { isEnterpriseConfigured, serverEnv } from "@/lib/env";
+import { isEnterpriseConfigured, isPmBillingConfigured, serverEnv } from "@/lib/env";
+import { PM_EDITOR_CENTS, PM_INCLUDED_ENTERPRISE_EDITORS } from "@/lib/pm/billing";
+import { verifyPmPrice } from "@/lib/pm/server";
 import { site } from "@/lib/site";
 import { fail, json, logError, rateLimit, sameOrigin } from "@/lib/http/api";
 
@@ -15,8 +17,10 @@ export const runtime = "nodejs";
 const Body = z.object({
   companyName: z.string().trim().min(1).max(200),
   users: z.number().int().min(ENTERPRISE_INCLUDED_USERS).max(ENTERPRISE_MAX_USERS).default(ENTERPRISE_INCLUDED_USERS),
+  /** Schedule editors chosen in the pricing calculator, including the 1 included (never more than users). */
+  editors: z.number().int().min(PM_INCLUDED_ENTERPRISE_EDITORS).max(ENTERPRISE_MAX_USERS).default(PM_INCLUDED_ENTERPRISE_EDITORS),
   attempt: z.string().regex(/^[A-Za-z0-9-]{8,64}$/).optional(),
-});
+}).refine((b) => b.editors <= b.users, { message: "editors_exceed_users", path: ["editors"] });
 
 /** Verified Stripe prices, cached per instance for 10 minutes. */
 const verifiedAt = new Map<string, number>();
@@ -43,8 +47,14 @@ export async function POST(req: Request) {
   if (!user) return fail(401, "not_authenticated", "Sign in to start the Team plan.");
   if (!user.verified) return fail(403, "email_not_verified", "Verify your phone or email before upgrading.");
   const p = Body.safeParse(await req.json().catch(() => null));
-  if (!p.success) return fail(400, "invalid", "Enter your company name and number of users.");
-  const { companyName, users } = p.data;
+  if (!p.success) return fail(400, "invalid", p.error.issues.some((i) => i.message === "editors_exceed_users")
+    ? "You can't have more schedule editors than licensed users."
+    : "Enter your company name and number of users.");
+  const { companyName, users, editors } = p.data;
+  // Extra schedule editors ($1.99/month each beyond the included one) go on the same subscription,
+  // the same Stripe item /api/company/pm-editors manages later. Only when editor billing is switched on.
+  const extraEditors = editors - PM_INCLUDED_ENTERPRISE_EDITORS;
+  if (extraEditors > 0 && !isPmBillingConfigured("editor")) return fail(409, "editors_unavailable", "Extra schedule editors can't be added at checkout yet. Start with 1 editor and add more from Team billing.");
 
   try {
     assertModeAllowed();
@@ -74,6 +84,7 @@ export async function POST(req: Request) {
 
     const env = serverEnv();
     await verifyPrices(stripe, env.stripePriceEnterpriseBase, env.stripePriceEnterpriseSeat);
+    if (extraEditors > 0) await verifyPmPrice(stripe, env.stripePricePmEditor, PM_EDITOR_CENTS, "month");
 
     const now = Math.floor(Date.now() / 1000);
     // One open checkout per customer: expire any other open sessions first.
@@ -81,7 +92,7 @@ export async function POST(req: Request) {
     await Promise.all(open.map((s) => stripe.checkout.sessions.expire(s.id).catch(() => null)));
 
     const extra = users - ENTERPRISE_INCLUDED_USERS;
-    const metadata = { user_id: user.id, plan: "enterprise", company_name: companyName, users: String(users) };
+    const metadata = { user_id: user.id, plan: "enterprise", company_name: companyName, users: String(users), schedule_editors: String(editors) };
     const params: Stripe.Checkout.SessionCreateParams = {
       mode: "subscription",
       customer,
@@ -89,6 +100,7 @@ export async function POST(req: Request) {
       line_items: [
         { price: env.stripePriceEnterpriseBase, quantity: 1 },
         ...(extra > 0 ? [{ price: env.stripePriceEnterpriseSeat, quantity: extra }] : []),
+        ...(extraEditors > 0 ? [{ price: env.stripePricePmEditor, quantity: extraEditors }] : []),
       ],
       subscription_data: { metadata },
       metadata,
@@ -98,13 +110,13 @@ export async function POST(req: Request) {
       success_url: `${site.url}/company/billing?checkout=success`,
       cancel_url: `${site.url}/pricing?checkout=cancelled&plan=enterprise`,
     };
-    const created = await stripe.checkout.sessions.create(params, { idempotencyKey: `ent-checkout-${user.id}-${users}-${p.data.attempt ?? `t${Math.floor(now / 60)}`}` });
+    const created = await stripe.checkout.sessions.create(params, { idempotencyKey: `ent-checkout-${user.id}-${users}-${editors}-${p.data.attempt ?? `t${Math.floor(now / 60)}`}` });
     if (created.status !== "open" || !created.url) return fail(409, "checkout_retry", "That checkout link expired. Please try again.");
     await admin.from("analytics_events").insert({ user_id: user.id, event: "checkout_started" });
     return json({ url: created.url, plan: "enterprise" });
   } catch (e) {
     const code = (e as { code?: string }).code;
-    logError("stripe.enterprise_checkout", e, { user: user.id, users });
+    logError("stripe.enterprise_checkout", e, { user: user.id, users, editors });
     if (code === "pricing_mismatch") return fail(500, "pricing_mismatch", "Team checkout is temporarily unavailable while we update pricing.");
     return fail(500, "checkout_failed", "We couldn't start checkout. Please try again.");
   }
