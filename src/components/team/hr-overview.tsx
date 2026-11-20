@@ -30,7 +30,7 @@ export function HrOverviewView({ overview, today }: { overview: HrOverview; toda
       ) : (
         <ul className="divide-y divide-line rounded-xl border border-line bg-surface">
           {overview.people.map((p) => {
-            const missing = [!p.ssnOnFile && "SSN", !p.emergencyOnFile && "emergency contact", !p.i9OnFile && "I-9", !p.w4OnFile && "W-4"].filter(Boolean) as string[];
+            const missing = [!p.ssnOnFile && "SSN", !p.emergencyOnFile && "emergency contact", !p.i9OnFile && "I-9", !p.w4OnFile && "W-4", !p.bankOnFile && "direct deposit"].filter(Boolean) as string[];
             return (
               <li key={p.resourceId}>
                 <Link href={`/projects/team/hr/${p.resourceId}`} className="flex flex-wrap items-center gap-2 p-3 hover:bg-paper">

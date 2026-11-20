@@ -225,17 +225,22 @@ export const mapLink = (p: Punch) => `https://www.google.com/maps/search/?api=1&
 // ---------------------------------------------------------------------------------------------------
 // Subcontractor records
 // ---------------------------------------------------------------------------------------------------
-export type SubDocType = "w9" | "coi_general_liability" | "workers_comp" | "auto_liability" | "umbrella" | "license" | "subcontract_agreement" | "master_agreement" | "lien_waiver" | "other";
+export type SubDocType = "w9" | "coi_general_liability" | "workers_comp" | "auto_liability" | "umbrella" | "license" | "subcontract_agreement" | "master_agreement" | "lien_waiver" | "other"
+  | "wc_exemption" | "bond" | "safety_program" | "prequalification";
 export const SUB_DOC_TYPES: { value: SubDocType; label: string; group: "tax" | "insurance" | "license" | "agreement" | "other"; expires: boolean }[] = [
   { value: "w9", label: "W-9", group: "tax", expires: false },
   { value: "coi_general_liability", label: "General liability certificate", group: "insurance", expires: true },
   { value: "workers_comp", label: "Workers' comp certificate", group: "insurance", expires: true },
   { value: "auto_liability", label: "Auto liability certificate", group: "insurance", expires: true },
   { value: "umbrella", label: "Umbrella / excess certificate", group: "insurance", expires: true },
+  { value: "wc_exemption", label: "Workers' comp exemption certificate", group: "license", expires: true },
+  { value: "bond", label: "Bond (license, performance or payment)", group: "license", expires: true },
   { value: "license", label: "Contractor license", group: "license", expires: true },
   { value: "subcontract_agreement", label: "Subcontract agreement", group: "agreement", expires: true },
   { value: "master_agreement", label: "Master subcontract agreement (MSA)", group: "agreement", expires: true },
   { value: "lien_waiver", label: "Lien waiver", group: "agreement", expires: false },
+  { value: "safety_program", label: "Safety program / OSHA logs", group: "other", expires: true },
+  { value: "prequalification", label: "Prequalification form", group: "other", expires: true },
   { value: "other", label: "Other document", group: "other", expires: true },
 ];
 export const docTypeLabel = (t: string) => SUB_DOC_TYPES.find((x) => x.value === t)?.label ?? "Document";
@@ -259,16 +264,41 @@ export interface SubTax {
 }
 export interface SubDocument {
   id: string; docType: SubDocType; title: string | null; issuer: string | null; policyNumber: string | null; coverageAmount: number | null;
+  aggregateAmount: number | null; additionalInsured: boolean | null; waiverOfSubrogation: boolean | null; primaryNoncontributory: boolean | null;
   effectiveOn: string | null; expiresOn: string | null; signedOn: string | null; fileName: string | null; hasFile: boolean; note: string | null;
   status: "on_file" | "replaced" | "removed"; recordedAt: string;
 }
-export interface SubRecord { resourceId: string; name: string; tax: SubTax | null; documents: SubDocument[] }
+export const DIVERSITY_CERTS = {
+  mbe: "Minority-owned (MBE)", wbe: "Women-owned (WBE)", dbe: "Disadvantaged (DBE)", sbe: "Small business (SBE)", vosb: "Veteran-owned (VOSB)",
+  sdvosb: "Service-disabled veteran-owned (SDVOSB)", hubzone: "HUBZone", "8a": "SBA 8(a)",
+} as const;
+export type DiversityCert = keyof typeof DIVERSITY_CERTS;
+export interface SubProfile {
+  paymentTerms: string | null; retainagePct: number | null; backupWithholding: boolean; emr: number | null; yearsInBusiness: number | null;
+  diversityCerts: DiversityCert[]; website: string | null; achBankName: string | null; achAccountType: "checking" | "savings" | null; achRouting: string | null;
+  prequalifiedOn: string | null;
+}
+export interface SubRecord {
+  resourceId: string; name: string; tax: SubTax | null; documents: SubDocument[];
+  profile: SubProfile | null; bank: { onFile: boolean; last4: string | null } | null;
+}
+const bool = (v: unknown): boolean | null => (typeof v === "boolean" ? v : null);
 
 export function mapSubRecord(raw: unknown): SubRecord {
   const r = (raw ?? {}) as Record<string, unknown>;
   const t = r.tax as Record<string, unknown> | null;
+  const pr = r.profile as Record<string, unknown> | null | undefined;
+  const bk = r.bank as Record<string, unknown> | null | undefined;
   return {
     resourceId: String(r.resourceId), name: String(r.name ?? ""),
+    profile: pr ? {
+      paymentTerms: str(pr.paymentTerms), retainagePct: num(pr.retainagePct), backupWithholding: pr.backupWithholding === true, emr: num(pr.emr),
+      yearsInBusiness: num(pr.yearsInBusiness), diversityCerts: (Array.isArray(pr.diversityCerts) ? pr.diversityCerts : []).filter((c): c is DiversityCert => typeof c === "string" && c in DIVERSITY_CERTS),
+      website: str(pr.website), achBankName: str(pr.achBankName), achAccountType: pr.achAccountType === "checking" || pr.achAccountType === "savings" ? pr.achAccountType : null,
+      achRouting: str(pr.achRouting), prequalifiedOn: str(pr.prequalifiedOn),
+    } : null,
+    // null until the 20270205001000 database update is applied (the card stays hidden).
+    bank: bk ? { onFile: bk.onFile === true, last4: str(bk.last4) } : null,
     tax: t ? {
       legalName: str(t.legalName), businessName: str(t.businessName), taxClassification: (str(t.taxClassification) as TaxClassification | null),
       tinType: t.tinType === "ssn" || t.tinType === "ein" ? t.tinType : null, tinLast4: str(t.tinLast4), address: str(t.address),
@@ -276,7 +306,8 @@ export function mapSubRecord(raw: unknown): SubRecord {
     } : null,
     documents: (Array.isArray(r.documents) ? (r.documents as Record<string, unknown>[]) : []).map((d) => ({
       id: String(d.id), docType: String(d.docType) as SubDocType, title: str(d.title), issuer: str(d.issuer), policyNumber: str(d.policyNumber),
-      coverageAmount: num(d.coverageAmount), effectiveOn: str(d.effectiveOn), expiresOn: str(d.expiresOn), signedOn: str(d.signedOn),
+      coverageAmount: num(d.coverageAmount), aggregateAmount: num(d.aggregateAmount), additionalInsured: bool(d.additionalInsured),
+      waiverOfSubrogation: bool(d.waiverOfSubrogation), primaryNoncontributory: bool(d.primaryNoncontributory), effectiveOn: str(d.effectiveOn), expiresOn: str(d.expiresOn), signedOn: str(d.signedOn),
       fileName: str(d.fileName), hasFile: d.hasFile === true, note: str(d.note),
       status: d.status === "replaced" ? "replaced" : d.status === "removed" ? "removed" : "on_file", recordedAt: String(d.recordedAt ?? ""),
     })),
@@ -366,6 +397,7 @@ export function recordsDbError(e: { message?: string; code?: string } | null): {
   if (m.includes("too_long")) return { status: 400, code: "too_long", message: "One entry can't be longer than 24 hours. Split it into two." };
   if (m.includes("bad_project")) return { status: 400, code: "bad_project", message: "Pick one of your own projects." };
   if (m.includes("bad_tin")) return { status: 400, code: "bad_tin", message: "Enter only the last 4 digits of the SSN or EIN." };
+  if (m.includes("bad_routing")) return { status: 400, code: "bad_routing", message: "That routing number isn't valid. Check the 9 digits on the check or bank letter." };
   if (m.includes("bad_supplier")) return { status: 400, code: "bad_supplier", message: "Pick one of your own suppliers." };
   if (m.includes("forbidden_own")) return { status: 403, code: "forbidden_own", message: "Someone else needs to approve your own time." };
   if (m.includes("not_found")) return { status: 404, code: "not_found", message: "That record no longer exists." };

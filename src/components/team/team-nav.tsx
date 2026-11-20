@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Building2, Clock, FileCheck2, FolderLock, HardHat, Scale, Users } from "lucide-react";
+import { Building2, Clock, FileCheck2, FileUp, FolderLock, HardHat, Scale, Users } from "lucide-react";
 
 const TABS = [
   { key: "people", href: "/projects/team", label: "People & subs", Icon: Users },
@@ -9,6 +9,7 @@ const TABS = [
   { key: "pricing", href: "/projects/team/pricing", label: "Supplier pricing", Icon: Scale },
   { key: "subs", href: "/projects/team/subs", label: "Sub records", Icon: HardHat },
   { key: "1099", href: "/projects/team/1099", label: "1099 totals", Icon: FileCheck2 },
+  { key: "import", href: "/projects/team/import", label: "Import", Icon: FileUp },
 ] as const;
 export type TeamTab = (typeof TABS)[number]["key"];
 
