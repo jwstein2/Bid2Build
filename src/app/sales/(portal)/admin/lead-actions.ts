@@ -7,6 +7,7 @@ import { requireSalesAdmin } from "@/lib/sales/server";
 import type { SalesCap } from "@/lib/sales/caps";
 import { parseLeadRows } from "@/lib/sales/crm";
 import { ADMIN_LEAD_ERRORS, csvToRows } from "@/lib/sales/leads-admin";
+import { markEmailBounced, recheckLeadEmails } from "@/lib/sales/email-check";
 
 /**
  * V8.6 admin lead actions. Each re-checks the caller here and again in the database (admin_sales_*),
@@ -57,9 +58,12 @@ export async function importLeadsV86(fd: FormData) {
   const { data, error } = await db.rpc("admin_sales_lead_import", { p_caller: user.id, p_rows: rows, p_mode: mode, p_rep: mode === "rep" ? rep : null, p_label: String(fd.get("label") ?? "").slice(0, 200) || null });
   if (error) backTo(fd, { err: code(error) });
   const r = data as { added: number; duplicates: number; possible: number; suppressed: number; invalid: number; existing_customers: number; allocated: number; held: number };
+  // Check the new leads' emails can receive mail (DNS only, within the request; the daily job finishes any left).
+  const mail = r.added ? await recheckLeadEmails(db, { limit: Math.min(r.added, 300) }).catch(() => null) : null;
   const parts = [`Added ${r.added}`, r.allocated ? `${r.allocated} assigned` : "", r.held ? `${r.held} waiting in the queue` : "", r.duplicates ? `${r.duplicates} already on file (left with their owner)` : "",
     r.possible ? `${r.possible} possible duplicates to review` : "", r.existing_customers ? `${r.existing_customers} existing customers held for review` : "",
-    r.suppressed ? `${r.suppressed} on the do-not-contact list` : "", r.invalid ? `${r.invalid} missing a name or contact` : ""].filter(Boolean);
+    r.suppressed ? `${r.suppressed} on the do-not-contact list` : "", r.invalid ? `${r.invalid} missing a name or contact` : "",
+    mail?.bad ? `${mail.bad} with an email that can't receive mail (flagged on the lead)` : ""].filter(Boolean);
   backTo(fd, { ok: parts.join(", ") + "." });
 }
 
@@ -138,6 +142,7 @@ export async function adminLogActivity(fd: FormData) {
   if (!lead.success || !p.success) backTo(fd, { err: "invalid" });
   const { error } = await db.rpc("admin_sales_lead_activity_add", { p_caller: user.id, p_lead: lead.data, p_kind: p.data.kind, p_body: p.data.body, p_disposition: p.data.disposition || null });
   if (error) backTo(fd, { err: code(error) });
+  if (p.data.kind === "email" && p.data.disposition === "bounced") await markEmailBounced(db, lead.data, p.data.body, user.id).catch(() => false);
   backTo(fd, { ok: "Logged on the lead. The owner sees it in their CRM." });
 }
 
@@ -150,4 +155,21 @@ export async function adminScheduleFollowUp(fd: FormData) {
   const { error } = await db.rpc("admin_sales_lead_task", { p_caller: user.id, p_lead: lead.data, p_title: title, p_due_at: new Date(`${due}T15:00:00Z`).toISOString() });
   if (error) backTo(fd, { err: code(error) });
   backTo(fd, { ok: "Follow-up scheduled for the lead's owner." });
+}
+
+/** A real bounce came back for this lead's email: mark it bad and put it on the known-bounce list. */
+export async function adminMarkEmailBounced(fd: FormData) {
+  const { user, db } = await need("view_all_leads", fd);
+  const lead = z.string().regex(uuidRe).safeParse(fd.get("lead"));
+  if (!lead.success) backTo(fd, { err: "invalid" });
+  const ok = await markEmailBounced(db, lead.data, String(fd.get("note") ?? ""), user.id);
+  backTo(fd, ok ? { ok: "Email marked as bounced. Reach them by phone." } : { err: "invalid" });
+}
+
+/** Re-run the mail-server check on every lead's email (DNS only, nothing is sent). */
+export async function recheckAllLeadEmails(fd: FormData) {
+  const { db } = await need("reassign_leads", fd);
+  const r = await recheckLeadEmails(db, { all: true, limit: 1000 });
+  if ("error" in r && r.error) backTo(fd, { err: "invalid" });
+  backTo(fd, { ok: `Checked ${r.checked} email${r.checked === 1 ? "" : "s"}: ${r.ok} can receive mail, ${r.bad} can't${r.unknown ? `, ${r.unknown} couldn't be checked right now (try again later)` : ""}.` });
 }

@@ -1,8 +1,8 @@
-import { resolveMx } from "node:dns/promises";
 import { createAdminClient } from "@/lib/supabase/server";
 import { fail, json, logError } from "@/lib/http/api";
-import { cleanRows, ImportBody, importAuthCheck, type ImportLeadRow, type ImportResult } from "@/lib/sales/import";
+import { cleanRows, ImportBody, importAuthCheck, type ImportResult } from "@/lib/sales/import";
 import { fillBriefs, type BriefLead } from "@/lib/sales/brief";
+import { checkEmails, knownBadEmails } from "@/lib/sales/email-check";
 
 export const runtime = "nodejs";
 
@@ -30,19 +30,6 @@ export async function GET(req: Request) {
   return json(data);
 }
 
-/** The email's domain must accept mail (MX record). Cached per request; DNS errors count as no. */
-async function mailDomainsOk(rows: ImportLeadRow[]): Promise<Set<string>> {
-  const domains = [...new Set(rows.map((r) => r.email.split("@")[1]))];
-  const ok = new Set<string>();
-  await Promise.all(domains.map(async (d) => {
-    try {
-      const mx = await Promise.race([resolveMx(d), new Promise<never>((_, rej) => setTimeout(() => rej(new Error("timeout")), 3000))]);
-      if (mx.some((m) => m.exchange)) ok.add(d);
-    } catch { /* no MX → unverified */ }
-  }));
-  return ok;
-}
-
 export async function POST(req: Request) {
   const no = denied(req); if (no) return no;
   const raw = await req.text();
@@ -52,19 +39,30 @@ export async function POST(req: Request) {
   const p = ImportBody.safeParse(body);
   if (!p.success) return fail(400, "invalid_body", "Expected { batch_id, label?, leads: [...] } with at most 1,000 leads.", { issues: p.error.issues.slice(0, 5).map((i) => `${i.path.join(".")}: ${i.message}`) });
   const { valid, unverified, reasons } = cleanRows(p.data.leads);
-  const okDomains = await mailDomainsOk(valid);
-  const rows = valid.filter((r) => okDomains.has(r.email.split("@")[1]))
-    .map((r) => ({ ...r, verification: { ...r.verification, email_domain_mx: true, checked_at: new Date().toISOString() } }));
-  const noMx = valid.length - rows.length;
+  // The email must be able to receive mail: the domain has an MX record AND that mail server exists
+  // (an MX pointing at a dead host bounces everything). Known bounces are skipped too. DNS failures count
+  // as not verified, so the agent can resend the row next run.
   const admin = createAdminClient();
+  const [checks, bad] = await Promise.all([checkEmails(valid.map((r) => r.email)), knownBadEmails(admin, valid.map((r) => r.email))]);
+  const checkedAt = new Date().toISOString();
+  const rows = valid.filter((r) => checks.get(r.email)?.status === "ok" && !bad.has(r.email))
+    .map((r) => ({ ...r, verification: { ...r.verification, email_domain_mx: true, email_mail_server: true, checked_at: checkedAt } }));
+  const noMx = valid.length - rows.length;
+  const badReasons = [...new Set(valid.filter((r) => bad.has(r.email) || checks.get(r.email)?.status !== "ok")
+    .map((r) => bad.has(r.email) ? "email (bounced before)" : checks.get(r.email)?.status === "unknown" ? "email (mail lookup failed, resend next run)" : "email (domain can't receive mail)"))];
   const { data, error } = await admin.rpc("sales_import_batch", { p_external_id: p.data.batch_id, p_label: p.data.label ?? null, p_rows: rows, p_unverified: unverified + noMx });
   if (error) {
     logError("sales.lead_import", error, { batch: p.data.batch_id });
     return fail(500, "import_failed", "Import failed; nothing partial was reported. Try again.");
   }
   const r = data as ImportResult;
-  // Briefs for the new leads, within a time budget; the daily sales job fills any left over.
   const added = new Set(r.added_ids ?? []);
+  // Every stored row passed the mail check just now; record that on the new leads.
+  if (added.size) {
+    await admin.from("sales_leads").update({ email_status: "ok", email_checked_at: checkedAt, email_check_note: "Mail server checked at import." })
+      .in("id", [...added]).then(() => null, () => null);
+  }
+  // Briefs for the new leads, within a time budget; the daily sales job fills any left over.
   let briefs = 0;
   if (added.size) {
     const { data: missing } = await admin.rpc("sales_leads_missing_brief", { p_limit: 200 });
@@ -82,7 +80,10 @@ export async function POST(req: Request) {
   return json({
     progress,
     batch_id: p.data.batch_id, received: p.data.leads.length, added: r.added, duplicates: r.duplicates, suppressed: r.suppressed,
-    invalid: r.invalid, unverified: r.unverified, unverified_fields: noMx ? [...reasons, "email (domain has no mail server)"] : reasons,
+    invalid: r.invalid, unverified: r.unverified, unverified_fields: noMx ? [...reasons, ...badReasons] : reasons,
     briefs_written: briefs, replayed: r.replayed,
+    // Which addresses failed the mail check and why, so the agent can find another contact for them.
+    email_rejected: valid.filter((x) => bad.has(x.email) || checks.get(x.email)?.status !== "ok").slice(0, 100)
+      .map((x) => ({ company_name: x.company_name, email: x.email, reason: bad.has(x.email) ? "Bounced before." : checks.get(x.email)?.reason ?? "Not checked." })),
   });
 }

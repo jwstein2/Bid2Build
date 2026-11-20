@@ -13,7 +13,15 @@ export interface Lead {
   do_not_contact: boolean; dnc_status?: "unchecked" | "clear" | "listed"; dnc_checked_at?: string | null; phone_line?: "unknown" | "landline" | "mobile" | "voip"; text_consent_at?: string | null; next_action_at: string | null; last_activity_at: string | null; notes: string | null; open_tasks: number; created_at: string; updated_at: string;
   /** Weekly import only: business start date as published, where each fact was checked, Haiku sales brief. */
   business_started?: string | null; verification?: Record<string, unknown> | null; sales_brief?: string | null;
+  email_status?: LeadEmailStatus; email_checked_at?: string | null; email_check_note?: string | null;
 }
+
+/** Can the lead's email receive mail? Set by a DNS check (email-check.ts) or "bounced" by a person. */
+export type LeadEmailStatus = "unchecked" | "ok" | "undeliverable" | "bounced";
+export const EMAIL_STATUS_LABEL: Record<LeadEmailStatus, string> = {
+  unchecked: "Not checked yet", ok: "Can receive mail", undeliverable: "Can't receive mail", bounced: "Bounced",
+};
+export const isBadEmail = (s: string | null | undefined) => s === "undeliverable" || s === "bounced";
 
 /** Labels for the verification sources the weekly import records. */
 export const VERIFIED_LABEL: Record<string, string> = { owner_name: "Owner", email: "Email", phone: "Phone", business_started: "Start date" };

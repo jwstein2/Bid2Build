@@ -4,6 +4,7 @@ import { fail, json, logError } from "@/lib/http/api";
 import { fillBriefs } from "@/lib/sales/brief";
 import { sendDayBeforeReminders } from "@/lib/sales/booking-email";
 import { sendWeeklyDigest } from "@/lib/sales/digest";
+import { recheckLeadEmails } from "@/lib/sales/email-check";
 
 export const runtime = "nodejs";
 
@@ -45,5 +46,7 @@ export async function POST(req: Request) {
   const { data: recycle } = await createAdminClient().rpc("sales_recycle_run", { p_actor: null });
   // Imported leads whose sales brief didn't finish during the import.
   const briefs = await fillBriefs(createAdminClient(), { limit: 50, budgetMs: 8000 }).catch(() => 0);
-  return json({ ...(data as object), accelerators: accel, customer_successes: successes, reminders, digest, queue: queue ?? null, recycle: recycle ?? null, briefs_written: briefs });
+  // Lead emails not checked yet (manual adds, CSV imports): can the domain receive mail? DNS only.
+  const emails = await recheckLeadEmails(createAdminClient(), { limit: 200 }).catch(() => null);
+  return json({ ...(data as object), email_checks: emails, accelerators: accel, customer_successes: successes, reminders, digest, queue: queue ?? null, recycle: recycle ?? null, briefs_written: briefs });
 }

@@ -5,6 +5,8 @@ import { STAGES, STAGE_LABEL, TRADES, type Lead, type LeadTask } from "@/lib/sal
 import { dateLabel } from "@/lib/sales/format";
 import { createLead, importMyLeads } from "./actions";
 import { AttentionCard, type Attention } from "./attention";
+import { EmailStatusBadge } from "@/components/sales/email-status";
+import { isBadEmail } from "@/lib/sales/crm";
 
 export const metadata = { title: "Leads" };
 const overdue = (iso: string) => new Date(iso).getTime() < Date.now();
@@ -80,7 +82,7 @@ export default async function SalesLeads({ searchParams }: { searchParams: Promi
             {shown.length === 0 && <tr><td colSpan={6} className="p-4 text-ink-soft">No leads here yet. Add one below.</td></tr>}
             {shown.map((l) => (
               <tr key={l.id} className="border-b border-line last:border-0">
-                <td className="p-3"><Link href={`/sales/leads/${l.id}`} className="font-semibold underline">{l.company_name}</Link>{l.contact_name && <p className="text-xs text-muted">{l.contact_name}</p>}{l.do_not_contact && <Badge tone="danger">Do not contact</Badge>}</td>
+                <td className="p-3"><Link href={`/sales/leads/${l.id}`} className="font-semibold underline">{l.company_name}</Link>{l.contact_name && <p className="text-xs text-muted">{l.contact_name}</p>}{l.do_not_contact && <Badge tone="danger">Do not contact</Badge>}{l.email && isBadEmail(l.email_status) && <EmailStatusBadge status={l.email_status} />}</td>
                 <td className="p-3">{[l.city, l.state].filter(Boolean).join(", ") || "—"} {l.zip}</td>
                 <td className="p-3">{l.trades.join(", ") || "—"}</td>
                 <td className="p-3"><Badge tone={l.stage === "paying" ? "ok" : l.stage === "lost" ? "neutral" : "brand"}>{STAGE_LABEL[l.stage]}</Badge></td>
