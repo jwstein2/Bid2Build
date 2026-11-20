@@ -375,6 +375,7 @@ d("Financial Command Center: receivables, milestones and emails (database)", () 
   });
 
   it("rollbacks remove the financial objects (newest first) and the migrations re-apply", async () => {
+    await pool.query(readFileSync("docs/affiliates/rollback_20270211001000.sql", "utf8"));   // newest first: affiliate payouts extend the staff payout ledger
     await pool.query(readFileSync("docs/worker-hub/rollback_20270210001000.sql", "utf8"));
     await pool.query(readFileSync("docs/workforce-gps/rollback_20270208001000.sql", "utf8"));
     await pool.query(readFileSync("docs/staff-payouts/rollback_20270207001000.sql", "utf8"));

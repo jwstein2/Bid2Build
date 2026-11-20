@@ -7,7 +7,7 @@ years**. Paid annually, never monthly, never up front.
 The Affiliate Hub is separate from the customer referral program (`referral_*`, a month free for referring a
 contractor), from internal sales reps (`sales_*`, staff-only Sales Portal) and from HR (`pm_*`).
 
-Migration: `supabase/migrations/20270210001000_affiliate_hub.sql`. Rollback: `docs/affiliates/rollback_20270210001000.sql`.
+Migration: `supabase/migrations/20270211001000_affiliate_hub.sql`. Rollback: `docs/affiliates/rollback_20270211001000.sql`.
 Agreement draft for counsel: `docs/affiliates/AFFILIATE_AGREEMENT_DRAFT.md`.
 
 ## Routes

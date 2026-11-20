@@ -33,7 +33,7 @@
 -- payout_events, same provider, limits, idempotency and owner activation) and are additionally gated by
 -- affiliate_settings.payouts_enabled (OFF). Only provider ids and bank name / last 4 are stored; W-9 TINs are sealed
 -- by the server like staff W-9s. Recruitment emails are OFF. YouTube imports need YOUTUBE_API_KEY (not set).
--- Rollback: docs/affiliates/rollback_20270210001000.sql
+-- Rollback: docs/affiliates/rollback_20270211001000.sql
 
 -- ---------------------------------------------------------------------------------------------------
 -- 1. Settings + policy versions

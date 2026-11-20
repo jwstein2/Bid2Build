@@ -10,7 +10,7 @@ import { invoiceFacts, type AffiliateInvoiceLike } from "./billing";
 /**
  * Affiliate Hub hooks for the Stripe webhook and the signed-in layout. Best effort and never throw: billing and
  * sign-in never depend on affiliate bookkeeping. The database decides eligibility and keeps every write idempotent
- * (see 20270210001000_affiliate_hub.sql). Customers with no affiliate return after one cheap lookup.
+ * (see 20270211001000_affiliate_hub.sql). Customers with no affiliate return after one cheap lookup.
  */
 
 export async function recordAffiliateAttribution(db: SupabaseClient, userId: string, rawCookie: string | null | undefined): Promise<string | null> {
