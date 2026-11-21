@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { json } from "@/lib/http/api";
+import { fail, json, logError } from "@/lib/http/api";
 import { finFail, finGuard } from "@/lib/financials/api";
 import { FinError, finAccess } from "@/lib/financials/server";
 import { BankError, disconnect, finishLink, reconnect, reconnectLink, refresh, startLink } from "@/lib/tax-banking/bank/service";
@@ -8,6 +8,7 @@ import { hashSigningToken, newSigningToken } from "@/lib/esign/token";
 import { site } from "@/lib/site";
 import { TWO_STEP_BANK_MESSAGE, TWO_STEP_REQUIRED } from "@/lib/auth/mfa";
 import { bankProviderMode } from "@/lib/tax-banking/isolation";
+import { plaidFailure } from "@/lib/tax-banking/bank/providers";
 
 export const runtime = "nodejs";
 
@@ -91,6 +92,12 @@ export async function POST(req: Request) {
     }
   } catch (e) {
     if (e instanceof BankError) return finFail(new FinError(e.code, e.code), `tax-banking.${a.action}`);
+    const plaid = plaidFailure(e);
+    if (plaid) {
+      logError(`tax-banking.${a.action}`, e, { plaidMessage: plaid.detail });
+      return fail(502, plaid.code, plaid.message);
+    }
     return finFail(e, `tax-banking.${a.action}`);
   }
 }
+
