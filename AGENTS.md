@@ -7,3 +7,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+## Legal documents
+
+Legal text changes must also keep the Google Drive copy current: see `docs/legal/GOOGLE_DRIVE_SYNC.md`
+(new public legal page → add it to `PAGES` in `docs/legal/drive-sync/LegalDriveSync.gs`).
