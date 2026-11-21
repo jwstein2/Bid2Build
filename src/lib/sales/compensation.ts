@@ -31,6 +31,21 @@ export interface AdminPrograms {
   reps: { id: string; name: string; status: string; work_state: string | null; work_locality: string | null; milestone_bonus: { available: boolean; reason: string }; randomized_activity_bonus: { available: boolean; reason: string } }[];
 }
 
+export type DrawingTier = { at: number; cents: number };
+export type DrawingEntry = { rep_id: string; name: string; base: number; activity: number; entries: number };
+export interface AdminDrawings {
+  tiers: DrawingTier[]; entry_cap: number; paying_accounts: number; prize_cents: number; current: DrawingEntry[];
+  drawings: { id: string; month: string; status: "drawn" | "no_draw"; reason: string | null; paying_accounts: number; prize_cents: number; total_entries: number;
+    entries: DrawingEntry[]; seed: string | null; ticket: number | null; winner_name: string | null; snapshot_hash: string | null; hash_ok: boolean; commission_status: string | null }[];
+}
+export interface MyDrawing {
+  status: { available: boolean; reason: string; message: string | null }; tiers: DrawingTier[]; entry_cap: number; prize_cents: number; my_entries: number; my_activity: number;
+  history: { month: string; status: string; reason: string | null; prize_cents: number; total_entries: number; won: boolean; my_entries: number }[];
+}
+export const DRAW_SKIP: Record<string, string> = {
+  below_threshold: "Not enough paying accounts yet", program_off: "Program was off", no_eligible_reps: "No eligible representatives",
+};
+
 /** Share of revenue as a percentage string, or a dash. */
 export const ratio = (part: number, whole: number) => (whole > 0 ? `${((part / whole) * 100).toFixed(1)}%` : "—");
 

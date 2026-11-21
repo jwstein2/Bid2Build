@@ -101,3 +101,19 @@ export async function resolveDispute(fd: FormData) {
   if (error) back({ err: code(error) });
   back({ ok: cents ? "Dispute upheld. The adjustment is a separate bonus line on the next statement." : "Dispute resolved." });
 }
+
+/** Owner: drawing prize tiers (paying accounts -> prize) and the monthly entry cap. Applies to drawings not yet run. */
+export async function saveDrawingSettings(fd: FormData) {
+  const { user, db } = await need("edit_commission_policies");
+  const num = z.coerce.number().int();
+  const p = z.object({
+    at1: num.min(1), usd1: z.coerce.number().min(0.01).max(1000), at2: num.min(1), usd2: z.coerce.number().min(0.01).max(1000),
+    at3: num.min(1), usd3: z.coerce.number().min(0.01).max(1000), cap: num.min(0).max(1000), note,
+  }).safeParse(Object.fromEntries(fd));
+  if (!p.success) back({ err: "invalid" });
+  const v = p.data;
+  const tiers = [[v.at1, v.usd1], [v.at2, v.usd2], [v.at3, v.usd3]].map(([at, d]) => ({ at, cents: Math.round(d * 100) })).sort((a, b) => a.at - b.at);
+  const { error } = await db.rpc("admin_sales_drawing_settings_save", { p_caller: user.id, p_tiers: tiers, p_cap: v.cap, p_note: v.note });
+  if (error) back({ err: code(error) });
+  back({ ok: "Drawing prizes saved. They apply from the next drawing." });
+}

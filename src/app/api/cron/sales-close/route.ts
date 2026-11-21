@@ -28,6 +28,9 @@ export async function POST(req: Request) {
   }
   // Compensation V3: log incentive-program approvals that expired (they stop applying on their own).
   await createAdminClient().rpc("sales_programs_sweep", {}).then(() => null, () => null);
+  // Randomized activity bonus: last month's drawing (once per month; records "no drawing" with the reason
+  // when the program is off or paying accounts are below the first prize tier). Missing until 20270216003000.
+  const drawing = await createAdminClient().rpc("sales_activity_drawing_run", {}).then((r) => r.data ?? null, () => null);
   // Milestone awards: create every milestone reached (V3 snapshots the amount now; V2 boxes wait out the hold).
   await createAdminClient().rpc("sales_milestones_evaluate", {}).then(() => null, () => null);
   // V8.4: monthly accelerators (finalize months whose sales cleared the hold) and achievements.
@@ -48,5 +51,5 @@ export async function POST(req: Request) {
   const briefs = await fillBriefs(createAdminClient(), { limit: 50, budgetMs: 8000 }).catch(() => 0);
   // Lead emails not checked yet (manual adds, CSV imports): can the domain receive mail? DNS only.
   const emails = await recheckLeadEmails(createAdminClient(), { limit: 200 }).catch(() => null);
-  return json({ ...(data as object), email_checks: emails, accelerators: accel, customer_successes: successes, reminders, digest, queue: queue ?? null, recycle: recycle ?? null, briefs_written: briefs });
+  return json({ ...(data as object), drawing, email_checks: emails, accelerators: accel, customer_successes: successes, reminders, digest, queue: queue ?? null, recycle: recycle ?? null, briefs_written: briefs });
 }

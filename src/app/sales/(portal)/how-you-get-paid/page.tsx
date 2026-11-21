@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/misc";
 import { requireSalesRep } from "@/lib/sales/server";
 import { DEFAULT_MILESTONES, payExample, type MilestoneModel, type MilestoneRules } from "@/lib/sales/goals";
 import type { Compensation } from "@/components/sales/compensation-card";
+import type { MyDrawing } from "@/lib/sales/compensation";
 import { usd } from "@/lib/sales/format";
 import { LegalStatusCompact } from "@/components/legal/legal-status";
 
@@ -10,7 +11,8 @@ export const metadata = { title: "How you get paid" };
 /** Rep onboarding walkthrough: what happens at each stage, and how a rep at account 300 looks. */
 export default async function HowYouGetPaid() {
   const { db } = await requireSalesRep();
-  const [{ data }, compRes] = await Promise.all([db.rpc("sales_my_milestones"), db.rpc("sales_my_compensation")]);
+  const [{ data }, compRes, drawRes] = await Promise.all([db.rpc("sales_my_milestones"), db.rpc("sales_my_compensation"), db.rpc("sales_my_drawing")]);
+  const drawing = drawRes.error ? null : (drawRes.data as MyDrawing | null);
   const m = data as { every: number; rates: MilestoneRules["rates"]; min_cents: number; flat: MilestoneRules["flat"] } | null;
   const rules: MilestoneRules = m?.rates ? { every: m.every, rates: m.rates, min_cents: m.min_cents, flat: m.flat } : DEFAULT_MILESTONES;
   const comp = compRes.error ? null : (compRes.data as Compensation | null);
@@ -34,7 +36,7 @@ export default async function HowYouGetPaid() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-extrabold">How you get paid</h1>
-        <p className="mt-1 text-ink-soft">Everything that happens from the first click to your paycheck. Fixed rules, no luck involved.</p>
+        <p className="mt-1 text-ink-soft">Everything that happens from the first click to your paycheck. Commissions and milestone bonuses follow fixed rules; the optional monthly drawing below is the only part with chance.</p>
         <LegalStatusCompact className="mt-2" />
       </div>
 
@@ -101,6 +103,33 @@ export default async function HowYouGetPaid() {
             <li><strong>Milestone bonuses:</strong> {comp.programs.milestone_bonus.available ? "available to you." : comp.programs.milestone_bonus.message}</li>
             <li><strong>Activity bonus drawing:</strong> {comp.programs.randomized_activity_bonus.available ? "available to you." : comp.programs.randomized_activity_bonus.message}</li>
           </ul>
+        </Card>
+      )}
+
+      {drawing && (
+        <Card className="p-5" id="drawing">
+          <h2 className="text-lg font-bold">Monthly activity drawing: official rules</h2>
+          {drawing.status.available ? (
+            <p className="mt-1 text-sm">You&apos;re eligible this month with <strong>{drawing.my_entries}</strong> {drawing.my_entries === 1 ? "entry" : "entries"} so far.
+              Prize if drawn today: <strong>{drawing.prize_cents > 0 ? usd(drawing.prize_cents) : "no drawing yet (not enough paying accounts)"}</strong>.</p>
+          ) : <p className="mt-1 text-sm text-ink-soft">{drawing.status.message ?? "The drawing isn't available to you right now."}</p>}
+          <ol className="mt-3 list-decimal space-y-1 pl-5 text-sm text-ink-soft">
+            <li><strong>Sponsor:</strong> Built2Bid L.L.C. pays every prize and all costs. You never pay anything to take part.</li>
+            <li><strong>Who can win:</strong> active Built2Bid sales representatives whose work location has the program approved on the last day of the month. Availability can differ by state or city.</li>
+            <li><strong>Entries:</strong> 1 free entry each month just for being eligible, plus 1 entry for each lead you call or email on a day (the same lead twice in one day counts once), up to {drawing.entry_cap} activity entries a month. Only real calls and emails logged on leads count; padded or fake activity voids that month&apos;s entries.</li>
+            <li><strong>Prize:</strong> one winner a month. The amount depends on how many paying Built2Bid accounts there are when it&apos;s drawn: {drawing.tiers.map((t) => `${usd(t.cents)} from ${t.at} accounts`).join(", ")}. Below {drawing.tiers[0]?.at ?? 3} accounts there&apos;s no drawing that month.</li>
+            <li><strong>Drawing:</strong> run automatically on the 1st of the next month (Central time) by a random number weighted by entries. Your odds are your entries divided by everyone&apos;s entries. The entry list and result are recorded and can be re-checked.</li>
+            <li><strong>Payment:</strong> the prize is added to the winner&apos;s next statement and paid with it once approved. It&apos;s taxable pay and reported like your other compensation.</li>
+            <li><strong>Changes:</strong> the company can change prizes or end the program for future months. A month already drawn is never changed.</li>
+          </ol>
+          {drawing.history.length > 0 && (
+            <ul className="mt-3 divide-y divide-line text-sm">
+              {drawing.history.map((h) => (
+                <li key={h.month} className="flex justify-between gap-3 py-2"><span>{new Date(`${h.month}T12:00:00Z`).toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" })}</span>
+                  <span className="text-ink-soft">{h.status === "drawn" ? (h.won ? `You won ${usd(h.prize_cents)}` : `${usd(h.prize_cents)} drawn · your entries ${h.my_entries} of ${h.total_entries}`) : "No drawing"}</span></li>
+              ))}
+            </ul>
+          )}
         </Card>
       )}
 
