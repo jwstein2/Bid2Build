@@ -71,6 +71,10 @@ describe("command actions", () => {
     expect(ids("company settings")[0]).toBe("company-settings");
     expect(ids("accounts receivable")[0]).toBe("view-ar");
     expect(ids("add subcontractor")[0]).toBe("add-sub");
+    // Will meeting 2026-11-21: calendar searches open the Projects calendar tab, not the Projects overview.
+    expect(findActions("calendar", owner)[0]).toMatchObject({ id: "view-schedule", href: "/projects?view=calendar" });
+    expect(findActions("schedule", owner)[0].href).toBe("/projects?view=calendar");
+    expect(findActions("gantt", owner)[0]).toMatchObject({ id: "view-timeline", href: "/projects?view=timeline" });
     expect(matchAction(ACTIONS.find((a) => a.id === "create-invoice")!, "zzz")).toBe(0);
   });
 
