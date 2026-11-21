@@ -34,6 +34,11 @@ async function accept(formData: FormData) {
     try { await inheritCompanyProfile(createAdminClient(), { companyId, userId: user.id, email: user.email ?? null }); }
     catch (e) { logError("company.join.inherit", e); }
   }
+  // V8.3.1: a worker invited to the worker app lands in My work (their login is now linked to their staff record).
+  if (user) {
+    const { data: staff } = await (await createClient()).from("pm_resources").select("id").eq("linked_user_id", user.id).eq("kind", "staff").eq("status", "active").limit(1);
+    if (Array.isArray(staff) && staff.length > 0) redirect("/clock?joined=1");
+  }
   redirect("/dashboard?joined=1");
 }
 

@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { notFound, redirect } from "next/navigation";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { isUnifiedHomeEnabled } from "@/lib/env";
+import { MyWorkCallout } from "@/components/workforce/hub/my-work-callout";
 import { allowed } from "@/lib/dashboard/access";
 import { QUICK_ACTIONS, QUICK_ACTION_KEYS, WIDGET_TYPES, widgetDef, type Option } from "@/lib/dashboard/registry";
 import { DATASET_INFO, isDataset, type ChartPeriod } from "@/lib/dashboard/charts";
@@ -51,6 +52,7 @@ export default async function HomePage() {
 
   return (
     <div className="mx-auto max-w-7xl" data-testid="unified-home">
+      <MyWorkCallout className="mb-4" />
       <DashboardBuilder
         key={viewer.mode}
         mode={viewer.mode}
