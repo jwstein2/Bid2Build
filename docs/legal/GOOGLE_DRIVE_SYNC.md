@@ -33,5 +33,5 @@ one in Archive.
 ## Setting it up again
 
 1. script.google.com → New project → name it "Built2Bid Legal Drive Sync".
-2. Paste `LegalDriveSync.gs` into Code.gs. Project Settings → "Show appsscript.json" → paste `appsscript.json`.
+2. Paste `LegalDriveSync.gs` into Code.gs and save (no extra services or settings needed).
 3. Run `setup` and click Allow. The first run only records a baseline; later runs archive and replace.

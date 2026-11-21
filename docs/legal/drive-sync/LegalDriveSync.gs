@@ -9,7 +9,7 @@
  * Nothing is ever deleted. No API keys or service accounts: it runs as the Google account that
  * authorized it, and only reads public pages.
  *
- * Setup (one time): paste this file + appsscript.json, run setup(), click Allow.
+ * Setup (one time): paste this file into a new Apps Script project, run setup(), click Allow.
  * Add a new public page: add a line to PAGES below (path, document name). Source of truth for the
  * list is src/lib/legal/registry.ts in jwstein2/bid2build (docs/legal/GOOGLE_DRIVE_SYNC.md).
  */
@@ -157,14 +157,23 @@ function wrap_(article, url, today) {
     ' by Legal Drive Sync</i></p>' + article + '</body></html>';
 }
 
+/** Uploads HTML to Drive converted to a Google Doc (Drive REST API with the script's own token; no advanced service needed). */
 function createDocFromHtml_(title, html, folderId, description) {
-  const blob = Utilities.newBlob(html, 'text/html', title + '.html');
-  return Drive.Files.create(
-    { name: title, mimeType: 'application/vnd.google-apps.document', parents: [folderId], description: description },
-    blob,
-    { fields: 'id,webViewLink' }
-  );
+  const boundary = 'b2bsync' + Date.now();
+  const meta = { name: title, mimeType: 'application/vnd.google-apps.document', parents: [folderId], description: description };
+  const body = '--' + boundary + '\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n' + JSON.stringify(meta) +
+    '\r\n--' + boundary + '\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n' + html + '\r\n--' + boundary + '--';
+  const res = UrlFetchApp.fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink', {
+    method: 'post',
+    contentType: 'multipart/related; boundary=' + boundary,
+    payload: Utilities.newBlob(body, 'multipart/related').getBytes(),
+    headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() },
+    muteHttpExceptions: true,
+  });
+  if (res.getResponseCode() >= 300) throw new Error('Drive upload failed: ' + res.getContentText().slice(0, 300));
+  return JSON.parse(res.getContentText());
 }
+
 
 function sha256_(s) {
   return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, s, Utilities.Charset.UTF_8)
