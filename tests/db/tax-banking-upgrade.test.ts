@@ -9,7 +9,9 @@ import type { Pool } from "pg";
 import { applyMigration, dbAvailable, freshDb } from "./harness";
 
 const available = await dbAvailable();
-const d = available ? describe : describe.skip;
+// The first version lives only in a pre-squash PR commit; clones of main (where #125 was squash-merged) don't have it.
+const hasFirst = (() => { try { execFileSync("git", ["cat-file", "-e", "6c835dd^{commit}"], { stdio: "ignore" }); return true; } catch { return false; } })();
+const d = available && hasFirst ? describe : describe.skip;
 let pool: Pool;
 let drop: () => Promise<void>;
 

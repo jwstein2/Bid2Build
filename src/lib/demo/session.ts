@@ -74,6 +74,9 @@ export const DEMO_BLOCKED: readonly { prefix: string; write?: boolean }[] = [
   { prefix: "/api/change-orders/", write: true },
   // Staff-only Sales Hub (Google mail/calendar, lead imports): never from a sample login.
   { prefix: "/api/sales/" },
+  // Built2Bid staff and affiliate payouts (bank connection, exports): never from a sample login.
+  { prefix: "/api/payouts/" },
+  { prefix: "/api/affiliate-payouts/" },
 ];
 
 /** Paths under a broad prefix that are blocked; the rest of that prefix stays usable in a demo. */

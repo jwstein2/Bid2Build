@@ -12,7 +12,7 @@ const [r1] = await q("select r.id, r.code from public.sales_reps r where r.email
 // Anniversaries and refunds on a fresh attributed customer (same functions the Stripe webhook calls).
 const run = Date.now(); const cust = `qa-cust3-${run}@audit.test`; // invoice ids are unique per run, as Stripe's are
 let custId;
-await T("04", "Commissions", "Sale + 2 anniversaries, then nothing (3 payments total)", "Lines for years 1, 2, 3; year 4 invoice adds none", async () => {
+await T("04", "Commissions", "Sale + 3 anniversaries (ten-year term, #200)", "Lines for years 1-4, each at the anniversary value", async () => {
   const ctx = await b.newContext(vp); const p = await ctx.newPage(); await p.goto(`${BASE}/s/${r1.code}`); await uiLogin(p, cust);
   await q("insert into public.admin_account_labels (user_id, label) select id, 'genuine' from auth.users where email=$1 on conflict (user_id) do update set label='genuine'", [cust]);
   await p.goto(BASE + "/dashboard"); await p.waitForTimeout(2500); await ctx.close();
@@ -21,7 +21,7 @@ await T("04", "Commissions", "Sale + 2 anniversaries, then nothing (3 payments t
     await q(`select public.sales_sync_billing($1, 'sub_qa_3', 'active', 'monthly', null, 1999, '{}'::jsonb, $2, 1999, now() + interval '${days} days')`, [custId, inv]);
   }
   const c = await q("select year_no, amount_cents from public.sales_commissions where user_id=$1 and kind='commission' order by year_no", [custId]);
-  return c.map((x) => x.year_no).join(",") === "1,2,3" && c.every((x) => x.amount_cents === 1999) ? "years 1,2,3 at $19.99; none for year 4" : { fail: JSON.stringify(c) };
+  return c.map((x) => x.year_no).join(",") === "1,2,3,4" && c.every((x) => x.amount_cents === 1999) ? "years 1-4 at $19.99 (10-year term; year 11 is covered by tests/db/sales-ten-year)" : { fail: JSON.stringify(c) };
 });
 await T("05", "Commissions", "Anniversary only if the customer is active and paid", "A past-due renewal with nothing paid creates no anniversary line", async () => {
   const before = (await q("select count(*)::int n from public.sales_commissions where user_id=$1", [custId]))[0].n;

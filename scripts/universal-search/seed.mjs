@@ -26,7 +26,8 @@ export const TRADES = [
 ];
 const SURNAMES = ["Anderson", "Baker", "Carter", "Diaz", "Evans", "Foster", "Garcia", "Hughes", "Ingram", "Jensen", "Keller", "Lopez", "Morgan",
   "Nguyen", "Olsen", "Patel", "Quinn", "Reyes", "Sullivan", "Turner", "Underwood", "Vasquez", "Walsh", "Xu", "Young", "Zimmer", "Abbott", "Bishop",
-  "Coleman", "Dalton", "Ellison", "Fischer", "Grant", "Holloway", "Irwin", "Jacobs", "Kendall", "Lindqvist"];
+  "Coleman", "Dalton", "Ellison", "Fischer", "Grant", "Holloway", "Irwin", "Jacobs", "Kendall", "Lindqvist",
+  "Mercer", "Novak", "Ortega", "Prescott", "Ramsey", "Stanton", "Thorne", "Vance"]; // one per trade (42 trades as of Nov 2026)
 
 export const IDS = {
   ME: "00000000-0000-4000-8000-000000000001",

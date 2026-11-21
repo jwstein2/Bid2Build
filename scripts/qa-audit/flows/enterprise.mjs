@@ -80,11 +80,12 @@ await T("08", "Create a team", "Team saved and listed", async () => {
 });
 await T("09", "Approval rule toggle persists", "Require-approval setting saved after reload", async () => {
   const { p } = await open(owner, "/company");
-  const sw = p.getByRole("switch").or(p.getByRole("checkbox", { name: /Require approval/i })).first();
+  // The sidebar's Practice Mode switch (#196) is also a switch: target the approval toggle itself.
+  const sw = p.getByTestId("approval-toggle");
   if (!(await sw.isVisible().catch(() => false))) return { fail: "no approval toggle" };
-  const before = (await sw.getAttribute("aria-checked")) ?? String(await sw.isChecked());
+  const before = String(await sw.isChecked());
   await sw.click(); await p.waitForTimeout(2000); await p.reload(); await p.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {});
-  const after = (await p.getByRole("switch").or(p.getByRole("checkbox", { name: /Require approval/i })).first().getAttribute("aria-checked")) ?? "";
+  const after = String(await p.getByTestId("approval-toggle").isChecked());
   return before !== after ? `${before} -> ${after}` : { fail: `unchanged ${before}` };
 });
 console.log(rec.counts); await b.close(); await closeDb();

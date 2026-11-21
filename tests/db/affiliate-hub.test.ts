@@ -302,6 +302,19 @@ d("Affiliate Hub (database)", () => {
     expect(b).toEqual(expect.arrayContaining(["w9_missing", "no_bank"]));
   });
 
+  it("QA 2026-11-20: the staff payout run leaves held affiliate payouts' reasons alone", async () => {
+    await pool.query("select public.admin_payout_settings_save($1, '{\"mode\":\"test\"}')", [owner]);
+    await pool.query("select public.admin_affiliate_settings_save($1, '{\"payouts_enabled\": true, \"confirm\": true}', 'Enable affiliate test payouts')", [owner]);
+    const a = await activeAffiliate("heldqa@creators.com", { w9: false });
+    const c = await referred(a.code);
+    await invoice(c, `in_${c}_1`, ago(400), { gross: 2999, listMonthly: 2999 });
+    await pool.query("select public.affiliate_daily(now())");
+    await pool.query("select public.affiliate_payout_plan(now())");
+    expect(await q1("select status, hold_reasons from public.payouts where affiliate_id = $1", [a.id])).toMatchObject({ status: "held", hold_reasons: ["w9_missing"] });
+    await pool.query("select public.payout_plan(now())");   // the daily run calls the staff plan first
+    expect(await q1("select status, hold_reasons from public.payouts where affiliate_id = $1", [a.id])).toMatchObject({ status: "held", hold_reasons: ["w9_missing"] });
+  });
+
   it("termination: without cause keeps future years; material misconduct holds unpaid lines for review", async () => {
     const a = await activeAffiliate("term1@creators.com");
     const c = await referred(a.code);
@@ -327,6 +340,34 @@ d("Affiliate Hub (database)", () => {
     expect((await lines(c))[0]).toMatchObject({ status: "canceled", reason: "attribution_moved" });
     expect(await val("select rep_id from public.sales_attributions where user_id = $1", [c])).toBe(rep);
     expect(await val("select count(*)::int from public.audit_logs where action = 'affiliate.dispute_resolved' and details ->> 'dispute' = $1", [id])).toBe(1);
+  });
+
+  it("QA 2026-11-20: a Sales Hub manual assignment can't take an affiliate's customer (one owner per customer)", async () => {
+    const a = await activeAffiliate("manualqa@creators.com");
+    const c = await referred(a.code, "manualqa-cust@shop.com");
+    const rep = (await q1("select (public.admin_sales_member_save($1, null, 'rep3@reps.com', 'Rep Three', null, 'rep', 'active', null, true)) ->> 'id' id", [owner])).id as string;
+    const err = await pool.query("select public.admin_sales_attribution_set($1, 'manualqa-cust@shop.com', $2, 'Met them at a trade show')", [owner, rep]).then(() => "ok", (e: Error) => e.message);
+    expect(err).toBe("owned_by_affiliate");
+    expect(await val("select count(*)::int from public.sales_attributions where user_id = $1", [c])).toBe(0);
+    // The supported path is an attribution dispute resolved as "moved to Sales"; after that, Sales Hub may reassign.
+    const id = await val("select public.admin_affiliate_dispute_open($1, $2, 'attribution', 'Rep met them first', 'sales')", [owner, c]) as string;
+    await pool.query("select public.admin_affiliate_dispute_resolve($1, $2, 'moved_to_sales', 'Trade show sign-in sheet', null, $3)", [owner, id, rep]);
+    expect(await val("select rep_id from public.sales_attributions where user_id = $1", [c])).toBe(rep);
+  });
+
+  it("QA 2026-11-20: moving a customer to Sales when another rep already owns them doesn't record a false assignment", async () => {
+    const a = await activeAffiliate("moveqa@creators.com");
+    const c = await referred(a.code, "moveqa-cust@shop.com");
+    const r1 = (await q1("select (public.admin_sales_member_save($1, null, 'rep4@reps.com', 'Rep Four', null, 'rep', 'active', null, true)) ->> 'id' id", [owner])).id as string;
+    const r2 = (await q1("select (public.admin_sales_member_save($1, null, 'rep5@reps.com', 'Rep Five', null, 'rep', 'active', null, true)) ->> 'id' id", [owner])).id as string;
+    // Simulate a pre-existing (legacy) double owner: a sales attribution created before this guard existed.
+    await pool.query("insert into public.sales_attributions (user_id, rep_id, source) values ($1, $2, 'manual')", [c, r1]);
+    const id = await val("select public.admin_affiliate_dispute_open($1, $2, 'attribution', 'Two owners', 'admin')", [owner, c]) as string;
+    const err = await pool.query("select public.admin_affiliate_dispute_resolve($1, $2, 'moved_to_sales', 'Rep Five owns it', null, $3)", [owner, id, r2]).then(() => "ok", (e: Error) => e.message);
+    expect(err).toBe("owned_by_sales");   // reassign between reps in Sales Hub instead
+    expect(await val("select status from public.affiliate_disputes where id = $1", [id])).toBe("open");
+    expect(await val("select rep_id from public.sales_attributions where user_id = $1", [c])).toBe(r1);
+    expect(await val("select count(*)::int from public.sales_attribution_history where user_id = $1 and to_rep = $2", [c, r2])).toBe(0);
   });
 
   it("isolation: affiliates see only their own customers, with privacy-safe labels; tables are closed to clients", async () => {

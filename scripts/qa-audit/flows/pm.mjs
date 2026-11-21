@@ -6,6 +6,9 @@ import { chromium, contextFor, watch, recorder, BASE, USERS, q, closeDb, shot, d
 const rec = recorder("pm");
 const b = await chromium.launch();
 const ctx = await contextFor(b, "pro");
+// The job photo fixture (uploads.mjs writes the same file later in run-flows.sh; a fresh QA_OUT doesn't have it yet).
+{ const { mkdirSync, existsSync, writeFileSync } = await import("node:fs"); mkdirSync(`${OUT}/fixtures`, { recursive: true });
+  if (!existsSync(`${OUT}/fixtures/logo.png`)) { const pg = await b.newPage({ viewport: { width: 240, height: 80 } }); await pg.setContent('<div style="font:bold 40px sans-serif;background:#0b3d63;color:#fff;height:80px">QA LOGO</div>'); writeFileSync(`${OUT}/fixtures/logo.png`, await pg.screenshot()); await pg.close(); } }
 const [{ id: uid }] = await q("select id from auth.users where email=$1", [USERS.pro]);
 await q("update public.complimentary_grants set pm_editors=1 where user_id=$1 and status='active'", [uid]);
 const T = (id, name, exp, fn) => rec.test(`PM-${id}`, "Projects", name, exp, fn);
