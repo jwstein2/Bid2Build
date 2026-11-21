@@ -7,11 +7,12 @@ import { StatusPill, field, label } from "../../ui";
 import { createAdminClient } from "@/lib/supabase/server";
 import { listTrades, requireAcademyStaff, signedMediaUrls } from "@/lib/academy/server";
 import { PILLARS, type CoverTheme, type Pillar } from "@/lib/academy/types";
-import { addModule, saveCourse, saveLesson, setCourseResources } from "../../actions";
+import { addModule, deleteCourse, saveCourse, saveLesson, setCourseResources } from "../../actions";
+import { releaseLabel } from "@/lib/academy/release-plan";
 
 type CourseRow = {
   id: string; slug: string; title: string; summary: string; description: string | null; trade_slug: string | null; pillar: Pillar; level: string; access: string; status: string;
-  content_class: string; cover_path: string | null; cover_theme: CoverTheme; featured: boolean; sort_order: number; planned_lessons: string[]; seo_title: string | null; seo_description: string | null;
+  content_class: string; cover_path: string | null; cover_theme: CoverTheme; featured: boolean; sort_order: number; planned_lessons: string[]; seo_title: string | null; seo_description: string | null; release_on: string | null;
 };
 const THEMES: CoverTheme[] = ["navy", "cyan", "amber", "green", "slate", "rose"];
 
@@ -71,6 +72,7 @@ export default async function CourseEditor({ params, searchParams }: PageProps<"
             <label className={label}>Content class<select name="content_class" defaultValue={c?.content_class ?? "original"} className={field}><option value="original">Built2Bid original</option><option value="mixed">Original + curated</option><option value="curated">External curated</option><option value="licensed">Licensed</option></select></label>
             <label className={label}>Cover theme<select name="cover_theme" defaultValue={c?.cover_theme ?? "navy"} className={field}>{THEMES.map((t) => <option key={t}>{t}</option>)}</select></label>
             <label className={label}>Sort order<input name="sort_order" type="number" defaultValue={c?.sort_order ?? 0} className={field} /></label>
+            <label className={label}>Release date (upcoming)<input name="release_on" type="date" defaultValue={c?.release_on ?? ""} className={field} data-testid="release-on" /></label>
             <label className="flex items-center gap-2 pt-6 text-sm font-semibold"><input type="checkbox" name="featured" defaultChecked={c?.featured} /> Featured</label>
           </div>
           <label className={label}>Planned lessons (one per line, shown while &quot;Coming soon&quot;)<textarea name="planned_lessons" rows={5} defaultValue={c?.planned_lessons.join("\n")} className={field} /></label>
@@ -86,6 +88,22 @@ export default async function CourseEditor({ params, searchParams }: PageProps<"
         <aside className="space-y-4">
           {c && <div className="overflow-hidden rounded-xl border border-line"><CourseCover course={c} tradeName={trades.find((t) => t.slug === c!.trade_slug)?.name} coverUrl={c.cover_path ? covers.get(c.cover_path) : null} /></div>}
           {c && <Link href={`/academy/courses/${c.slug}`} className="block text-sm font-semibold text-accent-ink hover:underline">View public page →</Link>}
+          {c?.status === "upcoming" && (
+            <div className="rounded-xl border border-line bg-surface p-4 text-sm">
+              <p className="font-semibold">{c.release_on ? `Releases ${releaseLabel(c.release_on, { weekday: true })}` : "Not scheduled yet"}</p>
+              <p className="mt-1 text-xs text-muted">Lessons written: {lessons.length} of {c.planned_lessons.length}. The weekly job writes the rest in the two weeks before release; they stay hidden until the course is published, so you can edit or delete them first. Leave the date blank to put it at the end of the schedule.</p>
+            </div>
+          )}
+          {c && admin && (
+            <form action={deleteCourse} className="rounded-xl border border-danger/40 bg-surface p-4" data-testid="delete-course">
+              <input type="hidden" name="id" value={c.id} />
+              <p className="text-sm font-semibold">Delete this course</p>
+              <p className="mt-1 text-xs text-muted">Removes the course, its lessons and members&apos; progress for good.{c.status === "upcoming" ? " Later courses move up to keep 2 a week." : ""}</p>
+              {c.status === "upcoming" && <label className="mt-2 flex items-start gap-2 text-xs"><input type="checkbox" name="keep_dates" className="mt-0.5" /> Keep other courses&apos; dates (leave a gap)</label>}
+              <label className="mt-1 flex items-start gap-2 text-xs"><input type="checkbox" name="confirm" required className="mt-0.5" /> Yes, delete &quot;{c.title}&quot;</label>
+              <div className="mt-2"><Submit size="sm" variant="danger" pending="Deleting…">Delete course</Submit></div>
+            </form>
+          )}
         </aside>
       </div>
 

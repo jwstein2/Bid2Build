@@ -10,6 +10,7 @@ import { academyErrorMessage, isPillar } from "@/lib/academy/types";
 import { sniffImage } from "@/lib/security/upload";
 import { AiUnavailableError, generateStructured } from "@/lib/ai/provider";
 import { logError } from "@/lib/http/api";
+import { repackSchedule } from "@/lib/academy/release";
 
 /**
  * Academy content management. Every action re-checks the caller's Academy role on the server, then writes with
@@ -55,6 +56,7 @@ export async function saveCourse(form: FormData) {
     status: status || "draft", content_class: str(form, "content_class") || "original", cover_theme: str(form, "cover_theme") || "navy",
     featured: form.get("featured") === "on", sort_order: Number(str(form, "sort_order")) || 0, planned_lessons: lines(form, "planned_lessons", 20),
     seo_title: opt(form, "seo_title"), seo_description: opt(form, "seo_description"),
+    release_on: /^\d{4}-\d{2}-\d{2}$/.test(str(form, "release_on")) ? str(form, "release_on") : null,
   };
   let courseId = id;
   if (id) {
@@ -80,9 +82,48 @@ export async function saveCourse(form: FormData) {
     const { data: old } = await admin.from("academy_courses").select("cover_path").eq("id", courseId).maybeSingle();
     if (old?.cover_path) { await admin.storage.from("academy-media").remove([old.cover_path]); await admin.from("academy_courses").update({ cover_path: null }).eq("id", courseId); }
   }
-  await audit(user.id, id ? "course.update" : "course.create", "course", courseId, { status: row.status, access: row.access, slug: row.slug });
+  // An upcoming course with no release day joins the end of the weekly schedule.
+  if (row.status === "upcoming" && !row.release_on) await repackSchedule(admin).catch((e) => logError("academy.schedule", e));
+  await audit(user.id, id ? "course.update" : "course.create", "course", courseId, { status: row.status, access: row.access, slug: row.slug, release_on: row.release_on });
   revalidatePath("/academy", "layout");
   go(`/academy/manage/courses/${courseId}`, { msg: "Course saved." });
+}
+
+/** Permanently deletes a course with its modules, lessons and progress. Upcoming courses' later release days move up to close the gap. */
+export async function deleteCourse(form: FormData) {
+  const id = str(form, "id");
+  const back = `/academy/manage/courses/${id}`;
+  const { user, admin } = await staff(["admin"], back);
+  if (!uuid.safeParse(id).success) go("/academy/manage/courses", { err: "Course not found." });
+  if (form.get("confirm") !== "on") go(back, { err: "Tick the box to confirm the delete." });
+  const { data: c } = await admin.from("academy_courses").select("slug, title, status, cover_path, release_on").eq("id", id).maybeSingle();
+  if (!c) go("/academy/manage/courses", { err: "Course not found." });
+  const { error } = await admin.from("academy_courses").delete().eq("id", id);
+  if (error) go(back, { err: dbErr(error) });
+  if (c!.cover_path) await admin.storage.from("academy-media").remove([c!.cover_path]);
+  let moved = 0;
+  if (c!.status === "upcoming" && form.get("keep_dates") !== "on") moved = await repackSchedule(admin).catch((e) => { logError("academy.schedule", e); return 0; });
+  await audit(user.id, "course.delete", "course", id, { slug: c!.slug, title: c!.title, status: c!.status, release_on: c!.release_on, rescheduled: moved });
+  revalidatePath("/academy", "layout");
+  go(ret(form, "/academy/manage/courses"), { msg: `Deleted "${c!.title}".${moved ? ` ${moved} later courses moved up a slot.` : ""}` });
+}
+
+/** Weekly release settings: pause or resume, courses per week and release weekday. Re-packs the schedule when the pace changes. */
+export async function saveReleaseSettings(form: FormData) {
+  const back = "/academy/manage/courses";
+  const { user, admin } = await staff(["admin"], back);
+  const perWeek = Math.round(Number(str(form, "release_per_week")));
+  const weekday = Math.round(Number(str(form, "release_weekday")));
+  if (!(perWeek >= 1 && perWeek <= 14) || !(weekday >= 1 && weekday <= 7)) go(back, { err: "Choose 1 to 14 courses per week and a weekday." });
+  const autoRelease = form.get("auto_release") === "on";
+  const { data: prev } = await admin.from("academy_settings").select("release_per_week, release_weekday").eq("id", true).maybeSingle();
+  const { error } = await admin.from("academy_settings").update({ auto_release: autoRelease, release_per_week: perWeek, release_weekday: weekday }).eq("id", true);
+  if (error) go(back, { err: dbErr(error) });
+  const repack = form.get("repack") === "on" || prev?.release_per_week !== perWeek || prev?.release_weekday !== weekday;
+  const moved = repack ? await repackSchedule(admin).catch((e) => { logError("academy.schedule", e); return 0; }) : 0;
+  await audit(user.id, "settings.release", "settings", null, { auto_release: autoRelease, release_per_week: perWeek, release_weekday: weekday, rescheduled: moved });
+  revalidatePath("/academy", "layout");
+  go(back, { msg: `Weekly releases ${autoRelease ? "on" : "paused"}.${repack ? ` Schedule rebuilt (${moved} dates changed).` : ""}` });
 }
 
 async function storeCover(courseId: string, file: File): Promise<{ ok: true; path: string } | { ok: false; message: string }> {
@@ -171,6 +212,30 @@ export async function saveLesson(form: FormData) {
   await audit(user.id, id ? "lesson.update" : "lesson.create", "lesson", lessonId, { status, access: row.access, course_id: courseId });
   revalidatePath("/academy", "layout");
   go(`/academy/manage/lessons/${lessonId}`, { msg: "Lesson saved." });
+}
+
+/** Permanently deletes a lesson. */
+export async function deleteLesson(form: FormData) {
+  const id = str(form, "id");
+  const back = `/academy/manage/lessons/${id}`;
+  const { user, admin } = await staff(["admin"], back);
+  if (!uuid.safeParse(id).success) go("/academy/manage/courses", { err: "Lesson not found." });
+  if (form.get("confirm") !== "on") go(back, { err: "Tick the box to confirm the delete." });
+  const { data: l } = await admin.from("academy_lessons").select("course_id, slug, title").eq("id", id).maybeSingle();
+  if (!l) go("/academy/manage/courses", { err: "Lesson not found." });
+  let unplanned = false;
+  if (form.get("drop_planned") === "on") {
+    const { data: c } = await admin.from("academy_courses").select("planned_lessons").eq("id", l!.course_id).maybeSingle();
+    const norm = (x: string) => x.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    const keep = (c?.planned_lessons ?? []).filter((t: string) => norm(t) !== norm(l!.title));
+    unplanned = keep.length !== (c?.planned_lessons ?? []).length;
+    if (unplanned) await admin.from("academy_courses").update({ planned_lessons: keep }).eq("id", l!.course_id);
+  }
+  const { error } = await admin.from("academy_lessons").delete().eq("id", id);
+  if (error) go(back, { err: dbErr(error) });
+  await audit(user.id, "lesson.delete", "lesson", id, { course_id: l!.course_id, slug: l!.slug, title: l!.title, removed_from_plan: unplanned });
+  revalidatePath("/academy", "layout");
+  go(`/academy/manage/courses/${l!.course_id}`, { msg: `Deleted "${l!.title}".${unplanned ? " Removed from the planned lessons too." : ""}` });
 }
 
 const summarySchema = z.object({ summary: z.string().max(240), takeaways: z.array(z.string().max(200)).min(1).max(6) });
