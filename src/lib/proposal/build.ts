@@ -68,7 +68,7 @@ export function buildProposal(estimate: Estimate, business: BusinessProfile, con
                 ? {
                     quantity: show.quantities ? fmtQty(i.quantity) : undefined,
                     unit: show.quantities ? (UNIT_ABBR[i.unit] ?? i.unit) : undefined,
-                    unitPrice: show.itemPrices && show.quantities ? formatCurrency(t.unitPrice) : undefined,
+                    unitPrice: show.itemPrices && show.quantities && t.unitPriceExact !== false ? formatCurrency(t.unitPrice) : undefined,
                     amount: show.itemPrices ? formatCurrency(t.extendedPrice) : undefined,
                   }
                 : {}),

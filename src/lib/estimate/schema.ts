@@ -85,6 +85,7 @@ export const estimateSchema = z.object({
   adjustmentLabel: z.string().max(100).optional(),
   taxRate: dec(10),
   roundTotal: z.boolean().optional(),
+  roundLines: z.boolean().optional(),
   displayMode: z.enum(["by_group", "project_total"]),
   defaultGroupVisibility: z.enum(["group_total", "names_only", "itemized"]),
   groups: z.array(groupSchema).max(200),
