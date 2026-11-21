@@ -27,3 +27,4 @@ run node scripts/qa-audit/flows/checkout.mjs
 run node scripts/qa-audit/flows/esign-misc.mjs
 run node scripts/qa-audit/flows/uploads.mjs
 run node scripts/qa-audit/flows/db-guards.mjs
+run node scripts/qa-audit/flows/today-systems.mjs

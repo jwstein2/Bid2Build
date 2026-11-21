@@ -153,6 +153,41 @@ describe("Practice Mode for everyone", () => {
     vi.resetModules();
   });
 
+  it("affiliate and payout emails refuse to send from a practice session", async () => {
+    vi.resetModules();
+    vi.doMock("server-only", () => ({}));
+    vi.doMock("@/lib/supabase/server", () => ({ getAuthUser: async () => ({ id: NS, app_metadata: { b2b_demo: { kind: "practice", owner: NS, workspace: NS } } }) }));
+    const prev = { a: process.env.AFFILIATE_EMAILS, k: process.env.RESEND_API_KEY, o: process.env.OWNER_ALERT_EMAIL };
+    process.env.AFFILIATE_EMAILS = "on"; process.env.RESEND_API_KEY = "re_test_placeholder"; process.env.OWNER_ALERT_EMAIL = "owner@example.com";
+    try {
+      const recorded: Record<string, unknown>[] = [];
+      const db = {
+        from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null }) }) }) }),
+        rpc: async (_fn: string, args: Record<string, unknown>) => { recorded.push(args); return { data: true }; },
+      };
+      const fetchImpl = vi.fn();
+      const { sendAffiliateEmail } = await import("@/lib/affiliates/emails");
+      const r = await sendAffiliateEmail(db as never, "k1", "approved", "real@person.com", { email: "real@person.com" }, {}, fetchImpl as unknown as typeof fetch);
+      expect(r).toBe("skipped");
+      expect(recorded[0]).toMatchObject({ p_status: "logged_off", p_error: "demo_mode_no_send" });
+      const { emailOwnerAlert, emailBankChanged } = await import("@/lib/payouts/notify");
+      await emailOwnerAlert("s", "b", "k2", fetchImpl as unknown as typeof fetch);
+      await emailBankChanged("real@person.com", "Pat", "6789", "Bank", null, "id1", fetchImpl as unknown as typeof fetch);
+      expect(fetchImpl).not.toHaveBeenCalled();
+    } finally {
+      for (const [k, v] of [["AFFILIATE_EMAILS", prev.a], ["RESEND_API_KEY", prev.k], ["OWNER_ALERT_EMAIL", prev.o]] as const) { if (v === undefined) delete process.env[k]; else process.env[k] = v; }
+      vi.doUnmock("@/lib/supabase/server"); vi.doUnmock("server-only");
+      vi.resetModules();
+    }
+  });
+
+  it("blocks the payout and affiliate payout routes for sample logins", async () => {
+    const { isDemoBlocked } = await import("@/lib/demo/session");
+    expect(isDemoBlocked("/api/payouts/return", "GET")).toBe(true);
+    expect(isDemoBlocked("/api/affiliate-payouts/return", "GET")).toBe(true);
+    expect(isDemoBlocked("/api/payouts/export", "GET")).toBe(true);
+  });
+
   it("every outbound email sender is reviewed for Demo / Practice Mode", () => {
     // Adding a new place that calls Resend? Make sure a demo or practice session can't reach it, then add it here.
     const reviewed = new Set([
@@ -163,7 +198,8 @@ describe("Practice Mode for everyone", () => {
       "src/lib/trial/delivery.ts",        // Facebook trial invites (public funnel, not a signed-in session)
       "src/lib/sales/invite-email.ts", "src/lib/sales/booking-email.ts", "src/lib/sales/congrats-email.ts", "src/lib/sales/digest.ts", // staff Sales Hub (/api/sales blocked)
       "src/app/api/webhooks/resend/route.ts", // inbound mail webhook (reads only)
-      "src/lib/payouts/notify.ts",        // Built2Bid staff payouts: staff_members only, payment emails for live payouts only
+      "src/lib/payouts/notify.ts",        // staff payouts: staff_members only, payment emails for live payouts only; refuses demo sessions itself
+      "src/lib/affiliates/emails.ts",     // Affiliate Hub: off until AFFILIATE_EMAILS=on / recruitment switch; refuses demo sessions itself
     ]);
     const root = path.join(__dirname, "..");
     const found: string[] = [];

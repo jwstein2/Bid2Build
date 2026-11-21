@@ -1,4 +1,5 @@
 import "server-only";
+import { inDemoSession } from "@/lib/demo/guard";
 import { logError } from "@/lib/http/api";
 import { site } from "@/lib/site";
 import { money } from "./labels";
@@ -12,6 +13,7 @@ import { money } from "./labels";
 async function send(to: string, subject: string, text: string, key: string, f: typeof fetch): Promise<boolean> {
   const api = process.env.RESEND_API_KEY;
   if (!api || !to) return false;
+  if (await inDemoSession()) return false; // never from a Demo / Practice session (the proxy blocks these routes too)
   try {
     const r = await f("https://api.resend.com/emails", {
       method: "POST",

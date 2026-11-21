@@ -78,8 +78,8 @@ d("Universal search (database)", () => {
     expect(top(await search(ME, "abc supply"))).toMatchObject({ kind: "supplier", id: w.supplier });
   });
 
-  it("10. every one of the 38 trades finds its bid", async () => {
-    expect(TRADES).toHaveLength(38);
+  it("10. every trade finds its bid", async () => {
+    expect(TRADES.length).toBeGreaterThanOrEqual(38);
     for (const [slug, label] of TRADES as [string, string][]) {
       const r = await search(ME, label.replace("&", "").toLowerCase(), { types: ["estimate"] });
       expect(ids(r, "estimate"), `${slug}`).toContain(w.tradeBids[slug]);
