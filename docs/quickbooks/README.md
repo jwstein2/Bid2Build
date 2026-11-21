@@ -67,3 +67,27 @@ Until the keys are set the page shows "Coming soon" and the Payroll CSV export k
   can't create a duplicate.
 - **Support reference:** Intuit's `intuit_tid` response header is captured on every failure. It's logged
   (`quickbooks.*` scopes) and appended to the message the contractor sees as "QuickBooks reference …".
+
+## Paying sales reps and affiliates through QuickBooks (admin side)
+
+Admin → Payments & Payouts → **QuickBooks** connects Built2Bid's *own* QuickBooks Online company (separate from
+the customers' hours-sync connections) and pays commissions through it:
+
+1. **Connect** (owner, two-step sign-in): uses the same Intuit app and redirect address
+   (`/api/integrations/quickbooks/callback`); the state cookie marks it as the platform connection. Tokens are
+   encrypted with `BANK_TOKEN_KEY` in `qb_platform_connection` (service role only).
+2. **Choose the expense account** the commissions are booked to (for example "Commissions & fees").
+3. **Ready to send** lists approved, unpaid sales statements and payable affiliate commissions. Each payee must meet
+   the automatic-payout rules except the bank checks: reviewed 1099 classification (never W-2), agreements, W-9.
+4. **Create bills**: each rep / affiliate becomes a QuickBooks vendor with "Track payments for 1099" on (contact
+   details only, never tax ids or bank numbers); each statement / commission becomes one bill (`DocNumber`
+   `B2B-S…` / `B2B-A…`). The Built2Bid bill id is the QuickBooks `requestid`, so a retry never creates a second bill.
+5. **Pay the bills in QuickBooks** (Bill Pay or Pay bills). The daily payouts cron, or "Check for paid bills now",
+   reads each open bill; a bill with no balance marks the statement / commission paid (the same records a settled
+   automatic payout writes). A bill deleted in QuickBooks releases the item to be billed again.
+
+Guards: one open or paid bill per item per QuickBooks environment; items in a live automatic payout are never
+offered and bills can't be created while automatic payouts are live. Sandbox bills are practice and never mark a
+real item paid. 1099-NEC totals come from QuickBooks for these vendors.
+
+SQL: `supabase/migrations/20270219001000_qb_payout_bills.sql`.

@@ -125,3 +125,42 @@ export async function createTimeActivity(env: QbEnvironment, realm: string, toke
   if (!id || !/^\d{1,32}$/.test(id)) throw new QbError("QuickBooks didn't return the new time entry.", 502);
   return id;
 }
+
+// --- Admin payouts: vendors, bills and expense accounts in Built2Bid's own QuickBooks company --------------------
+
+/** Active expense accounts (where commissions are booked), up to 1,000. */
+export async function listExpenseAccounts(env: QbEnvironment, realm: string, token: string): Promise<{ id: string; name: string }[]> {
+  const j = await api(env, realm, token, "query", { query: { query: "select Id, FullyQualifiedName from Account where AccountType = 'Expense' and Active = true maxresults 1000" } });
+  const rows = ((j.QueryResponse as Record<string, unknown> | undefined)?.Account ?? []) as { Id?: string; FullyQualifiedName?: string }[];
+  return rows.filter((r) => r.Id && /^\d{1,32}$/.test(r.Id)).map((r) => ({ id: String(r.Id), name: String(r.FullyQualifiedName ?? `#${r.Id}`).slice(0, 200) }));
+}
+
+/** A vendor with exactly this display name, if there is one (active or not). */
+export async function findVendorByName(env: QbEnvironment, realm: string, token: string, quotedName: string): Promise<{ id: string; active: boolean } | null> {
+  const j = await api(env, realm, token, "query", { query: { query: `select Id, Active from Vendor where DisplayName = ${quotedName}` } });
+  const v = (((j.QueryResponse as Record<string, unknown> | undefined)?.Vendor ?? []) as { Id?: string; Active?: boolean }[])[0];
+  return v?.Id && /^\d{1,32}$/.test(v.Id) ? { id: v.Id, active: v.Active !== false } : null;
+}
+
+export async function createVendor(env: QbEnvironment, realm: string, token: string, payload: Record<string, unknown>, requestId: string): Promise<string> {
+  const j = await api(env, realm, token, "vendor", { method: "POST", body: payload, query: { requestid: requestId } });
+  const id = (j.Vendor as { Id?: string } | undefined)?.Id;
+  if (!id || !/^\d{1,32}$/.test(id)) throw new QbError("QuickBooks didn't return the new vendor.", 502);
+  return id;
+}
+
+/** Creates one bill. requestid (the Built2Bid bill id) makes QuickBooks ignore a retry of the same bill. */
+export async function createBill(env: QbEnvironment, realm: string, token: string, payload: Record<string, unknown>, requestId: string): Promise<string> {
+  const j = await api(env, realm, token, "bill", { method: "POST", body: payload, query: { requestid: requestId } });
+  const id = (j.Bill as { Id?: string } | undefined)?.Id;
+  if (!id || !/^\d{1,32}$/.test(id)) throw new QbError("QuickBooks didn't return the new bill.", 502);
+  return id;
+}
+
+/** Reads a bill (Balance 0 = paid). Null when QuickBooks no longer has it (deleted). */
+export async function getBill(env: QbEnvironment, realm: string, token: string, id: string): Promise<{ Balance?: unknown; TotalAmt?: unknown } | null> {
+  if (!/^\d{1,32}$/.test(id)) return null;
+  const j = await api(env, realm, token, "query", { query: { query: `select Id, Balance, TotalAmt from Bill where Id = '${id}'` } });
+  const b = (((j.QueryResponse as Record<string, unknown> | undefined)?.Bill ?? []) as { Balance?: unknown; TotalAmt?: unknown }[])[0];
+  return b ?? null;
+}
