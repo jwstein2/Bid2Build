@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { isFinancialsEnabled } from "@/lib/env";
+import { isFinancialsEnabled, isPmEnabled } from "@/lib/env";
+import { isQuickBooksEnabled, QB_PAGE_PATH } from "@/lib/quickbooks/config";
 import { SandboxBar } from "@/components/financials/sandbox-bar";
 import { loadFinState } from "@/lib/financials/loaders";
 import type { FinPermission } from "@/lib/financials/permissions";
@@ -11,7 +12,8 @@ import { FinStateNotice } from "@/components/financials/fin-state-notice";
 
 export const metadata: Metadata = { title: "All financial tools", robots: { index: false } };
 
-interface Tool { label: string; href?: string; needs?: FinPermission; note?: string }
+/** `pm`: the tool lives in PM Hub and only shows when project scheduling and the QuickBooks sync are switched on. */
+interface Tool { label: string; href?: string; needs?: FinPermission; note?: string; pm?: boolean }
 const GROUPS: { title: string; tools: Tool[] }[] = [
   { title: "Getting paid", tools: [
     { label: "Jobs & contracts", href: "/financials/records?view=jobs", needs: "view_project_financials" },
@@ -47,6 +49,7 @@ const GROUPS: { title: string; tools: Tool[] }[] = [
     { label: "Transactions", href: "/financials/accounting/transactions", needs: "view_company_financials" },
     { label: "Chart of accounts", href: "/financials/accounting/accounts", needs: "view_company_financials" },
     { label: "Audit trail", href: "/financials/accounting/audit", needs: "view_company_financials" },
+    { label: "QuickBooks: connect & send crew hours", href: QB_PAGE_PATH, note: "Team managers", pm: true },
   ] },
   { title: "Keep it clean", tools: [
     { label: "Alerts", href: "/financials/records?view=alerts", needs: "view_project_financials" },
@@ -82,7 +85,7 @@ export default async function AllTools() {
           <section key={g.title} className="rounded-xl border border-line bg-surface p-4">
             <h2 className="font-display text-lg font-extrabold">{g.title}</h2>
             <ul className="mt-2 divide-y divide-line">
-              {g.tools.map((t) => {
+              {g.tools.filter((t) => !t.pm || (isPmEnabled() && isQuickBooksEnabled())).map((t) => {
                 const allowed = !t.needs || perms.includes(t.needs);
                 return (
                   <li key={t.label} className="flex min-h-11 items-center gap-2 py-1 text-sm">

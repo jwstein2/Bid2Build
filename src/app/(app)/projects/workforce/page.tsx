@@ -36,7 +36,7 @@ export default async function WorkforceRoute({ searchParams }: { searchParams: P
           <LocateFixed className="h-4 w-4 text-accent-ink" aria-hidden /> Time tracking: GPS clock-in, timesheets &amp; payroll export</Link>
         {isQuickBooksEnabled() && (
           <Link href="/projects/workforce/quickbooks" className="ml-2 mt-2 inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-line-strong bg-surface px-3 text-sm font-semibold text-navy hover:border-accent-ink" data-testid="workforce-quickbooks-link">
-            Send hours to QuickBooks</Link>
+            QuickBooks: connect &amp; send hours</Link>
         )}
       </div>
       {wf
