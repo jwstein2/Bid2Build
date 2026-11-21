@@ -108,6 +108,15 @@ export interface Estimate {
    * Persisted in estimates.proposal_config.roundTotal (no column).
    */
   roundTotal?: boolean;
+  /**
+   * Whole-dollar customer line prices (Will meeting 2026-11-21). Marked-up lines are priced in whole
+   * dollars: with a whole-number quantity the unit price is rounded to the dollar (so qty × unit still
+   * multiplies out exactly); with a fractional quantity the line amount is rounded and the unit price is
+   * shown only where it multiplies out. Billed-at-cost lines keep exact cents. Subtotal, tax and total are
+   * computed from the rounded lines, so everything printed adds up. Costs and profit stay exact.
+   * Persisted in estimates.proposal_config.roundLines (no column). Missing/false = exact cents.
+   */
+  roundLines?: boolean;
   displayMode: EstimateDisplayMode;
   defaultGroupVisibility: GroupVisibility;
   groups: EstimateGroup[];

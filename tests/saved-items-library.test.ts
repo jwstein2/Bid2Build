@@ -3,7 +3,7 @@ import { computeEstimate } from "@/lib/estimate/engine";
 import { buildProposal } from "@/lib/proposal/build";
 import { defaultBusinessProfile, defaultProposalConfig } from "@/lib/proposal/types";
 import { contentHash, versionSnapshot } from "@/lib/export/snapshot";
-import { estimateOptionsToStore, proposalConfigFrom, roundTotalFrom } from "@/lib/data/mappers";
+import { estimateOptionsToStore, proposalConfigFrom, roundLinesFrom, roundTotalFrom } from "@/lib/data/mappers";
 import { lineItemSchema } from "@/lib/estimate/schema";
 import { classifyItem, fingerprintOf } from "@/lib/market/classify";
 import { COST_TYPES } from "@/lib/trades/catalog";
@@ -212,5 +212,71 @@ describe("Saved Items keep their own markup (Will meeting 2026-11-21)", () => {
     expect(libraryOpSchema.safeParse({ kind: "item", action: "add", payload: bad }).success).toBe(false);
     // A section's override is not the item's own: it isn't copied into the library.
     expect(at({ pricingOverride: null })).toBeNull();
+  });
+});
+
+describe("whole-dollar line prices (Will meeting 2026-11-21, item D)", () => {
+  const sum = (xs: { extendedPrice: { toFixed: (n: number) => string } }[]) => xs.reduce((s, x) => s + Number(x.extendedPrice.toFixed(2)), 0);
+
+  it("off by default: exact cents, unchanged totals and version hash", () => {
+    const e = est({ pricing: { mode: "markup", percent: "17" }, items: [item("g1", "10", "40.27")] });
+    const t = computeEstimate(e);
+    expect(t.items[e.items[0].id].unitPrice.toFixed(2)).toBe("47.12"); // 40.27 × 1.17 = 47.1159
+    expect(t.items[e.items[0].id].unitPriceExact).toBe(true);
+    const cfg = defaultProposalConfig();
+    expect(contentHash(versionSnapshot({ ...e, roundLines: undefined }, defaultBusinessProfile(), cfg))).toBe(contentHash(versionSnapshot(e, defaultBusinessProfile(), cfg)));
+  });
+
+  it("whole quantities: unit price rounds to the dollar and qty × unit still multiplies out", () => {
+    const e = { ...est({ pricing: { mode: "markup", percent: "17" }, taxRate: "7.5", items: [item("g1", "10", "40.27"), item("g1", "3", "19.80")] }), roundLines: true };
+    const t = computeEstimate(e);
+    const [a, b] = e.items.map((i) => t.items[i.id]);
+    expect([a.unitPrice.toFixed(2), a.extendedPrice.toFixed(2)]).toEqual(["47.00", "470.00"]);
+    expect([b.unitPrice.toFixed(2), b.extendedPrice.toFixed(2)]).toEqual(["23.00", "69.00"]); // 19.80 × 1.17 = 23.166
+    expect(t.subtotal.toFixed(2)).toBe("539.00");
+    expect(t.tax.toFixed(2)).toBe("40.43"); // 539 × 7.5% = 40.425 → 40.43, computed once
+    expect(t.total.toFixed(2)).toBe("579.43");
+    expect(t.totalCost.toFixed(2)).toBe("462.10"); // costs stay exact
+    expect(t.grossProfit.toFixed(2)).toBe("76.90");
+  });
+
+  it("fractional quantities: line amount rounds, unit price is hidden unless it multiplies out", () => {
+    const e = { ...est({ pricing: { mode: "markup", percent: "25" }, items: [item("g1", "12.5", "33.33", { name: "Shingles" })] }), roundLines: true };
+    const t = computeEstimate(e);
+    const l = t.items[e.items[0].id];
+    expect(l.extendedPrice.toFixed(2)).toBe("521.00"); // 12.5 × 41.6625 = 520.78 → 521
+    expect(l.unitPrice.toFixed(2)).toBe("41.68"); // 41.68 × 12.5 = 521.00: this one multiplies out
+    expect(l.unitPriceExact).toBe(true);
+    const odd = { ...est({ pricing: { mode: "markup", percent: "25" }, items: [item("g1", "333.3", "10", { name: "Odd" })] }), roundLines: true };
+    const lo = computeEstimate(odd).items[odd.items[0].id];
+    expect(lo.extendedPrice.toFixed(2)).toBe("4166.00"); // 333.3 × 12.50 = 4,166.25 → 4,166
+    expect(lo.unitPriceExact).toBe(false); // no cent unit price × 333.3 makes 4,166.00, so it isn't printed
+    const show = { ...defaultProposalConfig().show, itemPrices: true, quantities: true };
+    const doc = buildProposal({ ...odd, defaultGroupVisibility: "itemized" }, defaultBusinessProfile(), { ...defaultProposalConfig(), show });
+    const line = doc.pricing.sections.flatMap((s) => s.lines).find((x) => x.name === "Odd")!;
+    expect(line.amount).toBe("$4,166.00");
+    expect(line.unitPrice).toBeUndefined();
+  });
+
+  it("bill-at-cost lines keep cents; printed lines, subtotal, discount, tax and total reconcile exactly", () => {
+    const e = { ...est({ pricing: { mode: "margin", percent: "30" }, taxRate: "6.875", fixedAdjustment: "-25.50",
+      items: [item("g1", "7", "61.43"), item("g1", "1", "137.21", { treatment: "pass_through", taxable: false, name: "Permit" }), item("g1", "2.25", "18.18")] }), roundLines: true };
+    const t = computeEstimate(e);
+    const lines = e.items.map((i) => t.items[i.id]);
+    expect(lines[1].extendedPrice.toFixed(2)).toBe("137.21");
+    expect(lines.filter((_, k) => k !== 1).every((l) => l.extendedPrice.isInteger())).toBe(true);
+    expect(t.itemsPrice.toFixed(2)).toBe(sum(lines).toFixed(2));
+    expect(t.subtotal.toFixed(2)).toBe((sum(lines) - 25.5).toFixed(2));
+    expect(t.total.toFixed(2)).toBe(t.subtotal.plus(t.tax).toFixed(2));
+    const doc = buildProposal(e, defaultBusinessProfile(), defaultProposalConfig());
+    expect(doc.pricing.total).toBe(`$${t.total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`);
+  });
+
+  it("is stored in proposal_config and read back; defaults to off", () => {
+    expect(estimateOptionsToStore({ roundLines: true })).toEqual({ roundLines: true });
+    expect(estimateOptionsToStore({ roundTotal: true, roundLines: true })).toEqual({ roundTotal: true, roundLines: true });
+    expect(roundLinesFrom({ roundLines: true })).toBe(true);
+    expect(roundLinesFrom({})).toBe(false);
+    expect(proposalConfigFrom({ roundLines: true })).not.toHaveProperty("roundLines");
   });
 });

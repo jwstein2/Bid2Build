@@ -143,6 +143,21 @@ export function PricingPanel({ estimate: e, totals: t, dispatch, lib }: { estima
             </span>
           </span>
         </label>
+        <label className="mt-2 flex items-start gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={Boolean(e.roundLines)}
+            onChange={(ev) => dispatch({ type: "patch", patch: { roundLines: ev.target.checked || undefined } })}
+            className="mt-0.5 h-4 w-4 accent-[var(--color-brand)] max-md:h-5 max-md:w-5"
+            data-testid="round-lines"
+          />
+          <span>
+            <span className="font-semibold">Whole-dollar line prices</span>
+            <span className="block text-xs text-muted">
+              Customer line prices show whole dollars, and the subtotal, tax and total are added up from those lines, so everything on the proposal matches. Billed-at-cost items keep their cents; your costs stay exact.
+            </span>
+          </span>
+        </label>
         {e.roundTotal && (
           <dl className="mt-2 space-y-1.5 text-sm" aria-label="Rounding">
             <Metric k="Calculated total" v={formatCurrency(t.calculatedTotal)} />

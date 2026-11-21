@@ -73,6 +73,8 @@ export interface ItemTotals {
   extendedCost: Dec;
   unitPrice: Dec;
   extendedPrice: Dec;
+  /** False when unitPrice × quantity doesn't equal extendedPrice (whole-dollar lines with a fractional quantity): don't print the unit price. */
+  unitPriceExact: boolean;
   grossProfit: Dec;
   appliedRule: PricingRule | null; // null = pass-through
   taxable: boolean;
@@ -178,8 +180,21 @@ export function computeEstimate(estimate: Estimate): EstimateTotals {
       if (!f.valid) valid = false;
     }
     const extendedCost = round2(quantity.times(unitCost));
-    const unitPrice = round2(unitCost.times(factor));
-    const extendedPrice = round2(quantity.times(unitPrice));
+    let unitPrice = round2(unitCost.times(factor));
+    let extendedPrice = round2(quantity.times(unitPrice));
+    let unitPriceExact = true;
+    if (estimate.roundLines && rule) {
+      // Whole-dollar customer lines (billed-at-cost lines, rule === null, keep their exact cents).
+      const exactUnit = unitCost.times(factor);
+      if (quantity.isInteger()) {
+        unitPrice = exactUnit.toDecimalPlaces(0, D.ROUND_HALF_UP);
+        extendedPrice = quantity.times(unitPrice);
+      } else {
+        extendedPrice = quantity.times(exactUnit).toDecimalPlaces(0, D.ROUND_HALF_UP);
+        unitPrice = quantity.isZero() ? exactUnit.toDecimalPlaces(0, D.ROUND_HALF_UP) : round2(extendedPrice.div(quantity));
+        unitPriceExact = round2(quantity.times(unitPrice)).equals(extendedPrice);
+      }
+    }
     items[item.id] = {
       itemId: item.id,
       groupId: item.groupId,
@@ -188,6 +203,7 @@ export function computeEstimate(estimate: Estimate): EstimateTotals {
       extendedCost,
       unitPrice,
       extendedPrice,
+      unitPriceExact,
       grossProfit: extendedPrice.minus(extendedCost),
       appliedRule: rule,
       taxable: item.taxable,
