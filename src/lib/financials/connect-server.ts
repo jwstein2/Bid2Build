@@ -79,8 +79,8 @@ export async function startOnboarding(opts: { bookId: string; userId: string; em
       business_profile: { name: opts.businessName.slice(0, 100), mcc: "1520", product_description: "Construction and home improvement services" },
       metadata: { b2b_book_id: opts.bookId },
     // The key stops a double click from making two accounts. Stripe replays a saved result (errors included) for
-    // 24 hours, so the hour bucket keeps a failed first try (e.g. platform setup unfinished) from blocking a retry all day.
-    }, { idempotencyKey: `b2b-connect-acct-${opts.bookId}-${liveKey() ? "live" : "test"}-${new Date().toISOString().slice(0, 13)}` });
+    // 24 hours, so the minute bucket keeps a failed try (e.g. platform setup unfinished) from blocking the next retry.
+    }, { idempotencyKey: `b2b-connect-acct-${opts.bookId}-${liveKey() ? "live" : "test"}-${new Date().toISOString().slice(0, 16)}` });
     const { error } = await admin.from("fin_payment_accounts").upsert({
       book_id: opts.bookId, stripe_account_id: acct.id, livemode: liveKey(), created_by: opts.userId, ...snapshotColumns(acct),
     }, { onConflict: "book_id" });
