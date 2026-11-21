@@ -31,6 +31,9 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # Needs Settings → Code security → Dependency graph turned on. Until the owner enables it the action reports
+    # "not supported", so it is advisory for now; remove continue-on-error once the dependency graph is on.
+    continue-on-error: true
     permissions:
       contents: read
       pull-requests: write
