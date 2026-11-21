@@ -61,13 +61,13 @@ has no service worker, and even with one, iOS and Android don't give web pages b
 | Built2Bid open on screen (browser or Home Screen app) | Works: automatic clock-in/out at assigned sites | Walk-tested in Chromium with a simulated location. Still needs checking on real iPhone and Android phones. |
 | Minimized, screen locked, or another app in front | Does not run. Events resume when Built2Bid is opened again. Nothing that happened while it was closed is invented. | Platform limit |
 | App closed | Does not work in a web app | Needs the native app |
-| Native iPhone / Android app | Background arrive/leave using the same rules and records | **Not built.** Needs Apple Developer ($99/yr) and Google Play ($25 one-time) accounts, which are awaiting James's decision. |
+| Built2Bid Android app | Background arrive/leave using the same rules and records, app closed | **Built** (`android/`, see [docs/android](../android/README.md)). Google only: James decided 2026-11-21 there is no iPhone app. Waiting on the Google Play account (D-U-N-S) and a real-phone test. |
 
 The fallback always works: the manual **Clock in / Clock out** buttons, plus "Add missing time" and "Request a fix"
 (both go to a manager for approval with history kept). "Keep screen on" uses the Wake Lock API where the phone
 supports it.
 
-## Native app plan (when approved)
+## Native app plan (Android built in `android/`; iOS notes kept for reference only, not planned)
 
 - **iOS:** Core Location region monitoring (`CLCircularRegion`).
   - Needs "Always" location permission plus the usage strings `NSLocationAlwaysAndWhenInUseUsageDescription` and
@@ -114,7 +114,7 @@ browser walk is `scripts/workforce-gps/walk.mjs`. All of them use synthetic comp
 | 11 | Tenant isolation (Company B sees nothing of A) | DB "11." |
 | 12 | Project labor: estimated vs actual; wages hidden | DB "12.", walk (project panel) |
 | 13 | Overtime by jurisdiction / exempt | unit `splitWeek` / `overtimeByWeek` |
-| 14 | App closed / native background | **Not testable until the native app exists** |
+| 14 | App closed / native background | Android app real-phone plan in docs/android/README.md |
 | 15 | GPS never removes recorded time; retention only purges old events | DB "15.", rollback test |
 
 Also covered: off by default, location confirmation, W-2-only enrollment, consent before anything is stored,

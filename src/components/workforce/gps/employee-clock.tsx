@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { BellRing, Clock, LocateFixed, LogIn, LogOut, MapPin, Pause, Play, ShieldCheck, Smartphone } from "lucide-react";
+import { BatteryCharging, BellRing, Clock, LocateFixed, LogIn, LogOut, MapPin, Pause, Play, ShieldCheck, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge, Notice } from "@/components/ui/misc";
 import { api } from "@/components/schedule/client";
@@ -8,6 +8,7 @@ import { addDays, entryHours, fmtHours, localDay, TIME_SOURCE_LABEL, TIME_STATUS
 import { ISSUE_LABEL } from "@/lib/workforce/hub/model";
 import { clientEventId, GeofenceTracker, type GeoEvent } from "@/lib/workforce/gps/geofence";
 import { disclosureText, type Correction, type MyStaff, type MyStatus, type Permission } from "@/lib/workforce/gps/model";
+import { inAndroidApp, nativeBatterySettings, nativeRequestPermission, nativeStop, nativeSync, onNativeState, type NativeState } from "@/lib/workforce/gps/native";
 
 type Project = { id: string; name: string };
 /** Paid work that isn't a customer project, plus unpaid time; a project is never required for paid work. */
@@ -17,8 +18,9 @@ type EventReply = { ok: true; outcome: string; message?: string | null; prompt?:
 const hm = (iso: string | null | undefined, tz: string) => (iso ? new Intl.DateTimeFormat("en-US", { timeZone: tz, hour: "numeric", minute: "2-digit" }).format(new Date(iso)) : "—");
 const dayTime = (iso: string | null | undefined, tz: string) => (iso ? new Intl.DateTimeFormat("en-US", { timeZone: tz, weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(iso)) : "—");
 const toLocalInput = (iso: string) => { const d = new Date(iso); const p = (n: number) => String(n).padStart(2, "0"); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; };
-const appMode = (): "pwa" | "browser" => {
+const appMode = (): "pwa" | "browser" | "native_android" => {
   if (typeof window === "undefined") return "browser";
+  if (inAndroidApp()) return "native_android";
   const nav = navigator as Navigator & { standalone?: boolean };
   return window.matchMedia?.("(display-mode: standalone)").matches || nav.standalone ? "pwa" : "browser";
 };
@@ -48,6 +50,18 @@ export function EmployeeClock({ initial, projects }: { initial: Data; projects: 
     if (r.ok) setData(r.data);
   }, []);
   const tz = data.status.settings.timezone;
+  // Android app: hand today's sites to the phone's geofencing (one person per phone), or stop it when automatic
+  // clock-in is off for them. In a browser this does nothing.
+  const st = data.status;
+  const tracked = st.settings.enabled ? st.me.find((m) => m.enrolled && m.active && m.consentAt && (m.consentVersion ?? 0) >= st.settings.disclosureVersion) : undefined;
+  const syncKey = tracked ? JSON.stringify([tracked.resourceId, tracked.locations.map((l) => [l.id, l.lat, l.lng, l.radiusM]), st.settings.entryDwellMin, st.settings.exitGraceMin, st.settings.maxAccuracyM]) : "";
+  useEffect(() => {
+    if (!inAndroidApp()) return;
+    if (!tracked) { nativeStop(); return; }
+    nativeSync({ resourceId: tracked.resourceId, sites: tracked.locations.map((l) => ({ id: l.id, name: l.name, lat: l.lat, lng: l.lng, radiusM: l.radiusM })),
+      dwellMin: st.settings.entryDwellMin, graceMin: st.settings.exitGraceMin, maxAccuracyM: st.settings.maxAccuracyM });
+    // syncKey captures everything the phone needs; re-sync only when it changes.
+  }, [syncKey]); // eslint-disable-line react-hooks/exhaustive-deps
   if (data.status.me.length === 0) {
     return <Notice title="You're not set up on the time clock yet">Ask your company admin to add you as Staff in Team &amp; Subcontractors and link your login.</Notice>;
   }
@@ -177,11 +191,25 @@ function GpsCard({ me, status, post, reload, say, setBanner, onPrompt }: {
   useEffect(() => { tracker.setSites(me.locations.map((l) => ({ id: l.id, name: l.name, lat: l.lat, lng: l.lng, radiusM: l.radiusM }))); }, [tracker, me.locations]);
   const names = useMemo(() => Object.fromEntries(me.locations.map((l) => [l.id, l.name])), [me.locations]);
   const sending = useRef(false);
-
   const report = useCallback((p: Permission) => {
     setPerm(p);
     void post({ action: "device", resourceId: me.resourceId, permission: p, appMode: appMode(), device: navigator.userAgent.includes("iPhone") ? "iPhone" : /Android/.test(navigator.userAgent) ? "Android" : "Other" });
   }, [post, me.resourceId]);
+
+  // Inside the Android app the phone does the watching (also when the app is closed), so the on-screen tracker stays off.
+  const [native, setNative] = useState<NativeState | null>(null);
+  const [isApp, setIsApp] = useState(false);
+  const lastNativePerm = useRef<Permission | null>(null);
+  useEffect(() => {
+    if (!inAndroidApp()) return;
+    queueMicrotask(() => setIsApp(true));
+    return onNativeState((st) => {
+      setNative(st);
+      // Tell the company's admin view whether location is allowed on this phone (only when it changes).
+      const p: Permission = st.location === "granted" ? "granted" : st.location === "denied" ? "denied" : "prompt";
+      if (me.active && p !== lastNativePerm.current) { lastNativePerm.current = p; report(p); }
+    });
+  }, [me.active, report]);
 
   const flush = useCallback(async () => {
     if (sending.current) return;
@@ -234,6 +262,7 @@ function GpsCard({ me, status, post, reload, say, setBanner, onPrompt }: {
   // Start automatically when opened if location is already allowed; report permission status either way.
   useEffect(() => {
     if (!me.active) return;
+    if (inAndroidApp()) return; // the app reports its own permission state below
     if (!navigator.geolocation) { queueMicrotask(() => report("unavailable")); return; }
     let cancelled = false;
     navigator.permissions?.query({ name: "geolocation" as PermissionName }).then((st) => {
@@ -289,6 +318,43 @@ function GpsCard({ me, status, post, reload, say, setBanner, onPrompt }: {
       </section>
     );
   }
+  const turnOff = (
+    <p className="text-xs text-muted">Only arrivals and departures at your work sites are saved, with distance and GPS accuracy. No trail of where you go. <button type="button" className="underline" onClick={async () => { setRunning(false); await post({ action: "consent", resourceId: me.resourceId, agree: false, version: s.disclosureVersion }); say(true, "Automatic clock-in is off. Use the buttons above."); await reload(); }}>Turn off automatic clock-in</button></p>
+  );
+  const siteList = (
+    <div>
+      <p className="font-semibold">Your sites today</p>
+      {me.locations.length === 0 ? <p className="text-ink-soft">You aren&apos;t assigned to a site today. Clock in by hand.</p>
+        : <ul className="mt-1 space-y-0.5">{me.locations.map((l) => <li key={l.id}><MapPin className="mr-1 inline h-3.5 w-3.5 text-accent-ink" aria-hidden />{l.name}</li>)}</ul>}
+    </div>
+  );
+  if (isApp) {
+    const bg = native?.tracking ? "on" : native?.location === "granted" && !native.background ? "open_only" : "off";
+    return (
+      <section className="space-y-3 rounded-xl border border-line bg-surface p-4 text-sm" data-testid="gps-card-native">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="mr-auto text-lg font-extrabold text-navy"><LocateFixed className="mr-1 inline h-5 w-5 text-accent-ink" aria-hidden />Automatic clock-in</p>
+          <Badge tone={bg === "on" ? "ok" : bg === "open_only" ? "warn" : "neutral"}>{bg === "on" ? "On, even when the app is closed" : bg === "open_only" ? "Needs “Allow all the time”" : "Not set up on this phone"}</Badge>
+        </div>
+        {!native ? <p className="text-ink-soft">Checking this phone…</p>
+          : native.tracking ? (
+            <p data-testid="gps-native-on">This phone clocks you in when you arrive at a site below and out when you leave. You can close Built2Bid.</p>
+          ) : (
+            <>
+              <p>{native.location === "granted" ? "Built2Bid can only see your location while it's open. To clock in and out with the app closed, choose “Allow all the time”." : "Allow location so this phone can clock you in when you arrive at your sites and out when you leave, even with Built2Bid closed."}</p>
+              <Button size="sm" onClick={() => nativeRequestPermission()} data-testid="gps-native-allow"><Play className="h-4 w-4" aria-hidden />{native.location === "granted" ? "Allow all the time" : "Allow location"}</Button>
+              {native.error === "geofence_unavailable" && <Notice tone="warn">Turn on Location in your phone&apos;s quick settings, then come back.</Notice>}
+            </>
+          )}
+        {native?.tracking && !native.batteryUnrestricted && (
+          <p className="text-ink-soft"><BatteryCharging className="mr-1 inline h-4 w-4" aria-hidden />Some phones stop apps to save battery. If clock-ins come late, set Built2Bid to <button type="button" className="underline" onClick={() => nativeBatterySettings()}>Unrestricted battery</button>.</p>
+        )}
+        {native?.tracking && !native.notifications && <p className="text-ink-soft">Allow notifications to see “Clocked in” and “Still working?” messages.</p>}
+        {siteList}
+        {turnOff}
+      </section>
+    );
+  }
   return (
     <section className="space-y-3 rounded-xl border border-line bg-surface p-4 text-sm" data-testid="gps-card">
       <div className="flex flex-wrap items-center gap-2">
@@ -310,15 +376,11 @@ function GpsCard({ me, status, post, reload, say, setBanner, onPrompt }: {
         </div>
       )}
       {running && <p data-testid="gps-live">{near ? <>At <strong>{near}</strong>.</> : "Not at an assigned site."} {last ? <span className="text-muted">GPS ±{Math.round(last.accuracyM)} m{last.accuracyM > s.maxAccuracyM ? " (too weak to use right now)" : ""}.</span> : <span className="text-muted">Waiting for GPS…</span>}</p>}
-      <div>
-        <p className="font-semibold">Your sites today</p>
-        {me.locations.length === 0 ? <p className="text-ink-soft">You aren&apos;t assigned to a site today. Clock in by hand.</p>
-          : <ul className="mt-1 space-y-0.5">{me.locations.map((l) => <li key={l.id}><MapPin className="mr-1 inline h-3.5 w-3.5 text-accent-ink" aria-hidden />{l.name}</li>)}</ul>}
-      </div>
+      {siteList}
       <Notice title="Keep Built2Bid open on screen">
         <Smartphone className="mr-1 inline h-4 w-4" aria-hidden />Phones pause web pages when you switch apps, lock the screen or close the browser. Automatic clock-in and clock-out only happen while this screen is open; anything that happened while it was closed isn&apos;t recorded. If you forget, clock in or out by hand or ask for a fix below.
       </Notice>
-      <p className="text-xs text-muted">Only arrivals and departures at your work sites are saved, with distance and GPS accuracy. No trail of where you go. <button type="button" className="underline" onClick={async () => { setRunning(false); await post({ action: "consent", resourceId: me.resourceId, agree: false, version: s.disclosureVersion }); say(true, "Automatic clock-in is off. Use the buttons above."); await reload(); }}>Turn off automatic clock-in</button></p>
+      {turnOff}
     </section>
   );
 }
