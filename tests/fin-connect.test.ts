@@ -10,10 +10,9 @@ describe("Stripe Connect invoice payments: pure helpers", () => {
     expect(connectMode({ STRIPE_SECRET_KEY: "rk_live_x", STRIPE_ALLOW_LIVE: "true", CONNECT_PAYMENTS_LIVE: "true" })).toBe("live");
   });
 
-  it("keeps the card surcharge off until counsel approves", () => {
-    expect(surchargeAllowed({})).toBe(false);
-    expect(surchargeAllowed({ CONNECT_CARD_SURCHARGE: "on" })).toBe(false);
+  it("has an owner kill switch for the card surcharge", () => {
     expect(surchargeAllowed({ CONNECT_CARD_SURCHARGE: "approved" })).toBe(true);
+    expect(surchargeAllowed({ CONNECT_CARD_SURCHARGE: "OFF" })).toBe(false);
   });
 
   it("derives a plain account state", () => {

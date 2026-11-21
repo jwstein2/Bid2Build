@@ -9,8 +9,9 @@ Migration: `supabase/migrations/20270213001000_fin_connect_payments.sql` · Roll
   full Stripe Dashboard, the contractor pays Stripe's fees, Stripe carries payment losses, and Stripe collects the
   KYC requirements. A contractor who already uses Stripe can sign in to it.
 - **Settings:** card on or off, bank (ACH) on or off (at least one must stay on), and who pays the card fee. "Customer
-  pays" (a card surcharge) is shown but **locked** until counsel approves the surcharge rules (credit only, capped,
-  banned states, disclosure). It unlocks with `CONNECT_CARD_SURCHARGE=approved`.
+  pays" (a credit card surcharge) is ON (2026-11-21) with state-by-state enforcement: credit only, capped, banned
+  states blocked, disclosed, 30-day notice. See [card-surcharge-rules.md](card-surcharge-rules.md). Kill switch:
+  `CONNECT_CARD_SURCHARGE=off`.
 - **Pay online link** on every issued invoice with a balance. This creates one secure link per invoice (only a SHA-256
   of the token is stored; a new link replaces the old one) and copies it to paste into an email or text.
 - **Public pay page** `/pay/<token>`: invoice number, dates, total and amount due, then **Pay** opens Stripe Checkout.

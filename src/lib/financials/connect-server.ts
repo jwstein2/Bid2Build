@@ -8,15 +8,36 @@ import { getStripe, assertModeAllowed } from "@/lib/billing/stripe";
 import { createAdminClient } from "@/lib/supabase/server";
 import { isLiveKey } from "@/lib/billing/test-mode";
 import { serverEnv } from "@/lib/env";
-import { checkoutParams, connectMode, fromCents, hashPayToken, methodFromType, newPayToken, type AccountSnapshot } from "./connect";
+import { checkoutParams, connectMode, fromCents, hashPayToken, methodFromType, newPayToken, surchargeAllowed, toCents, type AccountSnapshot } from "./connect";
+import { capturePlan, disclosureText, normalizeState, settingsProblems, stateFromAddress, surchargeCents, surchargeDecision } from "./surcharge";
 
 export interface PaymentAccountRow {
   book_id: string; stripe_account_id: string; livemode: boolean; charges_enabled: boolean; payouts_enabled: boolean; details_submitted: boolean;
   requirements_due: string[]; disabled_reason: string | null; card_enabled: boolean; ach_enabled: boolean; card_fee_payer: "contractor" | "customer";
   status_synced_at: string | null;
+  surcharge_pct: number | string; card_cost_pct: number | string; card_cost_fixed_cents: number; surcharge_notice_date: string | null; surcharge_attested_at: string | null;
 }
 
-const COLS = "book_id, stripe_account_id, livemode, charges_enabled, payouts_enabled, details_submitted, requirements_due, disabled_reason, card_enabled, ach_enabled, card_fee_payer, status_synced_at";
+const COLS = "book_id, stripe_account_id, livemode, charges_enabled, payouts_enabled, details_submitted, requirements_due, disabled_reason, card_enabled, ach_enabled, card_fee_payer, status_synced_at, surcharge_pct, card_cost_pct, card_cost_fixed_cents, surcharge_notice_date, surcharge_attested_at";
+
+/** The contractor's surcharge settings in engine form. */
+export const surchargeSettingsOf = (a: PaymentAccountRow) => ({
+  pct: Number(a.surcharge_pct) || 0, costPct: Number(a.card_cost_pct) || 0, costFixedCents: Number(a.card_cost_fixed_cents) || 0,
+  noticeDate: a.surcharge_notice_date, attested: Boolean(a.surcharge_attested_at),
+});
+
+/** Is "customer pays the card fee" switched on AND ready on the contractor's side (rate, terms, 30-day notice)? */
+// Bank (ACH) must be offered too, so the surcharge is always avoidable (all-in pricing laws in CO, VA, OR, RI, DC;
+// Oklahoma requires another payment method).
+export const surchargeActive = (a: PaymentAccountRow | null) =>
+  Boolean(a && a.card_enabled && a.ach_enabled && a.card_fee_payer === "customer" && surchargeAllowed() && !settingsProblems(surchargeSettingsOf(a)).length);
+
+/** The contractor's business state, from their tax profile (Financials → Tax). */
+export async function businessState(bookId: string): Promise<string | null> {
+  const { data } = await createAdminClient().from("fin_tax_profiles").select("primary_state, address").eq("book_id", bookId).maybeSingle();
+  const r = data as { primary_state?: string | null; address?: { state?: string } | null } | null;
+  return normalizeState(r?.primary_state ?? null) ?? normalizeState(r?.address?.state ?? null);
+}
 const liveKey = () => isLiveKey(serverEnv().stripeSecretKey);
 
 export async function getPaymentAccount(bookId: string): Promise<PaymentAccountRow | null> {
@@ -103,6 +124,7 @@ export async function revokePayLinks(invoiceId: string, userId: string) {
 export interface PayPage {
   invoiceId: string; bookId: string; number: string; issueDate: string | null; dueDate: string | null; total: string; balance: string; status: string;
   billToName: string; billToEmail: string | null; businessName: string; account: PaymentAccountRow | null; pending: boolean;
+  contractorState: string | null; customerState: string | null;
 }
 
 /** Everything the public pay page shows, looked up by the link token. Null when the link is unknown or revoked. */
@@ -111,12 +133,13 @@ export async function loadPayPage(token: string): Promise<PayPage | null> {
   const { data: link } = await admin.from("fin_invoice_pay_links").select("id, book_id, invoice_id").eq("token_hash", hashPayToken(token)).is("revoked_at", null).maybeSingle();
   if (!link) return null;
   const l = link as { id: string; book_id: string; invoice_id: string };
-  const [{ data: inv }, { data: bal }, { data: book }, account, { data: pending }] = await Promise.all([
+  const [{ data: inv }, { data: bal }, { data: book }, account, { data: pending }, contractorState] = await Promise.all([
     admin.from("fin_invoices").select("id, number, issue_date, due_date, total, status, bill_to").eq("id", l.invoice_id).maybeSingle(),
     admin.from("fin_invoice_balances_v").select("balance").eq("invoice_id", l.invoice_id).maybeSingle(),
     admin.from("fin_books").select("name").eq("id", l.book_id).maybeSingle(),
     getPaymentAccount(l.book_id),
     admin.from("fin_online_payments").select("id").eq("invoice_id", l.invoice_id).eq("status", "processing").limit(1),
+    businessState(l.book_id).catch(() => null),
   ]);
   if (!inv) return null;
   await admin.from("fin_invoice_pay_links").update({ last_viewed_at: new Date().toISOString() }).eq("id", l.id);
@@ -126,31 +149,129 @@ export async function loadPayPage(token: string): Promise<PayPage | null> {
     balance: String((bal as { balance?: string } | null)?.balance ?? i.total), status: i.status,
     billToName: i.bill_to?.name ?? "", billToEmail: i.bill_to?.email ?? null, businessName: (book as { name?: string } | null)?.name ?? "Your contractor",
     account, pending: Boolean((pending as unknown[] | null)?.length),
+    contractorState, customerState: stateFromAddress(i.bill_to?.address ?? null),
   };
 }
 
-/** Start a Stripe Checkout session on the contractor's account for the invoice's open balance. */
-export async function startInvoiceCheckout(page: PayPage, returnUrl: string) {
+/**
+ * The card surcharge line printed on the customer's invoice, or null. Shown only when the contractor surcharges, the
+ * contractor's state allows it, and the invoice's customer state (when known) allows it too.
+ */
+export async function invoiceSurchargeNote(bookId: string, billToAddress: string | null | undefined, balance?: string): Promise<string | null> {
+  if (connectMode() === "off") return null;
+  const a = await getPaymentAccount(bookId).catch(() => null);
+  if (!a || !a.charges_enabled || !surchargeActive(a)) return null;
+  const home = await businessState(bookId).catch(() => null);
+  const cust = stateFromAddress(billToAddress ?? null);
+  const d = surchargeDecision(home, cust ?? home, surchargeSettingsOf(a).pct);
+  if (!d.ok) return null;
+  const st = surchargeSettingsOf(a);
+  const baseCents = toCents(balance ?? "0");
+  const sc = baseCents > 0 ? surchargeCents(baseCents, d.pct, st.costPct, st.costFixedCents) : 0;
+  const usd = (c: number) => (c / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
+  const totals = sc > 0 ? ` Amount due by bank (ACH) or debit card: ${usd(baseCents)}. Amount due by credit card: ${usd(baseCents + sc)} (includes a ${usd(sc)} surcharge).` : "";
+  return `Online card payments: ${disclosureText(d.pct, d.disclosures)}${totals}${cust ? "" : " Surcharges are never added where state law prohibits them."}`;
+}
+
+export interface PayOffer {
+  /** Surcharge shown and charged on a credit card, or null when the contractor pays the fee / it isn't allowed. */
+  surcharge: { pct: number; cents: number; disclosure: string } | null;
+  /** The customer's state is needed before we can say (the contractor surcharges and the address has no state). */
+  needsState: boolean;
+  /** Why no surcharge applies here (for the contractor-facing note; empty when it does). */
+  reasons: string[];
+}
+
+/** What the customer is offered on the pay page, for a given customer state (from the invoice or their choice). */
+export function payOffer(page: PayPage, customerState: string | null): PayOffer {
+  const a = page.account;
+  if (!surchargeActive(a) || !a) return { surcharge: null, needsState: false, reasons: [] };
+  if (!customerState) return { surcharge: null, needsState: true, reasons: [] };
+  const st = surchargeSettingsOf(a);
+  const d = surchargeDecision(page.contractorState, customerState, st.pct);
+  if (!d.ok) return { surcharge: null, needsState: false, reasons: d.reasons };
+  const cents = surchargeCents(toCents(page.balance), d.pct, st.costPct, st.costFixedCents);
+  if (cents <= 0) return { surcharge: null, needsState: false, reasons: ["Surcharge rounds to zero."] };
+  return { surcharge: { pct: d.pct, cents, disclosure: disclosureText(d.pct, d.disclosures) }, needsState: false, reasons: [] };
+}
+
+/**
+ * Start a Stripe Checkout session on the contractor's account for the invoice's open balance.
+ * choice.method: "any" (contractor pays the fee: card and bank on one page), "card" (credit card surcharge may
+ * apply) or "ach" (bank, never surcharged). choice.state: the customer's state when the invoice address has none.
+ */
+export async function startInvoiceCheckout(page: PayPage, returnUrl: string, choice: { method?: "any" | "card" | "ach"; state?: string | null } = {}) {
   if (connectMode() === "off") throw new Error("connect_off");
   assertModeAllowed();
   const a = page.account;
   if (!a || !a.charges_enabled) throw new Error("not_ready");
   if (page.status !== "issued" || Number(page.balance) <= 0) throw new Error("nothing_due");
+  const method = choice.method ?? "any";
+  if (method === "card" && !a.card_enabled) throw new Error("method_off");
+  if (method === "ach" && !a.ach_enabled) throw new Error("method_off");
+  const customerState = page.customerState ?? normalizeState(choice.state ?? null);
+  const offer = method === "card" ? payOffer(page, customerState) : null;
+  if (offer?.needsState) throw new Error("state_needed");
+  const sc = offer?.surcharge && page.contractorState && customerState
+    ? { cents: offer.surcharge.cents, pct: offer.surcharge.pct, contractorState: page.contractorState, customerState, disclosure: offer.surcharge.disclosure } : null;
   const params = checkoutParams({
     invoiceId: page.invoiceId, bookId: page.bookId, invoiceNumber: page.number, businessName: page.businessName, amountDue: page.balance,
-    customerEmail: page.billToEmail, card: a.card_enabled, ach: a.ach_enabled, returnUrl,
+    customerEmail: page.billToEmail, card: method !== "ach" && a.card_enabled, ach: method !== "card" && a.ach_enabled, returnUrl, surcharge: sc,
   });
   const session = await getStripe().checkout.sessions.create(params as Stripe.Checkout.SessionCreateParams, { stripeAccount: a.stripe_account_id });
   const { error } = await createAdminClient().from("fin_online_payments").insert({
     book_id: page.bookId, invoice_id: page.invoiceId, stripe_account_id: a.stripe_account_id, checkout_session_id: session.id,
     livemode: Boolean(session.livemode), amount: page.balance, status: "open",
+    surcharge_offered: sc ? fromCents(sc.cents) : 0, surcharge_pct: sc ? sc.pct : null, payer_state: customerState,
   });
   if (error) throw error;
   return session.url;
 }
 
+const surchargeMeta = (s: Stripe.Checkout.Session) => {
+  const m = s.metadata ?? {};
+  const surcharge = Number(m.b2b_surcharge_cents ?? 0);
+  const base = Number(m.b2b_base_cents ?? 0);
+  return surcharge > 0 && base > 0 ? { surcharge, base, pct: Number(m.b2b_surcharge_pct ?? 0), contractorState: normalizeState(m.b2b_contractor_state) } : null;
+};
+
+/** Is this a surcharge session whose card payment is authorized and waiting for our capture decision? */
+export const needsCaptureDecision = (s: Stripe.Checkout.Session) => Boolean(surchargeMeta(s)) && s.payment_status === "unpaid" && s.status === "complete";
+
+/**
+ * Surcharge sessions are authorized for invoice + surcharge but not captured. Here we look at the card Stripe
+ * actually saw (funding type, billing state) and capture the full amount only when the surcharge is allowed;
+ * otherwise we capture just the invoice amount, so a debit / prepaid card or a banned-state billing address is
+ * never surcharged. Then the payment is recorded at the invoice amount. Idempotent (a captured PI is re-read).
+ */
+export async function captureAndSettle(session: Stripe.Checkout.Session, stripeAccount: string) {
+  const sm = surchargeMeta(session);
+  const piId = typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id ?? null;
+  if (!sm || !piId) return settleSession(session, stripeAccount);
+  const stripe = getStripe();
+  let pi = await stripe.paymentIntents.retrieve(piId, { expand: ["latest_charge"] }, { stripeAccount });
+  const charge = (typeof pi.latest_charge === "object" ? pi.latest_charge : null) as Stripe.Charge | null;
+  const facts = {
+    funding: charge?.payment_method_details?.card?.funding, pmType: charge?.payment_method_details?.type,
+    billingState: charge?.billing_details?.address?.state, billingCountry: charge?.billing_details?.address?.country,
+  };
+  const plan = capturePlan(sm.base, sm.surcharge, sm.contractorState, facts, sm.pct || undefined);
+  if (pi.status === "requires_capture") {
+    pi = await stripe.paymentIntents.capture(piId, { amount_to_capture: plan.captureCents }, { stripeAccount, idempotencyKey: `b2b-capture-${piId}` });
+  }
+  if (pi.status !== "succeeded") return { skipped: pi.status };
+  const kept = Math.max(0, Math.min(sm.surcharge, (pi.amount_received ?? plan.captureCents) - sm.base));
+  const f = facts.funding;
+  const result = await settleSession(session, stripeAccount, { amountCents: sm.base });
+  await createAdminClient().from("fin_online_payments").update({
+    surcharge_amount: fromCents(kept), card_funding: f === "credit" || f === "debit" || f === "prepaid" ? f : "unknown",
+    payer_state: normalizeState(facts.billingState) ?? undefined, surcharge_note: kept > 0 ? null : plan.reason,
+  }).eq("checkout_session_id", session.id);
+  return result;
+}
+
 /** Settle a paid Checkout session (card right away; ACH once the bank debit succeeds). Idempotent. */
-export async function settleSession(session: Stripe.Checkout.Session, stripeAccount: string) {
+export async function settleSession(session: Stripe.Checkout.Session, stripeAccount: string, opts: { amountCents?: number } = {}) {
   const piId = typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id ?? null;
   let method: "card" | "ach" | null = null;
   if (piId) {
@@ -158,7 +279,8 @@ export async function settleSession(session: Stripe.Checkout.Session, stripeAcco
     const pm = pi.payment_method as Stripe.PaymentMethod | string | null;
     method = methodFromType(typeof pm === "object" && pm ? pm.type : pi.payment_method_types?.[0]);
   }
-  const amount = fromCents(session.amount_total ?? 0);
+  // A surcharge is never part of the invoice payment: it's recorded on the online payment row (surcharge_amount).
+  const amount = fromCents(opts.amountCents ?? surchargeMeta(session)?.base ?? session.amount_total ?? 0);
   const { data, error } = await createAdminClient().rpc("fin_online_payment_settle", {
     p_checkout_session_id: session.id, p_payment_intent_id: piId, p_method: method ?? "card", p_amount: amount,
   });

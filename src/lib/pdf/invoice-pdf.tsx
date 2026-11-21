@@ -17,6 +17,8 @@ export interface InvoicePdfData {
   paid: string; credited: string; balance: string;
   payments: { date: string; method: string; amount: string }[];
   contract?: { current: string; invoicedToDate: string; paidToDate: string } | null;
+  /** Credit card surcharge disclosure (customer pays the card fee), when it applies. */
+  cardSurchargeNote?: string | null;
   /** Practice sandbox: every page carries a watermark. */
   sandbox?: boolean;
 }
@@ -134,6 +136,7 @@ export function InvoicePdf({ d, logo }: { d: InvoicePdfData; logo?: { data: Buff
         <View style={s.box} wrap={false}>
           <Text style={s.label}>How to pay</Text>
           <Text>Make payment to {T(d.company.name)} and include invoice number {T(d.invoice.number)} with your payment.</Text>
+          {d.cardSurchargeNote && <Text style={{ marginTop: 3 }}>{T(d.cardSurchargeNote)}</Text>}
           {(d.company.phone || d.company.email) && <Text style={s.muted}>Questions about this invoice: {T([d.company.phone, d.company.email].filter(Boolean).join(" or "))}</Text>}
         </View>
 

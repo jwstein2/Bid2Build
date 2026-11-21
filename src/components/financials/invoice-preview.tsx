@@ -82,6 +82,7 @@ export function InvoicePreviewDialog({ invoiceId, onOpenChange }: { invoiceId: s
             </dl>
             {d.payments.length > 0 && <p className="mt-3 text-xs text-[#56677a]">Payments: {d.payments.map((p) => `${usd(p.amount)} ${METHOD[p.method] ?? ""} ${fmtDate(p.date)}`).join(" · ")}</p>}
             {d.invoice.memo && <p className="mt-3 text-sm"><span className="font-semibold">Notes: </span>{d.invoice.memo}</p>}
+            {d.cardSurchargeNote && <p className="mt-3 text-xs text-ink-soft" data-testid="invoice-surcharge-note">{d.cardSurchargeNote}</p>}
           </div>
           <div className="flex flex-wrap gap-2">
             <a className={buttonClass("secondary", "sm")} href={`/api/financials/invoices/${invoiceId}/pdf`} target="_blank" rel="noopener"><FileDown className="h-4 w-4" aria-hidden /> Open PDF</a>
