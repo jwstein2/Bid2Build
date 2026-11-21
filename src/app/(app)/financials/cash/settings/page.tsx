@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { isFinancialsEnabled } from "@/lib/env";
 import { isMissing, loadFinState } from "@/lib/financials/loaders";
 import { Notice } from "@/components/ui/misc";
@@ -50,13 +50,15 @@ export default async function CashSettingsPage() {
   const history = customerHistory(rows(paidR).map((p) => ({ customerId: p.customer_id ? String(p.customer_id) : null, issueDate: p.issue_date ? String(p.issue_date).slice(0, 10) : null,
     dueDate: p.due_date ? String(p.due_date).slice(0, 10) : null, paidOn: last.get(String(p.invoice_id)) ?? null })));
   const terms = new Map(rows(termsR).map((t) => [String(t.customer_id), { days: Number(t.days), basis: t.basis === "issue" ? "issue" as const : "due" as const }]));
+  // People who may get warning emails: the book owner and seats whose role can see company financials.
+  const people = canEdit ? await recipientsFor(ctx.bookId) : [];
   const customers = rows(custR).map((c) => ({ id: String(c.id), name: String(c.name || "Customer") })).sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <TbShell {...shell} intro="The assumptions behind your cash forecast. They are your company's own numbers, not industry figures, and you can change them any time. Changing them never changes an invoice, bill or payment."
       actions={<Link href="/financials/cash" className="inline-flex min-h-9 items-center rounded-lg border border-line px-3 text-sm font-semibold hover:bg-black/5">← Back to Cash flow</Link>}>
       {!settings.saved && <Notice title="Using starting assumptions">Nothing has been saved yet, so the forecast uses the values shown below. Save them once to make them yours.</Notice>}
-      <CashSettingsForm s={settings} canEdit={canEdit} />
+      <CashSettingsForm s={settings} canEdit={canEdit} people={people} />
       <section className="space-y-2 rounded-xl border border-line bg-surface p-4" aria-labelledby="v9-cust-h" data-testid="v9-collection-terms">
         <h2 id="v9-cust-h" className="text-lg font-bold">Customer payment habits</h2>
         <p className="text-sm text-muted">Set how long a specific customer usually takes to pay. This wins over their history and the company default above.</p>
@@ -69,4 +71,32 @@ export default async function CashSettingsPage() {
       </section>
     </TbShell>
   );
+}
+
+const FORECAST_ROLES = ["owner", "financial_admin", "bookkeeper", "accountant"];
+async function recipientsFor(bookId: string): Promise<{ id: string; label: string }[]> {
+  try {
+    const admin = createAdminClient();
+    const [{ data: book }, { data: seats }] = await Promise.all([
+      admin.from("fin_books").select("owner_user_id, company_id").eq("id", bookId).maybeSingle(),
+      admin.from("fin_seats").select("user_id, fin_role").eq("book_id", bookId),
+    ]);
+    const b = book as Row | null;
+    const ids = new Set(rows({ data: seats }).filter((x) => FORECAST_ROLES.includes(String(x.fin_role))).map((x) => String(x.user_id)));
+    if (b?.owner_user_id) ids.add(String(b.owner_user_id));
+    if (b?.company_id) {
+      const { data: c } = await admin.from("companies").select("owner_user_id").eq("id", String(b.company_id)).maybeSingle();
+      if ((c as Row | null)?.owner_user_id) ids.add(String((c as Row).owner_user_id));
+    }
+    const list = [...ids].slice(0, 50);
+    const { data: m } = list.length ? await admin.from("company_members").select("user_id, display_name, email").in("user_id", list) : { data: [] };
+    const label = new Map(rows({ data: m }).map((x) => [String(x.user_id), String(x.display_name || x.email || "")]));
+    const out: { id: string; label: string }[] = [];
+    for (const id of list) {
+      let l = label.get(id) || "";
+      if (!l) { const { data: u } = await admin.auth.admin.getUserById(id); l = String(u?.user?.email ?? "Team member"); }
+      out.push({ id, label: l });
+    }
+    return out.sort((a, b) => a.label.localeCompare(b.label));
+  } catch { return []; }
 }

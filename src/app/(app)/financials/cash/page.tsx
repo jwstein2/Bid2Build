@@ -15,10 +15,10 @@ import { fmtDateServer, fmtWhen } from "@/lib/financials/accounting-format";
 import { createAdminClient } from "@/lib/supabase/server";
 import { isCashV9Enabled, loadV9 } from "@/lib/cash-v9/load";
 import { bucketize, buildV9, type Granularity } from "@/lib/cash-v9/engine";
-import { alertsFor, persist, previousSnapshot } from "@/lib/cash-v9/run";
+import { alertsFor, loadAccuracy, persist, previousSnapshot } from "@/lib/cash-v9/run";
 import { parseWhatIf } from "@/lib/cash-v9/whatif";
 import { HORIZONS as V9_HORIZONS, type ExpenseMode, type Scenario } from "@/lib/cash-v9/settings";
-import { V9Alerts, V9Buckets, V9Confidence, V9Controls, V9Milestones, V9Projects, V9Summary, V9WhatIf, type V9View } from "@/components/cash-v9/panel";
+import { V9Accuracy, V9Alerts, V9Buckets, V9Calendar, V9Confidence, V9Controls, V9Milestones, V9Projects, V9Summary, V9WhatIf, type V9View } from "@/components/cash-v9/panel";
 
 export const metadata: Metadata = { title: "Cash flow", robots: { index: false } };
 type Row = Record<string, unknown>;
@@ -29,7 +29,7 @@ const CATEGORY: Record<string, string> = { customer_payment: "Customer payment",
  * Cash-flow forecast: bank-reported balance (when the viewer may see it) plus what's scheduled and expected.
  * Every number is a forecast except the bank-reported balance; expected dates are estimates and say so.
  */
-export default async function CashPage({ searchParams }: { searchParams: Promise<{ h?: string; end?: string; acct?: string | string[]; sc?: string; mode?: string; g?: string; job?: string; cat?: string | string[]; wi?: string }> }) {
+export default async function CashPage({ searchParams }: { searchParams: Promise<{ h?: string; end?: string; acct?: string | string[]; sc?: string; mode?: string; g?: string; job?: string; cat?: string | string[]; wi?: string; focus?: string }> }) {
   if (!isFinancialsEnabled()) notFound();
   const sp = await searchParams;
   const db = await createClient();
@@ -42,6 +42,7 @@ export default async function CashPage({ searchParams }: { searchParams: Promise
   const today = new Date().toISOString().slice(0, 10);
   const custom = sp.h === "custom" && sp.end && /^\d{4}-\d{2}-\d{2}$/.test(sp.end) && sp.end > today ? sp.end : undefined;
   const v9On = isCashV9Enabled();
+  const focus = sp.focus && /^\d{4}-\d{2}-\d{2}$/.test(sp.focus) ? sp.focus : null;
   const horizonList: readonly number[] = v9On ? V9_HORIZONS : HORIZONS;
   const horizon = custom ? Math.min(365, Math.round((Date.parse(custom) - Date.parse(today)) / 864e5)) : horizonList.includes(Number(sp.h)) ? Number(sp.h) : 30;
   const acctSel = (Array.isArray(sp.acct) ? sp.acct : sp.acct ? [sp.acct] : []).filter((a) => /^[0-9a-f-]{36}$/.test(a));
@@ -113,10 +114,12 @@ export default async function CashPage({ searchParams }: { searchParams: Promise
       {v9 && <V9Confidence r={v9.result} />}
 
       <CashChart series={f.series} events={f.events} scheduledEvents={f.scheduledEvents} startsFromBank={f.startsFromBank} />
+      {v9 && <V9Calendar r={v9.result} today={today} />}
       {v9 && <V9Buckets buckets={v9.buckets} />}
       {v9 && <V9Milestones r={v9.result} />}
       {v9 && <V9Projects r={v9.result} />}
       {v9 && <V9WhatIf v={v9.view} jobs={v9.jobs} />}
+      {v9 && <V9Accuracy a={v9.accuracy} />}
 
       <section id="events" aria-labelledby="events-h" className="space-y-2">
         <h2 id="events-h" className="font-display text-lg font-extrabold">What&apos;s coming ({f.events.length})</h2>
@@ -125,7 +128,7 @@ export default async function CashPage({ searchParams }: { searchParams: Promise
             <table className="w-full text-sm" data-testid="cash-events">
               <thead><tr className="text-left text-xs text-muted"><th className="p-2">Date</th><th className="p-2">What</th><th className="p-2">Type</th><th className="p-2">How sure</th><th className="p-2 text-right">Amount</th></tr></thead>
               <tbody>{f.events.map((e) => (
-                <tr key={e.key} className="border-t border-line">
+                <tr key={e.key} className={`border-t border-line ${focus && e.date === focus ? "bg-brand-tint" : ""}`} data-focus={focus && e.date === focus ? "true" : undefined}>
                   <td className="whitespace-nowrap p-2">{fmtDateServer(e.date)}</td>
                   <td className="p-2">{e.href ? <Link href={e.href} className="text-accent-ink underline">{e.label}</Link> : e.label}{e.note && <span className="block text-xs text-muted">{e.note}</span>}</td>
                   <td className="p-2 text-ink-soft">{CATEGORY[e.category] ?? e.category}</td>
@@ -184,8 +187,9 @@ async function loadCashV9(db: Awaited<ReturnType<typeof createClient>>, bookId: 
     alertRows = ((data ?? []) as Record<string, unknown>[]).filter((a) => a.status !== "snoozed")
       .sort((a, b) => ["critical", "warning", "info"].indexOf(String(a.severity)) - ["critical", "warning", "info"].indexOf(String(b.severity)));
   } catch { /* alerts are best-effort; the forecast still shows */ }
+  const accuracy = await loadAccuracy(db, bookId, today).catch(() => null);
   return {
-    result, alerts: alertRows, canAct, minCash: d.settings.minCash,
+    result, alerts: alertRows, canAct, accuracy, minCash: d.settings.minCash,
     buckets: bucketize(result.forecast.series, result.forecast.events, granularity),
     jobs: openJobs.map((j) => ({ id: j.jobId, name: j.jobName })),
     view: { scenario, mode, granularity, horizon: q.horizon, custom: q.end, job, cats, whatIf, wiRaw: sp.wi } satisfies V9View,
