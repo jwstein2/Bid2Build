@@ -1,8 +1,9 @@
 import { z } from "zod";
-import { generateExclusions, generateScope } from "@/lib/ai/proposal-text";
-import { aiSettings, isAiConfigured } from "@/lib/ai/provider";
-import { hasBidContent, INPUT_LIMITS, type GenerationInput } from "@/lib/proposal/text-sections";
-import { createAdminClient, getUser } from "@/lib/supabase/server";
+import { AI_EXCLUSIONS_VERSION, AI_SCOPE_VERSION, generateExclusions, generateScope } from "@/lib/ai/proposal-text";
+import { adminOrNull } from "@/lib/ai/budget";
+import { BUSY_MESSAGE, QUOTA_BIDS_MESSAGE, QUOTA_MESSAGE, SAMPLE_NOTICE, beginGuarded, finishGuarded, inputHash, preflightAi } from "@/lib/ai/guard";
+import { hasBidContent, INPUT_LIMITS, type ExclusionItem, type GenerationInput } from "@/lib/proposal/text-sections";
+import { getUser } from "@/lib/supabase/server";
 import { fail, json, logError, rateLimit, sameOrigin } from "@/lib/http/api";
 
 export const runtime = "nodejs";
@@ -13,8 +14,10 @@ export const maxDuration = 60;
  *
  * Privacy: the browser sends only the cost-free GenerationInput (built by buildGenerationInput):
  * no costs, prices, markup, margin, tax or customer contact details. This strict schema rejects
- * anything else. Nothing here stores the input or the generated text; only counts, tokens and
- * cost are logged for limits and admin analytics.
+ * anything else. The input is never stored (only its SHA-256 hash); counts, tokens and cost are
+ * logged for limits and admin analytics. A successful AI result (the generated text only) is
+ * kept in the person's own ai_generation_results row so asking again with the same input, or switching
+ * back to an already-generated style, returns it without a paid call (Will meeting 2026-11-21).
  */
 const s = (n: number) => z.string().max(n);
 const item = z.strictObject({ name: s(INPUT_LIMITS.name), description: s(INPUT_LIMITS.description).optional(), quantity: s(24), unit: s(40), kind: s(30) });
@@ -29,17 +32,11 @@ const inputSchema = z.strictObject({
   scope: s(INPUT_LIMITS.scope).optional(),
   existing: z.array(z.strictObject({ category: s(40), text: s(400) })).max(INPUT_LIMITS.existing).optional(),
 });
-const body = z.strictObject({ estimateId: z.string().uuid().nullable().optional(), input: inputSchema });
+/** `fresh`: Regenerate. Honoured for paying accounts only; everyone else gets their saved result back. */
+const body = z.strictObject({ estimateId: z.string().uuid().nullable().optional(), input: inputSchema, fresh: z.boolean().optional() });
 
-/** Per-instance backstop for the per-user daily limit when the usage table isn't reachable. */
-const dayCounts = new Map<string, { day: string; n: number }>();
-function memoryCount(userId: string): number {
-  const day = new Date().toISOString().slice(0, 10);
-  const c = dayCounts.get(userId);
-  if (!c || c.day !== day) { dayCounts.set(userId, { day, n: 1 }); return 1; }
-  c.n++;
-  return c.n;
-}
+/** What is kept per bid/action/style in ai_generation_results (the person's own generated text). */
+interface SavedText { generator: string; scope?: string; items?: ExclusionItem[] }
 
 export async function POST(req: Request) {
   if (!(await sameOrigin())) return fail(403, "bad_origin", "Cross-site request refused.");
@@ -48,39 +45,42 @@ export async function POST(req: Request) {
   if (!user) return fail(401, "not_authenticated", "Sign in to use AI writing.");
   const parsed = body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return fail(400, "invalid", "Invalid request.");
-  const { input, estimateId } = parsed.data;
+  const { input, estimateId, fresh } = parsed.data;
   if (!hasBidContent(input as GenerationInput)) return fail(422, "empty_estimate", "Add some line items first so there's something to describe.");
 
-  const settings = aiSettings();
-  let useAi = isAiConfigured();
-  let limitNotice: string | undefined;
-  let db: ReturnType<typeof createAdminClient> | null = null;
-  try { db = createAdminClient(); } catch { db = null; }
+  const gi = input as GenerationInput;
+  const db = adminOrNull();
+  // One guard for every paid generation (lib/ai/guard.ts): Practice/Demo, kill switch, limits, budgets.
+  const pre = await preflightAi(db, user);
+  if (!pre.ok && pre.reason === "sample") {
+    // Practice / Demo: the built-in rules draft is the prebuilt sample. No provider call, nothing logged as AI.
+    const outcome = gi.kind === "scope" ? await generateScope(gi, { useAi: false }) : await generateExclusions(gi, { useAi: false });
+    return json({ kind: gi.kind, engine: outcome.engine, generator: outcome.generator, status: "sample", scope: outcome.scope, items: outcome.items, dropped: 0, notice: SAMPLE_NOTICE, sample: true });
+  }
+  const useAi = pre.ok;
+  const limitNotice = !pre.ok && pre.reason === "daily_limit" ? "You've reached today's AI writing limit, so this was drafted from your line items. AI writing resets in 24 hours." : undefined;
 
+  const version = gi.kind === "scope" ? AI_SCOPE_VERSION : AI_EXCLUSIONS_VERSION;
+  const key = { userId: user.id, action: gi.kind, estimateId: estimateId ?? null, style: gi.style } as const;
+  let guardId: string | null = null;
   if (useAi) {
-    const since = new Date(Date.now() - 24 * 3600_000).toISOString();
-    const monthStart = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1)).toISOString();
-    let today = memoryCount(user.id);
-    let monthSpend = 0;
-    if (db) {
-      const [{ count, error: e1 }, { data: spend, error: e2 }] = await Promise.all([
-        db.from("ai_generations").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("engine", "ai").gte("created_at", since),
-        db.rpc("ai_generation_spend_since", { p_since: monthStart }),
-      ]);
-      if (!e1 && typeof count === "number") today = Math.max(today, count + 1);
-      if (!e2 && spend !== null) monthSpend = Number(spend) || 0;
-    }
-    if (today > settings.dailyLimitPerUser) {
-      useAi = false;
-      limitNotice = "You've reached today's AI writing limit, so this was drafted from your line items. AI writing resets in 24 hours.";
-    } else if (settings.monthlyBudgetUsd > 0 && monthSpend >= settings.monthlyBudgetUsd) {
-      useAi = false;
-    }
+    const g = await beginGuarded<SavedText>(db, { ...key, inputHash: inputHash(version, gi), fresh });
+    if (g.decision === "cached") return json({ kind: gi.kind, engine: "ai", generator: g.result.generator, status: "ok", scope: g.result.scope, items: g.result.items, dropped: 0, cached: true });
+    if (g.decision === "busy") return fail(429, "ai_busy", BUSY_MESSAGE);
+    if (g.decision === "quota") return fail(429, "ai_quota", QUOTA_MESSAGE, { latest: g.latest });
+    if (g.decision === "quota_bids") return fail(429, "ai_quota_bids", QUOTA_BIDS_MESSAGE);
+    guardId = g.id;
   }
 
-  const gi = input as GenerationInput;
   const outcome = gi.kind === "scope" ? await generateScope(gi, { useAi }) : await generateExclusions(gi, { useAi });
   if (limitNotice) outcome.notice = limitNotice;
+  if (useAi) {
+    // Only a real AI result is kept (and counts toward a free allowance); rules fallbacks and failures don't.
+    const ok = outcome.engine === "ai" && outcome.status === "ok";
+    await finishGuarded(db, guardId, key, ok
+      ? { ok: true, engine: "ai", result: { generator: outcome.generator, scope: outcome.scope, items: outcome.items } satisfies SavedText, costUsd: outcome.usage?.costUsd ?? 0 }
+      : { ok: false, costUsd: outcome.usage?.costUsd ?? 0 });
+  }
 
   if (db) {
     const { error } = await db.from("ai_generations").insert({

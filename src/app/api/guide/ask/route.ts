@@ -1,7 +1,8 @@
 import { z } from "zod/v4";
 import { createAdminClient, getUser } from "@/lib/supabase/server";
 import { fail, json, logError, rateLimit, sameOrigin } from "@/lib/http/api";
-import { AiUnavailableError, aiSettings, generateStructured } from "@/lib/ai/provider";
+import { AiUnavailableError, generateStructured } from "@/lib/ai/provider";
+import { preflightAi } from "@/lib/ai/guard";
 import { GUIDE_AI_CACHE_MS, GUIDE_AI_DAILY_LIMIT, GUIDE_AI_MAX_QUESTION, GUIDE_AI_SYSTEM, isGuideAiEnabled } from "@/lib/guide/ai";
 import { helpIndex, searchHelp, terms } from "@/lib/guide/help";
 import { GUEST_CONTEXT, isPageKey, type GuideContext } from "@/lib/features/page-guides";
@@ -24,8 +25,8 @@ const cache = new Map<string, { at: number; answer: string; sources: string[] }>
 
 /**
  * Ask Built2Bid (optional, Haiku by default). The plan/role context only narrows which help notes are
- * used (it can't unlock anything: the notes are public product copy). Demo and practice logins use it
- * the same way; usage is logged in ai_generations with kind 'guide_help'.
+ * used (it can't unlock anything: the notes are public product copy). Demo and practice logins get the
+ * matching help notes without a paid answer; usage is logged in ai_generations with kind 'guide_help'.
  */
 export async function POST(req: Request) {
   if (!(await sameOrigin())) return fail(403, "bad_origin", "Cross-site request refused.");
@@ -47,15 +48,10 @@ export async function POST(req: Request) {
   if (hit && Date.now() - hit.at < GUIDE_AI_CACHE_MS) return json({ answer: hit.answer, sources: hit.sources, cached: true });
 
   const db = createAdminClient();
-  const settings = aiSettings();
-  const since = new Date(Date.now() - 24 * 3600_000).toISOString();
-  const monthStart = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1)).toISOString();
-  const [{ count }, { data: spend }] = await Promise.all([
-    db.from("ai_generations").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("kind", "guide_help").gte("created_at", since).then((r) => r, () => ({ count: 0 })),
-    db.rpc("ai_generation_spend_since", { p_since: monthStart }).then((r) => r, () => ({ data: 0 })),
-  ]);
-  if ((count ?? 0) >= GUIDE_AI_DAILY_LIMIT) return json({ answer: null, sources, fallback: true, reason: "daily_limit" });
-  if (settings.monthlyBudgetUsd > 0 && Number(spend ?? 0) >= settings.monthlyBudgetUsd) return json({ answer: null, sources, fallback: true, reason: "budget" });
+  // One guard for every paid generation (lib/ai/guard.ts). Practice/Demo sessions get the matching help
+  // notes without a paid answer, same as when the daily limit or a budget is reached.
+  const pre = await preflightAi(db, user, { dailyLimit: GUIDE_AI_DAILY_LIMIT, countKind: "guide_help" });
+  if (!pre.ok) return json({ answer: null, sources, fallback: true, reason: pre.reason === "daily_limit" ? "daily_limit" : pre.reason === "sample" ? "practice" : "budget" });
 
   await db.from("guide_events").insert({ user_id: user.id, event: "ai_asked", page, workspace: ws }).then(() => {}, () => {});
   const helpNotes = notes.map((n, i) => `${i + 1}. [${n.source}] ${n.title}: ${n.body}`).join("\n");

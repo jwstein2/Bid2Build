@@ -17,13 +17,13 @@ export class GenerationError extends Error {}
  * Ask the server to draft text. If the visitor isn't signed in, the server is unreachable, or the
  * AI service is down, draft locally with the built-in rules so the contractor is never stuck.
  */
-export async function requestGeneration(input: GenerationInput, opts: { signedIn: boolean; estimateId?: string | null }): Promise<GenerationResult> {
+export async function requestGeneration(input: GenerationInput, opts: { signedIn: boolean; estimateId?: string | null; /** Regenerate: a fresh result for paying accounts (others get their saved one). */ fresh?: boolean }): Promise<GenerationResult> {
   if (opts.signedIn) {
     try {
       const r = await fetch("/api/ai/proposal-text", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ estimateId: opts.estimateId ?? null, input }),
+        body: JSON.stringify({ estimateId: opts.estimateId ?? null, input, ...(opts.fresh ? { fresh: true } : {}) }),
       });
       const data = await r.json().catch(() => null);
       if (r.ok && data) return data as GenerationResult;

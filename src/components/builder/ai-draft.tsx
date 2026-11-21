@@ -1,12 +1,13 @@
 "use client";
 import { ArrowLeft, Loader2, Sparkles, Store } from "lucide-react";
-import { useMemo, useState, type Dispatch } from "react";
+import { useEffect, useMemo, useRef, useState, type Dispatch } from "react";
 import type { Estimate, LineItem } from "@/lib/estimate/types";
 import { getTrade, tradeName, UNIT_ABBR } from "@/lib/trades/catalog";
 import { formatCurrency } from "@/lib/estimate/money";
 import { sectionTrade } from "@/lib/estimate/trades";
 import { DEFAULT_LABOR_BURDEN, MAX_LABOR_BURDEN, MIN_LABOR_BURDEN, clampBurden } from "@/lib/ai-draft/labor-rates";
 import { resolveDraft, sourceCounts, type DraftResponse, type PricedLine, type PriceSourceKind } from "@/lib/ai-draft/resolve";
+import { loadStoredDraft, saveStoredDraft } from "@/lib/ai-draft/store";
 import { cn } from "@/lib/cn";
 import { Button } from "../ui/button";
 import { Badge, Notice } from "../ui/misc";
@@ -56,6 +57,9 @@ export function AiDraftButton({ estimate, dispatch, lib, onApplied }: { estimate
       {open && <AiDraftDialog estimate={estimate} lib={lib} onClose={() => setOpen(false)} onApply={(trade, sections) => {
         const ids = sections.flatMap((s) => s.items.map((i) => i.id));
         dispatch({ type: "applyDraft", trade, sections });
+        // Keep the draft for later (Will meeting 2026-11-21); just note that its lines are now in the bid.
+        const stored = loadStoredDraft(estimate.id);
+        if (stored) saveStoredDraft(estimate.id, { ...stored, appliedAt: new Date().toISOString(), appliedCount: ids.length });
         setOpen(false);
         onApplied(`Added ${ids.length} drafted ${ids.length === 1 ? "item" : "items"} to ${tradeName(trade)}. Review every price before you send.`, ids);
       }} />}
@@ -67,14 +71,39 @@ function AiDraftDialog({ estimate, lib, onClose, onApply }: {
   estimate: Estimate; lib: Library; onClose: () => void;
   onApply: (trade: string, sections: ReturnType<typeof draftSections>) => void;
 }) {
-  const [trade, setTrade] = useState(estimate.trades[0] ?? "other");
-  const [description, setDescription] = useState("");
+  // Restores the last draft for this bid (Will meeting 2026-11-21): closing the dialog never loses it.
+  const [stored] = useState(() => loadStoredDraft(estimate.id));
+  const [trade, setTrade] = useState(stored?.trade && estimate.trades.includes(stored.trade) ? stored.trade : estimate.trades[0] ?? "other");
+  const [description, setDescription] = useState(stored?.description ?? "");
+  const [draftedFrom, setDraftedFrom] = useState(stored?.draftedFrom ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [draft, setDraft] = useState<DraftResponse | null>(null);
-  const [burden, setBurden] = useState(String(DEFAULT_LABOR_BURDEN));
-  const [useBallpark, setUseBallpark] = useState(true);
-  const [picked, setPicked] = useState<Set<number>>(new Set());
+  const [notice, setNotice] = useState<string | null>(stored?.appliedAt ? `You added ${stored.appliedCount ?? "some"} lines from this draft on ${new Date(stored.appliedAt).toLocaleString()}. Adding again adds them a second time.` : null);
+  const [draft, setDraft] = useState<DraftResponse | null>(stored?.draft ?? null);
+  const [editing, setEditing] = useState(false);
+  const [burden, setBurden] = useState(stored?.burden ?? String(DEFAULT_LABOR_BURDEN));
+  const [useBallpark, setUseBallpark] = useState(stored?.useBallpark ?? true);
+  const [picked, setPicked] = useState<Set<number>>(new Set(stored?.picked ?? []));
+  const appliedRef = useRef({ appliedAt: stored?.appliedAt ?? null, appliedCount: stored?.appliedCount });
+
+  // No copy in this browser: ask the server for this bid's last saved draft (own rows only).
+  useEffect(() => {
+    if (stored?.draft || !lib.signedIn) return;
+    let live = true;
+    fetch(`/api/ai/bid-draft?estimateId=${encodeURIComponent(estimate.id)}`).then((r) => (r.ok ? r.json() : null)).then((d) => {
+      if (!live || !d?.lines?.length) return;
+      setDraft((cur) => cur ?? (d as DraftResponse));
+      setPicked((cur) => (cur.size ? cur : new Set((d as DraftResponse).lines.map((_, i) => i))));
+      if (typeof d.description === "string") { setDescription((cur) => cur || d.description); setDraftedFrom(d.description); }
+      if (typeof d.trade === "string" && estimate.trades.includes(d.trade)) setTrade(d.trade);
+      setNotice(`Restored your last draft${d.savedAt ? ` from ${new Date(d.savedAt).toLocaleString()}` : ""}. Nothing was charged.`);
+    }).catch(() => undefined);
+    return () => { live = false; };
+  }, [stored, lib.signedIn, estimate.id, estimate.trades]);
+
+  useEffect(() => {
+    saveStoredDraft(estimate.id, { trade, description, draftedFrom, draft, picked: [...picked], burden, useBallpark, ...appliedRef.current });
+  }, [estimate.id, trade, description, draftedFrom, draft, picked, burden, useBallpark]);
 
   const priced = useMemo(
     () => (draft ? resolveDraft(draft.lines, { savedItems: lib.items, wages: draft.labor.wages, laborBurden: clampBurden(Number(burden)), useBallpark, trade: draft.trade }) : []),
@@ -91,12 +120,17 @@ function AiDraftDialog({ estimate, lib, onClose, onApply }: {
       const r = await fetch("/api/ai/bid-draft", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ estimateId: estimate.id, trade, description: description.trim(), location: { zip: estimate.location.zip || undefined, state: estimate.location.state || undefined }, existingSections }),
+        // Same description as the draft on screen = "draft again": a fresh draft on paid plans, the saved one otherwise.
+        body: JSON.stringify({ estimateId: estimate.id, trade, description: description.trim(), location: { zip: estimate.location.zip || undefined, state: estimate.location.state || undefined }, existingSections, ...(draft && draftedFrom === description.trim() ? { fresh: true } : {}) }),
       });
       const data = await r.json().catch(() => null);
       if (!r.ok || !data) { setError(data?.error?.message ?? "The draft didn't come through. Please try again."); return; }
-      const d = data as DraftResponse;
+      const d = data as DraftResponse & { cached?: boolean };
+      appliedRef.current = { appliedAt: null, appliedCount: undefined };
       setDraft(d);
+      setDraftedFrom(description.trim());
+      setEditing(false);
+      setNotice(d.notice ?? (d.cached ? "This is your saved draft for this description. Nothing was charged." : null));
       setPicked(new Set(d.lines.map((_, i) => i)));
     } catch {
       setError("You're offline or the server didn't answer. Please try again.");
@@ -109,8 +143,8 @@ function AiDraftDialog({ estimate, lib, onClose, onApply }: {
   const sections = [...new Set(priced.map((l) => l.section))];
 
   return (
-    <Modal open onOpenChange={(o) => { if (!o) onClose(); }} title="Draft with AI" description={draft ? "Untick anything you don't want, then add the rest. Prices show where they came from." : "A starting point for this bid. Nothing is added until you review it."} wide>
-      {!draft ? (
+    <Modal open onOpenChange={(o) => { if (!o) onClose(); }} title="Draft with AI" description={draft && !editing ? "Untick anything you don't want, then add the rest. Prices show where they came from." : "A starting point for this bid. Nothing is added until you review it."} wide>
+      {!draft || editing ? (
         <div className="space-y-4">
           {estimate.trades.length > 1 && (
             <div>
@@ -135,7 +169,7 @@ function AiDraftDialog({ estimate, lib, onClose, onApply }: {
           <p className="text-sm text-ink-soft">{where ? <>Labor rates use the project location (<span className="font-semibold">{where}</span>).</> : "Add the project ZIP on the Project step for local labor rates. Without it, national rates are used."}</p>
           {error && <Notice tone="danger">{error}</Notice>}
           <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={onClose}>Cancel</Button>
+            {draft ? <Button variant="ghost" onClick={() => setEditing(false)}><ArrowLeft className="h-4 w-4" aria-hidden /> Back to your draft</Button> : <Button variant="ghost" onClick={onClose}>Cancel</Button>}
             <Button onClick={run} disabled={busy || description.trim().length < 10}>
               {busy ? <><Loader2 className="h-4 w-4 animate-spin" aria-hidden /> Drafting…</> : <><Sparkles className="h-4 w-4" aria-hidden /> Draft items</>}
             </Button>
@@ -143,6 +177,7 @@ function AiDraftDialog({ estimate, lib, onClose, onApply }: {
         </div>
       ) : (
         <div className="space-y-4">
+          {notice && <Notice tone="neutral">{notice}</Notice>}
           <div className="flex flex-wrap gap-1.5 text-xs" aria-label="Where prices came from">
             <Badge tone="ok">{counts.saved} your prices</Badge>
             <Badge tone="brand">{counts.labor_rate} local labor</Badge>
@@ -198,7 +233,7 @@ function AiDraftDialog({ estimate, lib, onClose, onApply }: {
           <p className="flex items-center gap-1.5 text-xs text-muted"><Store className="h-3.5 w-3.5" aria-hidden /> Home Depot and Lowe&apos;s online prices: coming soon.</p>
 
           <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3">
-            <Button variant="ghost" onClick={() => setDraft(null)}><ArrowLeft className="h-4 w-4" aria-hidden /> Edit description</Button>
+            <Button variant="ghost" onClick={() => { setEditing(true); setError(null); }}><ArrowLeft className="h-4 w-4" aria-hidden /> Edit description</Button>
             <div className="flex items-center gap-3">
               <span className="text-sm text-ink-soft">Cost before markup: <span className="font-semibold tabular-nums text-ink">{formatCurrency(total)}</span></span>
               <Button onClick={() => onApply(draft.trade, draftSections(priced, picked))} disabled={picked.size === 0}>Add {picked.size} {picked.size === 1 ? "item" : "items"}</Button>
