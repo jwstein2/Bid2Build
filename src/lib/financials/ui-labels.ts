@@ -25,6 +25,9 @@ export const QUICK_ACTION_TARGET: Partial<Record<QuickAction, string>> = {
   record_bill: "bill", create_commitment: "commitment", bill_change_order: "invoice", issue_credit: "credit",
 };
 
+/** Quick actions that open their own page instead of a records form. */
+export const QUICK_ACTION_HREF: Partial<Record<QuickAction, string>> = { export: "/financials/accounting/reports" };
+
 export const REPORT_LABELS: Record<ReportKey, string> = {
   profit_loss: "Profit & Loss", ar_aging: "Receivables aging", job_profitability: "Job profitability", budget_vs_actual: "Budget vs actual", cost_by_code: "Cost by cost code",
   commitments: "Commitments", payments_received: "Payments received", change_order_log: "Change order log", wip_placeholder: "Work in progress (coming later)",

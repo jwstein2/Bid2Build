@@ -40,6 +40,13 @@ const GROUPS: { title: string; tools: Tool[] }[] = [
     { label: "Tax & regulatory updates", href: "/financials/tax", needs: "view_company_financials" },
     { label: "Tax setup & exemption certificates", href: "/financials/tax?view=setup", needs: "view_company_financials" },
   ] },
+  { title: "Accounting", tools: [
+    { label: "Accountant reports & CSV export", href: "/financials/accounting/reports", needs: "view_company_financials" },
+    { label: "Bank statement import & reconciliation", href: "/financials/accounting/bank", needs: "view_company_financials" },
+    { label: "Transactions", href: "/financials/accounting/transactions", needs: "view_company_financials" },
+    { label: "Chart of accounts", href: "/financials/accounting/accounts", needs: "view_company_financials" },
+    { label: "Audit trail", href: "/financials/accounting/audit", needs: "view_company_financials" },
+  ] },
   { title: "Keep it clean", tools: [
     { label: "Alerts", href: "/financials/records?view=alerts", needs: "view_project_financials" },
     { label: "Needs review", href: "/financials/records?view=review", needs: "view_project_financials" },
@@ -49,10 +56,11 @@ const GROUPS: { title: string; tools: Tool[] }[] = [
     { label: "AI & Automation", href: "/company/ai-automation", needs: "manage_financial_config" },
   ] },
   { title: "Coming later", tools: [
-    { label: "Sending invoice & receipt emails", note: "Turns on after approval" },
-    { label: "Accountant CSV export", note: "Next Phase 1 update" }, { label: "Audit log viewer", note: "Next Phase 1 update" },
+    { label: "Sending invoice & receipt emails from Built2Bid", note: "Turns on after approval" },
     { label: "Progress billing (schedule of values)", note: "Phase 1b" }, { label: "Retainage", note: "Phase 1b" },
-    { label: "Time & materials billing", note: "Later" }, { label: "Bank import & reconciliation", note: "Phase 2" }, { label: "Online card / ACH payments", note: "Phase 3" },
+    { label: "Time & materials billing", note: "Later" }, { label: "Service-call billing", note: "Later" },
+    { label: "Inventory tracking", note: "Later" }, { label: "Crew utilization", note: "Later" },
+    { label: "Online card / ACH payments", note: "Phase 3" },
   ] },
 ];
 
