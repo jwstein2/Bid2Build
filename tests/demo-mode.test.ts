@@ -164,6 +164,7 @@ describe("Practice Mode for everyone", () => {
       "src/lib/sales/invite-email.ts", "src/lib/sales/booking-email.ts", "src/lib/sales/congrats-email.ts", "src/lib/sales/digest.ts", // staff Sales Hub (/api/sales blocked)
       "src/app/api/webhooks/resend/route.ts", // inbound mail webhook (reads only)
       "src/lib/payouts/notify.ts",        // Built2Bid staff payouts: staff_members only, payment emails for live payouts only
+      "src/lib/affiliates/emails.ts",     // Affiliate Hub: refuses demo sessions itself; off unless AFFILIATE_EMAILS=on / recruitment switch
     ]);
     const root = path.join(__dirname, "..");
     const found: string[] = [];
