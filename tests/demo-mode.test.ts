@@ -15,10 +15,10 @@ const owner = buildDemoDataset({ kind: "owner_demo", namespace: NS, anchor: "202
 describe("sample company dataset", () => {
   it("has the documented size and mix", () => {
     const s = datasetSummary(owner);
-    expect(s).toMatchObject({ customers: 150, estimates: 125, employees: 8, subcontractors: 18, crews: 2 });
-    expect(s.projects).toBe(90);
+    expect(s).toMatchObject({ customers: 150, estimates: 169, employees: 8, subcontractors: 18, crews: 2, changeOrders: 4, bankStatements: 25 });
+    expect(s.projects).toBe(126 + 8);
     expect(s.schedules).toBe(45);
-    expect(s.invoices).toBe(65);
+    expect(s.invoices).toBe(209);
     expect(s.communications).toBeGreaterThanOrEqual(200);
     const trades = new Set(owner.estimates.flatMap((e) => (e.payload as { trades?: string[] }).trades ?? []));
     for (const t of ["concrete", "decks", "roofing", "siding", "kitchens", "bathrooms", "painting", "drywall", "electrical", "pressure-washing", "soft-washing"]) {
@@ -55,7 +55,8 @@ describe("sample company dataset", () => {
       expect(stages).not.toContain("lost");
       const total = inv.lines.reduce((n, l) => n + Number(l.quantity) * Number(l.unitPrice), 0);
       expect(total).toBeGreaterThan(0);
-      if (inv.payment) expect(Number(inv.payment.amount)).toBeLessThanOrEqual(total + 0.01);
+      // Payments never apply more than the invoice (the one overpayment keeps the extra unapplied, then refunds it).
+      if (inv.payment) expect(Number(inv.payment.allocate ?? inv.payment.amount)).toBeLessThanOrEqual(total + 0.01);
       expect(inv.dueDate >= inv.issueDate).toBe(true);
     }
   });
@@ -67,11 +68,76 @@ describe("sample company dataset", () => {
     for (const s of steps) if (Array.isArray(s.rows)) expect(s.rows.length).toBeLessThanOrEqual(200);
   });
 
-  it("practice data is small and has no team or invoices", () => {
+  it("Practice gets the same full company as the owner demo, under its own name", () => {
     const p = buildDemoDataset({ kind: "practice", namespace: NS, anchor: "2026-11-18" });
-    expect(p.estimates.length).toBeLessThanOrEqual(5);
-    expect(p.resources).toEqual([]);
-    expect(p.invoices).toEqual([]);
+    const { customers, estimates, schedules, invoices, employees, subcontractors, crews, bankStatements, changeOrders } = datasetSummary(owner);
+    expect(datasetSummary(p)).toMatchObject({ customers, estimates, schedules, invoices, employees, subcontractors, crews, bankStatements, changeOrders });
+    expect(p.bank.institution).toMatch(/SIMULATED/);
+    expect(p.companyName).toMatch(/Practice/);
+  });
+});
+
+describe("24-month history and the simulated bank (Will meeting 2026-11-21, item C)", () => {
+  const b = owner.bank;
+  const lines = b.statements.flatMap((s) => s.transactions);
+
+  it("covers 24 months of past activity plus current and future work", () => {
+    expect(b.statements).toHaveLength(25);                       // 24 full months + this month to date
+    const oldest = owner.estimates.map((e) => e.createdAt).sort()[0];
+    expect((Date.parse("2026-11-18") - Date.parse(oldest)) / 86_400_000).toBeGreaterThan(700);
+    expect(owner.estimates.some((e) => e.label === "Scheduled")).toBe(true);
+    expect(owner.estimates.some((e) => e.label === "Delayed")).toBe(true);
+    expect(owner.invoices.some((i) => !i.payment && i.dueDate < "2026-11-18")).toBe(true);   // overdue
+    expect(owner.cashPlan.every((c) => c.expectedOn > "2026-11-18")).toBe(true);           // forecasts are future only
+    // Seasonal: summer months bring in more than winter months.
+    const month = (m: string) => lines.filter((t) => t.date.slice(5, 7) === m && Number(t.amount) > 0).reduce((n, t) => n + Number(t.amount), 0);
+    expect(month("07") + month("08")).toBeGreaterThan(month("01") + month("02"));
+  });
+
+  it("is conspicuously fake and never a real connection", () => {
+    expect(b.institution).toMatch(/SIMULATED/);
+    expect(b.accountName).toMatch(/SIMULATED/);
+    expect(b.mask).toBe("0000");
+    expect(b.itemRef).toMatch(/^demo-sim:/);
+    for (const t of lines) expect(t.description).toMatch(/\(SIMULATED\)$/);
+    expect(JSON.stringify(b)).not.toMatch(/plaid|stripe|access[-_]?token|routing/i);
+  });
+
+  it("balances to the cent: statements chain, the balance stays positive, deposits mirror payments", () => {
+    let bal = Number(b.openingBalance), min = Infinity;
+    for (const s of b.statements) {
+      for (const t of s.transactions) { bal = Math.round((bal + Number(t.amount)) * 100) / 100; min = Math.min(min, bal); expect(t.date >= s.start && t.date <= s.end).toBe(true); }
+      expect(s.closingBalance).toBe(bal.toFixed(2));
+    }
+    expect(b.currentBalance).toBe(bal.toFixed(2));
+    expect(min).toBeGreaterThanOrEqual(8000);
+    expect(lines.every((t) => t.date < "2026-11-18")).toBe(true);
+    const refs = new Set(owner.invoices.filter((i) => i.payment).map((i) => i.payment!.reference));
+    for (const t of lines) if (t.post?.type === "payment") expect(refs.has(t.post.reference)).toBe(true);
+    // Only the newest lines are left to match, and reconciliations stop before them.
+    const open = lines.filter((t) => !t.post);
+    expect(open.length).toBeGreaterThan(0);
+    expect(open.every((t) => t.date > "2026-11-10")).toBe(true);
+    expect(b.reconcile.length).toBeGreaterThanOrEqual(22);
+    expect(b.reconcile.every((r) => r.periodEnd < "2026-11-01")).toBe(true);
+  });
+
+  it("includes the exceptions: a refund, change orders, an owner draw, loss-making jobs", () => {
+    expect(lines.filter((t) => t.post?.type === "refund")).toHaveLength(1);
+    expect(owner.invoices.filter((i) => i.payment?.allocate)).toHaveLength(1);
+    expect(owner.changeOrders.map((c) => c.outcome).sort()).toEqual(["approved", "approved", "declined", "sent"]);
+    expect(lines.some((t) => t.post?.type === "excluded" && t.post.reason === "owner")).toBe(true);
+    expect(lines.some((t) => t.post?.type === "expense" && /Rework/.test(t.post.description))).toBe(true);
+  });
+
+  it("seeds the bank after the books it posts into", () => {
+    const kinds = demoSteps(owner).map((s) => s.kind);
+    expect(kinds.indexOf("bank")).toBeGreaterThan(kinds.lastIndexOf("invoices"));
+    expect(kinds.indexOf("bank_post")).toBeGreaterThan(kinds.indexOf("bank"));
+    expect(kinds.indexOf("bank_finish")).toBeGreaterThan(kinds.lastIndexOf("bank_post"));
+    expect(kinds.indexOf("changes")).toBeGreaterThan(kinds.lastIndexOf("invoices"));
+    // The feed step carries no posting instructions (those are separate, smaller steps).
+    expect(JSON.stringify(demoSteps(owner).find((s) => s.kind === "bank"))).not.toContain('"post"');
   });
 });
 

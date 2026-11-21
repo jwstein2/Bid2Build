@@ -4,14 +4,14 @@ import { cookies } from "next/headers";
 import type { User } from "@supabase/supabase-js";
 import { createAdminClient, createClient, getAuthUser } from "@/lib/supabase/server";
 import { applyDemoDataset } from "./apply";
-import { buildDemoDataset } from "./dataset";
+import { DEMO_SEED_VERSION, buildDemoDataset } from "./dataset";
 import { DEMO_HINT_COOKIE, DEMO_META_KEY, DEMO_RETURN_COOKIE, DEMO_RETURN_MAX_AGE, parseDemoClaim, type DemoClaim, type DemoSessionKind } from "./session";
 
 type Admin = ReturnType<typeof createAdminClient>;
 
 /**
- * Practice Mode is on for every verified user (it creates a small sample login per person the first time
- * they turn it on). PRACTICE_MODE=off is an emergency switch that hides it everywhere.
+ * Practice Mode is on for every verified user (it creates a sample login per person the first time they turn
+ * it on: the same 24-month sample company as the owner demo, with a simulated bank). PRACTICE_MODE=off is an emergency switch that hides it everywhere.
  */
 export const isPracticeEnabled = () => process.env.PRACTICE_MODE !== "off";
 
@@ -93,7 +93,10 @@ export type EnterResult =
 export async function prepareWorkspace(admin: Admin, owner: string, kind: DemoSessionKind, opts: { reset?: boolean } = {}): Promise<EnterResult> {
   let ws = await loadWorkspace(admin, owner, kind);
   const stale = ws && ws.status === "ready" && ws.seeded_at && Date.now() - Date.parse(ws.seeded_at) > 600 * 86_400_000;   // grant nears its 730-day limit
-  if (!ws || !ws.demo_user_id || ws.status === "failed" || opts.reset || stale) ws = await provision(admin, owner, kind);
+  // Practice follows the current sample (e.g. the 2026-11-21 24-month company): an older practice workspace starts fresh.
+  // Owner demos keep their data until the owner presses Reset.
+  const outdated = kind === "practice" && ws?.status === "ready" && ws.seed_version !== DEMO_SEED_VERSION;
+  if (!ws || !ws.demo_user_id || ws.status === "failed" || opts.reset || stale || outdated) ws = await provision(admin, owner, kind);
   if (ws.status === "ready") return { status: "ready", workspace: ws };
   // The anchor day is fixed when the login is provisioned, so a seed resumed tomorrow stays consistent.
   const d = buildDemoDataset({ kind, namespace: ws.id, anchor: anchorOf(ws) });

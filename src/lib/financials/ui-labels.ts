@@ -152,6 +152,7 @@ const ERRORS: Record<string, string> = {
   rate_limited: "This bank was refreshed several times today. Try again tomorrow, or wait for the daily update.",
   disconnected: "This bank connection was disconnected. Connect it again to resume updates.",
   needs_reconnect: "This bank connection needs to be refreshed. Use Reconnect.",
+  simulated_bank: "This is the simulated Practice bank (sample data). It never connects to a real bank, so there is nothing to refresh. Simulation — no real transaction.",
   token_store_failed: "The bank connection couldn't be saved securely. Nothing was stored. Try again.",
   // V9 cash forecasting
   trigger_not_progress: "Only milestones that wait on work being done (a phase, final completion or a custom approval) can follow schedule progress.",

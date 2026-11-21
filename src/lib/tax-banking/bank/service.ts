@@ -79,8 +79,19 @@ async function syncConnection(connectionId: string, p: BankProvider, accessToken
   return data as { status: string; inserted: number; balances: number };
 }
 
+/**
+ * The Practice / Demo simulated bank (item ref "demo-sim:...") is a fixed sample feed: it has no token, never syncs and
+ * can't be refreshed or reconnected, so nothing ever changes its reconciled history or reaches a provider.
+ */
+export const SIMULATED_BANK_PREFIX = "demo-sim:";
+async function isSimulated(db: Db, connectionId: string) {
+  const { data } = await db.from("fin_bank_connections").select("provider_item_ref").eq("id", connectionId).maybeSingle();
+  return String((data as { provider_item_ref?: string } | null)?.provider_item_ref ?? "").startsWith(SIMULATED_BANK_PREFIX);
+}
+
 /** Manual "Refresh bank balance": permission + rate limit checked by the database first. */
 export async function refresh(db: Db, connectionId: string, sandboxBook: boolean) {
+  if (await isSimulated(db, connectionId)) throw new BankError("simulated_bank");
   const gate = await rpc<{ provider: string }>(db, "fin_bank_refresh_allowed", { p_connection_id: connectionId });
   const p = providerByName(gate.provider, sandboxBook);
   if (!p) throw new BankError("provider_not_approved");
@@ -89,6 +100,7 @@ export async function refresh(db: Db, connectionId: string, sandboxBook: boolean
 
 /** Reconnect, step 1 (real providers): a link token in update mode for this connection's existing access. */
 export async function reconnectLink(db: Db, connectionId: string, userId: string, sandboxBook: boolean) {
+  if (await isSimulated(db, connectionId)) throw new BankError("simulated_bank");
   const gate = await rpc<{ provider: string; bookId: string }>(db, "fin_bank_refresh_allowed", { p_connection_id: connectionId });
   if (!(await rpc<boolean>(db, "tb_can", { p_book_id: gate.bookId, p_cap: "bank.connect", p_write: true }))) throw new BankError("forbidden");
   if (gate.provider === "mock") return { provider: "mock", linkToken: null };
@@ -100,6 +112,7 @@ export async function reconnectLink(db: Db, connectionId: string, userId: string
 
 /** After the user re-authenticates in the provider window (update mode). The mock simply issues a healthy token. */
 export async function reconnect(db: Db, connectionId: string, sandboxBook: boolean) {
+  if (await isSimulated(db, connectionId)) throw new BankError("simulated_bank");
   const gate = await rpc<{ provider: string; bookId: string }>(db, "fin_bank_refresh_allowed", { p_connection_id: connectionId });
   if (!(await rpc<boolean>(db, "tb_can", { p_book_id: gate.bookId, p_cap: "bank.connect", p_write: true }))) throw new BankError("forbidden");
   const p = providerByName(gate.provider, sandboxBook);
