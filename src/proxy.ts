@@ -102,5 +102,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/stripe/webhook|api/webhooks/|api/health|media/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|mp4|webm|vtt)$).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/stripe/webhook|api/stripe/connect-webhook|api/webhooks/|api/health|media/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|mp4|webm|vtt)$).*)"],
 };

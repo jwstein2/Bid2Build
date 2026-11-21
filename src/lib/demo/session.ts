@@ -55,6 +55,8 @@ export const DEMO_BLOCKED: readonly { prefix: string; write?: boolean }[] = [
   { prefix: "/api/account/ad-consent", write: true },
   { prefix: "/api/estimates/", write: true, /* signing + countersign only, see matcher */ },
   { prefix: "/api/financials/tax-banking", write: true },
+  // Stripe Connect: creates a real Stripe account and customer pay links.
+  { prefix: "/api/financials/connect", write: true },
   { prefix: "/api/comms/", write: true },
   { prefix: "/api/comms", write: true },
   { prefix: "/api/schedules/", write: true /* customer updates only, see matcher */ },
