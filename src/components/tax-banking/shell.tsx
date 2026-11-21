@@ -31,12 +31,12 @@ export function TbShell({ state, title, active, cap, intro, actions, children }:
       {state.ctx.access.sandbox && <SandboxBar sandbox canManage={perms.includes("manage_financial_config")} />}
       {crumbs}
       <header className="flex flex-wrap items-end gap-3">
-        <div className="min-w-0 flex-1">
+        <div className="min-w-[min(100%,20rem)] flex-1">
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">Financials</p>
           <h1 className="text-3xl font-extrabold">{title}</h1>
           {intro && <p className="mt-1 max-w-3xl text-sm text-ink-soft">{intro}</p>}
         </div>
-        {actions}
+        {actions && <div className="min-w-0 max-w-full">{actions}</div>}
       </header>
       <nav aria-label="Cash, banks and tax" className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
         <ul className="flex min-w-max gap-1 border-b border-line">

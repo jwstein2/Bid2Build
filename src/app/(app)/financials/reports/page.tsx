@@ -113,7 +113,7 @@ export default async function Reports({ searchParams }: { searchParams: Promise<
     <div className="mx-auto max-w-7xl space-y-5" data-testid="fin-reports" data-guide-page="financials.reports">
       {crumbs}
       <header className="flex flex-wrap items-end gap-3">
-        <div className="min-w-0 flex-1">
+        <div className="min-w-[min(100%,20rem)] flex-1">
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">Accounting</p>
           <h1 className="text-3xl font-extrabold">Profit &amp; Loss</h1>
           <p className="text-sm text-ink-soft">Every project rolled up: {fmt(range.from)} – {fmt(range.to)} · {BASIS_LABELS[basis]}</p>
