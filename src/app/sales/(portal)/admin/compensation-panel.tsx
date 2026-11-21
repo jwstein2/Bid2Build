@@ -1,7 +1,7 @@
 import { Badge, Card, Notice } from "@/components/ui/misc";
 import { dateLabel, monthLabel, usd } from "@/lib/sales/format";
-import { ratio, type AdminCompensation, type AdminPrograms } from "@/lib/sales/compensation";
-import { emergencyProgram, resolveDispute, revokeJurisdiction, saveJurisdiction, saveMilestoneModel, saveWorkLocation, setProgram } from "./compensation-actions";
+import { DRAW_SKIP, ratio, type AdminCompensation, type AdminDrawings, type AdminPrograms } from "@/lib/sales/compensation";
+import { emergencyProgram, resolveDispute, revokeJurisdiction, saveJurisdiction, saveDrawingSettings, saveMilestoneModel, saveWorkLocation, setProgram } from "./compensation-actions";
 
 const input = "min-h-11 w-full rounded-lg border border-line bg-white px-3 text-sm";
 const btn = "min-h-11 rounded-lg bg-ink px-4 text-sm font-semibold text-white";
@@ -167,8 +167,65 @@ function Programs({ p, owner, canStop, canLocate }: { p: AdminPrograms; owner: b
 }
 
 /** Owner view of sales compensation: cost vs revenue, per-rep obligations, award calculations, disputes, payroll. */
-export function CompensationPanel({ c, p, owner, canStop, canLocate, canAdjust, model, qualification }: {
-  c: AdminCompensation | null; p: AdminPrograms | null; owner: boolean; canStop: boolean; canLocate: boolean; canAdjust: boolean; model: string; qualification: string;
+function Drawings({ dr, owner }: { dr: AdminDrawings; owner: boolean }) {
+  const t = [...dr.tiers].sort((a, b) => a.at - b.at);
+  const tier = (i: number) => t[i] ?? { at: [3, 10, 100][i], cents: [2000, 5000, 10000][i] };
+  const total = dr.current.reduce((n, e) => n + e.entries, 0);
+  return (
+    <section aria-labelledby="drawing-h" className="space-y-3">
+      <h2 id="drawing-h" className="text-lg font-bold">Monthly activity drawing</h2>
+      <p className="text-sm text-ink-soft">
+        One winner a month, drawn on the first close of the next month. Every eligible representative gets 1 free entry, plus 1 for each lead they called or emailed per day (up to {dr.entry_cap} a month).
+        The prize is set by paying accounts at draw time: {t.map((x) => `${usd(x.cents)} from ${x.at}`).join(", ")}. It goes on the winner&apos;s next statement for your approval.
+      </p>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Card className="p-4"><p className="text-xs text-muted">Paying accounts now</p><p className="text-2xl font-extrabold tabular-nums">{dr.paying_accounts}</p></Card>
+        <Card className="p-4"><p className="text-xs text-muted">Prize if drawn today</p><p className="text-2xl font-extrabold tabular-nums">{dr.prize_cents > 0 ? usd(dr.prize_cents) : "No drawing"}</p></Card>
+        <Card className="p-4"><p className="text-xs text-muted">Entries this month</p><p className="text-2xl font-extrabold tabular-nums">{total}</p>
+          <p className="text-xs text-muted">{dr.current.map((e) => `${e.name} ${e.entries}`).join(" · ") || "No eligible representatives"}</p></Card>
+      </div>
+      <Card className="overflow-x-auto">
+        <table className="w-full min-w-[48rem] text-sm">
+          <caption className="p-3 text-left font-bold">Past drawings</caption>
+          <thead className="border-b border-line text-left text-muted"><tr><th className={th}>Month</th><th className={th}>Result</th><th className={th}>Prize</th><th className={th}>Accounts</th><th className={th}>Entries</th><th className={th}>Check</th></tr></thead>
+          <tbody>
+            {dr.drawings.map((x) => (
+              <tr key={x.id} className="border-b border-line align-top last:border-0">
+                <td className="p-3">{monthLabel(x.month)}</td>
+                <td className="p-3">{x.status === "drawn" ? <><strong>{x.winner_name}</strong>{x.commission_status && <p className="text-xs text-muted">Pay line: {x.commission_status}</p>}</> : <Badge>{DRAW_SKIP[x.reason ?? ""] ?? x.reason}</Badge>}</td>
+                <td className="p-3 tabular-nums">{x.status === "drawn" ? usd(x.prize_cents) : "—"}</td>
+                <td className="p-3 tabular-nums">{x.paying_accounts}</td>
+                <td className="p-3">{x.status === "drawn" ? <details><summary className="cursor-pointer">{x.total_entries} (ticket {x.ticket})</summary><ul className="mt-1 text-xs">{x.entries.map((e) => <li key={e.rep_id}>{e.name}: {e.entries} (1 free + {e.activity})</li>)}</ul></details> : "—"}</td>
+                <td className="p-3">{x.status === "drawn" ? (x.hash_ok ? <Badge tone="ok">Verified</Badge> : <Badge tone="danger">Mismatch</Badge>) : "—"}</td>
+              </tr>
+            ))}
+            {dr.drawings.length === 0 && <tr><td colSpan={6} className="p-3 text-ink-soft">No drawings yet. The first runs on the first close of next month.</td></tr>}
+          </tbody>
+        </table>
+      </Card>
+      {owner && (
+        <Card className="p-5">
+          <h3 className="font-bold">Prizes and entry cap</h3>
+          <form action={saveDrawingSettings} className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            {[0, 1, 2].map((i) => (
+              <fieldset key={i} className="grid grid-cols-2 gap-2 sm:col-span-2 lg:col-span-1 lg:grid-cols-1">
+                <legend className="text-xs font-semibold text-muted">Tier {i + 1}</legend>
+                <label className="text-sm">From paying accounts<input name={`at${i + 1}`} type="number" min={1} required defaultValue={tier(i).at} className={input} /></label>
+                <label className="text-sm">Prize (USD)<input name={`usd${i + 1}`} type="number" min={0.01} max={1000} step={0.01} required defaultValue={(tier(i).cents / 100).toFixed(2)} className={input} /></label>
+              </fieldset>
+            ))}
+            <label className="text-sm">Activity entries cap / month<input name="cap" type="number" min={0} max={1000} required defaultValue={dr.entry_cap} className={input} /></label>
+            <label className="text-sm sm:col-span-2 lg:col-span-3">Reason (program history)<input name="note" required minLength={3} maxLength={500} className={input} /></label>
+            <div className="flex items-end"><button type="submit" className={btn}>Save</button></div>
+          </form>
+        </Card>
+      )}
+    </section>
+  );
+}
+
+export function CompensationPanel({ c, p, dr, owner, canStop, canLocate, canAdjust, model, qualification }: {
+  c: AdminCompensation | null; p: AdminPrograms | null; dr?: AdminDrawings | null; owner: boolean; canStop: boolean; canLocate: boolean; canAdjust: boolean; model: string; qualification: string;
 }) {
   const lastMonth = (() => { const d = new Date(); d.setUTCDate(1); d.setUTCMonth(d.getUTCMonth() - 1); return d.toISOString().slice(0, 7); })();
   return (
@@ -284,6 +341,7 @@ export function CompensationPanel({ c, p, owner, canStop, canLocate, canAdjust, 
         </>
       )}
       {p && <Programs p={p} owner={owner} canStop={canStop} canLocate={canLocate} />}
+      {dr && <Drawings dr={dr} owner={owner} />}
     </div>
   );
 }

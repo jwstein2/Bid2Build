@@ -22,7 +22,7 @@ import { LeadsPanel, type AdminLeads, type PendingAssign, type PossibleDup } fro
 import { ADMIN_LEAD_ERRORS, cleanFilters, LIFECYCLE, lifecycle } from "@/lib/sales/leads-admin";
 import { cookies } from "next/headers";
 import { CompensationPanel } from "./compensation-panel";
-import { COMP_ERRORS, type AdminCompensation, type AdminPrograms } from "@/lib/sales/compensation";
+import { COMP_ERRORS, type AdminCompensation, type AdminDrawings, type AdminPrograms } from "@/lib/sales/compensation";
 import { sendInvite } from "./rep-actions";
 import { inviteEmailsOn, } from "@/lib/sales/invite-email";
 import { DELIVERY_LABEL } from "@/lib/sales/leads-admin";
@@ -303,6 +303,9 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
   const compData = compRes && !compRes.error ? (compRes.data as AdminCompensation) : null;
   const progRes = tab === "compensation" ? await db.rpc("admin_sales_programs", { p_caller: user.id }) : null;
   const progData = progRes && !progRes.error ? (progRes.data as AdminPrograms) : null;
+  // Monthly activity drawing (hidden until 20270216003000 is applied).
+  const drawRes = tab === "compensation" ? await db.rpc("admin_sales_drawings", { p_caller: user.id }) : null;
+  const drawData = drawRes && !drawRes.error ? (drawRes.data as AdminDrawings) : null;
   const msForUpcoming = tab === "recognition" ? await db.rpc("admin_sales_milestones", { p_caller: user.id }) : null;
   const recentBoxes = (msForUpcoming && !msForUpcoming.error ? msForUpcoming.data : []) as { id: string; rep_name: string; milestone: number; amount_cents: number | null; status: string; reached_at: string; commission_status: string | null }[];
   // A just-created invite link arrives in a two-minute cookie (never in the URL); it shows on the rep it was made for.
@@ -624,7 +627,7 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
       )}
 
       {tab === "compensation" && (progData || compData ? (
-        <CompensationPanel c={compData} p={progData} owner={has("edit_commission_policies")} canStop={has("approve_commissions")} canLocate={has("manage_reps")} canAdjust={has("adjust_commissions")}
+        <CompensationPanel c={compData} p={progData} dr={drawData} owner={has("edit_commission_policies")} canStop={has("approve_commissions")} canLocate={has("manage_reps")} canAdjust={has("adjust_commissions")}
           model={h.settings.milestone_model ?? "v2_window"} qualification={h.settings.milestone_qualification ?? "first_payment"} />
       ) : (
         <Notice tone="warn" title="Compensation V3 isn't installed yet">Run <code className="break-all">supabase/migrations/20270202001000_sales_comp_v3.sql</code> in the Supabase SQL Editor, then reload.</Notice>
