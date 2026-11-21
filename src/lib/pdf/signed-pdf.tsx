@@ -71,6 +71,12 @@ const AUTHORITY_LABELS: Record<string, string> = {
 
 const utc = (iso: string) => `${new Date(iso).toISOString().replace("T", " ").slice(0, 19)} UTC`;
 
+/**
+ * Printed on every signature certificate. Explains why the record is a valid signed original under ESIGN/UETA
+ * (consent, intent, attribution, integrity, retention), in the way a certificate of completion does.
+ */
+export const LEGAL_BASIS_TEXT = "Each signature in this document is an electronic signature under the U.S. Electronic Signatures in Global and National Commerce Act (15 U.S.C. 7001 et seq.) and the Uniform Electronic Transactions Act as adopted by the applicable state. Before signing, each signer agreed to use electronic records and signatures and affirmed the statement shown above, which records their intent to sign (for a signature applied automatically, the signer adopted it and authorized its use in advance, as shown). Each signer's name, signing method and time, the IP address and browser for signatures made in person, the activity on the signing link, and the SHA-256 fingerprints of the exact document reviewed are kept with this record so the signature can be attributed and any later change to the file can be detected. Built2Bid provided the signing service and is not a party to this agreement.";
+
 /** The proposal exactly as reviewed, the signature in its acceptance line, then a certificate page. */
 export async function renderSignedPdf(doc: ProposalDocument, logo: { data: Buffer; format: "png" | "jpg" } | null, c: SignatureCertificate, opts: SignedPdfOptions = {}): Promise<Buffer> {
   const k = opts.contractor ?? null;
@@ -157,6 +163,10 @@ export async function renderSignedPdf(doc: ProposalDocument, logo: { data: Buffe
       <KV k="Signing request ID" v={c.requestId} mono />
       {c.ipAddress ? <KV k="IP address" v={c.ipAddress} /> : null}
       {c.userAgent ? <KV k="Browser" v={c.userAgent.slice(0, 200)} /> : null}
+      <View wrap={false}>
+        <Text style={s.h2}>Legal basis of this record</Text>
+        <Text>{T(LEGAL_BASIS_TEXT)}</Text>
+      </View>
       <Text style={[s.muted, { marginTop: 14, fontSize: 8 }]}>
         {T(`The proposal pages in this file are the version the signer reviewed (its PDF hash is listed above). Signed ${date}. A record of this signature is kept by ${doc.brand.companyName} through Built2Bid. To check that this file has not been changed since it was signed, upload it at built2bid.org/verify.`)}
       </Text>

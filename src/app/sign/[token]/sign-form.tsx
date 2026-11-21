@@ -3,6 +3,7 @@ import { CheckCircle2, Download, Loader2, PenLine, Type } from "lucide-react";
 import { useRef, useState } from "react";
 import { SignaturePad } from "@/components/esign/signature-pad";
 import { useRouter } from "next/navigation";
+import { SIGN_INTENT_NOTICE } from "@/lib/esign/config";
 
 type Method = "typed" | "drawn";
 type Errors = Partial<Record<"signerName" | "signerEmail" | "signatureText" | "signatureImage" | "consent" | "accept" | "form", string>>;
@@ -149,6 +150,7 @@ export function SignForm({ token, customerName, consentVersion, consent, accepta
       </div>
 
       {errors.form && <p className="rounded-lg bg-danger-tint p-3 text-sm font-medium text-danger" role="alert">{errors.form}</p>}
+      <p className="text-xs text-muted" data-testid="sign-intent">{SIGN_INTENT_NOTICE}</p>
       <button type="submit" disabled={busy} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-accent px-6 text-base font-bold text-navy hover:bg-accent-hover disabled:opacity-60 sm:w-auto">
         {busy ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> : <PenLine className="h-5 w-5" aria-hidden />} Accept &amp; Sign Proposal
       </button>

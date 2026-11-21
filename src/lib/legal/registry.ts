@@ -159,10 +159,13 @@ export const LEGAL_DOCUMENTS: LegalDocument[] = [
   },
   {
     key: "esign-disclosure", name: "Electronic Signature Disclosure", category: "disclosure", href: "/esign-disclosure", public: true,
-    version: "November 19, 2026", effectiveDate: null, originalPublication: LEGAL_UPDATE_2026_11_19,
-    lastRevised: LEGAL_UPDATE_2026_11_19, publishedOn: LEGAL_UPDATE_2026_11_19, defaultStatus: "published_pending", risk: "high",
-    acceptance: "Signers consent on the signing page; consent and acceptance text are stored with each signature.",
-    history: [{ version: "November 19, 2026", summary: "First published.", publishedOn: LEGAL_UPDATE_2026_11_19, supersededOn: null }],
+    version: "November 21, 2026", effectiveDate: null, originalPublication: LEGAL_UPDATE_2026_11_19,
+    lastRevised: "2026-11-21", publishedOn: "2026-11-21", defaultStatus: "published_pending", risk: "high",
+    acceptance: "Signers consent on the signing page; consent and acceptance text are stored with each signature. Contractor signers affirm adoption, authorization and countersignature statements, each stored with its version.",
+    history: [
+      { version: "November 21, 2026", summary: "Added agreement to do business electronically, electronic delivery of copies and notices, an express intent-to-sign statement, and a section for contractors who sign for their company (adoption, automatic application, countersignature, security duties).", publishedOn: "2026-11-21", supersededOn: null },
+      { version: "November 19, 2026", summary: "First published.", publishedOn: LEGAL_UPDATE_2026_11_19, supersededOn: "2026-11-21" },
+    ],
   },
   {
     key: "security", name: "Security Overview", category: "disclosure", href: "/security", public: true,
