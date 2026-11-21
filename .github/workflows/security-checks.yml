@@ -1,0 +1,45 @@
+name: Security checks
+
+# Free checks that auditors and investors look for in a software supply chain:
+# - npm audit on the packages that ship to production (fails on high or critical advisories).
+# - Dependency review on pull requests: blocks a PR that adds a package with a known high/critical vulnerability.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "41 9 * * 1"   # weekly, Monday 09:41 UTC
+
+permissions:
+  contents: read
+
+jobs:
+  npm-audit:
+    name: npm audit (production dependencies)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm audit --package-lock-only --omit=dev --audit-level=high
+
+  dependency-review:
+    name: Dependency review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      # Needs Settings → Code security → Dependency graph turned on. Until the owner enables it the action reports
+      # "not supported", so the step is advisory for now; remove continue-on-error once the dependency graph is on.
+      - uses: actions/dependency-review-action@v4
+        continue-on-error: true
+        with:
+          fail-on-severity: high
+          comment-summary-in-pr: on-failure

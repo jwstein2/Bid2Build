@@ -37,6 +37,8 @@ export async function Footer() {
           <li><Link href="/terms" className="inline-block py-1 hover:text-white hover:underline">Terms of service</Link></li>
           <li><Link href="/security" className="inline-block py-1 hover:text-white hover:underline">Security</Link></li>
           <li><Link href="/cookies" className="inline-block py-1 hover:text-white hover:underline">Cookie policy and choices</Link></li>
+          <li><Link href="/subprocessors" className="inline-block py-1 hover:text-white hover:underline">Service providers</Link></li>
+          <li><Link href="/accessibility" className="inline-block py-1 hover:text-white hover:underline">Accessibility</Link></li>
           <li><Link href="/esign-disclosure" className="inline-block py-1 hover:text-white hover:underline">E-signature disclosure</Link></li>
           <li><Link href="/legal" className="inline-block py-1 hover:text-white hover:underline">Legal Document Status</Link></li>
         </FooterCol>

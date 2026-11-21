@@ -30,6 +30,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: u("/privacy"), priority: 0.2 },
     { url: u("/terms"), priority: 0.2 },
     { url: u("/security"), priority: 0.2 },
-    ...["/legal", "/cookies", "/esign-disclosure", "/referral-terms", "/trial-terms", "/academy-terms", "/verify"].map((p) => ({ url: u(p), priority: 0.2 })),
+    ...["/legal", "/cookies", "/esign-disclosure", "/referral-terms", "/trial-terms", "/academy-terms", "/subprocessors", "/accessibility", "/verify"].map((p) => ({ url: u(p), priority: 0.2 })),
   ];
 }
