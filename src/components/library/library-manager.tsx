@@ -4,7 +4,7 @@ import { useState } from "react";
 import { formatCurrency } from "@/lib/estimate/money";
 import { COST_TYPES, UNIT_ABBR, tradeName } from "@/lib/trades/catalog";
 import Link from "next/link";
-import { FREE_ITEMS_KEPT_NOTE, FREE_SAVED_ITEMS_LIMIT, frequentItems, matchesQuery, organizeLibrary, type SavedItem, type SavedStack, type StackScale } from "@/lib/library/saved-items";
+import { FREE_ITEMS_KEPT_NOTE, FREE_SAVED_ITEMS_LIMIT, frequentItems, matchesQuery, organizeLibrary, overrideLabel, type SavedItem, type SavedStack, type StackScale } from "@/lib/library/saved-items";
 import { STARTER_ASSEMBLIES, perLabel, starterStack } from "@/lib/library/assemblies";
 import { ScaleFields } from "./scale-stack";
 import { useLibrary, type Library } from "../builder/library";
@@ -200,7 +200,7 @@ function ItemRow({ item: i, lib, onEdit, onRemoved }: { item: SavedItem; lib: Li
     <li className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-2 text-sm" data-search-id={i.id}>
       <div className="min-w-0 flex-1">
         <p className="font-medium">{i.name}{i.favorite && <Star className="ml-1 inline h-3.5 w-3.5 text-warn" fill="currentColor" aria-label="Favorite" />}</p>
-        <p className="text-xs text-muted">{typeLabel(i.costType)}{i.quantity ? ` · default qty ${i.quantity}` : ""}{i.treatment === "pass_through" ? " · billed at cost" : ""}</p>
+        <p className="text-xs text-muted">{typeLabel(i.costType)}{i.quantity ? ` · default qty ${i.quantity}` : ""}{i.treatment === "pass_through" ? " · billed at cost" : ""}{overrideLabel(i) ? ` · ${overrideLabel(i)}` : ""}</p>
         {i.priceSource && i.priceSource !== "manual" && (
           <p className="text-xs text-muted" data-testid="item-price-source">
             Price from {i.supplierName ?? "supplier"}{i.supplierSku ? ` #${i.supplierSku}` : ""}{i.priceEffectiveOn ? ` · ${fmtDay(i.priceEffectiveOn)}` : ""}

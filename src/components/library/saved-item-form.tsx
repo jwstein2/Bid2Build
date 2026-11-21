@@ -39,7 +39,7 @@ export function SavedItemForm({ initial, items, onSave, onCancel, submitLabel = 
       const errs = Object.fromEntries(parsed.error.issues.map((i) => [String(i.path[0]), i.message]));
       setErrors(errs);
       // Fields without their own message (shouldn't happen) still get a visible explanation.
-      const shown = ["name", "unitCost", "quantity"];
+      const shown = ["name", "unitCost", "quantity", "pricingOverride"];
       setErr(Object.keys(errs).some((k) => !shown.includes(k)) ? "Some details are invalid. Check the fields and try again." : null);
       return;
     }
@@ -109,8 +109,23 @@ export function SavedItemForm({ initial, items, onSave, onCancel, submitLabel = 
       </div>
       <fieldset className="text-sm">
         <legend className="label">Pricing</legend>
-        <label className="flex min-h-9 items-center gap-2"><input type="radio" name={f("treat")} checked={v.treatment !== "pass_through"} onChange={() => set({ treatment: "marked_up" })} className="h-4 w-4 accent-[var(--color-brand)]" /> Apply the bid&apos;s markup</label>
-        <label className="flex min-h-9 items-center gap-2"><input type="radio" name={f("treat")} checked={v.treatment === "pass_through"} onChange={() => set({ treatment: "pass_through" })} className="h-4 w-4 accent-[var(--color-brand)]" /> Bill at cost (no markup)</label>
+        <label className="flex min-h-9 items-center gap-2"><input type="radio" name={f("treat")} checked={v.treatment !== "pass_through" && !v.pricingOverride} onChange={() => set({ treatment: "marked_up", pricingOverride: null })} className="h-4 w-4 accent-[var(--color-brand)]" /> Apply the bid&apos;s markup</label>
+        <label className="flex min-h-9 items-center gap-2"><input type="radio" name={f("treat")} checked={v.treatment !== "pass_through" && Boolean(v.pricingOverride)} onChange={() => set({ treatment: "marked_up", pricingOverride: v.pricingOverride ?? { mode: "markup", percent: "0" } })} className="h-4 w-4 accent-[var(--color-brand)]" data-testid="saved-item-own-markup" /> Save its own markup or margin</label>
+        {v.treatment !== "pass_through" && v.pricingOverride && (
+          <div className="ml-6 flex flex-wrap items-center gap-2 pb-1">
+            <label className="sr-only" htmlFor={f("ovpct")}>Percent</label>
+            <input id={f("ovpct")} className="field tabular w-20" inputMode="decimal" value={v.pricingOverride.percent} onChange={(e) => set({ pricingOverride: { ...v.pricingOverride!, percent: e.target.value.replace(/[%\s]/g, "") } })} aria-invalid={Boolean(errors.pricingOverride)} data-testid="saved-item-own-markup-pct" />
+            <span aria-hidden>%</span>
+            <label className="sr-only" htmlFor={f("ovmode")}>Markup or margin</label>
+            <select id={f("ovmode")} className="field w-auto" value={v.pricingOverride.mode} onChange={(e) => set({ pricingOverride: { ...v.pricingOverride!, mode: e.target.value as "markup" | "margin" } })}>
+              <option value="markup">markup</option>
+              <option value="margin">margin</option>
+            </select>
+            <p className="w-full text-xs text-muted">Used every time you add this item, e.g. 0% markup on a dumpster. You can still change it on the bid.</p>
+            {errors.pricingOverride && <p className="w-full text-xs text-danger">Markup 0 to 1000%, margin 0 to 99.99%, up to 4 decimals.</p>}
+          </div>
+        )}
+        <label className="flex min-h-9 items-center gap-2"><input type="radio" name={f("treat")} checked={v.treatment === "pass_through"} onChange={() => set({ treatment: "pass_through", pricingOverride: null })} className="h-4 w-4 accent-[var(--color-brand)]" /> Bill at cost (separate pass-through charge)</label>
       </fieldset>
       <p className="text-xs text-muted sm:col-span-2">Changing a saved rate only affects items you add from now on. Existing estimates and sent proposals keep their prices.</p>
       {err && <p role="alert" className="text-sm text-danger sm:col-span-2">{err}</p>}

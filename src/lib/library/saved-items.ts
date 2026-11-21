@@ -11,7 +11,7 @@
  */
 import { z } from "zod";
 import { lineItemSchema } from "../estimate/schema";
-import type { CostType, EstimateGroup, LineItem, Estimate } from "../estimate/types";
+import type { CostType, EstimateGroup, LineItem, Estimate, PricingRule } from "../estimate/types";
 import { getTrade, tradeName } from "../trades/catalog";
 import { sectionTrade } from "../estimate/trades";
 
@@ -31,6 +31,12 @@ export interface SavedItem {
   /** Default rate (internal unit cost). "" = no saved price. */
   unitCost: string;
   taxable: boolean;
+  /**
+   * Optional markup or margin kept with the item (e.g. 0% markup on a dumpster). null/missing = use the
+   * bid's pricing, which is how every item saved before 2026-11-21 behaves. Stored in
+   * saved_items.pricing_override / assembly_items.pricing_override (SQL 20270219001000).
+   */
+  pricingOverride?: PricingRule | null;
   /** How many of the contractor's recent estimate rows use this item's name (read-only, for ordering). */
   uses?: number;
   /** Where the saved price came from (read-only here; set by supplier imports). */
@@ -90,6 +96,8 @@ export const FREE_ITEMS_KEPT_NOTE = "Your saved items stay with you when you upg
 
 export const LIBRARY_LOCKED_MESSAGE = "Premium Only — Save your preferred labor rates, material prices, and frequently used estimating items.";
 
+/** Matches the database check on saved_items.pricing_override (SQL 20270219001000). */
+const OVERRIDE_PERCENT = /^\d{1,4}(\.\d{1,4})?$/;
 const dec = z.string().trim().max(20).regex(/^\d*(\.\d*)?$/, "Enter a number").or(z.literal(""));
 const optText = (max: number) => z.string().max(max).optional();
 
@@ -105,6 +113,9 @@ export const savedItemSchema = z.object({
   unit: z.string().trim().min(1).max(40),
   unitCost: dec,
   taxable: z.boolean(),
+  pricingOverride: z.object({ mode: z.enum(["markup", "margin"]), percent: z.string().trim().regex(OVERRIDE_PERCENT, "Enter a percent (up to 4 decimals)") })
+    .refine((r) => (r.mode === "margin" ? Number(r.percent) < 100 && Number(r.percent) >= 0 : Number(r.percent) >= 0 && Number(r.percent) <= 1000), { message: "Markup 0 to 1000%, margin 0 to 99.99%", path: ["percent"] })
+    .nullable().optional(),
 });
 
 const per = z.string().trim().max(20).regex(/^\d*(\.\d{0,6})?$/, "Enter a number").optional();
@@ -158,7 +169,24 @@ export function savedItemFromLine(item: LineItem, ctx: { trade?: string | null; 
     unit: item.unit,
     unitCost: item.unitCost.trim(),
     taxable: item.taxable,
+    // The row's own markup/margin (not a section's or the bid's) is part of the item; bill-at-cost rows have none.
+    pricingOverride: savedOverride(item),
   };
+}
+
+/** The item-level markup/margin a saved item keeps: only on marked-up rows with a valid percent. */
+export function savedOverride(item: Pick<LineItem, "treatment" | "pricingOverride">): PricingRule | null {
+  const o = item.pricingOverride;
+  if (!o || item.treatment === "pass_through" || !OVERRIDE_PERCENT.test(o.percent.trim())) return null;
+  const n = Number(o.percent);
+  if (o.mode === "margin" ? n >= 100 : n > 1000) return null;
+  return { mode: o.mode, percent: o.percent.trim() };
+}
+
+/** Short label for a saved item's own pricing ("0% markup", "30% margin"), or null when it follows the bid. */
+export function overrideLabel(s: Pick<SavedItem, "treatment" | "pricingOverride">): string | null {
+  const o = savedOverride({ treatment: s.treatment, pricingOverride: s.pricingOverride ?? null });
+  return o ? `${Number(o.percent)}% ${o.mode}` : null;
 }
 
 /** Trade and section of an estimate row, for filing it in the library. */
@@ -186,6 +214,8 @@ export function lineFromSaved(s: SavedItem): Partial<LineItem> {
     unit: s.unit,
     unitCost: s.unitCost,
     taxable: s.taxable,
+    // Saved items without their own markup keep following the bid (and the section's override, if any).
+    pricingOverride: savedOverride({ treatment: s.treatment, pricingOverride: s.pricingOverride ?? null }),
   };
 }
 

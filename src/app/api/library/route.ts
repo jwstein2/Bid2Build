@@ -14,10 +14,15 @@ const hasAccess = (supabase: Supa) => hasPremiumAccess(supabase);
 const freeItemsOk = async (supabase: Supa) => (await supabase.rpc("saved_items_free_ok")).data === true;
 const FREE_LIMIT_MESSAGE = `Free accounts can keep up to ${FREE_SAVED_ITEMS_LIMIT} saved items. Individual Unlimited has no limit, and everything you've saved comes with you.`;
 
+const overrideFromRow = (v: any): SavedItem["pricingOverride"] =>
+  v && (v.mode === "markup" || v.mode === "margin") && v.percent !== undefined && v.percent !== null ? { mode: v.mode, percent: String(v.percent) } : null;
+
 const mapItem = (r: any): SavedItem => ({
   id: r.id, name: r.name, description: r.description ?? undefined, trade: r.trade ?? null, category: r.category ?? undefined,
   costType: r.cost_type ?? "material", treatment: r.treatment ?? "marked_up", quantity: r.quantity === null || r.quantity === undefined ? undefined : num(r.quantity),
   unit: r.unit ?? "each", unitCost: num(r.unit_cost), taxable: r.taxable ?? true,
+  // Item's own markup/margin (Will meeting 2026-11-21). Absent until SQL 20270219001000 is applied.
+  pricingOverride: overrideFromRow(r.pricing_override),
   // Price-source metadata (V5). Absent until migration 20261127001000 is applied.
   supplierName: r.supplier_name ?? null, supplierSku: r.supplier_sku ?? null, priceSource: r.price_source ?? null,
   priceEffectiveOn: r.price_effective_on ? String(r.price_effective_on).slice(0, 10) : null,
@@ -90,7 +95,19 @@ const itemRow = (i: z.infer<typeof savedItemSchema>) => ({
   name: i.name, description: i.description?.trim() || null, trade: i.trade || null, category: i.category?.trim() || null,
   cost_type: i.costType, treatment: i.treatment, quantity: i.quantity ? i.quantity : null, unit: i.unit,
   unit_cost: i.unitCost === "" ? null : i.unitCost, taxable: i.taxable,
+  pricing_override: i.treatment === "pass_through" ? null : i.pricingOverride ?? null,
 });
+
+/**
+ * Until SQL 20270219001000 adds pricing_override, PostgREST refuses the unknown column (PGRST204). Retry the
+ * same write without it so saving keeps working; the item then follows the bid's markup as before.
+ */
+const missingOverrideColumn = (e: { code?: string; message: string } | null) => Boolean(e && (e.code === "PGRST204" || e.code === "42703") && /pricing_override/.test(e.message));
+function dropOverride<T extends Record<string, unknown>>(row: T): Omit<T, "pricing_override"> {
+  const { pricing_override: _p, ...rest } = row;
+  void _p;
+  return rest;
+}
 /** Stack rows: assembly_items has no trade or category columns (the stack carries the trade), so sending them fails the insert. */
 const stackItemRow = (i: z.infer<typeof savedItemSchema>) => {
   const { trade: _trade, category: _category, ...row } = itemRow(i);
@@ -118,9 +135,12 @@ export async function POST(req: Request) {
   let error: { message: string } | null = null;
   let affected = 1;
   if (o.kind === "item" && o.action === "add") {
-    ({ error } = await supabase.from("saved_items").insert({ id: o.payload.id, user_id: user.id, ...itemRow(o.payload) }));
+    const row = { id: o.payload.id, user_id: user.id, ...itemRow(o.payload) };
+    ({ error } = await supabase.from("saved_items").insert(row));
+    if (missingOverrideColumn(error)) ({ error } = await supabase.from("saved_items").insert(dropOverride(row)));
   } else if (o.kind === "item" && o.action === "update") {
-    const r = await supabase.from("saved_items").update(itemRow(o.payload)).eq("id", o.payload.id).select("id");
+    let r = await supabase.from("saved_items").update(itemRow(o.payload)).eq("id", o.payload.id).select("id");
+    if (missingOverrideColumn(r.error)) r = await supabase.from("saved_items").update(dropOverride(itemRow(o.payload))).eq("id", o.payload.id).select("id");
     error = r.error; affected = r.data?.length ?? 0;
   } else if (o.kind === "item" && o.action === "remove") {
     ({ error } = await supabase.from("saved_items").delete().eq("id", o.payload.id));
@@ -159,11 +179,13 @@ export async function POST(req: Request) {
       starter_key: s.starterKey ?? null, ...(companyId ? { company_id: companyId } : {}),
     }));
     if (!error) {
-      ({ error } = await supabase.from("assembly_items").insert(s.items.map((i, k) => ({
+      const rows = s.items.map((i, k) => ({
         // Client ids are kept so the open page can edit the rows right away (scaling) without a reload.
         id: i.id, ...stackItemRow(i), quantity: i.quantity || "1", assembly_id: s.id, user_id: user.id, sort_order: k,
         ...(s.scale ? { qty_per: i.per || null, waste_pct: i.wastePct || 0, round_up: Boolean(i.roundUp) } : {}),
-      }))));
+      }));
+      ({ error } = await supabase.from("assembly_items").insert(rows));
+      if (missingOverrideColumn(error)) ({ error } = await supabase.from("assembly_items").insert(rows.map(dropOverride)));
       // Don't leave an empty stack behind if its rows were refused.
       if (error) await supabase.from("assemblies").delete().eq("id", s.id);
     }

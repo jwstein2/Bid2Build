@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type Dispatch, type ReactNode } from "reac
 import type { Estimate, EstimateGroup, LineItem } from "@/lib/estimate/types";
 import { UNIT_ABBR, getTrade, parseTemplateItem, type TemplateItem } from "@/lib/trades/catalog";
 import { sectionTrade } from "@/lib/estimate/trades";
-import { FREE_ITEMS_KEPT_NOTE, frequentItems, lineContext, lineFromSaved, matchesQuery, type SavedItem, type SavedStack, type StackItem, type StackScale } from "@/lib/library/saved-items";
+import { FREE_ITEMS_KEPT_NOTE, frequentItems, lineContext, lineFromSaved, matchesQuery, overrideLabel, savedOverride, type SavedItem, type SavedStack, type StackItem, type StackScale } from "@/lib/library/saved-items";
 import { startersFor, starterStack } from "@/lib/library/assemblies";
 import { cn } from "@/lib/cn";
 import { useDismiss } from "@/components/ui/use-dismiss";
@@ -16,6 +16,9 @@ import { LibraryUpgradeDialog } from "../library/premium-lock";
 import { SavedItemForm } from "../library/saved-item-form";
 import { ConfirmRemove, rateLabel } from "../library/library-manager";
 import { ScaleFields, ScaleStackForm, isValidMeasure } from "../library/scale-stack";
+
+/** Rate plus the item's own markup, when it keeps one ("$450.00 / ea · 0% markup"). */
+const metaLabel = (f: SavedItem) => { const o = overrideLabel(f); return o ? `${rateLabel(f)} · ${o}` : rateLabel(f); };
 
 /**
  * Builder-side Saved Items actions: Save Item (one row), Save Stack (selected rows), edit/delete from
@@ -49,7 +52,10 @@ export function useSavedItemsUi(lib: Library, estimate: Estimate) {
     const r = await lib.saveLine(it, lineContext(estimate, groupOf(it)));
     // Free plan: say once per save that the item comes along on an upgrade (James, V8 batch 5).
     const kept = lib.access ? "" : ` ${FREE_ITEMS_KEPT_NOTE}`;
-    if (r.ok) say(r.updated ? `Updated “${it.name.trim()}” in Saved Items.${kept}` : `Saved “${it.name.trim()}” to Saved Items.${kept}`);
+    // Will meeting 2026-11-21: say when the row's own markup/margin was kept with it (e.g. 0% on a dumpster).
+    const own = overrideLabel({ treatment: it.treatment, pricingOverride: savedOverride(it) });
+    const withMarkup = own ? ` Its ${own} is saved with it.` : "";
+    if (r.ok) say(r.updated ? `Updated “${it.name.trim()}” in Saved Items.${withMarkup}${kept}` : `Saved “${it.name.trim()}” to Saved Items.${withMarkup}${kept}`);
     else if (r.code === "premium_required") setUpgradeOpen(true);
     else say(r.message);
   };
@@ -195,7 +201,7 @@ export function SavedItemsPicker({ group, estimate, suggestions, lib, dispatch }
                 {favStacks.map(stackRow)}
                 {favItems.map((f) => (
                   <div key={`fav-${f.id}`} className="flex items-center gap-1">
-                    <div className="min-w-0 flex-1"><PickRow name={f.name} added={has(f.name)} meta={rateLabel(f)} onPick={() => dispatch({ type: "addItem", groupId: group.id, from: lineFromSaved(f) })} /></div>
+                    <div className="min-w-0 flex-1"><PickRow name={f.name} added={has(f.name)} meta={metaLabel(f)} onPick={() => dispatch({ type: "addItem", groupId: group.id, from: lineFromSaved(f) })} /></div>
                     {star("item", f.id, f.name, true)}
                   </div>
                 ))}
@@ -209,13 +215,13 @@ export function SavedItemsPicker({ group, estimate, suggestions, lib, dispatch }
                   </button>
                 ))}
                 {frequent.length > 0 && <p className={heading}>Frequently used</p>}
-                {frequent.map((f) => <PickRow key={`fq-${f.id}`} name={f.name} added={has(f.name)} meta={`${rateLabel(f)} · used ${f.uses}×`} onPick={() => dispatch({ type: "addItem", groupId: group.id, from: lineFromSaved(f) })} />)}
+                {frequent.map((f) => <PickRow key={`fq-${f.id}`} name={f.name} added={has(f.name)} meta={`${metaLabel(f)} · used ${f.uses}×`} onPick={() => dispatch({ type: "addItem", groupId: group.id, from: lineFromSaved(f) })} />)}
                 <p className={heading}>Saved Items</p>
                 {!saved.length && !frequent.length && <p className="px-2 py-1.5 text-xs text-muted">{lib.items.length ? "No saved items match." : "None yet. Use ⋯ → Save Item on any row."}</p>}
                 {saved.map((f) => (
                   <div key={f.id} className="group/saved flex items-center gap-1">
                     <div className="min-w-0 flex-1">
-                      <PickRow name={f.name} added={has(f.name)} meta={rateLabel(f)} onPick={() => dispatch({ type: "addItem", groupId: group.id, from: lineFromSaved(f) })} />
+                      <PickRow name={f.name} added={has(f.name)} meta={metaLabel(f)} onPick={() => dispatch({ type: "addItem", groupId: group.id, from: lineFromSaved(f) })} />
                     </div>
                     {star("item", f.id, f.name, Boolean(f.favorite))}
                     <button type="button" onClick={() => { setOpen(false); lib.editItem(f); }} className="grid h-10 w-9 shrink-0 place-items-center rounded text-muted hover:bg-paper hover:text-brand md:h-8 md:w-8" aria-label={`Edit saved item ${f.name}`}><Pencil className="h-3.5 w-3.5" aria-hidden /></button>
