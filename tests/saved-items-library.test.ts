@@ -173,3 +173,44 @@ describe("Saved Items library helpers", () => {
     expect(libraryOpSchema.safeParse({ kind: "stack", action: "add", payload: { id: crypto.randomUUID(), name: "S", items: [] } }).success).toBe(false);
   });
 });
+
+describe("Saved Items keep their own markup (Will meeting 2026-11-21)", () => {
+  it("a 0% markup dumpster saved from a bid comes back at 0% (not the bid's markup)", () => {
+    const row = item("g1", "1", "450", { name: "Dumpster 20 yd", costType: "equipment", taxable: false, pricingOverride: { mode: "markup", percent: "0" } });
+    const s = savedItemFromLine(row, { trade: "roofing", category: "Tear Off" }, "d1");
+    expect(s.pricingOverride).toEqual({ mode: "markup", percent: "0" });
+    expect(libraryOpSchema.safeParse({ kind: "item", action: "add", payload: { ...s, id: crypto.randomUUID() } }).success).toBe(true);
+    const from = lineFromSaved(s);
+    expect(from.pricingOverride).toEqual({ mode: "markup", percent: "0" });
+
+    // Added to a 25% markup bid: the dumpster bills $450.00 at cost, the shingles still get 25%.
+    const e0 = est({ pricing: { mode: "markup", percent: "25" }, taxRate: "8", items: [item("g1", "10", "100", { taxable: true })] });
+    const e1 = reducer({ estimate: e0, trash: [], dirty: 0 }, { type: "addItem", groupId: "g1", from }).estimate;
+    const t = computeEstimate(e1);
+    expect(t.totalCost.toFixed(2)).toBe("1450.00");
+    expect(t.subtotal.toFixed(2)).toBe("1700.00"); // 1,250 + 450
+    expect(t.grossProfit.toFixed(2)).toBe("250.00"); // profit report: no profit on the dumpster
+    expect(t.tax.toFixed(2)).toBe("100.00"); // 8% of the taxable 1,250 only
+  });
+
+  it("margin overrides round-trip; items saved before this change keep following the bid", () => {
+    const row = item("g1", "1", "70", { pricingOverride: { mode: "margin", percent: "30" } });
+    expect(savedItemFromLine(row, {}, "m1").pricingOverride).toEqual({ mode: "margin", percent: "30" });
+    const legacy = saved({ name: "Old item", unitCost: "10" }); // no pricingOverride field at all
+    expect(lineFromSaved(legacy).pricingOverride).toBeNull();
+    const t = computeEstimate(reducer({ estimate: est({ items: [] }), trash: [], dirty: 0 }, { type: "addItem", groupId: "g1", from: lineFromSaved(legacy) }).estimate);
+    expect(t.subtotal.toFixed(2)).toBe("12.50"); // bid's 25% markup
+  });
+
+  it("never saves a markup on bill-at-cost rows, invalid percents, or a 100%+ margin", () => {
+    const at = (p: Partial<Parameters<typeof item>[3]>) => savedItemFromLine(item("g1", "1", "5", p), {}, "x").pricingOverride;
+    expect(at({ treatment: "pass_through", pricingOverride: { mode: "markup", percent: "0" } })).toBeNull();
+    expect(at({ pricingOverride: { mode: "markup", percent: "" } })).toBeNull();
+    expect(at({ pricingOverride: { mode: "markup", percent: "-5" } })).toBeNull();
+    expect(at({ pricingOverride: { mode: "margin", percent: "100" } })).toBeNull();
+    const bad = { ...saved({}), pricingOverride: { mode: "margin" as const, percent: "100" } };
+    expect(libraryOpSchema.safeParse({ kind: "item", action: "add", payload: bad }).success).toBe(false);
+    // A section's override is not the item's own: it isn't copied into the library.
+    expect(at({ pricingOverride: null })).toBeNull();
+  });
+});
