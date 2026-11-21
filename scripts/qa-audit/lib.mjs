@@ -51,7 +51,7 @@ export async function uiLogin(page, email, { loginPath = "/login" } = {}) {
   if (!(await field.isVisible().catch(() => false))) {
     const cont = page.getByRole("button", { name: /Continue with email|Sign in with email/i }).first();
     if (await cont.isVisible().catch(() => false)) await cont.click();
-    else { await page.getByRole("link", { name: /Sign in or create|Sign in to (join|accept)/i }).or(page.getByRole("button", { name: /Sign in or create/i })).first().click(); await page.waitForTimeout(1200); }
+    else { await page.getByRole("link", { name: /Sign in or create|Sign in to (join|accept)/i }).or(page.getByRole("button", { name: /Sign in or create|Create my account or sign in/i })).first().click(); await page.waitForTimeout(1200); }
     if (!(await field.isVisible().catch(() => false))) { const c2 = page.getByRole("button", { name: /Continue with email/i }).first(); if (await c2.isVisible().catch(() => false)) await c2.click(); }
   }
   await field.fill(email);

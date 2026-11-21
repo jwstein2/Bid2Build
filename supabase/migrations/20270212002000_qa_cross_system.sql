@@ -1,5 +1,17 @@
--- Rollback for 20270212001000_qa_cross_system.sql: restores the three functions exactly as they were before it.
--- 1. payout_plan (from 20270207001000_staff_payouts.sql)
+-- QA 2026-11-20: fixes found testing today's systems together (Practice Mode, staff payouts, GPS / worker hub,
+-- ten-year Sales commissions, Affiliate Hub). Safe to run more than once. Rollback: supabase/rollback/20270212002000_qa_cross_system_down.sql
+--
+-- 1. payout_plan (staff payouts) re-checked EVERY held payout with the staff blockers, including affiliate payouts
+--    (no staff record), so a held affiliate payout's reason became "no_staff_record" after each daily run.
+--    It now re-checks staff payouts only; affiliate_payout_plan re-checks affiliate payouts with their own blockers.
+-- 2. admin_sales_attribution_set (Sales Hub -> assign a customer by hand) didn't know about the Affiliate Hub, so the
+--    owner could give an affiliate's customer to a rep and both would earn commission on the same customer.
+--    It now refuses with owned_by_affiliate; the supported path is an affiliate attribution dispute -> "moved to Sales".
+-- 3. admin_affiliate_dispute_resolve "moved to Sales" recorded an "assigned" history row even when another rep already
+--    owned the customer (the insert silently did nothing). It now refuses with owned_by_sales in that case, re-opens an
+--    ended sales attribution properly, uses the per-customer attribution lock and records who did it.
+
+-- 1.
 create or replace function public.payout_plan(p_now timestamptz default now()) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare s public.payout_settings; f public.payout_fee_policies; r record; m public.staff_members; p public.payouts;
@@ -42,7 +54,8 @@ begin
   end loop;
 
   -- Re-check held payouts: a prerequisite fixed since the last run releases them.
-  for p in select * from public.payouts where status = 'held' and mode = v_mode for update skip locked loop
+  -- Staff payouts only: affiliate payouts are re-checked by affiliate_payout_plan with their own blockers.
+  for p in select * from public.payouts where status = 'held' and mode = v_mode and staff_id is not null for update skip locked loop
     v_blockers := public.payout_blockers(p.staff_id, v_mode);
     if p.gross_cents < s.min_payout_cents then v_blockers := array_append(v_blockers, 'below_minimum'); end if;
     if cardinality(v_blockers) = 0 then
@@ -57,7 +70,7 @@ begin
 end $$;
 
 
--- 2. admin_sales_attribution_set (from 20270107001000_sales_portal.sql)
+-- 2.
 create or replace function public.admin_sales_attribution_set(p_caller uuid, p_customer_email text, p_rep uuid, p_reason text) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare
@@ -71,6 +84,14 @@ begin
   if v_user is null then raise exception 'customer_not_found'; end if;
   select * into rep from public.sales_reps where id = p_rep and status in ('active', 'invited', 'suspended');
   if not found then raise exception 'rep_not_found'; end if;
+  -- One owner per customer: an affiliate's customer moves to Sales only through an attribution dispute
+  -- (Affiliates admin -> Disputes -> "moved to Sales"), under the same per-customer lock as link attribution.
+  perform pg_advisory_xact_lock(hashtext('customer_attribution:' || v_user::text));
+  if to_regclass('public.affiliate_referrals') is not null then
+    if exists (select 1 from public.affiliate_referrals where user_id = v_user and ended_at is null) then
+      raise exception 'owned_by_affiliate' using errcode = '22023';
+    end if;
+  end if;
   if rep.user_id = v_user or exists (select 1 from public.sales_reps r where r.user_id = v_user and r.status <> 'removed') then raise exception 'customer_is_sales_staff'; end if;
   select * into prev from public.sales_attributions where user_id = v_user for update;
   if found then
@@ -90,12 +111,10 @@ begin
 end $$;
 
 
--- 3. admin_affiliate_dispute_resolve (from 20270211001000_affiliate_hub.sql), only while the Affiliate Hub is installed.
-do $do$ begin
-  if to_regclass('public.affiliate_referrals') is not null then
-    execute $fn$create or replace function public.admin_affiliate_dispute_resolve(p_caller uuid, p_id uuid, p_outcome text, p_resolution text, p_target_affiliate uuid default null, p_target_rep uuid default null) returns jsonb
+-- 3.
+create or replace function public.admin_affiliate_dispute_resolve(p_caller uuid, p_id uuid, p_outcome text, p_resolution text, p_target_affiliate uuid default null, p_target_rep uuid default null) returns jsonb
 language plpgsql security definer set search_path = public as $$
-declare x public.affiliate_disputes; r public.affiliate_referrals;
+declare x public.affiliate_disputes; r public.affiliate_referrals; sa public.sales_attributions;
 begin
   perform public.affiliate_require_admin(p_caller);
   if char_length(btrim(coalesce(p_resolution, ''))) < 5 then raise exception 'resolution_required' using errcode = '22023'; end if;
@@ -108,10 +127,22 @@ begin
     insert into public.affiliate_referral_history (user_id, from_affiliate, to_affiliate, action, reason, actor) values (r.user_id, r.affiliate_id, p_target_affiliate, 'dispute_resolved', p_resolution, p_caller);
   elsif p_outcome = 'moved_to_sales' then
     if r.user_id is null or p_target_rep is null then raise exception 'target_required' using errcode = '22023'; end if;
+    if not exists (select 1 from public.sales_reps where id = p_target_rep and status in ('active', 'invited', 'suspended')) then raise exception 'rep_not_found' using errcode = '22023'; end if;
+    perform pg_advisory_xact_lock(hashtext('customer_attribution:' || r.user_id::text));
+    select * into sa from public.sales_attributions where user_id = r.user_id for update;
+    -- Another rep already owns this customer: reassign between reps in Sales Hub instead of here.
+    if found and sa.ended_at is null and sa.rep_id <> p_target_rep then raise exception 'owned_by_sales' using errcode = '22023'; end if;
     update public.affiliate_referrals set ended_at = now(), ended_reason = 'moved_to_sales: ' || left(p_resolution, 200) where user_id = r.user_id;
     insert into public.affiliate_referral_history (user_id, from_affiliate, action, reason, actor) values (r.user_id, r.affiliate_id, 'dispute_resolved', p_resolution, p_caller);
-    insert into public.sales_attributions (user_id, rep_id, source) values (r.user_id, p_target_rep, 'manual') on conflict (user_id) do nothing;
-    insert into public.sales_attribution_history (user_id, to_rep, action, reason) values (r.user_id, p_target_rep, 'assigned', 'affiliate dispute: ' || left(p_resolution, 200));
+    if sa.user_id is null then
+      insert into public.sales_attributions (user_id, rep_id, source) values (r.user_id, p_target_rep, 'manual');
+      update public.sales_attributions sx set stripe_subscription_id = s.stripe_subscription_id, sub_status = s.status, plan = s.plan, company_id = s.company_id
+      from (select * from public.subscriptions where user_id = r.user_id order by updated_at desc limit 1) s where sx.user_id = r.user_id;
+      insert into public.sales_attribution_history (user_id, to_rep, action, reason, actor_id) values (r.user_id, p_target_rep, 'assigned', 'affiliate dispute: ' || left(p_resolution, 200), p_caller);
+    elsif sa.ended_at is not null then
+      update public.sales_attributions set rep_id = p_target_rep, source = 'manual', ended_at = null, ended_reason = null where user_id = r.user_id;
+      insert into public.sales_attribution_history (user_id, from_rep, to_rep, action, reason, actor_id) values (r.user_id, sa.rep_id, p_target_rep, 'reassigned', 'affiliate dispute: ' || left(p_resolution, 200), p_caller);
+    end if;
     update public.affiliate_commissions set status = 'canceled', reason = 'attribution_moved' where user_id = r.user_id and status in ('pending', 'payable') and payout_id is null;
   elsif p_outcome = 'removed' then
     if r.user_id is null then raise exception 'target_required' using errcode = '22023'; end if;
@@ -126,6 +157,4 @@ begin
   update public.affiliate_disputes set status = 'resolved', outcome = p_outcome, resolution = left(btrim(p_resolution), 2000), resolved_by = p_caller, resolved_at = now() where id = p_id;
   perform public.affiliate_audit(p_caller, 'affiliate.dispute_resolved', coalesce(x.affiliate_id::text, x.id::text), jsonb_build_object('dispute', p_id, 'outcome', p_outcome));
   return jsonb_build_object('outcome', p_outcome);
-end $$;$fn$;
-  end if;
-end $do$;
+end $$;
