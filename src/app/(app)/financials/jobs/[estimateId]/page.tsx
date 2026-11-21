@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isFinancialsEnabled, isPmEnabled } from "@/lib/env";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
@@ -16,7 +16,12 @@ export default async function JobFinancialsPage({ params, searchParams }: { para
   if (!/^[0-9a-f-]{36}$/i.test(estimateId)) notFound();
   const db = await createClient();
   const est = await loadJobHeader(db, estimateId);
-  if (!est) notFound();
+  if (!est) {
+    // Links built from a financial job id (cash forecast, alerts) land here too: send them to the job's bid page.
+    const { data: job } = await db.from("fin_jobs").select("estimate_id").eq("id", estimateId).maybeSingle();
+    if (job?.estimate_id && job.estimate_id !== estimateId) redirect(`/financials/jobs/${job.estimate_id}`);
+    notFound();
+  }
   const { data: sched } = isPmEnabled() ? await db.from("project_schedules").select("id").eq("estimate_id", estimateId).maybeSingle() : { data: null };
   const sp = await searchParams;
   return (

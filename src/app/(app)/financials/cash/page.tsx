@@ -12,6 +12,13 @@ import { CancelPlanned, CashPlanForm } from "@/components/tax-banking/cash-plan"
 import { can } from "@/lib/tax-banking/capabilities";
 import { loadForecast } from "@/lib/tax-banking/load";
 import { fmtDateServer, fmtWhen } from "@/lib/financials/accounting-format";
+import { createAdminClient } from "@/lib/supabase/server";
+import { isCashV9Enabled, loadV9 } from "@/lib/cash-v9/load";
+import { bucketize, buildV9, type Granularity } from "@/lib/cash-v9/engine";
+import { alertsFor, persist, previousSnapshot } from "@/lib/cash-v9/run";
+import { parseWhatIf } from "@/lib/cash-v9/whatif";
+import { HORIZONS as V9_HORIZONS, type ExpenseMode, type Scenario } from "@/lib/cash-v9/settings";
+import { V9Alerts, V9Buckets, V9Confidence, V9Controls, V9Milestones, V9Projects, V9Summary, V9WhatIf, type V9View } from "@/components/cash-v9/panel";
 
 export const metadata: Metadata = { title: "Cash flow", robots: { index: false } };
 type Row = Record<string, unknown>;
@@ -22,7 +29,7 @@ const CATEGORY: Record<string, string> = { customer_payment: "Customer payment",
  * Cash-flow forecast: bank-reported balance (when the viewer may see it) plus what's scheduled and expected.
  * Every number is a forecast except the bank-reported balance; expected dates are estimates and say so.
  */
-export default async function CashPage({ searchParams }: { searchParams: Promise<{ h?: string; end?: string; acct?: string | string[] }> }) {
+export default async function CashPage({ searchParams }: { searchParams: Promise<{ h?: string; end?: string; acct?: string | string[]; sc?: string; mode?: string; g?: string; job?: string; cat?: string | string[]; wi?: string }> }) {
   if (!isFinancialsEnabled()) notFound();
   const sp = await searchParams;
   const db = await createClient();
@@ -34,11 +41,15 @@ export default async function CashPage({ searchParams }: { searchParams: Promise
   const canPlan = ctx.access.active && !ctx.access.readOnly && can(perms, "cash.manage_plan");
   const today = new Date().toISOString().slice(0, 10);
   const custom = sp.h === "custom" && sp.end && /^\d{4}-\d{2}-\d{2}$/.test(sp.end) && sp.end > today ? sp.end : undefined;
-  const horizon = custom ? Math.min(365, Math.round((Date.parse(custom) - Date.parse(today)) / 864e5)) : HORIZONS.includes(Number(sp.h) as 7) ? Number(sp.h) : 30;
+  const v9On = isCashV9Enabled();
+  const horizonList: readonly number[] = v9On ? V9_HORIZONS : HORIZONS;
+  const horizon = custom ? Math.min(365, Math.round((Date.parse(custom) - Date.parse(today)) / 864e5)) : horizonList.includes(Number(sp.h)) ? Number(sp.h) : 30;
   const acctSel = (Array.isArray(sp.acct) ? sp.acct : sp.acct ? [sp.acct] : []).filter((a) => /^[0-9a-f-]{36}$/.test(a));
   const r = await loadForecast(db, ctx.bookId, perms, { horizon, end: custom, accounts: acctSel });
   if (!r.installed) return <TbShell {...shell}><Notice title="Cash flow turns on after the database update">The V6.9 SQL (20261226001000) hasn&apos;t been installed on this database yet. Nothing else is affected.</Notice></TbShell>;
-  const f = r.forecast;
+  // V9 (behind NEXT_PUBLIC_CASH_V9=on): schedule-dated milestones, commitments, payroll, scenarios, alerts. Off = the V6.9 page unchanged.
+  const v9 = v9On ? await loadCashV9(db, ctx.bookId, perms, { horizon, end: custom, accounts: acctSel }, sp, today, canPlan) : null;
+  const f = v9?.result.forecast ?? r.forecast;
   const qs = (h: string, extra = "") => `/financials/cash?h=${h}${acctSel.map((a) => `&acct=${a}`).join("")}${extra}`;
   const planned = r.planned as Row[];
   const acctOpts = r.banks.accounts.filter((a) => a.status !== "disconnected").map((a) => ({ id: a.id, label: `${a.name}${a.last4 ? ` ••${a.last4}` : ""}` }));
@@ -54,8 +65,9 @@ export default async function CashPage({ searchParams }: { searchParams: Promise
       {f.stale && <Notice tone="warn" title="Bank balance may be out of date">The last bank update was {f.openingAsOf ? fmtWhen(f.openingAsOf) : "a while ago"}. Refresh it on Connected banks.</Notice>}
       {f.missingBalances.length > 0 && <Notice tone="warn" title="Some accounts didn't report a balance">{f.missingBalances.join(", ")}. They&apos;re left out of the starting balance.</Notice>}
 
+      {v9 && <V9Controls v={v9.view} jobs={v9.jobs} />}
       <form className="flex flex-wrap items-end gap-2" action="/financials/cash" data-testid="cash-controls">
-        <nav aria-label="Forecast horizon" className="flex flex-wrap gap-1">
+        <nav aria-label="Forecast horizon" className={`flex flex-wrap gap-1 ${v9 ? "hidden" : ""}`}>
           {HORIZONS.map((h) => <Link key={h} href={qs(String(h))} aria-current={!custom && horizon === h ? "page" : undefined} className={`inline-flex min-h-9 items-center rounded-full border px-3 text-sm font-semibold ${!custom && horizon === h ? "border-brand bg-brand-tint" : "border-line"}`}>{h} days</Link>)}
         </nav>
         <input type="hidden" name="h" value="custom" />
@@ -91,7 +103,20 @@ export default async function CashPage({ searchParams }: { searchParams: Promise
         ))}
       </dl>
 
+      {v9 && (
+        <section aria-labelledby="v9-alerts-h" className="space-y-2" id="alerts">
+          <h2 id="v9-alerts-h" className="font-display text-lg font-extrabold">Early warnings</h2>
+          <V9Alerts alerts={v9.alerts} canAct={v9.canAct} />
+        </section>
+      )}
+      {v9 && <V9Summary r={v9.result} minCash={v9.minCash} />}
+      {v9 && <V9Confidence r={v9.result} />}
+
       <CashChart series={f.series} events={f.events} scheduledEvents={f.scheduledEvents} startsFromBank={f.startsFromBank} />
+      {v9 && <V9Buckets buckets={v9.buckets} />}
+      {v9 && <V9Milestones r={v9.result} />}
+      {v9 && <V9Projects r={v9.result} />}
+      {v9 && <V9WhatIf v={v9.view} jobs={v9.jobs} />}
 
       <section id="events" aria-labelledby="events-h" className="space-y-2">
         <h2 id="events-h" className="font-display text-lg font-extrabold">What&apos;s coming ({f.events.length})</h2>
@@ -131,4 +156,38 @@ export default async function CashPage({ searchParams }: { searchParams: Promise
       </section>
     </TbShell>
   );
+}
+
+type Sp = { sc?: string; mode?: string; g?: string; job?: string; cat?: string | string[]; wi?: string; h?: string; end?: string };
+
+/** Loads V9, builds the chosen view, and (for the company's standard view only) refreshes early warnings + today's snapshot. */
+async function loadCashV9(db: Awaited<ReturnType<typeof createClient>>, bookId: string, perms: readonly string[], q: { horizon: number; end?: string; accounts?: string[] }, sp: Sp, today: string, canAct: boolean) {
+  const d = await loadV9(db, bookId, perms, q, today);
+  if (!d.installed) return null;
+  const scenario: Scenario = sp.sc === "conservative" || sp.sc === "optimistic" ? sp.sc : "expected";
+  const mode: ExpenseMode = sp.mode === "known" || sp.mode === "historical" || sp.mode === "benchmark" ? sp.mode : d.settings.expenseMode;
+  const granularity: Granularity = sp.g === "day" || sp.g === "month" ? sp.g : "week";
+  const openJobs = d.data.jobs.filter((j) => j.status === "open");
+  const job = sp.job && openJobs.some((j) => j.jobId === sp.job) ? sp.job : null;
+  const cats = (Array.isArray(sp.cat) ? sp.cat : sp.cat ? [sp.cat] : []).filter((c) => ["customer_payment", "milestone", "payroll", "subcontractor", "supplier", "recurring", "other"].includes(c));
+  const whatIf = parseWhatIf(sp.wi);
+  const result = buildV9(d.base, d.data, { scenario, mode, whatIf, jobFilter: job, categories: cats });
+  const standard = scenario === "expected" && mode === d.settings.expenseMode && !job && !cats.length && !whatIf.length && !q.accounts?.length;
+  let alertRows: Record<string, unknown>[] = [];
+  try {
+    if (standard && canAct) { // only someone who can manage the plan stores alerts (a narrower view could wrongly resolve them)
+      const std = q.horizon >= 90 ? result : buildV9({ ...d.base, horizonDays: 90, endDate: undefined }, d.data, { scenario, mode, whatIf: [] });
+      const alerts = alertsFor(std, d.data, d.base, today, await previousSnapshot(db, bookId, today));
+      await persist(createAdminClient(), bookId, std, alerts, today, { mode, scenario, horizon: 90 });
+    }
+    const { data } = await db.from("fin_cash_alerts").select("*").eq("book_id", bookId).in("status", ["open", "acknowledged", "snoozed"]).order("last_seen_at", { ascending: false }).limit(50);
+    alertRows = ((data ?? []) as Record<string, unknown>[]).filter((a) => a.status !== "snoozed")
+      .sort((a, b) => ["critical", "warning", "info"].indexOf(String(a.severity)) - ["critical", "warning", "info"].indexOf(String(b.severity)));
+  } catch { /* alerts are best-effort; the forecast still shows */ }
+  return {
+    result, alerts: alertRows, canAct, minCash: d.settings.minCash,
+    buckets: bucketize(result.forecast.series, result.forecast.events, granularity),
+    jobs: openJobs.map((j) => ({ id: j.jobId, name: j.jobName })),
+    view: { scenario, mode, granularity, horizon: q.horizon, custom: q.end, job, cats, whatIf, wiRaw: sp.wi } satisfies V9View,
+  };
 }

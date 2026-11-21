@@ -153,5 +153,14 @@ const ERRORS: Record<string, string> = {
   disconnected: "This bank connection was disconnected. Connect it again to resume updates.",
   needs_reconnect: "This bank connection needs to be refreshed. Use Reconnect.",
   token_store_failed: "The bank connection couldn't be saved securely. Nothing was stored. Try again.",
+  // V9 cash forecasting
+  trigger_not_progress: "Only milestones that wait on work being done (a phase, final completion or a custom approval) can follow schedule progress.",
+  no_progress_rule: "Set the completion % for this milestone first.",
+  below_threshold: "Verified schedule progress hasn't reached this milestone's % yet.",
+  already_triggered: "This milestone is already ready to invoice. Nothing was recorded twice.",
+  bad_benchmark: "Benchmarks are a percent of contract (0 to 100) for a cost type.",
+  bad_recipient: "Alert emails can only go to people with Financials access.",
+  bad_snooze: "Pick a snooze date between tomorrow and 90 days from now.",
+  bad_range: "Pick a date range of 400 days or less.",
 };
 export const finErrorText = (code: string | undefined | null) => (code && ERRORS[code]) || "Something went wrong. Nothing was changed.";
