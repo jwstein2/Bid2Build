@@ -9,6 +9,8 @@ import { AlertsPanel, type AlertRow } from "./alerts-panel";
 import { BasisBadge } from "./basis";
 import { EmailDraftDialog } from "./email-draft-dialog";
 import { finAction, fmtDate, usd } from "./fin-client";
+import { CostTimingCard } from "@/components/cash-v9/cost-timing";
+import { MilestoneProgressCard } from "@/components/cash-v9/milestone-progress";
 import { ContractCard, CreditDialog, InvoiceDialog, MilestoneCard, PaymentDialog, VoidDialog, type Perms, type R, type VoidTarget } from "./job-billing";
 import { DeleteInvoiceDialog, InvoicePreviewDialog } from "./invoice-preview";
 import { PayLinkButton } from "./payments-setup";
@@ -186,6 +188,8 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
               onPay={(m) => setOpen({ kind: "payment", invoice: s(invoices.find((i) => i.milestone_id === m.milestone_id && i.status === "issued")?.invoice_id) || null })} />
           </div>
 
+          {process.env.NEXT_PUBLIC_CASH_V9 === "on" && <MilestoneProgressCard jobId={jobId} canConfirm={writable && perms.invoice} onChanged={done} />}
+
           <ChangeOrdersCard rows={data.changeOrders ?? []} jobId={jobId} invoices={invoices} canInvoice={perms.invoice} canApprove={perms.config} writable={writable}
             onChanged={(m) => { if (m) setNotice(m); done(); }} />
 
@@ -287,6 +291,7 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
             {perms.bill && writable && <Button size="sm" variant="secondary" onClick={() => setOpen({ kind: "bill" })}>Enter a vendor bill</Button>}
             {perms.bill && writable && <Button size="sm" variant="secondary" onClick={() => setOpen({ kind: "commitment" })}>Commit a sub quote</Button>}
           </div>
+          {process.env.NEXT_PUBLIC_CASH_V9 === "on" && <CostTimingCard jobId={jobId} canTerms={writable && perms.bill} canOverride={writable && perms.config} />}
           <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
             <BudgetTable budget={data.budget ?? []} />
             <ProfitCard profit={data.profit ?? null} />

@@ -163,7 +163,7 @@ export async function loadForecast(db: Db, bookId: string, perms: readonly strin
       recurrence: p.recurrence as PlannedEvent["recurrence"], recurUntil: d10(p.recur_until), certainty: p.certainty as "scheduled" | "expected", accountId: s(p.account_id), toAccountId: s(p.to_account_id), invoiceId: s(p.invoice_id), settlement: s(p.settlement) })),
     customerLateness: lateness,
   };
-  return { installed: true as const, forecast: buildForecast(input), banks, accounts, planned: (planned.data ?? []) as Row[], withBank,
+  return { installed: true as const, forecast: buildForecast(input), input, banks, accounts, planned: (planned.data ?? []) as Row[], withBank,
     invoices: input.invoices.map((i) => ({ id: i.id, label: `${i.number}${i.customerName ? ` · ${i.customerName}` : ""}` })) };
 }
 
