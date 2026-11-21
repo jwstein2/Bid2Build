@@ -1,6 +1,7 @@
 import type Stripe from "stripe";
 import { z } from "zod";
 import { assertModeAllowed, getStripe } from "@/lib/billing/stripe";
+import { TEST_CHECKOUT_MESSAGE, testCheckoutBlocked } from "@/lib/billing/test-mode";
 import { applySubscription } from "@/lib/billing/apply";
 import { checkoutTaxParams } from "@/lib/billing/tax";
 import { PLAN_IDS, priceMismatch, type PlanId } from "@/lib/billing/plans";
@@ -44,6 +45,8 @@ export async function POST(req: Request) {
   const p = Body.safeParse(await req.json().catch(() => null));
   if (!p.success) return fail(400, "invalid", "Choose a plan.");
   const plan = p.data.plan;
+
+  if (testCheckoutBlocked(serverEnv().stripeSecretKey, user.email)) return fail(403, "test_mode_restricted", TEST_CHECKOUT_MESSAGE);
 
   try {
     assertModeAllowed();

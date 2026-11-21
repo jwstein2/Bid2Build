@@ -1,6 +1,7 @@
 import type Stripe from "stripe";
 import { z } from "zod";
 import { assertModeAllowed, getStripe } from "@/lib/billing/stripe";
+import { TEST_CHECKOUT_MESSAGE, testCheckoutBlocked } from "@/lib/billing/test-mode";
 import { applySubscription } from "@/lib/billing/apply";
 import { checkoutTaxParams } from "@/lib/billing/tax";
 import { BLOCKING_SUBSCRIPTION_STATUSES } from "@/lib/billing/checkout-sessions";
@@ -55,6 +56,8 @@ export async function POST(req: Request) {
   // the same Stripe item /api/company/pm-editors manages later. Only when editor billing is switched on.
   const extraEditors = editors - PM_INCLUDED_ENTERPRISE_EDITORS;
   if (extraEditors > 0 && !isPmBillingConfigured("editor")) return fail(409, "editors_unavailable", "Extra schedule editors can't be added at checkout yet. Start with 1 editor and add more from Team billing.");
+
+  if (testCheckoutBlocked(serverEnv().stripeSecretKey, user.email)) return fail(403, "test_mode_restricted", TEST_CHECKOUT_MESSAGE);
 
   try {
     assertModeAllowed();

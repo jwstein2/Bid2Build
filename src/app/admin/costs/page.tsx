@@ -6,6 +6,7 @@ import { CATALOG, CATEGORIES, COST_TYPES, INTERVALS, SOURCES, STATUSES, costTota
 import { envPresent } from "@/lib/admin/integrations";
 import { loadReport } from "@/lib/admin/load";
 import { adsSetup, anthropicCost, netlifyUsage, supabaseUsage, type Monitor } from "@/lib/admin/monitors";
+import { checkBackups } from "@/lib/monitoring/backups";
 import { str } from "@/lib/admin/view";
 import { loadPlaidUsage } from "@/lib/admin/plaid-cost-load";
 import { PlaidCostPanel } from "@/components/admin/plaid-cost";
@@ -63,7 +64,7 @@ export default async function Costs({ searchParams }: { searchParams: Promise<Re
   const recent = [...costs.expenses].sort((a, b) => (a.incurred_on < b.incurred_on ? 1 : -1)).slice(0, 15);
   const nameOf = new Map(views.map((v) => [v.key, v.name]));
   const today = now.toISOString().slice(0, 10);
-  const [netlify, supa, anth, plaid] = await Promise.all([netlifyUsage(), supabaseUsage(), anthropicCost(now), loadPlaidUsage(now)]);
+  const [netlify, supa, anth, plaid, backups] = await Promise.all([netlifyUsage(), supabaseUsage(), anthropicCost(now), loadPlaidUsage(now), checkBackups(now)]);
   const ads = adsSetup();
   // KPI drilldowns.
   const recurring = views.filter((v) => v.status === "active" && v.interval !== "usage" && (v.monthlyAllocatedCents ?? 0) > 0).sort((a, b) => (b.monthlyAllocatedCents ?? 0) - (a.monthlyAllocatedCents ?? 0));
@@ -161,7 +162,12 @@ export default async function Costs({ searchParams }: { searchParams: Promise<Re
               {supa.data.requests.slice(0, 5).map((r) => <Row key={r.label} k={<span className="capitalize">{r.label}</span>}>{fmt(r.count)}</Row>)}
             </dl>
           ) : <p className="text-sm text-ink-soft">Project health and API request counts.</p>}
-          <p className="mt-2 text-xs text-muted">Egress is not exposed by the Management API; check the Supabase usage page.</p>
+          <dl className="mt-2" data-testid="backup-status">
+            <Row k="Database backups">{backups.state === "ok" || backups.state === "stale"
+              ? <span className={backups.state === "stale" ? "text-[var(--cc-red)]" : "text-[var(--cc-green)]"}>{backups.data.latestAt ? `Newest ${backups.data.ageHours}h ago` : "None found"}{backups.data.failedLast7Days ? ` · ${backups.data.failedLast7Days} failed` : ""}{backups.data.pitr ? " · PITR on" : " · daily, 7 days kept"}</span>
+              : backups.state === "error" ? <span className="text-[var(--cc-amber)]">{backups.message}</span> : <NotConnected />}</Row>
+          </dl>
+          <p className="mt-2 text-xs text-muted">Egress is not exposed by the Management API; check the Supabase usage page. Backups cover the database only, not uploaded files; see docs/monitoring/PROTECT_LIVE_SITE.md.</p>
         </Panel>
         <Panel title="Anthropic (whole account)" action={<MonitorState m={anth} now={nowMs} />}>
           {anth.state === "ok" ? (
