@@ -169,6 +169,7 @@ d("Team & Subcontractors + assignments (database)", () => {
     await pool.query(readFileSync("docs/financials/rollback_20270214001000.sql", "utf8"));   // General ledger references books, accounts and jobs
     await pool.query(readFileSync("docs/financials/rollback_20270213001000.sql", "utf8"));   // Connect payments reference invoices and payments
     await pool.query(readFileSync("docs/affiliates/rollback_20270211001000.sql", "utf8"));   // newest first: affiliate payouts extend the staff payout ledger
+    await pool.query(readFileSync("docs/quickbooks/rollback_20270214005000.sql", "utf8"));
     await pool.query(readFileSync("docs/worker-invites/rollback_20270212001000.sql", "utf8"));
     await pool.query(readFileSync("docs/worker-hub/rollback_20270210001000.sql", "utf8"));
     await pool.query(readFileSync("docs/workforce-gps/rollback_20270208001000.sql", "utf8"));

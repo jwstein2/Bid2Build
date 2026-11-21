@@ -10,6 +10,7 @@ import { addDays, localDay, REVIEW_FLAG_LABEL, TIME_SOURCE_LABEL, weekStart, WOR
 import { fmtRadius, radiusGuidance, RADIUS_PRESETS } from "@/lib/workforce/gps/geofence";
 import { OVERTIME_RULES } from "@/lib/workforce/gps/overtime";
 import { payrollCsvV2, payrollRows, timeDetailCsv } from "@/lib/workforce/gps/export";
+import { isQuickBooksEnabled } from "@/lib/quickbooks/config";
 import {
   EVENT_KIND_LABEL, LOCATION_KIND_LABEL, OUTCOME_LABEL, PERMISSION_LABEL, setupSteps, WEEKDAYS,
   type Correction, type Exceptions, type GeoEventRow, type GpsAdmin, type GpsSettings, type LocationKind, type WorkLocation,
@@ -486,6 +487,7 @@ function Payroll({ a, names }: { a: GpsAdmin; names: Record<string, string> }) {
           <div className="flex flex-wrap gap-2">
             <Button size="sm" variant="secondary" onClick={() => download(`payroll-${week}.csv`, payrollCsvV2(rows, names, rule, includeCost))} disabled={rows.length === 0} data-testid="gps-export-payroll"><Download className="h-4 w-4" aria-hidden />Payroll CSV</Button>
             <Button size="sm" variant="secondary" onClick={() => download(`time-detail-${week}.csv`, timeDetailCsv(sheet.entries, names, sheet.projects, sheet.locations ?? {}, tz))} disabled={sheet.entries.length === 0}><Download className="h-4 w-4" aria-hidden />Every entry (CSV)</Button>
+            {isQuickBooksEnabled() && <Link href="/projects/workforce/quickbooks" className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-line-strong bg-surface px-3 text-sm font-semibold text-navy hover:border-accent-ink" data-testid="gps-send-quickbooks">Send to QuickBooks</Link>}
           </div>
           <p className="text-xs text-muted">Hours for whoever runs your payroll. Built2Bid doesn&apos;t calculate pay or taxes. Lunch is never deducted automatically: only unpaid breaks that were actually recorded come off. Overtime follows the rule in Settings; check it matches your state.</p>
         </>
