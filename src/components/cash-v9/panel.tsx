@@ -209,3 +209,48 @@ export function V9Confidence({ r }: { r: V9Result }) {
     </Notice>
   );
 }
+
+/** How close past forecasts were: first predicted vs actual payment date for invoices since paid in full. */
+export function V9Accuracy({ a }: { a: { n: number; meanAbsDays: number | null; late: number; early: number; since: string } | null }) {
+  return (
+    <section aria-labelledby="v9-acc-h" className="space-y-1 rounded-xl border border-line bg-surface p-4" data-testid="v9-accuracy">
+      <h2 id="v9-acc-h" className="font-display text-lg font-extrabold">Forecast accuracy</h2>
+      {!a ? <p className="text-sm text-muted">Built2Bid saves one forecast a day. Once invoices it forecast get paid, you&apos;ll see how close the predicted dates were.</p>
+        : a.n === 0 ? <p className="text-sm text-muted">No invoice forecast since {fmtDateServer(a.since)} has been paid in full yet.</p>
+        : <p className="text-sm">On {a.n} paid invoice{a.n === 1 ? "" : "s"} since {fmtDateServer(a.since)}, payments arrived <strong>{a.meanAbsDays} days</strong> from the first predicted date on average ({a.late} later than predicted, {a.early} earlier, {a.n - a.late - a.early} on the day). If customers keep paying later than predicted, set their payment habit in <Link href="/financials/cash/settings" className="font-semibold text-accent-ink underline">Forecast settings</Link>.</p>}
+    </section>
+  );
+}
+
+/** Five-week payment calendar of the expected view: money in and out per day, each day linking to its payments. */
+export function V9Calendar({ r, today }: { r: V9Result; today: string }) {
+  const byDay = new Map<string, { inflow: number; outflow: number; n: number }>();
+  for (const e of r.forecast.events) {
+    const d = byDay.get(e.date) ?? { inflow: 0, outflow: 0, n: 0 };
+    const v = Number(e.amount); if (v >= 0) d.inflow += v; else d.outflow -= v; d.n++;
+    byDay.set(e.date, d);
+  }
+  const t = new Date(`${today}T12:00:00Z`);
+  const start = new Date(t.getTime() - t.getUTCDay() * 864e5);
+  const days = Array.from({ length: 35 }, (_, i) => new Date(start.getTime() + i * 864e5).toISOString().slice(0, 10));
+  const k = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}k` : n.toFixed(0));
+  return (
+    <section aria-labelledby="v9-cal-h" className="space-y-2" id="calendar">
+      <h2 id="v9-cal-h" className="font-display text-lg font-extrabold">Payment calendar</h2>
+      <div className="grid grid-cols-7 gap-1 text-xs" data-testid="v9-calendar">
+        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => <div key={d} className="px-1 font-semibold text-muted">{d}</div>)}
+        {days.map((d) => {
+          const x = byDay.get(d); const past = d < today;
+          const body = (<>
+            <span className={`block font-semibold ${d === today ? "text-brand" : ""}`}>{Number(d.slice(8))}</span>
+            {x && x.inflow > 0 && <span className="block tabular-nums text-ok">+${k(x.inflow)}</span>}
+            {x && x.outflow > 0 && <span className="block tabular-nums text-danger">−${k(x.outflow)}</span>}
+          </>);
+          const cls = `min-h-14 rounded-md border p-1 ${d === today ? "border-brand" : "border-line"} ${past ? "opacity-50" : "bg-surface"}`;
+          return x ? <a key={d} href={`?focus=${d}#events`} className={`${cls} hover:border-brand`} aria-label={`${d}: ${x.n} payment${x.n === 1 ? "" : "s"}`}>{body}</a> : <div key={d} className={cls}>{body}</div>;
+        })}
+      </div>
+      <p className="text-xs text-muted">Expected dates: invoices and milestones are estimates; bills, payroll and planned payments use their set dates.</p>
+    </section>
+  );
+}

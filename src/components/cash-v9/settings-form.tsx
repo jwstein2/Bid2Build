@@ -28,7 +28,7 @@ function Num({ id, label, value, onChange, hint, suffix, disabled, mode = "numer
 }
 
 /** Forecast assumptions. Every value is the company's own assumption, saved once for everyone who sees the forecast. */
-export function CashSettingsForm({ s, canEdit }: { s: CashSettings; canEdit: boolean }) {
+export function CashSettingsForm({ s, canEdit, people = [] }: { s: CashSettings; canEdit: boolean; people?: { id: string; label: string }[] }) {
   const { busy, msg, run } = useV9();
   const [minCash, setMinCash] = useState(s.minCash === null ? "" : String(s.minCash));
   const [gross, setGross] = useState(s.targetGrossMargin === null ? "" : String(s.targetGrossMargin));
@@ -50,6 +50,8 @@ export function CashSettingsForm({ s, canEdit }: { s: CashSettings; canEdit: boo
   const [concDays, setConcDays] = useState(String(s.concentrationDays));
   const [concPct, setConcPct] = useState(String(s.concentrationPct));
   const [kindsOff, setKindsOff] = useState<string[]>(s.alertKindsOff);
+  const [email, setEmail] = useState(s.alertEmail);
+  const [recips, setRecips] = useState<string[]>(s.alertRecipients);
   const [err, setErr] = useState<string | null>(null);
   const preset = (COLLECTION_PRESETS as readonly number[]).includes(Number(days));
   const off = !canEdit || busy;
@@ -70,7 +72,7 @@ export function CashSettingsForm({ s, canEdit }: { s: CashSettings; canEdit: boo
       expenseMode: mode, benchmark, payrollFromSchedule: payroll, payrollPayLagDays: Math.min(31, intOr(payLag, 5)), payrollBurdenPct: Math.min(100, numOr(burden, 0)),
       subPayDays: Math.min(180, intOr(subDays, 7)), supplierPayDays: Math.min(180, intOr(supDays, 30)), conservativeLateDays: Math.min(180, intOr(consLate, 14)),
       conservativeCostPct: Math.min(100, numOr(consCost, 10)), arGraceDays: Math.min(120, intOr(grace, 7)), concentrationDays: Math.max(1, Math.min(31, intOr(concDays, 7))),
-      concentrationPct: Math.max(1, Math.min(1000, numOr(concPct, 50))), alertEmail: s.alertEmail, alertRecipients: s.alertRecipients, alertKindsOff: kindsOff,
+      concentrationPct: Math.max(1, Math.min(1000, numOr(concPct, 50))), alertEmail: email && recips.length > 0, alertRecipients: recips, alertKindsOff: kindsOff,
     } }, "Forecast settings saved. The forecast now uses them.");
   };
 
@@ -147,6 +149,14 @@ export function CashSettingsForm({ s, canEdit }: { s: CashSettings; canEdit: boo
             <label key={k} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={!kindsOff.includes(k)} onChange={(e) => setKindsOff(e.target.checked ? kindsOff.filter((x) => x !== k) : [...kindsOff, k])} />{ALERT_LABELS[k]}</label>))}
         </div>
         <p className="text-xs text-muted">Warnings show on the Cash flow page. They never send an invoice, move money or contact a customer.</p>
+        <label className="flex items-start gap-2 text-sm"><input type="checkbox" className="mt-1" checked={email} onChange={(e) => setEmail(e.target.checked)} data-testid="v9-alert-email" />
+          <span>Also email new warnings once a day (off unless you turn it on). Only the people you pick below get them.</span></label>
+        {email && (people.length ? (
+          <div className="grid gap-2 sm:grid-cols-3" data-testid="v9-alert-recipients">
+            {people.map((p) => <label key={p.id} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={recips.includes(p.id)}
+              onChange={(e) => setRecips(e.target.checked ? [...recips, p.id].slice(0, 20) : recips.filter((x) => x !== p.id))} />{p.label}</label>)}
+            {!recips.length && <p className="text-xs text-warn sm:col-span-3">Pick at least one person, or no email is sent.</p>}
+          </div>) : <p className="text-xs text-muted">No one with access to company financials was found.</p>)}
       </fieldset>
 
       {canEdit ? (

@@ -53,3 +53,29 @@ export function accuracy(snapItems: { key: string; date: string }[], paid: Recor
   if (!diffs.length) return { n: 0, meanAbsDays: null, late: 0, early: 0 };
   return { n: diffs.length, meanAbsDays: Math.round((diffs.reduce((a, d) => a + Math.abs(d), 0) / diffs.length) * 10) / 10, late: diffs.filter((d) => d > 0).length, early: diffs.filter((d) => d < 0).length };
 }
+
+/** The first predicted date for each invoice across snapshots (oldest snapshot wins), so accuracy measures the early guess. */
+export function firstPredictions(snaps: { taken_on: string; items: { key: string; date: string }[] }[]): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const s of [...snaps].sort((a, b) => a.taken_on.localeCompare(b.taken_on))) {
+    for (const it of s.items ?? []) if (it?.key?.startsWith("inv:") && !out[it.key]) out[it.key] = it.date;
+  }
+  return out;
+}
+
+/** Forecast accuracy for the last 120 days: predicted vs actual payment dates of invoices that have since been paid in full. */
+export async function loadAccuracy(db: SupabaseClient, bookId: string, today: string) {
+  const from = new Date(Date.parse(`${today}T12:00:00Z`) - 120 * 864e5).toISOString().slice(0, 10);
+  const { data } = await db.from("fin_forecast_snapshots").select("taken_on, items").eq("book_id", bookId).eq("kind", "daily").gte("taken_on", from).lt("taken_on", today).order("taken_on").limit(120);
+  const snaps = ((data ?? []) as Row[]).map((r) => ({ taken_on: String(r.taken_on), items: (r.items ?? []) as { key: string; date: string }[] }));
+  if (!snaps.length) return null;
+  const pred = firstPredictions(snaps);
+  const ids = Object.keys(pred).map((k) => k.slice(4)).slice(0, 500);
+  if (!ids.length) return { ...accuracy([], {}), since: snaps[0].taken_on };
+  const { data: paidInv } = await db.from("fin_invoice_balances_v").select("invoice_id").in("invoice_id", ids).lte("balance", 0);
+  const paidIds = ((paidInv ?? []) as Row[]).map((r) => String(r.invoice_id));
+  const { data: allocs } = paidIds.length ? await db.from("fin_payment_allocations").select("invoice_id, created_at").in("invoice_id", paidIds).is("reversed_at", null) : { data: [] };
+  const paid: Record<string, string> = {};
+  for (const a of (allocs ?? []) as Row[]) { const k = `inv:${a.invoice_id}`; const d = String(a.created_at).slice(0, 10); if (!paid[k] || paid[k] < d) paid[k] = d; }
+  return { ...accuracy(Object.entries(pred).map(([key, date]) => ({ key, date })), paid), since: snaps[0].taken_on };
+}
