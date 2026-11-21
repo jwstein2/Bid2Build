@@ -375,6 +375,7 @@ d("Financial Command Center: receivables, milestones and emails (database)", () 
   });
 
   it("rollbacks remove the financial objects (newest first) and the migrations re-apply", async () => {
+    await pool.query(readFileSync("docs/cash-v9/rollback_20270217001000.sql", "utf8"));   // newest first: V9 cash forecasting reads books, jobs, milestones, commitments
     await pool.query(readFileSync("docs/financials/rollback_20270214001000.sql", "utf8"));   // General ledger references books, accounts and jobs
     await pool.query(readFileSync("docs/financials/rollback_20270213001000.sql", "utf8"));   // Connect payments reference invoices and payments
     await pool.query(readFileSync("docs/affiliates/rollback_20270211001000.sql", "utf8"));   // newest first: affiliate payouts extend the staff payout ledger

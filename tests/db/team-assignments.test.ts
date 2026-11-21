@@ -166,6 +166,7 @@ d("Team & Subcontractors + assignments (database)", () => {
   it("rollback removes V4.2 and the migration re-applies", async () => {
     // Later migrations depend on the directory: roll them back first (newest first).
     // The Financial Command Center points at change orders / quotes / the directory: roll it back first (newest first).
+    await pool.query(readFileSync("docs/cash-v9/rollback_20270217001000.sql", "utf8"));   // newest first: V9 cash forecasting reads books, jobs, milestones, commitments
     await pool.query(readFileSync("docs/financials/rollback_20270214001000.sql", "utf8"));   // General ledger references books, accounts and jobs
     await pool.query(readFileSync("docs/financials/rollback_20270213001000.sql", "utf8"));   // Connect payments reference invoices and payments
     await pool.query(readFileSync("docs/affiliates/rollback_20270211001000.sql", "utf8"));   // newest first: affiliate payouts extend the staff payout ledger

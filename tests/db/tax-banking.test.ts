@@ -307,6 +307,7 @@ d("V6.9 tax + banking (database)", () => {
   });
 
   it("rollback removes V6.9 objects, keeps bank-source lines, and the migration re-applies", async () => {
+    await pool.query(readFileSync("docs/cash-v9/rollback_20270217001000.sql", "utf8"));   // newest first: V9 cash forecasting reads books, jobs, milestones, commitments
     await pool.query(readFileSync("docs/tax-banking/rollback_20261226001000.sql", "utf8"));
     expect((await pool.query("select to_regclass('public.tax_calculations') a, to_regclass('public.fin_bank_connections') b")).rows[0]).toEqual({ a: null, b: null });
     expect(Number((await pool.query("select count(*) n from public.fin_bank_transactions where account_id = $1", [chk])).rows[0].n)).toBe(3);
