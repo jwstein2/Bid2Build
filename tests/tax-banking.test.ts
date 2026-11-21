@@ -408,3 +408,16 @@ describe("bid address for tax", () => {
     expect(addressFrom({ customer: { projectAddress: "88 Elm St" }, location: { city: "Austin", state: "tx", zip: "78701" } })).toEqual({ line1: "88 Elm St", city: "Austin", state: "TX", zip: "78701" });
   });
 });
+
+describe("plaidFailure", () => {
+  it("maps Plaid error codes to plain messages and ignores other errors", async () => {
+    const { plaidFailure } = await import("@/lib/tax-banking/bank/providers");
+    const err = (code: string) => Object.assign(new Error(code), { code, plaidMessage: "raw plaid text" });
+    expect(plaidFailure(err("INVALID_LINK_CUSTOMIZATION"))).toMatchObject({ code: "bank_setup", detail: "raw plaid text" });
+    expect(plaidFailure(err("INSTITUTION_DOWN"))?.code).toBe("bank_unavailable");
+    expect(plaidFailure(err("RATE_LIMIT_EXCEEDED"))?.code).toBe("bank_busy");
+    expect(plaidFailure(new Error("boom"))).toBeNull();
+    expect(plaidFailure(Object.assign(new Error("x"), { code: "23505" }))).toBeNull();
+    expect(plaidFailure(err("INVALID_LINK_CUSTOMIZATION"))?.message).not.toContain("raw plaid text");
+  });
+});
