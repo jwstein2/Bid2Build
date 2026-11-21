@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { baselineCsp } from "./src/lib/config/csp";
 import { resolveAllowIndexing, resolveDeployContext, resolveSiteUrl } from "./src/lib/config/deploy";
 
 // Resolve per-deploy values once at build time and inline them for server and browser code.
@@ -15,6 +16,9 @@ const securityHeaders = [
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(self)" },
   // HTTPS-only on real deploys. No includeSubDomains/preload until the production domain is settled.
   ...(deployContext === "local" ? [] : [{ key: "Strict-Transport-Security", value: "max-age=31536000" }]),
+  // Baseline Content Security Policy (enforced). Only directives that cannot break third-party scripts (Stripe,
+  // Plaid, Sentry, Google Maps) or Next.js inline scripts: see src/lib/config/csp.ts.
+  { key: "Content-Security-Policy", value: baselineCsp(deployContext) },
   // Keep every non-production deploy (previews, branch deploys) out of search results.
   ...(allowIndexing ? [] : [{ key: "X-Robots-Tag", value: "noindex, nofollow" }]),
 ];
