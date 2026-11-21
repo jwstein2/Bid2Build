@@ -119,7 +119,7 @@ function ScopeEditor({ estimate, signedIn, estimateId, fingerprint, canGenerate,
     setNotice(null);
     try {
       const input = buildGenerationInput(estimate, { kind: "scope", style: scope.style, includeNotes });
-      const r = await requestGeneration(input, { signedIn, estimateId });
+      const r = await requestGeneration(input, { signedIn, estimateId, fresh: hasText });
       if (!r.scope?.trim()) { setNotice({ tone: "danger", text: "There wasn't enough in the bid to describe. Add line items and try again." }); return; }
       if (r.notice) setNotice({ tone: "info", text: r.notice });
       // Ask before touching anything the contractor wrote or edited.
@@ -297,7 +297,7 @@ export function ExclusionsEditor({ estimate, signedIn, estimateId, fingerprint, 
     setNotice(null);
     try {
       const input = buildGenerationInput(estimate, { kind: "exclusions", style: value.style, scope: config.scopeOfWork, existing: [...approved, ...rejected] });
-      const r = await requestGeneration(input, { signedIn, estimateId });
+      const r = await requestGeneration(input, { signedIn, estimateId, fresh: Boolean(value.generatedAt) });
       const fresh = (r.items ?? []).map((i) => ({ ...i, status: "suggested" as const }));
       // Replace earlier unreviewed suggestions; never touch approved or rejected ones.
       setItems([...approved, ...fresh, ...rejected], { history: pushExclusionHistory(value), generatedAt: now(), generator: r.generator, basedOn: fingerprint });

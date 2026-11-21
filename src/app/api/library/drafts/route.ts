@@ -2,7 +2,8 @@ import { createHash } from "node:crypto";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { fail, json, rateLimit, sameOrigin } from "@/lib/http/api";
 import { AiUnavailableError, isAiConfigured } from "@/lib/ai/provider";
-import { adminOrNull, checkAiBudget, logAiGeneration } from "@/lib/ai/budget";
+import { adminOrNull, logAiGeneration } from "@/lib/ai/budget";
+import { preflightAi } from "@/lib/ai/guard";
 import { getTrade, tradeName } from "@/lib/trades/catalog";
 import { generateLibrary, type GenerateOutcome } from "@/lib/library-generator/generate";
 import { GENERATOR_VERSION, draftTitle, generateRequestSchema, modeFor, normalizedName } from "@/lib/library-generator/model";
@@ -83,12 +84,15 @@ export async function POST(req: Request) {
     }
   }
 
-  if (!isAiConfigured()) return fail(503, "ai_unavailable", "Price library generation isn't available right now. Please try again later.");
   const db = adminOrNull();
-  const budget = await checkAiBudget(db, user.id);
-  if (!budget.ok) return budget.reason === "daily_limit"
-    ? fail(429, "daily_limit", "You've reached today's AI limit. Your draft is saved; you can keep reviewing it. Generating resets in 24 hours.")
-    : fail(503, "ai_unavailable", "Generating is paused for the rest of the month. Your drafts are saved and you can keep reviewing them.");
+  // One guard for every paid generation (lib/ai/guard.ts): Practice/Demo never makes a paid call.
+  const pre = await preflightAi(db, user);
+  if (!pre.ok) {
+    if (pre.reason === "sample") return fail(403, "practice_sample", "Simulation — no real transaction. Generating a price library uses AI, so it's off in Practice Mode. Switch to your own account to generate one.");
+    if (pre.reason === "off") return fail(503, "ai_unavailable", "Price library generation isn't available right now. Please try again later.");
+    if (pre.reason === "daily_limit") return fail(429, "daily_limit", "You've reached today's AI limit. Your draft is saved; you can keep reviewing it. Generating resets in 24 hours.");
+    return fail(503, "ai_unavailable", "Generating is paused for now to stay within the AI budget. Your drafts are saved and you can keep reviewing them.");
+  }
 
   let bidOutline: string | undefined;
   if (estimateId) {

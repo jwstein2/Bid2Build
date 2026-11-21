@@ -38,3 +38,14 @@ $$;
 grant usage on schema storage to authenticated, service_role;
 grant select, insert, update, delete on storage.objects to authenticated;
 grant usage on schema public to anon, authenticated, service_role;
+
+-- pg_cron stub (Supabase has the extension; plain Postgres doesn't). Migrations may schedule jobs.
+create schema if not exists cron;
+create table if not exists cron.job (jobid bigserial primary key, jobname text unique, schedule text, command text, active boolean default true);
+create or replace function cron.schedule(p_name text, p_schedule text, p_command text) returns bigint language sql as $$
+  insert into cron.job (jobname, schedule, command) values (p_name, p_schedule, p_command)
+  on conflict (jobname) do update set schedule = excluded.schedule, command = excluded.command returning jobid
+$$;
+create or replace function cron.unschedule(p_name text) returns boolean language sql as $$
+  with d as (delete from cron.job where jobname = p_name returning 1) select exists (select 1 from d)
+$$;

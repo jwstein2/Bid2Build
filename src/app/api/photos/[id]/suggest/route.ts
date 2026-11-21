@@ -1,7 +1,8 @@
 import { z } from "zod/v4";
 import { createAdminClient, createClient, getUser } from "@/lib/supabase/server";
 import { fail, json, logError, rateLimit, sameOrigin } from "@/lib/http/api";
-import { aiSettings, AiUnavailableError, DEFAULT_MODEL, generateStructured, isAiConfigured } from "@/lib/ai/provider";
+import { AiUnavailableError, DEFAULT_MODEL, generateStructured, isAiConfigured } from "@/lib/ai/provider";
+import { preflightAi } from "@/lib/ai/guard";
 import { filterSuggestions, PHOTO_LABELS } from "@/lib/operations/photo-labels";
 import { isPhotoAiEnabled, photoAiAllowedFor } from "@/lib/operations/photos-server";
 import { UUID } from "@/lib/operations/server";
@@ -33,11 +34,12 @@ export async function POST(_req: Request, ctx: { params: Promise<{ id: string }>
   if (!(await photoAiAllowedFor(admin, { estimateId: ph.estimate_id, customerId: ph.customer_id }))) {
     return fail(409, "ai_off", "Photo label suggestions are turned off in Company → AI & Automation.");
   }
-  const settings = aiSettings();
-  if (settings.monthlyBudgetUsd > 0) {
-    const monthStart = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1)).toISOString();
-    const { data: spend } = await admin.rpc("ai_generation_spend_since", { p_since: monthStart });
-    if (Number(spend) >= settings.monthlyBudgetUsd) return fail(429, "ai_budget", "This month's AI budget is used up. Add labels yourself for now.");
+  // One guard for every paid generation (lib/ai/guard.ts): Practice/Demo, daily limit, daily/monthly budgets.
+  const pre = await preflightAi(admin, user);
+  if (!pre.ok) {
+    if (pre.reason === "sample") return fail(409, "practice_sample", "Simulation — no real transaction. AI photo labels are off in Practice Mode. Add labels yourself.");
+    if (pre.reason === "daily_limit") return fail(429, "daily_limit", "You've reached today's AI limit. Add labels yourself for now.");
+    return fail(429, "ai_budget", "The AI budget is used up for now. Add labels yourself for now.");
   }
   const { data: file } = await admin.storage.from("project-photos").download(ph.thumb_path ?? ph.storage_path);
   if (!file) return fail(404, "not_found", "Photo not found.");
