@@ -110,6 +110,7 @@ d("invoice send states and scope-removal credits (database)", () => {
   });
 
   it("rollback restores the old rules and the migration re-applies", async () => {
+    await pool.query(readFileSync("docs/worker-invites/rollback_20270212001000.sql", "utf8"));
     await pool.query(readFileSync("docs/worker-hub/rollback_20270210001000.sql", "utf8"));
     await pool.query(readFileSync("docs/workforce-gps/rollback_20270208001000.sql", "utf8"));
     await pool.query(readFileSync("docs/hr-records/rollback_20270205001000.sql", "utf8"));

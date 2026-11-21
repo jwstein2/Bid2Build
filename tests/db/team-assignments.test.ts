@@ -167,6 +167,7 @@ d("Team & Subcontractors + assignments (database)", () => {
     // Later migrations depend on the directory: roll them back first (newest first).
     // The Financial Command Center points at change orders / quotes / the directory: roll it back first (newest first).
     await pool.query(readFileSync("docs/affiliates/rollback_20270211001000.sql", "utf8"));   // newest first: affiliate payouts extend the staff payout ledger
+    await pool.query(readFileSync("docs/worker-invites/rollback_20270212001000.sql", "utf8"));
     await pool.query(readFileSync("docs/worker-hub/rollback_20270210001000.sql", "utf8"));
     await pool.query(readFileSync("docs/workforce-gps/rollback_20270208001000.sql", "utf8"));
     await pool.query(readFileSync("docs/staff-payouts/rollback_20270207001000.sql", "utf8"));

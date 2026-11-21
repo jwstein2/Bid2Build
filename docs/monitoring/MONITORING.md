@@ -51,3 +51,7 @@ Source maps are not uploaded, so browser stack traces show minified code. Server
 - Uptime: pause and resume a monitor, or open `https://built2bid.org/api/health` and confirm `"status":"ok"`.
 - Sentry: after the DSN deploy, Sentry's Issues page should stay empty in normal use. To force a test event, open the
   browser console on built2bid.org and run `setTimeout(() => { throw new Error("Sentry test") })`.
+
+## More
+
+Backups, restore drill, cron heartbeats, Stripe test key for previews and email status: [PROTECT_LIVE_SITE.md](PROTECT_LIVE_SITE.md).

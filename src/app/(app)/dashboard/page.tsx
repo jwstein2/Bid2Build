@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { MyWorkCallout } from "@/components/workforce/hub/my-work-callout";
 import { WhatsNewNotice } from "@/components/features/whats-new-notice";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -185,6 +186,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
+      <MyWorkCallout />
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           {gift && <p className="text-sm font-semibold text-accent-ink">{biz?.company_name ? `Welcome back, ${biz.company_name}` : "Let's build your next professional bid"}</p>}

@@ -1,4 +1,5 @@
 "use client";
+import { WorkerInviteButton } from "@/components/workforce/hub/worker-invite";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Archive, Copy, HardHat, Mail, Pencil, Phone, Plus, RotateCcw, Search, User, Users } from "lucide-react";
@@ -120,6 +121,7 @@ export function TeamDirectory({ team, people, me, usage, compliance = null }: {
                   <a href={`mailto:${r.email}`} className="inline-flex min-h-9 min-w-0 items-center gap-1 rounded-lg border border-line px-2.5 font-semibold"><Mail className="h-4 w-4 shrink-0" aria-hidden /><span className="truncate">{r.email}</span></a>
                   <button type="button" onClick={() => copy(r.email!, `${r.id}-e`)} className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2 text-ink-soft hover:bg-paper" aria-label={`Copy email for ${r.name}`} data-testid="copy-email"><Copy className="h-4 w-4" aria-hidden />{copied === `${r.id}-e` ? "Copied" : ""}</button>
                 </>}
+                {team.canManage && r.kind === "staff" && r.status === "active" && !r.linkedUserId && <WorkerInviteButton resourceId={r.id} name={r.name} email={r.email} phone={r.phone} onDone={() => router.refresh()} />}
                 {team.canManage && <span className="ml-auto flex gap-1">
                   {r.status === "active" && <Button size="sm" variant="ghost" onClick={() => setEditing(r)} aria-label={`Edit ${r.name}`} data-testid="team-edit"><Pencil className="h-4 w-4" aria-hidden /> Edit</Button>}
                   {r.status === "active"
@@ -131,7 +133,7 @@ export function TeamDirectory({ team, people, me, usage, compliance = null }: {
           );
         })}
       </ul>
-      <p className="text-xs text-muted">Subcontractors don&apos;t get a Built2Bid login. Nothing is emailed or texted automatically: use the buttons to call, copy, or open your own email app.</p>
+      <p className="text-xs text-muted">Subcontractors don&apos;t get a Built2Bid login. Staff can: use Invite to the worker app to send them a link to My work (their jobs, week and time clock). Nothing is emailed or texted automatically.</p>
     </div>
   );
 }

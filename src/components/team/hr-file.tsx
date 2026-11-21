@@ -1,4 +1,5 @@
 "use client";
+import { WorkerAppCard } from "@/components/workforce/hub/worker-invite";
 import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Check, ExternalLink, Eye, EyeOff, FileUp, Lock, Trash2, X } from "lucide-react";
@@ -28,6 +29,7 @@ export function HrFileView({ file, piiReady, today }: { file: HrFile; piiReady: 
   return (
     <div className="space-y-6" data-testid="hr-file">
       {msg && <Notice tone={msg.ok ? "ok" : "danger"}>{msg.text}</Notice>}
+      <WorkerAppCard resourceId={file.resourceId} name={file.name} email={file.email} phone={file.phone} />
       <DetailsForm file={file} onSaved={() => done("HR file saved.")} onError={err} />
       <SsnCard file={file} ready={piiReady} onDone={done} onError={err} />
       <BankAccountCard resourceId={file.resourceId} status={file.bank} ready={piiReady} purpose="direct deposit" onDone={done} onError={err} />

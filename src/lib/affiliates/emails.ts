@@ -1,8 +1,8 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { inDemoSession } from "../demo/guard";
 import { logError } from "../http/api";
 import { site } from "../site";
+import { inDemoSession } from "../demo/guard";
 
 /**
  * Affiliate emails from partners@ / noreply@built2bid.org via Resend. Every send is recorded once per key
@@ -83,8 +83,8 @@ export async function sendAffiliateEmail(db: SupabaseClient, key: string, t: Aff
       const { data: sup } = await db.from("creator_outreach_suppressions").select("email").eq("email", to.toLowerCase()).maybeSingle();
       if (sup) reason = "suppressed";
     } else if (!transactionalOn()) reason = "affiliate_emails_off";
-    // Last line of defence: nothing is emailed from a Demo / Practice session (sample data, never a real person).
-    if (await inDemoSession()) reason = "demo_mode_no_send";
+    // Demo / Practice Mode never emails anyone (e.g. a practice session submitting the public application).
+    if (!reason && (await inDemoSession())) reason = "demo_mode_no_send";
     const api = process.env.RESEND_API_KEY;
     if (!api) reason = reason ?? "no_resend_key";
     if (reason) { await record(reason === "suppressed" ? "suppressed" : "logged_off", null, reason); return "skipped"; }

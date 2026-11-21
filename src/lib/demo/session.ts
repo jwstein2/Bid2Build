@@ -66,6 +66,8 @@ export const DEMO_BLOCKED: readonly { prefix: string; write?: boolean }[] = [
   { prefix: "/api/onboarding/discover", write: true },
   { prefix: "/api/team/supplier-pricing/connections", write: true },
   { prefix: "/api/auth/phone-abandon" },
+  // Invites a staff member to the worker app (creates a login invitation, may email it).
+  { prefix: "/api/workforce/hub/invite", write: true },
   // Emails a subcontractor a document request link.
   { prefix: "/api/team/subs/", write: true /* request only, see matcher */ },
   // Change order send / customer signing link / approval: customer-facing.
