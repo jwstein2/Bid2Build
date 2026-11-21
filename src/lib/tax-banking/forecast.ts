@@ -52,9 +52,23 @@ export interface ForecastInput {
   customerLateness?: Record<string, number>;
   defaultLatenessDays?: number;
   staleHours?: number;
+  /**
+   * V9 (optional, additive): flows computed by the V9 layer (src/lib/cash-v9) such as schedule-projected milestones,
+   * open commitments, uncommitted budget and payroll from schedules. Each brings its own scheduled / expected dates.
+   * Callers that don't pass it get exactly the V6.9 forecast.
+   */
+  extra?: ExtraFlow[];
+  /** V9: planned-event kinds left out because a V9 flow replaces them (e.g. manual payroll when payroll comes from schedules). */
+  excludePlannedKinds?: string[];
 }
 
-export interface CashEvent { key: string; date: string; label: string; amount: string; category: FlowCategory; certainty: Certainty; href: string | null; note?: string; accountId?: string | null }
+/** A V9 flow. amount is signed (+ in, - out). scheduledOn null = expected only. */
+export interface ExtraFlow {
+  key: string; label: string; amount: string; category: FlowCategory; scheduledOn: string | null; expectedOn: string;
+  href: string | null; note?: string; jobId?: string | null; accountId?: string | null;
+}
+
+export interface CashEvent { key: string; date: string; label: string; amount: string; category: FlowCategory; certainty: Certainty; href: string | null; note?: string; accountId?: string | null; jobId?: string | null }
 export interface SeriesPoint { date: string; confirmed: string; scheduled: string; expected: string }
 
 export interface Forecast {
@@ -153,13 +167,13 @@ export function buildForecast(input: ForecastInput): Forecast {
     const overdue = inv.dueDate !== null && inv.dueDate < today;
     const late = lateness(inv.customerId);
     const exp = inv.dueDate ? maxD(addDays(inv.dueDate, late), addDays(today, overdue ? Math.max(1, late) : 0)) : addDays(today, 30);
-    push({ key: `inv:${inv.id}`, label: `Invoice ${inv.number}${inv.customerName ? ` · ${inv.customerName}` : ""}`, amount: money2(dec(inv.balance)), category: "customer_payment",
+    push({ key: `inv:${inv.id}`, label: `Invoice ${inv.number}${inv.customerName ? ` · ${inv.customerName}` : ""}`, amount: money2(dec(inv.balance)), category: "customer_payment", jobId: inv.jobId ?? null,
       href: `/financials/records?view=invoices&invoice=${inv.id}`, scheduledOn: overdue || !inv.dueDate ? null : maxD(inv.dueDate, today), expectedOn: exp,
       note: overdue ? `Overdue ${diffDays(today, inv.dueDate!)} days: not counted as scheduled` : late ? `This customer usually pays ${late} days after the due date` : undefined });
   }
   for (const m of input.milestones) {
     if (dec(m.amount).lte(0)) continue;
-    push({ key: `ms:${m.id}`, label: `Milestone · ${m.label}`, amount: money2(dec(m.amount)), category: "milestone", href: m.jobId ? `/financials/jobs/${m.jobId}` : null,
+    push({ key: `ms:${m.id}`, label: `Milestone · ${m.label}`, amount: money2(dec(m.amount)), category: "milestone", jobId: m.jobId ?? null, href: m.jobId ? `/financials/jobs/${m.jobId}` : null,
       scheduledOn: null, expectedOn: maxD(m.expectedOn ?? addDays(today, 30), today), note: m.expectedOn ? "Not invoiced yet" : "Ready to invoice, no date set: assumed in about 30 days" });
   }
   for (const d of input.depositsInTransit) {
@@ -185,7 +199,14 @@ export function buildForecast(input: ForecastInput): Forecast {
     push({ key: `chk:${c.kind}:${c.id}`, label: `Outstanding check · ${c.label}`, amount: money2(dec(c.amount).abs().neg()), category: "check", href: "/financials/accounting/bank?view=checks",
       scheduledOn: today, expectedOn: today, note: "Written but not cleared yet" });
   }
+  for (const x of input.extra ?? []) {
+    if (dec(x.amount).eq(0)) continue;
+    push({ key: x.key, label: x.label, amount: money2(dec(x.amount)), category: x.category, href: x.href, note: x.note, jobId: x.jobId ?? null, accountId: x.accountId ?? null,
+      scheduledOn: x.scheduledOn ? maxD(x.scheduledOn, today) : null, expectedOn: maxD(x.expectedOn, today) });
+  }
+  const skipKinds = new Set(input.excludePlannedKinds ?? []);
   for (const p of input.planned) {
+    if (skipKinds.has(p.kind)) continue;
     if (p.kind === "transfer") {
       const fromIn = p.accountId ? includedIds.has(p.accountId) : false;
       const toIn = p.toAccountId ? includedIds.has(p.toAccountId) : false;

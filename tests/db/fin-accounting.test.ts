@@ -173,6 +173,7 @@ d("Accountant Mode: bank, reconciliation, classification, exports, audit (databa
   });
 
   it("rollback removes the accounting objects and the migration re-applies", async () => {
+    await pool.query(readFileSync("docs/cash-v9/rollback_20270217001000.sql", "utf8"));   // newest first: V9 cash forecasting reads books, jobs, milestones, commitments
     await pool.query(readFileSync("docs/tax-banking/rollback_20261226001000.sql", "utf8"));   // V6.9 tax + banking (newer)
     await pool.query(readFileSync("docs/financials/rollback_20261213001000.sql", "utf8"));
     expect((await pool.query("select to_regclass('public.fin_bank_transactions') as t")).rows[0].t).toBeNull();
