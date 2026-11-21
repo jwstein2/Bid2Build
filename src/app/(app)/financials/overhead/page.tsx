@@ -84,7 +84,7 @@ export default async function OverheadPage() {
       {ctx.access.sandbox && <SandboxBar sandbox canManage={perms.includes("manage_financial_config")} />}
       {crumbs}
       <header className="flex flex-wrap items-end gap-3">
-        <div className="min-w-0 flex-1">
+        <div className="min-w-[min(100%,20rem)] flex-1">
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">Financials</p>
           <h1 className="text-3xl font-extrabold">Overhead &amp; bills</h1>
           <p className="mt-1 max-w-3xl text-sm text-ink-soft">Rent, insurance, software, vehicles, office payroll and other costs of running the business. Enter them by hand, no bank needed. They count as overhead in Profit &amp; Loss, and unpaid ones show in your cash-flow forecast.</p>

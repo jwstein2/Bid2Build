@@ -101,7 +101,7 @@ export default async function FinancialsHome() {
     <div className="mx-auto max-w-7xl space-y-6" data-testid="fin-home" data-preset={profile.presetKey} data-guide-page="financials.home" data-guide-trade={profile.trades.join(" ")}>
       {access.sandbox && <SandboxBar sandbox canManage={perms.includes("manage_financial_config")} />}
       <header className="flex flex-wrap items-end gap-3">
-        <div className="min-w-0 basis-full sm:basis-auto sm:flex-1">
+        <div className="min-w-[min(100%,20rem)] flex-1">
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">Know Your Numbers</p>
           <h1 className="text-3xl font-extrabold">Financials</h1>
           <p className="text-sm text-ink-soft">{access.name} · {PRESETS[profile.presetKey].label}{profile.trades.length > 1 ? ` + ${profile.trades.length - 1} more trade${profile.trades.length > 2 ? "s" : ""}` : ""}</p>
