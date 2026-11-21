@@ -191,9 +191,12 @@ export const LEGAL_DOCUMENTS: LegalDocument[] = [
   {
     key: "sales-comp-program", name: "Sales Representative Compensation Program (How you get paid)", category: "in_product", href: "/sales/how-you-get-paid", public: false,
     location: "Sales Portal → How you get paid (reps only)", version: "Policy version recorded per award", effectiveDate: null, originalPublication: null,
-    lastRevised: "2026-11-20", publishedOn: null, defaultStatus: "published_pending", risk: "high",
+    lastRevised: "2026-11-21", publishedOn: null, defaultStatus: "published_pending", risk: "high",
     acceptance: "No separate acceptance; a written sales agreement is referenced but not yet signed by any rep (no reps active).",
-    history: [{ version: "V3 milestones", summary: "Commission, 30-day hold, anniversaries and milestone bonuses (randomized bonus off).", publishedOn: "2026-11-20", supersededOn: null }],
+    history: [
+      { version: "V3 + activity drawing", summary: "Adds the monthly activity drawing official rules ($20 / $50 / $100 by paying accounts; 1 free entry + capped activity entries). Owner-approved for MN; counsel review pending.", publishedOn: "2026-11-21", supersededOn: null },
+      { version: "V3 milestones", summary: "Commission, 30-day hold, anniversaries and milestone bonuses (randomized bonus off).", publishedOn: "2026-11-20", supersededOn: "2026-11-21" },
+    ],
   },
   {
     key: "creator-program-terms", name: "Creator Partner Program Terms", category: "in_product", href: "/learning", public: false,
