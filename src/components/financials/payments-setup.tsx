@@ -4,7 +4,11 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import type { AccountState } from "@/lib/financials/connect";
 
-type Settings = { cardEnabled: boolean; achEnabled: boolean; cardFeePayer: "contractor" | "customer" };
+type Settings = {
+  cardEnabled: boolean; achEnabled: boolean; cardFeePayer: "contractor" | "customer";
+  surchargePct: number; cardCostPct: number; cardCostFixedCents: number; surchargeNoticeDate: string; surchargeAttested: boolean; noticeReadyOn?: string | null;
+};
+type SurchargeState = { code: string | null; ok: boolean; maxPct: number; reasons: string[]; notes: string[] };
 
 async function post(payload: Record<string, unknown>) {
   const res = await fetch("/api/financials/connect", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
@@ -14,8 +18,8 @@ async function post(payload: Record<string, unknown>) {
 }
 
 /** Connect / finish the contractor's Stripe account, and the card / bank / card-fee settings. */
-export function PaymentsSetup({ canManage, state, hasAccount, settings, surchargeAllowed }:
-  { canManage: boolean; state: AccountState; hasAccount: boolean; settings: Settings | null; surchargeAllowed: boolean }) {
+export function PaymentsSetup({ canManage, state, hasAccount, settings, surchargeAllowed, surchargeState }:
+  { canManage: boolean; state: AccountState; hasAccount: boolean; settings: Settings | null; surchargeAllowed: boolean; surchargeState?: SurchargeState }) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +31,14 @@ export function PaymentsSetup({ canManage, state, hasAccount, settings, surcharg
   }
   const onboard = () => run("onboard", async () => { const { url } = await post({ action: "onboard" }); window.location.assign(url); });
   const refresh = () => run("refresh", async () => { await post({ action: "refresh" }); router.refresh(); });
-  const save = (patch: Partial<Settings>) => run("settings", async () => { const next = await post({ action: "settings", ...patch }); setS(next as Settings); });
+  const save = (patch: Record<string, unknown>) => run("settings", async () => {
+    const next = await post({ action: "settings", ...patch });
+    setS((prev) => ({ ...(prev as Settings), ...(next as Partial<Settings>), surchargeNoticeDate: (next as { surchargeNoticeDate?: string | null }).surchargeNoticeDate ?? "",
+      surchargePct: Number((next as { surchargePct?: unknown }).surchargePct ?? prev?.surchargePct ?? 0), cardCostPct: Number((next as { cardCostPct?: unknown }).cardCostPct ?? prev?.cardCostPct ?? 2.9) }));
+    router.refresh();
+  });
+  const [draft, setDraft] = useState({ pct: String(settings?.surchargePct || 3), costPct: String(settings?.cardCostPct ?? 2.9), costFixed: String(settings?.cardCostFixedCents ?? 30), notice: settings?.surchargeNoticeDate ?? "", attest: Boolean(settings?.surchargeAttested) });
+  const stateOk = Boolean(surchargeState?.ok);
 
   if (!canManage) {
     return <p className="text-sm text-ink-soft">{state === "ready" ? "Customers can pay your invoices online." : "Ask your company owner to connect a Stripe account so customers can pay online."}</p>;
@@ -49,10 +60,43 @@ export function PaymentsSetup({ canManage, state, hasAccount, settings, surcharg
           <div className="pt-1 text-sm">
             <p className="font-semibold">Who pays the card fee</p>
             <label className="flex min-h-11 items-center gap-2"><input type="radio" name="fee" checked={s.cardFeePayer === "contractor"} onChange={() => save({ cardFeePayer: "contractor" })} /> I do (most common)</label>
-            <label className={`flex min-h-11 items-center gap-2 ${surchargeAllowed ? "" : "text-muted"}`}>
-              <input type="radio" name="fee" checked={s.cardFeePayer === "customer"} disabled={!surchargeAllowed} onChange={() => save({ cardFeePayer: "customer" })} />
-              My customer, as a disclosed card surcharge {surchargeAllowed ? "" : "(coming soon, after legal review of state surcharge rules)"}
+            <label className={`flex min-h-11 items-center gap-2 ${surchargeAllowed && stateOk ? "" : "text-muted"}`}>
+              <input type="radio" name="fee" checked={s.cardFeePayer === "customer"} disabled={!surchargeAllowed || !stateOk} onChange={() => save({ cardFeePayer: "customer" })} />
+              My customer, as a disclosed credit card surcharge
             </label>
+            {!surchargeAllowed && <p className="text-xs text-muted">Card surcharges are paused right now.</p>}
+            {surchargeAllowed && !stateOk && <p className="text-xs text-muted">{surchargeState?.reasons[0] ?? "Card surcharges aren't available for your state."} Bank (ACH) payments are the low-cost option.</p>}
+            {surchargeAllowed && stateOk && (
+              <details className="mt-2 rounded-lg border border-line p-3" open={s.cardFeePayer === "customer" || undefined} data-testid="surcharge-setup">
+                <summary className="cursor-pointer font-semibold">Surcharge setup and rules</summary>
+                <div className="mt-2 space-y-3">
+                  <ul className="list-disc space-y-1 pl-5 text-xs text-ink-soft">
+                    <li>Credit cards only. Debit and prepaid cards are never surcharged: Built2Bid checks the card and removes the surcharge automatically.</li>
+                    <li>At most {surchargeState?.maxPct}% from your state ({surchargeState?.code}), and never more than your actual card cost. We work out the cost limit for you.</li>
+                    <li>Checked against your customer&apos;s state on every payment. Customers in states that ban surcharges (for example Connecticut, Massachusetts and Maine) are never charged one.</li>
+                    <li>Shown to the customer before they pay, on the invoice (with the card total), and as its own line on Stripe&apos;s checkout. Bank (ACH) must stay on so customers can always pay with no surcharge.</li>
+                    {surchargeState?.notes.map((n, i) => <li key={i}>{n}</li>)}
+                  </ul>
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    <label className="text-xs">Surcharge rate (%)<input className="field mt-1" inputMode="decimal" value={draft.pct} onChange={(e) => setDraft({ ...draft, pct: e.target.value })} /></label>
+                    <label className="text-xs">Your card rate (%)<input className="field mt-1" inputMode="decimal" value={draft.costPct} onChange={(e) => setDraft({ ...draft, costPct: e.target.value })} /></label>
+                    <label className="text-xs">Your per-payment fee (cents)<input className="field mt-1" inputMode="numeric" value={draft.costFixed} onChange={(e) => setDraft({ ...draft, costFixed: e.target.value })} /></label>
+                  </div>
+                  <label className="block text-xs">Date you told Stripe you will surcharge (Visa and Mastercard require 30 days&apos; notice to your processor; email Stripe support or use the support form in your Stripe Dashboard)
+                    <input type="date" className="field mt-1 w-auto" value={draft.notice} onChange={(e) => setDraft({ ...draft, notice: e.target.value })} />
+                  </label>
+                  {s.noticeReadyOn && <p className="text-xs text-muted">Surcharging can start on {s.noticeReadyOn}.</p>}
+                  <label className="flex items-start gap-2 text-xs">
+                    <input type="checkbox" className="mt-0.5" checked={draft.attest} onChange={(e) => setDraft({ ...draft, attest: e.target.checked })} />
+                    <span>I confirm the rate doesn&apos;t exceed what I pay to accept credit cards, I gave Stripe notice on the date above, I&apos;ll surcharge Visa, Mastercard, Discover and American Express credit cards the same way, and I&apos;m responsible for following card network rules and the law where I and my customers are.</span>
+                  </label>
+                  <Button variant="secondary" disabled={busy !== null} data-testid="save-surcharge" onClick={() => save({
+                    surchargePct: Math.round(Number(draft.pct) * 100) / 100, cardCostPct: Math.round(Number(draft.costPct) * 100) / 100,
+                    cardCostFixedCents: Math.round(Number(draft.costFixed)), surchargeNoticeDate: draft.notice, surchargeAttest: draft.attest,
+                  })}>{busy === "settings" ? "Saving…" : "Save surcharge setup"}</Button>
+                </div>
+              </details>
+            )}
           </div>
         </fieldset>
       )}

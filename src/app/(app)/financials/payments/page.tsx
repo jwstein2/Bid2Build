@@ -7,7 +7,8 @@ import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { FinStateNotice } from "@/components/financials/fin-state-notice";
 import { Badge, Notice } from "@/components/ui/misc";
 import { accountState, ACCOUNT_STATE_LABEL, connectMode, surchargeAllowed } from "@/lib/financials/connect";
-import { getPaymentAccount, refreshAccount } from "@/lib/financials/connect-server";
+import { businessState, getPaymentAccount, refreshAccount, surchargeSettingsOf } from "@/lib/financials/connect-server";
+import { noticeReadyOn, surchargeDecision } from "@/lib/financials/surcharge";
 import { PaymentsSetup } from "@/components/financials/payments-setup";
 import { fmtWhen } from "@/lib/financials/accounting-format";
 
@@ -34,12 +35,14 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
   const canManage = ctx.access.active && !ctx.access.readOnly && perms.includes("manage_financial_config");
   let account = mode === "off" || ctx.access.sandbox ? null : await getPaymentAccount(ctx.bookId).catch(() => null);
   if (account && sp.stripe === "return") account = (await refreshAccount(ctx.bookId).catch(() => null)) ?? account;
+  const home = account ? await businessState(ctx.bookId).catch(() => null) : null;
+  const homeDecision = surchargeDecision(home, home);
   const st = accountState(account ? { ...account, requirements: { currently_due: account.requirements_due, disabled_reason: account.disabled_reason } } : null);
   const { data: recent } = account
-    ? await createAdminClient().from("fin_online_payments").select("id, amount, method, status, created_at, settled_at, refunded_amount, fin_invoices(number)")
+    ? await createAdminClient().from("fin_online_payments").select("id, amount, method, status, created_at, settled_at, refunded_amount, surcharge_amount, fin_invoices(number)")
         .eq("book_id", ctx.bookId).neq("status", "open").order("created_at", { ascending: false }).limit(25)
     : { data: [] };
-  type Row = { id: string; amount: string; method: string | null; status: string; created_at: string; refunded_amount: string; fin_invoices: { number: string | null } | null };
+  type Row = { id: string; amount: string; method: string | null; status: string; created_at: string; refunded_amount: string; surcharge_amount?: string | null; fin_invoices: { number: string | null } | null };
   const rows = (recent ?? []) as unknown as Row[];
   const attention = rows.filter((r) => ["refunded", "partially_refunded", "disputed", "failed"].includes(r.status));
 
@@ -59,7 +62,11 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
             {account?.status_synced_at && <span className="text-xs text-muted">Checked {fmtWhen(account.status_synced_at)}</span>}
           </div>
           <PaymentsSetup canManage={canManage} state={st} hasAccount={Boolean(account)} surchargeAllowed={surchargeAllowed()}
-            settings={account ? { cardEnabled: account.card_enabled, achEnabled: account.ach_enabled, cardFeePayer: account.card_fee_payer } : null} />
+            surchargeState={{ code: home, ok: homeDecision.ok, maxPct: homeDecision.maxPct, reasons: homeDecision.reasons, notes: homeDecision.rules.map((r) => r.summary) }}
+            settings={account ? (() => { const x = surchargeSettingsOf(account); return {
+              cardEnabled: account.card_enabled, achEnabled: account.ach_enabled, cardFeePayer: account.card_fee_payer,
+              surchargePct: x.pct, cardCostPct: x.costPct, cardCostFixedCents: x.costFixedCents, surchargeNoticeDate: x.noticeDate ?? "", surchargeAttested: x.attested,
+              noticeReadyOn: noticeReadyOn(x.noticeDate) }; })() : null} />
         </section>
       )}
       <section className="rounded-xl border border-line bg-surface p-4 text-sm" aria-labelledby="pay-fees-h">
@@ -84,6 +91,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
                     <span className="font-semibold">Invoice {r.fin_invoices?.number ?? ""}</span>
                     <span className="tabular">{Number(r.amount).toLocaleString("en-US", { style: "currency", currency: "USD" })}</span>
                     <span className="text-muted">{r.method === "ach" ? "Bank" : r.method === "card" ? "Card" : ""}</span>
+                    {Number(r.surcharge_amount ?? 0) > 0 && <span className="text-xs text-muted">+ {Number(r.surcharge_amount).toLocaleString("en-US", { style: "currency", currency: "USD" })} card surcharge</span>}
                     <Badge tone={s.tone}>{s.label}</Badge>
                     <span className="ml-auto text-xs text-muted">{fmtWhen(r.created_at)}</span>
                   </li>

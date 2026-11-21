@@ -6,7 +6,8 @@ import { site } from "@/lib/site";
 import { testCheckoutBlocked, TEST_CHECKOUT_MESSAGE } from "@/lib/billing/test-mode";
 import { serverEnv } from "@/lib/env";
 import { accountState, ACCOUNT_STATE_LABEL, connectMode, surchargeAllowed } from "@/lib/financials/connect";
-import { createPayLink, getPaymentAccount, refreshAccount, revokePayLinks, startOnboarding } from "@/lib/financials/connect-server";
+import { businessState, createPayLink, getPaymentAccount, refreshAccount, revokePayLinks, startOnboarding, surchargeSettingsOf } from "@/lib/financials/connect-server";
+import { NETWORK_CAP_PCT, settingsProblems, surchargeDecision } from "@/lib/financials/surcharge";
 
 export const runtime = "nodejs";
 
@@ -26,7 +27,12 @@ export async function GET() {
 const body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("onboard") }),
   z.object({ action: z.literal("refresh") }),
-  z.object({ action: z.literal("settings"), cardEnabled: z.boolean().optional(), achEnabled: z.boolean().optional(), cardFeePayer: z.enum(["contractor", "customer"]).optional() }),
+  z.object({
+    action: z.literal("settings"), cardEnabled: z.boolean().optional(), achEnabled: z.boolean().optional(), cardFeePayer: z.enum(["contractor", "customer"]).optional(),
+    surchargePct: z.number().min(0).max(NETWORK_CAP_PCT).multipleOf(0.01).optional(), cardCostPct: z.number().min(0).max(10).multipleOf(0.01).optional(),
+    cardCostFixedCents: z.number().int().min(0).max(500).optional(), surchargeNoticeDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).or(z.literal("")).optional(),
+    surchargeAttest: z.boolean().optional(),
+  }),
   z.object({ action: z.literal("link"), invoiceId: z.string().uuid() }),
   z.object({ action: z.literal("revoke-link"), invoiceId: z.string().uuid() }),
 ]);
@@ -59,12 +65,31 @@ export async function POST(req: Request) {
       }
       case "settings": {
         if (!(await has("manage_financial_config"))) return fail(403, "forbidden", "Only the owner can change payment settings.");
-        if (p.data.cardFeePayer === "customer" && !surchargeAllowed()) {
-          return fail(409, "surcharge_unavailable", "Passing the card fee to customers turns on after the legal review of card surcharge rules. Customers can always pay by bank (ACH) at a much lower fee.");
+        const current = await getPaymentAccount(bookId);
+        if (!current) return fail(404, "not_found", "Connect Stripe first.");
+        const payer = p.data.cardFeePayer ?? current.card_fee_payer;
+        if (payer === "customer") {
+          if (!(p.data.achEnabled ?? current.ach_enabled) || !(p.data.cardEnabled ?? current.card_enabled)) {
+            return fail(409, "surcharge_needs_ach", "To pass the card fee to customers, keep both card and bank (ACH) payments on, so customers can always pay without a surcharge.");
+          }
+          if (!surchargeAllowed()) return fail(409, "surcharge_unavailable", "Card surcharges are paused right now. Customers can always pay by bank (ACH) at a much lower fee.");
+          const home = await businessState(bookId);
+          const d = surchargeDecision(home, home);
+          if (!d.ok) return fail(409, "surcharge_state", `${d.reasons[0] ?? "Card surcharges aren't allowed in your state."} You can still offer bank (ACH) payments, which cost much less.`);
+          const cur = surchargeSettingsOf(current);
+          const next = {
+            pct: p.data.surchargePct ?? cur.pct, costPct: p.data.cardCostPct ?? cur.costPct, costFixedCents: p.data.cardCostFixedCents ?? cur.costFixedCents,
+            noticeDate: p.data.surchargeNoticeDate !== undefined ? (p.data.surchargeNoticeDate || null) : cur.noticeDate,
+            attested: p.data.surchargeAttest ?? cur.attested,
+          };
+          if (next.pct > d.maxPct) return fail(409, "surcharge_cap", `The most you can surcharge from your state is ${d.maxPct}%.`);
+          const problems = settingsProblems(next);
+          if (problems.length) return fail(409, "surcharge_not_ready", problems.join(" "));
         }
         const { data, error } = await db.rpc("fin_payment_account_settings", { p_book_id: bookId, p: p.data });
         if (error) {
           if (error.message.includes("fin_payment_accounts_method")) return fail(409, "no_methods", "Keep at least one way to pay turned on.");
+          if (error.message.includes("surcharge_not_ready")) return fail(409, "surcharge_not_ready", "Finish the surcharge setup (rate, terms and the 30-day notice) first.");
           return fail(409, error.message.split(/\s/)[0] || "failed", "We couldn't save that.");
         }
         return json(data);

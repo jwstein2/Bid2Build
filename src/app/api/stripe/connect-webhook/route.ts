@@ -4,7 +4,7 @@ import { isLiveKey } from "@/lib/billing/test-mode";
 import { createAdminClient } from "@/lib/supabase/server";
 import { serverEnv } from "@/lib/env";
 import { logError } from "@/lib/http/api";
-import { flagByPaymentIntent, markSession, settleSession, syncAccount } from "@/lib/financials/connect-server";
+import { captureAndSettle, flagByPaymentIntent, markSession, needsCaptureDecision, settleSession, syncAccount } from "@/lib/financials/connect-server";
 import { fromCents } from "@/lib/financials/connect";
 
 export const runtime = "nodejs";
@@ -59,6 +59,8 @@ export async function POST(req: Request) {
         const s = obj as Stripe.Checkout.Session;
         if (!isInvoicePayment(s)) break;
         if (s.payment_status === "paid") await settleSession(s, account);
+        // Credit card surcharge sessions: authorized only; capture with or without the surcharge, then record.
+        else if (needsCaptureDecision(s)) await captureAndSettle(s, account);
         else await markSession(s.id, "processing");   // ACH: the bank debit is on its way (3-5 business days)
         break;
       }
@@ -80,7 +82,7 @@ export async function POST(req: Request) {
       case "charge.refunded": {
         const c = obj as Stripe.Charge;
         const pi = typeof c.payment_intent === "string" ? c.payment_intent : c.payment_intent?.id;
-        if (pi) await flagByPaymentIntent(pi, { status: c.amount_refunded >= c.amount ? "refunded" : "partially_refunded", refunded_amount: fromCents(c.amount_refunded) });
+        if (pi) await flagByPaymentIntent(pi, { status: c.amount_refunded >= (c.amount_captured || c.amount) ? "refunded" : "partially_refunded", refunded_amount: fromCents(c.amount_refunded) });
         break;
       }
       case "charge.dispute.created":

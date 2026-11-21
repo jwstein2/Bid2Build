@@ -3,6 +3,7 @@ import { renderToBuffer, type DocumentProps } from "@react-pdf/renderer";
 import { fail, logError } from "@/lib/http/api";
 import { finGuard } from "@/lib/financials/api";
 import { loadInvoiceDoc } from "@/lib/financials/invoice-doc";
+import { invoiceSurchargeNote } from "@/lib/financials/connect-server";
 import { InvoicePdf } from "@/lib/pdf/invoice-pdf";
 
 export const runtime = "nodejs";
@@ -17,6 +18,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
   const doc = await loadInvoiceDoc(g.db, g.bookId, id);
   if (doc.status === "not_found") return fail(404, "not_found", "Invoice not found.");
   if (doc.status !== "ok") return fail(409, "draft", "Issue the invoice first. Drafts don't have a customer PDF.");
+  if (doc.d.invoice.status === "issued") doc.d.cardSurchargeNote = await invoiceSurchargeNote(g.bookId, doc.d.billTo.address, doc.d.balance).catch(() => null);
   let pdf: Buffer;
   try {
     pdf = await renderToBuffer(createElement(InvoicePdf, { d: doc.d, logo: doc.logo }) as React.ReactElement<DocumentProps>);
