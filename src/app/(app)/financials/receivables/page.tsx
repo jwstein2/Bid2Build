@@ -93,7 +93,7 @@ export default async function Receivables({ searchParams }: { searchParams: Prom
       {crumbs}
       {access.sandbox && <SandboxBar sandbox canManage={access.permissions.includes("manage_financial_config")} />}
       <header className="flex flex-wrap items-end gap-3">
-        <div className="min-w-0 flex-1">
+        <div className="min-w-[min(100%,20rem)] flex-1">
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">Accounting</p>
           <h1 className="text-3xl font-extrabold">Accounts receivable</h1>
           <p className="text-sm text-ink-soft">What customers owe you on issued invoices. Milestones you haven&apos;t invoiced yet are not counted.</p>

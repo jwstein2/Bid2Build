@@ -98,7 +98,7 @@ describe("command actions", () => {
       expect(a.label).not.toMatch(/delete|remove|cancel subscription|send email|pay now|charge/i);
     }
     for (const id of ["create-invoice", "record-payment", "add-expense", "add-bill"]) expect(ACTIONS.find((a) => a.id === id)!.reviewForm).toBe(true);
-    expect(findActions("bank reconcile", owner)[0]).toMatchObject({ comingSoon: true });
+    expect(findActions("bank reconcile", owner)[0]).toMatchObject({ comingSoon: false, href: "/financials/accounting/bank" });
     expect(findActions("new invoice", { ...owner, fin: { ...owner.fin!, sandbox: true } })[0]).toMatchObject({ id: "create-invoice", sandbox: true });
     expect(defaultActions(owner, ["open-pl"]).map((a) => a.id)[0]).toBe("open-pl");
     expect(defaultActions(crew, ["open-pl"]).map((a) => a.id)).not.toContain("open-pl");

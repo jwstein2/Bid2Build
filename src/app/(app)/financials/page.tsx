@@ -11,7 +11,7 @@ import { loadFinState, loadHome, type Figure } from "@/lib/financials/loaders";
 import { canUseAccountantMode } from "@/lib/financials/permissions";
 import { CARDS, KPI_KEYS, QUICK_ACTIONS, QUICK_ACTION_NEEDS, type CardKey, type QuickAction } from "@/lib/financials/profiles/catalog";
 import { PRESETS } from "@/lib/financials/profiles/presets";
-import { KPI_LABELS, QUICK_ACTION_HINTS, QUICK_ACTION_LABELS, QUICK_ACTION_TARGET, REPORT_HREF, REPORT_LABELS } from "@/lib/financials/ui-labels";
+import { KPI_LABELS, QUICK_ACTION_HINTS, QUICK_ACTION_HREF, QUICK_ACTION_LABELS, QUICK_ACTION_TARGET, REPORT_HREF, REPORT_LABELS } from "@/lib/financials/ui-labels";
 import { formatCurrency } from "@/lib/estimate/money";
 import { MetricCard } from "@/components/ui/metric-card";
 import { Notice } from "@/components/ui/misc";
@@ -80,9 +80,12 @@ export default async function FinancialsHome() {
   })() : null;
   const quick = layout.quickActions;
   const quickLibrary = QUICK_ACTIONS.filter((q) => perms.includes(QUICK_ACTION_NEEDS[q]))
-    .map((q) => ({ key: q, label: QUICK_ACTION_LABELS[q], hint: QUICK_ACTION_HINTS[q], built: Boolean(QUICK_ACTION_TARGET[q]) }));
+    .map((q) => ({ key: q, label: QUICK_ACTION_LABELS[q], hint: QUICK_ACTION_HINTS[q], built: Boolean(QUICK_ACTION_TARGET[q] || QUICK_ACTION_HREF[q]) }));
   const slots = layout.cards.map((c) => ({ key: c.key, visible: c.visible }));
   const quickNode = (q: QuickAction) => {
+    const href = QUICK_ACTION_HREF[q];
+    // A page link (e.g. the export reports) is read-only, so it works for read-only books too; the page re-checks access.
+    if (href && perms.includes(QUICK_ACTION_NEEDS[q])) return <ButtonLink href={href} variant="secondary" size="sm">{QUICK_ACTION_LABELS[q]}</ButtonLink>;
     const target = QUICK_ACTION_TARGET[q];
     return target && canWrite
       ? <ButtonLink href={`/financials/records?view=jobs&do=${target}`} variant="secondary" size="sm">{QUICK_ACTION_LABELS[q]}</ButtonLink>
@@ -101,7 +104,7 @@ export default async function FinancialsHome() {
     <div className="mx-auto max-w-7xl space-y-6" data-testid="fin-home" data-preset={profile.presetKey} data-guide-page="financials.home" data-guide-trade={profile.trades.join(" ")}>
       {access.sandbox && <SandboxBar sandbox canManage={perms.includes("manage_financial_config")} />}
       <header className="flex flex-wrap items-end gap-3">
-        <div className="min-w-0 basis-full sm:basis-auto sm:flex-1">
+        <div className="min-w-[min(100%,20rem)] flex-1">
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">Know Your Numbers</p>
           <h1 className="text-3xl font-extrabold">Financials</h1>
           <p className="text-sm text-ink-soft">{access.name} · {PRESETS[profile.presetKey].label}{profile.trades.length > 1 ? ` + ${profile.trades.length - 1} more trade${profile.trades.length > 2 ? "s" : ""}` : ""}</p>
