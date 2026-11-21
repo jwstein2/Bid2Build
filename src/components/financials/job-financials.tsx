@@ -11,6 +11,7 @@ import { EmailDraftDialog } from "./email-draft-dialog";
 import { finAction, fmtDate, usd } from "./fin-client";
 import { ContractCard, CreditDialog, InvoiceDialog, MilestoneCard, PaymentDialog, VoidDialog, type Perms, type R, type VoidTarget } from "./job-billing";
 import { DeleteInvoiceDialog, InvoicePreviewDialog } from "./invoice-preview";
+import { PayLinkButton } from "./payments-setup";
 import { ChangeOrdersCard, MarkSentDialog, SendStatus } from "./send-and-changes";
 import { SandboxBar } from "./sandbox-bar";
 import type { CoRow } from "@/lib/financials/change-orders";
@@ -216,6 +217,7 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
                         <Button size="sm" variant="ghost" onClick={() => del(i.invoice_id)}>Delete draft</Button>
                       </>}
                       {i.status === "issued" && perms.pay && writable && cmp(s(i.balance) || "0", 0) > 0 && <Button size="sm" variant="secondary" onClick={() => setOpen({ kind: "payment", invoice: s(i.invoice_id) })}>Record payment</Button>}
+                      {i.status === "issued" && perms.invoice && writable && !data.access.sandbox && cmp(s(i.balance) || "0", 0) > 0 && <PayLinkButton invoiceId={s(i.invoice_id)} />}
                       {i.status === "issued" && <a className={buttonClass("ghost", "sm")} href={`/api/financials/invoices/${s(i.invoice_id)}/pdf`} target="_blank" rel="noopener" data-testid="fin-invoice-pdf"><FileDown className="h-4 w-4" aria-hidden /> PDF</a>}
                       {i.status === "issued" && perms.invoice && !data.access.sandbox && <Button size="sm" variant="ghost" onClick={() => setOpen({ kind: "email", invoiceId: s(i.invoice_id) })}><Mail className="h-4 w-4" aria-hidden /> Email draft</Button>}
                       {i.status === "issued" && perms.invoice && writable && Boolean(i.send) && !(i.send as SendInfo).marked && (i.send as SendInfo).state !== "sent" && (i.send as SendInfo).state !== "paid" && (

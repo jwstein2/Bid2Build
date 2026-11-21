@@ -21,6 +21,7 @@ const GROUPS: { title: string; tools: Tool[] }[] = [
     { label: "Accounts receivable (aging, collections)", href: "/financials/receivables", needs: "view_project_financials" },
     { label: "Payments received", href: "/financials/records?view=payments", needs: "view_company_financials" },
     { label: "Unapplied payments", href: "/financials/records?view=payments&filter=unapplied", needs: "view_company_financials" },
+    { label: "Online payments (card & bank)", href: "/financials/payments", needs: "view_company_financials" },
   ] },
   { title: "Job costs", tools: [
     { label: "Expenses & receipts", href: "/financials/records?view=costs", needs: "view_project_financials" },
@@ -52,7 +53,7 @@ const GROUPS: { title: string; tools: Tool[] }[] = [
     { label: "Sending invoice & receipt emails", note: "Turns on after approval" },
     { label: "Accountant CSV export", note: "Next Phase 1 update" }, { label: "Audit log viewer", note: "Next Phase 1 update" },
     { label: "Progress billing (schedule of values)", note: "Phase 1b" }, { label: "Retainage", note: "Phase 1b" },
-    { label: "Time & materials billing", note: "Later" }, { label: "Bank import & reconciliation", note: "Phase 2" }, { label: "Online card / ACH payments", note: "Phase 3" },
+    { label: "Time & materials billing", note: "Later" }, { label: "Bank import & reconciliation", note: "Phase 2" },
   ] },
 ];
 
