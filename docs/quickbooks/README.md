@@ -56,3 +56,14 @@ Rules:
    `QBO_ENVIRONMENT` = `production`, and trigger a deploy. Anyone connected to a sandbox company must reconnect.
 
 Until the keys are set the page shows "Coming soon" and the Payroll CSV export keeps working.
+
+## How Built2Bid talks to Intuit
+
+- **Endpoints:** the OAuth authorize, token and revoke URLs come from Intuit's discovery document
+  (`openid_sandbox_configuration` / `openid_configuration`), cached for a day. If it can't be read, the documented
+  URLs are used so connecting never breaks.
+- **Retries:** token requests and API calls retry up to twice on network errors and Intuit 429/5xx answers, with
+  back-off (honouring `Retry-After`). 4xx errors are never retried. Time entries carry a `requestid`, so a retry
+  can't create a duplicate.
+- **Support reference:** Intuit's `intuit_tid` response header is captured on every failure. It's logged
+  (`quickbooks.*` scopes) and appended to the message the contractor sees as "QuickBooks reference …".

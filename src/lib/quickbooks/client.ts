@@ -3,20 +3,41 @@ import "server-only";
  * Intuit OAuth 2.0 and the few QuickBooks Online Accounting API calls the hours sync needs.
  * Tokens are passed in and returned; storage and encryption live in server.ts.
  */
-import { QB_AUTHORIZE_URL, QB_MINOR_VERSION, QB_REVOKE_URL, QB_SCOPE, QB_TOKEN_URL, qbApiBase, type QbEnvironment } from "./config";
+import { QB_AUTHORIZE_URL, QB_MINOR_VERSION, QB_REVOKE_URL, QB_SCOPE, QB_TOKEN_URL, qbApiBase, qbDiscoveryUrl, qbEnvironment, type QbEnvironment } from "./config";
 import { faultMessage, type TimeActivityPayload } from "./mapping";
+import { intuitTid, parseDiscovery, withRef, withRetry, type QbEndpoints } from "./net";
 
 export interface QbTokens { accessToken: string; refreshToken: string; accessExpiresAt: Date; refreshExpiresAt: Date | null }
 export interface QbEntity { id: string; name: string; type: "Employee" | "Vendor" | "Customer" }
 
+/** A QuickBooks failure. `tid` is Intuit's request id (intuit_tid) for support, when Intuit sent one. */
 export class QbError extends Error {
-  constructor(message: string, readonly status: number, readonly reauth = false) { super(message); }
+  constructor(message: string, readonly status: number, readonly reauth = false, readonly tid: string | null = null) { super(message); }
+}
+
+const FALLBACK: QbEndpoints = { authorize: QB_AUTHORIZE_URL, token: QB_TOKEN_URL, revoke: QB_REVOKE_URL };
+const DISCOVERY_TTL = 24 * 60 * 60_000;
+const discovered = new Map<QbEnvironment, { at: number; ep: QbEndpoints }>();
+
+/**
+ * OAuth endpoints from Intuit's discovery document, cached for a day per environment (Intuit's recommendation).
+ * Falls back to the documented endpoints when the document can't be read, so connecting never breaks on it.
+ */
+export async function endpoints(env: QbEnvironment = qbEnvironment()): Promise<QbEndpoints> {
+  const hit = discovered.get(env);
+  if (hit && Date.now() - hit.at < DISCOVERY_TTL) return hit.ep;
+  try {
+    const res = await withRetry(() => fetch(qbDiscoveryUrl(env), { headers: { accept: "application/json" }, signal: AbortSignal.timeout(5_000) }), 1);
+    const ep = res.ok ? parseDiscovery(await res.json().catch(() => null)) : null;
+    if (ep) { discovered.set(env, { at: Date.now(), ep }); return ep; }
+  } catch { /* fall through */ }
+  return hit?.ep ?? FALLBACK;
 }
 
 const basic = () => `Basic ${Buffer.from(`${process.env.QBO_CLIENT_ID}:${process.env.QBO_CLIENT_SECRET}`).toString("base64")}`;
 
-export function authorizeUrl(redirectUri: string, state: string): string {
-  const u = new URL(QB_AUTHORIZE_URL);
+export async function authorizeUrl(redirectUri: string, state: string, env: QbEnvironment = qbEnvironment()): Promise<string> {
+  const u = new URL((await endpoints(env)).authorize);
   u.searchParams.set("client_id", process.env.QBO_CLIENT_ID ?? "");
   u.searchParams.set("response_type", "code");
   u.searchParams.set("scope", QB_SCOPE);
@@ -32,24 +53,30 @@ function toTokens(j: Record<string, unknown>, now = Date.now()): QbTokens {
   return { accessToken: access, refreshToken: refresh, accessExpiresAt: new Date(now + exp * 1000), refreshExpiresAt: Number.isFinite(rexp) && rexp > 0 ? new Date(now + rexp * 1000) : null };
 }
 
-async function tokenCall(body: Record<string, string>): Promise<QbTokens> {
-  const res = await fetch(QB_TOKEN_URL, {
+/** Token requests retry network failures and Intuit 429/5xx; an invalid_grant (expired or revoked) asks the contractor to reconnect. */
+async function tokenCall(env: QbEnvironment, body: Record<string, string>): Promise<QbTokens> {
+  const url = (await endpoints(env)).token;
+  const res = await withRetry(() => fetch(url, {
     method: "POST",
     headers: { authorization: basic(), "content-type": "application/x-www-form-urlencoded", accept: "application/json" },
     body: new URLSearchParams(body).toString(),
     signal: AbortSignal.timeout(15_000),
-  });
+  }));
+  const tid = intuitTid(res);
   const j = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-  if (!res.ok) throw new QbError(`QuickBooks sign-in failed (${String(j.error ?? res.status)}).`, res.status, j.error === "invalid_grant");
+  if (!res.ok) throw new QbError(withRef(`QuickBooks sign-in failed (${String(j.error ?? res.status)}).`, tid), res.status, j.error === "invalid_grant", tid);
   return toTokens(j);
 }
 
-export const exchangeCode = (code: string, redirectUri: string) => tokenCall({ grant_type: "authorization_code", code, redirect_uri: redirectUri });
-export const refreshTokens = (refreshToken: string) => tokenCall({ grant_type: "refresh_token", refresh_token: refreshToken });
+export const exchangeCode = (code: string, redirectUri: string, env: QbEnvironment = qbEnvironment()) =>
+  tokenCall(env, { grant_type: "authorization_code", code, redirect_uri: redirectUri });
+export const refreshTokens = (refreshToken: string, env: QbEnvironment = qbEnvironment()) =>
+  tokenCall(env, { grant_type: "refresh_token", refresh_token: refreshToken });
 
 /** Best effort: tells Intuit to forget the tokens when a contractor disconnects. */
-export async function revokeToken(token: string): Promise<void> {
-  await fetch(QB_REVOKE_URL, {
+export async function revokeToken(token: string, env: QbEnvironment = qbEnvironment()): Promise<void> {
+  const url = (await endpoints(env)).revoke;
+  await fetch(url, {
     method: "POST",
     headers: { authorization: basic(), "content-type": "application/json", accept: "application/json" },
     body: JSON.stringify({ token }),
@@ -61,14 +88,16 @@ async function api(env: QbEnvironment, realm: string, token: string, path: strin
   const u = new URL(`${qbApiBase(env)}/v3/company/${encodeURIComponent(realm)}/${path}`);
   u.searchParams.set("minorversion", QB_MINOR_VERSION);
   for (const [k, v] of Object.entries(init.query ?? {})) u.searchParams.set(k, v);
-  const res = await fetch(u, {
+  // Reads are safe to repeat, and every write carries a requestid, so QuickBooks ignores a repeated create.
+  const res = await withRetry(() => fetch(u, {
     method: init.method ?? "GET",
     headers: { authorization: `Bearer ${token}`, accept: "application/json", ...(init.body ? { "content-type": "application/json" } : {}) },
     body: init.body ? JSON.stringify(init.body) : undefined,
     signal: AbortSignal.timeout(20_000),
-  });
+  }));
+  const tid = intuitTid(res);
   const j = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-  if (!res.ok) throw new QbError(faultMessage(j), res.status, res.status === 401);
+  if (!res.ok) throw new QbError(withRef(faultMessage(j), tid), res.status, res.status === 401, tid);
   return j;
 }
 

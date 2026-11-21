@@ -17,11 +17,19 @@ export function qbConfigured(env: Record<string, string | undefined> = process.e
   return Boolean(env.QBO_CLIENT_ID && env.QBO_CLIENT_SECRET && key && key.length === 32);
 }
 
+/** Fallbacks only: the live endpoints come from Intuit's discovery document (see discoveryUrl / client.ts). */
 export const QB_AUTHORIZE_URL = "https://appcenter.intuit.com/connect/oauth2";
 export const QB_TOKEN_URL = "https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer";
 export const QB_REVOKE_URL = "https://developer.api.intuit.com/v2/oauth2/tokens/revoke";
 export const QB_SCOPE = "com.intuit.quickbooks.accounting";
 export const QB_MINOR_VERSION = "75";
+
+/** Intuit's OpenID discovery document, which lists the current OAuth 2.0 endpoints for each environment. */
+export function qbDiscoveryUrl(env: QbEnvironment): string {
+  return env === "production"
+    ? "https://developer.api.intuit.com/.well-known/openid_configuration"
+    : "https://developer.api.intuit.com/.well-known/openid_sandbox_configuration";
+}
 
 export function qbApiBase(env: QbEnvironment): string {
   return env === "production" ? "https://quickbooks.api.intuit.com" : "https://sandbox-quickbooks.api.intuit.com";

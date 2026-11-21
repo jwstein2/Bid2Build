@@ -6,7 +6,7 @@ import { isPmEnabled } from "@/lib/env";
 import { logError } from "@/lib/http/api";
 import { site } from "@/lib/site";
 import { QB_CALLBACK_PATH, QB_PAGE_PATH, isQuickBooksEnabled, qbConfigured } from "@/lib/quickbooks/config";
-import { exchangeCode } from "@/lib/quickbooks/client";
+import { QbError, exchangeCode } from "@/lib/quickbooks/client";
 import { saveConnection, scopeFor } from "@/lib/quickbooks/server";
 
 export const runtime = "nodejs";
@@ -35,7 +35,7 @@ export async function GET(req: Request) {
     await saveConnection(createAdminClient(), scope, user.id, realm, tokens);
     return back("connected");
   } catch (e) {
-    logError("quickbooks.callback", e);
+    logError("quickbooks.callback", e, { intuit_tid: e instanceof QbError ? e.tid ?? undefined : undefined });
     return back("failed");
   }
 }

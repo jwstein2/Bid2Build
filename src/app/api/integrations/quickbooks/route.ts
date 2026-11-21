@@ -20,6 +20,7 @@ const ops = z.discriminatedUnion("action", [
 
 function qbFail(where: string, e: unknown) {
   if (e instanceof QbError) {
+    logError(where, e, { status: e.status, reauth: e.reauth, intuit_tid: e.tid ?? undefined });
     if (e.reauth) return fail(409, "reauth", "QuickBooks asked to sign in again. Click Reconnect QuickBooks.");
     if (e.status === 403) return fail(403, "forbidden", e.message);
     return fail(502, "quickbooks", e.message);

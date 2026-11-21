@@ -24,5 +24,5 @@ export async function GET() {
   if (!scope?.canManage) return back("forbidden");
   const state = randomBytes(24).toString("base64url");
   (await cookies()).set("qb_oauth_state", `${state}.${user.id}`, { httpOnly: true, secure: true, sameSite: "lax", path: "/api/integrations/quickbooks", maxAge: 600 });
-  return NextResponse.redirect(authorizeUrl(new URL(QB_CALLBACK_PATH, site.url).toString(), state));
+  return NextResponse.redirect(await authorizeUrl(new URL(QB_CALLBACK_PATH, site.url).toString(), state));
 }
