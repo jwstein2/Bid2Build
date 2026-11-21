@@ -21,7 +21,7 @@ export interface BackupSummary {
 
 export type BackupCheck =
   | { state: "not_connected"; env: string }
-  | { state: "error"; env: string; message: string }
+  | { state: "error"; env: string; message: string; code: "token_forbidden" | "provider_error" | "config" }
   | { state: "ok" | "stale"; env: string; data: BackupSummary; fetchedAt: string };
 
 export const BACKUP_TOKEN_ENV = "SUPABASE_MANAGEMENT_TOKEN";
@@ -62,17 +62,18 @@ export async function checkBackups(now = new Date()): Promise<BackupCheck> {
   const token = process.env[BACKUP_TOKEN_ENV]?.trim();
   if (!token) return { state: "not_connected", env: BACKUP_TOKEN_ENV };
   const ref = /^https:\/\/([a-z0-9]{20})\.supabase\.co/.exec(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "")?.[1];
-  if (!ref) return { state: "error", env: BACKUP_TOKEN_ENV, message: "Project ref not found in NEXT_PUBLIC_SUPABASE_URL" };
+  if (!ref) return { state: "error", env: BACKUP_TOKEN_ENV, code: "config", message: "Project ref not found in NEXT_PUBLIC_SUPABASE_URL" };
   try {
     const res = await fetch(`https://api.supabase.com/v1/projects/${ref}/database/backups`, {
       headers: { Accept: "application/json", Authorization: `Bearer ${token}` }, cache: "no-store", signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) {
-      return { state: "error", env: BACKUP_TOKEN_ENV, message: res.status === 401 || res.status === 403 ? `Token can't read backups (HTTP ${res.status}): give it backup read access` : `Supabase returned HTTP ${res.status}` };
+      const forbidden = res.status === 401 || res.status === 403;
+      return { state: "error", env: BACKUP_TOKEN_ENV, code: forbidden ? "token_forbidden" : "provider_error", message: forbidden ? `Token can't read backups (HTTP ${res.status}): give it backup read access` : `Supabase returned HTTP ${res.status}` };
     }
     const data = summarizeBackups(await res.json(), now.getTime());
     return { state: data.stale ? "stale" : "ok", env: BACKUP_TOKEN_ENV, data, fetchedAt: now.toISOString() };
   } catch {
-    return { state: "error", env: BACKUP_TOKEN_ENV, message: "Supabase did not respond" };
+    return { state: "error", env: BACKUP_TOKEN_ENV, code: "provider_error", message: "Supabase did not respond" };
   }
 }

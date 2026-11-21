@@ -24,12 +24,13 @@ export async function POST(req: Request) {
   const r = await checkBackups();
   if (r.state === "not_connected") return json({ state: r.state });
   if (r.state === "error") {
-    logError("monitor.backups", new Error(`Backup check failed: ${r.message}`));
+    // The code is in the Sentry issue title, so the alert says why (e.g. "monitor.backups: token_forbidden").
+    logError("monitor.backups", Object.assign(new Error(`Backup check failed: ${r.message}`), { code: r.code }));
     return json({ state: r.state, message: r.message }, 503);
   }
   if (r.state === "stale" || r.data.failedLast7Days > 0) {
     const why = r.data.latestAt ? `newest completed backup is ${r.data.ageHours}h old (${r.data.latestAt})` : "no completed backup found";
-    logError("monitor.backups", new Error(`Database backups need attention: ${why}; ${r.data.failedLast7Days} failed in 7 days`), { failed: r.data.failedLast7Days });
+    logError("monitor.backups", Object.assign(new Error(`Database backups need attention: ${why}; ${r.data.failedLast7Days} failed in 7 days`), { code: r.state === "stale" ? "backups_stale" : "backups_failed" }), { failed: r.data.failedLast7Days });
     return json({ state: "stale", ...r.data }, 503);
   }
   return json({ state: "ok", ...r.data });
