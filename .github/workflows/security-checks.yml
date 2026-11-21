@@ -31,15 +31,15 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # Needs Settings → Code security → Dependency graph turned on. Until the owner enables it the action reports
-    # "not supported", so it is advisory for now; remove continue-on-error once the dependency graph is on.
-    continue-on-error: true
     permissions:
       contents: read
       pull-requests: write
     steps:
       - uses: actions/checkout@v4
+      # Needs Settings → Code security → Dependency graph turned on. Until the owner enables it the action reports
+      # "not supported", so the step is advisory for now; remove continue-on-error once the dependency graph is on.
       - uses: actions/dependency-review-action@v4
+        continue-on-error: true
         with:
           fail-on-severity: high
           comment-summary-in-pr: on-failure
