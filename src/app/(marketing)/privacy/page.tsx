@@ -82,13 +82,15 @@ export default function Privacy() {
         <li>Resend: email delivery</li>
         <li>Anthropic: AI features</li>
         <li>Sentry: error monitoring</li>
-        <li>Google: website analytics (Google Analytics), company email (Google Workspace) and, when used, address autofill (Google Maps)</li>
+        <li>Google: website analytics (Google Analytics), company email (Google Workspace) and, when used, address autofill (Google Maps) and Send via My Email (Gmail)</li>
         <li>Meta: ad measurement, only with your consent</li>
         <li>Plaid: optional, read-only bank connections</li>
+        <li>Intuit: QuickBooks Online sync, only if you connect QuickBooks</li>
         <li>Twilio: text message codes, if you sign in by phone</li>
         <li>YouTube: embedded training videos (loaded only when you press play)</li>
         <li>U.S. Census Bureau geocoder: matching job addresses to tax jurisdictions</li>
       </UL>
+      <p>The full, current list with the data each provider receives is on our <Link className="underline" href="/subprocessors">Service Providers</Link> page.</p>
       <p>We may also disclose information if the law requires it, to protect people or the service, or as part of a sale or merger of our business. See <Link className="underline" href="/security">Security</Link> for how we protect your data.</p>
 
       <H2>Children</H2>
