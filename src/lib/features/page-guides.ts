@@ -623,8 +623,17 @@ export const PAGE_GUIDES = {
     route: "/financials/accounting/accounts",
     label: "Accounting · Chart of accounts",
     steps: [
-      { target: "fin.acct-groups", title: "Balance groups", body: "Receivables, payables, your bank accounts and income. A full double-entry chart of accounts comes with the general ledger." },
+      { target: "fin.acct-chart", title: "Your accounts", body: "Assets, liabilities, equity, income, job costs and expenses, with each account's balance. Built-in accounts can be renamed; add your own for each bank account or card." },
       { target: "fin.acct-codes", title: "Cost codes", body: "Every bill line and expense is classified with one of these codes, grouped by trade." },
+    ],
+  },
+  "financials.accounting.ledger": {
+    route: "/financials/accounting/ledger",
+    label: "Accounting · General ledger",
+    steps: [
+      { target: "fin.gl-views", title: "Statements", body: "Balance sheet, income statement, trial balance, one account's detail, or the journal itself. Pick the dates above." },
+      { target: "fin.gl-body", title: "Built from your records", body: "Invoices, payments, bills and expenses post here automatically. A voided record posts a reversal; nothing is ever edited." },
+      { target: "fin.gl-close", title: "Close the books", body: "Closing through a date stops anything from posting into that period. Reopening needs a reason and is logged." },
     ],
   },
   "financials.records": {

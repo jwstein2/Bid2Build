@@ -148,3 +148,13 @@ export function resolveBankProvider(env: Record<string, string | undefined> = pr
   if (mode === "plaid") return plaidProvider({ clientId: env.PLAID_CLIENT_ID!, secret: env.PLAID_SECRET!, env: env.PLAID_ENV === "production" ? "production" : "sandbox", webhookUrl: env.PLAID_WEBHOOK_URL });
   return null;
 }
+
+/** Plaid errors carry an UPPER_CASE error_code. Map them to plain words; never show Plaid's raw text to customers. */
+export function plaidFailure(e: unknown): { code: string; message: string; detail: string | undefined } | null {
+  const x = e as { code?: unknown; plaidMessage?: unknown } | null;
+  if (!x || typeof x.code !== "string" || !/^[A-Z_]+$/.test(x.code)) return null;
+  const detail = typeof x.plaidMessage === "string" ? x.plaidMessage.slice(0, 300) : undefined;
+  if (/^INSTITUTION_/.test(x.code)) return { code: "bank_unavailable", message: "Your bank isn't responding right now. Nothing was changed. Please try again later.", detail };
+  if (x.code === "RATE_LIMIT_EXCEEDED" || x.code === "PRODUCTS_NOT_READY") return { code: "bank_busy", message: "The bank connection service is busy. Nothing was changed. Please try again in a few minutes.", detail };
+  return { code: "bank_setup", message: "Bank connections are temporarily unavailable while Built2Bid finishes setup with Plaid, our bank connection partner. Nothing was changed. Please try again later.", detail };
+}

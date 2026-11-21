@@ -100,6 +100,7 @@ d("complete HR records (database)", () => {
   });
 
   it("rollback restores the earlier definitions and re-apply works", async () => {
+    await pool.query(readFileSync("docs/quickbooks/rollback_20270214005000.sql", "utf8"));
     await pool.query(readFileSync("docs/worker-invites/rollback_20270212001000.sql", "utf8"));
     await pool.query(readFileSync("docs/worker-hub/rollback_20270210001000.sql", "utf8"));
     await pool.query(readFileSync("docs/workforce-gps/rollback_20270208001000.sql", "utf8"));

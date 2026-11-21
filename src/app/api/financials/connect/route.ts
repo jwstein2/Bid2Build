@@ -114,6 +114,12 @@ export async function POST(req: Request) {
     }
   } catch (e) {
     logError("fin.connect", e, { action: p.data.action });
+    // Stripe refuses new connected accounts until the platform finishes its own Connect setup (profile, owner ID).
+    // That's on us, not the contractor, so say so instead of "try again in a minute".
+    const msg = e instanceof Error ? e.message : "";
+    if (/platform profile|create live connected accounts|identity document/i.test(msg)) {
+      return fail(503, "connect_setup_pending", "Online payments are almost ready. Built2Bid is finishing its Stripe setup, so please try again later today.");
+    }
     return fail(502, "stripe_error", "Stripe didn't respond as expected. Please try again in a minute.");
   }
 }

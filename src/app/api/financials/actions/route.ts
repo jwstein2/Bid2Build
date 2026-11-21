@@ -98,6 +98,14 @@ const body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("email_draft_save"), p: z.object({ templateKind: z.enum(["deposit", "progress", "final", "time_materials", "change_order", "balance_reminder", "overdue_reminder", "receipt", "partial_payment", "final_thanks", "credit_refund"]),
     tone: z.enum(["friendly", "professional", "brief"]), toEmail: z.string().trim().email().max(320), toName: text(200).optional(), subject: text(300).min(1), body: text(20000).min(1),
     invoiceId: id.optional(), paymentId: id.optional(), fieldsHash: z.string().regex(/^[0-9a-f]{64}$/), idempotencyKey: z.string().min(8).max(100) }) }),
+  // General ledger (20270214001000). Postings from records are automatic; these are the accountant's own entries.
+  z.object({ action: z.literal("gl_journal_post"), key, p: z.object({ date: day, memo: text(500).min(1), opening: z.boolean().optional(),
+    lines: z.array(z.object({ account: id, debit: amount.optional(), credit: amount.optional(), jobId: id.optional(), description: text(300).optional() })).min(2).max(100) }) }),
+  z.object({ action: z.literal("gl_journal_reverse"), entryId: id, date: day.optional(), reason: text(400).min(1) }),
+  z.object({ action: z.literal("gl_account_save"), p: z.object({ id: id.optional(), code: z.string().regex(/^[0-9]{3,6}(\.[0-9]{1,3})?$/).optional(), name: text(120).optional(),
+    type: z.enum(["asset", "liability", "equity", "income", "cogs", "expense"]).optional(), description: text(300).optional(), active: z.boolean().optional() }) }),
+  z.object({ action: z.literal("gl_lock_period"), through: day.nullable(), reason: text(500).optional() }),
+  z.object({ action: z.literal("gl_sync") }),
   z.object({ action: z.literal("email_template_save"), templateKind: z.enum(["deposit", "progress", "final", "time_materials", "change_order", "balance_reminder", "overdue_reminder", "receipt", "partial_payment", "final_thanks", "credit_refund"]),
     tone: z.enum(["friendly", "professional", "brief"]), subject: text(300).min(1), body: text(10000).min(1) }),
 ]);
@@ -204,6 +212,11 @@ export async function POST(req: Request) {
       case "bank_create_expense": return json((await rpcData(db, "fin_bank_create_expense", { p_txn_id: a.txnId, p: a.p })) as Record<string, unknown>);
       case "bank_reconcile": return json((await rpcData(db, "fin_bank_reconcile", { p_account_id: a.accountId, p: a.p })) as Record<string, unknown>);
       case "bank_reconcile_reopen": return await rpcOk(db, "fin_bank_reconcile_reopen", { p_id: a.reconciliationId, p_reason: a.reason });
+      case "gl_journal_post": return json((await rpcData(db, "fin_gl_journal_post", { p_book_id: bookId, p: a.p, p_idempotency_key: a.key ?? null })) as Record<string, unknown>);
+      case "gl_journal_reverse": return json((await rpcData(db, "fin_gl_journal_reverse", { p_entry_id: a.entryId, p_date: a.date ?? null, p_reason: a.reason })) as Record<string, unknown>);
+      case "gl_account_save": return json((await rpcData(db, "fin_gl_account_save", { p_book_id: bookId, p: a.p })) as Record<string, unknown>);
+      case "gl_lock_period": return json((await rpcData(db, "fin_gl_lock_period", { p_book_id: bookId, p_through: a.through, p_reason: a.reason ?? null })) as Record<string, unknown>);
+      case "gl_sync": return json({ posted: await rpcData(db, "fin_gl_sync", { p_book_id: bookId }) });
       case "cost_fill": return await rpcOk(db, "fin_cost_fill", { p_entity_type: a.entityType, p_entity_id: a.entityId, p: a.p });
       // Drafts only: saving a draft stores it for review. There is no send or queue action here.
       case "email_draft_save": return json({ messageId: await fin.saveEmailDraft(db, bookId, a.p) });

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Built2Bid</string>
+    <string name="channel_clock">Time clock</string>
+    <string name="channel_clock_desc">Automatic clock-in and clock-out at your job sites</string>
+
+    <!-- Prominent disclosure shown before any location permission prompt (Google Play User Data policy). -->
+    <string name="disclosure_title">Automatic clock-in uses your location</string>
+    <string name="disclosure_body">Built2Bid collects location data to clock you in and out automatically when you arrive at and leave the job sites your company assigned to you, even when the app is closed or not in use.\n\nOnly arrivals and departures at your work sites are saved, with the distance to the site and GPS accuracy. Built2Bid does not save a trail of where you go, and there is no live map.\n\nLocation is only used if your company turned on automatic clock-in and you agreed. You can turn it off any time on the time clock screen, and the Clock in and Clock out buttons always work.</string>
+    <string name="disclosure_continue">Continue</string>
+    <string name="disclosure_cancel">No thanks</string>
+    <string name="background_title">Choose “Allow all the time”</string>
+    <string name="background_body">So clock-in works when Built2Bid is closed, choose “Allow all the time” on the next screen. If you choose “Only while using the app”, automatic clock-in only works while Built2Bid is open.</string>
+    <string name="background_open">Open settings</string>
+    <string name="not_now">Not now</string>
+    <string name="signed_out">Open Built2Bid and sign in so automatic clock-in keeps working.</string>
+    <string name="offline_title">You’re offline</string>
+    <string name="offline_body">Built2Bid needs a connection to load. Arrivals and departures at your job sites are saved on this phone and sent when you’re back online.</string>
+    <string name="retry">Try again</string>
+</resources>

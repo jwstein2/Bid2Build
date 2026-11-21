@@ -6,10 +6,14 @@ import { AGING_BUCKETS, AGING_LABELS, filterTxns, POSTING_LABELS, RECON_LABELS, 
 import {
   loadApAging, loadArAgingRows, loadAudit, loadBank, loadCustomerBalances, loadExpensesByCategory, loadJobCosting, loadLaborVariance, loadLookups, loadSubPayments, loadTxns, todayIso,
 } from "@/lib/financials/accounting-load";
+import { balanceSheet, incomeStatement, trialBalance, SOURCE_LABELS, EVENT_LABELS, type StatementSection } from "@/lib/financials/general-ledger";
+import { loadAccounts, loadActivity, loadBalances, syncLedger } from "@/lib/financials/general-ledger-load";
+
+const sectionRows = (s: StatementSection) => [[s.label], ...s.lines.map((l) => [`${l.code} ${l.name}`, l.amount]), [`Total ${s.label.toLowerCase()}`, s.total], []];
 
 export const runtime = "nodejs";
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
-const KINDS = ["transactions", "bank_lines", "reconciliations", "ar_aging", "ap_aging", "customer_balances", "job_costing", "labor_variance", "expenses_by_category", "sub_payments", "audit_trail"] as const;
+const KINDS = ["transactions", "bank_lines", "reconciliations", "ar_aging", "ap_aging", "customer_balances", "job_costing", "labor_variance", "expenses_by_category", "sub_payments", "audit_trail", "general_ledger", "gl_trial_balance", "gl_balance_sheet", "gl_income_statement"] as const;
 type Kind = (typeof KINDS)[number];
 
 /**
@@ -120,6 +124,34 @@ export async function GET(req: Request) {
       if (!r.ok) return fail(r.reason === "forbidden" ? 403 : 503, r.reason, "The audit trail isn't available.");
       out = [["Audit trail (sensitive fields hidden)", `${from} to ${to}`, "Newest 500"], [], ["When (UTC)", "Who", "Action", "Record type", "Record id", "Details"],
         ...r.rows.map((x) => [x.created_at.replace("T", " ").slice(0, 19), x.actor_name, x.action, x.entity_type, x.entity_id ?? "", JSON.stringify(x.details ?? {})])];
+      break;
+    }
+    case "general_ledger": case "gl_trial_balance": case "gl_balance_sheet": case "gl_income_statement": {
+      if (!(await syncLedger(db, bookId)).ready) return fail(503, "not_installed", "The general ledger turns on after the database update is installed.");
+      if (kind === "general_ledger") {
+        title = "General_ledger";
+        const accounts = await loadAccounts(db, bookId);
+        const only = filters.account ? accounts.filter((a) => a.id === filters.account) : accounts;
+        out = [["General ledger detail (accrual)", `${from} to ${to}`], [], ["Account", "Date", "Type", "Memo", "Line note", "Debit", "Credit", "Balance"]];
+        for (const a of only) {
+          for (const r of await loadActivity(db, bookId, a.id, from, to)) {
+            out.push([`${a.code} ${a.name}`, r.entry_date, `${SOURCE_LABELS[r.source_type] ?? r.source_type}${EVENT_LABELS[r.event_kind] ? ` (${EVENT_LABELS[r.event_kind]})` : ""}`, r.memo, r.description ?? "", Number(r.debit) ? r.debit : "", Number(r.credit) ? r.credit : "", r.running]);
+          }
+        }
+      } else if (kind === "gl_trial_balance") {
+        title = "Trial_balance";
+        const t = trialBalance(await loadBalances(db, bookId, null, to));
+        out = [["Trial balance", `as of ${to}`], [], ["Account", "Debit", "Credit"], ...t.rows.map((r) => [`${r.code} ${r.name}`, r.debit, r.credit]), ["Totals", t.debit, t.credit]];
+      } else if (kind === "gl_balance_sheet") {
+        title = "Balance_sheet";
+        const b = balanceSheet(await loadBalances(db, bookId, null, to));
+        out = [["Balance sheet", `as of ${to}`], [], ...sectionRows(b.assets), ...sectionRows(b.liabilities), ...sectionRows(b.equity),
+          ["Retained earnings and current profit", b.earnings], ["Total equity", b.totalEquity], ["Total liabilities and equity", b.totalLiabilitiesAndEquity]];
+      } else {
+        title = "Income_statement";
+        const i = incomeStatement(await loadBalances(db, bookId, from, to));
+        out = [["Income statement (accrual)", `${from} to ${to}`], [], ...sectionRows(i.income), ...sectionRows(i.cogs), ["Gross profit", i.grossProfit], [], ...sectionRows(i.expense), ["Net income", i.netIncome]];
+      }
       break;
     }
   }

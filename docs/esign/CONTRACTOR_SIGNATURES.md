@@ -2,7 +2,9 @@
 
 Contractor-side signatures on accepted proposals. This builds on the existing e-signature system (`README.md` in this folder). It doesn't replace it. The customer side (`signing_requests`, `signatures`, `/sign/<token>`) is unchanged, and so is every reader of `public.signatures` (pipeline, project reviews, Financial Command Center).
 
-**Status:** behind `NEXT_PUBLIC_CONTRACTOR_SIGNING=on`, which also needs `NEXT_PUBLIC_ESIGNATURES=on`. It is off everywhere until the owner approves release. It needs migration `supabase/migrations/20261125001000_contractor_signatures.sql`, which is additive only. With the flag off, nothing changes for anyone, even after the migration is applied.
+**Status (2026-11-21):** James asked to turn contractor signing on in Production while attorney review is pending, with the legal wording made as enforceable as possible. The wording was strengthened (see "Enforceability wording, 2026-11-21" below); the "Legal Review Pending" notice stays on the disclosure and signing pages. Release = set `NEXT_PUBLIC_CONTRACTOR_SIGNING=on` for Production and redeploy. No new SQL.
+
+**Original status:** behind `NEXT_PUBLIC_CONTRACTOR_SIGNING=on`, which also needs `NEXT_PUBLIC_ESIGNATURES=on`. It is off everywhere until the owner approves release. It needs migration `supabase/migrations/20261125001000_contractor_signatures.sql`, which is additive only. With the flag off, nothing changes for anyone, even after the migration is applied.
 
 ## 1. Audit of what already existed (and what was extended)
 
@@ -104,3 +106,22 @@ The requirement is frozen per signing link in `contractor_signing_requirements` 
 5. Have an attorney review section 4 and the wording in `config.ts`.
 6. To release: set `NEXT_PUBLIC_CONTRACTOR_SIGNING=on` for Production in Netlify, then **Trigger deploy** (the flag is inlined at build time).
 7. Roll back by removing the flag and redeploying. Data stays; customer signing keeps working as before.
+
+## 7. Enforceability wording, 2026-11-21
+
+Benchmarked against the elements of DocuSign's public Electronic Record and Signature Disclosure and Certificate of Completion (no text copied), mapped to ESIGN (15 U.S.C. 7001) and UETA.
+
+| Element | Where | What it says now |
+|---|---|---|
+| Agreement to transact electronically (UETA sec. 5) | Customer consent `esign-consent-2026-11-21`; contractor adoption `contractor-adopt-2026-11-21` | Both parties expressly agree to do business electronically |
+| Consumer disclosure (ESIGN 7001(c)) | `consentText` + `/esign-disclosure` | Scope, electronic delivery of copies/notices, free paper copy and how to ask, withdrawal and its effect, contact updates, hardware/software incl. email, "I can open the PDF on this device" |
+| Intent to sign | `acceptanceText`, `SIGN_INTENT_NOTICE` above the button; `countersignText`, `signBeforeSendText`, `CONTRACTOR_SIGN_INTENT_NOTICE` | Express "I intend to sign ... and be legally bound" |
+| Legal effect (ESIGN 7001(a), UETA sec. 7) | All statements | Same effect as a handwritten signature under ESIGN and UETA |
+| Attribution (UETA sec. 9) | Adoption + auto-apply | Identity check, own signature, no one else uses it, secure sign-in, remove on suspected misuse, authority limits; auto-apply is the signer's signature adopted in advance and binds the company |
+| Record retention / original (UETA sec. 12) | `countersignText`; certificate "Legal basis of this record" | Electronic record with certificate and audit trail may be used as the signed original |
+| Audit trail / certificate | Signed PDF certificate (unchanged data) + new legal-basis paragraph | Consent, statements, times, IP/browser for in-person signatures, link activity, SHA-256 fingerprints |
+| Copy to all parties | Customer: download + `ESIGN_SIGNER_COPY_EMAIL` (off until set); contractor: Executed PDF on the signed page | Recommend setting `ESIGN_SIGNER_COPY_EMAIL=on` in Production |
+
+Older signatures and credentials keep the wording and version they were signed with. Pages open during the deploy get a "page was updated, reload" message (409) and sign after reloading.
+
+Still for counsel: optional email one-time code before customer signing; PKI seal on the executed PDF; state home-improvement contract rules (signature, notice and cancellation requirements).
