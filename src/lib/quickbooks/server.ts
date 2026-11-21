@@ -11,6 +11,7 @@ import { mapTimesheet } from "@/lib/team/records";
 import { qbEnvironment, type QbEnvironment } from "./config";
 import { QbError, companyName, createTimeActivity, refreshTokens, revokeToken, listEntities, type QbEntity, type QbTokens } from "./client";
 import { planExport, type JobLink, type SkipReason, type WorkerLink } from "./mapping";
+import { logError } from "@/lib/http/api";
 
 type Db = SupabaseClient;
 export interface Scope { companyId: string | null; ownerId: string | null; canManage: boolean }
@@ -70,7 +71,7 @@ export async function accessToken(admin: Db, c: Connection): Promise<string> {
   const row = data as Record<string, string>;
   if (Date.parse(row.access_expires_at) - Date.now() > 120_000) return openToken(row.access_ciphertext);
   try {
-    const t = await refreshTokens(openToken(row.refresh_ciphertext));
+    const t = await refreshTokens(openToken(row.refresh_ciphertext), c.environment);
     await storeTokens(admin, c.id, t);
     return t.accessToken;
   } catch (e) {
@@ -94,7 +95,7 @@ async function withToken<T>(admin: Db, c: Connection, fn: (token: string) => Pro
 
 export async function disconnect(admin: Db, c: Connection, userId: string): Promise<void> {
   const { data } = await admin.from("qb_connection_secrets").select("refresh_ciphertext").eq("connection_id", c.id).maybeSingle();
-  if (data) { try { await revokeToken(openToken((data as { refresh_ciphertext: string }).refresh_ciphertext)); } catch { /* best effort */ } }
+  if (data) { try { await revokeToken(openToken((data as { refresh_ciphertext: string }).refresh_ciphertext), c.environment); } catch { /* best effort */ } }
   await markDisconnected(admin, c.id, userId);
 }
 
@@ -162,6 +163,7 @@ export async function syncHours(admin: Db, userDb: Db, c: Connection, userId: st
       const message = e instanceof Error ? e.message.slice(0, 300) : "QuickBooks didn't accept this entry.";
       await admin.from("qb_time_exports").update({ status: "error", error: message }).eq("connection_id", c.id).eq("entry_id", item.entry.id);
       result.failed.push({ entryId: item.entry.id, message });
+      logError("quickbooks.time_activity", e, { status: e instanceof QbError ? e.status : undefined, intuit_tid: e instanceof QbError ? e.tid ?? undefined : undefined });
       if (e instanceof QbError && e.reauth) { await needsReauth(admin, c.id, "QuickBooks asked to sign in again."); break; }
     }
   }
