@@ -5,7 +5,7 @@ import { ArrowLeft, CheckCircle2, Circle, Clock, Lock } from "lucide-react";
 import { Container, Notice } from "@/components/ui/misc";
 import { buttonClass } from "@/components/ui/button";
 import { Flash } from "@/components/creator/flash";
-import { CourseCover } from "@/components/academy/course-card";
+import { CourseCover, comingLabel } from "@/components/academy/course-card";
 import { ResourceCard } from "@/components/academy/resource-card";
 import { SaveButton } from "@/components/academy/controls";
 import { getCourse, loadMe, signedMediaUrls } from "@/lib/academy/server";
@@ -65,7 +65,7 @@ export default async function CoursePage({ params, searchParams }: PageProps<"/a
           <h1 className="mt-1 font-display text-3xl font-extrabold">{course.title}</h1>
           <p className="mt-2 text-lg text-ink-soft">{course.summary}</p>
           <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
-            {live ? <span className="rounded bg-ok-tint px-2 py-1 text-ok">{ACCESS_LABEL[course.access]}</span> : <span className="rounded bg-idle-tint px-2 py-1 text-ink-soft">Coming soon</span>}
+            {live ? <span className="rounded bg-ok-tint px-2 py-1 text-ok">{ACCESS_LABEL[course.access]}</span> : <span className="rounded bg-idle-tint px-2 py-1 text-ink-soft">{comingLabel(course.release_on)}</span>}
             <span className="rounded bg-black/5 px-2 py-1 text-ink-soft">{LEVEL_LABEL[course.level]}</span>
             {live && <span className="rounded bg-black/5 px-2 py-1 text-ink-soft">{outline.length} lessons{minutes ? ` · about ${minutes} min` : ""}</span>}
             {course.content_class === "mixed" && <span className="rounded bg-black/5 px-2 py-1 text-ink-soft">Built2Bid lessons + credited expert resources</span>}
@@ -127,7 +127,7 @@ export default async function CoursePage({ params, searchParams }: PageProps<"/a
                   {!me.member && outline.some((o) => o.locked) && <p className="mt-3 text-xs text-muted">The first lessons are open to everyone. <Link href={me.signed_in ? "/academy/join" : "/login?next=/academy/join"} className="font-semibold text-accent-ink underline">Join free</Link> to unlock the rest and save your progress.</p>}
                 </>
               ) : (
-                <p className="text-sm text-ink-soft">Coming soon. {me.member ? "Save it to find it again." : ""}</p>
+                <p className="text-sm text-ink-soft">{comingLabel(course.release_on)}. {me.member ? "Save it to find it again." : ""}</p>
               )}
               {me.member && !course.id.startsWith("static-") && <div className="mt-2"><SaveButton type="course" id={course.id} saved={saved} /></div>}
             </div>

@@ -72,7 +72,7 @@ export default async function TradeClassroom({ params }: PageProps<"/academy/cla
           {general.map((c) => <CourseCard key={c.id} course={c} progress={progress.get(c.id)} />)}
           {sorted.map((c) => <CourseCard key={c.id} course={c} tradeName={trade.name} progress={progress.get(c.id)} />)}
         </ul>
-        <p className="mt-3 text-xs text-muted">Courses marked &quot;Coming soon&quot; are being written and reviewed. Each one lists its planned lessons and credited resources you can use now.</p>
+        <p className="mt-3 text-xs text-muted">Upcoming courses show their release date: two new courses go live every week. Each one lists its planned lessons and credited resources you can use now.</p>
       </section>
 
       <section className="mt-10 grid gap-4 md:grid-cols-2">

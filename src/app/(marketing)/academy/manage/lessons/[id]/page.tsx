@@ -8,7 +8,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { requireAcademyStaff } from "@/lib/academy/server";
 import type { AppAction, QuizQuestion } from "@/lib/academy/types";
 import { isAiConfigured } from "@/lib/ai/provider";
-import { draftLessonSummary, saveLesson, setLessonResources } from "../../actions";
+import { deleteLesson, draftLessonSummary, saveLesson, setLessonResources } from "../../actions";
 
 type LessonRow = {
   id: string; course_id: string; module_id: string | null; slug: string; title: string; summary: string | null; body_md: string | null; takeaways: string[]; checklist: string[];
@@ -95,6 +95,16 @@ export default async function LessonEditor({ params, searchParams }: PageProps<"
             </div>
             <div className="mt-2"><Submit size="sm" variant="secondary">Save resources</Submit></div>
           </form>
+          {admin && (
+            <form action={deleteLesson} className="rounded-xl border border-danger/40 bg-surface p-4" data-testid="delete-lesson">
+              <input type="hidden" name="id" value={l.id} />
+              <p className="text-sm font-semibold">Delete this lesson</p>
+              <p className="mt-1 text-xs text-muted">Removes it for good, with members&apos; progress on it. If it&apos;s still in the course&apos;s planned lessons, the weekly job writes a fresh version before release unless you remove it from the plan.</p>
+              <label className="mt-2 flex items-start gap-2 text-xs"><input type="checkbox" name="drop_planned" defaultChecked className="mt-0.5" /> Also remove it from the planned lessons</label>
+              <label className="mt-1 flex items-start gap-2 text-xs"><input type="checkbox" name="confirm" required className="mt-0.5" /> Yes, delete &quot;{l.title}&quot;</label>
+              <div className="mt-2"><Submit size="sm" variant="danger" pending="Deleting…">Delete lesson</Submit></div>
+            </form>
+          )}
         </aside>
       </div>
     </>

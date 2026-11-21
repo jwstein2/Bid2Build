@@ -3,6 +3,7 @@ import { BookOpen, Calculator, CalendarCheck, HardHat, Landmark, Repeat, ShieldC
 import { cn } from "@/lib/cn";
 import { ACCESS_LABEL, LEVEL_LABEL, pillarMeta, type CoverTheme, type Pillar } from "@/lib/academy/types";
 import type { Course } from "@/lib/academy/server";
+import { centralToday, releaseLabel } from "@/lib/academy/release-plan";
 
 const ICONS: Record<Pillar, LucideIcon> = {
   getting_started: HardHat, sales: Handshake, estimating: Calculator, project_management: CalendarCheck,
@@ -36,6 +37,11 @@ export function CourseCover({ course, tradeName, coverUrl, className }: { course
   );
 }
 
+/** "Coming Nov 30, 2026" for a scheduled course (or "Coming soon" when it has no date or the date has passed). */
+export function comingLabel(releaseOn: string | null | undefined): string {
+  return releaseOn && releaseOn >= centralToday() ? `Coming ${releaseLabel(releaseOn)}` : "Coming soon";
+}
+
 export function CourseCard({ course, tradeName, progress, coverUrl }: { course: Course; tradeName?: string | null; progress?: { completed: number; total: number }; coverUrl?: string | null }) {
   const live = course.status === "published";
   const pct = progress && progress.total ? Math.round((progress.completed / progress.total) * 100) : 0;
@@ -45,7 +51,7 @@ export function CourseCard({ course, tradeName, progress, coverUrl }: { course: 
         <CourseCover course={course} tradeName={tradeName} coverUrl={coverUrl} />
         <div className="flex flex-1 flex-col p-4">
           <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-semibold">
-            {live ? <span className="rounded bg-ok-tint px-1.5 py-0.5 text-ok">{ACCESS_LABEL[course.access]}</span> : <span className="rounded bg-idle-tint px-1.5 py-0.5 text-ink-soft">Coming soon</span>}
+            {live ? <span className="rounded bg-ok-tint px-1.5 py-0.5 text-ok">{ACCESS_LABEL[course.access]}</span> : <span className="rounded bg-idle-tint px-1.5 py-0.5 text-ink-soft" data-testid="coming-label">{comingLabel(course.release_on)}</span>}
             <span className="rounded bg-black/5 px-1.5 py-0.5 text-ink-soft">{LEVEL_LABEL[course.level]}</span>
             {live && course.lesson_count ? <span className="text-muted">{course.lesson_count} {course.lesson_count === 1 ? "lesson" : "lessons"}</span> : course.planned_lessons.length ? <span className="text-muted">{course.planned_lessons.length} lessons planned</span> : null}
           </div>
