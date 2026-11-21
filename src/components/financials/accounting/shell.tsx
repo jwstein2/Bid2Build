@@ -9,7 +9,7 @@ import { ACCOUNTANT_NAV, type AccountantNavKey } from "@/lib/financials/accounti
 import { cn } from "@/lib/cn";
 
 /** Page-guide keys for the accounting pages (src/lib/features/page-guides.ts). */
-export const GUIDE_PAGE = { queue: "financials.accounting", transactions: "financials.accounting.transactions", bank: "financials.accounting.bank", reports: "financials.accounting.reports", audit: "financials.accounting.audit", accounts: "financials.accounting.accounts" } as const;
+export const GUIDE_PAGE = { queue: "financials.accounting", transactions: "financials.accounting.transactions", bank: "financials.accounting.bank", reports: "financials.accounting.reports", audit: "financials.accounting.audit", accounts: "financials.accounting.accounts", ledger: "financials.accounting.ledger" } as const;
 export type AccountingGuide = (typeof GUIDE_PAGE)[keyof typeof GUIDE_PAGE];
 
 /** Accountant Mode navigation: one row of real links (scrolls sideways on phones, never wraps into a menu). */

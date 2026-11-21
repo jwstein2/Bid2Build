@@ -126,7 +126,7 @@ describe("reports catalog", () => {
       if (r.status === "blocked") { expect(r.href).toBeUndefined(); expect(r.blockedBy).toMatch(/general ledger/i); expect(r.csv).toBeUndefined(); }
       else expect(r.href).toMatch(/^\/financials\//);
     }
-    expect(REPORT_CATALOG.filter((r) => r.status === "blocked").map((r) => r.key).sort()).toEqual(["balance_sheet", "cash_flow", "general_ledger", "trial_balance"]);
+    expect(REPORT_CATALOG.filter((r) => r.status === "blocked").map((r) => r.key).sort()).toEqual(["cash_flow"]);
   });
   it("searches labels, descriptions and keywords; hides reports the role can't open", () => {
     expect(searchCatalog("1099", FIN_ROLE_PERMISSIONS.bookkeeper).map((r) => r.key)).toEqual(["sub_payments"]);
@@ -137,7 +137,7 @@ describe("reports catalog", () => {
 
 describe("accountant quick actions", () => {
   it("are the nine asked for, each opening a real page", () => {
-    expect(ACCOUNTANT_ACTIONS.map((a) => a.label)).toEqual(["Reconcile bank", "Review uncategorized", "Review bills", "Review AR", "Generate P&L", "Export transaction ledger", "Review duplicate transactions", "Review audit trail", "Review payroll costs"]);
+    expect(ACCOUNTANT_ACTIONS.map((a) => a.label)).toEqual(["Reconcile bank", "Review uncategorized", "Review bills", "Review AR", "Generate P&L", "Export general ledger", "Review duplicate transactions", "Review audit trail", "Review payroll costs"]);
     for (const a of ACCOUNTANT_ACTIONS) expect(a.href).toMatch(/^\/(financials|api\/financials)\//);
   });
   it("show only what the role allows", () => {

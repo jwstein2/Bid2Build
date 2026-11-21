@@ -246,10 +246,11 @@ export const REPORT_CATALOG: CatalogReport[] = [
   { key: "transactions", label: "Transaction Ledger", description: "Every invoice, payment, refund, credit, bill, bill payment and expense in one searchable list.", status: "available", href: "/financials/accounting/transactions", needs: "view_company_financials", keywords: "transactions ledger register list journal", csv: "transactions" },
   { key: "reconciliations", label: "Bank Reconciliation History", description: "Confirmed periods per bank account, with the statement balance, bank balance and any difference.", status: "available", href: "/financials/accounting/bank", needs: "view_company_financials", keywords: "bank reconciliation history periods", csv: "reconciliations" },
   { key: "audit_trail", label: "Audit Trail", description: "Who did what and when, with previous and new values.", status: "available", href: "/financials/accounting/audit", needs: "view_company_financials", keywords: "audit log history changes who", csv: "audit_trail" },
-  { key: "balance_sheet", label: "Balance Sheet", description: "Assets, liabilities and equity at a date.", status: "blocked", needs: "view_company_financials", keywords: "balance sheet assets liabilities equity", blockedBy: "Needs the general ledger (chart of accounts + double-entry postings) and a CPA review of the account mapping." },
-  { key: "trial_balance", label: "Trial Balance", description: "Every account's debit and credit balance.", status: "blocked", needs: "view_company_financials", keywords: "trial balance debits credits", blockedBy: "Needs the general ledger (double-entry postings)." },
-  { key: "cash_flow", label: "Cash Flow Statement", description: "Operating, investing and financing cash flows.", status: "blocked", needs: "view_company_financials", keywords: "cash flow statement operating investing financing", blockedBy: "Needs the general ledger and account classifications reviewed by a CPA. The cash-basis P&L shows money in and out today." },
-  { key: "general_ledger", label: "General Ledger detail", description: "Postings per account with running balances.", status: "blocked", needs: "view_company_financials", keywords: "general ledger gl postings", blockedBy: "Needs the general ledger. The Transaction Ledger export is the closest thing today and is labeled as such." },
+  { key: "balance_sheet", label: "Balance Sheet", description: "Assets, liabilities and equity at a date, from the general ledger.", status: "available", href: "/financials/accounting/ledger?v=balance", needs: "view_company_financials", keywords: "balance sheet assets liabilities equity", csv: "gl_balance_sheet" },
+  { key: "trial_balance", label: "Trial Balance", description: "Every account's debit and credit balance at a date.", status: "available", href: "/financials/accounting/ledger?v=trial", needs: "view_company_financials", keywords: "trial balance debits credits", csv: "gl_trial_balance" },
+  { key: "income_statement", label: "Income Statement (accrual)", description: "Income, job costs and expenses for a period from the general ledger.", status: "available", href: "/financials/accounting/ledger?v=income", needs: "view_company_financials", keywords: "income statement profit loss accrual gl", csv: "gl_income_statement" },
+  { key: "cash_flow", label: "Cash Flow Statement", description: "Operating, investing and financing cash flows.", status: "blocked", needs: "view_company_financials", keywords: "cash flow statement operating investing financing", blockedBy: "The general ledger is in; the cash flow statement needs account classifications (operating, investing, financing) reviewed by a CPA. The cash-basis P&L shows money in and out today." },
+  { key: "general_ledger", label: "General Ledger detail", description: "Every journal line per account with running balances.", status: "available", href: "/financials/accounting/ledger?v=detail", needs: "view_company_financials", keywords: "general ledger gl postings journal", csv: "general_ledger" },
 ];
 
 export function searchCatalog(q: string, perms: readonly string[]): CatalogReport[] {
@@ -266,7 +267,7 @@ export const ACCOUNTANT_ACTIONS: AccountantAction[] = [
   { key: "bills", label: "Review bills", href: "/financials/accounting?kind=bills", needs: ["view_company_financials"], hint: "Bills waiting for approval or past due" },
   { key: "ar", label: "Review AR", href: "/financials/receivables", needs: ["view_company_financials"], hint: "What customers owe, by age" },
   { key: "pl", label: "Generate P&L", href: "/financials/reports", needs: ["view_company_financials"], hint: "Profit & Loss for any period" },
-  { key: "export_ledger", label: "Export transaction ledger", href: "/api/financials/export?kind=transactions", needs: ["view_company_financials", "export_financials"], hint: "CSV of every transaction (not a GL export)" },
+  { key: "export_ledger", label: "Export general ledger", href: "/api/financials/export?kind=general_ledger", needs: ["view_company_financials", "export_financials"], hint: "CSV of every journal line by account" },
   { key: "duplicates", label: "Review duplicate transactions", href: "/financials/accounting?kind=duplicates", needs: ["view_company_financials"], hint: "Possible duplicate expenses and bank lines" },
   { key: "audit", label: "Review audit trail", href: "/financials/accounting/audit", needs: ["view_company_financials"], hint: "Who changed what, and when" },
   { key: "payroll", label: "Review payroll costs", href: "/financials/accounting/reports?r=labor_variance", needs: ["view_company_financials"], hint: "Labor costs vs estimate, with time-clock hours" },
@@ -279,6 +280,7 @@ export const ACCOUNTANT_NAV = [
   { key: "transactions", label: "Transactions", href: "/financials/accounting/transactions" },
   { key: "bank", label: "Reconciliation", href: "/financials/accounting/bank" },
   { key: "arap", label: "AR / AP", href: "/financials/accounting/reports?r=ap_aging" },
+  { key: "ledger", label: "General ledger", href: "/financials/accounting/ledger" },
   { key: "accounts", label: "Chart of accounts", href: "/financials/accounting/accounts" },
   { key: "reports", label: "Reports", href: "/financials/accounting/reports" },
   { key: "audit", label: "Audit trail", href: "/financials/accounting/audit" },
