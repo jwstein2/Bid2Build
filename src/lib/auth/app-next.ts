@@ -6,7 +6,7 @@
  * Pages still authorize on their own; this only keeps the destination.
  */
 
-const APP_PREFIXES = ["/company", "/dashboard", "/financials", "/home", "/industry", "/learning", "/mentorship", "/projects", "/search", "/settings", "/signed", "/whats-new"];
+const APP_PREFIXES = ["/clock", "/company", "/dashboard", "/financials", "/home", "/industry", "/learning", "/mentorship", "/projects", "/search", "/settings", "/signed", "/whats-new"];
 /** Public pages that live under an app prefix. */
 const PUBLIC_UNDER_APP = ["/company/join"];
 

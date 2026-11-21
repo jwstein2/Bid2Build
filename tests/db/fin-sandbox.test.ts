@@ -123,6 +123,7 @@ d("company sandbox mode (database)", () => {
   });
 
   it("rollback refuses while a sandbox holds records; on a clean database it rolls back and re-applies", async () => {
+    await pool.query(readFileSync("docs/worker-invites/rollback_20270212001000.sql", "utf8"));
     await pool.query(readFileSync("docs/worker-hub/rollback_20270210001000.sql", "utf8"));
     await pool.query(readFileSync("docs/workforce-gps/rollback_20270208001000.sql", "utf8"));
     await pool.query(readFileSync("docs/hr-records/rollback_20270205001000.sql", "utf8"));
@@ -137,6 +138,7 @@ d("company sandbox mode (database)", () => {
       // An empty sandbox (no jobs) is removed by the rollback.
       const e = await wonBid(fresh.pool, w2.owner, w2.company, { title: "Fence" });
       await as2(w2.owner, "select public.fin_sandbox_enter($1)", [w2.book]);
+      await fresh.pool.query(readFileSync("docs/worker-invites/rollback_20270212001000.sql", "utf8"));
       await fresh.pool.query(readFileSync("docs/worker-hub/rollback_20270210001000.sql", "utf8"));
       await fresh.pool.query(readFileSync("docs/workforce-gps/rollback_20270208001000.sql", "utf8"));
       await fresh.pool.query(readFileSync("docs/hr-records/rollback_20270205001000.sql", "utf8"));

@@ -16,6 +16,7 @@ import {
 } from "@/lib/workforce/gps/model";
 import { CLASSIFICATION_LABEL, type Classification } from "@/lib/workforce/hub/model";
 import { LaborReportPanel, PayPanel, SchedulesPanel } from "@/components/workforce/hub/admin-panels";
+import { WorkerInviteButton } from "@/components/workforce/hub/worker-invite";
 
 export type Tab = "overview" | "locations" | "employees" | "settings" | "corrections" | "payroll" | "schedules" | "report" | "pay";
 const TABS: { key: Tab; label: string }[] = [
@@ -82,7 +83,7 @@ export function TimeTrackingAdmin({ initial, projects, initialTab }: { initial: 
       {msg && <Notice tone={msg.ok ? "ok" : "danger"}>{msg.text}</Notice>}
       {tab === "overview" && <Overview data={data} tz={tz} names={names} locNames={locNames} post={post} go={setTab} />}
       {tab === "locations" && <Locations a={a} projects={projects} post={post} onError={(t) => setMsg({ ok: false, text: t })} />}
-      {tab === "employees" && <Employees a={a} tz={tz} locNames={locNames} post={post} classes={data.classifications ?? null} setClass={setClass} />}
+      {tab === "employees" && <Employees a={a} tz={tz} locNames={locNames} post={post} classes={data.classifications ?? null} setClass={setClass} reloadAll={() => { void reload(); }} />}
       {tab === "schedules" && a.canSupervise && <SchedulesPanel staff={a.employees.filter((e) => e.kind === "staff" && e.status === "active").map((e) => ({ id: e.id, name: e.name }))} locations={a.locations} projects={projects} tz={tz} canEdit={a.canSupervise} />}
       {tab === "report" && a.canSupervise && <LaborReportPanel tz={tz} />}
       {tab === "pay" && <PayPanel />}
@@ -353,7 +354,7 @@ function LocationEditor({ a, draft, setDraft, post, onError }: { a: GpsAdmin; dr
 }
 
 // -------------------------------------------------------------------------------------------------------------------
-function Employees({ a, tz, locNames, post, classes, setClass }: { a: GpsAdmin; tz: string; locNames: Record<string, string>; post: (b: Record<string, unknown>, t: string) => Promise<boolean>; classes: Record<string, Classification | null> | null; setClass: (id: string, c: string, name: string) => Promise<void> }) {
+function Employees({ a, tz, locNames, post, classes, setClass, reloadAll }: { reloadAll: () => void; a: GpsAdmin; tz: string; locNames: Record<string, string>; post: (b: Record<string, unknown>, t: string) => Promise<boolean>; classes: Record<string, Classification | null> | null; setClass: (id: string, c: string, name: string) => Promise<void> }) {
   const [events, setEvents] = useState<{ id: string; name: string; rows: GeoEventRow[] } | null>(null);
   const staff = a.employees.filter((e) => e.kind === "staff" && e.status === "active");
   const subs = a.employees.filter((e) => e.kind === "subcontractor" && e.status === "active");
@@ -373,7 +374,7 @@ function Employees({ a, tz, locNames, post, classes, setClass }: { a: GpsAdmin; 
           <tbody className="divide-y divide-line">
             {staff.map((e) => (
               <tr key={e.id}>
-                <td className="px-3 py-2"><span className="font-semibold">{e.name}</span>{!e.linked && <span className="block text-xs text-muted">No login linked: manual clock by a manager</span>}{e.flsa === "exempt" && <span className="block text-xs text-muted">FLSA exempt (no overtime split)</span>}</td>
+                <td className="px-3 py-2"><span className="font-semibold">{e.name}</span>{!e.linked && <span className="block text-xs text-muted">No login linked: manual clock by a manager</span>}{!e.linked && a.canAdmin && <span className="mt-1 block"><WorkerInviteButton resourceId={e.id} name={e.name} onDone={reloadAll} /></span>}{e.flsa === "exempt" && <span className="block text-xs text-muted">FLSA exempt (no overtime split)</span>}</td>
                 <td className="px-3 py-2">{classes ? (
                   <select className="rounded-lg border border-line bg-surface px-2 py-1.5 text-sm" aria-label={`${e.name}: employment classification`} value={classes[e.id] ?? ""} disabled={!a.canAdmin} data-testid={`hub-class-${e.id}`}
                     onChange={(ev) => setClass(e.id, ev.target.value, e.name)}>
