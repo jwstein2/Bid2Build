@@ -19,4 +19,6 @@ begin
     where n.nspname = 'public' and p.prosecdef and p.prorettype = 'trigger'::regtype
   loop execute format('grant execute on function %s to public, anon, authenticated', f); end loop;
 end $$;
+select cron.unschedule('b2b-location-retention');
+drop function if exists private.purge_expired_locations();
 commit;
