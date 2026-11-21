@@ -160,6 +160,17 @@ d("General ledger (database)", () => {
     expect(await fails(pool.query("select public.fin_gl_post($1, now()::date, 'x', 'manual', 'y', 'post', '[]')", [w.book]).then(() => as(w.owner, "select public.fin_gl_post($1, now()::date, 'x', 'manual', 'y', 'post', '[]')", [w.book])))).toMatch(/permission denied/);
   });
 
+  it("posts card surcharges once the surcharge column exists", async () => {
+    await pool.query("alter table public.fin_online_payments add column if not exists surcharge_amount numeric(14,2) not null default 0");
+    const pay = (await as<{ r: Row }>(w.bk, "select public.fin_payment_record($1, $2) as r", [w.book, { jobId: job, method: "card", amount: "100.00" }])).r.paymentId;
+    await pool.query("insert into public.fin_online_payments (book_id, invoice_id, stripe_account_id, checkout_session_id, livemode, amount, status, payment_id, settled_at, surcharge_amount) values ($1, $2, 'acct_T', 'cs_sur_1', false, '100.00', 'succeeded', $3, now(), '2.90')", [w.book, inv, pay]);
+    const before = await bal("merchant_fees");
+    await sync(); await sync();
+    expect(await bal("merchant_fees")).toBeCloseTo(before - 2.9, 2);
+    const { rows: e } = await pool.query("select count(*)::int as n from public.fin_journal_entries where source_ref = $1", [`${pay}:surcharge`]);
+    expect(e[0].n).toBe(1);
+  });
+
   it("lets accounts be added and renamed but protects system accounts", async () => {
     const a = await as<{ r: Row }>(w.owner, "select public.fin_gl_account_save($1, $2) as r", [w.book, { code: "1010", name: "Savings", type: "asset" }]).then((x) => x.r);
     expect(a).toMatchObject({ code: "1010", type: "asset", active: true });

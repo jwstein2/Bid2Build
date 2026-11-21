@@ -256,6 +256,18 @@ begin
     if r.status = 'void' then perform public.fin_gl_reverse_internal(v_entry, r.voided_at::date, 'void', 'Void expense ' || r.number); end if;
   end loop;
 
+  -- Card surcharges collected online (column added by the surcharge migration, 20270215001000+): Dr cash /
+  -- Cr merchant & bank fees (a contra to the card fees they offset). Skipped until that column exists.
+  if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'fin_online_payments' and column_name = 'surcharge_amount') then
+    for r in execute 'select o.payment_id, o.surcharge_amount, coalesce(o.settled_at, o.updated_at, o.created_at)::date as d, p.status as pay_status, p.voided_at, p.number
+                        from public.fin_online_payments o join public.fin_payments p on p.id = o.payment_id
+                       where o.book_id = $1 and o.surcharge_amount > 0' using p_book_id loop
+      v_entry := public.fin_gl_post(p_book_id, r.d, 'Card surcharge on payment ' || r.number, 'payment', r.payment_id::text || ':surcharge', 'post', jsonb_build_array(
+        jsonb_build_object('systemKey', 'cash', 'debit', r.surcharge_amount), jsonb_build_object('systemKey', 'merchant_fees', 'credit', r.surcharge_amount)));
+      if r.pay_status = 'void' then perform public.fin_gl_reverse_internal(v_entry, r.voided_at::date, 'void', 'Void card surcharge on payment ' || r.number); end if;
+    end loop;
+  end if;
+
   select count(*) - v_before into v_n from public.fin_journal_entries where book_id = p_book_id;
   return v_n;
 end $$;
