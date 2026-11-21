@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Built2Bid" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/navy</item>
+        <item name="colorPrimaryDark">@color/navy</item>
+        <item name="android:statusBarColor">@color/navy</item>
+        <item name="android:windowBackground">@color/paper</item>
+    </style>
+</resources>
