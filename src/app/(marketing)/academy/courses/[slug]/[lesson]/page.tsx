@@ -149,6 +149,10 @@ export default async function LessonPage({ params, searchParams }: PageProps<"/a
           <h1 className="mt-1 font-display text-3xl font-extrabold">{lesson.title}</h1>
           {lesson.summary && <p className="mt-2 text-lg text-ink-soft">{lesson.summary}</p>}
           {lesson.body_md && <Markdown source={lesson.body_md} className="mt-6 space-y-4 leading-relaxed text-ink-soft" />}
+          {/* AI-use disclosure: Academy lessons can be drafted with AI (Haiku) from public sources. */}
+          <p className="mt-6 rounded-lg bg-paper px-3 py-2 text-xs text-ink-soft" data-testid="ai-disclosure">
+            Academy lessons may be prepared with AI assistance from public sources. They are general information, not legal, tax or professional advice. Check codes, permits, tax and contract rules with your local authority.
+          </p>
 
           {lesson.takeaways.length > 0 && (
             <section className="mt-8 rounded-xl border border-line bg-surface p-5" aria-labelledby="takeaways-h">
