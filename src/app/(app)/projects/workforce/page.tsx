@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ChevronLeft, HardHat, LocateFixed } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { isPmEnabled } from "@/lib/env";
+import { isQuickBooksEnabled } from "@/lib/quickbooks/config";
 import { todayIn } from "@/lib/schedule/calendar";
 import { loadWorkforce } from "@/lib/workforce/server";
 import { WorkforcePage } from "@/components/workforce/workforce-page";
@@ -33,6 +34,10 @@ export default async function WorkforceRoute({ searchParams }: { searchParams: P
         <p className="mt-1 text-ink-soft">Find the right sub, worker or crew, see where they&apos;re booked, and put them on another job without leaving PM Hub.</p>
         <Link href="/projects/workforce/time-tracking" className="mt-2 inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-line-strong bg-surface px-3 text-sm font-semibold text-navy hover:border-accent-ink" data-testid="workforce-time-tracking-link">
           <LocateFixed className="h-4 w-4 text-accent-ink" aria-hidden /> Time tracking: GPS clock-in, timesheets &amp; payroll export</Link>
+        {isQuickBooksEnabled() && (
+          <Link href="/projects/workforce/quickbooks" className="ml-2 mt-2 inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-line-strong bg-surface px-3 text-sm font-semibold text-navy hover:border-accent-ink" data-testid="workforce-quickbooks-link">
+            Send hours to QuickBooks</Link>
+        )}
       </div>
       {wf
         ? <WorkforcePage wf={wf} today={todayIn("America/Chicago")} people={people}
