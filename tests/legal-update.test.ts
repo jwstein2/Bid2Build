@@ -32,7 +32,7 @@ describe("calling compliance helpers", () => {
 describe("e-signature consent v2", () => {
   it("covers paper copies, withdrawal, contact changes and the ability to open the PDF", () => {
     const t = consentText("Acme Roofing");
-    expect(CONSENT_VERSION).toBe("esign-consent-2026-11-19");
+    expect(CONSENT_VERSION).toBe("esign-consent-2026-11-21");
     for (const re of [/paper copy at no charge/, /withdraw this consent/, /email address changes/, /I confirm that I can open the proposal PDF/, /same legal effect/]) expect(t).toMatch(re);
     expect(t.length).toBeLessThan(4000);
   });

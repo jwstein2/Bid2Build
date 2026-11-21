@@ -116,7 +116,18 @@ describe("config, tokens and wording", () => {
     expect(c).toMatch(/withdraw/);
     expect(c).toMatch(/PDF/);
     expect(acceptanceText({ companyName: "Acme Decks", proposalNumber: "1042", projectTitle: "Deck", total: "$18,450.00" })).toBe(
-      'I have reviewed the entire proposal ("Deck", proposal #1042) from Acme Decks, including its scope, pricing, exclusions, payment schedule and terms, and I accept it for a total of $18,450.00.');
+      'I have reviewed the entire proposal ("Deck", proposal #1042) from Acme Decks, including its scope, pricing, exclusions, payment schedule and terms, and I accept it for a total of $18,450.00. By selecting Accept & Sign Proposal, I intend to sign this proposal electronically and to be legally bound by it.');
+  });
+  it("consent has every ESIGN 7001(c) / UETA element (2026-11-21)", () => {
+    const c = consentText("Acme Decks");
+    expect(c).toMatch(/do business electronically with Acme Decks/);
+    expect(c).toMatch(/same legal effect as a handwritten signature under the federal ESIGN Act/);
+    expect(c).toMatch(/at no charge/);
+    expect(c).toMatch(/withdraw this consent/);
+    expect(c).toMatch(/does not change the legal effect of anything I already signed/);
+    expect(c).toMatch(/If my email address changes/);
+    expect(c).toMatch(/I confirm that I can open the proposal PDF on this device/);
+    expect(c).toMatch(/notices and records about signing it electronically/);
   });
   it("the signing-link email carries the link and no attachment wording", () => {
     const e = buildShareEmail({ customerName: "John Smith", customerEmail: "john@example.com", projectTitle: "Backyard Deck Replacement", companyName: "Acme Decks", contactName: "Sam", phone: "(555) 010-0000", signingUrl: "https://built2bid.org/sign/abc" });

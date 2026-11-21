@@ -71,7 +71,7 @@ await link(2, "deck-token");
 await accept("deck-token", "John Smith");
 
 // The owner adopts a signature with automatic application, then the company turns on Mode A, before sending.
-await c.query("select * from public.contractor_adopt_credential($1, 'Alex Rivera', 'Owner', 'typed', 'Alex Rivera', null, null, 'contractor-adopt-2026-11-17', 'I adopt this signature', 'I authorize automatic application', $2, '198.51.100.7', 'Mozilla/5.0')", [OWNER, { method: "recent_sign_in", authenticatedAt: new Date().toISOString() }]);
+await c.query("select * from public.contractor_adopt_credential($1, 'Alex Rivera', 'Owner', 'typed', 'Alex Rivera', null, null, 'contractor-adopt-2026-11-21', 'I adopt this signature', 'I authorize automatic application', $2, '198.51.100.7', 'Mozilla/5.0')", [OWNER, { method: "recent_sign_in", authenticatedAt: new Date().toISOString() }]);
 await c.query("select * from public.contractor_save_policy($1, $2, $3)", [OWNER, company, { mode: "company_signer", defaultSignerId: OWNER, autoApplyAllowed: true, autoApplyTiming: "before_send", repSignaturesAllowed: false, required: true }]);
 
 // Fence install – Garcia: contractor signature applied automatically before sending, then customer signs = fully executed.

@@ -7,7 +7,7 @@ import sharp from "sharp";
 vi.mock("server-only", () => ({}));
 import { renderToBuffer } from "@react-pdf/renderer";
 import { executionState, applicationLabel, signingOrder, EXECUTION_LABELS } from "@/lib/esign/contractor/status";
-import { adoptionText, autoApplyText, countersignText, isContractorSigningEnabled } from "@/lib/esign/contractor/config";
+import { ADOPTION_VERSION, adoptionText, autoApplyText, countersignText, isContractorSigningEnabled } from "@/lib/esign/contractor/config";
 import { credentialSchema, policySchema } from "@/lib/esign/contractor/validate";
 import { normalizeSignatureImage } from "@/lib/esign/contractor/image";
 import { recentAuth } from "@/lib/esign/contractor/server";
@@ -69,6 +69,22 @@ describe("statements, flags and validation", () => {
     expect(autoApplyText({ legalName: "Dana Owner", companyName: "Acme" })).toMatch(/not as a signature I personally made/);
     expect(countersignText({ signerName: "Dana", companyName: "Acme", proposalNumber: "1042", projectTitle: "Deck", total: "$1,000.00", versionNumber: 2, customerSigned: true })).toContain("version 2 for a total of $1,000.00, as accepted by the customer");
   });
+  it("contractor wording states intent, legal effect, authority and attribution (2026-11-21)", () => {
+    const a = adoptionText({ legalName: "Dana Owner", companyName: "Acme" });
+    expect(a).toMatch(/I agree to do business electronically/);
+    expect(a).toMatch(/I intend to sign that document/);
+    expect(a).toMatch(/ESIGN Act and the Uniform Electronic Transactions Act/);
+    expect(a).toMatch(/only within the authority Acme has given me/);
+    expect(a).toMatch(/remove this signature right away/);
+    const auto = autoApplyText({ legalName: "Dana Owner", companyName: "Acme" });
+    expect(auto).toMatch(/I intend each automatic application to be my electronic signature/);
+    expect(auto).toMatch(/Revoking stops future applications only/);
+    const cs = countersignText({ signerName: "Dana", companyName: "Acme", proposalNumber: "1042", projectTitle: "Deck", total: "$1,000.00", versionNumber: 2, customerSigned: false });
+    expect(cs).toMatch(/authorized to sign for and bind Acme/);
+    expect(cs).toMatch(/I intend to sign this document electronically/);
+    expect(cs).toMatch(/may be used as the signed original/);
+    expect(ADOPTION_VERSION).toBe("contractor-adopt-2026-11-21");
+  });
   it("needs both flags", () => {
     expect(isContractorSigningEnabled({ NEXT_PUBLIC_CONTRACTOR_SIGNING: "on", NEXT_PUBLIC_ESIGNATURES: "on" })).toBe(true);
     expect(isContractorSigningEnabled({ NEXT_PUBLIC_CONTRACTOR_SIGNING: "on" })).toBe(false);
@@ -115,6 +131,7 @@ describe("PDFs", () => {
   it("customer copy awaiting countersignature says so and is not labelled executed", async () => {
     const { text } = await pdfText(await renderSignedPdf(sig(), null, customer(await png()), { contractorPending: true }));
     expect(text).toMatch(/Contractor countersignature: pending/);
+    expect(text).toMatch(/Legal basis of this record/);
     expect(text).not.toMatch(/Fully Executed/);
     expect(text).toContain("Authorized signer, Acme Decks");
   }, 30_000);

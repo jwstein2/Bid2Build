@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Button } from "../ui/button";
 import { LocalTime } from "./local-time";
 import { applicationLabel, EXECUTION_LABELS, executionState, type ContractorSignatureRow, type RequirementRow } from "@/lib/esign/contractor/status";
-import { MISSING_LABELS } from "@/lib/esign/contractor/config";
+import { CONTRACTOR_SIGN_INTENT_NOTICE, MISSING_LABELS, signBeforeSendText } from "@/lib/esign/contractor/config";
 import type { ContractorState } from "@/lib/esign/contractor/state";
 
 /** A customer signature on this bid, as the Proposal step loads it. */
@@ -52,7 +52,7 @@ export function ContractorStatus({ estimateId, state, signed, pending, signBefor
               {state.me.canSign && onSignBeforeSend && (
                 <label className="flex items-start gap-2">
                   <input type="checkbox" className="mt-0.5 h-4 w-4" checked={Boolean(signBeforeSend)} onChange={(e) => onSignBeforeSend(e.target.checked)} data-testid="sign-before-send" />
-                  <span>Sign now as <b>{state.me.name}</b> before sending. I am authorized to sign for the company and I sign this proposal, exactly as the customer will see it, on its behalf.</span>
+                  <span>Sign now as <b>{state.me.name}</b> before sending. {signBeforeSendText({ signerName: state.me.name ?? "" })}</span>
                 </label>
               )}
             </>
@@ -106,6 +106,7 @@ function Countersign({ estimateId, versionId, state, historical, designated, onC
             <Button size="sm" variant="accent" onClick={() => void sign()} disabled={!ok || busy} data-testid="countersign-submit">{busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <PenLine className="h-4 w-4" aria-hidden />} Sign for the company</Button>
             <Button size="sm" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
           </div>
+          <p className="mt-2 text-xs text-muted" data-testid="countersign-intent">{CONTRACTOR_SIGN_INTENT_NOTICE}</p>
         </div>
       )}
       {err && <p className="text-danger" role="alert">{err}</p>}
