@@ -100,8 +100,8 @@ export function StudyApp({ items, decks, categories, exams, learner, state, stat
 
   const finish = useCallback((s: Session) => {
     const rows = s.ids.map((id) => byId.get(id)!).filter(Boolean);
-    const sc = s.derived ? { right: rows.filter((r) => s.answers[r.id] === s.derived![r.id]?.correct).length, total: rows.length } : { right: score(rows, s.answers).right, total: rows.length };
-    if (!s.derived) track(rows.filter((r) => s.answers[r.id] !== undefined && !s.recorded.includes(r.id)).map((r) => ({ id: r.id, right: isRight(r, s.answers[r.id]) })));
+    const sc = s.derived ? { right: rows.filter((r) => s.answers[r.id] === s.derived![r.id]?.correct).length, total: rows.length } : { right: score(rows, s.answers, s.mode).right, total: rows.length };
+    if (!s.derived) track(rows.filter((r) => s.answers[r.id] !== undefined && !s.recorded.includes(r.id)).map((r) => ({ id: r.id, right: isRight(r, s.answers[r.id], s.mode) })));
     if (s.attemptId) void saveAttempt(s.attemptId, s.answers, s.ids.length, true);
     if (s.mode !== "flashcards") {
       const row: HistoryRow = { mode: s.mode, exam: s.exam, label: s.label, correct: sc.right, total: sc.total, finishedAt: new Date().toISOString() };
@@ -116,7 +116,7 @@ export function StudyApp({ items, decks, categories, exams, learner, state, stat
     let recorded = s.recorded;
     if (s.feedback && !s.derived) {
       const row = byId.get(id);
-      if (row && !recorded.includes(id)) { track([{ id, right: isRight(row, value) }]); recorded = [...recorded, id]; }
+      if (row && !recorded.includes(id)) { track([{ id, right: isRight(row, value, s.mode) }]); recorded = [...recorded, id]; }
     }
     const next = { ...s, answers, recorded };
     setSession(next);
@@ -506,10 +506,10 @@ function Results({ s, byId, decks, signedIn, onClose, onRetry, onDeck }: {
   s: Session; byId: Map<string, StudyRow>; decks: DeckInfo[]; signedIn: boolean; onClose: () => void; onRetry: (ids: string[]) => void; onDeck: (deck: string) => void;
 }) {
   const rows = s.ids.map((id) => byId.get(id)!).filter(Boolean);
-  const right = (r: StudyRow) => (s.derived ? s.answers[r.id] === s.derived[r.id]?.correct : isRight(r, s.answers[r.id]));
+  const right = (r: StudyRow) => (s.derived ? s.answers[r.id] === s.derived[r.id]?.correct : isRight(r, s.answers[r.id], s.mode));
   const nRight = rows.filter(right).length;
   const wrong = rows.filter((r) => !right(r));
-  const recs = recommendations(rows, Object.fromEntries(rows.map((r) => [r.id, right(r) ? (r.kind === "question" ? r.correct! : true) : -1])), decks).slice(0, 4);
+  const recs = recommendations(rows, Object.fromEntries(rows.map((r) => [r.id, right(r) ? (s.mode !== "flashcards" && r.kind === "question" ? r.correct! : true) : -1])), decks, s.mode).slice(0, 4);
   const pct = rows.length ? Math.round((nRight / rows.length) * 100) : 0;
   return (
     <section className="mt-4" aria-labelledby="res-h" data-testid="study-results">
