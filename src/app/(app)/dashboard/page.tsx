@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { FileCheck2 } from "lucide-react";
 import { createAdminClient, createClient, getAuthUser, getUser } from "@/lib/supabase/server";
+import { isUnifiedHomeEnabled } from "@/lib/env";
 import { Card } from "@/components/ui/misc";
 import { ButtonLink } from "@/components/ui/button";
 import { BidList, type BidRow } from "./bid-list";
@@ -183,7 +184,8 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
 
   const ownIds = new Set(ests.map((e) => e.id));
   const delivered = ests.some((e) => latest.has(e.id)) || (reqRows ?? []).some((r: { estimate_id: string }) => ownIds.has(r.estimate_id));
-  const checklist = ests.length === 0 ? null : await loadChecklist(supabase, user.id, { companyName: Boolean(biz?.company_name?.trim()), estimateIds: ests.map((e) => e.id), latestEstimateId: ests[0]?.id ?? null, delivered });
+  // With Home on, the fuller getting started card lives there; My bids keeps only the profile reminder.
+  const checklist = ests.length === 0 || isUnifiedHomeEnabled() ? null : await loadChecklist(supabase, user.id, { companyName: Boolean(biz?.company_name?.trim()), estimateIds: ests.map((e) => e.id), latestEstimateId: ests[0]?.id ?? null, delivered });
 
   // Details that make proposals look complete. None are required to create or export a bid.
   const missing = [!biz?.company_name && "company name", !biz?.logo_path && "logo", !(biz?.phone || biz?.email) && "phone or email", !biz?.address && "business address"]

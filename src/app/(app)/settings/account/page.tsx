@@ -47,7 +47,7 @@ export default async function AccountPage() {
       )}
       {hasSales(workspaces) && <LandingPreference ws={workspaces} />}
       {!user.demo && (isAdmin === true || isPracticeEnabled()) && (
-        <Card className="p-5" data-testid="demo-settings-card">
+        <Card className="scroll-mt-20 p-5" id="practice" data-testid="demo-settings-card">
           <h2 className="font-bold">{isAdmin === true ? "Demo Mode" : "Practice Mode"}</h2>
           <p className="text-sm text-ink-soft">
             {isAdmin === true

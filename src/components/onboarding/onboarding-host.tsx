@@ -46,9 +46,9 @@ async function fetchServer(): Promise<ServerView | null> {
   }
 }
 
-async function pushServer(status: "dismissed" | "completed"): Promise<boolean> {
+async function pushServer(status: "dismissed" | "completed", replay = false): Promise<boolean> {
   try {
-    const r = await fetch("/api/onboarding", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ status }) });
+    const r = await fetch("/api/onboarding", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(replay ? { status, replay } : { status }) });
     return r.ok;
   } catch {
     return false;
@@ -140,7 +140,11 @@ export function OnboardingHost() {
     // After the dialog's own focus handling has run.
     if (back) setTimeout(() => { if (back.isConnected) back.focus(); }, 0);
     track(how === "completed" ? "onboarding_completed" : "onboarding_dismissed", { mode });
-    if (mode !== "auto") return; // replay never changes onboarding status
+    if (mode !== "auto") {
+      // A replay only records a finished tour (it ticks the Home checklist step); closing it changes nothing.
+      if (how === "completed" && hasSessionCookie(document.cookie)) void pushServer("completed", true);
+      return;
+    }
     const at = new Date().toISOString();
     const signed = signedIn.current || hasSessionCookie(document.cookie);
     writeLocal({ status: how, at, synced: false });
