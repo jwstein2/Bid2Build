@@ -106,7 +106,9 @@ for st, d in sorted(DATA["states"].items()):
                 "Applies statewide." if a["statewide"] else "Applies only where a local government adopts or enforces it, or to the buildings the state regulates." if a["statewide"] is False else None,
                 "Local amendments are allowed." if a["local_amendments_allowed"] else "Local governments may not amend it." if a["local_amendments_allowed"] is False else None,
                 a["scope_note"] and clip(a["scope_note"], 900)]
-        akey = f"adoption:st:{st}:{fam}:{ed or slug(a['state_code_name'] or '')}"
+        akey = f"adoption:st:{st}:{fam}:{ed or '-'}:{a['applies_to'] or 'all'}:{slug(a['state_code_name'] or '')}"
+        if any(x["key"] == akey for x in adoptions):  # the same code listed twice for one state: keep the first
+            continue
         adoptions.append({"key": akey, "st": st, "source": key, "scope": clip(" ".join(b for b in bits if b), 2000),
                           "authority": clip(a["authority_citation"], 200), "url": a["official_url"], "effective": a["effective_date"],
                           "localconf": not (a["statewide"] is True and a["local_amendments_allowed"] is False),
@@ -144,16 +146,27 @@ L.append(",\n".join(
     f"{q(s['rights'])}, false, false, {q(s['note'])}, {q('Built2Bid cites sections only; page numbers differ between formats.' if s['rights'] == 'metadata_only' else None)}, {q(s['status'])}, {q(s['official'])}, "
     f"{(q(AT) + '::timestamptz') if s['status'] == 'verified' else 'null'}, {q(AT)}::timestamptz)"
     for k, s in sorted(sources.items())) + "\non conflict do nothing;\n")
-L.append("insert into public.academy_kb_adoptions (id, jurisdiction_id, source_id, kind, replaces_family, scope_note, authority_citation, official_url, effective_date, expiration_date, local_confirmation_required, trades, status, last_verified_at, notes) values")
-L.append(",\n".join(
+ADOPT_HEAD = "insert into public.academy_kb_adoptions (id, jurisdiction_id, source_id, kind, replaces_family, scope_note, authority_citation, official_url, effective_date, expiration_date, local_confirmation_required, trades, status, last_verified_at, notes) values"
+VERIF_HEAD = "insert into public.academy_kb_verifications (target_type, target_id, checked_at, method, result, source_url, content_hash, evidence, notes) values"
+
+
+def chunked(head, rows, size):
+    """Several INSERTs of at most `size` rows, so each statement fits a SQL Editor paste."""
+    for i in range(0, len(rows), size):
+        L.append(head)
+        L.append(",\n".join(rows[i:i + size]) + "\non conflict do nothing;\n")
+
+
+adopt_rows = (
     f"  ({uid(a['key'])}, {q(a['st'])}, {uid('source:' + a['source'])}, 'adopts', null, {q(a['scope'])}, {q(a['authority'])}, {q(a['url'])}, "
     f"{(q(a['effective']) + '::date') if a['effective'] else 'null'}, null, {q(a['localconf'])}, '{{}}'::text[], {q(a['status'])}, "
-    f"{(q(AT) + '::timestamptz') if a['status'] == 'verified' else 'null'}, {q(a['notes'])})" for a in adoptions) + "\non conflict do nothing;\n")
+    f"{(q(AT) + '::timestamptz') if a['status'] == 'verified' else 'null'}, {q(a['notes'])})" for a in adoptions)
+chunked(ADOPT_HEAD, list(adopt_rows), 60)
 L.append("create unique index if not exists academy_kb_verifications_once on public.academy_kb_verifications (target_type, target_id, checked_at, method);")
-L.append("insert into public.academy_kb_verifications (target_type, target_id, checked_at, method, result, source_url, content_hash, evidence, notes) values")
-L.append(",\n".join(
+verif_rows = (
     f"  ({q(t)}, {('(' + uid(k) + ')::text') if t != 'jurisdiction' else q(k)}, {q(AT)}::timestamptz, 'official_text', 'verified', {q(u)}, {q(h)}, {q(e)}, {q(n)})"
-    for t, k, u, h, e, n in verifs) + "\non conflict do nothing;\n")
+    for t, k, u, h, e, n in verifs)
+chunked(VERIF_HEAD, list(verif_rows), 40)
 for st, cov, note, url in juris:
     L.append(f"update public.academy_kb_jurisdictions set coverage = {q(cov)}, notes = coalesce(notes, {q(note)}), building_dept_url = coalesce(building_dept_url, {q(url)}), updated_at = now()\n"
              f"  where id = {q(st)} and coverage = 'awaiting_verification';")
