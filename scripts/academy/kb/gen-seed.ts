@@ -173,11 +173,11 @@ out.push(secRows.join(",\n") + "\non conflict do nothing;\n");
 out.push("insert into public.academy_kb_terms (term, synonyms, topics, related, trades, note) values");
 out.push(TERMS.map((t) => `  (${[q(t.term), arr(t.synonyms), arr(t.topics), arr(t.related), arr(t.trades ?? []), q(t.note ?? null)].join(", ")})`).join(",\n") + "\non conflict (term) do nothing;\n");
 
-// Verification records (only for rows this script inserted for the first time: skip when a record for the target exists).
-out.push("insert into public.academy_kb_verifications (target_type, target_id, checked_at, method, result, source_url, content_hash, evidence, notes)");
-out.push("select v.* from (values");
-out.push(verifs.join(",\n"));
-out.push(") as v(target_type, target_id, checked_at, method, result, source_url, content_hash, evidence, notes)\nwhere not exists (select 1 from public.academy_kb_verifications x where x.target_type = v.target_type and x.target_id = v.target_id);\n");
+// Verification records. A plain INSERT ... VALUES (the Supabase SQL Editor rejected the INSERT ... SELECT FROM (VALUES)
+// form with a bogus parse error); re-runs are made safe by a unique index on the seed's fixed (target, time, method).
+out.push("create unique index if not exists academy_kb_verifications_once on public.academy_kb_verifications (target_type, target_id, checked_at, method);\n");
+out.push("insert into public.academy_kb_verifications (target_type, target_id, checked_at, method, result, source_url, content_hash, evidence, notes) values");
+out.push(verifs.join(",\n") + "\non conflict do nothing;\n");
 
 out.push("select set_config('academy.kb_verifying', 'off', false);\n");
 const file = path.join(ROOT, "supabase/migrations/20270220002000_academy_knowledge_seed.sql");
