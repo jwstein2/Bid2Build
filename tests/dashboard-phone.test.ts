@@ -6,8 +6,12 @@ const w = (id: string, type: string, width = 1, h = 1, settings: Record<string, 
 
 describe("phone two-up KPI tiles", () => {
   it("pairs single-number cards and keeps lists, charts and quick actions full width", () => {
-    const out = phoneHalfWidth([w("qa", "quick_actions", 2), w("a", "sales_awaiting"), w("b", "pm_active"), w("c", "fin_ar"), w("d", "fin_cash_received"), w("up", "pm_upcoming", 2)], false);
+    const out = phoneHalfWidth([w("qa", "quick_actions", 2), w("a", "sales_awaiting"), w("b", "pm_active"), w("c", "fin_revenue"), w("d", "customers"), w("up", "pm_upcoming", 2)], false);
     expect([...out].sort()).toEqual(["a", "b", "c", "d"]);
+  });
+  it("keeps cards that preview records full width on phones", () => {
+    const out = phoneHalfWidth([w("a", "fin_ar"), w("b", "fin_cash_received"), w("c", "sales_drafts"), w("d", "sales_win_rate")], false);
+    expect(out.size).toBe(0);
   });
   it("lets a lone card before a full-width widget span the row (no gaps)", () => {
     const out = phoneHalfWidth([w("a", "sales_awaiting"), w("b", "pm_active"), w("c", "customers"), w("list", "sales_recent", 2)], false);

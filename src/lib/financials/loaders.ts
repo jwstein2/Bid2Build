@@ -211,7 +211,12 @@ export async function loadHome(db: Db, ctx: FinContext) {
       ? money(add(0, ...[...latestBal.values()].map((r) => String(r.current_balance ?? "0"))), "Actual", "/financials/cash", { sub: `Bank-reported · ${latestBal.size} account${latestBal.size === 1 ? "" : "s"}`, note: balAsOf ? `Oldest update ${balAsOf.slice(0, 10)}` : undefined })
       : { value: "No bank connected", money: false, basis: "Count", href: "/financials/banks", empty: true, sub: "Connect a bank or see the forecast" },
   };
-  return { kpis, cards, alerts: A, jobs: P.length };
+  // Home dashboard "Collected" card: verified payments only (net of refunds). Recorded-but-unverified payments are
+  // counted in the note, never in the figure. The Financials KPI above (kpis.collected) is unchanged.
+  const verifiedPay = activePay.filter((r) => r.verified);
+  const collectedVerified = money(sub(sumOf(verifiedPay, "amount"), sumOf(verifiedPay, "refunded")), "Paid", "/financials/records?view=payments",
+    { sub: `${unverified.length} not yet verified`, note: "Verified payments, net of refunds. Payments recorded but not yet verified aren't counted." });
+  return { kpis, cards, alerts: A, jobs: P.length, collectedVerified };
 }
 
 function agingSub(open: Row[]) {

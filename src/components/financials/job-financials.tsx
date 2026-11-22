@@ -90,6 +90,22 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
     setActionUsed(true); if (next) setOpen(next);
   }, [data, actionUsed, initialAction, writable, perms.invoice, perms.pay, perms.expense, perms.bill]);
 
+  // Links from the Home dashboard previews (#fin-invoices, #fin-payments) land on that list once the job has loaded.
+  const [hashUsed, setHashUsed] = useState(false);
+  useEffect(() => {
+    if (!data?.job || hashUsed) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time scroll from the URL hash
+    setHashUsed(true);
+    const id = typeof window === "undefined" ? "" : window.location.hash.slice(1);
+    if (id !== "fin-invoices" && id !== "fin-payments") return;
+    setSection("billing");
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const el = document.getElementById(id);
+      el?.scrollIntoView({ block: "start" });
+      el?.focus({ preventScroll: true });
+    }));
+  }, [data, hashUsed]);
+
   if (error) return <Notice tone="warn" title="Financials">{error}</Notice>;
   if (!data) return <p className="text-sm text-ink-soft" aria-busy="true">Loading financials…</p>;
 
