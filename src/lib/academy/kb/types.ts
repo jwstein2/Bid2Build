@@ -47,7 +47,9 @@ export const APPLICABILITY: Record<Applicability, { label: string; tone: "ok" | 
 
 export const REASON_TEXT: Record<string, string> = {
   verified: "Verified from the official source.",
-  local_not_selected: "Choose your city, county or township, or confirm with the local building department.",
+  local_not_selected: "Which city, county or township is the project in? Pick it under \u201cWhere is the project?\u201d to check.",
+  local_verified: "Your city or township enforces the state code (confirmed from the state's official directory).",
+  local_not_enforced: "Your city or township has not adopted the state building code for local enforcement. The state code still applies; check with the county or state about permits.",
   local_not_verified: "Your local authority's adoption has not been verified yet.",
   state_rules_may_differ: "Federal rule. State programs can add to it or run their own version.",
   state_plan: "Your state runs an OSHA-approved State Plan. Its standards govern and must be at least as effective as the federal rule shown.",
@@ -93,8 +95,15 @@ export interface KbResult {
   official_url: string | null; section_status: string; last_verified_at: string | null; source_title: string; source_short: string;
   edition: string; family_slug: string; family_name: string; publisher: string; rights: string; read_url: string | null;
   source_jurisdiction: string | null; pagination_note: string | null; amends_section: string | null; amend_action: string | null;
-  applicability: { status: Applicability; reason?: string; authority?: string; effective_date?: string | null; jurisdiction_id?: string; official_url?: string; other_edition?: string; scope_note?: string | null };
+  applicability: { status: Applicability; reason?: string; authority?: string; effective_date?: string | null; jurisdiction_id?: string; official_url?: string; other_edition?: string; scope_note?: string | null; local?: KbLocalInfo };
   match: string; rank: number;
+}
+
+/** Public facts about a local permitting authority (academy_kb_local_info). No personal names are stored. */
+export interface KbLocalInfo {
+  id: string; name: string; kind?: string; county?: string; status?: "enforces" | "not_enforced" | "unknown"; phone?: string;
+  detail?: { electrical?: "state" | "local"; accessibility?: "local" | "county"; opt_1306_2?: boolean; opt_1306_3?: boolean; plumbing_inspects?: boolean };
+  source_url?: string; verified_at?: string;
 }
 
 export interface KbLocation {

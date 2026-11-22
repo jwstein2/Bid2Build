@@ -61,6 +61,13 @@ change to the live Academy, delivered in separate PRs, each behind a switch that
 
 Known gaps: Minnesota plumbing code (chapter 4714) not yet seeded; FMCSA definitions (49 CFR 390.3/390.5) skipped because eCFR shows transitional versions; WI, IA, TX, FL, CA queued next.
 
+## PR 2: "Where is the project?" + all 50 states
+
+- **Local permitting authorities.** Migration `20270222001000_academy_kb_local.sql` adds `kind`, `county_name`, `local_status` (enforces / not_enforced / unknown), `phone`, `detail`, `source_url`, `verified_at` to `academy_kb_jurisdictions`, and teaches `academy_kb_applicability` two new reasons: `local_verified` (the picked city/township enforces the state code → Verified Applicable) and `local_not_enforced` (it does not → still Jurisdiction Confirmation Needed, with the state's statewide-standard note). Seed `20270222002000` loads Minnesota DLI's directory (87 counties, ~3,200 cities/townships: `python3 scripts/academy/kb/fetch_mn_jurisdictions.py` then `gen_local_seed.py`).
+- **ZIP → area picker.** `public/academy-geo/<zip3>.json` (from Census 2020 ZCTA relationship files, `gen_geo.py`) lists every city, township and unincorporated county area a ZIP touches; the visitor picks one. An optional street-address lookup (`/api/academy/locate`) uses the free Census geocoder (no key, address never stored or logged, 20/hour per visitor). Ids match between the two (`src/lib/academy/kb/geo.ts`).
+- **State adoptions.** Researched per state from official sources, then re-checked by `scripts/academy/kb/check_state_evidence.py`: each quote must appear word for word on the official page (only .gov / state legal-publication hosts). Matches are `verified` with the page hash; anything else is `pending_review` with the reason, for an admin to confirm in Manage → Codes. Output `src/lib/academy/kb/seed/state-adoptions.json` → `gen_states_seed.py` → `20270222003000_academy_kb_states_seed.sql` (rollback `docs/academy/rollback_20270222003000.sql`).
+- 2026-11-22 result: 370 adoptions in 49 states + DC (Minnesota seeded earlier), 308 verified. Mostly pending: NH, WV, SD (pages could not be re-read word for word), FL (quotes came from mixed pages), WY (evidence on a Google Drive link), AR (fire marshal rules unreachable). MO has no statewide code.
+
 ## Next PRs
 
 1. Study tools: flashcards, quizzes (5/10/20/25/50/custom, timed), practice exams (original questions, "not an official exam"), "How to read a codebook" lesson, five-minute lessons, learning paths. Tables and RPCs are already in this migration.

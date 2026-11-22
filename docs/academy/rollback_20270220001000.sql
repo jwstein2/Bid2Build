@@ -3,6 +3,10 @@
 -- The ai_generations kind 'academy_code_explain' is left in the allowed list (harmless; removing it would fail if rows exist).
 -- Uploaded PDFs in the private 'academy-kb' bucket are not deleted here: empty the bucket in Storage first if wanted.
 
+-- Later add-ons (20270222001000 local authorities), if applied.
+drop function if exists public.academy_kb_load_local(text, text, timestamptz, text);
+drop function if exists public.academy_kb_local_info(public.academy_kb_jurisdictions);
+
 drop function if exists public.academy_kb_health();
 drop function if exists public.academy_kb_step(text, text, boolean);
 drop function if exists public.academy_kb_save(uuid, jsonb, integer, boolean);

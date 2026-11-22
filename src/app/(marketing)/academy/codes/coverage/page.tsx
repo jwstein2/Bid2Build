@@ -27,12 +27,14 @@ export default async function CoveragePage({ searchParams }: PageProps<"/academy
         {covered.length ? (
           <ul className="mt-2 flex flex-wrap gap-2">{covered.map((s) => <li key={s.code}><Link href={`/academy/codes/coverage${locationQuery({ ...loc, state: s.code, local: null, zip: null })}`} className="inline-block rounded-full bg-ok-tint px-3 py-1 text-sm font-semibold text-ok">{s.name}</Link></li>)}</ul>
         ) : <p className="mt-2 text-sm text-ink-soft">None yet.</p>}
-        <p className="mt-2 text-xs text-muted">Every other state and DC: awaiting verification. Federal OSHA, EPA and DOT rules apply everywhere (State Plan states are marked).</p>
+        <p className="mt-2 text-xs text-muted">States not listed: awaiting verification, or only some of their codes could be checked so far. Federal OSHA, EPA and DOT rules apply everywhere (State Plan states are marked).</p>
       </section>
 
       {mine && (
         <section className="mt-6">
           <h2 className="text-lg font-bold">{stateName(mine.state)}</h2>
+          {mine.note && <p className="mt-1 text-sm text-ink-soft">{mine.note}</p>}
+          {mine.directory && <p className="mt-1 text-xs"><a href={mine.directory} target="_blank" rel="noopener noreferrer" className="font-semibold text-brand hover:underline">Official list of local building departments</a></p>}
           <CoverageTable rows={mine.families} empty="Nothing verified for this state yet." />
         </section>
       )}
