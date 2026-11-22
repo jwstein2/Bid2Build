@@ -44,9 +44,14 @@ describe("V8.6 lead admin helpers", () => {
     const fake = (async (_u: string, init?: RequestInit) => { seen = init; return new Response(JSON.stringify({ id: "msg_1" }), { status: 200 }); }) as typeof fetch;
     const t = inviteText("Ana", "https://built2bid.org/sales/invite/abc", "December 3");
     expect(t.body).toContain("https://built2bid.org/sales/invite/abc");
+    // The HTML version links the invite as a button.
+    expect(t.html).toContain('<a href="https://built2bid.org/sales/invite/abc" target="_blank"');
+    expect(t.html).toContain("Join the sales team");
+    expect(inviteText("<b>", "https://x.test/?a=1&b=2", "Dec").html).toContain("&lt;b&gt;");
     const ok = await sendInviteEmail({ inviteId: "i1", to: "a@b.com", ...t }, env, fake);
     expect(ok).toEqual({ ok: true, id: "msg_1" });
     expect((seen?.headers as Record<string, string>)["idempotency-key"]).toBe("sales-invite/i1");
+    expect(JSON.parse(String(seen?.body)).html).toContain("Join the sales team");
   });
 
   it("words recycling deadlines and exports formula-safe CSV", () => {
