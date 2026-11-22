@@ -1,6 +1,7 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MapPin, Search } from "lucide-react";
+import { AddressInput } from "@/components/ui/address-input";
 import { labelFromId, parseShard, shardUrl, type GeoOption } from "@/lib/academy/kb/geo";
 
 const input = "w-full rounded-md border border-line-strong bg-surface px-3 py-2 text-sm";
@@ -27,6 +28,7 @@ export function LocationForm({ action, q, initial, states, trades, note }: Props
   const [shard, setShard] = useState<{ zip: string; opts: GeoOption[] }>({ zip: "", opts: [] });
   const [extra, setExtra] = useState<GeoOption | null>(null);
   const [address, setAddress] = useState("");
+  const latestAddress = useRef("");
   const [addrMsg, setAddrMsg] = useState<string | null>(null);
   const [looking, setLooking] = useState(false);
   const url = shardUrl(zip);
@@ -55,12 +57,12 @@ export function LocationForm({ action, q, initial, states, trades, note }: Props
 
   const pick = (id: string) => { setLocal(id); if (id) setState(id.slice(0, 2)); };
 
-  async function lookup() {
+  async function lookup(value: string = address) {
     setAddrMsg(null);
-    if (address.trim().length < 8) { setAddrMsg("Enter the street address with city and state, or ZIP."); return; }
+    if (value.trim().length < 8) { setAddrMsg("Enter the street address with city and state, or ZIP."); return; }
     setLooking(true);
     try {
-      const r = await fetch("/api/academy/locate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ address }) });
+      const r = await fetch("/api/academy/locate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ address: value.slice(0, 200) }) });
       const d = (await r.json().catch(() => null)) as { found?: boolean; zip?: string | null; option?: GeoOption; matched?: string; error?: { message?: string } } | null;
       if (d?.found && d.option) {
         if (d.zip && /^\d{5}$/.test(d.zip)) setZip(d.zip);
@@ -135,10 +137,14 @@ export function LocationForm({ action, q, initial, states, trades, note }: Props
         <summary className="cursor-pointer text-xs font-semibold text-muted">Not sure which one? Look up the street address</summary>
         <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_auto]">
           <label htmlFor="kb-address" className="sr-only">Project street address</label>
-          <input id="kb-address" value={address} onChange={(e) => setAddress(e.target.value.slice(0, 200))} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void lookup(); } }} placeholder="123 Main St, Byron, MN 55920" autoComplete="street-address" className={input} />
+          <div onKeyDown={(e) => { if (e.key === "Enter") { const picked = e.defaultPrevented; e.preventDefault(); if (!picked) void lookup(); } }}>
+            {/* Google address suggestions (same as the rest of the app); picking one looks the area up right away. */}
+            <AddressInput id="kb-address" value={address} onChange={(v) => { latestAddress.current = v; setAddress(v.slice(0, 200)); }} onPick={() => void lookup(latestAddress.current)}
+              placeholder="123 Main St, Byron, MN 55920" className={input} />
+          </div>
           <button type="button" onClick={() => void lookup()} disabled={looking} className="inline-flex items-center justify-center gap-1 rounded-md border border-line-strong px-4 py-2 text-sm font-semibold disabled:opacity-60"><Search className="h-4 w-4" aria-hidden />{looking ? "Looking…" : "Look up"}</button>
         </div>
-        <p className="mt-1 text-xs text-muted">Sent only to the U.S. Census Bureau&apos;s free address lookup to find the city, township or county. We don&apos;t save it.</p>
+        <p className="mt-1 text-xs text-muted">Suggestions come from Google, and the address is checked with the U.S. Census Bureau&apos;s free lookup to find the city, township or county. We don&apos;t save it.</p>
         {addrMsg && <p className="mt-1 text-sm text-ink-soft" role="status">{addrMsg}</p>}
       </details>
 
