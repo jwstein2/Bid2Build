@@ -1,6 +1,6 @@
 "use client";
 import * as Dialog from "@radix-ui/react-dialog";
-import { ArrowRight, Clock, CornerDownLeft, FlaskConical, History, LoaderCircle, Newspaper, Search, Shield, X, Zap } from "lucide-react";
+import { ArrowRight, BookOpen, Clock, CornerDownLeft, FlaskConical, History, LoaderCircle, Newspaper, Search, Shield, X, Zap } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
@@ -58,7 +58,7 @@ export function SearchIconButton({ tone = "light", className }: { tone?: "light"
   );
 }
 
-type Option = { key: string; href: string; kind: "record" | "action" | "query" | "recent" | "all" | "admin" | "news"; record?: SearchResult; action?: ActionResult; query?: string; newsSubtitle?: string };
+type Option = { key: string; href: string; kind: "record" | "action" | "query" | "recent" | "all" | "admin" | "news" | "codes"; record?: SearchResult; action?: ActionResult; query?: string; newsSubtitle?: string };
 
 /** The search dialog + Ctrl/Cmd+K. Mount once per layout. */
 export function GlobalSearchHost() {
@@ -168,9 +168,11 @@ export function GlobalSearchHost() {
     // Public industry articles: their own group, labelled so they can't be mistaken for company records.
     if (data.news?.length) out.push({ id: "news", label: "Industry News · public articles", icon: Newspaper, options: data.news.map((n) => ({ key: `n:${n.id}`, href: n.href, kind: "news", query: n.title, newsSubtitle: n.subtitle })) });
     if (actions && !data.actionsFirst) out.push(actions);
+    // Public code library: a hand-off into Academy with the question kept. Never mixed into company records.
+    out.push({ id: "codes", label: "Codes & Regulations · public", icon: BookOpen, options: [{ key: "codes", href: `/academy/codes?q=${encodeURIComponent(q.trim().slice(0, 300))}`, kind: "codes", query: q.trim() }] });
     out.push({ id: "all", label: "", options: [{ key: "all", href: allHref, kind: "all" }] });
     return out;
-  }, [hasQuery, recent, data, ctx, scope, allHref]);
+  }, [hasQuery, recent, data, ctx, scope, allHref, q]);
   const options = useMemo(() => sections.flatMap((s) => s.options), [sections]);
   const optId = (i: number) => `${uid}-opt-${i}`;
   const idx = Math.min(active, Math.max(0, options.length - 1));
@@ -305,6 +307,12 @@ export function GlobalSearchHost() {
                     <div key={o.key} id={optId(i)} role="option" aria-selected={on} onMouseEnter={() => setActive(i)} onClick={() => choose(o)} data-testid="search-result-news" data-href={o.href} className={cn(base, "items-center")}>
                       <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-black/5 text-ink-soft" aria-hidden><Newspaper className="h-4 w-4" /></span>
                       <span className="min-w-0 flex-1"><span className="block font-semibold">{o.query}</span><span className="block text-xs text-ink-soft">Industry news · public article · {o.newsSubtitle}</span></span>
+                    </div>
+                  );
+                  if (o.kind === "codes") return (
+                    <div key={o.key} id={optId(i)} role="option" aria-selected={on} onMouseEnter={() => setActive(i)} onClick={() => choose(o)} data-testid="search-codes" data-href={o.href} className={cn(base, "items-center")}>
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-black/5 text-ink-soft" aria-hidden><BookOpen className="h-4 w-4" /></span>
+                      <span className="min-w-0 flex-1"><span className="block font-semibold">Search Codes &amp; Regulations for “{o.query}”</span><span className="block text-xs text-ink-soft">Academy · official building codes, OSHA, EPA and DOT rules</span></span>
                     </div>
                   );
                   if (o.kind === "admin") return (

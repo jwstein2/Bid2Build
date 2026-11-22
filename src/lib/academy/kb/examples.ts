@@ -16,6 +16,11 @@ export const EXAMPLES: Example[] = [
   { q: "trench protective system", needs: "federal", trades: ["excavation", "plumbing", "concrete", "landscaping", "foundations"] },
   { q: "lead-safe renovation", needs: "federal", trades: ["painting", "windows-doors", "interior-remodeling", "kitchens", "bathrooms", "siding"] },
   { q: "silica dust", needs: "federal", trades: ["concrete", "masonry", "tile", "cabinets-countertops", "demolition"] },
+  { q: "deck railing height", needs: "state_text", trades: ["decks", "finish-carpentry", "general-contracting"] },
+  { q: "deck footing requirements", needs: "state_text", trades: ["decks", "concrete", "foundations"] },
+  { q: "lead paint renovation pre-1978", needs: "federal", trades: ["painting", "windows-doors", "interior-remodeling", "exterior-remodeling", "siding", "handyman"] },
+  { q: "OSHA fall protection residential roofing", needs: "federal", trades: ["roofing", "framing", "gutters"] },
+  { q: "40 CFR 745.85", needs: "federal" },
   { q: "report a serious injury", needs: "federal" },
   { q: "1926.501", needs: "federal" },
 ];
@@ -26,3 +31,11 @@ export function examplesFor(trade: string | null, hasStateText: boolean, max = 6
   const rest = usable.filter((e) => !mine.includes(e));
   return [...mine, ...rest].slice(0, max).map((e) => e.q);
 }
+
+/** Topic shortcuts offered by the search autocomplete (always shown with whatever the library can answer). */
+export const TOPIC_SHORTCUTS: string[] = [...new Set([
+  ...EXAMPLES.map((e) => e.q),
+  "stair handrail height", "scaffold guardrails", "ladder angle", "trench box",
+  "respirator silica", "asbestos", "hours of service", "CDL drug testing", "vehicle annual inspection", "injury recordkeeping",
+])];
+

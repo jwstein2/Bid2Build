@@ -189,3 +189,21 @@ export const listFamilies = cache(async (): Promise<{ slug: string; name: string
   const { data } = await db.from("academy_kb_families").select("slug, name, short_name, sort_order, academy_kb_sources!inner(id)").order("sort_order").limit(100);
   return ((data ?? []) as { slug: string; name: string; short_name: string }[]).map((f) => ({ slug: f.slug, name: f.name, short: f.short_name }));
 });
+
+/**
+ * Verified local sections for federal citations ("29 CFR 1926.501" → section ids), so the codebook can link to the
+ * verified text we hold and fall back to the official eCFR page for everything else.
+ */
+export const verifiedFederal = cache(async (): Promise<Map<string, string>> => {
+  const out = new Map<string, string>();
+  const db = await academyDb();
+  if (!db) return out;
+  const { data, error } = await db.from("academy_kb_sections").select("id, citation, section_number").eq("status", "verified").like("citation", "% CFR %").limit(500);
+  if (error || !data) return out;
+  for (const r of data as { id: string; citation: string }[]) {
+    const base = r.citation.replace(/\(.*$/, "").trim();
+    if (!out.has(base)) out.set(base, r.id);
+  }
+  return out;
+});
+
