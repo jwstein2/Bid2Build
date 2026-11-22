@@ -263,6 +263,8 @@ describe("Practice Mode for everyone", () => {
       "src/lib/creator/outreach/send.ts", // staff creator outreach cron
       "src/lib/trial/delivery.ts",        // Facebook trial invites (public funnel, not a signed-in session)
       "src/lib/sales/invite-email.ts", "src/lib/sales/booking-email.ts", "src/lib/sales/congrats-email.ts", "src/lib/sales/digest.ts", // staff Sales Hub (/api/sales blocked)
+      "src/lib/sales/nurture/runner.ts", // Sales Hub follow-up emails: refuses demo sessions itself (inDemoSession); off until an admin enables it
+      "src/lib/sales/nurture/inbound.ts", // webhook-only: forwards a lead's reply to the rep
       "src/app/api/webhooks/resend/route.ts", // inbound mail webhook (reads only)
       "src/lib/payouts/notify.ts",        // staff payouts: staff_members only, payment emails for live payouts only; refuses demo sessions itself
       "src/lib/affiliates/emails.ts",     // Affiliate Hub: off until AFFILIATE_EMAILS=on / recruitment switch; refuses demo sessions itself

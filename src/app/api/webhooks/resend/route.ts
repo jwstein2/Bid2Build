@@ -5,6 +5,7 @@ import { processInbound } from "@/lib/comms/inbound";
 import { logEvent, suppress } from "@/lib/comms/server";
 import { verifySvix } from "@/lib/comms/svix";
 import { DELIVERY_KINDS, emailStream, recipientDomain } from "@/lib/email/streams";
+import { handleSalesInbound } from "@/lib/sales/nurture/inbound";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -43,11 +44,14 @@ export async function POST(req: Request) {
       const headers = (body.headers ?? {}) as Record<string, string>;
       const hv = (k: string) => (Array.isArray(headers) ? (headers as { name: string; value: string }[]).find((h) => h.name.toLowerCase() === k)?.value : headers[k] ?? headers[k.toLowerCase()]) ?? null;
       const to = ([] as unknown[]).concat(body.to ?? []).map(String);
-      const res = await processInbound(admin, cfg, {
+      const inbound = {
         from: String(body.from ?? ""), to, subject: String(body.subject ?? ""), text: String(body.text ?? ""),
         inReplyTo: (body.in_reply_to as string) ?? hv("in-reply-to"), references: (body.references as string) ?? hv("references"), providerEventId: eventId,
-      });
-      return json(res);
+      };
+      // A reply to a Sales Hub follow-up email (stops that campaign and is forwarded to the rep).
+      const sales = await handleSalesInbound(admin, cfg, inbound);
+      if (sales) return json({ ...sales, sales: true });
+      return json(await processInbound(admin, cfg, inbound));
     }
     const kind = DELIVERY_KINDS[evt.type ?? ""];
     if (kind) {
@@ -65,6 +69,16 @@ export async function POST(req: Request) {
     const { data: m } = providerId ? await admin.from("comm_messages").select("id, account_id, to_email, status").eq("provider_id", providerId).maybeSingle() : { data: null };
     const msg = m as Row | null;
     if (!msg) {
+      // Sales Hub follow-up emails: delivered, hard bounce (address marked bad) or spam complaint (opted out).
+      if (providerId && (evt.type === "email.delivered" || evt.type === "email.bounced" || evt.type === "email.complained")) {
+        const type = String((d.bounce as Row | undefined)?.type ?? "").toLowerCase();
+        const hard = !type || type.includes("permanent") || type.includes("hard");
+        const ev = evt.type === "email.delivered" ? "delivered" : evt.type === "email.complained" ? "complained" : hard ? "bounced" : null;
+        if (ev) {
+          const { data: hit } = await admin.rpc("sales_campaign_delivery", { p_provider_id: providerId, p_event: ev });
+          if (hit === true) return json({ ok: true, sales_nurture: true });
+        }
+      }
       // V8.6: a sales team invitation (only the provider can say delivered or bounced).
       if (providerId && (evt.type === "email.delivered" || evt.type === "email.bounced")) {
         const { data: inv } = await admin.rpc("sales_invite_delivery", { p_message_id: providerId, p_status: evt.type === "email.delivered" ? "delivered" : "bounced" });

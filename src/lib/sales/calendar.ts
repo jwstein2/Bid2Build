@@ -4,7 +4,9 @@
  */
 import { createHash, randomBytes } from "node:crypto";
 
-export type SessionId = "win" | "run" | "grow";
+export type SessionId = "win" | "run" | "grow" | "intro";
+/** The three customer onboarding sessions shown on a booking page ("intro" is the prospect walkthrough). */
+export const ONBOARDING_SESSIONS = ["win", "run", "grow"] as const;
 type Item = { text: string; needs?: "team" | "pm" | "financials" };
 
 /** The three customer onboarding sessions. Items marked `needs` show only when the customer's plan includes them. */
@@ -21,6 +23,13 @@ export const SESSIONS: Record<SessionId, { title: string; summary: string; agend
     agenda: [
       { text: "Convert a signed bid into a project" }, { text: "Change orders and invoices" },
       { text: "Schedule crews and subcontractors in Project Command Center", needs: "pm" }, { text: "Add teammates and set what they can see", needs: "team" },
+    ],
+  },
+  intro: {
+    title: "Quick walkthrough", summary: "A short look at how Built2Bid could fit your estimating.",
+    agenda: [
+      { text: "How you handle estimates and bids today" }, { text: "Building an estimate in Built2Bid for your trade" },
+      { text: "Sending a proposal your client can sign online" }, { text: "Your questions" },
     ],
   },
   grow: {

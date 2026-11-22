@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { agendaFor, fmtWhen, SESSIONS, slotsByDay, type SessionId } from "@/lib/sales/calendar";
+import { agendaFor, fmtWhen, ONBOARDING_SESSIONS, SESSIONS, slotsByDay, type SessionId } from "@/lib/sales/calendar";
 import { loadSlots, US_ZONES, zoneOk } from "../slots";
 import { bookSession } from "../actions";
 
@@ -20,34 +20,37 @@ export default async function MeetPage({ params, searchParams }: { params: Promi
   const { page, slots } = await loadSlots(slug.toLowerCase());
   if (!page) notFound();
   const tz = zoneOk(sp.tz, page.time_zone);
-  const session = (["win", "run", "grow"] as const).find((s) => s === sp.session) as SessionId | undefined;
+  const session = (["win", "run", "grow", "intro"] as const).find((s) => s === sp.session) as SessionId | undefined;
+  // A walkthrough link from a sales follow-up email: only that session is offered.
+  const intro = session === "intro";
+  const ref = typeof sp.ref === "string" && sp.ref.length <= 80 ? sp.ref : null;
   const at = sp.at && slots.includes(sp.at) ? sp.at : null;
-  const q = (o: Record<string, string>) => `/meet/${slug}?${new URLSearchParams({ ...(sp.tz ? { tz } : {}), ...o })}`;
+  const q = (o: Record<string, string>) => `/meet/${slug}?${new URLSearchParams({ ...(sp.tz ? { tz } : {}), ...(ref ? { ref } : {}), ...o })}`;
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-10">
       <p className="text-sm font-extrabold tracking-wide text-brand">BUILT2BID</p>
-      <h1 className="mt-2 text-3xl font-extrabold">Book a session with {page.first_name}</h1>
-      <p className="mt-1 text-ink-soft">Free {page.session_minutes}-minute onboarding sessions to help you get the most out of Built2Bid.</p>
+      <h1 className="mt-2 text-3xl font-extrabold">{intro ? `Book a quick walkthrough with ${page.first_name}` : `Book a session with ${page.first_name}`}</h1>
+      <p className="mt-1 text-ink-soft">{intro ? `A free ${page.session_minutes}-minute look at how Built2Bid could fit your estimating. No obligation.` : `Free ${page.session_minutes}-minute onboarding sessions to help you get the most out of Built2Bid.`}</p>
       {sp.err && <p role="alert" className="mt-4 rounded-lg border border-danger/40 bg-danger/5 p-3 text-sm">{ERRORS[sp.err] ?? ERRORS.invalid}</p>}
       {!page.enabled || slots.length === 0 ? (
         <p className="mt-6 rounded-lg border border-line p-4">No times are open right now. Email <a className="font-semibold underline" href="mailto:support@built2bid.org">support@built2bid.org</a> and we&apos;ll help.</p>
       ) : (
         <>
-          <ol className="mt-6 grid gap-3 sm:grid-cols-3">
-            {(Object.keys(SESSIONS) as SessionId[]).map((s, i) => (
+          {!intro && <ol className="mt-6 grid gap-3 sm:grid-cols-3">
+            {(ONBOARDING_SESSIONS as readonly SessionId[]).map((s, i) => (
               <li key={s}>
                 <Link href={q({ session: s })} aria-current={session === s ? "true" : undefined} className={`block h-full rounded-xl border p-4 ${session === s ? "border-brand ring-2 ring-brand/30" : "border-line"}`}>
                   <p className="text-xs font-semibold text-muted">Session {i + 1}</p><p className="font-bold">{SESSIONS[s].title}</p><p className="mt-1 text-sm text-ink-soft">{SESSIONS[s].summary}</p>
                 </Link>
               </li>
             ))}
-          </ol>
+          </ol>}
           {session && !at && (
             <section className="mt-8" aria-labelledby="times-h">
               <div className="flex flex-wrap items-end justify-between gap-2">
                 <h2 id="times-h" className="text-lg font-bold">Pick a time</h2>
-                <form className="text-sm"><input type="hidden" name="session" value={session} />
+                <form className="text-sm"><input type="hidden" name="session" value={session} />{ref && <input type="hidden" name="ref" value={ref} />}
                   <label>Times in <select name="tz" defaultValue={tz} className="rounded border border-line px-2 py-1">{US_ZONES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label> <button className="underline">Update</button>
                 </form>
               </div>
@@ -66,9 +69,10 @@ export default async function MeetPage({ params, searchParams }: { params: Promi
               <p className="text-sm text-muted"><Link href={q({ session })} className="underline">Pick a different time</Link></p>
               <p className="mt-3 text-sm font-semibold">What we&apos;ll cover</p>
               <ul className="list-disc pl-5 text-sm text-ink-soft">{agendaFor(session, null).map((a) => <li key={a}>{a}</li>)}</ul>
-              <p className="mt-1 text-xs text-muted">If you&apos;re already a customer, we&apos;ll focus on what&apos;s in your plan.</p>
+              {!intro && <p className="mt-1 text-xs text-muted">If you&apos;re already a customer, we&apos;ll focus on what&apos;s in your plan.</p>}
               <form action={bookSession} className="mt-4 grid gap-2 sm:grid-cols-2">
                 <input type="hidden" name="slug" value={slug} /><input type="hidden" name="session" value={session} /><input type="hidden" name="at" value={at} />
+                {ref && <input type="hidden" name="ref" value={ref} />}
                 <input type="text" name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden="true" />
                 <label className="text-sm">Your name<input name="name" required maxLength={120} autoComplete="name" className={input} /></label>
                 <label className="text-sm">Email<input name="email" type="email" required maxLength={320} autoComplete="email" className={input} /></label>
