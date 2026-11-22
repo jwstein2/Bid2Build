@@ -5,7 +5,7 @@
 import { describe, expect, it, vi } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
-import { DEMO_SEED_VERSION, buildDemoDataset, datasetSummary, demoId } from "@/lib/demo/dataset";
+import { DEMO_SEED_VERSION, buildDemoDataset, datasetSummary, demoId, demoNamespace } from "@/lib/demo/dataset";
 import { demoSteps } from "@/lib/demo/apply";
 import { DEMO_BLOCKED, isDemoBlocked, parseDemoClaim } from "@/lib/demo/session";
 
@@ -146,7 +146,7 @@ describe("demo session blocklist", () => {
     for (const [p, m] of [
       ["/api/stripe/checkout", "POST"], ["/api/stripe/portal", "POST"], ["/api/billing/pm-addon", "POST"],
       ["/api/estimates/abc/signing", "POST"], ["/api/comms", "POST"], ["/api/comms/send", "POST"],
-      ["/api/company/invitations", "POST"], ["/api/schedules/abc/updates", "POST"],
+      ["/api/company/invitations", "POST"], ["/api/schedules/abc/updates", "POST"], ["/api/schedules/abc/updates/9", "PATCH"],
       ["/api/account/delete", "POST"], ["/api/import-website", "POST"],
       // Practice Mode for everyone (Nov 20): sub document request emails, change order links, Sales Hub.
       ["/api/team/subs/abc/request", "POST"], ["/api/change-orders/abc", "POST"], ["/api/sales/leads/import", "POST"], ["/api/sales/google/connect", "GET"],
@@ -157,6 +157,8 @@ describe("demo session blocklist", () => {
     for (const [p, m] of [
       ["/api/estimates/abc", "PATCH"], ["/api/estimates/abc/signing", "GET"], ["/api/comms/settings", "POST"], ["/api/comms/preview", "POST"],
       ["/api/schedules/abc", "POST"], ["/api/guide", "POST"],
+      // The customer update preview stores and sends nothing; publishing (POST /updates) stays blocked.
+      ["/api/schedules/abc/updates/preview", "POST"],
       // Invoice email drafts only render text (nothing can be sent), so demos can show them (Nov 18 demo failure).
       ["/api/financials/email", "POST"], ["/api/demo/exit", "POST"], ["/api/demo/reset", "POST"], ["/api/features", "GET"],
       ["/api/team/subs/abc", "PATCH"], ["/api/team/subs/abc/documents", "POST"], ["/api/change-orders/abc", "GET"],
@@ -281,5 +283,26 @@ describe("Practice Mode for everyone", () => {
     walk(path.join(root, "src"));
     const unreviewed = found.filter((f) => !reviewed.has(f) && f !== "src/lib/comp/server.ts" /* owner-only complimentary invites */ && f !== "src/lib/admin/costs.ts" /* text only */);
     expect(unreviewed).toEqual([]);
+  });
+});
+
+describe("Start over (reset) gets fresh ids", () => {
+  it("the first generation keeps the workspace id; each reset gets its own namespace", () => {
+    expect(demoNamespace({ id: NS, reset_count: 0 })).toBe(NS);
+    expect(demoNamespace({ id: NS, reset_count: 2 })).toBe(`${NS}:r2`);
+  });
+  it("a reset seed shares no ids or bank refs with the retired one", () => {
+    const a = buildDemoDataset({ kind: "practice", namespace: demoNamespace({ id: NS, reset_count: 0 }), anchor: "2026-11-18" });
+    const b = buildDemoDataset({ kind: "practice", namespace: demoNamespace({ id: NS, reset_count: 1 }), anchor: "2026-11-18" });
+    const ids = (d: typeof a) => new Set([...d.resources.map((r) => r.id), ...d.estimates.map((e) => e.id), ...d.customers.map((c) => c.id)]);
+    const ia = ids(a);
+    expect([...ids(b)].some((x) => ia.has(x))).toBe(false);
+    expect(a.bank.statements[0].transactions[0].txnRef).not.toBe(b.bank.statements[0].transactions[0].txnRef);
+  });
+  it("sample job costs carry the estimate cost type they are coded to", () => {
+    const d = buildDemoDataset({ kind: "practice", namespace: NS, anchor: "2026-11-18" });
+    const posts = d.bank.statements.flatMap((s) => s.transactions).map((t) => t.post).filter((p) => p?.type === "expense" && p.estimateId);
+    expect(posts.length).toBeGreaterThan(0);
+    expect(posts.every((p) => p?.type === "expense" && ["material", "subcontractor", "permit"].includes(p.costType ?? ""))).toBe(true);
   });
 });

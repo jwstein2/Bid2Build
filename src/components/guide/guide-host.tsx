@@ -38,7 +38,7 @@ type Live = { tour: TourDef; steps: PlannedStep[]; at: number; role: string } & 
 );
 
 /**
- * The Built2Bid Guide: bottom-left launcher, smart tour offers and the multi-page tour runner.
+ * The Built2Bid Guide: bottom-left launcher (just right of the app sidebar on desktop, so it never covers a menu item), smart tour offers and the multi-page tour runner.
  * Mounted in the signed-in layout; the estimate builder mounts it with launcher={false} so a tour that
  * continues into the builder picks up there. It never navigates, clicks or saves anything for the
  * person: between pages it offers a link and waits.
@@ -185,7 +185,7 @@ export function GuideHost({ launcher = true }: { launcher?: boolean }) {
 
       {next && live && (
         <div role="dialog" aria-modal="false" aria-labelledby="guide-next-title" data-testid="guide-continue"
-          className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+4.5rem)] left-3 right-3 z-50 rounded-xl border border-line bg-surface p-4 shadow-2xl sm:right-auto sm:w-[340px] no-print">
+          className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+4.5rem)] left-3 right-3 md:left-[calc(16rem+0.75rem)] z-50 rounded-xl border border-line bg-surface p-4 shadow-2xl sm:right-auto sm:w-[340px] no-print">
           <p className="text-xs font-semibold text-muted">{live.tour.title} · Step {live.at + 1} of {live.steps.length}</p>
           <h2 id="guide-next-title" className="font-display text-base font-extrabold text-navy">Next: {next.title}</h2>
           <p className="mt-1 text-sm text-ink-soft">{next.href ? `This part is on ${pageLabel(next.page)}.` : next.continueHint ?? `Open ${pageLabel(next.page)} to continue.`}</p>
@@ -202,7 +202,7 @@ export function GuideHost({ launcher = true }: { launcher?: boolean }) {
 
       {offer && !live && (
         <div role="dialog" aria-modal="false" aria-labelledby="guide-offer-title" aria-describedby="guide-offer-body" data-testid="guide-offer" data-tour={offer.tour.id}
-          className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+4.5rem)] left-3 right-3 z-50 rounded-xl border border-line bg-surface p-4 shadow-2xl sm:right-auto sm:w-[360px] no-print">
+          className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+4.5rem)] left-3 right-3 md:left-[calc(16rem+0.75rem)] z-50 rounded-xl border border-line bg-surface p-4 shadow-2xl sm:right-auto sm:w-[360px] no-print">
           <button type="button" onClick={() => answerOffer("later")} aria-label="Close" className="absolute right-1 top-1 grid h-11 w-11 place-items-center rounded-md text-muted hover:bg-black/5 sm:h-9 sm:w-9"><X className="h-4 w-4" aria-hidden /></button>
           <div className="flex items-start gap-3 pr-8">
             <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-accent/15 text-accent-ink"><Compass className="h-4 w-4" aria-hidden /></span>
@@ -223,12 +223,12 @@ export function GuideHost({ launcher = true }: { launcher?: boolean }) {
 
       {launcher && !showing && !panel && (min ? (
         <button type="button" onClick={() => { toggleMin(false); openPanel(); }} aria-label="Open the Built2Bid Guide" data-testid="guide-launcher-min"
-          className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+1rem)] left-0 z-40 grid h-11 w-6 place-items-center rounded-r-lg bg-navy text-white shadow-lg no-print">
+          className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+1rem)] left-0 md:left-64 z-40 grid h-11 w-6 place-items-center rounded-r-lg bg-navy text-white shadow-lg no-print">
           <Compass className="h-4 w-4" aria-hidden />
         </button>
       ) : (
         <button ref={launcherBtn} type="button" onClick={openPanel} aria-haspopup="dialog" data-testid="guide-launcher"
-          className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+1rem)] left-3 z-40 inline-flex h-11 items-center gap-2 rounded-full bg-navy px-3 text-sm font-semibold text-white shadow-lg ring-1 ring-white/10 hover:bg-navy/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:px-4 no-print">
+          className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+1rem)] left-3 md:left-[calc(16rem+0.75rem)] z-40 inline-flex h-11 items-center gap-2 rounded-full bg-navy px-3 text-sm font-semibold text-white shadow-lg ring-1 ring-white/10 hover:bg-navy/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:px-4 no-print">
           <Compass className="h-5 w-5" aria-hidden /><span className="max-sm:sr-only">Guide</span>
         </button>
       ))}

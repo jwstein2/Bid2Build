@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseCsv } from "@/lib/pricing/import";
-import { EMPLOYEE_COLUMNS, matchHeaders, parseCell, parseDate, parseRecord, sheetToRecords, SUB_COLUMNS, templateCsv } from "@/lib/team/import";
+import { EMPLOYEE_COLUMNS, headerRowIndex, isTemplateExampleRow, matchHeaders, parseCell, parseDate, parseRecord, sheetToRecords, SUB_COLUMNS, templateCsv } from "@/lib/team/import";
 import { HR_FIELDS, normalizeAccountNumber, routingOk } from "@/lib/team/hr";
 
 describe("team import: templates and headers", () => {
@@ -84,5 +84,23 @@ describe("team import: cell validation", () => {
   it("a 9-digit TIN without a type guesses EIN for companies and SSN for individuals", () => {
     expect(parseRecord("subs", 2, { name: "Stone Works", tin: "123456789" }).values.tinType).toBe("ein");
     expect(parseRecord("subs", 2, { name: "Joe Tile", entity: "individual", tin: "123456789" }).values.tinType).toBe("ssn");
+  });
+});
+
+describe("team import: real exports", () => {
+  it("skips the report title rows a QuickBooks vendor list starts with", () => {
+    const table = [["Practice Builders"], ["Vendor Contact List"], ["All Dates"], [], ["Vendor", "Phone Numbers", "Email", "Full Name", "Address", "Account #"],
+      ["Sample Lumber Supply", "(651) 555-0301", "orders@lumber.example", "Pat Sample", "100 Example Ave", ""]];
+    expect(headerRowIndex("subs", table)).toBe(4);
+    const { records, missingRequired } = sheetToRecords("subs", table);
+    expect(missingRequired).toEqual([]);
+    expect(records).toEqual([{ line: 6, raw: { name: "Sample Lumber Supply", email: "orders@lumber.example", w9Address: "100 Example Ave" } }]);
+  });
+  it("a header in the first row still starts at row 1", () => expect(headerRowIndex("employees", [["Name", "Work email"], ["Cris", ""]])).toBe(0));
+  it("only the template's own example row is skipped; a real company named Example is imported", () => {
+    expect(isTemplateExampleRow("EXAMPLE Cris Lopez (delete this row)")).toBe(true);
+    expect(isTemplateExampleRow("Example Roofing LLC")).toBe(false);
+    const { records } = sheetToRecords("subs", [["Company or person name"], ["Example Roofing LLC"], ["EXAMPLE Stone Works LLC (delete this row)"]]);
+    expect(records.map((r) => r.raw.name)).toEqual(["Example Roofing LLC"]);
   });
 });

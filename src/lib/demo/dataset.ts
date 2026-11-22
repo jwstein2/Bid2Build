@@ -24,7 +24,7 @@ import { RECIPES, type JobRecipe } from "./catalog";
 import { BUSINESS_NAMES, EMAIL_DOMAINS, FIRST, LAST, STAFF, STREETS, SUBS, TOWNS, fictionalPhone } from "./names";
 
 /** Bump when the dataset changes; Reset re-seeds with the current version. */
-export const DEMO_SEED_VERSION = "2026.11.21-1"; // 2026.11.21: 24-month history, simulated bank, change orders, refund; Practice = full company
+export const DEMO_SEED_VERSION = "2026.11.22-1"; // 2026.11.22: job costs coded to budget lines, bank-matched payments verified (2026.11.21: 24-month history, simulated bank, change orders, refund; Practice = full company)
 export type DemoKind = "owner_demo" | "practice";
 
 export type Stage = "draft" | "ready_for_review" | "approved" | "sent" | "pending" | "won" | "scheduled" | "in_progress" | "completed" | "lost";
@@ -72,7 +72,8 @@ export interface DemoComm {
  */
 export type DemoBankPost =
   | { type: "payment"; reference: string }
-  | { type: "expense"; payee: string; description: string; estimateId?: string }
+  // costType: the estimate cost type the job cost is coded to (the job's budget line for it), so actuals offset the estimate.
+  | { type: "expense"; payee: string; description: string; estimateId?: string; costType?: "material" | "subcontractor" | "permit" }
   | { type: "refund"; paymentReference: string; amount: string; reference: string }
   | { type: "excluded"; reason: "transfer" | "duplicate" | "owner" | "not_business" | "other"; note: string };
 export interface DemoBankTxn { txnRef: string; date: string; description: string; amount: string; checkNumber?: string; post: DemoBankPost | null }
@@ -102,6 +103,15 @@ export interface DemoDataset {
 
 // ── Deterministic helpers ────────────────────────────────────────────────────────────────────────
 /** Stable UUID (v4 layout) for a key inside a namespace. */
+/**
+ * Id namespace for one generation of a workspace. Reset (Start over) keeps the workspace id but retires the old
+ * sample login, whose append-only sample records can stay behind; the reset count gives the new seed fresh ids so
+ * it never collides with them. The first generation keeps the bare workspace id (unchanged for existing workspaces).
+ */
+export function demoNamespace(ws: { id: string; reset_count?: number | null }): string {
+  return ws.reset_count ? `${ws.id}:r${ws.reset_count}` : ws.id;
+}
+
 export function demoId(namespace: string, key: string): string {
   const h = createHash("sha256").update(`${namespace}:${key}`).digest("hex");
   return `${h.slice(0, 8)}-${h.slice(8, 12)}-4${h.slice(13, 16)}-${((parseInt(h[16], 16) & 3) | 8).toString(16)}${h.slice(17, 20)}-${h.slice(20, 32)}`;
@@ -567,22 +577,22 @@ function buildFinance(a: { seed: string; namespace: string; today: string; estim
     const supplies = ((cost.material ?? 0) + (cost.equipment ?? 0) + (cost.other ?? 0)) * factor;
     const end = jobEnd ?? null;
     const span = Math.max(3, end ? Math.round((Date.parse(end) - Date.parse(jobStart)) / DAY) : 21);
-    if (cost.permit) push(addDays(jobStart, -6), `City of Maple Hollow permit ${title}`, -cost.permit, { type: "expense", payee: "City of Maple Hollow (sample)", description: `Permit: ${title}`, estimateId: e.id });
+    if (cost.permit) push(addDays(jobStart, -6), `City of Maple Hollow permit ${title}`, -cost.permit, { type: "expense", payee: "City of Maple Hollow (sample)", description: `Permit: ${title}`, estimateId: e.id, costType: "permit" });
     if (supplies > 0) {
-      push(addDays(jobStart, -2), `Maple Hollow Lumber & Supply ${title}`, -supplies * 0.7, { type: "expense", payee: "Maple Hollow Lumber & Supply (sample)", description: `Materials: ${title}`, estimateId: e.id });
-      push(addDays(jobStart, Math.round(span / 2)), `Maple Hollow Lumber & Supply ${title}`, -supplies * 0.3, { type: "expense", payee: "Maple Hollow Lumber & Supply (sample)", description: `Materials (second delivery): ${title}`, estimateId: e.id });
+      push(addDays(jobStart, -2), `Maple Hollow Lumber & Supply ${title}`, -supplies * 0.7, { type: "expense", payee: "Maple Hollow Lumber & Supply (sample)", description: `Materials: ${title}`, estimateId: e.id, costType: "material" });
+      push(addDays(jobStart, Math.round(span / 2)), `Maple Hollow Lumber & Supply ${title}`, -supplies * 0.3, { type: "expense", payee: "Maple Hollow Lumber & Supply (sample)", description: `Materials (second delivery): ${title}`, estimateId: e.id, costType: "material" });
     }
     if (cost.subcontractor) {
       const sub = subs[k % Math.max(1, subs.length)]?.name ?? "Subcontractor (sample)";
       const n = check++;
-      if (end) push(addDays(end, 5), `Check ${n} ${sub}`, -cost.subcontractor * factor, { type: "expense", payee: sub, description: `Subcontract: ${title}`, estimateId: e.id }, String(n));
-      else push(addDays(jobStart, Math.round(span / 2)), `Check ${n} ${sub} progress payment`, -cost.subcontractor * factor * 0.5, { type: "expense", payee: sub, description: `Subcontract progress (50%): ${title}`, estimateId: e.id }, String(n));
+      if (end) push(addDays(end, 5), `Check ${n} ${sub}`, -cost.subcontractor * factor, { type: "expense", payee: sub, description: `Subcontract: ${title}`, estimateId: e.id, costType: "subcontractor" }, String(n));
+      else push(addDays(jobStart, Math.round(span / 2)), `Check ${n} ${sub} progress payment`, -cost.subcontractor * factor * 0.5, { type: "expense", payee: sub, description: `Subcontract progress (50%): ${title}`, estimateId: e.id, costType: "subcontractor" }, String(n));
     }
     // Loss-making jobs: rework after a failed inspection pushes job costs past the contract price.
     if (k % 7 === 3 && end) {
       const booked = (cost.permit ?? 0) + supplies + (cost.subcontractor ?? 0) * factor;
       const rework = e.total * (1.04 + r.next() * 0.1) - booked;
-      if (rework > 0) push(addDays(end, -3), `Maple Hollow Lumber & Supply rework ${title}`, -rework, { type: "expense", payee: "Maple Hollow Lumber & Supply (sample)", description: `Rework after failed inspection (overtime crew and replacement materials): ${title}`, estimateId: e.id });
+      if (rework > 0) push(addDays(end, -3), `Maple Hollow Lumber & Supply rework ${title}`, -rework, { type: "expense", payee: "Maple Hollow Lumber & Supply (sample)", description: `Rework after failed inspection (overtime crew and replacement materials): ${title}`, estimateId: e.id, costType: "material" });
     }
     const labor = (cost.labor ?? 0) * factor;
     for (let d = 0; d < span; d++) laborByDay.set(addDays(jobStart, d), (laborByDay.get(addDays(jobStart, d)) ?? 0) + labor / span);
@@ -623,7 +633,7 @@ function buildFinance(a: { seed: string; namespace: string; today: string; estim
   let run = 0, min = 0;
   for (const t of txns) { run = Math.round((run + Number(t.amount)) * 100) / 100; min = Math.min(min, run); }
   const opening = Math.max(18000, Math.ceil((8000 - min) / 500) * 500);
-  const all: DemoBankTxn[] = txns.map((t, i) => ({ ...t, txnRef: `sim-${a.namespace.slice(0, 8)}-${String(i + 1).padStart(5, "0")}`, post: t.date > addDays(today, -BANK_DAYS_UNMATCHED) ? null : t.post }));
+  const all: DemoBankTxn[] = txns.map((t, i) => ({ ...t, txnRef: `sim-${a.namespace.includes(":") ? demoId(a.namespace, "bank-ref").slice(0, 8) : a.namespace.slice(0, 8)}-${String(i + 1).padStart(5, "0")}`, post: t.date > addDays(today, -BANK_DAYS_UNMATCHED) ? null : t.post }));
   const statements: DemoBankStatement[] = [];
   let bal = opening;
   for (let m = start; m <= posted; m = addDays(monthEnd(m), 1)) {
