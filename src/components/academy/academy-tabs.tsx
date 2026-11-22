@@ -12,11 +12,12 @@ const PRIMARY: Tab[] = [
 
 type Tab = { href: string; label: string; short?: string; match: (p: string) => boolean };
 const CODES: Tab = { href: "/academy/codes", label: "Codes", match: (p: string) => p.startsWith("/academy/codes") };
+const STUDY: Tab = { href: "/academy/study", label: "Study", match: (p: string) => p.startsWith("/academy/study") };
 
-/** The primary Academy tabs (Community first; Codes once the code library is on), plus a small secondary menu. */
+/** The primary Academy tabs (Community first; Codes and Study once the code library is on), plus a small secondary menu. */
 export function AcademyTabs({ secondary, codes = false }: { secondary: { href: string; label: string }[]; codes?: boolean }) {
   const path = usePathname() ?? "/academy";
-  const tabs = codes ? [...PRIMARY.slice(0, 2), CODES, ...PRIMARY.slice(2)] : PRIMARY;
+  const tabs = codes ? [...PRIMARY.slice(0, 2), CODES, STUDY, ...PRIMARY.slice(2)] : PRIMARY;
   return (
     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
       <nav aria-label="Academy" className="-mx-1 flex max-w-full gap-1 overflow-x-auto px-1" data-testid="academy-tabs">
