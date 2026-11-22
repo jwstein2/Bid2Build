@@ -164,3 +164,18 @@ export async function getBill(env: QbEnvironment, realm: string, token: string, 
   const b = (((j.QueryResponse as Record<string, unknown> | undefined)?.Bill ?? []) as { Balance?: unknown; TotalAmt?: unknown }[])[0];
   return b ?? null;
 }
+
+/** Active bank accounts (where payouts are booked as paid from, e.g. the Stripe payout balance). */
+export async function listBankAccounts(env: QbEnvironment, realm: string, token: string): Promise<{ id: string; name: string }[]> {
+  const j = await api(env, realm, token, "query", { query: { query: "select Id, FullyQualifiedName from Account where AccountType = 'Bank' and Active = true maxresults 1000" } });
+  const rows = ((j.QueryResponse as Record<string, unknown> | undefined)?.Account ?? []) as { Id?: string; FullyQualifiedName?: string }[];
+  return rows.filter((r) => r.Id && /^\d{1,32}$/.test(r.Id)).map((r) => ({ id: String(r.Id), name: String(r.FullyQualifiedName ?? `#${r.Id}`).slice(0, 200) }));
+}
+
+/** Records a bill as paid from a bank account (bookkeeping entry only: QuickBooks moves no money for a "Check" bill payment). */
+export async function createBillPayment(env: QbEnvironment, realm: string, token: string, payload: Record<string, unknown>, requestId: string): Promise<string> {
+  const j = await api(env, realm, token, "billpayment", { method: "POST", body: payload, query: { requestid: requestId } });
+  const id = (j.BillPayment as { Id?: string } | undefined)?.Id;
+  if (!id || !/^\d{1,32}$/.test(id)) throw new QbError("QuickBooks didn't return the bill payment.", 502);
+  return id;
+}

@@ -81,3 +81,25 @@ export const QB_BLOCKER: Record<string, string> = {
   agreement_missing: "Affiliate agreement not accepted",
   no_affiliate: "Affiliate not found",
 };
+
+export interface BillPaymentInput { vendorId: string; bankAccountId: string; billId: string; amountCents: number; txnDate: string; note: string }
+
+/**
+ * Bookkeeping for a payout the payment provider already settled: a bill payment of type "Check" from the bank account
+ * that funds payouts, linked to the bill. It records money that already moved; it never sends money.
+ */
+export function billPaymentPayload(b: BillPaymentInput): Record<string, unknown> {
+  if (![b.vendorId, b.bankAccountId, b.billId].every((x) => /^\d{1,32}$/.test(x))) throw new Error("bad_ref");
+  if (!Number.isInteger(b.amountCents) || b.amountCents <= 0) throw new Error("bad_amount");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(b.txnDate)) throw new Error("bad_date");
+  const amount = Math.round(b.amountCents) / 100;
+  return {
+    VendorRef: { value: b.vendorId },
+    PayType: "Check",
+    CheckPayment: { BankAccountRef: { value: b.bankAccountId }, PrintStatus: "NotSet" },
+    TotalAmt: amount,
+    TxnDate: b.txnDate,
+    PrivateNote: b.note.slice(0, 4000),
+    Line: [{ Amount: amount, LinkedTxn: [{ TxnId: b.billId, TxnType: "Bill" }] }],
+  };
+}
