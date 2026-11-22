@@ -45,3 +45,11 @@ its version.
 3. Annual-plan customers who switch their renewal date away from the original anniversary month can miss an
    anniversary under the existing monthly-anniversary rule. That rule was kept as approved; the Affiliate program
    uses a "paid-through coverage" rule instead (see `docs/affiliates/`). Decide whether Sales should match.
+
+## New reps (2026-11-22)
+
+Migration `20270225001000_sales_amendments_existing_reps_only.sql` (rollback `docs/sales-portal/rollback_20270225001000.sql`):
+an amendment is only offered to reps whose record existed before the amendment was issued. Reps added later already
+join under the ten-year term, so they don't see the "Your commission term is now 10 years" banner, the amendment isn't
+listed on `/sales/amendments`, they can't accept it, and the owner's Policy tab doesn't count them as pending.
+Acceptances already recorded are unchanged.
