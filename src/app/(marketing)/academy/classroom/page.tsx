@@ -9,6 +9,7 @@ import { openGraphFor } from "@/lib/seo/open-graph";
 import { site } from "@/lib/site";
 import { ChallengeCard } from "@/components/academy/challenge-card";
 import { loadChallenge } from "@/lib/academy/rewards-server";
+import { centralToday, releaseLabel } from "@/lib/academy/release-plan";
 
 const title = "Contractor Classroom: Free Business Courses by Trade";
 const description = "Free business courses for contractors, organized by trade: sales, estimating, project management, financials, hiring, recurring revenue and safety.";
@@ -26,8 +27,19 @@ export default async function ClassroomPage({ searchParams }: PageProps<"/academ
   const tradeName = new Map(trades.map((t) => [t.slug, t.name]));
   const tradeIcon = new Map(trades.map((t) => [t.slug, t.icon ?? "Hammer"]));
   const general = all.filter((c) => !c.trade_slug);
-  const counts = new Map<string, { live: number; total: number }>();
-  for (const c of all) if (c.trade_slug) { const x = counts.get(c.trade_slug) ?? { live: 0, total: 0 }; x.total++; if (c.status === "published") x.live++; counts.set(c.trade_slug, x); }
+  const counts = new Map<string, { live: number; total: number; next: string | null }>();
+  const today = centralToday();
+  for (const c of all) if (c.trade_slug) {
+    const x = counts.get(c.trade_slug) ?? { live: 0, total: 0, next: null };
+    x.total++;
+    if (c.status === "published") x.live++;
+    else if (c.release_on && c.release_on >= today && (!x.next || c.release_on < x.next)) x.next = c.release_on;
+    counts.set(c.trade_slug, x);
+  }
+  // Trades with open courses first; the rest say when their first course opens instead of looking like empty rooms.
+  const tile = (t: { slug: string }) => counts.get(t.slug) ?? { live: 0, total: 0, next: null };
+  const tradeStatus = (c: { live: number; total: number; next: string | null }) =>
+    c.live ? `${c.live} open now · ${c.total} planned` : c.next ? `First course opens ${releaseLabel(c.next)}` : "Courses coming soon";
   const mine = (me.trades ?? []).filter((t) => tradeName.has(t));
   const results = q ? all.filter((c) => `${c.title} ${c.summary} ${c.trade_slug ? tradeName.get(c.trade_slug) : ""}`.toLowerCase().includes(q.toLowerCase())).slice(0, 48) : [];
 
@@ -74,21 +86,21 @@ export default async function ClassroomPage({ searchParams }: PageProps<"/academ
           <section className="mt-10" aria-labelledby="trades-h">
             <h2 id="trades-h" className="text-lg font-bold">Browse by trade</h2>
             {FAMILIES.map((fam) => {
-              const list = trades.filter((t) => t.family === fam);
+              const list = trades.filter((t) => t.family === fam).sort((a, b) => Number(tile(b).live > 0) - Number(tile(a).live > 0));
               if (!list.length) return null;
               return (
                 <div key={fam} className="mt-5">
                   <h3 className="text-xs font-bold tracking-wide text-muted uppercase">{fam}</h3>
                   <ul className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {list.map((t) => {
-                      const c = counts.get(t.slug) ?? { live: 0, total: 0 };
+                      const c = tile(t);
                       return (
                         <li key={t.slug}>
-                          <Link href={`/academy/classroom/${t.slug}`} className="flex items-center gap-3 rounded-xl border border-line bg-surface p-3 shadow-card hover:border-line-strong" data-testid="trade-tile">
+                          <Link href={`/academy/classroom/${t.slug}`} className={`flex items-center gap-3 rounded-xl border p-3 hover:border-line-strong ${c.live ? "border-line bg-surface shadow-card" : "border-dashed border-line bg-paper"}`} data-testid="trade-tile" data-open={c.live > 0 ? "true" : "false"}>
                             <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-brand-tint text-navy"><TradeIcon name={t.icon ?? "Hammer"} className="h-5 w-5" /></span>
                             <span className="min-w-0">
                               <span className="block font-semibold">{t.name}</span>
-                              <span className="block text-xs text-muted">{c.total} courses{c.live ? ` · ${c.live} open now` : ""}</span>
+                              <span className={`block text-xs ${c.live ? "font-semibold text-ok" : "text-muted"}`}>{tradeStatus(c)}</span>
                             </span>
                           </Link>
                         </li>
