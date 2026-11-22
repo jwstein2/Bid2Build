@@ -122,3 +122,23 @@ export function categoryFor(family: string, title?: string | null): CodeCategory
 
 /** Whether the search counts as answered for the anonymous trend stats (same rule as the page). */
 export const isAnswered = (results: KbResult[]) => pickAnswer(results) !== null;
+
+const STOP = new Set(["the", "and", "for", "with", "what", "how", "are", "is", "of", "to", "in", "on", "a", "an", "do", "i", "my", "need", "requirements", "requirement", "code", "codes", "rules"]);
+/** Splits text into plain and matched parts for the words of a question (whole-word prefix match, case-insensitive). */
+export function highlightTerms(text: string, q: string): { text: string; hit: boolean }[] {
+  const words = [...new Set(q.toLowerCase().split(/[^\p{L}\p{N}.]+/u).filter((w) => w.length >= 3 && !STOP.has(w)))].slice(0, 8);
+  if (!text || !words.length) return [{ text, hit: false }];
+  const esc = words.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).sort((a, b) => b.length - a.length);
+  const re = new RegExp(`\\b(${esc.join("|")})`, "giu");
+  const out: { text: string; hit: boolean }[] = [];
+  let last = 0;
+  for (const m of text.matchAll(re)) {
+    const i = m.index ?? 0;
+    if (i > last) out.push({ text: text.slice(last, i), hit: false });
+    out.push({ text: m[0], hit: true });
+    last = i + m[0].length;
+  }
+  if (last < text.length) out.push({ text: text.slice(last), hit: false });
+  return out;
+}
+

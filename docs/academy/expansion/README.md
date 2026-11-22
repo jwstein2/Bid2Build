@@ -87,3 +87,12 @@ Known gaps: Minnesota plumbing code (chapter 4714) not yet seeded; FMCSA definit
 - **Public statuses**: Verified for Selected Jurisdiction, Statewide Source Available, Local Verification Needed, Historical Edition, Under Review, Official Reference Only. Raw flags are staff-only.
 - **California**: 2025 Title 24 parts are verified as official references (text is copyrighted model-code text, so it is linked, not stored). CALGreen (Part 11) added.
 - **Coverage audit**: `academy_kb_run_coverage_audit()` (migration 20270222005000) runs 6 real searches per state + DC with the page's answer rule and stores the state × category matrix. Manage Academy → Codes → 50-state coverage audit, "Run audit now", and monthly on the 1st via the existing cron. Rollback: `docs/academy/rollback_20270222005000.sql`.
+
+## PR 5: Codebook search with the official eCFR API
+
+- **Already in place (kept):** verified local index and `academy_kb_search` (authoritative; Quick Answers only from it), terminology suggestions, ZIP/state/local jurisdiction picker, 50-state coverage, monthly eCFR amendment-date monitoring per stored section with review-queue items, the coverage audit.
+- **Live federal discovery** (`src/lib/academy/kb/ecfr.ts`): `/api/search/v1/results` with `date=current`, scoped to 29 CFR 1926 + 1904, 40 CFR 745 and 49 CFR chapter III subchapter B. Only for federal questions (never building-code questions), labeled "Official eCFR · not reviewed by Built2Bid", never a Quick Answer, weak matches dropped, cached a day per question, 4 s timeout, null on any failure (page shows local results only). Excerpts are sanitized to plain-text segments.
+- **Codebook browse** (`/academy/codes/browse`): Title → Chapter → Part → Subpart → Section from a headings-only snapshot (`scripts/academy/kb/gen_ecfr_structure.py` → `seed/ecfr-structure.json` + `public/academy-codes/federal-sections.json`). Verified sections link to Built2Bid text; every section links to the official eCFR page.
+- **Search UX:** citation-aware autocomplete (`autocomplete.ts`), topic shortcuts, highlighted matches, edition line on results, exact-citation card, "No matching indexed text" wording, global search "Search Codes & Regulations" hand-off.
+- **Monitoring:** the monthly coverage cron also compares each codebook part's latest eCFR amendment date with the snapshot and opens one review item when newer. No content is overwritten.
+- Not used: `/api/search/v1/suggestions` (returned empty for every test query, Nov 2026). No SQL, no keys, no cost.

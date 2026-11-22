@@ -2,6 +2,7 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/server";
 import { fail, json, logError } from "@/lib/http/api";
 import { compare, fingerprintText, planFor } from "@/lib/academy/kb/monitor";
+import { CODEBOOK, codebookDrift, partKey, partUrl } from "@/lib/academy/kb/codebook";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -14,7 +15,8 @@ const UA = "Built2Bid-Academy-SourceMonitor/1.0 (+https://built2bid.org/academy)
  *                      review-queue item for an admin. No AI, no content edits.
  *   ?phase=semiannual  queue the six-month review of every source (deduplicated per half-year)
  *   ?phase=coverage    monthly 50-state + DC coverage audit (real test searches per state); results show in
- *                      Manage Academy → Codes → Coverage. Read-only apart from the run record.
+ *                      Manage Academy → Codes → Coverage. Read-only apart from the run record. Also compares each
+ *                      codebook part's latest eCFR amendment date with the snapshot and opens a review item when newer.
  * Does nothing until the knowledge-engine migration is applied (the RPCs are missing and the job answers "off").
  */
 export async function POST(req: Request) {
@@ -33,7 +35,8 @@ export async function POST(req: Request) {
     if (phase === "coverage") {
       const { data, error } = await db.rpc("academy_kb_run_coverage_audit", { p_trigger: "scheduled" });
       if (error) return json({ ok: true, off: true });
-      return json({ ok: true, run: data });
+      const drift = await codebookCheck(db);
+      return json({ ok: true, run: data, codebook: drift });
     }
     const { data: due, error } = await db.rpc("academy_kb_due_checks", { p_limit: 8 });
     if (error) return json({ ok: true, off: true });
@@ -69,3 +72,27 @@ export async function POST(req: Request) {
     return fail(500, "server_error", "Source monitoring failed.");
   }
 }
+
+/** Latest amendment date per codebook part (eCFR versioner); a newer date than the snapshot opens one review item. */
+async function codebookCheck(db: ReturnType<typeof createAdminClient>): Promise<number> {
+  const live: Record<string, string | null> = {};
+  for (const p of CODEBOOK.parts) {
+    try {
+      const r = await fetch(`https://www.ecfr.gov/api/versioner/v1/versions/title-${p.title}.json?part=${p.part}`, { headers: { "user-agent": UA, accept: "application/json" }, signal: AbortSignal.timeout(12_000) });
+      if (!r.ok) continue;
+      const v = (await r.json()) as { content_versions?: { amendment_date?: string }[] };
+      live[partKey(p)] = (v.content_versions ?? []).map((x) => x.amendment_date ?? "").filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d)).sort().pop() ?? null;
+    } catch { /* unreachable this month; checked again next run */ }
+  }
+  const drift = codebookDrift(live);
+  for (const d of drift) {
+    const { error } = await db.from("academy_kb_review_queue").insert({
+      kind: "source_change", priority: 3, target_type: "codebook", target_id: d.key, dedupe_key: `codebook:${d.key}:${d.live}`,
+      title: `${d.part.title} CFR Part ${d.part.part} was amended ${d.live}`,
+      detail: `The official eCFR shows an amendment newer than the codebook snapshot (${d.part.last_amended ?? "none"}). Review the change at ${partUrl(d.part)}, update any affected sections through the usual verification, then re-run scripts/academy/kb/gen_ecfr_structure.py.`,
+    });
+    if (error && error.code !== "23505") logError("academy.kb.cron.codebook", error);
+  }
+  return drift.length;
+}
+

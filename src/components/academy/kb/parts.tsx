@@ -7,7 +7,7 @@ import { CONTENT_STATUS_LABEL, FEEDBACK_REASONS, KB_DISCLAIMER, REASON_TEXT, cit
 import { labelFromId } from "@/lib/academy/kb/geo";
 import { stateName } from "@/lib/academy/kb/location";
 import { CopyCitation } from "./copy-citation";
-import { STATUS, displayStatus, type DisplayStatus } from "@/lib/academy/kb/answer";
+import { STATUS, displayStatus, highlightTerms, type DisplayStatus } from "@/lib/academy/kb/answer";
 
 const fmtDate = (d: string | null | undefined) => (d ? new Date(`${d.slice(0, 10)}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) : null);
 export { fmtDate };
@@ -81,7 +81,13 @@ export function StatusBadge({ status }: { status: string }) {
 }
 
 /** A result card: answer text (verified only), applicability, facts, citation, report link. */
-export function ResultCard({ r, returnTo, state, strong, staff }: { r: KbResult; returnTo: string; state: string | null; strong?: boolean; staff?: boolean }) {
+/** Text with the searched words marked (plain text only; never renders HTML). */
+export function Hl({ text, q }: { text: string; q?: string | null }) {
+  if (!q) return <>{text}</>;
+  return <>{highlightTerms(text, q).map((p, i) => (p.hit ? <mark key={i} className="rounded-sm bg-accent-tint px-0.5 text-ink">{p.text}</mark> : <span key={i}>{p.text}</span>))}</>;
+}
+
+export function ResultCard({ r, returnTo, state, strong, staff, q }: { r: KbResult; returnTo: string; state: string | null; strong?: boolean; staff?: boolean; q?: string | null }) {
   const verified = r.section_status === "verified" && r.body_kind !== "title_only";
   const status = displayStatus(r, state);
   return (
@@ -92,9 +98,10 @@ export function ResultCard({ r, returnTo, state, strong, staff }: { r: KbResult;
         {r.amend_action && <Badge tone="brand">State amendment</Badge>}
       </div>
       <h3 className="mt-2 font-semibold">
-        <Link href={`/academy/codes/section/${r.section_id}${state ? `?state=${state}` : ""}`} className="hover:underline">{r.citation}: {r.title}</Link>
+        <Link href={`/academy/codes/section/${r.section_id}${state ? `?state=${state}` : ""}`} className="hover:underline">{r.citation}: <Hl text={r.title} q={q} /></Link>
       </h3>
-      {verified && r.summary && <p className="mt-1 text-sm text-ink">{r.summary}</p>}
+      <p className="text-xs text-muted" data-testid="kb-result-edition">{r.source_short}{r.edition ? ` · ${r.edition}` : ""}</p>
+      {verified && r.summary && <p className="mt-1 text-sm text-ink"><Hl text={r.summary} q={q} /></p>}
       {!verified && <p className="mt-1 text-sm text-ink-soft">{r.applicability?.status === "not_adopted" ? "A different edition is in force here. Use the official source for the adopted requirement." : "Section title only. Read the requirement in the official source."}</p>}
       {verified && r.exceptions && <p className="mt-1 text-xs text-ink-soft"><span className="font-semibold">Exceptions: </span>{r.exceptions}</p>}
       <details className="mt-2">
