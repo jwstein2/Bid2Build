@@ -3,11 +3,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { isPmEnabled } from "@/lib/env";
+import { isFinancialsEnabled, isPmEnabled } from "@/lib/env";
 import { loadClockProjects } from "@/lib/team/server";
 import { isQuickBooksEnabled, qbConfigured } from "@/lib/quickbooks/config";
 import { scopeFor } from "@/lib/quickbooks/server";
-import { QuickBooksSync } from "@/components/workforce/quickbooks/quickbooks-sync";
+import { AddExistingData, QuickBooksSync } from "@/components/workforce/quickbooks/quickbooks-sync";
 import { Notice } from "@/components/ui/misc";
 
 export const metadata: Metadata = { title: "QuickBooks hours sync", robots: { index: false } };
@@ -36,8 +36,8 @@ export default async function QuickBooksPage({ searchParams }: { searchParams: P
       <p className="mt-1 text-ink-soft">Send approved crew hours to QuickBooks Online as time entries, ready to run in QuickBooks Payroll. No double entry.</p>
     </div>
   );
-  if (!scope) return <div className="mx-auto max-w-4xl space-y-5">{header}<Notice tone="warn" title="QuickBooks sync is being set up">The database update for this page hasn&apos;t been applied yet.</Notice></div>;
-  if (!scope.canManage) return <div className="mx-auto max-w-4xl space-y-5">{header}<Notice title="Only people who manage your team can open this page" /></div>;
+  if (!scope) return <div className="mx-auto max-w-4xl space-y-5">{header}<Notice tone="warn" title="QuickBooks sync is being set up">The database update for this page hasn&apos;t been applied yet.</Notice><AddExistingData isFinancialsOn={isFinancialsEnabled()} /></div>;
+  if (!scope.canManage) return <div className="mx-auto max-w-4xl space-y-5">{header}<Notice title="Only people who manage your team can open this page" /><AddExistingData isFinancialsOn={isFinancialsEnabled()} /></div>;
   const [{ data: people }, projects] = await Promise.all([
     supabase.from("pm_resources").select("id, name, kind").in("kind", ["staff", "crew"]).eq("status", "active").order("name").limit(500),
     loadClockProjects(supabase),
@@ -47,7 +47,7 @@ export default async function QuickBooksPage({ searchParams }: { searchParams: P
     <div className="mx-auto max-w-4xl space-y-5" data-testid="quickbooks-page">
       {header}
       {result && <Notice tone={result.tone}>{result.text}</Notice>}
-      <QuickBooksSync configured={qbConfigured()} workers={((people ?? []) as { id: string; name: string }[]).map((p) => ({ id: p.id, name: p.name }))} projects={projects} />
+      <QuickBooksSync configured={qbConfigured()} isFinancialsOn={isFinancialsEnabled()} workers={((people ?? []) as { id: string; name: string }[]).map((p) => ({ id: p.id, name: p.name }))} projects={projects} />
     </div>
   );
 }

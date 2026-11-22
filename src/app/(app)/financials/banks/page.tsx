@@ -5,6 +5,7 @@ import { isFinancialsEnabled } from "@/lib/env";
 import { loadFinState } from "@/lib/financials/loaders";
 import { formatCurrency } from "@/lib/estimate/money";
 import { Badge, Notice } from "@/components/ui/misc";
+import { ButtonLink } from "@/components/ui/button";
 import { TbShell } from "@/components/tax-banking/shell";
 import { ConnectBank, ConnectionActions, SetPrimary } from "@/components/tax-banking/banks";
 import { can } from "@/lib/tax-banking/capabilities";
@@ -50,7 +51,7 @@ export default async function BanksPage({ searchParams }: { searchParams: Promis
   return (
     <TbShell {...shell}
       intro="Connect your business bank to see bank-reported balances and bring transactions into reconciliation automatically. Read-only: Built2Bid can't move money, never asks for your bank login, and stores only the last 4 digits of an account."
-      actions={<ConnectBank mode={mode} canConnect={canManage} laterHref={sp.onboarding ? "/financials" : undefined} />}>
+      actions={<div className="flex flex-wrap items-start gap-2"><ConnectBank mode={mode} canConnect={canManage} laterHref={sp.onboarding ? "/financials" : undefined} /><ButtonLink href="/financials/accounting/bank" variant="secondary" data-testid="banks-upload-statement">Upload a bank statement</ButtonLink></div>}>
       {mode === "plaid" && ctx.access.sandbox && process.env.PLAID_ENV !== "production" && <Notice title="Plaid test mode">This practice book uses Plaid&apos;s test banks. Sign in with user_good / pass_good. No real bank is contacted.</Notice>}
       {live.some((c) => c.sandbox) && (
         <Notice title="Simulation — no real transaction" tone="warn">

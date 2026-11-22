@@ -46,6 +46,7 @@ const GROUPS: { title: string; tools: Tool[] }[] = [
   { title: "Accounting", tools: [
     { label: "Accountant reports & CSV export", href: "/financials/accounting/reports", needs: "view_company_financials" },
     { label: "Bank statement import & reconciliation", href: "/financials/accounting/bank", needs: "view_company_financials" },
+    { label: "Add existing data (customers, bank statements, team, prices)", href: "/import" },
     { label: "Transactions", href: "/financials/accounting/transactions", needs: "view_company_financials" },
     { label: "Chart of accounts", href: "/financials/accounting/accounts", needs: "view_company_financials" },
     { label: "Audit trail", href: "/financials/accounting/audit", needs: "view_company_financials" },
