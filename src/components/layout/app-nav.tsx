@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { REVEAL_FEATURE_EVENT, START_TOUR_EVENT } from "@/lib/features/state";
-import { Sparkles, CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, HardHat, LayoutTemplate, LogOut, ArrowLeftRight, X, UserCog, Clock, Receipt, Gauge, SquareKanban, CalendarRange, GraduationCap, Palette, Landmark, Shapes, Bot, House, Newspaper } from "lucide-react";
+import { Sparkles, CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, HardHat, LayoutTemplate, LogOut, ArrowLeftRight, X, UserCog, Clock, Receipt, Gauge, SquareKanban, CalendarRange, GraduationCap, Palette, Landmark, Shapes, Bot, House, Newspaper, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ButtonLink } from "@/components/ui/button";
 import { Logo } from "./logo";
@@ -74,7 +74,11 @@ export type SidebarAccess = { hidden: string[]; other: { href: string; label: st
 /** V8.10 workspace switches ("Switch to Sales Hub"), chosen on the server from the person's permissions. */
 export type WorkspaceSwitch = { href: string; label: string };
 
-export function AppSidebar({ isAdmin, email, company, access = null, projects = false, clock = false, financials = false, home = false, theme = null, learning, switches = [], bell = null, practice = false, demo = null }: { isAdmin: boolean; /** Practice Mode switch in the Help section (on for everyone unless PRACTICE_MODE=off). */ practice?: boolean; /** Active demo / practice session, if any. */ demo?: DemoSessionKind | null; email: string | null; company?: CompanyNav | null; access?: SidebarAccess | null; projects?: boolean; clock?: boolean; financials?: boolean; home?: boolean; theme?: ThemePref | null; learning?: LearningNav | null; switches?: WorkspaceSwitch[]; /** Phone top bar notifications (the desktop copy sits in the page header). */ bell?: ReactNode }) {
+/** Links a brand-new solo account sees up front (2026-11-22 simpler menu). Everything else is under "More tools". */
+export const ESSENTIAL_HREFS = new Set(["/home", "/clock", "/dashboard", "/dashboard/customers", "/dashboard/items", "/dashboard/templates"]);
+const MORE_KEY = "b2b:nav-more-open";
+
+export function AppSidebar({ essentials = false, isAdmin, email, company, access = null, projects = false, clock = false, financials = false, home = false, theme = null, learning, switches = [], bell = null, practice = false, demo = null }: { /** New solo account: show the essentials and fold the rest under "More tools". */ essentials?: boolean; isAdmin: boolean; /** Practice Mode switch in the Help section (on for everyone unless PRACTICE_MODE=off). */ practice?: boolean; /** Active demo / practice session, if any. */ demo?: DemoSessionKind | null; email: string | null; company?: CompanyNav | null; access?: SidebarAccess | null; projects?: boolean; clock?: boolean; financials?: boolean; home?: boolean; theme?: ThemePref | null; learning?: LearningNav | null; switches?: WorkspaceSwitch[]; /** Phone top bar notifications (the desktop copy sits in the page header). */ bell?: ReactNode }) {
   // In a company, say whose bids and whose subscription each link is ("Team bids" is in the Company section).
   const own = (n: NavItem): NavItem => (!company ? n : n.href === "/dashboard" ? { ...n, label: "My bids" } : n.href === "/settings/billing" ? { ...n, label: "My subscription" } : n);
   const shown = (href: string) => !access?.hidden.includes(href);
@@ -86,6 +90,13 @@ export function AppSidebar({ isAdmin, email, company, access = null, projects = 
   const nav: NavItem[] = [...work, INDUSTRY, ...(finLinks ? [FINANCIALS] : []), ...finSettings, ...other, ...ACCOUNT_NAV.map(own)];
   const path = usePathname();
   const [open, setOpen] = useState(false);
+  // "More tools" (essentials menu only): remembered per browser; opens by itself on a page that lives in it.
+  const [moreOpen, setMoreOpen] = useState(false);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- read the remembered choice after hydration
+    try { if (window.localStorage.getItem(MORE_KEY) === "1") setMoreOpen(true); } catch { /* storage blocked */ }
+  }, []);
+  const toggleMore = () => setMoreOpen((v) => { try { window.localStorage.setItem(MORE_KEY, v ? "0" : "1"); } catch { /* storage blocked */ } return !v; });
   // eslint-disable-next-line react-hooks/set-state-in-effect -- close the mobile menu after navigating
   useEffect(() => { setOpen(false); }, [path]);
   // On phones the links are inside the Menu. Starting a walkthrough from it closes it so the page it
@@ -121,6 +132,9 @@ export function AppSidebar({ isAdmin, email, company, access = null, projects = 
   }, [open]);
   const active = (href: string, exact?: boolean) => (exact ? path === href : path === href || path.startsWith(`${href}/`));
   const current = nav.find((n) => active(n.href, n.exact)) ?? (active(COMPANY_PROFILE.href) ? COMPANY_PROFILE : undefined) ?? companyLinks.find((l) => active(l.href, companyExact(l.href)));
+  const primary = essentials ? work.filter((n) => ESSENTIAL_HREFS.has(n.href)) : work;
+  const moreItems: NavItem[] = essentials ? [...work.filter((n) => !ESSENTIAL_HREFS.has(n.href)), ...(finLinks ? [FINANCIALS] : []), ...finSettings] : [];
+  const showMore = moreOpen || moreItems.some((n) => active(n.href, n.exact));
   const link = (n: NavItem, wrap = false) => {
     const on = active(n.href, n.exact);
     return (
@@ -160,8 +174,24 @@ export function AppSidebar({ isAdmin, email, company, access = null, projects = 
       {!open && current && current.href !== "/home" && <p className="flex items-center gap-1.5 px-4 pb-2 text-xs text-[#B8C6D4] md:hidden" data-testid="nav-current">{current.label}{"premium" in current && current.premium && <PremiumDiamond tone="dark" />}</p>}
       <nav id="account-nav" aria-label="Account" className={cn("flex-col gap-1 px-2 pb-3 md:mt-4 md:flex", open ? "flex max-md:motion-drop-in" : "hidden")}>
         {bell && <ThemeToggle signedIn account={theme} tone="dark" label className={cn(item, "w-full justify-start text-[#C9D6E3] hover:text-white md:hidden")} />}
-        {work.map((n) => link(n))}
-        {finLinks && (
+        {primary.map((n) => link(n))}
+        {essentials && moreItems.length > 0 && (
+          <>
+            <button type="button" onClick={toggleMore} aria-expanded={showMore} aria-controls="nav-more" data-testid="nav-more-toggle"
+              className={cn(item, "w-full text-left text-[#C9D6E3] hover:bg-white/5 hover:text-white")}>
+              <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform", showMore ? "rotate-180" : "")} aria-hidden />
+              <span className="flex-1">{showMore ? "Fewer tools" : "More tools"}</span>
+              {!showMore && <span className="text-[11px] text-[#B8C6D4]">{moreItems.length}</span>}
+            </button>
+            {showMore && (
+              <div id="nav-more" className="flex flex-col gap-1" data-testid="nav-more">
+                <p className="px-3 pb-1 text-xs text-[#B8C6D4]">Scheduling, crews, financials and more. They&apos;re here whenever you need them.</p>
+                {moreItems.map((n) => link(n))}
+              </div>
+            )}
+          </>
+        )}
+        {!essentials && finLinks && (
           <>
             <p className="mt-3 px-3 pb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#B8C6D4]" data-testid="nav-numbers-heading">Know Your Numbers</p>
             {link(FINANCIALS)}
@@ -177,7 +207,7 @@ export function AppSidebar({ isAdmin, email, company, access = null, projects = 
         <Link href={COMPANY_PROFILE.href} aria-current={active(COMPANY_PROFILE.href) ? "page" : undefined} data-testid="nav-company-profile" className={cn(item, active(COMPANY_PROFILE.href) ? "bg-white/10 text-white shadow-[inset_3px_0_0_var(--color-cyan)]" : "text-[#C9D6E3] hover:bg-white/5 hover:text-white")}>
           <Building2 className={cn("h-4 w-4", active(COMPANY_PROFILE.href) ? "text-cyan" : "")} aria-hidden /> {COMPANY_PROFILE.label}
         </Link>
-        {finSettings.map((n) => link(n))}
+        {!essentials && finSettings.map((n) => link(n))}
         {companyLinks.map((l) => {
           const on = active(l.href, companyExact(l.href));
           const Icon = COMPANY_ICONS[l.href];
