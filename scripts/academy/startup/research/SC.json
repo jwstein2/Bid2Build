@@ -1,0 +1,358 @@
+{
+ "state": "SC",
+ "researched_on": "2026-11-22",
+ "general": {
+  "entity": {
+   "agency": "SC Secretary of State",
+   "summary": "Create your LLC or corporation online through the Secretary of State's Business Entities Online system. Commercial contractor applicants (other than sole proprietors) must show they are registered to do business in SC.",
+   "url": "https://sos.sc.gov/online-filings",
+   "quote": "By using the Business Entities Online system, users may file online to create business entities and make changes to their existing entities"
+  },
+  "state_tax": {
+   "agency": "SC Department of Revenue (SCDOR)",
+   "summary": "Get a retail license from SCDOR before selling taxable goods, and an employer withholding account if you have employees. Your state retail license is separate from any local business license.",
+   "url": "https://scbos.sc.gov/business-compliance/licenses/retail-license",
+   "quote": "Businesses must obtain a retail license before making any sales of taxable goods in South Carolina."
+  },
+  "unemployment": {
+   "agency": "SC Department of Employment and Workforce (SCDEW)",
+   "summary": "Once you have at least one employee, file with SCDEW, which decides whether you owe unemployment insurance tax.",
+   "url": "https://scbos.sc.gov/hiring-employees",
+   "quote": "Businesses must file with the South Carolina Department of Employment and Workforce (SCDEW) if the employer has at least one employee."
+  },
+  "workers_comp": {
+   "agency": "SC Workers' Compensation Commission",
+   "summary": "Businesses that regularly employ 4 or more people in SC must carry workers' comp, counting part-timers and family members. Subcontractors with fewer than 4 employees are judged case by case, and general contractors often require coverage anyway.",
+   "url": "https://wcc.sc.gov/employer-faqs",
+   "quote": "As a general rule, businesses that regularly employ four or more employees within South Carolina are required to maintain workers' compensation coverage. Part-time workers and family members are counted as employees."
+  },
+  "local": {
+   "summary": "South Carolina has no statewide business license; counties and cities issue business licenses, and you may need one from both.",
+   "url": "https://scbos.sc.gov/business-compliance/licenses/business-license",
+   "quote": "In South Carolina, b usiness licenses are typically issued by the county or municipality where your business operates. South Carolina does not have a statewide business license."
+  }
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "threshold",
+   "name": "Residential Builder License; Residential Specialty Contractor Registration",
+   "agency": "SC Residential Builders Commission (LLR)",
+   "covers": "Residential Builder: anyone building, repairing or improving homes (up to three floors and sixteen units) when the job costs more than five thousand dollars. Specialty Contractor Registration: single-trade residential contractors (siding, insulation, roofing, masonry, carpentry, drywall, painting, stucco, etc.) on jobs over $500.",
+   "threshold": "Residential builder license for jobs over five thousand dollars; specialty registration for specialty jobs over $500.",
+   "prerequisites": [
+    "Builder: at least one year of experience under a licensed residential builder (or approved education/experience), verified before you can sit for the exam",
+    "Builder: pass the SC Residential Builder exam",
+    "Builder: surety bond of at least fifteen thousand dollars or proof of financial responsibility",
+    "Workers' compensation insurance information on the application",
+    "Specialty registration: no exam, limited to three trades; bond required when a job for a property owner exceeds five thousand dollars"
+   ],
+   "bond": "Residential builders: bond of not less than fifteen thousand dollars or acceptable proof of financial responsibility. Specialty contractors: bond when a job for an individual owner exceeds five thousand dollars.",
+   "insurance": "Workers' compensation insurance is part of the application review.",
+   "summary": "South Carolina requires a Residential Builder license for home construction or remodeling jobs over five thousand dollars, which takes verified experience, an exam, and a bond or financial statement. Single-trade contractors such as roofers, painters or siding installers instead register as residential specialty contractors (no exam) for jobs over $500.",
+   "url": "https://llr.sc.gov/res/resbuilder.aspx",
+   "quote": "and which does not have more than sixteen units in any single apartment building, when the cost of the undertaking exceeds five thousand dollars.",
+   "evidence": [
+    {
+     "url": "https://www.scstatehouse.gov/code/t40c059.php",
+     "quote": "A prerequisite for taking the examination for a residential builder's license is a minimum of one year of actual experience under the supervision of a licensed residential builder"
+    },
+    {
+     "url": "https://www.scstatehouse.gov/code/t40c059.php",
+     "quote": "the applicant submits an executed bond in the form and with a surety approved by the commission in the sum of not less than fifteen thousand dollars or proof of financial responsibility acceptable to the commission."
+    },
+    {
+     "url": "https://llr.sc.gov/res/resspecialty.aspx",
+     "quote": "when the undertakings exceed five hundred dollars ($500) and are not regulated by the provisions of Chapter 11, Title 40."
+    },
+    {
+     "url": "https://llr.sc.gov/res/resspecialty.aspx",
+     "quote": "A Residential Specialty Contractor Registration is limited to three trade classifications."
+    },
+    {
+     "url": "https://www.scstatehouse.gov/code/t40c059.php",
+     "quote": "When the total cost of materials and labor for an undertaking performed by a residential specialty contractor for an individual property owner exceeds five thousand dollars, the residential specialty contractor shall obtain an executed bond"
+    },
+    {
+     "url": "https://llr.sc.gov/res/resbuilder.aspx",
+     "quote": "Work experience must be verified and approved before you are made eligible for the exam."
+    }
+   ],
+   "note": "The application review also lists workers' compensation insurance (SC Code 40-59-220)."
+  },
+  "commercial_building": {
+   "status": "threshold",
+   "name": "General Contractor License (Building and other classifications/subclassifications)",
+   "agency": "SC Contractor's Licensing Board (LLR)",
+   "covers": "Anyone performing commercial construction over $10,000 in a regulated classification (e.g. General Contractors-Building, Nonstructural Renovation, Roofing, Masonry).",
+   "threshold": "Commercial work over $10,000.",
+   "prerequisites": [
+    "Designate a Primary Qualifying Party who has passed the exams before applying",
+    "Pass the PSI technical exam for the classification (or qualify by waiver/reciprocity)",
+    "Pass the S.C. Business Management and Law for Commercial Contractors exam",
+    "At least 2 years of work experience within the past 5 years",
+    "Financial statement or surety bond for the license group limit",
+    "Proof of registration with the SC Secretary of State (not for sole proprietors)"
+   ],
+   "bond": "A financial statement (net worth/working capital) or a surety bond in the amount required for your license group sets your per-job limit.",
+   "insurance": null,
+   "summary": "Commercial construction over $10,000 in South Carolina requires a General Contractor license from the Contractor's Licensing Board. Your qualifying party must pass a technical exam and a business and law exam and show 2 years of experience in the past 5; the business must also file a financial statement or bond.",
+   "url": "https://llr.sc.gov/clb/clb_general.aspx",
+   "quote": "A General or Mechanical Contractor's license is required for anyone performing commercial construction over $10,000 in the regulated classifications listed in Title 40, Chapter 11, Section 40-11-410",
+   "evidence": [
+    {
+     "url": "https://llr.sc.gov/clb/clb_licensure.aspx",
+     "quote": "Applicants are also required to pass the S.C. Business Management and Law for Commercial Contractors exam. In addition, all applicants must submit at least 2 years of work experience performed within the past 5 years"
+    },
+    {
+     "url": "https://llr.sc.gov/clb/clb_licensure.aspx",
+     "quote": "PQPs must complete the exam requirements for certification prior to the entity or individual submitting an application to the Board for licensure"
+    },
+    {
+     "url": "https://llr.sc.gov/clb/clb_licensure.aspx",
+     "quote": "A financial statement or a surety bond must be submitted to determine your license group limitation for initial applications and renewal applications."
+    },
+    {
+     "url": "https://llr.sc.gov/clb/clb_licensure.aspx",
+     "quote": "Verification to conduct business in SC from the SC Secretary of State (not required for a sole proprietorship)."
+    }
+   ]
+  },
+  "electrical": {
+   "status": "threshold",
+   "name": "Residential Electrician License (RBC); Mechanical Contractor License - Electrical subclassification (CLB)",
+   "agency": "SC Residential Builders Commission / SC Contractor's Licensing Board (LLR)",
+   "covers": "Residential electrical work over $500 needs a Residential Electrician license; commercial electrical work over $10,000 needs a Mechanical Contractor license with the Electrical subclassification.",
+   "threshold": "Residential over $500; commercial over $10,000.",
+   "prerequisites": [
+    "Residential: verified work experience approved by the Commission, then pass the SC Residential Electrical exam",
+    "Commercial: qualifying party passes the technical exam (or holds an accepted Master Electrician certification) and the business and law exam, with 2 years of experience in the past 5",
+    "Commercial: financial statement or surety bond"
+   ],
+   "bond": "Commercial license requires a financial statement or surety bond for the license group.",
+   "insurance": null,
+   "summary": "Residential electrical jobs over $500 require a state Residential Electrician license, earned with verified experience and an exam. Commercial electrical work over $10,000 requires a Mechanical Contractor license with the Electrical subclassification.",
+   "url": "https://llr.sc.gov/res/reselectric.aspx",
+   "quote": "Residential electrical work exceeding $500 requires a license. If you intend to perform commercial electrical work that exceeds $10,000, please see the South Carolina Contractor's Licensing Board for information about licensure.",
+   "evidence": [
+    {
+     "url": "https://llr.sc.gov/res/reselectric.aspx",
+     "quote": "Work experience must be verified and approved before you are made eligible for the exam."
+    },
+    {
+     "url": "https://llr.sc.gov/clb/clb_licensure.aspx",
+     "quote": "Applicants are also required to pass the S.C. Business Management and Law for Commercial Contractors exam. In addition, all applicants must submit at least 2 years of work experience performed within the past 5 years"
+    },
+    {
+     "url": "https://llr.sc.gov/clb/clb_licensure.aspx",
+     "quote": "A financial statement or a surety bond must be submitted to determine your license group limitation for initial applications and renewal applications."
+    }
+   ],
+   "note": "SC has no state journeyman electrician license; individual electrician certification for commercial work may be required locally."
+  },
+  "plumbing": {
+   "status": "threshold",
+   "name": "Residential Plumber License (RBC); Mechanical Contractor License - Plumbing subclassification (CLB)",
+   "agency": "SC Residential Builders Commission / SC Contractor's Licensing Board (LLR)",
+   "covers": "Residential plumbing work over $500 needs a Residential Plumber license; commercial plumbing work over $10,000 needs a Mechanical Contractor license with the Plumbing subclassification.",
+   "threshold": "Residential over $500; commercial over $10,000.",
+   "prerequisites": [
+    "Residential: verified work experience approved by the Commission, then pass the SC Residential Plumber exam",
+    "Commercial: qualifying party passes the technical exam (or holds an accepted Master Plumber certification) and the business and law exam, with 2 years of experience in the past 5",
+    "Commercial: financial statement or surety bond"
+   ],
+   "bond": "Commercial license requires a financial statement or surety bond for the license group.",
+   "insurance": null,
+   "summary": "Residential plumbing jobs over $500 require a state Residential Plumber license, earned with verified experience and an exam. Commercial plumbing over $10,000 requires a Mechanical Contractor license with the Plumbing subclassification.",
+   "url": "https://llr.sc.gov/res/resplumber.aspx",
+   "quote": "Residential plumbing work exceeding $500 requires a license. If you intend to perform commercial plumbing work that exceeds $10,000, please see the South Carolina Contractor's Licensing Board for information about licensure.",
+   "evidence": [
+    {
+     "url": "https://llr.sc.gov/res/resplumber.aspx",
+     "quote": "Work experience must be verified and approved before you are made eligible for the exam."
+    },
+    {
+     "url": "https://llr.sc.gov/clb/clb_licensure.aspx",
+     "quote": "Applicants are also required to pass the S.C. Business Management and Law for Commercial Contractors exam. In addition, all applicants must submit at least 2 years of work experience performed within the past 5 years"
+    },
+    {
+     "url": "https://llr.sc.gov/clb/clb_licensure.aspx",
+     "quote": "A financial statement or a surety bond must be submitted to determine your license group limitation for initial applications and renewal applications."
+    }
+   ]
+  },
+  "mechanical": {
+   "status": "threshold",
+   "name": "Residential HVAC Installer and Repairer License (RBC); Mechanical Contractor License - Air Conditioning/Heating/Refrigeration subclassifications (CLB)",
+   "agency": "SC Residential Builders Commission / SC Contractor's Licensing Board (LLR)",
+   "covers": "Residential HVAC work over $500 needs a Residential HVAC license; commercial HVAC work over $10,000 needs a Mechanical Contractor license (Air Conditioning, Heating, Refrigeration, Packaged Equipment, etc.).",
+   "threshold": "Residential over $500; commercial over $10,000.",
+   "prerequisites": [
+    "Residential: verified work experience approved by the Commission, then pass the SC Residential HVAC exam",
+    "Commercial: qualifying party passes the technical exam and the business and law exam, with 2 years of experience in the past 5",
+    "Commercial: financial statement or surety bond"
+   ],
+   "bond": "Commercial license requires a financial statement or surety bond for the license group.",
+   "insurance": null,
+   "summary": "Residential HVAC jobs over $500 need a state Residential HVAC Installer and Repairer license, earned with verified experience and an exam. Commercial HVAC work over $10,000 needs a Mechanical Contractor license from the Contractor's Licensing Board.",
+   "url": "https://llr.sc.gov/res/reshvac.aspx",
+   "quote": "Residential HVAC work exceeding $500 requires a license. If you intend to perform commercial HVAC work that exceeds $10,000, please see the South Carolina Contractor's Licensing Board for information about licensure.",
+   "evidence": [
+    {
+     "url": "https://llr.sc.gov/res/reshvac.aspx",
+     "quote": "Work experience must be verified and approved before you are made eligible for the exam."
+    },
+    {
+     "url": "https://llr.sc.gov/clb/clb_licensure.aspx",
+     "quote": "Applicants are also required to pass the S.C. Business Management and Law for Commercial Contractors exam. In addition, all applicants must submit at least 2 years of work experience performed within the past 5 years"
+    },
+    {
+     "url": "https://llr.sc.gov/clb/clb_licensure.aspx",
+     "quote": "A financial statement or a surety bond must be submitted to determine your license group limitation for initial applications and renewal applications."
+    },
+    {
+     "url": "https://www.scstatehouse.gov/code/t40c011.php",
+     "quote": "\"Air Conditioning\" which includes the installation, replacement, alteration, and repair of air conditioning equipment and systems"
+    }
+   ],
+   "note": "Federal EPA refrigerant-handling certification also applies to technicians; not covered by these state pages."
+  },
+  "roofing": {
+   "status": "threshold",
+   "name": "Residential Specialty Contractor Registration - Roofers (RBC); General Contractor License - Roofing subclassification (CLB)",
+   "agency": "SC Residential Builders Commission / SC Contractor's Licensing Board (LLR)",
+   "covers": "Residential roofers register as residential specialty contractors for jobs over $500; commercial roofing over $10,000 needs a General Contractor license with the Roofing subclassification.",
+   "threshold": "Residential over $500; commercial over $10,000.",
+   "prerequisites": [
+    "Residential: specialty registration (no exam); bond when a job for an individual owner exceeds five thousand dollars",
+    "Commercial: qualifying party passes the technical and business/law exams, 2 years of experience in the past 5, and a financial statement or bond"
+   ],
+   "bond": "Residential specialty: bond when a job for an individual owner exceeds five thousand dollars. Commercial: financial statement or surety bond.",
+   "insurance": null,
+   "summary": "Residential roofers register with the Residential Builders Commission as specialty contractors (no exam) for jobs over $500. Commercial roofing over $10,000 requires a General Contractor license with the Roofing subclassification.",
+   "url": "https://llr.sc.gov/res/resspecialty.aspx",
+   "quote": "An examination is not required to become a registered specialty contractor.",
+   "evidence": [
+    {
+     "url": "https://llr.sc.gov/res/resspecialty.aspx",
+     "quote": "when the undertakings exceed five hundred dollars ($500) and are not regulated by the provisions of Chapter 11, Title 40."
+    },
+    {
+     "url": "https://www.scstatehouse.gov/code/t40c011.php",
+     "quote": "\"Roofing\" which includes the installation and repair of roofs and roof decking on commercial, industrial, residential, and institutional structures"
+    },
+    {
+     "url": "https://llr.sc.gov/clb/clb_general.aspx",
+     "quote": "A General or Mechanical Contractor's license is required for anyone performing commercial construction over $10,000"
+    },
+    {
+     "url": "https://www.scstatehouse.gov/code/t40c059.php",
+     "quote": "When the total cost of materials and labor for an undertaking performed by a residential specialty contractor for an individual property owner exceeds five thousand dollars, the residential specialty contractor shall obtain an executed bond"
+    },
+    {
+     "url": "https://llr.sc.gov/clb/clb_licensure.aspx",
+     "quote": "Applicants are also required to pass the S.C. Business Management and Law for Commercial Contractors exam. In addition, all applicants must submit at least 2 years of work experience performed within the past 5 years"
+    }
+   ]
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Commercial Pesticide Applicator License; Pest Control Business License",
+   "agency": "Clemson University Department of Pesticide Regulation (state regulatory agency)",
+   "covers": "Businesses applying pesticides for hire, including structural pest control, lawn/ornamental and tree spraying.",
+   "threshold": null,
+   "prerequisites": [
+    "Pass the certification exam for each category",
+    "Financial responsibility (liability insurance or surety bond) of at least twenty-five thousand dollars"
+   ],
+   "bond": "Surety bond or liability insurance accepted as financial responsibility.",
+   "insurance": "Property damage and public liability coverage of at least twenty-five thousand dollars (may be raised by regulation).",
+   "summary": "Pesticide applicators working for hire in South Carolina need a commercial applicator license, which requires passing an exam and showing proof of liability insurance or a bond. Pest control companies also need a pest control business license.",
+   "url": "https://www.scstatehouse.gov/code/t46c013.php",
+   "quote": "The director may not issue a commercial or noncommercial applicator's license until the individual who uses or supervises the use of a restricted use pesticide is certified by passing an examination",
+   "evidence": [
+    {
+     "url": "https://www.scstatehouse.gov/code/t46c013.php",
+     "quote": "The amount of the financial responsibility provided in this section must be not less than twenty-five thousand dollars for property damage and public liability insurance."
+    },
+    {
+     "url": "https://www.scstatehouse.gov/code/t46c013.php",
+     "quote": "Made a pesticide application or performed other activity without the proper South Carolina Commercial Pesticide Applicator's License or South Carolina Pest Control Business License."
+    }
+   ],
+   "note": "The Department of Pesticide Regulation's own website is on clemson.edu (not .gov), so statute text is cited."
+  },
+  "asbestos": {
+   "status": "state_license",
+   "name": "Asbestos Project License and personnel licenses",
+   "agency": "SC Department of Environmental Services (formerly DHEC)",
+   "covers": "Asbestos abatement entities must get a project license before each asbestos project; workers and supervisors need personnel licenses set by regulation.",
+   "threshold": null,
+   "prerequisites": [
+    "Asbestos project license from the department before starting each project",
+    "Licensed asbestos abatement personnel"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "South Carolina requires asbestos abatement contractors to get a state license for each project before work begins, and the department licenses the people who do the work.",
+   "url": "https://www.scstatehouse.gov/code/t44c087.php",
+   "quote": "Asbestos abatement entities performing asbestos projects shall, before beginning work on a project, obtain an asbestos project license from the department.",
+   "evidence": [
+    {
+     "url": "https://www.scstatehouse.gov/code/t44c087.php",
+     "quote": "The department by regulation may define categories and requirements for licensing of personnel who perform asbestos abatement work."
+    }
+   ]
+  },
+  "lead_rrp": {
+   "status": "no_state_license",
+   "name": "EPA Lead-Safe Certified Firm (federal RRP)",
+   "agency": "U.S. EPA",
+   "covers": "Firms doing renovation, repair or painting in pre-1978 housing or child-occupied facilities.",
+   "threshold": null,
+   "prerequisites": [
+    "EPA firm certification",
+    "Certified renovator training for workers in charge"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "South Carolina does not run its own RRP program, so firms working on pre-1978 homes must be certified directly by EPA.",
+   "url": "https://www.epa.gov/node/255913",
+   "quote": "Federal law requires all renovation, repair, and painting firms (including sole proprietorships) working in housing, or facilities where children are routinely present, built before 1978, to be certified.",
+   "evidence": [
+    {
+     "url": "https://www.epa.gov/node/255913",
+     "quote": "EPA's renovation program applies to all states, Tribes and territories where EPA has not specifically provided authorization for that state, Tribe or territory to operate the program themselves."
+    },
+    {
+     "url": "https://www.epa.gov/node/255913",
+     "quote": "These states are authorized to administer their own RRP programs in lieu of the federal program."
+    }
+   ],
+   "note": "South Carolina is not on EPA's list of authorized states."
+  },
+  "other": [
+   {
+    "key": "fire_sprinkler",
+    "name": "Fire Protection Sprinkler Contractor License",
+    "agency": "SC Contractor's Licensing Board (LLR)",
+    "trades": [
+     "plumbing"
+    ],
+    "summary": "Fire sprinkler businesses need a state license under the Fire Protection Sprinkler Systems Act.",
+    "url": "https://llr.sc.gov/clb/licensure_sprinkler.aspx",
+    "quote": "It is unlawful for a person to practice in the fire protection sprinkler systems business in this State without being licensed"
+   },
+   {
+    "key": "alarm",
+    "name": "Burglar and Fire Alarm Contractor License",
+    "agency": "SC Contractor's Licensing Board (LLR)",
+    "trades": [
+     "electrical"
+    ],
+    "summary": "The Contractor's Licensing Board also licenses burglar alarm and fire alarm contractors.",
+    "url": "https://llr.sc.gov/clb/",
+    "quote": "The SC Contractor's Licensing Board regulates the license, certification or registration of general and mechanical contractors, construction managers, burglar alarm and fire alarm contractors, fire sprinkler contractors, and the boiler safety program."
+   }
+  ]
+ }
+}

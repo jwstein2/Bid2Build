@@ -1,0 +1,352 @@
+{
+ "state": "TX",
+ "researched_on": "2026-11-22",
+ "checked_at": "2026-11-22T21:48:10Z",
+ "general": {
+  "entity": {
+   "agency": "Texas Secretary of State",
+   "summary": "Create a Texas LLC or corporation by filing a certificate of formation with the Secretary of State (online through SOSDirect). Sole proprietors using a business name file an assumed name (DBA) certificate with the county clerk.",
+   "url": "https://www.sos.state.tx.us/corp/businessstructure.shtml",
+   "quote": "Limited Liability Company: A Texas limited liability company is created by filing a certificate of formation with the Texas Secretary of State.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "state_tax": {
+   "agency": "Texas Comptroller of Public Accounts",
+   "summary": "Residential repair and remodeling contractors can work under a lump-sum contract (you pay tax on materials when you buy them and don't charge customers tax) or a separated contract (you buy materials with a resale certificate and collect sales tax on the materials charge). Nonresidential repair and remodeling is taxable on the total charge.",
+   "url": "https://comptroller.texas.gov/taxes/publications/94-116.php",
+   "quote": "When you repair or remodel residential property, you are a contractor. As a contractor, you may have a lump-sum contract (one price for the entire job). Or, you may have a separated contract (you charge separately for materials and labor).",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "unemployment": {
+   "agency": "Texas Workforce Commission (TWC)",
+   "summary": "Register with the Texas Workforce Commission for an unemployment tax account within 10 days of becoming liable as an employer.",
+   "url": "https://www.twc.texas.gov/businesses/unemployment-tax-registration",
+   "quote": "Texas Unemployment Compensation Act requires employers to register with the Texas Workforce Commission (TWC) within 10 days of becoming liable.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "workers_comp": {
+   "agency": "Texas Department of Insurance, Division of Workers' Compensation",
+   "summary": "Workers' comp is optional for most private Texas employers. If you choose not to carry it, TDLR license applications (e.g. electrical contractors) require a statement of that election and an online notice of no coverage filed with TDI.",
+   "url": "https://www.tdi.texas.gov/wc/employer/index.html",
+   "quote": "In Texas, private employers can choose to carry workers' compensation insurance coverage, but it is not required in most cases.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "local": {
+   "agency": null,
+   "summary": "Texas cities handle contractor registration and permits; for example, Austin requires general contractors and trade contractors to register with the city before being assigned to permits.",
+   "url": "https://www.austintexas.gov/development-services/contractor-registration",
+   "quote": "To apply for or activate a Building Permit, a General Contractor must first have an Austin Build + Connect (AB+C) Portal account and then register before being assigned to the Building Permit.",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "local_only",
+   "name": "No state license; city contractor registration (varies by city)",
+   "agency": "Cities (e.g. City of Austin Development Services)",
+   "covers": "General contractors, remodelers and builders are not licensed by the state; some cities require registration before you can pull permits.",
+   "threshold": null,
+   "prerequisites": [
+    "City contractor registration where required (e.g. Austin)"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Texas has no state general contractor or home builder license. Cities set their own registration rules, so check with each city where you pull permits.",
+   "url": "https://www.austintexas.gov/development-services/contractor-registration",
+   "quote": "In Texas, anyone can be a General Contractor, including homeowners, and a state license is not required.",
+   "note": "Source is a City of Austin page; no state-agency page stating this was found. Requirements differ by city (e.g. San Antonio residential contractor registration, whose site blocked automated fetching).",
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "commercial_building": {
+   "status": "local_only",
+   "name": "No state license; city contractor registration (varies by city)",
+   "agency": "Cities",
+   "covers": "Same as residential: no state general contractor license for commercial work.",
+   "threshold": null,
+   "prerequisites": [
+    "City contractor registration where required"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "There is no state commercial general contractor license in Texas. Cities may require registration, and the specialty trades (electrical, plumbing, HVAC) are licensed by the state.",
+   "url": "https://www.austintexas.gov/development-services/contractor-registration",
+   "quote": "A General Contractor (GC) is the responsible individual assigned to a Building Permit. In Texas, anyone can be a General Contractor, including homeowners, and a state license is not required.",
+   "note": "City of Austin source; other cities differ.",
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "electrical": {
+   "status": "state_license",
+   "name": "Electrical Contractor License; Master Electrician; Journeyman Electrician",
+   "agency": "Texas Department of Licensing and Regulation (TDLR)",
+   "covers": "Anyone performing or offering non-exempt electrical work must be licensed and work through a licensed electrical contractor.",
+   "threshold": null,
+   "prerequisites": [
+    "Contractor: employ a licensed Master Electrician (can be the owner)",
+    "Journeyman: 8,000 hours of on-the-job training under a Texas Master Electrician (can test at 7,000 hours), then pass the exam",
+    "Master: hold a Journeyman license for at least two years and complete 12,000 hours of on-the-job training, then pass the exam",
+    "Contractor: business liability insurance of at least $300,000 per occurrence, $600,000 aggregate, and $300,000 products/completed operations",
+    "Proof of workers' comp or a statement electing not to carry it"
+   ],
+   "bond": null,
+   "insurance": "Minimum $300,000 per occurrence, $600,000 aggregate, and $300,000 aggregate products and completed operations liability insurance.",
+   "summary": "Texas licenses electricians and electrical contractors statewide through TDLR. An electrical contractor must employ a Master Electrician, who needs 12,000 hours of training and two years as a journeyman, and must carry liability insurance.",
+   "url": "https://www.tdlr.texas.gov/electricians/elec.htm",
+   "quote": "Anyone who performs, or offers to perform, non-exempt electrical work in the state of Texas must be licensed and perform that work through a licensed electrical contractor.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.tdlr.texas.gov/electricians/apply/businesses/contractor-elec.htm",
+     "quote": "You must employ a licensed Master Electrician to apply for an Electrical Contractor license. The Master Electrician may also be the business owner."
+    },
+    {
+     "url": "https://www.tdlr.texas.gov/electricians/apply/businesses/contractor-elec.htm",
+     "quote": "Minimum $300,000 per occurrence (combined for property damage and bodily injury); Minimum $600,000 aggregate"
+    },
+    {
+     "url": "https://www.tdlr.texas.gov/electricians/apply/individuals/journeyman-electrician.htm",
+     "quote": "Submitting at least 7,000 hours of on-the-job training will simply allow you to take the examination before reaching the full 8,000 hours required for licensure."
+    },
+    {
+     "url": "https://www.tdlr.texas.gov/electricians/apply/individuals/master-electrician.htm",
+     "quote": "To apply for a Master Electrician license, you must have held Journeyman Electrician license for at least two years."
+    },
+    {
+     "url": "https://www.tdlr.texas.gov/electricians/apply/individuals/master-electrician.htm",
+     "quote": "You must also be able to show that you have completed 12,000 hours of on-the-job training under the supervision of a Master Electrician licensed in Texas."
+    },
+    {
+     "url": "https://www.tdlr.texas.gov/electricians/apply/businesses/contractor-elec.htm",
+     "quote": "A statement that you have elected not to obtain workers' compensation insurance pursuant to Subchapter A, Chapter 406, Labor Code"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "plumbing": {
+   "status": "state_license",
+   "name": "Master Plumber with Responsible Master Plumber (RMP) designation; Journeyman Plumber",
+   "agency": "Texas State Board of Plumbing Examiners (TSBPE)",
+   "covers": "Plumbing work is licensed statewide; contracts for plumbing are secured under a Responsible Master Plumber's license.",
+   "threshold": null,
+   "prerequisites": [
+    "Journeyman: 8,000 hours of plumbing experience and a 48-hour TSBPE-approved course (or approved apprenticeship), then pass the exam",
+    "Master: hold a Journeyman license at least two years (or one year plus a DOL-approved apprenticeship), then pass the exam",
+    "RMP designation: licensed Master Plumber in good standing with at least $300,000 of commercial liability insurance",
+    "Fingerprints for all applicants"
+   ],
+   "bond": null,
+   "insurance": "Responsible Master Plumber must carry at least $300,000 of commercial liability insurance.",
+   "summary": "Texas licenses plumbers through the State Board of Plumbing Examiners. A plumbing business operates under a Responsible Master Plumber, who must be a licensed Master Plumber (after at least two years as a journeyman) and carry $300,000 in liability insurance.",
+   "url": "https://tsbpe.texas.gov/responsible-master-plumber/",
+   "quote": "you are currently licensed as a Master Plumber in Texas; you are in good standing with the TSBPE; and you have submitted proof that you have obtained a minimum of $300,000 of commercial liability insurance coverage",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://tsbpe.texas.gov/license-types/journeyman",
+     "quote": "you have at least 8,000 hours of experience working in the plumbing trade; and you have completed a 48-hour training course* approved by the TSBPE"
+    },
+    {
+     "url": "https://www.tsbpe.texas.gov/licensing/master-plumber",
+     "quote": "a Journeyman Plumber in Texas or another state and have held your license for at least two years;"
+    },
+    {
+     "url": "https://tsbpe.texas.gov/responsible-master-plumber/",
+     "quote": "a RMP is responsible for the general supervision and management of plumbing work performed under contracts secured under his or her license regardless of whether the individuals performing the work are employees or subcontractors."
+    },
+    {
+     "url": "https://www.tsbpe.texas.gov/licensing/master-plumber",
+     "quote": "All applicants and examinees in the state of Texas are required by law to submit fingerprint data."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "mechanical": {
+   "status": "state_license",
+   "name": "Air Conditioning and Refrigeration (ACR) Contractor License (Class A or B)",
+   "agency": "Texas Department of Licensing and Regulation (TDLR)",
+   "covers": "Contractors who install, repair or maintain air conditioning, refrigeration or heating systems; ACR companies must employ a licensed ACR contractor at each permanent location.",
+   "threshold": null,
+   "prerequisites": [
+    "48 months of supervised ACR experience in the past 72 months (or 36 months in the past 48 plus a technician certification held 12 months)",
+    "Pass the TDLR licensing exam",
+    "Commercial general liability insurance certificate after passing the exam"
+   ],
+   "bond": null,
+   "insurance": "Commercial general liability insurance must be maintained while the license is active (amount depends on license class).",
+   "summary": "HVAC and refrigeration contractors in Texas need a TDLR ACR contractor license, which takes about four years of supervised experience and a passed exam. You must also keep commercial liability insurance on file.",
+   "url": "https://www.tdlr.texas.gov/acr/acr.htm",
+   "quote": "Contractors who install, repair, or maintain systems related to air conditioning, refrigeration, or heating must have a TDLR license and ACR companies must employ an ACR contractor in each permanent location.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.tdlr.texas.gov/acr/contractor-apply.htm",
+     "quote": "You have at least 48 months of practical experience in air-conditioning and refrigeration-related work under the supervision of a licensed air conditioning and refrigeration contractor in the past 72 months, OR You have held a technician certification for the past 12 months and you have at least 36 months of practical experience"
+    },
+    {
+     "url": "https://www.tdlr.texas.gov/acr/contractor-apply.htm",
+     "quote": "After passing the licensing exam, you must submit a Certificate of Insurance, which includes the license holder name and business name to the Department."
+    },
+    {
+     "url": "https://www.tdlr.texas.gov/acr/contractor-apply.htm",
+     "quote": "You must maintain commercial general liability insurance at all times while your license is active."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "roofing": {
+   "status": "no_state_license",
+   "name": "No state roofing license",
+   "agency": "Cities (local registration/permits)",
+   "covers": "Texas does not license roofers at the state level; roofing falls under general contracting, which is left to cities.",
+   "threshold": null,
+   "prerequisites": [
+    "City registration/permits where required"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Texas has no state roofing license. Roofers follow local city registration and permit rules, the same as general contractors.",
+   "url": "https://www.austintexas.gov/development-services/contractor-registration",
+   "quote": "In Texas, anyone can be a General Contractor, including homeowners, and a state license is not required.",
+   "note": "No state page explicitly addresses roofing; TDLR's program list contains no roofing license.",
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Structural Pest Control Business License; Certified Commercial Applicator",
+   "agency": "Texas Department of Agriculture, Structural Pest Control Service (SPCS)",
+   "covers": "Any business doing structural pest control (including pest, termite, and lawn/ornamental pest services) needs a business license for each location and a responsible certified applicator.",
+   "threshold": null,
+   "prerequisites": [
+    "Certified applicator: technician license for at least six months plus 12 of the last 24 months of supervised pest control work (or equivalent experience/training)",
+    "Pass the General exam and at least one category exam",
+    "Business: liability insurance of at least $500,000 per occurrence and $1,000,000 aggregate",
+    "Designate a responsible certified applicator"
+   ],
+   "bond": null,
+   "insurance": "Not less than $500,000 bodily injury and property damage coverage with a $1,000,000 aggregate.",
+   "summary": "Pest control businesses in Texas need a TDA business license for each location and a certified applicator in each service category. Certified applicators need six months as a licensed technician plus a year of supervised work and must pass exams; the business must carry liability insurance.",
+   "url": "https://texasagriculture.gov/RegulatoryPrograms/Pesticides/StructuralPestControlService/StructuralPestControlBusiness.aspx",
+   "quote": "Any person engaged in the business of structural pest control must secure a business license from the SPCS for each business location, including branch offices, in accordance with the Structural Pest Control Act.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://texasagriculture.gov/RegulatoryPrograms/Pesticides/StructuralPestControlService/StructuralPestControlLicensing/SPCSCertifiedApplicatorLicensing.aspx",
+     "quote": "Have held a technician license for at least six months and been employed with duties including pest control services under the supervision of a licensed certified applicator for at least 12 of the last 24 months;"
+    },
+    {
+     "url": "https://texasagriculture.gov/RegulatoryPrograms/Pesticides/StructuralPestControlService/StructuralPestControlLicensing/SPCSCertifiedApplicatorLicensing.aspx",
+     "quote": "All applicants for Certified Applicator are required to take the General Exam (noted as G - General Standards Exam on Metro's exam website) as well as one category and pass with 70% or more correct to become licensed."
+    },
+    {
+     "url": "https://texasagriculture.gov/RegulatoryPrograms/Pesticides/StructuralPestControlService/StructuralPestControlBusiness.aspx",
+     "quote": "are required to maintain insurance of not less than $500,000 bodily injury and property damage coverage with a minimum total aggregate of $1,000,000 for all occurrences"
+    },
+    {
+     "url": "https://texasagriculture.gov/RegulatoryPrograms/Pesticides/StructuralPestControlService/StructuralPestControlBusiness.aspx",
+     "quote": "Each commercial business license holder must designate a commercial certified applicator, registered with the business, as the responsible certified applicator for the business."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "asbestos": {
+   "status": "state_license",
+   "name": "Asbestos Abatement Contractor and individual asbestos licenses",
+   "agency": "Texas Department of State Health Services (DSHS), Asbestos Program",
+   "covers": "Persons and companies doing asbestos-related activities in public buildings in Texas.",
+   "threshold": null,
+   "prerequisites": [
+    "DSHS asbestos license/registration application with required documentation"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Asbestos work in Texas public buildings requires a DSHS license or registration for both companies and individuals. DSHS also handles asbestos abatement and demolition notifications.",
+   "url": "https://dshs.texas.gov/asbestos-program/licensing-registration-requirements-asbestos-program",
+   "quote": "Persons and companies that engage in asbestos-related activities in a public building in Texas are required to be appropriately licensed or registered by the Department of State Health Services (DSHS).",
+   "note": "Texas defines which buildings count as public buildings by rule; single-family homes may be outside the licensing requirement.",
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "lead_rrp": {
+   "status": "no_state_license",
+   "name": "EPA Lead-Safe Certified Firm (federal RRP)",
+   "agency": "U.S. EPA",
+   "covers": "Firms doing renovation, repair or painting in pre-1978 housing or child-occupied facilities.",
+   "threshold": null,
+   "prerequisites": [
+    "EPA firm certification",
+    "Certified renovator training"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Texas is not EPA-authorized for RRP, so firms working on pre-1978 homes must be certified directly by EPA.",
+   "url": "https://www.epa.gov/node/255913",
+   "quote": "Federal law requires all renovation, repair, and painting firms (including sole proprietorships) working in housing, or facilities where children are routinely present, built before 1978, to be certified.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.epa.gov/node/255913",
+     "quote": "EPA's renovation program applies to all states, Tribes and territories where EPA has not specifically provided authorization for that state, Tribe or territory to operate the program themselves."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "other": [
+  {
+   "key": "irrigation",
+   "name": "Landscape Irrigator License",
+   "agency": "Texas Commission on Environmental Quality (TCEQ)",
+   "trades": [
+    "landscaping"
+   ],
+   "summary": "Landscape irrigation work requires a TCEQ irrigator license; unlicensed irrigators can be ticketed.",
+   "url": "https://www.tceq.texas.gov/drinkingwater/irrigation/",
+   "quote": "Complaints against an unlicensed irrigator can now be filed in Municipal and Justice of the Peace courts, and law enforcement officers can issue a ticket",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  {
+   "key": "onsite_wastewater",
+   "name": "On-Site Sewage Facility (septic) Installer License",
+   "agency": "Texas Commission on Environmental Quality (TCEQ)",
+   "trades": [
+    "excavation"
+   ],
+   "summary": "Septic system installers need a TCEQ OSSF installer license.",
+   "url": "https://www.tceq.texas.gov/licensing/licenses/ossflic",
+   "quote": "Information about how to obtain an on-site sewage facility license as a Designated Representative, a Site Evaluator, an Installer I and II, an Apprentice, a Maintenance Technician, or a Maintenance Provider.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  {
+   "key": "well_drilling",
+   "name": "Water Well Driller / Pump Installer License",
+   "agency": "Texas Department of Licensing and Regulation (TDLR)",
+   "trades": [
+    "excavation",
+    "plumbing"
+   ],
+   "summary": "Drilling water wells or installing well pumps requires a TDLR license.",
+   "url": "https://www.tdlr.texas.gov/wwd/wwd.htm",
+   "quote": "A license is required to drill a water-related well in Texas and to install a pump for a water-related well.",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ ]
+}

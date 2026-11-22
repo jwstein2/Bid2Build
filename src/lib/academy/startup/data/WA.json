@@ -1,0 +1,366 @@
+{
+ "state": "WA",
+ "researched_on": "2026-11-22",
+ "checked_at": "2026-11-22T21:48:10Z",
+ "general": {
+  "entity": {
+   "agency": "WA Secretary of State, Corporations Division",
+   "summary": "If you form an LLC, corporation or partnership, file it with the Secretary of State first, then apply for your state business license.",
+   "url": "https://dor.wa.gov/open-business/apply-business-license",
+   "quote": "If your business structure will be one of the following, you must file with the Washington Secretary of State before filing the Business License Application",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "state_tax": {
+   "agency": "WA Department of Revenue (Business Licensing Service)",
+   "summary": "Apply for a Washington business license with the Department of Revenue. You get a Unified Business Identifier (UBI) number, which you need before contractor registration.",
+   "url": "https://dor.wa.gov/open-business/apply-business-license",
+   "quote": "When you receive your business license, you’ll be assigned a Unified Business Identifier (UBI) number. This number is unique to your business, and you’ll need it whenever you file your taxes or make changes to your business.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "unemployment": {
+   "agency": "WA Employment Security Department",
+   "summary": "When you hire employees, add hiring to your Department of Revenue business license application; that registers you for unemployment insurance taxes with ESD.",
+   "url": "https://esd.wa.gov/employer-taxes/register-your-business",
+   "quote": "If you have employees in Washington, you need to apply for a license from the state Department of Revenue .",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "workers_comp": {
+   "agency": "WA Department of Labor & Industries",
+   "summary": "Washington employers buy workers' comp from L&I (the state fund). Business owners (sole proprietors), exempt corporate officers and partners are not required to cover themselves, but can elect coverage.",
+   "url": "https://www.lni.wa.gov/agency/small-business/common-small-business-questions",
+   "quote": "No. Owners of businesses (sole proprietors), exempt corporate officers, and partners aren't required to have workers' comp coverage in this state.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "local": {
+   "agency": null,
+   "summary": "Some cities and counties require their own business license endorsements, added through your state business license application.",
+   "url": "https://dor.wa.gov/open-business/apply-business-license",
+   "quote": "Your business requires city endorsements , county endorsements , and state endorsements .",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "state_registration",
+   "name": "Construction Contractor Registration (General or Specialty)",
+   "agency": "WA Department of Labor & Industries",
+   "covers": "All construction contractors, residential or commercial: building, remodeling, repairing and demolishing. General contractors can do most work and hire subs; specialty contractors work only in their specialty.",
+   "threshold": null,
+   "prerequisites": [
+    "Register your business with the Department of Revenue (UBI number)",
+    "Continuous contractor surety bond ($30,000 general / $15,000 specialty) or assignment of savings",
+    "General liability insurance ($200,000 public liability and $50,000 property damage, or $250,000 combined single limit)",
+    "Notarized Application for Contractor Registration"
+   ],
+   "bond": "$30,000 surety bond for general contractors, $15,000 for specialty contractors (or an assigned savings account).",
+   "insurance": "General liability: $200,000 public liability and $50,000 property damage, or $250,000 combined single limit, with L&I listed as certificate holder.",
+   "summary": "Washington requires all construction contractors to register with L&I before bidding, advertising or working. You need a UBI number, a surety bond and general liability insurance. You must show your registration number in all ads and bids.",
+   "url": "https://lni.wa.gov/licensing-permits/contractors/register-as-a-contractor/",
+   "quote": "Washington State requires all construction contractors to register with L&I. State law also requires construction contractors to be bonded and insured to protect the public.",
+   "note": "A Model Disclosure Statement must be given to customers on residential jobs of $1,000 or more.",
+   "evidence": [
+    {
+     "url": "https://lni.wa.gov/licensing-permits/contractors/register-as-a-contractor/",
+     "quote": "Register your business with Department of Revenue . Get a surety bond or an assignment of savings. Purchase a general liability insurance policy. Complete your Application for Contractor Registration."
+    },
+    {
+     "url": "https://lni.wa.gov/licensing-permits/contractors/register-as-a-contractor/",
+     "quote": "$30,000 for general contractors. $15,000 for specialty contractors."
+    },
+    {
+     "url": "https://lni.wa.gov/licensing-permits/contractors/register-as-a-contractor/",
+     "quote": "$200,000 in public liability and $50,000 property damage, or $250,000 combined single limit."
+    },
+    {
+     "url": "https://lni.wa.gov/licensing-permits/contractors/register-as-a-contractor/",
+     "quote": "An original, completed Application for Contractor Registration (F625-001-000) with notarized signatures"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "commercial_building": {
+   "status": "state_registration",
+   "name": "Construction Contractor Registration (General or Specialty)",
+   "agency": "WA Department of Labor & Industries",
+   "covers": "Same registration as residential work; it covers buildings, roads and other real property.",
+   "threshold": null,
+   "prerequisites": [
+    "UBI number from the Department of Revenue",
+    "Contractor surety bond or assignment of savings",
+    "General liability insurance"
+   ],
+   "bond": "Same bond as residential (general or specialty amount).",
+   "insurance": "Same general liability insurance as residential.",
+   "summary": "There is no separate commercial license. The same L&I contractor registration covers commercial and residential construction work.",
+   "url": "https://lni.wa.gov/licensing-permits/contractors/register-as-a-contractor/",
+   "quote": "Once registered, contractors can bid, advertise, and perform construction work. This can include constructing, remodeling, repairing and demolishing buildings, roads and other real property.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://lni.wa.gov/licensing-permits/contractors/register-as-a-contractor/",
+     "quote": "Register your business with Department of Revenue . Get a surety bond or an assignment of savings. Purchase a general liability insurance policy."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "electrical": {
+   "status": "state_license",
+   "name": "Electrical Contractor License; Electrician (journey level/specialty), Master Electrician and Electrical Administrator certificates",
+   "agency": "WA Department of Labor & Industries, Electrical Program",
+   "covers": "Any business doing electrical work needs an electrical contractor license; anyone doing the work needs an electrician or trainee certificate.",
+   "threshold": null,
+   "prerequisites": [
+    "Valid UBI number",
+    "$4,000 electrical contractor bond or assignment of savings",
+    "A designated master electrician or electrical administrator (who must pass a qualifying exam)",
+    "Electricians: required experience and education, then pass the exam (start as a trainee)"
+   ],
+   "bond": "$4,000 electrical/telecommunications contractor bond or assignment of savings.",
+   "insurance": null,
+   "summary": "To do electrical work as a business you need an L&I electrical contractor license with a UBI number, a bond and an assigned master electrician or administrator. Individuals start as trainees and must have experience and pass an exam to become certified electricians.",
+   "url": "https://lni.wa.gov/licensing-permits/electrical/electrical-licensing-exams-education/",
+   "quote": "To do electrical work, you must get an electrical contractor license from us. You must have a valid UBI number, either a $4,000 bond or assignment of savings, and a designated master electrician or administrator.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://lni.wa.gov/licensing-permits/electrical/electrical-licensing-exams-education/",
+     "quote": "To become an electrical administrator , you must pass a qualifying exam."
+    },
+    {
+     "url": "https://lni.wa.gov/licensing-permits/electrical/electrical-licensing-exams-education/",
+     "quote": "To become a certified general journey level or specialty electrician , you must have the required experience and education and pass the appropriate exam."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "plumbing": {
+   "status": "state_license",
+   "name": "Plumber Certification (journey level PL01, residential PL02, residential service PL04, others)",
+   "agency": "WA Department of Labor & Industries, Plumber Certification Program",
+   "covers": "Anyone working in the plumbing trade must be certified. Plumbing businesses register as contractors with L&I.",
+   "threshold": null,
+   "prerequisites": [
+    "Start as a plumber trainee",
+    "Journey level: four years (at least 8,000 hours) as a supervised trainee",
+    "Residential: 3 years (at least 6,000 hours) in the specialty",
+    "Contractor registration with L&I for the business"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Washington certifies individual plumbers; you typically begin as a trainee and log supervised hours before a journey level or specialty certificate. A plumbing business also needs L&I contractor registration with bond and insurance.",
+   "url": "https://lni.wa.gov/licensing-permits/plumbing/plumber-certification/",
+   "quote": "You must be certified by the Washington State Plumber Certification Program to work in the plumbing trade in Washington.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://lni.wa.gov/licensing-permits/plumbing/plumber-certification/",
+     "quote": "Four years or more (at least 8,000 hours) working as a plumber trainee under the supervision of a certified journey level plumber."
+    },
+    {
+     "url": "https://lni.wa.gov/licensing-permits/plumbing/plumber-certification/",
+     "quote": "3 years or more (at least 6,000 hours) working in the specialty under supervision of a certified residential or journey level plumber."
+    },
+    {
+     "url": "https://lni.wa.gov/licensing-permits/plumbing/plumber-certification/",
+     "quote": "To become a certified journey level or specialty plumber in Washington, you must typically begin as a plumber trainee ."
+    },
+    {
+     "url": "https://lni.wa.gov/licensing-permits/contractors/register-as-a-contractor/",
+     "quote": "However, contractors working with plumbing , electrical , elevators , mobile home installation , boilers , and asbestos have additional requirements for education, examination, and licensing."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "mechanical": {
+   "status": "state_registration",
+   "name": "Specialty Contractor Registration (HVAC)",
+   "agency": "WA Department of Labor & Industries",
+   "covers": "HVAC is one of the L&I contractor specialties; there is no separate state HVAC/mechanical contractor license.",
+   "threshold": null,
+   "prerequisites": [
+    "L&I contractor registration with bond and insurance",
+    "Electrical wiring on HVAC/refrigeration equipment falls under the electrical licensing rules"
+   ],
+   "bond": "Specialty contractor bond.",
+   "insurance": "General liability insurance as for all registered contractors.",
+   "summary": "HVAC contractors register with L&I as specialty contractors. Washington has no separate statewide mechanical license, but the electrical parts of HVAC work fall under L&I electrical licensing, and boilers have their own rules.",
+   "url": "https://lni.wa.gov/licensing-permits/contractors/register-as-a-contractor/",
+   "quote": "L&I regulates 63 specialties that each require contractor registration. These specialties include roofing, painting, HVAC, tree removal, mobile home set-up, and dozens more.",
+   "note": "Washington's electrical program includes HVAC/refrigeration electrical specialties; check with L&I for which certificate applies.",
+   "evidence": [
+    {
+     "url": "https://lni.wa.gov/licensing-permits/electrical/electrical-licensing-exams-education/",
+     "quote": "You must have a valid electrical certificate or license from us to do electrical work in Washington."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "roofing": {
+   "status": "state_registration",
+   "name": "Specialty Contractor Registration (Roofing)",
+   "agency": "WA Department of Labor & Industries",
+   "covers": "Roofing is one of the L&I specialty contractor classifications.",
+   "threshold": null,
+   "prerequisites": [
+    "UBI number",
+    "Specialty contractor surety bond",
+    "General liability insurance"
+   ],
+   "bond": "Specialty contractor surety bond ($15,000).",
+   "insurance": "General liability insurance as for all registered contractors.",
+   "summary": "Roofers register with L&I as specialty contractors (or as general contractors). There is no separate roofing license beyond registration.",
+   "url": "https://lni.wa.gov/licensing-permits/contractors/register-as-a-contractor/",
+   "quote": "L&I regulates 63 specialties that each require contractor registration. These specialties include roofing, painting, HVAC, tree removal, mobile home set-up, and dozens more.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://lni.wa.gov/licensing-permits/contractors/register-as-a-contractor/",
+     "quote": "$30,000 for general contractors. $15,000 for specialty contractors."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Commercial Applicator License (and Structural Pest Inspector license)",
+   "agency": "WA State Department of Agriculture (WSDA)",
+   "covers": "Applying pesticides to someone else's property (pest control, lawn/weed control, tree spraying).",
+   "threshold": null,
+   "prerequisites": [
+    "Pass the required WSDA pesticide exams",
+    "UBI number showing the business is registered to do business in Washington",
+    "Proof of financial responsibility (insurance)"
+   ],
+   "bond": null,
+   "insurance": "Proof of financial responsibility is required for the license.",
+   "summary": "Applying pesticides on other people's property requires a WSDA Commercial Applicator License, a joint company-person license held by whoever makes application decisions. You must pass exams and show a valid UBI number.",
+   "url": "https://agr.wa.gov/Services/Licenses-Permits-and-Certificates/Summary-Descriptions/Commercial-Applicator-License",
+   "quote": "Applying pesticides to the lands/property of another requires the Commercial Applicator License. This is a joint company – person license. The person who makes the pesticide application decisions for the company must obtain the license.",
+   "note": "Insurance requirement is in RCW 17.21.160; not quoted here.",
+   "evidence": [
+    {
+     "url": "https://agr.wa.gov/Services/Licenses-Permits-and-Certificates/Summary-Descriptions/Commercial-Applicator-License",
+     "quote": "The applicant must pass the required exams and furnish information that they are legal to do business in the state of Washington by supplying their UBI number"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "asbestos": {
+   "status": "state_license",
+   "name": "Certified Asbestos Contractor; Asbestos Supervisor and Worker certificates",
+   "agency": "WA Department of Labor & Industries",
+   "covers": "Removing or abating asbestos. Any contractor must also have a good faith asbestos inspection before renovation or demolition.",
+   "threshold": null,
+   "prerequisites": [
+    "Active L&I contractor registration",
+    "A Certified Asbestos Supervisor on payroll (40-hour supervisor course)",
+    "Workers: 32-hour Asbestos Worker training course"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Asbestos abatement contractors must be certified by L&I and employ a certified supervisor; workers need certification too. All contractors must have a good faith asbestos inspection done before remodeling or demolition work that could disturb suspect materials.",
+   "url": "https://www.lni.wa.gov/licensing-permits/other-licenses-permits/asbestos-certification",
+   "quote": "A good faith inspection for asbestos, performed by an AHERA certified building inspector is required before any remodel, repair, removal, or other work that could disturb suspect materials.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.lni.wa.gov/licensing-permits/other-licenses-permits/asbestos-certification",
+     "quote": "An active Contractor Registration with the WA Dept. of Labor and Industries."
+    },
+    {
+     "url": "https://www.lni.wa.gov/licensing-permits/other-licenses-permits/asbestos-certification",
+     "quote": "A Certified Asbestos Supervisor on your payroll."
+    },
+    {
+     "url": "https://www.lni.wa.gov/licensing-permits/other-licenses-permits/asbestos-certification",
+     "quote": "Attend a 40-hour Asbestos Supervisor training course."
+    },
+    {
+     "url": "https://www.lni.wa.gov/licensing-permits/other-licenses-permits/asbestos-certification",
+     "quote": "Attend a 32-hour Asbestos Worker training course."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "lead_rrp": {
+   "status": "state_license",
+   "name": "Renovation, Repair and Painting (RRP) certification",
+   "agency": "WA Department of Commerce, Lead-Based Paint Program",
+   "covers": "Firms and individuals who offer, bid or contract renovation work on pre-1978 homes and child-occupied facilities.",
+   "threshold": null,
+   "prerequisites": [
+    "RRP certification from the WA Department of Commerce (state-run program)"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Washington runs its own lead RRP program through the Department of Commerce instead of EPA. You or your company need RRP certification to work on pre-1978 homes or child-occupied facilities.",
+   "url": "https://www.commerce.wa.gov/building-infrastructure/lead-based-paint/",
+   "quote": "Commerce’s Lead-Based Paint programs protect public health by providing training, certification and compliance enforcement for lead-safe practices.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.commerce.wa.gov/building-infrastructure/lead-based-paint/",
+     "quote": "You or your company need this certification if you: Offer, bid, or contract to work on pre-1978 properties"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "other": [
+  {
+   "key": "elevator_boiler_manufactured_home",
+   "name": "Elevator, boiler and mobile home installation licensing",
+   "agency": "WA Department of Labor & Industries",
+   "trades": [
+    "general-contracting",
+    "hvac"
+   ],
+   "summary": "Contractors working on elevators, mobile home installation or boilers have extra education, exam and licensing requirements beyond contractor registration.",
+   "url": "https://lni.wa.gov/licensing-permits/contractors/register-as-a-contractor/",
+   "quote": "However, contractors working with plumbing , electrical , elevators , mobile home installation , boilers , and asbestos have additional requirements for education, examination, and licensing.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  {
+   "key": "tree_removal",
+   "name": "Specialty Contractor Registration (tree removal)",
+   "agency": "WA Department of Labor & Industries",
+   "trades": [
+    "tree-removal",
+    "tree-trimming"
+   ],
+   "summary": "Tree removal is an L&I contractor specialty that requires contractor registration.",
+   "url": "https://lni.wa.gov/licensing-permits/contractors/register-as-a-contractor/",
+   "quote": "L&I regulates 63 specialties that each require contractor registration. These specialties include roofing, painting, HVAC, tree removal, mobile home set-up, and dozens more.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  {
+   "key": "telecom",
+   "name": "Telecommunications Contractor License (low voltage)",
+   "agency": "WA Department of Labor & Industries",
+   "trades": [
+    "electrical"
+   ],
+   "summary": "Telecommunications (low voltage) businesses need an L&I telecommunications contractor license with a UBI number, bond, liability insurance and a designated administrator.",
+   "url": "https://lni.wa.gov/licensing-permits/electrical/electrical-licensing-exams-education/",
+   "quote": "To engage in the business of doing telecommunications work, you must get a telecommunications contractor license from us.",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ ]
+}

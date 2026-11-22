@@ -1,0 +1,296 @@
+{
+ "state": "VT",
+ "researched_on": "2026-11-22",
+ "checked_at": "2026-11-22T21:48:10Z",
+ "general": {
+  "entity": {
+   "agency": "VT Secretary of State, Business Services Division",
+   "summary": "Form an LLC or corporation, or register an assumed business name (DBA), through the Secretary of State's Online Business Service Center.",
+   "url": "https://sos.vermont.gov/business-services/business-filings/domestic-formation/",
+   "quote": "Ready to start or register a business in Vermont? Use the Online Business Service Center to take care of your business filing needs.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "state_tax": {
+   "agency": "VT Department of Taxes",
+   "summary": "Register with the Vermont Department of Taxes through myVTax. Sales and use tax and withholding each need their own business tax account.",
+   "url": "https://tax.vermont.gov/business/register",
+   "quote": "Most businesses operating in Vermont must first register with the Vermont Department of Taxes. For Sales and Use, Meals and Rooms, or Withholding you will need a separate business tax account for each of these respective taxes.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "unemployment": {
+   "agency": "VT Department of Labor",
+   "summary": "Once you are a liable employer (for example, paying at least $1,500 in wages in a calendar quarter), you must provide unemployment insurance coverage and register with the Department of Labor.",
+   "url": "https://labor.vermont.gov/src/sites/labor/files/doc_library/Employer%20Responsibility%20for%20Insurance%20Coverage%20%26%20Exclusions.pdf",
+   "quote": "Pays at least $1,500 in gross wages during any calendar quarter in either the current or the preceding calendar year, regardless of the number of employees;",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "workers_comp": {
+   "agency": "VT Department of Labor, Workers' Compensation Program",
+   "summary": "You must buy workers' comp if you hire one or more full- or part-time employees in Vermont. Sole proprietors and partners of unincorporated businesses don't have to cover themselves; corporate officers can opt out only with Department approval.",
+   "url": "https://labor.vermont.gov/doc/sites/labor/files/doc_library/A-Guide-for-Vermont-Business-Owners.pdf",
+   "quote": "You hire one or more employees on a full or part time basis in Vermont, or",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "threshold",
+   "name": "Residential Contractor Registration",
+   "agency": "VT Secretary of State, Office of Professional Regulation (OPR)",
+   "covers": "Anyone contracting directly with a homeowner for residential construction (building, remodeling, repair, painting, paving, roofing, weatherization, heating, plumbing, electrical, etc.) on buildings with four or fewer units.",
+   "threshold": "Jobs over $10,000 including labor and materials.",
+   "prerequisites": [
+    "Register with OPR before contracting for a job over $10,000",
+    "Liability insurance of $1,000,000 per occurrence and $2,000,000 aggregate (certificate uploaded with application)",
+    "Written contract required for jobs over $10,000"
+   ],
+   "bond": null,
+   "insurance": "Liability insurance of at least $1,000,000 per occurrence and $2,000,000 aggregate.",
+   "summary": "Vermont requires residential contractors to register with OPR before contracting with a homeowner for work over $10,000. You must carry liability insurance and use a written contract. Subcontractors hired by another contractor don't need to register.",
+   "url": "https://legislature.vermont.gov/statutes/fullchapter/26/106",
+   "quote": "A person shall register with the Office of Professional Regulation prior to contracting with a homeowner to perform residential construction in exchange for consideration of more than $10,000.00, including labor and materials.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://legislature.vermont.gov/statutes/fullchapter/26/106",
+     "quote": "A person registered under this chapter shall maintain minimum liability insurance coverage in the amount of $1,000,000.00 per occurrence and $2,000,000.00 aggregate"
+    },
+    {
+     "url": "https://legislature.vermont.gov/statutes/fullchapter/26/106",
+     "quote": "A person registered under this chapter shall execute a written contract prior to receiving a deposit or commencing residential construction work if the estimated value of the labor and materials exceeds $10,000.00."
+    },
+    {
+     "url": "https://sos.vermont.gov/residential-contractors/residential-contractor-faqs",
+     "quote": "Yes, you will be required to upload a copy of your certificate of insurance with your initial and biennial renewal applications."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "commercial_building": {
+   "status": "no_state_license",
+   "name": null,
+   "agency": "VT Secretary of State, Office of Professional Regulation",
+   "covers": "Commercial-only contractors do not register with OPR; they must register if they take a residential job of $10,000 or more.",
+   "threshold": null,
+   "prerequisites": [],
+   "bond": null,
+   "insurance": null,
+   "summary": "Vermont has no state general contractor license for commercial work. Trade licenses (electrical, plumbing, gas) still apply.",
+   "url": "https://sos.vermont.gov/residential-contractors/residential-contractor-faqs",
+   "quote": "No; but you are required to register if you accept a residential job where the estimated value is $10,000 or more inclusive of labor and materials.",
+   "note": null,
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "electrical": {
+   "status": "state_license",
+   "name": "Master Electrician and Journeyman Electrician licenses",
+   "agency": "VT Department of Public Safety, Division of Fire Safety (Electricians' Licensing Board)",
+   "covers": "Anyone installing, replacing or repairing electrical installations; a master electrician may run an electrical business and employ other licensees.",
+   "threshold": null,
+   "prerequisites": [
+    "Journeyman: complete an apprenticeship verified by the Vermont Apprenticeship Council (or equivalent training) and pass an exam",
+    "Master: licensed as a journeyman for at least two years (or comparable experience) and pass an exam"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Vermont licenses electricians at the state level. Journeymen complete an apprenticeship and pass an exam; masters need two years as a licensed journeyman and another exam. A master electrician can run an electrical business.",
+   "url": "https://legislature.vermont.gov/statutes/fullchapter/26/015",
+   "quote": "Any person who installs, replaces, or repairs any electrical installation except as provided in sections 882 and 910 of this title, without first obtaining an appropriate license under this subchapter",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://legislature.vermont.gov/statutes/fullchapter/26/015",
+     "quote": "have been licensed as a journeyman electrician under this chapter for at least two years"
+    },
+    {
+     "url": "https://legislature.vermont.gov/statutes/fullchapter/26/015",
+     "quote": "provide verification by the Vermont Apprenticeship Council of completion of an apprenticeship in electrical wiring that included both instruction and practice in work processes"
+    },
+    {
+     "url": "https://legislature.vermont.gov/statutes/fullchapter/26/015",
+     "quote": "may employ other persons licensed under this chapter or electrician’s helpers to perform work in connection with electrical installations under his or her direction"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "plumbing": {
+   "status": "state_license",
+   "name": "Master Plumber and Journeyman Plumber licenses",
+   "agency": "VT Department of Public Safety, Division of Fire Safety (Plumber's Examining Board)",
+   "covers": "All plumbing and specialty work in Vermont, except an owner working in their own owner-occupied single-family home.",
+   "threshold": null,
+   "prerequisites": [
+    "Journeyman: plumbing apprenticeship verified by the Vermont Apprenticeship Council (or equivalent) and pass an exam",
+    "Master: hold a journeyman plumber license for at least 12 months (or equivalent) and pass an exam"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "All plumbing work must be done by state-licensed plumbers. Journeymen complete an apprenticeship and pass an exam; masters need 12 months as a licensed journeyman and pass another exam.",
+   "url": "https://legislature.vermont.gov/statutes/fullchapter/26/039",
+   "quote": "All plumbing and specialty work performed in Vermont shall be performed by persons licensed under this chapter except that a license shall not be required for the following types of work:",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://legislature.vermont.gov/statutes/fullchapter/26/039",
+     "quote": "of having held a valid journeyman plumber’s license under this chapter for at least 12 months"
+    },
+    {
+     "url": "https://legislature.vermont.gov/statutes/fullchapter/26/039",
+     "quote": "apprenticeship in plumbing that includes both instruction and practice in work processes as verified by the Vermont Apprenticeship Council"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "mechanical": {
+   "status": "state_license",
+   "name": "Natural and Propane Gas certifications; Oil Burner Installer certification",
+   "agency": "VT Department of Public Safety, Division of Fire Safety",
+   "covers": "Individuals who install, inspect or service propane or natural gas systems (and oil burner installers). Vermont has no general HVAC contractor license.",
+   "threshold": null,
+   "prerequisites": [
+    "Gas certification training (e.g., NPGA CETP or PEP) and the state education module"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Vermont has no general HVAC/mechanical contractor license, but anyone installing or servicing propane or natural gas systems must hold a Division of Fire Safety gas certification, and oil burner installers are certified too. Heating work for homeowners over the threshold also needs residential contractor registration.",
+   "url": "https://firesafety.vermont.gov/licensing/gas-certifications",
+   "quote": "All individuals engaged in the inspection, installation, and service of Propane (LP) or Natural Gas systems must be certified as required under the Vermont Fire and Building Safety Code.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://firesafety.vermont.gov/licensing/gas-certifications",
+     "quote": "If you are applying for a new license or certification, or renewing an existing license or certification after July 1, 2021, you are required to complete the education module."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "roofing": {
+   "status": "threshold",
+   "name": "Residential Contractor Registration (covers roofing)",
+   "agency": "VT Secretary of State, Office of Professional Regulation",
+   "covers": "Roofing is listed as residential construction; no separate roofing license.",
+   "threshold": "Residential jobs over $10,000.",
+   "prerequisites": [
+    "Residential contractor registration and liability insurance for homeowner jobs over $10,000"
+   ],
+   "bond": null,
+   "insurance": "Same liability insurance as residential contractor registration.",
+   "summary": "Vermont has no separate roofing license. Roofing for homeowners is covered by residential contractor registration when the job is over $10,000.",
+   "url": "https://legislature.vermont.gov/statutes/fullchapter/26/106",
+   "quote": "includes interior and exterior construction, renovation, and repair; painting; paving; roofing; weatherization; installation or repair of heating, plumbing, solar, electrical, water, or wastewater systems",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://legislature.vermont.gov/statutes/fullchapter/26/106",
+     "quote": "A person shall register with the Office of Professional Regulation prior to contracting with a homeowner to perform residential construction in exchange for consideration of more than $10,000.00, including labor and materials."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Pesticide Company License and Commercial Applicator Certification",
+   "agency": "VT Agency of Agriculture, Food and Markets",
+   "covers": "Businesses and applicators using pesticides on others' property (pest control, lawn/weed control, tree spraying).",
+   "threshold": null,
+   "prerequisites": [
+    "Pass the pesticide applicator certification exam",
+    "Company license for the business"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Using pesticides commercially requires a Pesticide Company License for the business and commercial applicator certification (by exam) for applicators, issued by the Agency of Agriculture.",
+   "url": "https://legislature.vermont.gov/statutes/fullchapter/06/087",
+   "quote": "used pesticides without first obtaining the appropriate company license or applicator certificate;",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://legislature.vermont.gov/statutes/section/06/087/01112",
+     "quote": "Examination fee for dealer licenses and applicator certification"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "asbestos": {
+   "status": "state_license",
+   "name": "Asbestos abatement company license; asbestos worker/supervisor licenses",
+   "agency": "VT Department of Health, Asbestos and Lead Regulatory Program",
+   "covers": "Removing asbestos-containing materials before renovation or demolition; also an asbestos assessment by a licensed inspector before renovating or demolishing.",
+   "threshold": null,
+   "prerequisites": [
+    "Up-to-date training from a Health Department-accredited training provider",
+    "Abatement permit application filed before each project"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Asbestos must be removed by a Vermont-licensed asbestos abatement company, and workers need accredited training before licensing. Before any renovation or demolition, confirm an asbestos assessment was done by a Vermont-licensed inspector.",
+   "url": "https://www.healthvermont.gov/node/317",
+   "quote": "Asbestos-containing materials must be removed by a Vermont-licensed asbestos abatement company before the renovation or demolition.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.healthvermont.gov/node/317",
+     "quote": "Asbestos and lead contractors must have up-to-date training from an accredited training provider before they can be licensed to work in Vermont."
+    },
+    {
+     "url": "https://www.healthvermont.gov/node/317",
+     "quote": "No one may renovate or demolish a building or other structure or a portion of a it without first getting confirmation from the owner that an asbestos assessment has been completed"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "lead_rrp": {
+   "status": "state_license",
+   "name": "Lead-Safe Renovation, Repair, Painting and Maintenance (RRPM) license",
+   "agency": "VT Department of Health",
+   "covers": "Workers and businesses disturbing painted surfaces above small thresholds in buildings built before 1978.",
+   "threshold": null,
+   "prerequisites": [
+    "RRPM training and a Vermont RRPM license for the individual and the business"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Vermont runs its own lead-safe program (RRPM) instead of EPA. Workers and businesses doing RRPM work on pre-1978 buildings must be trained and licensed by the Health Department.",
+   "url": "https://www.healthvermont.gov/RRPM",
+   "quote": "The Health Department oversees compliance with the Vermont Renovation, Repair, Painting and Maintenance (RRPM) regulations and licenses individuals and businesses that perform RRPM work.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.healthvermont.gov/RRPM",
+     "quote": "Because lead is hazardous, workers must be trained and licensed to use lead-safe practices when working on painted surfaces in buildings built before 1978."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "other": [
+  {
+   "key": "boilers",
+   "name": "Boilers and Pressure Vessels licensing",
+   "agency": "VT Division of Fire Safety",
+   "trades": [
+    "hvac",
+    "plumbing"
+   ],
+   "summary": "The Division of Fire Safety licenses and certifies trade groups including boilers and pressure vessels, gas installers and oil burner installers.",
+   "url": "https://firesafety.vermont.gov/licensing",
+   "quote": "The Division of Fire Safety administers licensing and certification of trade groups to maintain professionals at a high level of technical knowledge.",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ ]
+}

@@ -1,0 +1,257 @@
+{
+  "state": "AL",
+  "researched_on": "2026-11-22",
+  "general": {
+    "entity": {
+      "agency": "Alabama Secretary of State, Business Entity Division",
+      "summary": "Form your LLC, corporation or partnership by filing with the Alabama Secretary of State. Out-of-state companies must qualify to do business in Alabama there too.",
+      "url": "https://www.sos.alabama.gov/business-entities",
+      "quote": "The types of entities we serve include For-Profit Corporations, Non-Profit Corporations, Limited Liability Companies, Limited Partnerships, Registered Limited Liability Partnerships, and Limited Liability Limited Partnerships."
+    },
+    "state_tax": {
+      "agency": "Alabama Department of Revenue",
+      "summary": "Register for your state tax accounts (such as sales/use tax and payroll withholding) online through My Alabama Taxes. If you have employees working in Alabama you need a withholding tax account number.",
+      "url": "https://www.revenue.alabama.gov/faqs/do-i-need-a-withholding-tax-account-number/",
+      "quote": "If you are an employer with employees working in the state of Alabama, you will need to register with the Department of Revenue for a withholding tax account number."
+    },
+    "unemployment": {
+      "agency": "Alabama Department of Workforce (formerly Department of Labor)",
+      "summary": "Once you pay wages for work in Alabama, register for an unemployment compensation account number online through the department's eGov system.",
+      "url": "https://workforce.alabama.gov/employers/faq/",
+      "quote": "Once wages have been paid for work performed in Alabama, you may apply for a new number with eGov"
+    },
+    "workers_comp": {
+      "agency": "Alabama Department of Workforce, Workers' Compensation Division",
+      "summary": "Businesses with five or more employees (counting part-time workers, corporate officers and LLC members) must carry workers' compensation. Smaller employers are generally exempt, except companies building or helping build new single-family detached homes, which must carry it regardless of size.",
+      "url": "https://workforce.alabama.gov/employers/workers-compensation/insurance-compliance/",
+      "quote": "If you regularly employ fewer than five employees—full-time or part-time, including corporate officers—you are generally not required to carry workers’ compensation insurance under Alabama law. The exception is businesses involved in constructing or assisting on-site with new single-family, detached residential homes, which are required to maintain coverage."
+    },
+    "local": {
+      "summary": "Cities and counties in Alabama issue their own business or occupational licenses to contractors; check with the city and county where you work.",
+      "url": "https://hblb.alabama.gov/how-to-get-licensed/",
+      "quote": "business or occupational license as a contractor issued by a municipality, township, or county in the state"
+    }
+  },
+  "credentials": {
+    "residential_building": {
+      "status": "threshold",
+      "name": "Home Builder License (Unlimited or Limited)",
+      "agency": "Alabama Home Builders Licensure Board",
+      "covers": "Anyone who builds, remodels, repairs or improves residences when the cost of the job exceeds $10,000.",
+      "threshold": "Residential jobs costing more than $10,000 (more than $2,500 for residential roofing).",
+      "prerequisites": [
+        "Unlimited license: pass the Alabama Home Builders Business & Law exam and Skills exam",
+        "Limited license: a current (or held within the past year) city or county contractor business license",
+        "A credit report sent to the Board to show financial responsibility",
+        "Corporations/LLCs: a Certificate of Compliance from the Alabama Department of Revenue",
+        "Proof of U.S. citizenship or lawful presence"
+      ],
+      "bond": null,
+      "insurance": null,
+      "summary": "Alabama requires a Home Builders license for residential construction and remodeling jobs over $10,000. For an Unlimited license you must pass the state exams; a Limited license is based on an existing local contractor license. You also need to send the Board a credit report.",
+      "url": "https://hblb.alabama.gov/wp-content/uploads/2026/10/HBLB-Law-Effective-10.1.2026-Regs-Combined.pdf",
+      "quote": "cost of the undertaking exceeds ten thousand dollars ($10,000). Notwithstanding the foregoing, the term includes a residential roofer when the cost of the undertaking exceeds two thousand five hundred dollars ($2,500)",
+      "evidence": [
+        {"url": "https://hblb.alabama.gov/how-to-get-licensed/", "quote": "To receive an Unlimited License, take and pass the Alabama Home Builders Exams."},
+        {"url": "https://hblb.alabama.gov/how-to-get-licensed/", "quote": "To receive a Limited or Roofers L icense, applicant must provide a copy of a currently held, or held on or before one (1) year prior to the date of the application, business or occupational license as a contractor issued by a municipality, township, or county in the state."},
+        {"url": "https://hblb.alabama.gov/how-to-get-licensed/", "quote": "To receive an Unlimited or Limited License, request that a current credit report on the individual or business who is making application be sent to the Board directly from a credit-reporting agency."},
+        {"url": "https://hblb.alabama.gov/how-to-get-licensed/", "quote": "Provide a Certificate of Compliance from the Alabama Department of Revenue ."},
+        {"url": "https://hblb.alabama.gov/how-to-get-licensed/", "quote": "All applicants must provide proof of citizenship with a copy of a driver license, birth certificate, or passport, or provide proof that they are lawfully present in this state."}
+      ],
+      "note": null
+    },
+    "commercial_building": {
+      "status": "threshold",
+      "name": "General Contractor License (prime or subcontractor)",
+      "agency": "Alabama Licensing Board for General Contractors",
+      "covers": "Contractors who build, alter, repair or demolish buildings, sites and other projects where the job costs $100,000 or more (swimming pools $5,000 or more). Subcontractors at that size must be licensed too.",
+      "threshold": "Projects of $100,000 or more including labor and materials ($5,000 or more for swimming pools).",
+      "prerequisites": [
+        "Prime contractors must pass a Business and Law exam administered by PSI",
+        "Three references from general contractors, architects, engineers or awarding authorities you have worked for",
+        "Application on file before a quarterly Board meeting"
+      ],
+      "bond": null,
+      "insurance": null,
+      "summary": "A state General Contractor license is required for projects of $100,000 or more (swimming pools $5,000 or more). Prime contractors must pass a Business and Law exam, and all applicants submit three references. Subcontractors may bid without a license but must be licensed before starting work.",
+      "url": "https://genconbd.alabama.gov/about/law/",
+      "quote": "where the cost of the undertaking including labor and materials is $100,000 or more. Swimming Pool construction of $5,000 or more.",
+      "evidence": [
+        {"url": "https://genconbd.alabama.gov/licensees/apply/", "quote": "The application has to be on file 30 days prior to a Board meeting which are held quarterly. All primes must take a Business and Law Exam administered by PSI."},
+        {"url": "https://genconbd.alabama.gov/licensees/apply/", "quote": "Three references from General Contractors, Architects, Engineers, or awarding authorities that you have completed work for must be submitted with your application. A subcontractor is allowed to bid to a General Contractor but cannot start the job until licensed."},
+        {"url": "https://genconbd.alabama.gov/about/law/", "quote": "Subcontractors performing minimum contracts including labor and materials of $100,000 ($5,000 swimming pools) under contract to a licensed prime contractor must be licensed by the board."}
+      ],
+      "note": "Act 2026-396 added exemptions (residential swimming pools, certain routine maintenance and repair) effective October 1, 2026; ask the Board about specific projects."
+    },
+    "electrical": {
+      "status": "state_license",
+      "name": "Electrical Contractor License (Master Electrician) and Journeyman Electrician License",
+      "agency": "Alabama Board of Electrical Contractors",
+      "covers": "Any person or business that solicits or installs, maintains, alters or repairs electrical power or control systems. Journeymen must work under a master or state-certified electrical contractor.",
+      "threshold": null,
+      "prerequisites": [
+        "Pass the Electrical Contractor exam (or the Journeyman Electrician exam for journeymen)",
+        "Journeyman electricians must work under a master or state certified electrical contractor"
+      ],
+      "bond": null,
+      "insurance": null,
+      "summary": "Alabama licenses electrical contractors and journeyman electricians at the state level. You first pass the Board's exam, then apply for the license. Journeymen work under a licensed electrical contractor.",
+      "url": "https://aecb.alabama.gov/applicants/how-to-get-licensed/",
+      "quote": "Electrical Contractor Examination : Any person, firm, or corporation who is engaged in the business of soliciting and installing electrical power or control systems; maintaining, altering, or repairing electrical power or control systems",
+      "evidence": [
+        {"url": "https://aecb.alabama.gov/applicants/how-to-get-licensed/", "quote": "STEP 2: Upon Successful Completion of the Examination Determine Your Desired Status From The Criteria Below:"},
+        {"url": "https://aecb.alabama.gov/applicants/how-to-get-licensed/", "quote": "He or she shall work under a master or state certified electrical contractor"}
+      ],
+      "note": null
+    },
+    "plumbing": {
+      "status": "state_license",
+      "name": "Master Plumber / Journeyman Plumber certificate (also Master and Journeyman Gas Fitter)",
+      "agency": "Alabama Plumbers and Gas Fitters Examining Board",
+      "covers": "Anyone installing, repairing or replacing plumbing systems or gas piping. Businesses doing plumbing or gas work also register with the Board.",
+      "threshold": null,
+      "prerequisites": [
+        "Journeyman: at least two years as a registered apprentice (or an approved apprentice program equal to two years), then pass the exam",
+        "Master: certified as a Journeyman Plumber for at least one year, then pass the Master exam",
+        "Businesses register with the Board and renew annually"
+      ],
+      "bond": null,
+      "insurance": null,
+      "summary": "Plumbers and gas fitters must be certified by the state Board. The path is apprentice, then journeyman after two years and an exam, then master after one year as a journeyman and another exam. A master plumber can register as the principal for a plumbing business.",
+      "url": "https://pgfb.alabama.gov/applicants/how-do-i-become-licensed/",
+      "quote": "Individuals who wish to become certified as a Journeyman Plumber must complete a minimum two years as an Apprentice, or successful completion of a board approved apprentice training program combined with time as a registered apprentice that is equal to two-years.",
+      "evidence": [
+        {"url": "https://pgfb.alabama.gov/applicants/how-do-i-become-licensed/", "quote": "To become eligible to take the Master Plumber Exam, an individual must be certified as a Journeyman Plumber for a minimum of one year."},
+        {"url": "https://pgfb.alabama.gov/applicants/how-do-i-become-licensed/", "quote": "This person may at any time register with the board as principal for any business, firm, or corporation."},
+        {"url": "https://pgfb.alabama.gov/businesses/new-businesses/", "quote": "Use the form below for new business registration, business information updates, or required annual renewals."}
+      ],
+      "note": null
+    },
+    "mechanical": {
+      "status": "state_license",
+      "name": "Heating & Air Conditioning Contractor / Refrigeration Contractor certification",
+      "agency": "Alabama Board of Heating, Air Conditioning & Refrigeration Contractors",
+      "covers": "Contractors who install, service or repair heating and/or cooling equipment (not window units) or commercial refrigeration.",
+      "threshold": null,
+      "prerequisites": [
+        "Pass the Heating & Air Conditioning (or Refrigeration) Contractors exam",
+        "Active status requires a business name and a $20,000 performance bond naming the Board"
+      ],
+      "bond": "$20,000 performance bond for active status.",
+      "insurance": null,
+      "summary": "HVAC and refrigeration contractors must pass the state exam and hold Board certification. To actively do the work you need a business name and a $20,000 performance bond. Gas piping by plumbers/gas fitters is separately certified by the Plumbers and Gas Fitters Board.",
+      "url": "https://hacr.alabama.gov/how-to-get-licensed/",
+      "quote": "Active Status: Contractors who perform HVAC or Refrigeration installation, service or repair. Requires a business name and performance bond in the amount of $20,000.",
+      "evidence": [
+        {"url": "https://hacr.alabama.gov/how-to-get-licensed/", "quote": "Heating & Air Conditioning Contractors Examination: A heating and air conditioning contractor performs installation, service, and/or repair on a heating and/or cooling apparatus."}
+      ],
+      "note": null
+    },
+    "roofing": {
+      "status": "threshold",
+      "name": "Residential Roofer License",
+      "agency": "Alabama Home Builders Licensure Board",
+      "covers": "Residential roofers when the cost of the job exceeds $2,500.",
+      "threshold": "Residential roofing jobs over $2,500.",
+      "prerequisites": [
+        "A current (or held within the past year) city or county contractor business license",
+        "A $10,000 License/Permit Bond naming the Board as obligee"
+      ],
+      "bond": "$10,000 License/Permit Bond.",
+      "insurance": null,
+      "summary": "Residential roofers need a Roofers license from the Home Builders Licensure Board for jobs over $2,500. You need an existing local contractor license and a $10,000 bond. Commercial roofing over $100,000 falls under the General Contractors Board.",
+      "url": "https://hblb.alabama.gov/wp-content/uploads/2026/10/HBLB-Law-Effective-10.1.2026-Regs-Combined.pdf",
+      "quote": "the term includes a residential roofer when the cost of the undertaking exceeds two thousand five hundred dollars ($2,500)",
+      "evidence": [
+        {"url": "https://hblb.alabama.gov/how-to-get-licensed/", "quote": "To receive a Roofers License, request that a $10,000 License/Permit Bond naming the Board as the Obligee be submitted directly to the Board by the Surety issuing the bond."},
+        {"url": "https://genconbd.alabama.gov/about/law/", "quote": "where the cost of the undertaking including labor and materials is $100,000 or more."}
+      ],
+      "note": null
+    },
+    "pesticide": {
+      "status": "state_license",
+      "name": "Commercial Pesticide Applicator certification and Structural / Horticulture Professional Services License",
+      "agency": "Alabama Department of Agriculture and Industries, Pesticide Management Section",
+      "covers": "Commercial pesticide applicators, and businesses doing household/structural pest control, termite (wood-destroying organism) control, fumigation, or ornamental and turf pest control.",
+      "threshold": null,
+      "prerequisites": [
+        "Pass the exams for your category and apply for commercial applicator certification",
+        "The business must have a certified operator in each category of work",
+        "Business license: Professional Services (structural) or Professional Services-Horticulture (lawn/ornamental)"
+      ],
+      "bond": null,
+      "insurance": "Structural pest control businesses file a Certificate of Structural Insurance.",
+      "summary": "Pest control and lawn-spraying companies need certified applicators who have passed state exams, and the business needs a Professional Services license from the Department of Agriculture and Industries. Structural pest control businesses also file proof of insurance.",
+      "url": "https://agi.alabama.gov/pesticidemanagement/programs/commercial-applicators/",
+      "quote": "Once the appropriate exams have been passed, one must apply for certification through this office. If an applicator plans to start a business in the state of Alabama, a license will also be required",
+      "evidence": [
+        {"url": "https://agi.alabama.gov/pesticidemanagement/programs/professional-services/", "quote": "The Structural Professional Services Licences are issued to businesses that engage in and solicit for Household, institutional & industrial Pest Control (HPC), Fumigation Pest Control (FC) and Control and/or Eradication of Wood Destroying organisms (WDC) and have a certified operator"},
+        {"url": "https://agi.alabama.gov/pesticidemanagement/programs/professional-services/", "quote": "Certificate of Structural Insurance"}
+      ],
+      "note": null
+    },
+    "asbestos": {
+      "status": "state_license",
+      "name": "Asbestos Removal Contractor Certification; 10-day demolition/renovation notification",
+      "agency": "Alabama Department of Environmental Management (ADEM), Air Division",
+      "covers": "Contractors removing regulated asbestos-containing material, and anyone demolishing or renovating regulated structures.",
+      "threshold": null,
+      "prerequisites": [
+        "Asbestos removal contractors apply for ADEM certification (Form 497)",
+        "Regulated structures must be surveyed by an Alabama Accredited Asbestos Inspector before renovation or demolition",
+        "Submit a 10-day notification before disturbing regulated asbestos material or beginning demolition"
+      ],
+      "bond": null,
+      "insurance": null,
+      "summary": "Before renovating or demolishing a regulated structure, have it surveyed by an Alabama accredited asbestos inspector and file a 10-day notice with ADEM. Asbestos removal contractors must hold ADEM certification.",
+      "url": "https://adem.alabama.gov/air/asbestos-certificationdemolition",
+      "quote": "The regulations require a responsible party (contractor, property owner, consultant, etc.) to submit a 10-day notification to the appropriate agency prior to disturbing any regulated asbestos-containing material (RACM) or beginning demolition",
+      "evidence": [
+        {"url": "https://adem.alabama.gov/air/asbestos-certificationdemolition", "quote": "All regulated structures must be surveyed by an Alabama Accredited Asbestos Inspector before renovation or demolition or burning for training."},
+        {"url": "https://adem.alabama.gov/air/aepacs-instructions-asbestos-program-contractors", "quote": "To submit a new Form 497 (Air Asbestos Removal Contractor Certification - New) for an organization not yet in AEPACS:"}
+      ],
+      "note": "The City of Huntsville runs its own asbestos program for projects inside the city."
+    },
+    "lead_rrp": {
+      "status": "state_license",
+      "name": "Lead-Based Paint Renovator Firm Certification and Renovator Accreditation",
+      "agency": "Alabama Department of Public Health (registration handled by UA SafeState)",
+      "covers": "Firms that perform or offer lead-based paint renovation work covered by the state lead rules. Alabama runs its own program, so EPA certification is not used here.",
+      "threshold": null,
+      "prerequisites": [
+        "At least one employee accredited as a Renovator through an Alabama-approved course and registered with UA SafeState",
+        "Then apply for firm certification"
+      ],
+      "bond": null,
+      "insurance": null,
+      "summary": "Alabama is authorized to run its own lead renovation (RRP) program. Renovation firms need Alabama Department of Public Health certification, which requires at least one accredited Renovator on staff.",
+      "url": "https://www.alabamapublichealth.gov/lead/certification-renovation.html",
+      "quote": "All firms which perform, or offer to perform, any of the lead-based paint renovation activities described in Alabama's lead rules must have certification from the Alabama Department of Public Health.",
+      "evidence": [
+        {"url": "https://www.alabamapublichealth.gov/lead/certification-renovation.html", "quote": "In order to be certified as Renovator Firm, the company must have at least one individual who is accredited by and registered with UA SafeState at the University of Alabama as a Renovator."},
+        {"url": "https://www.alabamapublichealth.gov/lead/certification-renovation.html", "quote": "After an individual’s accreditation number and expiration date are received, the company must then apply for firm certification through UA SafeState."}
+      ],
+      "note": null
+    },
+    "other": [
+      {
+        "key": "horticulture",
+        "name": "Horticulture Professional Services License (tree surgery, landscape design, setting landscape plants, ornamental & turf pest control)",
+        "agency": "Alabama Department of Agriculture and Industries",
+        "trades": ["landscaping", "tree-removal", "tree-trimming"],
+        "summary": "Businesses offering tree surgery, landscape design, landscape planting or lawn/ornamental pest control need a Horticulture Professional Services License and a certified operator who passed the category exam.",
+        "url": "https://agi.alabama.gov/pesticidemanagement/programs/professional-services/",
+        "quote": "The Horticulture Professional Services Licenses are issued to businesses that engage in and solicit for Landscape Design (LD), Tree Surgery (TS), Setting of Landscape Plants (SLP) and Ornamental & Turf Pest Control (OTPS) and have a certified operator"
+      },
+      {
+        "key": "gas_fitter",
+        "name": "Master / Journeyman Gas Fitter certificate",
+        "agency": "Alabama Plumbers and Gas Fitters Examining Board",
+        "trades": ["plumbing", "hvac"],
+        "summary": "Installing or repairing gas piping and appliances requires state gas fitter certification (apprentice, journeyman, master).",
+        "url": "https://pgfb.alabama.gov/applicants/how-do-i-become-licensed/",
+        "quote": "This is a person who engages in or works at the actual installation, repair, or replacement of gas work, who has successfully fulfilled the examination requirements of the board, has been issued a journeyman gas fitter certificate by the board"
+      }
+    ]
+  }
+}

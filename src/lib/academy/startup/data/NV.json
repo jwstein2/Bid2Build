@@ -1,0 +1,334 @@
+{
+ "state": "NV",
+ "researched_on": "2026-11-22",
+ "checked_at": "2026-11-22T21:48:10Z",
+ "general": {
+  "entity": {
+   "agency": "Nevada Secretary of State",
+   "summary": "Form your LLC or corporation with the Nevada Secretary of State (SilverFlume). Every business, including sole proprietors, also needs a Nevada state business license before doing business.",
+   "url": "https://www.leg.state.nv.us/NRS/NRS-076.html",
+   "quote": "the person must obtain the state business license before conducting a business in this State.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "state_tax": {
+   "agency": "Nevada Department of Taxation",
+   "summary": "If you sell goods (not just labor), register with the Department of Taxation for a seller's permit for each place of business.",
+   "url": "https://www.leg.state.nv.us/NRS/NRS-360.html",
+   "quote": "Every person desiring to engage in or conduct business as a seller within this State must: (a) Register with the Department pursuant to NRS 360B.200 ; or (b) File with the Department an application for a permit for each place of business.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "unemployment": {
+   "agency": "Nevada DETR, Employment Security Division",
+   "summary": "Within 30 days after you become an employer, register with DETR's Employment Security Division for an unemployment insurance account.",
+   "url": "https://www.leg.state.nv.us/NRS/NRS-612.html",
+   "quote": "Each employing unit, within 30 days after becoming an employer under this chapter, shall register with the Division by filing a report form designed and prescribed by the Division.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "workers_comp": {
+   "agency": "Nevada Division of Industrial Relations",
+   "summary": "Employers covered by Nevada's industrial insurance law must provide and secure workers' compensation for their employees.",
+   "url": "https://www.leg.state.nv.us/NRS/NRS-616B.html",
+   "quote": "shall provide and secure compensation according to the terms, conditions and provisions of those chapters for any personal injuries by accident sustained by an employee arising out of and in the course of the employment.",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "state_license",
+   "name": "Contractor's license, Classification B General Building (e.g. B-2 Residential and Small Commercial, B-7 Residential Remodeling)",
+   "agency": "Nevada State Contractors Board",
+   "covers": "Anyone who builds or alters any building or structure in Nevada, except small repair jobs that need no permit and are not plumbing, electrical or HVAC work.",
+   "threshold": "Repair/maintenance work under $1,000 (labor and materials) is exempt unless a building permit is needed or it is plumbing, electrical, refrigeration, heating or air-conditioning work.",
+   "prerequisites": [
+    "A qualifying individual with at least four full years of journeyman, foreman, supervisor or contractor experience in the classification within the last fifteen years",
+    "Pass the business and law (CMS) exam and a trade exam",
+    "Submit a financial statement and references with the application",
+    "Post a license bond (or cash deposit) in the amount the Board sets"
+   ],
+   "bond": "Every license requires a license bond; the Board sets the amount ($1,000 to $500,000) based on license type, monetary limit, finances and experience.",
+   "insurance": null,
+   "summary": "Nevada requires a State Contractors Board license for nearly all construction and remodeling, residential or commercial. You need a qualified individual with four years of experience, must pass two exams, show financial responsibility, and post a bond.",
+   "url": "https://www.nvcontractorsboard.com/licensing/faq-for-general-requirements/",
+   "quote": "All businesses or individuals who construct or alter any building, highway, road, parking facility, railroad, excavation, or other structure in Nevada must be licensed by the Nevada State",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.nvcontractorsboard.com/licensing/faq-for-general-requirements/",
+     "quote": "within the fifteen years immediately before the filing of the application, at least four full years of experience at a journeyman level, or as a foreman, supervisor, or contractor in the classification for which you are applying."
+    },
+    {
+     "url": "https://www.nvcontractorsboard.com/licensing/license-examinations/",
+     "quote": "Nevada requires each applicant to pass a general business and law or “CMS” examination, and a trade examination specific to the classification of license for which you have applied."
+    },
+    {
+     "url": "https://www.nvcontractorsboard.com/licensing/bonds/",
+     "quote": "Each contractor’s license issued in the State of Nevada requires a license bond. The Nevada State Contractors Board determines the amount of the bond at the time of license approval. The bond can vary in amount from $1,000 to $500,000."
+    },
+    {
+     "url": "https://www.leg.state.nv.us/NRS/NRS-624.html",
+     "quote": "Any work to repair or maintain property the value of which is less than $1,000, including labor and materials, unless: (a) A building permit is required to perform the work; (b) The work is of a type performed by a plumbing, electrical, refrigeration, heating or air-conditioning contractor"
+    },
+    {
+     "url": "https://www.nvcontractorsboard.com/licensing/faq-for-general-requirements/",
+     "quote": "All reference certificates, detailed resume of experience, financial statement"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "commercial_building": {
+   "status": "state_license",
+   "name": "Contractor's license, Classification B General Building (e.g. B-6 Commercial Remodeling) or A General Engineering",
+   "agency": "Nevada State Contractors Board",
+   "covers": "Commercial building and remodeling; heavy/civil work falls under Classification A.",
+   "threshold": null,
+   "prerequisites": [
+    "Qualifying individual with four years of experience in the classification",
+    "Pass the CMS and trade exams",
+    "License bond"
+   ],
+   "bond": "License bond set by the Board.",
+   "insurance": null,
+   "summary": "Commercial work uses the same State Contractors Board licensing system, with Classification B for building and Classification A for engineering work. It is unlawful to contract or bid without an active license.",
+   "url": "https://www.leg.state.nv.us/NRS/NRS-624.html",
+   "quote": "It is unlawful for any person or combination of persons to: (a) Engage in the business or act in the capacity of a contractor within this State; or (b) Submit a bid on a job situated within this State",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.nvcontractorsboard.com/licensing/license-classifications/",
+     "quote": "Classification B: General Building (B-1 to B-7)"
+    },
+    {
+     "url": "https://www.nvcontractorsboard.com/licensing/faq-for-general-requirements/",
+     "quote": "at least four full years of experience at a journeyman level, or as a foreman, supervisor, or contractor in the classification for which you are applying."
+    },
+    {
+     "url": "https://www.nvcontractorsboard.com/licensing/license-examinations/",
+     "quote": "Nevada requires each applicant to pass a general business and law or “CMS” examination, and a trade examination specific to the classification of license for which you have applied."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "electrical": {
+   "status": "state_license",
+   "name": "Classification C-2 Electrical Contracting license",
+   "agency": "Nevada State Contractors Board",
+   "covers": "Electrical contracting businesses (installing wiring, fixtures, conduits and similar).",
+   "threshold": null,
+   "prerequisites": [
+    "Qualifying individual with four years of journeyman-level or higher electrical experience",
+    "Pass the CMS and electrical trade exams",
+    "License bond"
+   ],
+   "bond": "License bond set by the Board.",
+   "insurance": null,
+   "summary": "Electrical contractors need a C-2 license from the State Contractors Board. Nevada has no statewide journeyman electrician license; individual electrician cards are handled by local jurisdictions such as Clark County.",
+   "url": "https://www.leg.state.nv.us/NAC/NAC-624.html",
+   "quote": "The Board will grant to qualified applicants a license in the specialty of electrical contracting. The Board designates such a license as “classification C-2.”",
+   "note": "Local electrician certification (e.g. Clark County, City of Las Vegas) not verified here.",
+   "evidence": [
+    {
+     "url": "https://www.nvcontractorsboard.com/licensing/faq-for-general-requirements/",
+     "quote": "at least four full years of experience at a journeyman level, or as a foreman, supervisor, or contractor in the classification for which you are applying."
+    },
+    {
+     "url": "https://www.nvcontractorsboard.com/licensing/license-examinations/",
+     "quote": "Nevada requires each applicant to pass a general business and law or “CMS” examination, and a trade examination specific to the classification of license for which you have applied."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "plumbing": {
+   "status": "state_license",
+   "name": "Classification C-1 Plumbing and Heating Contracting license",
+   "agency": "Nevada State Contractors Board",
+   "covers": "Plumbing and heating contractors.",
+   "threshold": null,
+   "prerequisites": [
+    "Qualifying individual with four years of journeyman-level or higher experience",
+    "Pass the CMS and trade exams",
+    "License bond"
+   ],
+   "bond": "License bond set by the Board.",
+   "insurance": null,
+   "summary": "Plumbing contractors need a C-1 license from the State Contractors Board. Plumbing is never covered by the small-job exemption.",
+   "url": "https://www.leg.state.nv.us/NAC/NAC-624.html",
+   "quote": "The Board will grant to qualified applicants a license in the specialty of plumbing and heating contracting. The Board designates such a license as a “classification C-1” license.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.nvcontractorsboard.com/licensing/faq-for-general-requirements/",
+     "quote": "at least four full years of experience at a journeyman level, or as a foreman, supervisor, or contractor in the classification for which you are applying."
+    },
+    {
+     "url": "https://www.nvcontractorsboard.com/licensing/license-examinations/",
+     "quote": "Nevada requires each applicant to pass a general business and law or “CMS” examination, and a trade examination specific to the classification of license for which you have applied."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "mechanical": {
+   "status": "state_license",
+   "name": "Classification C-21 Refrigeration and Air-Conditioning license (heating also under C-1)",
+   "agency": "Nevada State Contractors Board",
+   "covers": "HVAC and refrigeration contractors.",
+   "threshold": null,
+   "prerequisites": [
+    "Qualifying individual with four years of journeyman-level or higher experience",
+    "Pass the CMS and trade exams",
+    "License bond"
+   ],
+   "bond": "License bond set by the Board.",
+   "insurance": null,
+   "summary": "HVAC and refrigeration contractors need a C-21 license from the State Contractors Board; heating work can also fall under the C-1 plumbing and heating license.",
+   "url": "https://www.leg.state.nv.us/NAC/NAC-624.html",
+   "quote": "The Board will grant to qualified applicants a license in the specialty of refrigeration and air-conditioning. The Board designates such a license as a “classification C-21” license.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.nvcontractorsboard.com/licensing/faq-for-general-requirements/",
+     "quote": "at least four full years of experience at a journeyman level, or as a foreman, supervisor, or contractor in the classification for which you are applying."
+    },
+    {
+     "url": "https://www.nvcontractorsboard.com/licensing/license-examinations/",
+     "quote": "Nevada requires each applicant to pass a general business and law or “CMS” examination, and a trade examination specific to the classification of license for which you have applied."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "roofing": {
+   "status": "state_license",
+   "name": "Classification C-15 Roofing and Siding license",
+   "agency": "Nevada State Contractors Board",
+   "covers": "Roofing and siding contractors.",
+   "threshold": null,
+   "prerequisites": [
+    "Qualifying individual with four years of journeyman-level or higher experience",
+    "Pass the CMS and trade exams",
+    "License bond"
+   ],
+   "bond": "License bond set by the Board.",
+   "insurance": null,
+   "summary": "Roofing and siding contractors need a C-15 license from the State Contractors Board.",
+   "url": "https://www.leg.state.nv.us/NAC/NAC-624.html",
+   "quote": "The Board will grant to qualified applicants a license in the specialty of roofing and siding. The Board designates such a license as a “classification C-15” license.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.nvcontractorsboard.com/licensing/faq-for-general-requirements/",
+     "quote": "at least four full years of experience at a journeyman level, or as a foreman, supervisor, or contractor in the classification for which you are applying."
+    },
+    {
+     "url": "https://www.nvcontractorsboard.com/licensing/license-examinations/",
+     "quote": "Nevada requires each applicant to pass a general business and law or “CMS” examination, and a trade examination specific to the classification of license for which you have applied."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Pest Control Business License; Principal, Operator and Agent pest control licenses",
+   "agency": "Nevada Department of Agriculture",
+   "covers": "Pest control and lawn/weed/tree pesticide businesses and the people who apply pesticides for them.",
+   "threshold": null,
+   "prerequisites": [
+    "Principal applicator: two years of practical pesticide/pest control experience in the category (or six months plus qualifying college credits)",
+    "Pass the Nevada pest control exams"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Pest control companies in Nevada need a Department of Agriculture business license, which needs a licensed principal applicator. Principals must document two years of practical experience before they can sit for the exam.",
+   "url": "https://agri.nv.gov/Plant/PEST/Exam_Qualifications/",
+   "quote": "Documentation of two years practical experience in the application of pesticides or related pest control in the initial category(ies) applied for, or",
+   "note": null,
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "asbestos": {
+   "status": "state_license",
+   "name": "Asbestos Abatement Contractor license (plus supervisor/worker licenses)",
+   "agency": "Nevada Division of Industrial Relations (Nevada OSHA)",
+   "covers": "Any project for the abatement of asbestos.",
+   "threshold": null,
+   "prerequisites": [
+    "Use only licensed supervisors and abatement workers"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Asbestos abatement in Nevada must be done by a contractor licensed by the Division of Industrial Relations, using licensed supervisors and workers.",
+   "url": "https://www.leg.state.nv.us/NAC/NAC-618.html",
+   "quote": "A project for the abatement of asbestos must be performed by a contractor who is licensed pursuant to the provisions of NAC 618.850 to 618.986 , inclusive.",
+   "note": "Division forms list further prerequisites (experience, medical and air monitoring programs) but the PDFs could not be re-fetched.",
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "lead_rrp": {
+   "status": "no_state_license",
+   "name": "EPA RRP Firm Certification",
+   "agency": "U.S. EPA",
+   "covers": "Firms doing renovation, repair or painting in pre-1978 housing or child-occupied facilities.",
+   "threshold": null,
+   "prerequisites": [
+    "EPA firm certification",
+    "Certified renovator on the job"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Nevada does not run its own RRP program, so renovation firms get certified directly by EPA.",
+   "url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-firm-certification",
+   "quote": "if you do work in an area other than the states or the Tribe listed in the paragraph below, apply for EPA Firm Certification",
+   "note": "Southern Nevada Health District has its own lead paint regulations for Clark County.",
+   "evidence": [
+    {
+     "url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-firm-certification",
+     "quote": "Contractors working in these states: Alabama , Delaware , Georgia , Iowa , Kansas , Massachusetts , Mississippi , North Carolina , Oklahoma , Oregon , Rhode Island , Utah , Vermont , Washington and Wisconsin"
+    },
+    {
+     "url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-firm-certification",
+     "quote": "Federal law requires all renovation, repair, and painting firms (including sole proprietorships) working in housing, or facilities where children are routinely present, built before 1978, to be certified."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "other": [
+  {
+   "key": "well_drilling",
+   "name": "Classification C-23 Drilling wells and installing pumps",
+   "agency": "Nevada State Contractors Board",
+   "trades": [
+    "excavation"
+   ],
+   "summary": "Well drilling and pump installation is its own contractor classification.",
+   "url": "https://www.leg.state.nv.us/NAC/NAC-624.html",
+   "quote": "Classification C-23: Drilling wells and installing pumps, pressure tanks and storage tanks.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  {
+   "key": "fencing",
+   "name": "Classification C-25 Fencing",
+   "agency": "Nevada State Contractors Board",
+   "trades": [
+    "fencing"
+   ],
+   "summary": "Fence contractors are licensed under their own specialty classification.",
+   "url": "https://www.leg.state.nv.us/NAC/NAC-624.html",
+   "quote": "Classification C-25: Fencing and",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ ]
+}

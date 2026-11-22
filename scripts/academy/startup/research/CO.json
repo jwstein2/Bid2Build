@@ -1,0 +1,215 @@
+{
+  "state": "CO",
+  "researched_on": "2026-11-22",
+  "general": {
+    "entity": {
+      "agency": "Colorado Secretary of State",
+      "summary": "Create your LLC, corporation or trade name by filing a form online with the Colorado Secretary of State. Out-of-state entities file to register as foreign entities.",
+      "url": "https://www.coloradosos.gov/pubs/business/fileAForm.html",
+      "quote": "File a form to create a new record Examples are: a new LLC, corporation, trade name or trademark"
+    },
+    "state_tax": {
+      "agency": "Colorado Department of Revenue",
+      "summary": "If you sell goods at retail you need a Colorado sales tax license from the Department of Revenue before you start. Many cities collect their own sales and use taxes too.",
+      "url": "https://leg.colorado.gov/sites/default/files/images/olls/crs2024-title-39.pdf",
+      "quote": "it is unlawful for any person to engage in the business of selling at retail without first having obtained a license therefor, which license shall be granted and issued by the executive director of the department of revenue"
+    },
+    "unemployment": {
+      "agency": "Colorado Department of Labor and Employment (CDLE), Division of Unemployment Insurance",
+      "summary": "Once you pay wages to at least one employee in Colorado, register for an unemployment insurance account online through MyBizColorado or MyUI Employer+.",
+      "url": "https://cdle.colorado.gov/employers/recruiting-hiring/new-employer-checklist",
+      "quote": "To receive an unemployment account number, you may register your business online through MyBizColorado ."
+    },
+    "workers_comp": {
+      "agency": "CDLE Division of Workers' Compensation",
+      "summary": "Colorado employers must carry workers' compensation if they have one or more employees, including part-time workers and family members. Independent contractors can be exempt but must meet specific requirements.",
+      "url": "https://cdle.colorado.gov/dwc/employers",
+      "quote": "Colorado employers are required to carry workers' compensation insurance if they have one or more employees. This applies to all employers, regardless of whether the employees are part-time, full-time, or family members."
+    },
+    "local": {
+      "summary": "State law lets counties (and cities) license contractors. Expect to register or license with each city or county where you work; only plumbers and electricians are licensed by the state.",
+      "url": "https://bouldercounty.gov/property-and-land/land-use/building/contractor-licensing/",
+      "quote": "The Colorado State Legislature granted counties the authority to establish contractor licensing programs. Boulder County licenses contractors for work in the unincorporated county."
+    }
+  },
+  "credentials": {
+    "residential_building": {
+      "status": "local_only",
+      "name": "No state license; local contractor license/registration",
+      "agency": "City or county building departments",
+      "covers": "General and residential contractors are licensed by local governments, not the state.",
+      "threshold": null,
+      "prerequisites": [],
+      "bond": null,
+      "insurance": null,
+      "summary": "Colorado has no state general or residential contractor license. Counties and cities run their own contractor licensing, so check each place you work.",
+      "url": "https://bouldercounty.gov/property-and-land/land-use/building/contractor-licensing/",
+      "quote": "The Colorado State Legislature granted counties the authority to establish contractor licensing programs.",
+      "evidence": [
+        {"url": "https://bouldercounty.gov/property-and-land/land-use/building/contractor-licensing/", "quote": "Plumbers and electricians are licensed by the State of Colorado."}
+      ],
+      "note": "Source is a county government page; no statewide official list of unlicensed trades was fetched."
+    },
+    "commercial_building": {
+      "status": "local_only",
+      "name": "No state license; local contractor license/registration",
+      "agency": "City or county building departments",
+      "covers": "Commercial general contractors are licensed locally.",
+      "threshold": null,
+      "prerequisites": [],
+      "bond": null,
+      "insurance": null,
+      "summary": "There is no state commercial contractor license in Colorado; local jurisdictions license contractors. Large permitted projects also require a workers' compensation declaration with the local permit.",
+      "url": "https://bouldercounty.gov/property-and-land/land-use/building/contractor-licensing/",
+      "quote": "The Colorado State Legislature granted counties the authority to establish contractor licensing programs. Boulder County licenses contractors for work in the unincorporated county.",
+      "evidence": [
+        {"url": "https://cdle.colorado.gov/dwc/employers", "quote": "anyone applying for a building or construction permit for projects costing over $1 million is required by law to submit a declaration confirming that all workers under the permit have valid workers' compensation coverage"}
+      ],
+      "note": null
+    },
+    "electrical": {
+      "status": "state_license",
+      "name": "Electrical Contractor registration; Master Electrician, Journeyman Electrician, Residential Wireman licenses",
+      "agency": "Colorado State Electrical Board (DORA Division of Professions and Occupations)",
+      "covers": "Companies doing electrical contracting must register and hold or employ a licensed master electrician. Individual electricians are licensed by exam.",
+      "threshold": null,
+      "prerequisites": [
+        "Contractor: hold or employ a licensed master electrician as the responsible individual",
+        "Residential Wireman: 4,000 hours of residential experience over at least 2 years",
+        "Journeyman: 8,000 hours over at least 4 years (2,000 commercial/industrial)",
+        "Master: 10,000 hours over at least 5 years (or degree/trade school routes)",
+        "288 hours of classroom education for all applicants; pass the exam"
+      ],
+      "bond": null,
+      "insurance": null,
+      "summary": "Electrical contractors must register with the state and have a licensed master electrician as the responsible person. Journeymen need 8,000 hours of experience over four years plus 288 classroom hours, and masters need 10,000 hours over five years.",
+      "url": "https://dpo.colorado.gov/Electrical/Applications",
+      "quote": "To perform Electrical Contracting in the State of Colorado, you must be a licensed Electrical Contractor registered with the State of Colorado:",
+      "evidence": [
+        {"url": "https://dpo.colorado.gov/Electrical/Applications", "quote": "Hold or employ a licensed master electrician to serve as the responsible individual for the company."},
+        {"url": "https://dpo.colorado.gov/Electrical/Applications", "quote": "Residential Wireman 4,000 hours of residential only experience earned in no less than 2 years."},
+        {"url": "https://dpo.colorado.gov/Electrical/Applications", "quote": "Journeyman Electrician Experience Requirements: 8,000 hours of experience earned in no less than 4 years. 2,000 hours of which must be in commercial/industrial work."},
+        {"url": "https://dpo.colorado.gov/Electrical/Applications", "quote": "Master Electrician Experience Requirements (Must Meet One): 10,000 hours of experience earned in no less than 5 years."},
+        {"url": "https://dpo.colorado.gov/Electrical/Applications", "quote": "Education Requirements: 288 hours of classroom education is required for ALL applicants."}
+      ],
+      "note": null
+    },
+    "plumbing": {
+      "status": "state_license",
+      "name": "Plumbing Contractor registration; Master, Journeyworker and Residential Plumber licenses",
+      "agency": "Colorado State Plumbing Board (DORA Division of Professions and Occupations)",
+      "covers": "Plumbing contractors register with the state; individual plumbers are licensed by exam.",
+      "threshold": null,
+      "prerequisites": [
+        "Residential Plumber: 2 years (3,400 hours) of practical experience",
+        "Journeyworker Plumber: up to 4 years (6,800 hours) of practical experience",
+        "Master Plumber: five full-time years (8,500 hours) of practical experience",
+        "Experience verified by employers on the Affidavit of Experience; pass the PSI exam"
+      ],
+      "bond": null,
+      "insurance": null,
+      "summary": "Plumbers are licensed by the state and plumbing companies register as plumbing contractors. A residential plumber needs 2 years (3,400 hours) of experience, a journeyworker up to 4 years (6,800 hours), and a master five years (8,500 hours), plus a passing exam.",
+      "url": "https://dpo.colorado.gov/Plumbing/Applications",
+      "quote": "Master Plumber An applicant for a master plumber's license must furnish evidence of having obtained five full-time years (8,500 hours) of practical experience.",
+      "evidence": [
+        {"url": "https://dpo.colorado.gov/Plumbing/Applications", "quote": "Residential Plumber You must verify 2 years (3,400 hours) of practical experience."},
+        {"url": "https://dpo.colorado.gov/Plumbing/Applications", "quote": "Journeyworker Plumber The maximum experience the board requires for an applicant to qualify to receive a Journeyworker Plumber's license is 4 years (6,800 hours) of practical experience."},
+        {"url": "https://dpo.colorado.gov/Plumbing/Applications", "quote": "Plumbing Contractor - Initial Registration by Original Method"}
+      ],
+      "note": null
+    },
+    "mechanical": {
+      "status": "local_only",
+      "name": "No state HVAC/mechanical license; local licensing",
+      "agency": "City or county building departments",
+      "covers": "HVAC and mechanical contractors are licensed locally where required.",
+      "threshold": null,
+      "prerequisites": [],
+      "bond": null,
+      "insurance": null,
+      "summary": "Colorado does not license HVAC or mechanical contractors at the state level; check city and county requirements. Gas piping may fall under plumbing rules locally.",
+      "url": "https://bouldercounty.gov/property-and-land/land-use/building/contractor-licensing/",
+      "quote": "Plumbers and electricians are licensed by the State of Colorado.",
+      "evidence": [],
+      "note": "Inferred from the county statement that only plumbers and electricians are state-licensed."
+    },
+    "roofing": {
+      "status": "local_only",
+      "name": "No state roofing license; local licensing",
+      "agency": "City or county building departments",
+      "covers": "Roofers are licensed locally where required.",
+      "threshold": null,
+      "prerequisites": [],
+      "bond": null,
+      "insurance": null,
+      "summary": "Colorado has no state roofing license. Many cities and counties require roofers to be licensed or registered locally.",
+      "url": "https://bouldercounty.gov/property-and-land/land-use/building/contractor-licensing/",
+      "quote": "The Colorado State Legislature granted counties the authority to establish contractor licensing programs.",
+      "evidence": [],
+      "note": "State roofing contract consumer-protection rules (C.R.S. 6-22) were not researched."
+    },
+    "pesticide": {
+      "status": "state_license",
+      "name": "Commercial Applicator business license; Qualified Supervisor and Certified Operator licenses",
+      "agency": "Colorado Department of Agriculture, Pesticide Applicator Certification and Licensing Program",
+      "covers": "Businesses applying pesticides for hire (pest control, lawn and weed control, tree spraying) and the individuals who evaluate, recommend, apply or supervise.",
+      "threshold": null,
+      "prerequisites": [
+        "Business: commercial applicator license",
+        "A Qualified Supervisor who meets on-the-job experience requirements and passes the general and category exams"
+      ],
+      "bond": null,
+      "insurance": null,
+      "summary": "Pesticide application businesses must be licensed by the Colorado Department of Agriculture. Employees who work without supervision must be licensed Qualified Supervisors, which requires experience in each category and passing the exams.",
+      "url": "https://ag.colorado.gov/pesticide-applicator-certification-and-licensing-program",
+      "quote": "All commercial applicators must be licensed with the Department.",
+      "evidence": [
+        {"url": "https://ag.colorado.gov/pesticide-applicator-certification-and-licensing-program", "quote": "A Qualified Supervisor must meet specific on-the-job experience requirements in each category of licensure to obtain this license."},
+        {"url": "https://ag.colorado.gov/pesticide-applicator-certification-and-licensing-program", "quote": "Successfully complete the general exam plus exams in all categories applicable to the pesticide applications which they will be performing"}
+      ],
+      "note": null
+    },
+    "asbestos": {
+      "status": "state_license",
+      "name": "General Abatement Contractor certification; asbestos inspection and 10-working-day notice/permit",
+      "agency": "Colorado Department of Public Health and Environment (CDPHE), Air Pollution Control Division",
+      "covers": "Renovation or demolition that disturbs materials above trigger levels requires inspection by a Colorado-certified asbestos inspector; abatement must be done by a Colorado-certified General Abatement Contractor. Demolitions need a notification even if no asbestos is found.",
+      "threshold": null,
+      "prerequisites": [
+        "Inspection by a Colorado-certified Asbestos Building Inspector before work above trigger levels",
+        "Abatement by a Colorado-certified General Abatement Contractor",
+        "Ten working-day notification before abatement or demolition"
+      ],
+      "bond": null,
+      "insurance": null,
+      "summary": "In Colorado, building materials above trigger levels must be inspected by a state-certified asbestos inspector before renovation or demolition. Abatement must be done by a state-certified General Abatement Contractor after a ten working-day notice, and demolitions always need a notification.",
+      "url": "https://cdphe.colorado.gov/asbestos-and-abatement-support-and-guidance",
+      "quote": "Abatement must be conducted by a Colorado-certified General Abatement Contractor (GAC).",
+      "evidence": [
+        {"url": "https://cdphe.colorado.gov/asbestos-and-abatement-support-and-guidance", "quote": "If the components that will be disturbed exceed the trigger levels, they must be inspected for asbestos by a Colorado-certified Asbestos Building Inspector before starting work."},
+        {"url": "https://cdphe.colorado.gov/asbestos-and-abatement-support-and-guidance", "quote": "A ten working-day notification period is required before the demolition can commence."},
+        {"url": "https://cdphe.colorado.gov/asbestos-and-abatement-support-and-guidance", "quote": "A Demolition Notification Application Form must be submitted to the division, even if no asbestos was found during the inspection"}
+      ],
+      "note": null
+    },
+    "lead_rrp": {
+      "status": "no_state_license",
+      "name": "EPA Lead-Safe (RRP) Firm Certification and Certified Renovator",
+      "agency": "U.S. Environmental Protection Agency",
+      "covers": "Firms paid to do work that disturbs paint in homes and child-occupied facilities built before 1978.",
+      "threshold": null,
+      "prerequisites": ["EPA firm certification", "At least one EPA Certified Renovator (training course)"],
+      "bond": null,
+      "insurance": null,
+      "summary": "Colorado is not EPA-authorized for the renovation (RRP) program, so firms get RRP certification from EPA. Anyone paid to disturb paint in pre-1978 homes or child-occupied facilities must be certified.",
+      "url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-firm-certification",
+      "quote": "EPA's renovation program applies to all states, Tribes and territories where EPA has not specifically provided authorization for that state, Tribe or territory to operate the program themselves.",
+      "evidence": [
+        {"url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program", "quote": "EPA administers the RRP Program in most Tribes, states and territories, but has authorized the following to operate their own programs: Alabama, Delaware, Georgia, Iowa, Kansas, Massachusetts, Mississippi, North Carolina, Oklahoma, Oregon, Rhode Island, Utah, Vermont, Washington, Wisconsin"},
+        {"url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-contractors", "quote": "In general, anyone who is paid to perform work that disturbs paint in housing and child-occupied facilities built before 1978 must be certified. This includes all firms, even sole proprietorships."}
+      ],
+      "note": "CDPHE separately certifies lead-based paint abatement professionals; not researched."
+    },
+    "other": []
+  }
+}

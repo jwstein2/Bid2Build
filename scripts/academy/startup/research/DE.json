@@ -1,0 +1,175 @@
+{
+  "state": "DE",
+  "researched_on": "2026-11-22",
+  "general": {
+    "entity": {"agency": "Delaware Division of Corporations", "summary": "Corporations, LLCs and most partnerships file formation documents with the Division of Corporations; sole proprietors do not file there. Every entity needs a Delaware registered agent.", "url": "https://corp.delaware.gov/howtoform/", "quote": "Corporations, Public Benefit Corporations effective August 1, 2013, Limited Liability Companies (LLC), Limited Partnerships (LP), Statutory Trusts and many General Partnerships (GP) are required to file with the Delaware Division of Corporations. Sole proprietorships do not file with the Delaware Division of Corporations."},
+    "state_tax": {"agency": "Delaware Division of Revenue", "summary": "Every contractor working in Delaware must register with the Division of Revenue and get a business license (resident or non-resident contractor package). Delaware has no sales tax but contractors file gross receipts and related forms; non-resident contractors also post a bond.", "url": "https://revenue.delaware.gov/business-tax/contractors/", "quote": "Any contractors conducting business activity in Delaware are required to register with and obtain a business license from the Delaware Division of Revenue."},
+    "unemployment": {"agency": "Delaware Department of Labor, Division of Unemployment Insurance", "summary": "When you start hiring, report hiring through the Delaware Business One Stop so your unemployment insurance account is set up.", "url": "https://labor.delaware.gov/divisions/unemployment-insurance/", "quote": "Report Hiring with our office using the Delaware Business One Stop. If you’ve newly started a business with employees or are about to hire employees, make sure you report hiring to avoid penalties."},
+    "workers_comp": {"agency": "Delaware Department of Labor, Office of Workers' Compensation", "summary": "Employers covered by the law must carry workers' comp insurance. Sole proprietors and partners are not automatically covered but may elect coverage. Construction contractors must also show proof of Delaware workers' comp to register with the Department of Labor.", "url": "https://delcode.delaware.gov/title19/c023/sc04/", "quote": "Every employer to whom this chapter applies shall insure and keep insured the employer’s liability for compensation in some corporation, association or organization approved by the Department"},
+    "local": {"summary": "Construction businesses must register with the Department of Labor's Office of Contractor Registration before starting work, on top of the Division of Revenue license and reporting hiring.", "url": "https://labor.delaware.gov/divisions/industrial-affairs/workers-compensation/", "quote": "Delaware law requires construction service businesses to register with the Office of Contractor Registration at the Delaware Department of Labor BEFORE beginning work in the state, in addition to registering with the Division of Revenue and reporting hiring."}
+  },
+  "credentials": {
+    "residential_building": {
+      "status": "state_registration",
+      "name": "Contractor Registration (Office of Contractor Registration) plus Division of Revenue contractor business license",
+      "agency": "Delaware Department of Labor, Office of Contractor Registration; Delaware Division of Revenue",
+      "covers": "Any business doing construction services or maintenance for others for profit in Delaware, including subcontractors. There is no state competency license for general/residential builders.",
+      "threshold": null,
+      "prerequisites": ["Division of Revenue contractor business license", "Proof of Delaware workers' compensation insurance", "Register before performing construction services"],
+      "bond": "Not required for a normal registration; the Department may require a surety bond from contractors with labor-law violations. Non-resident contractors post a bond with the Division of Revenue.",
+      "insurance": "Proof of Delaware workers' compensation insurance",
+      "summary": "Delaware has no general contractor exam or competency license. Instead, construction businesses must register with the Department of Labor's Office of Contractor Registration before doing any construction work, and hold a Division of Revenue contractor business license.",
+      "url": "https://delcode.delaware.gov/title19/c036/",
+      "quote": "A contractor must register under this chapter before performing construction services or maintenance.",
+      "evidence": [
+        {"url": "https://delcode.delaware.gov/title19/c036/", "quote": "(6) Proof of Delaware worker’s compensation insurance."},
+        {"url": "https://delcode.delaware.gov/title19/c036/", "quote": "The Department may require as a condition of initial or continued registration that a contractor who has violated either this chapter or the prevailing wage law, § 6960 of Title 29, must provide a surety bond payable to the Department."},
+        {"url": "https://revenue.delaware.gov/business-tax/contractors/", "quote": "Please complete a Resident Contractors Package or Non-Resident Contractors Package; all necessary forms are included."}
+      ],
+      "note": "Registration is a labor-law registry, not a skills license."
+    },
+    "commercial_building": {
+      "status": "state_registration",
+      "name": "Contractor Registration plus Division of Revenue contractor business license (same as residential)",
+      "agency": "Delaware Department of Labor, Office of Contractor Registration; Delaware Division of Revenue",
+      "covers": "Same registration covers commercial construction; the statute's definition of construction services covers all building work.",
+      "threshold": null,
+      "prerequisites": ["Division of Revenue contractor business license", "Proof of Delaware workers' compensation insurance"],
+      "bond": null,
+      "insurance": "Proof of Delaware workers' compensation insurance",
+      "summary": "Commercial contractors use the same Department of Labor contractor registration and Division of Revenue business license as residential contractors. There is no separate state commercial builder license.",
+      "url": "https://delcode.delaware.gov/title19/c036/",
+      "quote": "“Construction services” includes all building or work on a building, structure, or improvement of any type",
+      "evidence": [{"url": "https://delcode.delaware.gov/title19/c036/", "quote": "(6) Proof of Delaware worker’s compensation insurance."}],
+      "note": null
+    },
+    "electrical": {
+      "status": "state_license",
+      "name": "Master, Master Special, Limited, Limited Special, Journeyperson, Residential and Apprentice Electrician licenses",
+      "agency": "Delaware Board of Electrical Examiners (Division of Professional Regulation)",
+      "covers": "Anyone performing electrical work covered by the National Electrical Code in Delaware.",
+      "threshold": null,
+      "prerequisites": ["Master: six years full-time experience (or four years under a master plus two years of technical training)", "Limited: three years full-time experience under a master or limited electrician", "Board approval to sit for, and passing, the exam", "Proof of general liability insurance of at least $300,000"],
+      "bond": null,
+      "insurance": "General liability insurance of at least $300,000 (your own or proof you are covered by your employer's policy)",
+      "summary": "All electrical work in Delaware requires a state electrician license. To get a Master or Limited license by exam you need documented supervised experience, Board approval to test, and proof of liability insurance before the license is issued.",
+      "url": "https://dpr.delaware.gov/boards/electrician/newlicense/",
+      "quote": "To perform electrical services in Delaware, you are required to hold a Delaware professional license as an electrician.",
+      "evidence": [
+        {"url": "https://dpr.delaware.gov/boards/electrician/newlicense/", "quote": "Master – six years full-time experience OR four years full-time experience under a Master Electrician only AND an official transcript showing two years of technical training."},
+        {"url": "https://dpr.delaware.gov/boards/electrician/newlicense/", "quote": "Limited – three years full-time experience under Master or Limited Electrician supervisor."},
+        {"url": "https://dpr.delaware.gov/boards/electrician/newlicense/", "quote": "Proof of general liability insurance of at least $300,000. Your name must be on the insurance document you submit even if your employer holds the policy."},
+        {"url": "https://dpr.delaware.gov/boards/electrician/newlicense/", "quote": "If you need to take the examination for an original license, the Board of Electrical Examiners must approve you to sit for the examination."}
+      ],
+      "note": null
+    },
+    "plumbing": {
+      "status": "state_license",
+      "name": "Master Plumber license",
+      "agency": "Delaware Board of Plumbing, Heating, Ventilation, Air Conditioning and Refrigeration Examiners",
+      "covers": "Designing, installing, repairing or altering water supply and drainage piping and fixtures; a Master Plumber may also install gas piping.",
+      "threshold": null,
+      "prerequisites": ["With a journeyman (apprenticeship) certificate: at least two years experience under a master after the certificate", "Without one: at least seven years experience under a master plus the Apprenticeship By-Pass Exam", "Pass the Master exam"],
+      "bond": null,
+      "insurance": null,
+      "summary": "Plumbing work requires a state Master Plumber license. Applicants need supervised experience under a master licensee (less if they completed an approved apprenticeship) and must pass the Master exam.",
+      "url": "https://dpr.delaware.gov/boards/plumbers/newlicense/",
+      "quote": "A Master Plumber can design, install, construct, replace, service, repair, alter, or modify the pipes, fixtures, and other apparatus used for bringing the water supply into a building and removing liquid and water-carried wastes from a building.",
+      "evidence": [
+        {"url": "https://dpr.delaware.gov/boards/plumbers/newlicense/", "quote": "Proof of at least two years work experience under the supervision of a master licensee after receiving Certificate."},
+        {"url": "https://dpr.delaware.gov/boards/plumbers/newlicense/", "quote": "Proof of at least seven years work experience under supervision of a master licensee."},
+        {"url": "https://dpr.delaware.gov/boards/plumbers/newlicense/", "quote": "When the Board approves you to sit for the Master exam, the Board office will send you a candidate information packet."}
+      ],
+      "note": null
+    },
+    "mechanical": {
+      "status": "state_license",
+      "name": "Master HVACR / Master HVACR Restricted license",
+      "agency": "Delaware Board of Plumbing, Heating, Ventilation, Air Conditioning and Refrigeration Examiners",
+      "covers": "Heating, air conditioning, refrigeration, ventilation and process heating/cooling equipment, including gas piping in those systems. Restricted licenses cover one specialty.",
+      "threshold": null,
+      "prerequisites": ["CFC (EPA refrigerant) certification card for Master HVACR and refrigeration/AC restricted licenses", "With a journeyman certificate: at least two years under a master; otherwise at least seven years", "Pass the Master exam"],
+      "bond": null,
+      "insurance": null,
+      "summary": "HVACR work requires a state Master HVACR (or Restricted) license. You need a CFC card for most HVACR licenses, supervised experience under a master licensee, and a passing exam score.",
+      "url": "https://dpr.delaware.gov/boards/plumbers/hvacrlicensure/",
+      "quote": "Master HVACR – A Master HVACR can design, install, construct, maintain, service, repair, alter, or modify a product or equipment including gas piping in heating and air conditioning, refrigeration, ventilation, or process cooling or heating systems.",
+      "evidence": [
+        {"url": "https://dpr.delaware.gov/boards/plumbers/hvacrlicensure/", "quote": "A copy of your CFC Certification card if you are applying for a Master HVACR, Master HVACR Restricted-Refrigeration, Master HVACR Restricted-Air Conditioning."},
+        {"url": "https://dpr.delaware.gov/boards/plumbers/hvacrlicensure/", "quote": "Proof of at least two years work experience under the supervision of a master licensee after receiving Certificate."},
+        {"url": "https://dpr.delaware.gov/boards/plumbers/hvacrlicensure/", "quote": "Proof of at least seven years work experience under supervision of a master licensee."}
+      ],
+      "note": null
+    },
+    "roofing": {
+      "status": "no_state_license",
+      "name": null,
+      "agency": "Delaware Department of Labor, Office of Contractor Registration",
+      "covers": "Roofers need the same contractor registration and Division of Revenue license as other construction businesses.",
+      "threshold": null,
+      "prerequisites": [],
+      "bond": null,
+      "insurance": null,
+      "summary": "Delaware has no separate roofing license. Roofing businesses register with the Department of Labor's Office of Contractor Registration like any construction contractor, and roofers who disturb asbestos roofing need asbestos (Class B) certification.",
+      "url": "https://delcode.delaware.gov/title19/c036/",
+      "quote": "A contractor must register under this chapter before performing construction services or maintenance.",
+      "evidence": [],
+      "note": "The Division of Professional Regulation's list of professions includes no roofing license."
+    },
+    "pesticide": {
+      "status": "state_license",
+      "name": "Certified Commercial Pesticide Applicator + Pesticide Business License",
+      "agency": "Delaware Department of Agriculture, Pesticides Section",
+      "covers": "Anyone applying any pesticide (restricted or general use) to someone else's property for pay, including lawn/turf and structural pest control.",
+      "threshold": null,
+      "prerequisites": ["Become a certified commercial applicator (pass exams)", "For structural pest control (categories 7A-7C): a certified applicator with two years supervised practical experience", "General liability insurance with completed operations coverage"],
+      "bond": null,
+      "insurance": "General liability insurance policy with completed operations coverage",
+      "summary": "Pest control and lawn-spraying businesses need a Delaware Pesticide Business License and at least one certified commercial applicator. Structural pest control businesses need an applicator with supervised experience, and all businesses must show liability insurance.",
+      "url": "https://agriculture.delaware.gov/pesticide-management/pesticide-applicator-certification",
+      "quote": "Anyone in the business of applying pesticides, either restricted use or general use to the land or property of another must be certified and obtain a Pesticide Business License from the Delaware Department of Agriculture.",
+      "evidence": [
+        {"url": "https://agriculture.delaware.gov/pesticide-management/business-licenses/", "quote": "Become a Certified Commercial Applicator in one or more categories of pest control and at least one of the certified applicators must have a minimum of two years practical experience under the supervision of a certified applicator."},
+        {"url": "https://agriculture.delaware.gov/pesticide-management/business-licenses/", "quote": "Proof of financial security is required and must contain a general liability insurance policy with completed operation coverage"}
+      ],
+      "note": null
+    },
+    "asbestos": {
+      "status": "state_license",
+      "name": "Asbestos Abatement Contractor Class A (unlimited) / Class B (limited) certification; supervisor and worker certification",
+      "agency": "Delaware Office of Management and Budget, Division of Facilities Management (Asbestos Office)",
+      "covers": "Any contractor or worker doing asbestos abatement. Class B is for tradespeople (roofers, siders, plumbers, HVAC) who work around asbestos-containing material in their normal craft.",
+      "threshold": null,
+      "prerequisites": ["Contractor certification from Facilities Management before any abatement", "Certified workers and supervisors on the job"],
+      "bond": null,
+      "insurance": null,
+      "summary": "Asbestos abatement in Delaware requires state certification of both the contractor and its workers. Tradespeople who only handle asbestos as part of roofing, siding, plumbing or HVAC work can get a limited Class B certification.",
+      "url": "https://delcode.delaware.gov/title16/c078/index.shtml",
+      "quote": "No contractor or asbestos worker shall undertake any asbestos abatement work without having first been certified in accordance with this chapter.",
+      "evidence": [{"url": "https://dfm.delaware.gov/envsrv/asbestos/app-definitions.shtml", "quote": "Certified Asbestos Abatement Contractor Class \"B\" (Limited) means any individual, public or private corporation, partnership, association, firm, trust, estate, institution, or other legal entity who has met the minimum requirements established by Facilities Management"}],
+      "note": null
+    },
+    "lead_rrp": {
+      "status": "state_license",
+      "name": "Delaware Lead Renovation, Repair and Painting (RRP) firm and renovator certification",
+      "agency": "Delaware Division of Public Health, Healthy Homes and Lead Poisoning Prevention Program",
+      "covers": "Contractors disturbing painted surfaces in homes, child care facilities and schools built before 1978 (above small-area limits).",
+      "threshold": "More than six square feet per room inside, or more than twenty square feet outside, or window replacement/demolition, in pre-1978 housing, child care facilities and schools",
+      "prerequisites": ["Complete an accredited training course and pass any required exams", "Apply to DPH for certification (firm and individual)"],
+      "bond": null,
+      "insurance": null,
+      "summary": "Delaware is EPA-authorized and runs its own RRP program, so firms and renovators are certified by the Division of Public Health, not EPA. Individuals must finish accredited training before applying.",
+      "url": "https://dhss.delaware.gov/dph/homepage/about/sections/hsp/licenses-and-permits/healthyhomes/lead-information-for-contractors/",
+      "quote": "Individuals and firms performing lead-based paint activities in the State of Delaware must be certified by the Division of Public Health (DPH).",
+      "evidence": [
+        {"url": "https://dhss.delaware.gov/dph/homepage/about/sections/hsp/licenses-and-permits/healthyhomes/lead-information-for-contractors/", "quote": "Certification is required for renovations that disturb more than six square feet of painted surfaces in a room for interior projects or more than twenty square feet of painted surfaces for exterior projects or window replacement or demolition in housing, child care facilities and schools built before 1978."},
+        {"url": "https://dhss.delaware.gov/dph/homepage/about/sections/hsp/licenses-and-permits/healthyhomes/lead-information-for-contractors/", "quote": "After completing an approved training course and passing any required exams, an individual must submit an Application for Certification to DPH."},
+        {"url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program", "quote": "EPA administers the RRP Program in most Tribes, states and territories, but has authorized the following to operate their own programs: Alabama, Delaware, Georgia"}
+      ],
+      "note": null
+    },
+    "other": [
+      {"key": "manufactured_home_installer", "name": "Manufactured Home Installer license", "agency": "Delaware Board of Manufactured Home Installation", "trades": ["general-contracting"], "summary": "Delaware licenses manufactured home installers through a state board under the Division of Professional Regulation.", "url": "https://dpr.delaware.gov/boards/manufactoredhomes/", "quote": "The primary objective of the Delaware Board of Manufactured Home Installation is to protect the public from unsafe practices"}
+    ]
+  }
+}

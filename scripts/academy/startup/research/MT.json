@@ -1,0 +1,266 @@
+{
+ "state": "MT",
+ "researched_on": "2026-11-22",
+ "general": {
+  "entity": {
+   "agency": "Montana Secretary of State",
+   "summary": "If you use a business name other than your own personal name, register it with the Montana Secretary of State; DLI suggests doing this before applying for your construction contractor license.",
+   "url": "https://boards.bsd.dli.mt.gov/construction-contractor/construction-contractor-program-FAQ.pdf",
+   "quote": "Should I register my business name with the Montana Secretary of State? Yes. All persons using a business name other than their personal name should register."
+  },
+  "state_tax": {
+   "agency": "Montana Department of Revenue",
+   "summary": "Montana has no general sales tax. Once you pay wages, register for a Montana withholding tax account with the Department of Revenue.",
+   "url": "https://revenue.mt.gov/taxes/withholding-tax/accounts",
+   "quote": "You must register for a Montana withholding tax account if you: Issue Montana wages Issue Forms W-2 (with or without withholding)"
+  },
+  "unemployment": {
+   "agency": "Montana DLI Unemployment Insurance Division",
+   "summary": "You are a covered employer who must register and pay Montana unemployment insurance tax once your annual payroll reaches $1,000 (or you meet another listed test).",
+   "url": "https://uid.dli.mt.gov/employer-handbook.pdf",
+   "quote": "Your total annual payroll for the current or preceding calendar year equals or exceeds $1,000."
+  },
+  "workers_comp": {
+   "agency": "Montana DLI Employment Relations Division",
+   "summary": "If you hire employees you must cover them under a Montana workers' compensation policy. Working alone as an independent contractor, you need either an Independent Contractor Exemption Certificate (ICEC) or self-elected workers' comp coverage.",
+   "url": "https://erd.dli.mt.gov/work-comp-regulations/montana-contractor/independent-contractor/",
+   "quote": "an independent contractor must obtain either an independent contractor exemption certificate or self-elected coverage under a Montana workers' compensation insurance policy."
+  },
+  "local": {
+   "summary": "Certified local governments may enforce building and mechanical codes and issue permits in their own areas; elsewhere the state Building Codes Program does.",
+   "url": "https://bsd.dli.mt.gov/Building-Codes-Permits/permit-applications/mechanical-permits/",
+   "quote": "Certified Local Governments may enforce the mechanical code within their jurisdictional area. All other areas fall under the State's jurisdiction."
+  }
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "state_license",
+   "name": "Construction Contractor License (CCL), effective January 1, 2026",
+   "agency": "Montana Department of Labor & Industry",
+   "covers": "Contractors who build, remodel, repair, demolish, or install roofing, siding or flooring for others, specifically those with employees, plus corporations and manager-managed LLCs regardless of employee count. Solo contractors without employees use an Independent Contractor Exemption Certificate instead.",
+   "threshold": null,
+   "prerequisites": [
+    "Workers' compensation insurance and unemployment coverage for employees",
+    "Business name registered with the Secretary of State if not your personal name",
+    "Independent Contractor Exemption Certificate if you work alone without employees"
+   ],
+   "bond": null,
+   "insurance": "Workers' compensation coverage for employees.",
+   "summary": "Since January 1, 2026, Montana requires a Construction Contractor License for contractors with employees and for corporations and manager-managed LLCs. It mainly confirms you carry workers' comp and unemployment coverage; there is no trade exam. Solo operators without employees instead get an Independent Contractor Exemption Certificate.",
+   "url": "https://boards.bsd.dli.mt.gov/construction-contractor/construction-contractor-program-FAQ.pdf",
+   "quote": "Anyone involved in the construction, alteration, repair, moving, or demolition of structures attached to real estate. This specifically targets contractors with employees, as well as corporations and manager-managed LLCs, regardless of employee count.",
+   "evidence": [
+    {
+     "url": "https://boards.bsd.dli.mt.gov/construction-contractor/construction-contractor-program-FAQ.pdf",
+     "quote": "In Montana, a Construction Contractor License exists MCA 37-45-101. (Effective January 1, 2026)"
+    },
+    {
+     "url": "https://boards.bsd.dli.mt.gov/construction-contractor/construction-contractor-program-FAQ.pdf",
+     "quote": "The licensing system enforces state laws, ensuring that contractors maintain required workers' compensation insurance and unemployment coverage for their employees."
+    },
+    {
+     "url": "https://erd.dli.mt.gov/work-comp-regulations/montana-contractor/independent-contractor/",
+     "quote": "A test is not required to qualify for the ICEC."
+    }
+   ],
+   "note": "The CCL is a business license tied to workers' comp/UI compliance, not a competency license."
+  },
+  "commercial_building": {
+   "status": "state_license",
+   "name": "Construction Contractor License (CCL)",
+   "agency": "Montana Department of Labor & Industry",
+   "covers": "Same license as residential: covers buildings, highways, roads, excavation and other improvements to real estate.",
+   "threshold": null,
+   "prerequisites": [
+    "Workers' compensation insurance and unemployment coverage for employees"
+   ],
+   "bond": null,
+   "insurance": "Workers' compensation coverage for employees.",
+   "summary": "Commercial contractors use the same Construction Contractor License as residential contractors.",
+   "url": "https://boards.bsd.dli.mt.gov/construction-contractor/construction-contractor-program-FAQ.pdf",
+   "quote": "offers to undertake, undertakes, or submits a bid to construct, alter, repair, add to, subtract from, improve, move, wreck, or demolish for another a building, highway, road, railroad, excavation, or other structure, project, development, or improvement attached to real estate",
+   "note": null
+  },
+  "electrical": {
+   "status": "state_license",
+   "name": "Electrical Contractor license; Master / Journeyman / Residential Electrician licenses",
+   "agency": "Montana State Electrical Board (DLI)",
+   "covers": "Electrical contracting businesses (a master electrician must be the responsible party) and individual electricians, who must work for a licensed electrical contractor.",
+   "threshold": null,
+   "prerequisites": [
+    "Master electrician as responsible party",
+    "Proof of workers' comp and UI compliance, or an Independent Contractor Exemption",
+    "Journeyman: completed apprenticeship (8000 hours plus 576 hours of instruction) and exam",
+    "Master: four years of licensed journeyman experience (or EE degree path) and exam"
+   ],
+   "bond": null,
+   "insurance": "Workers' compensation and unemployment insurance compliance (or ICEC).",
+   "summary": "An electrical contractor license needs a licensed master electrician as the responsible party plus workers' comp/UI compliance. Journeymen must finish an apprenticeship and pass an exam; masters need four years as a licensed journeyman and another exam.",
+   "url": "https://boards.bsd.dli.mt.gov/electrical/license-information/electrical-contractor",
+   "quote": "An electrical contractor license will require a Montana licensed master electrician as the responsible party and allows the electrical contractor to perform residential, commercial, industrial, and institutional work.",
+   "evidence": [
+    {
+     "url": "https://boards.bsd.dli.mt.gov/electrical/license-information/electrical-contractor",
+     "quote": "Proof of compliance with Montana Workers Compensation and also Unemployment Insurance or an Independent Contractor Exemption ."
+    },
+    {
+     "url": "https://boards.bsd.dli.mt.gov/electrical/license-information/journeyman-electrician",
+     "quote": "Journeyman Electrical Apprenticeship completion is required; journeyman apprenticeship completion includes 8000 hours legally obtained practical experience and 576 hours of related instruction/education."
+    },
+    {
+     "url": "https://boards.bsd.dli.mt.gov/electrical/license-information/master-electrician",
+     "quote": "Required four years licensed journeyman experience"
+    }
+   ],
+   "note": null
+  },
+  "plumbing": {
+   "status": "state_license",
+   "name": "Master Plumber / Journeyman Plumber license",
+   "agency": "Montana Board of Plumbers (DLI)",
+   "covers": "Anyone working in the field of plumbing as a master or journeyman.",
+   "threshold": null,
+   "prerequisites": [
+    "Journeyman: 5 years of legally obtained plumbing experience or a completed approved apprenticeship",
+    "Pass the board exam"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Plumbers must hold a state master or journeyman plumber license. Journeymen need 5 years of experience or a completed apprenticeship and must pass the board's exam.",
+   "url": "https://mca.legmt.gov/bills/mca/title_0370/chapter_0690/part_0030/section_0010/0370-0690-0030-0010.html",
+   "quote": "a person working at the field of plumbing in this state, either as a master plumber or as a journeyman plumber, shall first obtain a license as provided in Title 37, chapter 69, part 3.",
+   "evidence": [
+    {
+     "url": "https://mca.legmt.gov/bills/mca/title_0370/chapter_0690/part_0030/section_0040/0370-0690-0030-0040.html",
+     "quote": "a specific record of 5 years of legally obtained experience in the field of plumbing. This experience requirement may be fulfilled by: (i) working 5 years in a major phase of the plumbing business"
+    },
+    {
+     "url": "https://mca.legmt.gov/bills/mca/title_0370/chapter_0690/part_0030/section_0030/0370-0690-0030-0030.html",
+     "quote": "must at a time and place designated by the board be examined as to the qualifications for a license."
+    }
+   ],
+   "note": "Master plumber experience requirements were not checked."
+  },
+  "mechanical": {
+   "status": "no_state_license",
+   "name": null,
+   "agency": "Montana DLI Building Codes Program / certified local governments",
+   "covers": "HVAC/mechanical work needs permits and inspections, but no state HVAC trade license was found.",
+   "threshold": null,
+   "prerequisites": [
+    "Construction Contractor License (if you have employees or are a corporation/manager-managed LLC)",
+    "Mechanical permits from the state or certified local government"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Montana does not appear to issue a state HVAC/mechanical trade license; mechanical work is controlled through permits from the state Building Codes Program or a certified local government. Gas piping and plumbing parts may need a licensed plumber.",
+   "url": "https://bsd.dli.mt.gov/Building-Codes-Permits/permit-applications/mechanical-permits/",
+   "quote": "Mechanical permit holders must call for gas piping pressure tests, rough-in and final inspections.",
+   "note": "No official page states outright that Montana has no HVAC license; based on the DLI list of licensing programs, which has no mechanical/HVAC board."
+  },
+  "roofing": {
+   "status": "state_license",
+   "name": "Construction Contractor License (CCL)",
+   "agency": "Montana Department of Labor & Industry",
+   "covers": "The CCL definition expressly includes installing or repairing roofing or siding.",
+   "threshold": null,
+   "prerequisites": [
+    "Workers' compensation and unemployment coverage for employees, or an ICEC if working alone"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "There is no separate roofing license; roofers fall under the general Construction Contractor License (or an ICEC if working alone).",
+   "url": "https://boards.bsd.dli.mt.gov/construction-contractor/construction-contractor-program-FAQ.pdf",
+   "quote": "including the installation of carpeting or other floor covering, the erection of scaffolding or other structures or works, or the installation or repair of roofing or siding",
+   "note": null
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Commercial Applicator license",
+   "agency": "Montana Department of Agriculture",
+   "covers": "Anyone in the business of applying pesticides (lawn, weed, tree and structural pest control).",
+   "threshold": null,
+   "prerequisites": [
+    "Pass the required exams",
+    "Liability insurance (financial responsibility)"
+   ],
+   "bond": null,
+   "insurance": "Commercial applicators must carry liability insurance.",
+   "summary": "To apply pesticides as a business you need a Montana commercial applicator license, which requires passing exams and carrying liability insurance.",
+   "url": "https://agr.mt.gov/topics/n-p/pesticide-pages/pesticide-license-pages/Commercial-Applicators",
+   "quote": "Any person in the business of applying pesticides must obtain an applicator's license from the department. To obtain a license, a person must pass examinations, complete an application form and pay a licensing fee.",
+   "evidence": [
+    {
+     "url": "https://agr.mt.gov/topics/n-p/pesticide-pages/pesticide-license-pages/Commercial-Applicators",
+     "quote": "must meet financial liability requirements. These liability requirements may only be met through liability insurance."
+    }
+   ],
+   "note": null
+  },
+  "asbestos": {
+   "status": "state_license",
+   "name": "Asbestos occupation accreditation (contractor/supervisor, worker) and DEQ asbestos project permits",
+   "agency": "Montana Department of Environmental Quality, Asbestos Control Program",
+   "covers": "People working in asbestos-related occupations; asbestos projects require DEQ permits.",
+   "threshold": null,
+   "prerequisites": [
+    "Approved asbestos training course",
+    "Pass a department-approved exam",
+    "DEQ project permit"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Asbestos workers and contractors must be accredited by DEQ after approved training and an exam, and asbestos projects need a DEQ permit.",
+   "url": "https://mca.legmt.gov/bills/mca/title_0750/chapter_0020/part_0050/section_0110/0750-0020-0050-0110.html",
+   "quote": "To qualify for accreditation in a particular asbestos-related occupation, a person must: (a) (i) successfully complete an asbestos-related training course for that occupation approved by the department or the United States environmental protection agency; and (ii) pass an examination approved by the department",
+   "evidence": [
+    {
+     "url": "https://mca.legmt.gov/bills/mca/title_0750/chapter_0020/part_0050/section_0050/0750-0020-0050-0050.html",
+     "quote": "The department shall review a permit application within 5 working days of receipt of a complete application and an appropriate fee for an asbestos project"
+    }
+   ],
+   "note": "deq.mt.gov failed TLS verification with curl, so statutes were cited instead of the DEQ program page."
+  },
+  "lead_rrp": {
+   "status": "no_state_license",
+   "name": "EPA Lead-Safe Certified Firm + Certified Renovator (federal)",
+   "agency": "U.S. EPA",
+   "covers": "Paid renovation, repair and painting that disturbs paint in pre-1978 homes, childcare facilities and preschools.",
+   "threshold": null,
+   "prerequisites": [
+    "EPA firm certification",
+    "Certified renovator training"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Montana is not on EPA's list of states running their own RRP program, so renovation firms are certified directly by EPA.",
+   "url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program",
+   "quote": "EPA administers the RRP Program in most Tribes, states and territories, but has authorized the following to operate their own programs: Alabama, Delaware, Georgia, Iowa, Kansas, Massachusetts, Mississippi, North Carolina, Oklahoma, Oregon, Rhode Island, Utah, Vermont, Washington, Wisconsin",
+   "evidence": [
+    {
+     "url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program",
+     "quote": "EPA's RRP Rule requires that anyone paid to perform work that disturbs painted surfaces in homes, childcare facilities and preschools built before 1978 be certified and their employees be trained"
+    }
+   ],
+   "note": null
+  },
+  "other": [
+   {
+    "key": "icec",
+    "name": "Independent Contractor Exemption Certificate (ICEC)",
+    "agency": "Montana DLI Employment Relations Division",
+    "trades": [
+     "general-contracting",
+     "handyman",
+     "roofing",
+     "painting",
+     "drywall",
+     "framing"
+    ],
+    "summary": "Solo contractors without employees get an ICEC (no test) instead of workers' comp coverage.",
+    "url": "https://erd.dli.mt.gov/work-comp-regulations/montana-contractor/independent-contractor/",
+    "quote": "Covered under a self-elected workers' compensation insurance policy or obtain an Independent Contractor Exemption Certificate (ICEC)."
+   }
+  ]
+ }
+}

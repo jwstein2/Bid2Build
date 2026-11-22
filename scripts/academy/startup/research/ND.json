@@ -1,0 +1,310 @@
+{
+ "state": "ND",
+ "researched_on": "2026-11-22",
+ "general": {
+  "entity": {
+   "agency": "ND Secretary of State",
+   "summary": "Before applying for a contractor license, check whether you must register your business with the Secretary of State. Sole proprietors may need to register a trade name; LLCs and corporations register their entity. The contractor license name must match the business registration.",
+   "url": "https://www.sos.nd.gov/business/contractors",
+   "quote": "Before applying for a contractor license, you need to determine whether you have a business registration requirement with the Secretary of State. If you are a sole proprietor, you may need to register a trade name"
+  },
+  "state_tax": {
+   "agency": "ND Office of State Tax Commissioner",
+   "summary": "Businesses selling taxable goods need a sales tax permit from the Tax Commissioner; apply about a month before opening. Permits do not transfer if you buy an existing business.",
+   "url": "https://www.tax.nd.gov/business/sales-and-use-tax",
+   "quote": "Sellers that sell taxable tangible personal property, admissions to recreational activities, and the rental of lodging accommodations must obtain a sales tax permit. You should apply for a permit 30 days prior to opening for business."
+  },
+  "unemployment": {
+   "agency": "Job Service North Dakota",
+   "summary": "Within 20 days after you first hire workers in North Dakota, file a Report to Determine Liability with Job Service North Dakota, which then decides whether you owe state unemployment tax.",
+   "url": "https://apps.nd.gov/images/jsnd/jobsnd/ui/jsnd4036.pdf",
+   "quote": "Each employing unit is required to submit to Job Service North Dakota a Report to Determine Liability (SFN 41216) within 20 days after hiring workers in North Dakota"
+  },
+  "workers_comp": {
+   "agency": "ND Workforce Safety & Insurance (WSI)",
+   "summary": "Employers must cover their employees through WSI, the state's only workers' compensation insurer; private insurers cannot sell it in North Dakota. Contractors applying for a license must show WSI coverage, or a WSI letter of good standing if they have no employees.",
+   "url": "https://www.nd.gov/node/2686",
+   "quote": "As an employer or prospective employer in North Dakota, you must provide workers' compensation insurance coverage for your employees."
+  }
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "threshold",
+   "name": "Contractor License (Class A, B, C or D)",
+   "agency": "ND Secretary of State",
+   "covers": "Anyone acting as a contractor (general contractors and subcontractors, residential or commercial) when a job's cost, value or price exceeds four thousand dollars.",
+   "threshold": "Jobs over $4,000",
+   "prerequisites": [
+    "Be at least eighteen years old",
+    "Register the business with the Secretary of State if required",
+    "Certificate of liability insurance naming the Secretary of State as certificate holder",
+    "WSI certificate of payment (or WSI letter of good standing if no ND employees)",
+    "Signed statement of experience and qualifications"
+   ],
+   "bond": null,
+   "insurance": "Certificate of liability insurance in the license name; proof of WSI workers' compensation coverage",
+   "summary": "North Dakota requires a state contractor license from the Secretary of State when a job exceeds $4,000. There is no exam; you file liability insurance and workers' compensation proof. The license class (A to D) sets the largest single job you may take.",
+   "url": "https://www.sos.nd.gov/business/contractors",
+   "quote": "When the cost, value, or price of a job exceeds $4,000, the person doing the work must be licensed as a contractor in North Dakota ( NDCC ch. 43-07 ). This includes subcontractors, general contractors, public contractors, and nonresident contractors.",
+   "evidence": [
+    {
+     "url": "https://www.sos.nd.gov/business/contractors",
+     "quote": "You must include a certificate of liability insurance with the application. The liability insurance must be in the same name you are requesting for the contractor license."
+    },
+    {
+     "url": "https://www.sos.nd.gov/business/contractors",
+     "quote": "If you have employees residing in North Dakota, a current certificate of payment from Workforce Safety & Insurance (WSI) is required to verify workers' compensation insurance coverage."
+    },
+    {
+     "url": "https://www.ndlegis.gov/cencode/t43c07.pdf",
+     "quote": "applicant who is eighteen years of age or older shall submit, on forms the registrar prescribes, an application under oath containing a statement of the applicant's experience and qualifications as a contractor."
+    },
+    {
+     "url": "https://www.sos.nd.gov/business/contractors",
+     "quote": "Before applying for a contractor license, you need to determine whether you have a business registration requirement with the Secretary of State."
+    }
+   ]
+  },
+  "commercial_building": {
+   "status": "threshold",
+   "name": "Contractor License (Class A, B, C or D)",
+   "agency": "ND Secretary of State",
+   "covers": "Same contractor license as residential work; it applies to any construction job over four thousand dollars.",
+   "threshold": "Jobs over $4,000",
+   "prerequisites": [
+    "Certificate of liability insurance",
+    "WSI certificate of payment or letter of good standing",
+    "Be at least eighteen years old"
+   ],
+   "bond": null,
+   "insurance": "Certificate of liability insurance; WSI coverage",
+   "summary": "Commercial and residential contractors use the same Secretary of State license. A Class A license has no project limit; Class B is capped at $500,000, Class C at $300,000 and Class D at $100,000 per job.",
+   "url": "https://www.sos.nd.gov/business/contractors",
+   "quote": "Class A Over $500,000 per job $450 Class B Up to $500,000 per job $300 Class C Up to $300,000 per job $225 Class D Up to $100,000 per job",
+   "evidence": [
+    {
+     "url": "https://www.sos.nd.gov/business/contractors",
+     "quote": "When the cost, value, or price of a job exceeds $4,000, the person doing the work must be licensed as a contractor in North Dakota"
+    },
+    {
+     "url": "https://www.sos.nd.gov/business/contractors",
+     "quote": "You must include a certificate of liability insurance with the application."
+    },
+    {
+     "url": "https://www.ndlegis.gov/cencode/t43c07.pdf",
+     "quote": "The holder of a class A license is subject to no limitation as to the value of any single contract project."
+    },
+    {
+     "url": "https://www.ndlegis.gov/cencode/t43c07.pdf",
+     "quote": "applicant who is eighteen years of age or older shall submit"
+    }
+   ]
+  },
+  "electrical": {
+   "status": "state_license",
+   "name": "Master, Journeyman, Class B and Power Limited Electrician licenses",
+   "agency": "ND State Electrical Board",
+   "covers": "Anyone who plans, lays out, supervises, installs or repairs electrical wiring or equipment for light, heat or power.",
+   "threshold": null,
+   "prerequisites": [
+    "Pass the Board's technical and practical examination",
+    "Journeyman: board-approved apprenticeship (or two-year approved course) plus eight thousand hours of experience",
+    "Master: one year of experience as a licensed journeyman",
+    "To advertise or contract for electrical services, be or be associated with a master, Class B or power limited electrician"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "North Dakota licenses electricians at the state level through the State Electrical Board, and work must be done under a license. Journeymen need an apprenticeship and eight thousand hours of experience; masters need one more year as a licensed journeyman. A contractor's general contractor license does not cover electrical work.",
+   "url": "https://www.ndlegis.gov/cencode/t43c09.pdf",
+   "quote": "The board shall examine an applicant for licensure and if, upon a technical and practical examination, the applicant is found to possess the required knowledge and skill and to be versed in the laws of electricity",
+   "evidence": [
+    {
+     "url": "https://www.ndlegis.gov/cencode/t43c09.pdf",
+     "quote": "For licensure as a master electrician, an applicant must have completed one year's experience as a licensed journeyman electrician."
+    },
+    {
+     "url": "https://www.ndlegis.gov/cencode/t43c09.pdf",
+     "quote": "Successfully completed an appropriate course of study, which may not be less than two years or the equivalent of two years, at a board-approved institution of higher education and completed eight thousand hours' experience"
+    },
+    {
+     "url": "https://www.ndlegis.gov/cencode/t43c09.pdf",
+     "quote": "person may not advertise to contract for electrical services without being licensed as or being associated with a class B electrician, master electrician, or power limited electrician"
+    },
+    {
+     "url": "https://www.sos.nd.gov/business/contractors",
+     "quote": "These specialized licenses or permits are not part of the contractor license issued by the Secretary of State."
+    }
+   ],
+   "note": "The Board's site (ndseb.com) is not on a .gov host, so the statute is cited."
+  },
+  "plumbing": {
+   "status": "state_license",
+   "name": "Master Plumber and Journeyman Plumber licenses",
+   "agency": "ND State Plumbing Board",
+   "covers": "Plumbing businesses and plumbers in any area served by a public water or sewer system. A licensed master plumber must be in charge of the work (in cities under one thousand people and rural areas, a journeyman may run the business).",
+   "threshold": null,
+   "prerequisites": [
+    "Pass the Board's examination",
+    "A licensed master plumber must be in charge of the business's plumbing work"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "North Dakota licenses master and journeyman plumbers by examination through the State Plumbing Board. A plumbing business must have a licensed master plumber in charge of its work.",
+   "url": "https://www.ndlegis.gov/cencode/t43c18.pdf",
+   "quote": "No person, firm, corporation, or limited liability company shall engage in the business of a master plumber, journeyman plumber, or plumber's apprentice in any location of this state having a public system of waterworks or sewerage unless registered and licensed to do so by the board.",
+   "evidence": [
+    {
+     "url": "https://www.ndlegis.gov/cencode/t43c18.pdf",
+     "quote": "unless at all times a registered and licensed master plumber, who is responsible for the proper installation thereof, is in charge of such work."
+    },
+    {
+     "url": "https://www.ndlegis.gov/cencode/t43c18.pdf",
+     "quote": "Any person qualified under the rules of the board who desires to take the examination to become a registered and licensed plumber shall make application to the board"
+    }
+   ],
+   "note": "Experience requirements are set in Board rules (NDAC Title 62), not checked here."
+  },
+  "mechanical": {
+   "status": "no_state_license",
+   "name": null,
+   "agency": null,
+   "covers": "HVAC, sheet metal and gas fitting contractors.",
+   "threshold": null,
+   "prerequisites": [],
+   "bond": null,
+   "insurance": null,
+   "summary": "We found no statewide HVAC or mechanical license in North Dakota. The Secretary of State lists only the electrical, plumbing and asbestos boards as the specialty licenses outside the contractor license. HVAC contractors still need the state contractor license for jobs over the threshold, and cities may license mechanical work.",
+   "url": "https://www.sos.nd.gov/business/contractors",
+   "quote": "Examples include: Licenses issued by the ND State Electrical Board Licenses issued by the ND State Plumbing Board Asbestos Abatement License issued by the ND Department of Environmental Quality",
+   "note": "No official page states outright that there is no state HVAC license; this is inferred from the state's list of specialty licenses. Check city rules (e.g. Fargo, Bismarck)."
+  },
+  "roofing": {
+   "status": "no_state_license",
+   "name": "Contractor License (Secretary of State) for jobs over the threshold",
+   "agency": "ND Secretary of State",
+   "covers": "Roofers fall under the general contractor license when a job exceeds four thousand dollars.",
+   "threshold": "Jobs over $4,000",
+   "prerequisites": [
+    "Certificate of liability insurance",
+    "WSI certificate of payment or letter of good standing"
+   ],
+   "bond": null,
+   "insurance": "Certificate of liability insurance; WSI coverage",
+   "summary": "North Dakota has no separate roofing license. Roofers need the Secretary of State contractor license for any job over $4,000.",
+   "url": "https://www.sos.nd.gov/business/contractors",
+   "quote": "When the cost, value, or price of a job exceeds $4,000, the person doing the work must be licensed as a contractor in North Dakota",
+   "evidence": [
+    {
+     "url": "https://www.sos.nd.gov/business/contractors",
+     "quote": "You must include a certificate of liability insurance with the application."
+    },
+    {
+     "url": "https://www.sos.nd.gov/business/contractors",
+     "quote": "a current certificate of payment from Workforce Safety & Insurance (WSI) is required to verify workers' compensation insurance coverage."
+    }
+   ]
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Commercial Pesticide Applicator certification",
+   "agency": "ND Department of Agriculture (exams through NDSU Extension)",
+   "covers": "Anyone who applies pesticides by contract or for hire, including pest control, lawn care and tree spraying businesses.",
+   "threshold": null,
+   "prerequisites": [
+    "Pass the certification exam for each classification, given by NDSU Extension",
+    "Proof of financial responsibility of one hundred thousand dollars (net assets letter, performance bond, or liability insurance)"
+   ],
+   "bond": "Financial responsibility of one hundred thousand dollars, which can be met with a performance bond, liability insurance or proof of net assets",
+   "insurance": "General liability insurance is one way to meet the financial responsibility requirement",
+   "summary": "Applying pesticides for hire in North Dakota requires commercial applicator certification. You pass an exam for each classification and must show financial responsibility before the certificate is issued.",
+   "url": "https://ndlegis.gov/api/cencode/t04-1c33.pdf",
+   "quote": "An individual may be certified as a commercial or public applicator within a classification if the individual successfully completes an examination for the classification as prescribed by the board",
+   "evidence": [
+    {
+     "url": "https://ndlegis.gov/api/cencode/t04-1c33.pdf",
+     "quote": "A commercial applicator certificate may not be issued unless the applicant furnishes proof of financial responsibility. Financial responsibility must be maintained in the amount of one hundred thousand dollars."
+    },
+    {
+     "url": "https://ndlegis.gov/api/cencode/t04-1c33.pdf",
+     "quote": "\"Commercial applicator\" means a person who, by contract or for hire, engages in the business of applying pesticides for compensation."
+    },
+    {
+     "url": "https://ndlegis.gov/api/cencode/t04-1c33.pdf",
+     "quote": "a performance bond, or a general liability insurance policy"
+    }
+   ]
+  },
+  "asbestos": {
+   "status": "state_license",
+   "name": "Asbestos Abatement Contractor License; asbestos worker/supervisor certification",
+   "agency": "ND Department of Environmental Quality, Asbestos Control Program",
+   "covers": "Companies that do asbestos abatement and the workers, supervisors, inspectors and project monitors on those jobs.",
+   "threshold": null,
+   "prerequisites": [
+    "Complete approved initial asbestos training for each certified discipline"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "North Dakota licenses asbestos abatement contractors and certifies abatement workers and supervisors through the Department of Environmental Quality. This license is separate from the Secretary of State contractor license.",
+   "url": "https://deq.nd.gov/WM/asbestos",
+   "quote": "The Asbestos Control Program also licenses contractors and certifies workers for asbestos abatement activities and project monitoring.",
+   "evidence": [
+    {
+     "url": "https://deq.nd.gov/WM/asbestos",
+     "quote": "The Department will accept in-person training course completion certificates for initial and refresher training."
+    },
+    {
+     "url": "https://www.sos.nd.gov/business/contractors",
+     "quote": "Asbestos Abatement License issued by the ND Department of Environmental Quality"
+    }
+   ]
+  },
+  "lead_rrp": {
+   "status": "no_state_license",
+   "name": "EPA Renovation, Repair and Painting (RRP) firm and renovator certification",
+   "agency": "U.S. EPA (state DEQ licenses lead abatement only)",
+   "covers": "Renovation, repair and painting work in pre-1978 housing and child-occupied facilities.",
+   "threshold": null,
+   "prerequisites": [
+    "EPA firm certification and an EPA-certified renovator for RRP work"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "North Dakota does not run its own RRP program. Renovation firms get certified by EPA, while the state Department of Environmental Quality licenses only lead abatement firms and workers.",
+   "url": "https://deq.nd.gov/WM/Lead/",
+   "quote": "North Dakota\u2013licensed companies and certified individuals who do testing and abatement work, and the EPA-certified renovator/firms who conduct renovation work.",
+   "evidence": [
+    {
+     "url": "https://deq.nd.gov/WM/Lead/",
+     "quote": "in buildings built before 1978 when repainting or remodeling is done"
+    }
+   ]
+  },
+  "other": [
+   {
+    "key": "elevator",
+    "name": "Elevator contractor and elevator mechanic licensing",
+    "agency": "ND State Electrical Board",
+    "trades": [
+     "general-contracting"
+    ],
+    "summary": "The State Electrical Board also regulates elevator contractors and mechanics who install or service elevators, stair chairlifts and platform lifts.",
+    "url": "https://www.ndlegis.gov/cencode/t43c09.pdf",
+    "quote": "\"Elevator contractor\" means any person engaged in the business of constructing, installing, altering, replacing, decommissioning, dismantling, demolishing, removing from service, repairing, servicing, inspecting, or testing a conveyance."
+   },
+   {
+    "key": "transient_merchant",
+    "name": "Transient Merchant License",
+    "agency": "ND Office of the Attorney General",
+    "trades": [
+     "handyman",
+     "roofing",
+     "general-contracting"
+    ],
+    "summary": "The Secretary of State lists the Attorney General's transient merchant license among other licenses a contractor may need.",
+    "url": "https://www.sos.nd.gov/business/contractors",
+    "quote": "Transient Merchant License issued by the ND Office of the Attorney General"
+   }
+  ]
+ }
+}

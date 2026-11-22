@@ -1,0 +1,366 @@
+{
+ "state": "FL",
+ "researched_on": "2026-11-22",
+ "checked_at": "2026-11-22T21:48:10Z",
+ "general": {
+  "entity": {
+   "agency": "Florida Department of State, Division of Corporations (Sunbiz)",
+   "summary": "Form an LLC or corporation, or register a fictitious (DBA) name, online with the Division of Corporations (Sunbiz).",
+   "url": "https://dos.fl.gov/sunbiz/start-business/efile/",
+   "quote": "Form a limited liability company (LLC) in Florida. Complete and file the documentation online.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "state_tax": {
+   "agency": "Florida Department of Revenue",
+   "summary": "Check whether your activity is subject to sales and use tax; if it is, register each business location with the Department of Revenue before starting.",
+   "url": "https://floridarevenue.com/taxes/taxesfees/Pages/sales_tax.aspx",
+   "quote": "Before starting a business in Florida, you must first find out if your business activity or products will be subject to sales and use tax. If they are, you must register to collect sales tax or pay use tax.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "unemployment": {
+   "agency": "Florida Department of Revenue (reemployment tax)",
+   "summary": "Employers register with the Department of Revenue for reemployment (unemployment) tax, which the Department collects and audits.",
+   "url": "https://floridarevenue.com/taxes/taxesfees/Pages/reemployment.aspx",
+   "quote": "The Department registers employers, collects the tax and wage reports due, assigns tax rates, and audits employers.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "workers_comp": {
+   "agency": "Florida Department of Financial Services, Division of Workers' Compensation",
+   "summary": "Construction employers must carry workers' comp with even one employee (other industries at four). Sole proprietors and partners in construction count as employees; up to three corporate officers who own stock can elect an exemption.",
+   "url": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0400-0499/0440/Sections/0440.02.html",
+   "quote": "All private employments in which four or more employees are employed by the same employer or, with respect to the construction industry, all private employment in which one or more employees are employed by the same employer.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "local": {
+   "agency": null,
+   "summary": "A registered (not certified) contractor has met local competency requirements and may work only in those local jurisdictions; certified contractors can work statewide.",
+   "url": "https://www.myfloridalicense.com/DBPR/construction-industry/",
+   "quote": "Registered contractors may contract only in such jurisdictions.",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "state_license",
+   "name": "Certified Residential Contractor (CRC) / Registered Residential Contractor (RR); also Building (CB/RB) and General (CG/RG)",
+   "agency": "Florida Construction Industry Licensing Board (DBPR)",
+   "covers": "Construction, remodeling, repair or improvement of one-, two- or three-family homes up to two stories. Unlicensed subcontractors may work only under a licensed contractor's supervision.",
+   "threshold": null,
+   "prerequisites": [
+    "Be 18 years of age",
+    "At least 4 years of experience (at least 1 year as a foreman), or a college/experience combination",
+    "Pass the state certification exam",
+    "Affidavit of workers' compensation, public liability and property damage insurance",
+    "Credit report showing financial responsibility"
+   ],
+   "bond": null,
+   "insurance": "Workers' compensation (or exemption), public liability and property damage insurance in amounts set by Board rule",
+   "summary": "Florida requires a state license to contract for construction. A residential contractor applicant must be an adult, have years of trade experience including foreman time, pass the state exam, show insurance and submit a credit report.",
+   "url": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0400-0499/0489/Sections/0489.113.html",
+   "quote": "A person must be certified or registered in order to engage in the business of contracting in this state.",
+   "note": "The 4-year experience rule must include at least 1 year as a foreman.",
+   "evidence": [
+    {
+     "url": "https://www.myfloridalicense.com/DBPR/construction-industry/",
+     "quote": "CR and RR – A “ residential contractor ” means a contractor whose services are limited to construction, remodeling, repair, or improvement of one-family, two-family, or three-family residences which are not more than two stories"
+    },
+    {
+     "url": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0400-0499/0489/Sections/0489.111.html",
+     "quote": "Has a total of at least 4 years of active experience as a worker who has learned the trade by serving an apprenticeship as a skilled worker"
+    },
+    {
+     "url": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0400-0499/0489/Sections/0489.111.html",
+     "quote": "A person shall be eligible for licensure by examination if the person: (a) Is 18 years of age;"
+    },
+    {
+     "url": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0400-0499/0489/Sections/0489.115.html",
+     "quote": "the applicant shall submit an affidavit on a form provided by the board attesting to the fact that the applicant has obtained workers’ compensation insurance as required by chapter 440, public liability insurance, and property damage insurance"
+    },
+    {
+     "url": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0400-0499/0489/Sections/0489.115.html",
+     "quote": "as a prerequisite to the initial issuance of a certificate, the applicant shall furnish a credit report from a nationally recognized credit agency"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "commercial_building": {
+   "status": "state_license",
+   "name": "Certified/Registered General Contractor (CG/RG) or Building Contractor (CB/RB)",
+   "agency": "Florida Construction Industry Licensing Board (DBPR)",
+   "covers": "General contractors (unlimited) and building contractors (commercial and residential buildings up to three stories).",
+   "threshold": null,
+   "prerequisites": [
+    "Be 18 years of age",
+    "At least 4 years of experience (at least 1 year as a foreman), or a college/experience combination",
+    "Pass the state certification exam",
+    "Insurance affidavit and credit report"
+   ],
+   "bond": null,
+   "insurance": "Workers' compensation (or exemption), public liability and property damage insurance",
+   "summary": "Commercial work requires a General or Building contractor license from the CILB, with the same age, experience, exam, insurance and credit requirements as other CILB licenses.",
+   "url": "https://www.myfloridalicense.com/DBPR/construction-industry/",
+   "quote": "CG and RG – A “ general contractor ” means a contractor whose services are unlimited as to the type of work which he or she may do.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.myfloridalicense.com/DBPR/construction-industry/",
+     "quote": "CB and RB – A “ building contractor ” means a contractor whose services are limited to the construction of commercial buildings and single-dwelling or multiple-dwelling residential buildings. These buildings cannot exceed three stories in height."
+    },
+    {
+     "url": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0400-0499/0489/Sections/0489.111.html",
+     "quote": "Has a total of at least 4 years of active experience as a worker who has learned the trade by serving an apprenticeship as a skilled worker"
+    },
+    {
+     "url": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0400-0499/0489/Sections/0489.111.html",
+     "quote": "A person shall be eligible for licensure by examination if the person: (a) Is 18 years of age;"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "electrical": {
+   "status": "state_license",
+   "name": "Certified/Registered Electrical Contractor (EC/ER)",
+   "agency": "Florida Electrical Contractors' Licensing Board (DBPR)",
+   "covers": "Businesses that install, repair, alter or design electrical wiring, fixtures and equipment.",
+   "threshold": null,
+   "prerequisites": [
+    "At least 18 years of age to take the exam",
+    "Pass the certification exam",
+    "Experience such as at least 3 years of management experience or at least 4 years as a supervisor or contractor in the trade",
+    "Workers' compensation (or exemption) plus public liability and property damage insurance"
+   ],
+   "bond": null,
+   "insurance": "Workers' compensation (or exemption) and public liability and property damage insurance",
+   "summary": "Electrical contracting needs a state certified (or locally registered) electrical contractor license. Applicants need supervisory or management experience in the trade, a passing exam score, and proof of insurance.",
+   "url": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0400-0499/0489/Sections/0489.511.html",
+   "quote": "Any person who is at least 18 years of age may take the certification examination.",
+   "note": "Florida has no state journeyman electrician license; individual electrician licensing is local.",
+   "evidence": [
+    {
+     "url": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0400-0499/0489/Sections/0489.511.html",
+     "quote": "at least 3 years of proven management experience in the trade or education equivalent thereto"
+    },
+    {
+     "url": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0400-0499/0489/Sections/0489.511.html",
+     "quote": "at least 4 years of experience as a supervisor or contractor in the trade for which he or she is making application"
+    },
+    {
+     "url": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0400-0499/0489/Sections/0489.515.html",
+     "quote": "the applicant shall submit an affidavit on a form provided by the board attesting to the fact that the applicant has obtained both workers’ compensation insurance or an acceptable exemption certificate issued by the department and public liability and property damage insurance"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "plumbing": {
+   "status": "state_license",
+   "name": "Certified/Registered Plumbing Contractor (CF/RF)",
+   "agency": "Florida Construction Industry Licensing Board (DBPR)",
+   "covers": "Contractors who install, maintain, repair, alter, extend or design plumbing.",
+   "threshold": null,
+   "prerequisites": [
+    "Be 18 years of age",
+    "At least 4 years of experience (at least 1 year as a foreman), or a college/experience combination",
+    "Pass the state certification exam",
+    "Insurance affidavit and credit report"
+   ],
+   "bond": null,
+   "insurance": "Workers' compensation (or exemption), public liability and property damage insurance",
+   "summary": "Plumbing contractors need a CILB plumbing contractor license, with the same experience, exam, insurance and credit requirements as other CILB licenses.",
+   "url": "https://www.myfloridalicense.com/DBPR/construction-industry/",
+   "quote": "CF and RF – A “ plumbing contractor ” means a contractor whose contracting business consists of the execution of contracts requiring the experience, financial means, knowledge, and skill to install, maintain, repair, alter, extend, or, when not prohibited by law, design plumbing.",
+   "note": "Journeyman plumber licensing is handled by local jurisdictions.",
+   "evidence": [
+    {
+     "url": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0400-0499/0489/Sections/0489.111.html",
+     "quote": "Has a total of at least 4 years of active experience as a worker who has learned the trade by serving an apprenticeship as a skilled worker"
+    },
+    {
+     "url": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0400-0499/0489/Sections/0489.111.html",
+     "quote": "A person shall be eligible for licensure by examination if the person: (a) Is 18 years of age;"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "mechanical": {
+   "status": "state_license",
+   "name": "Air-Conditioning Contractor Class A/B/C (CA/RA), Mechanical Contractor (CM/RM), Sheet Metal Contractor (CS/RS)",
+   "agency": "Florida Construction Industry Licensing Board (DBPR)",
+   "covers": "Central air-conditioning, refrigeration, heating and ventilation work. Class B is limited in size; Class C is limited to servicing.",
+   "threshold": null,
+   "prerequisites": [
+    "Be 18 years of age",
+    "At least 4 years of experience (at least 1 year as a foreman), or a college/experience combination",
+    "Pass the state certification exam",
+    "Insurance affidavit and credit report"
+   ],
+   "bond": null,
+   "insurance": "Workers' compensation (or exemption), public liability and property damage insurance",
+   "summary": "HVAC contractors need a CILB air-conditioning (Class A, B or C) or mechanical contractor license; sheet metal contractors have their own license class.",
+   "url": "https://www.myfloridalicense.com/DBPR/construction-industry/",
+   "quote": "CA and RA – A “ class A air-conditioning contractor ” means a contractor whose services are unlimited in the execution of contracts requiring the experience, knowledge, and skill to install, maintain, repair, fabricate, alter, extend, or design central air-conditioning, refrigeration, heating,",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0400-0499/0489/Sections/0489.111.html",
+     "quote": "Has a total of at least 4 years of active experience as a worker who has learned the trade by serving an apprenticeship as a skilled worker"
+    },
+    {
+     "url": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0400-0499/0489/Sections/0489.111.html",
+     "quote": "A person shall be eligible for licensure by examination if the person: (a) Is 18 years of age;"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "roofing": {
+   "status": "state_license",
+   "name": "Certified/Registered Roofing Contractor (CC/RC)",
+   "agency": "Florida Construction Industry Licensing Board (DBPR)",
+   "covers": "Roofing work; general, building and residential contractors certified after 1973 may not hold themselves out as roofers without a roofing license.",
+   "threshold": null,
+   "prerequisites": [
+    "Be 18 years of age",
+    "At least 4 years of experience (at least 1 year as a foreman), or a college/experience combination",
+    "Pass the state certification exam",
+    "Insurance affidavit and credit report"
+   ],
+   "bond": null,
+   "insurance": "Workers' compensation (or exemption), public liability and property damage insurance",
+   "summary": "Florida has a separate state roofing contractor license. General, building and residential contractors cannot advertise as roofers unless they also hold a roofing license.",
+   "url": "https://www.myfloridalicense.com/DBPR/construction-industry/",
+   "quote": "CC and RC – A “ roofing contractor ” means a contractor whose services are unlimited in the roofing trade.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0400-0499/0489/Sections/0489.113.html",
+     "quote": "No general, building, or residential contractor certified after 1973 shall act as, hold himself or herself out to be, or advertise himself or herself to be a roofing contractor unless he or she is certified or registered as a roofing contractor."
+    },
+    {
+     "url": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0400-0499/0489/Sections/0489.111.html",
+     "quote": "Has a total of at least 4 years of active experience as a worker who has learned the trade by serving an apprenticeship as a skilled worker"
+    },
+    {
+     "url": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0400-0499/0489/Sections/0489.111.html",
+     "quote": "A person shall be eligible for licensure by examination if the person: (a) Is 18 years of age;"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Pest Control Business License + Certified Pest Control Operator",
+   "agency": "Florida Department of Agriculture and Consumer Services (FDACS)",
+   "covers": "Any pest control business; each business location must be licensed and pest control work requires a certified operator.",
+   "threshold": null,
+   "prerequisites": [
+    "Certified operator must pass the FDACS examination",
+    "Certificate of insurance for bodily injury and property damage",
+    "Business license before entering business"
+   ],
+   "bond": null,
+   "insurance": "Bodily injury and property damage insurance meeting minimum financial responsibility (higher for fumigation)",
+   "summary": "Pest control businesses need an FDACS business license for each location before starting, must carry required liability insurance, and need a certified pest control operator who passed the state exam.",
+   "url": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0400-0499/0482/Sections/0482.071.html",
+   "quote": "It is unlawful for any person to operate a pest control business that is not licensed by the department.",
+   "note": "Lawn and ornamental pest control is a category of the same pest control licensing.",
+   "evidence": [
+    {
+     "url": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0400-0499/0482/Sections/0482.071.html",
+     "quote": "A licensee may not operate a pest control business without carrying the required insurance coverage."
+    },
+    {
+     "url": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0400-0499/0482/Sections/0482.111.html",
+     "quote": "Before issuance of an original certificate, an individual must complete an application for examination, pay the examination fee required under s. 482.141 , and pass the examination."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "asbestos": {
+   "status": "state_license",
+   "name": "Asbestos Contractor license (and Asbestos Consultant)",
+   "agency": "Florida DBPR, Asbestos Licensing Unit",
+   "covers": "Anyone conducting asbestos abatement work (contractor) or asbestos surveys/abatement monitoring (consultant).",
+   "threshold": null,
+   "prerequisites": [
+    "Approved asbestos contractor/supervisor course and respiratory protection course",
+    "Satisfactory work on 10 asbestos projects within the last 5 years",
+    "Evidence of financial stability",
+    "Pass a department-approved exam",
+    "Affidavit of workers' comp, public liability and property damage insurance"
+   ],
+   "bond": null,
+   "insurance": "Workers' compensation, public liability and property damage insurance",
+   "summary": "Asbestos abatement in Florida requires a DBPR asbestos contractor license. Applicants need approved training, documented asbestos project experience, financial stability, a passing exam and proof of insurance.",
+   "url": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0400-0499/0469/Sections/0469.003.html",
+   "quote": "No person may conduct asbestos abatement work unless licensed by the department under this chapter as an asbestos contractor, except as otherwise provided in this chapter.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0400-0499/0469/Sections/0469.005.html",
+     "quote": "When applying for licensure as an asbestos contractor, successfully complete the following department-approved courses: (a) An asbestos contractor/supervisor course."
+    },
+    {
+     "url": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0400-0499/0469/Sections/0469.005.html",
+     "quote": "Provide evidence of satisfactory work on 10 asbestos projects within the last 5 years. (5) Provide evidence of financial stability. (6) Pass a department-approved examination of qualifications and knowledge relating to asbestos."
+    },
+    {
+     "url": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0400-0499/0469/Sections/0469.006.html",
+     "quote": "An affidavit on a form provided by the department attesting that the applicant has obtained workers’ compensation insurance as required by chapter 440, public liability insurance, and property damage insurance"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "lead_rrp": {
+   "status": "no_state_license",
+   "name": "EPA Lead-Safe Certified Firm and Certified Renovator",
+   "agency": "U.S. EPA",
+   "covers": "Anyone paid to disturb paint in homes, child care facilities and preschools built before 1978.",
+   "threshold": null,
+   "prerequisites": [
+    "EPA firm certification",
+    "Certified renovator training"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Florida does not run its own RRP program, so renovation firms get lead-safe certification directly from EPA and use EPA-certified renovators.",
+   "url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program",
+   "quote": "EPA administers the RRP Program in most Tribes, states and territories, but has authorized the following to operate their own programs: Alabama, Delaware, Georgia, Iowa, Kansas, Massachusetts, Mississippi, North Carolina, Oklahoma, Oregon, Rhode Island, Utah, Vermont, Washington, Wisconsin",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program",
+     "quote": "EPA's RRP Rule requires that anyone paid to perform work that disturbs painted surfaces in homes, childcare facilities and preschools built before 1978 be certified and their employees be trained"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "other": [
+  {
+   "key": "pool_spa",
+   "name": "Commercial/Residential Pool-Spa Contractor and Pool/Spa Servicing Contractor (CP/RP)",
+   "agency": "Florida Construction Industry Licensing Board (DBPR)",
+   "trades": [
+    "general-contracting"
+   ],
+   "summary": "Building, repairing or servicing swimming pools, hot tubs and spas requires a CILB pool/spa contractor license.",
+   "url": "https://www.myfloridalicense.com/DBPR/construction-industry/",
+   "quote": "CP and RP – A “ swimming pool/spa servicing contractor ” means a contractor whose scope of work involves the servicing and repair of any swimming pool or hot tub or spa.",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ ]
+}

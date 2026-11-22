@@ -1,0 +1,292 @@
+{
+ "state": "MA",
+ "researched_on": "2026-11-22",
+ "checked_at": "2026-11-22T21:48:10Z",
+ "general": {
+  "entity": {
+   "agency": "Secretary of the Commonwealth, Corporations Division",
+   "summary": "To form an LLC in Massachusetts, file a certificate of organization with the Secretary of the Commonwealth (Corporations Division). Sole proprietors using a trade name file a business certificate with their city or town clerk.",
+   "url": "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleXXII/Chapter156C/Section12",
+   "quote": "In order to form a limited liability company, one or more authorized persons must execute a certificate of organization. The certificate of organization shall be filed in the office of the state secretary",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "state_tax": {
+   "agency": "Massachusetts Department of Revenue",
+   "summary": "If you sell taxable goods you must register as a vendor with the Department of Revenue before doing business.",
+   "url": "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleIX/Chapter64H/Section7",
+   "quote": "No person shall do business in this commonwealth as a vendor unless a registration shall have been issued to him for each place of business in accordance with section sixty-seven of chapter sixty-two C.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "unemployment": {
+   "agency": "Massachusetts Department of Unemployment Assistance",
+   "summary": "Employing even one person in covered employment makes you an employer under the Massachusetts unemployment insurance law, so you must set up an employer account and pay contributions.",
+   "url": "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleXXI/Chapter151A/Section8",
+   "quote": "Has employed in employment subject to this chapter on some day in each of thirteen weeks in the year nineteen hundred and fifty or in any subsequent year at least one individual.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "workers_comp": {
+   "agency": "Massachusetts Department of Industrial Accidents",
+   "summary": "Every employer must carry workers' compensation insurance (or be an approved self-insurer) for its employees.",
+   "url": "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleXXI/Chapter152/Section25A",
+   "quote": "every employer shall provide for the payment to his employees of the compensation provided for by this chapter in the following manner: (1) By insurance with an insurer",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "local": {
+   "agency": null,
+   "summary": "Even state-licensed plumbers and gas fitters must follow local permit and bonding rules; cities and towns issue building permits.",
+   "url": "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleXX/Chapter142/Section3",
+   "quote": "but shall be subject to local regulations relative to permits and bonding requirements",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "state_registration",
+   "name": "Home Improvement Contractor (HIC) registration; Construction Supervisor License (CSL)",
+   "agency": "Office of Consumer Affairs and Business Regulation (HIC); Board of Building Regulations and Standards / Division of Occupational Licensure (CSL)",
+   "covers": "Contractors and subcontractors doing remodeling, repair, additions, demolition and similar work on existing owner-occupied homes with 1-4 units. Individuals supervising structural building work need a construction supervisor license.",
+   "threshold": null,
+   "prerequisites": [
+    "HIC registration application under oath listing owners and officers",
+    "A designated responsible individual for a corporation or partnership",
+    "Construction supervisor license for the person supervising structural work"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Before doing home improvement work on owner-occupied 1-4 unit homes you must register as a Home Improvement Contractor. Structural building work must also be supervised by someone holding a state construction supervisor license.",
+   "url": "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleXX/Chapter142A/Section9",
+   "quote": "No contractor or subcontractor shall undertake, offer to undertake, or agree to perform residential contracting services unless registered therefor with the approval of the office of consumer affairs and business regulation.",
+   "note": "CSL experience/exam details are on mass.gov, which blocked automated fetching; only the statute could be checked. HIC contracts over $1,000 must be in writing (c.142A s.2).",
+   "evidence": [
+    {
+     "url": "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleXX/Chapter142A/Section1",
+     "quote": "the reconstruction, alteration, renovation, repair, modernization, conversion, improvement, removal, or demolition, or the construction of an addition to any pre-existing owner occupied building containing at least one but not more than four dwelling units"
+    },
+    {
+     "url": "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleXX/Chapter142A/Section9",
+     "quote": "In the case of registration by a corporation or partnership, an individual shall be designated to be responsible for the corporation's or partnership's work."
+    },
+    {
+     "url": "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleXX/Chapter143/Section94",
+     "quote": "To issue licenses to individuals engaged as construction supervisors."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "commercial_building": {
+   "status": "state_license",
+   "name": "Construction Supervisor License (CSL)",
+   "agency": "Board of Building Regulations and Standards / Division of Occupational Licensure",
+   "covers": "Individuals who supervise construction of buildings covered by the state building code license rules.",
+   "threshold": null,
+   "prerequisites": [
+    "Construction supervisor license"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Massachusetts has no general contractor business license, but the state licenses individual construction supervisors under the building code. Larger commercial projects are controlled through building permits and registered design professionals.",
+   "url": "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleXX/Chapter143/Section94",
+   "quote": "To issue licenses to individuals engaged as construction supervisors.",
+   "note": "Which buildings require a CSL is set in 780 CMR 110.R5 on mass.gov, which could not be fetched for verification.",
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "electrical": {
+   "status": "state_license",
+   "name": "Master Electrician (Certificate A) / Journeyman Electrician (Certificate B); Systems Contractor / Technician (C/D)",
+   "agency": "Board of State Examiners of Electricians",
+   "covers": "Any person or business installing wiring, conduit, devices or equipment for light, heat, power, fire warning or security systems.",
+   "threshold": null,
+   "prerequisites": [
+    "Pass the state examiners' exam",
+    "Hold a journeyman (Certificate B) license for at least twelve months before a master license"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Electrical work requires a license from the Board of State Examiners of Electricians. An electrical business needs a master electrician license held by the owner, a member, or an officer, who must pass the exam and have held a journeyman license first.",
+   "url": "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleXX/Chapter141/Section1A",
+   "quote": "unless such person, firm or corporation shall be licensed by the state examiners of electricians in accordance with this chapter",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleXX/Chapter141/Section3",
+     "quote": "such person or a member of such firm or an officer of such corporation has passed an examination before the state examiners of electricians and such person or a member of such firm or officer of such corporation has held a certificate B license for at least twelve months."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "plumbing": {
+   "status": "state_license",
+   "name": "Master / Journeyman Plumber; Master / Journeyman Gas Fitter",
+   "agency": "Board of State Examiners of Plumbers and Gas Fitters",
+   "covers": "Anyone in the business of plumbing or gas fitting, or working as a journeyman or apprentice.",
+   "threshold": null,
+   "prerequisites": [
+    "License from the plumbing and gas fitting examiners (master license to run the business)"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "You must be licensed (or registered as an apprentice) by the state plumbing and gas fitting examiners before doing or advertising plumbing or gas fitting work. A plumber's license also covers gas fitting.",
+   "url": "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleXX/Chapter142/Section3",
+   "quote": "No person shall engage in the business as a master plumber or a master gas fitter or work as a journeyman plumber or as a journeyman gas fitter or as an apprentice plumber or as an apprentice gas fitter",
+   "note": "Experience/exam details are on mass.gov, which blocks automated fetching.",
+   "evidence": [
+    {
+     "url": "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleXX/Chapter142/Section3",
+     "quote": "Any person so licensed as a master plumber or a journeyman plumber may carry on the work of a gas fitter throughout the commonwealth"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "mechanical": {
+   "status": "state_license",
+   "name": "Refrigeration Technician / Refrigeration Contractor; Pipefitter; Sheet Metal Worker licenses",
+   "agency": "Office of Public Safety and Inspections (Division of Occupational Licensure); Board of Examiners of Sheet Metal Workers",
+   "covers": "Refrigeration/AC technicians, pipefitters and sheet metal (ductwork) workers.",
+   "threshold": null,
+   "prerequisites": [
+    "Pass the state licensing exam"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Massachusetts licenses refrigeration technicians and pipefitters through the Office of Public Safety and Inspections, and sheet metal (duct) workers through their own board. Gas heating work also needs a gas fitter license.",
+   "url": "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleXX/Chapter146/Section84",
+   "quote": "No person shall engage in the business of a master pipefitter, work as a journeyman or apprentice pipefitter, work as a refrigeration technician",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleXX/Chapter146/Section85",
+     "quote": "The office of public safety and inspections of the division of occupational licensure shall hold examinations in such cities and at such times as may be necessary."
+    },
+    {
+     "url": "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleXVI/Chapter112/Section238",
+     "quote": "No person shall engage in work as a master, journeyperson or apprentice nor shall any person advertise or represent that he is a master, journeyperson or apprentice unless that person holds a valid license issued by the board"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "roofing": {
+   "status": "state_registration",
+   "name": "Home Improvement Contractor registration (residential); Specialty Construction Supervisor License - roof covering",
+   "agency": "Office of Consumer Affairs and Business Regulation; Board of Building Regulations and Standards",
+   "covers": "Re-roofing and roof repair on owner-occupied 1-4 unit homes is residential contracting that needs HIC registration.",
+   "threshold": null,
+   "prerequisites": [
+    "HIC registration"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Roof work on existing owner-occupied homes is home improvement work, so roofers need HIC registration. The state also offers a specialty construction supervisor license for roof covering.",
+   "url": "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleXX/Chapter142A/Section9",
+   "quote": "No contractor or subcontractor shall undertake, offer to undertake, or agree to perform residential contracting services unless registered therefor with the approval of the office of consumer affairs and business regulation.",
+   "note": "The roof-covering specialty CSL is described on mass.gov, which blocked automated verification.",
+   "evidence": [
+    {
+     "url": "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleXX/Chapter142A/Section1",
+     "quote": "the reconstruction, alteration, renovation, repair, modernization, conversion, improvement, removal, or demolition, or the construction of an addition to any pre-existing owner occupied building containing at least one but not more than four dwelling units"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Certified Commercial Applicator / Licensed Applicator",
+   "agency": "Massachusetts Department of Agricultural Resources (Pesticide Board)",
+   "covers": "People applying pesticides in public and private places used by people (buildings with more than 3 dwelling units, businesses, etc.), including pest control companies.",
+   "threshold": null,
+   "prerequisites": [
+    "Pass the department's pesticide exam(s)"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Pesticide applicators working for hire must be certified or licensed by the state, which requires passing exams on pesticide use and handling.",
+   "url": "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleXIX/Chapter132B/Section10",
+   "quote": "the department shall require that all persons who are applicators of pesticides in public and private places used for human occupation and habitation, except residential properties with 3 or less dwelling units, shall be so certified, licensed or permitted",
+   "note": "The statute exempts properties with 3 or fewer units from this designation; MDAR regulations (on mass.gov, not fetchable) set commercial-applicator rules for for-hire lawn and pest work.",
+   "evidence": [
+    {
+     "url": "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleXIX/Chapter132B/Section10",
+     "quote": "The evaluation shall include such examinations as the department may require."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "asbestos": {
+   "status": "state_license",
+   "name": "Asbestos Abatement Contractor license (plus worker/supervisor licenses)",
+   "agency": "Massachusetts Department of Labor Standards",
+   "covers": "Any business removing, containing or encapsulating asbestos in any building.",
+   "threshold": null,
+   "prerequisites": [
+    "State asbestos contractor license",
+    "Worker training required by regulation"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Asbestos removal or encapsulation is a licensed business in Massachusetts, and workers must be trained under state rules.",
+   "url": "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleXXI/Chapter149/Section6B",
+   "quote": "No person, firm, corporation or other entity shall enter into, engage in, or work at the business of removal, containment or encapsulation of asbestos or materials containing asbestos, involving any building or structure",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleXXI/Chapter149/Section6C",
+     "quote": "Such regulations shall require the adequate instruction and training of workers employed by such contractors."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "lead_rrp": {
+   "status": "state_license",
+   "name": "Lead-Safe Renovation Contractor license (state RRP program)",
+   "agency": "Massachusetts Department of Labor Standards",
+   "covers": "Renovation, repair and painting that disturbs paint in pre-1978 homes and child-occupied facilities.",
+   "threshold": null,
+   "prerequisites": [
+    "State lead-safe renovation contractor license",
+    "Certified renovator training"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Massachusetts runs its own EPA-authorized RRP program, so renovation firms get their lead-safe license from the state rather than from EPA.",
+   "url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program",
+   "quote": "EPA administers the RRP Program in most Tribes, states and territories, but has authorized the following to operate their own programs: Alabama, Delaware, Georgia, Iowa, Kansas, Massachusetts, Mississippi",
+   "note": "The state license name and agency (DLS, 454 CMR 22) come from mass.gov, which blocked automated verification; EPA confirms the state program.",
+   "evidence": [
+    {
+     "url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program",
+     "quote": "EPA's RRP Rule requires that anyone paid to perform work that disturbs painted surfaces in homes, childcare facilities and preschools built before 1978 be certified and their employees be trained"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "other": [
+  {
+   "key": "fire_sprinkler",
+   "name": "Fire Protection Sprinkler System Contractor / Sprinkler Fitter license",
+   "agency": "Office of Public Safety and Inspections",
+   "trades": [
+    "plumbing"
+   ],
+   "summary": "Fire sprinkler contractors and fitters must hold a state license.",
+   "url": "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleXX/Chapter146/Section84",
+   "quote": "work on a fire protection sprinkler system as a fire protection sprinkler system contractor or as a sprinkler fitter or apprentice sprinkler fitter, unless that person is lawfully licensed",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ ]
+}

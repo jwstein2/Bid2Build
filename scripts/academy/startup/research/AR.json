@@ -1,0 +1,203 @@
+{
+  "state": "AR",
+  "researched_on": "2026-11-22",
+  "general": {
+    "entity": {
+      "agency": "Arkansas Secretary of State, Business and Commercial Services",
+      "summary": "Check that your business name is available, then file your corporation or LLC with the Arkansas Secretary of State (online or on paper).",
+      "url": "https://www.sos.arkansas.gov/business-commercial-services-bcs/",
+      "quote": "Business Entity Name Search (make sure your name is available before filing) ... Corporations/LLC/Nonprofit Online Filing System"
+    },
+    "state_tax": {
+      "agency": "Arkansas Department of Finance and Administration (DFA)",
+      "summary": "Register for a sales and use tax permit and other state tax accounts (such as withholding) through the Arkansas Taxpayer Access Point (ATAP). Any other unpaid tax liabilities must be cleared first.",
+      "url": "https://www.dfa.arkansas.gov/office/taxes/excise-tax-administration/sales-use-tax/register-for-a-tax-account/",
+      "quote": "Other tax liabilities must be cleared before a new permit will be issued"
+    },
+    "unemployment": {
+      "agency": "Arkansas Division of Workforce Services / Division of Reemployment",
+      "summary": "You become a liable employer and must pay state unemployment tax once you employ one or more workers on ten or more days in a calendar year. Register for an employer account in the Tax21 system.",
+      "url": "https://reemployment.arkansas.gov/wp-content/uploads/2026/08/Employer_Handbook_20220811.pdf",
+      "quote": "Employ one or more workers for some portion of ten or more days during a calendar year."
+    },
+    "workers_comp": {
+      "agency": "Arkansas Workers' Compensation Commission",
+      "summary": "Most employers with three or more employees must carry workers' compensation. There are exceptions that cover smaller employers (construction and subcontracting are among them), so check with the Commission before assuming you are exempt.",
+      "url": "https://labor.arkansas.gov/workers-comp/awcc-about-us/basic-facts/",
+      "quote": "Most employers in Arkansas with three or more employees are required by law to have Workers’ Compensation insurance coverage for their employees."
+    }
+  },
+  "credentials": {
+    "residential_building": {
+      "status": "threshold",
+      "name": "Residential Builder License, Residential Remodeler License, or Home Improvement License",
+      "agency": "Arkansas Contractors Licensing Board (Residential Committee), Dept. of Labor and Licensing",
+      "covers": "Building a single-family home (Residential Builder), major structural remodels and additions (Residential Remodeler), or specialty work like painting, windows or flooring (Home Improvement) when the project is more than $2,000.",
+      "threshold": "Single-family residential projects over $2,000 including labor and materials.",
+      "prerequisites": [
+        "Residential Builder and Residential Remodeler: pass a business and law test",
+        "Home Improvement license: application only (no business and law test listed)"
+      ],
+      "bond": null,
+      "insurance": null,
+      "summary": "Arkansas requires a residential license for single-family home projects over $2,000. Builders and remodelers must pass a business and law test; specialty trades (painting, windows, flooring, etc.) need a Home Improvement license.",
+      "url": "https://labor.arkansas.gov/licensing/arkansas-contractors-licensing-board/apply-for-contractors-license-registration/",
+      "quote": "A residential builders license is needed to build a single-family residence, if the cost of the project is more than $2,000, including, but not limited to, labor and material, unless an exception applies.",
+      "evidence": [
+        {"url": "https://labor.arkansas.gov/licensing/arkansas-contractors-licensing-board/apply-for-contractors-license-registration/", "quote": "A residential remodelers license is needed to make major structural changes to a single-family residence or to add on to an existing single-family residence, if the project is more than $2,000, including, but not limited to, labor and material. A business and law test is required"},
+        {"url": "https://labor.arkansas.gov/licensing/arkansas-contractors-licensing-board/apply-for-contractors-license-registration/", "quote": "A home improvement license is needed to do specialty work on a single-family residence, if the project is more than $2,000, including, but not limited to, labor and material. This license is for a contractor who is only responsible for certain types of work (painting, windows, flooring, etc.)."}
+      ],
+      "note": null
+    },
+    "commercial_building": {
+      "status": "threshold",
+      "name": "Commercial Contractor License (subcontractors of licensed primes may use a registration)",
+      "agency": "Arkansas Contractors Licensing Board, Dept. of Labor and Licensing",
+      "covers": "Contractors doing work of $50,000 or more on any project that is not a single-family residence.",
+      "threshold": "$50,000 or more including labor and materials on a commercial project.",
+      "prerequisites": ["Pass a business and law test"],
+      "bond": null,
+      "insurance": null,
+      "summary": "A commercial contractor license is required for work of $50,000 or more on anything other than a single-family home. Applicants pass a business and law test. Subcontractors working under a properly licensed prime can work with a registration certificate instead.",
+      "url": "https://labor.arkansas.gov/licensing/arkansas-contractors-licensing-board/apply-for-contractors-license-registration/",
+      "quote": "A commercial license is needed if a contractor performs work of $50,000 or more, including, but not limited to, labor and materials, on a commercial project. Any project that is not a single-family residence is a commercial project. A business and law test is required",
+      "evidence": [
+        {"url": "https://labor.arkansas.gov/licensing/arkansas-contractors-licensing-board/apply-for-contractors-license-registration/", "quote": "Subcontractors of PROPERLY LICENSED contractors can work with a REGISTRATION certificate instead of a full license."}
+      ],
+      "note": null
+    },
+    "electrical": {
+      "status": "state_license",
+      "name": "Master / Journeyman / Residential Master / Residential Journeyman Electrician license; apprentice registration",
+      "agency": "Arkansas Board of Electrical Examiners, Dept. of Labor and Licensing",
+      "covers": "Individual electricians. Electrical apprentices register with the Board.",
+      "threshold": null,
+      "prerequisites": ["Pass the state electrical exam for your license class", "Apprentices register with the Board"],
+      "bond": null,
+      "insurance": null,
+      "summary": "Arkansas licenses electricians at the state level (master, journeyman, residential master, residential journeyman and others) by exam, and registers apprentices. Electrical contracting jobs over the commercial or residential thresholds also need a Contractors Licensing Board license.",
+      "url": "https://labor.arkansas.gov/labor/code-enforcement/electrical-inspection-and-licensing/",
+      "quote": "The following classes of license are available: master electrician, journeyman electrician, residential master electrician, residential journeyman electrician, air conditioning electrician, and industrial maintenance electrician. The board is also responsible for registering electrical apprentices.",
+      "evidence": [
+        {"url": "https://labor.arkansas.gov/labor/code-enforcement/electrical-inspection-and-licensing/", "quote": "Apply to take the Electrical Exam"}
+      ],
+      "note": "Experience hours for each class are in the Board's laws and rules, which were not fetched."
+    },
+    "plumbing": {
+      "status": "state_license",
+      "name": "Master Plumber / Journeyman Plumber license",
+      "agency": "Arkansas Department of Health, Plumbing and Natural Gas (Committee of Plumbing Examiners)",
+      "covers": "Plumbers and natural gas piping installers.",
+      "threshold": null,
+      "prerequisites": [
+        "Journeyman exam: at least four years of experience or equivalent",
+        "Master exam: at least five years of experience, and hold a journeyman license for one full year"
+      ],
+      "bond": null,
+      "insurance": null,
+      "summary": "Plumbers are licensed by the Arkansas Department of Health. You need four years of experience to sit for the journeyman exam, and five years (including a full year as a licensed journeyman) for the master exam.",
+      "url": "https://healthy.arkansas.gov/wp-content/uploads/Plumbing-Licensing-Rules.pdf",
+      "quote": "An applicant for the Master Plumber examination shall have a minimum of five (5) years’ experience and an applicant for Journeyman Plumber examination licensing shall have a minimum of four (4) years’ experience or its equivalent.",
+      "evidence": [
+        {"url": "https://healthy.arkansas.gov/wp-content/uploads/Plumbing-Licensing-Rules.pdf", "quote": "for one (1) full year before becoming eligible for the Master Plumber examination"}
+      ],
+      "note": null
+    },
+    "mechanical": {
+      "status": "state_license",
+      "name": "HVAC/R Contractor License (Class A, B and others)",
+      "agency": "Arkansas HVAC/R Licensing Board, Dept. of Labor and Licensing",
+      "covers": "Heating, ventilation, air conditioning and refrigeration contractors.",
+      "threshold": null,
+      "prerequisites": ["Board pre-approval of a notarized HVAC/R Contractor Application", "Pass the HVAC/R contractor exam"],
+      "bond": null,
+      "insurance": null,
+      "summary": "HVAC/R contractors are licensed by the state. You must be pre-approved by the HVAC/R Board, then pass the contractor exam. Arkansas has no reciprocity with other states for HVAC/R.",
+      "url": "https://labor.arkansas.gov/labor/code-enforcement/hvac-r/",
+      "quote": "To sit for an Arkansas Department of Labor and Licensing HVAC/R contractor exam, you must be pre-approved by the Board. To apply for an exam please read the HVAC/R Contractor License Rules and Regulations and mail an original notarized HVAC/R Contractor Application to our office.",
+      "evidence": [
+        {"url": "https://labor.arkansas.gov/labor/code-enforcement/hvac-r/", "quote": "The Arkansas Department of Labor and Licensing's State HVAC/R Board has no reciprocal licensing agreements with any other state licensing Boards for HVAC/R licensing at this time."}
+      ],
+      "note": "Insurance/bond and experience requirements are in the HVAC/R rules, which were not fetched."
+    },
+    "roofing": {
+      "status": "threshold",
+      "name": "Residential Roofer Registration",
+      "agency": "Arkansas Contractors Licensing Board (Residential Committee)",
+      "covers": "Residential roofing, roof decks and roofing sheet metal projects over $2,000. Not needed if you hold a Residential Builder or Remodeler license.",
+      "threshold": "Residential roofing projects over $2,000.",
+      "prerequisites": [],
+      "bond": null,
+      "insurance": null,
+      "summary": "Residential roofers must register with the Residential Committee for projects over $2,000. Residential builders and remodelers do not need the separate registration. Commercial roofing at $50,000 or more falls under the commercial license.",
+      "url": "https://labor.arkansas.gov/licensing/arkansas-contractors-licensing-board/apply-for-contractors-license-registration/",
+      "quote": "A Residential Roofer Registration is need to perform “Roofing, Roof Decks, Roofing Sheet Metal” projects more than $2,000, including but not limited to, labor and material. Contractors who have a Residential Builders or Residential Remodelers License DO NOT NEED the Registration.",
+      "evidence": [
+        {"url": "https://labor.arkansas.gov/licensing/arkansas-contractors-licensing-board/apply-for-contractors-license-registration/", "quote": "A commercial license is needed if a contractor performs work of $50,000 or more"}
+      ],
+      "note": null
+    },
+    "pesticide": {
+      "status": "state_license",
+      "name": "Commercial Pest Control License (business), Licensed Operator, Agent Registration",
+      "agency": "Arkansas Department of Agriculture, Pest Control Program (State Plant Board)",
+      "covers": "Anyone doing pest control for pay, including termite and household pest treatment and lawn/turf insect and weed control.",
+      "threshold": null,
+      "prerequisites": [
+        "Pass the Basic Core exam and the classification exam(s)",
+        "A licensed operator (certified individual) supervising the work",
+        "Some classifications require experience or education"
+      ],
+      "bond": null,
+      "insurance": null,
+      "summary": "Pest control and lawn-treatment businesses need a commercial license from the Arkansas Department of Agriculture, with a licensed operator who passed the core and classification exams. Employees working under supervision register as agents.",
+      "url": "https://agriculture.arkansas.gov/crops-industry/regulatory-services/pest-control-program/",
+      "quote": "Anyone performing pest control for compensation must be licensed or certified. Pest Control work is the management of pests such as treating buildings for termites, roaches, ants or treating lawns and turf for insect and weed pests.",
+      "evidence": [
+        {"url": "https://agriculture.arkansas.gov/crops-industry/regulatory-services/pest-control-program/", "quote": "Commercial License – for businesses offering pest control services"},
+        {"url": "https://agriculture.arkansas.gov/crops-industry/regulatory-services/pest-control-program/", "quote": "Some classifications require experience or education"}
+      ],
+      "note": null
+    },
+    "asbestos": {
+      "status": "state_license",
+      "name": "Asbestos Contractor License and individual asbestos certification (Regulation 21)",
+      "agency": "Arkansas Division of Environmental Quality (DEQ), Office of Air Quality",
+      "covers": "Asbestos abatement contractors and workers; also requires inspection of most structures by a state-certified asbestos inspector before renovation or demolition.",
+      "threshold": null,
+      "prerequisites": [
+        "Workers, supervisors and inspectors must be trained and certified",
+        "Have structures inspected by an Arkansas-certified asbestos inspector before renovation or demolition"
+      ],
+      "bond": null,
+      "insurance": null,
+      "summary": "Arkansas licenses asbestos contractors and certifies asbestos workers. Before renovating or demolishing most buildings (some homes are excluded), have them inspected by an asbestos inspector certified in Arkansas.",
+      "url": "https://www.adeq.state.ar.us/air/asbestos/",
+      "quote": "Arkansas requires institutional, commercial, public, industrial or residential structures, excluding certain residential structures to be inspected for the presence of asbestos prior to being renovated or demolished. This inspection must be performed by an asbestos inspector certified in the State of Arkansas.",
+      "evidence": [
+        {"url": "https://www.adeq.state.ar.us/air/asbestos/licenses.aspx", "quote": "APC&EC Regulation 21 requires that individuals who work in asbestos abatement be trained and certified."},
+        {"url": "https://www.adeq.state.ar.us/air/asbestos/", "quote": "Asbestos Contractor and Consultant License"}
+      ],
+      "note": null
+    },
+    "lead_rrp": {
+      "status": "no_state_license",
+      "name": "EPA Lead-Safe (RRP) Firm Certification and Certified Renovator",
+      "agency": "U.S. Environmental Protection Agency",
+      "covers": "Firms paid to do work that disturbs paint in homes and child-occupied facilities built before 1978.",
+      "threshold": null,
+      "prerequisites": ["EPA firm certification", "At least one EPA Certified Renovator (training course)"],
+      "bond": null,
+      "insurance": null,
+      "summary": "Arkansas is not authorized to run its own lead renovation program, so firms get RRP certification from EPA. Anyone paid to disturb paint in pre-1978 homes or child-occupied facilities must be certified.",
+      "url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-firm-certification",
+      "quote": "EPA's renovation program applies to all states, Tribes and territories where EPA has not specifically provided authorization for that state, Tribe or territory to operate the program themselves.",
+      "evidence": [
+        {"url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program", "quote": "EPA administers the RRP Program in most Tribes, states and territories, but has authorized the following to operate their own programs: Alabama, Delaware, Georgia, Iowa, Kansas, Massachusetts, Mississippi, North Carolina, Oklahoma, Oregon, Rhode Island, Utah, Vermont, Washington, Wisconsin"},
+        {"url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-contractors", "quote": "In general, anyone who is paid to perform work that disturbs paint in housing and child-occupied facilities built before 1978 must be certified. This includes all firms, even sole proprietorships."}
+      ],
+      "note": null
+    },
+    "other": []
+  }
+}

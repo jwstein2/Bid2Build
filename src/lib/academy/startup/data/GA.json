@@ -1,0 +1,312 @@
+{
+ "state": "GA",
+ "researched_on": "2026-11-22",
+ "checked_at": "2026-11-22T21:48:10Z",
+ "general": {
+  "entity": {
+   "agency": "Georgia Secretary of State, Corporations Division",
+   "summary": "LLCs, corporations and limited partnerships register with the Georgia Secretary of State's Corporations Division.",
+   "url": "https://georgia.gov/register-llc",
+   "quote": "A limited liability company (LLC) is a business structure that offers limited personal liability on the part of the owner.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "state_tax": {
+   "agency": "Georgia Department of Revenue",
+   "summary": "Register through the Georgia Tax Center for the business tax accounts you need, such as sales and use tax and employer withholding.",
+   "url": "https://georgia.gov/register-business-georgia-department-revenue",
+   "quote": "Depending on the type of business, you may need to register with the Department of Revenue (DOR) to collect and periodically pay various types of business taxes.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "unemployment": {
+   "agency": "Georgia Department of Labor",
+   "summary": "Register online with the Department of Labor, which tells you whether you owe unemployment insurance tax and sets up your account.",
+   "url": "https://georgia.gov/register-business-georgia-department-labor",
+   "quote": "Many businesses in Georgia are liable for payment of unemployment insurance taxes to the Georgia Department of Labor, even if they don’t yet have employees.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "workers_comp": {
+   "agency": "Georgia State Board of Workers' Compensation",
+   "summary": "Businesses that regularly employ three or more people (part-time or full-time) must carry workers' comp. Exempted corporate officers or LLC members still count toward the total. Residential and general contractor license applicants must also show workers' comp as required by law.",
+   "url": "https://sbwc.georgia.gov/node/50",
+   "quote": "Every employer, individual, firm, association, or corporation, regularly employing three or more persons, part-time or full time, shall provide workers’ compensation insurance coverage.",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "state_license",
+   "name": "Residential-Basic Contractor or Residential-Light Commercial Contractor license",
+   "agency": "Georgia State Licensing Board for Residential and General Contractors (Residential Contractor Division)",
+   "covers": "Contractors building or improving one- and two-family homes (residential-basic) and certain light commercial buildings.",
+   "threshold": null,
+   "prerequisites": [
+    "At least 21 years of age",
+    "At least two years of experience working as or for a residential contractor",
+    "Significant responsibility for at least two residential projects in the prior two years",
+    "Pass the Division's exam",
+    "General liability insurance of not less than $300,000 and workers' compensation insurance"
+   ],
+   "bond": null,
+   "insurance": "General liability insurance of not less than $300,000 (residential-basic) plus workers' compensation as required by law",
+   "summary": "Georgia requires a state residential contractor license. A residential-basic applicant must be at least 21, have residential contracting experience and recent project responsibility, pass the exam, and show liability and workers' comp insurance.",
+   "url": "https://rules.sos.ga.gov/gac/553-3",
+   "quote": "Additionally, such applicants must submit to and successfully pass an examination prepared by the residential contractor division",
+   "note": "A dollar threshold below which no license is needed exists in statute (O.C.G.A. 43-41-17) but the official SOS pages block automated fetching, so it is not recorded here.",
+   "evidence": [
+    {
+     "url": "https://rules.sos.ga.gov/gac/553-3",
+     "quote": "Is at least 21 years of age;"
+    },
+    {
+     "url": "https://rules.sos.ga.gov/gac/553-3",
+     "quote": "Has at least two years of proven experience working as or in the employment of a residential contractor, predominantly in the residential-basic category"
+    },
+    {
+     "url": "https://rules.sos.ga.gov/gac/553-3",
+     "quote": "Has had significant responsibility for the successful performance and completion of at least two projects falling within the residential-basic category in the two years immediately preceding application."
+    },
+    {
+     "url": "https://rules.sos.ga.gov/gac/553-3",
+     "quote": "all applicants shall provide satisfactory proof of general liability insurance of not less than $300,000 for the residential-basic category and satisfactory proof of workers´ compensation insurance as required by the laws of this state in their name."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "commercial_building": {
+   "status": "state_license",
+   "name": "General Contractor license (and General Contractor-Limited Tier)",
+   "agency": "Georgia State Licensing Board for Residential and General Contractors (General Contractor Division)",
+   "covers": "Commercial general contracting.",
+   "threshold": null,
+   "prerequisites": [
+    "At least 21 years of age",
+    "At least four years of construction-related experience (two with a general contractor) or a college/experience combination",
+    "Pass the general contractor exam",
+    "General liability insurance not less than $500,000 and workers' compensation insurance"
+   ],
+   "bond": null,
+   "insurance": "General liability insurance not less than $500,000 plus workers' compensation as required by law",
+   "summary": "Commercial general contractors need a state General Contractor license. Applicants must be at least 21, document years of construction experience (or education plus experience), pass the exam, and show liability and workers' comp insurance.",
+   "url": "https://rules.sos.ga.gov/gac/553-4",
+   "quote": "Has a total of at least four years of proven active experience working in a construction industry related field, at least two of which shall have been as or in the employment of a general contractor",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://rules.sos.ga.gov/gac/553-4",
+     "quote": "Is at least 21 years of age;"
+    },
+    {
+     "url": "https://rules.sos.ga.gov/gac/553-4",
+     "quote": "all applicants shall provide satisfactory proof of general liability insurance in an amount not less than $500,000 and of workers´ compensation insurance as required by the laws of this state in their name."
+    },
+    {
+     "url": "https://rules.sos.ga.gov/gac/553-4",
+     "quote": "The general contractor division shall cause to be conducted an examination to ascertain the particular applicant's ability to make a practical application of his or her knowledge of the profession of commercial general contracting"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "electrical": {
+   "status": "state_license",
+   "name": "Statewide Electrical Contractor license, Class I (restricted) or Class II (unrestricted)",
+   "agency": "Georgia State Construction Industry Licensing Board, Division of Electrical Contractors",
+   "covers": "Electrical contracting businesses.",
+   "threshold": null,
+   "prerequisites": [
+    "At least 21 years of age",
+    "At least 4 years of primary experience in the electrical field",
+    "Score of at least 70 on the exam"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Electrical contractors need a statewide Electrical Contractor license. Applicants must be at least 21, document years of electrical field experience, and pass the exam.",
+   "url": "https://rules.sos.ga.gov/gac/121-3",
+   "quote": "To obtain a statewide Class I or Class II Electrical Contractor license, a person must be at least 21 years of age, submit a completed application, meet the experience requirements as described in this rule, obtain a minimum score of seventy (70) on the appropriate examination",
+   "note": "Georgia licenses electrical contractors, not individual journeyman electricians, at the state level.",
+   "evidence": [
+    {
+     "url": "https://rules.sos.ga.gov/gac/121-3",
+     "quote": "Applicants for statewide Electrical Contractor license must document a minimum of 4 years of Primary experience in the electrical field"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "plumbing": {
+   "status": "state_license",
+   "name": "Statewide Master Plumber (Class I/Class II) and Journeyman Plumber licenses",
+   "agency": "Georgia State Construction Industry Licensing Board, Division of Master Plumbers and Journeyman Plumbers",
+   "covers": "Plumbing work; Class I master is limited to smaller buildings, Class II is unrestricted.",
+   "threshold": null,
+   "prerequisites": [
+    "Master: at least five (5) years of plumbing experience, two of them licensed as a journeyman",
+    "Journeyman: experience plus a score of at least 70 on the exam"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Plumbers need a statewide Journeyman or Master Plumber license. A master plumber must document years of plumbing experience including time as a licensed journeyman, and all applicants must pass an exam.",
+   "url": "https://rules.sos.ga.gov/gac/121-3",
+   "quote": "Applicants for statewide Master Plumber license must document a minimum of five (5) years of experience in plumbing work as would be covered by items of the Georgia State Plumbing Code, with at least two (2) of the five (5) years being licensed as a Journeyman Plumber.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://rules.sos.ga.gov/gac/121-3",
+     "quote": "statewide Journeyman Plumber license, a person must submit a completed application, meet the experience requirement, obtain a minimum score of seventy (70) on the appropriate examination"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "mechanical": {
+   "status": "state_license",
+   "name": "Conditioned Air Contractor license, Class I (restricted) or Class II (unrestricted)",
+   "agency": "Georgia State Construction Industry Licensing Board, Division of Conditioned Air Contractors",
+   "covers": "Heating and air conditioning contracting; Class I is limited to smaller systems.",
+   "threshold": null,
+   "prerequisites": [
+    "At least four (4) years of conditioned air experience for Class I, five (5) years for Class II",
+    "EPA (refrigerant) certification",
+    "Pass the exam"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "HVAC contractors need a Conditioned Air Contractor license. Applicants document years of conditioned air experience, hold EPA refrigerant certification, and pass the exam.",
+   "url": "https://rules.sos.ga.gov/gac/121-3",
+   "quote": "Applicants must document a minimum of four (4) years of experience for Class I and five (5) years for Class II in conditioned air work of a type covered by the Georgia Heating and Air Conditioning Code",
+   "note": "Exam requirement is stated in the same rule chapter; verify details with the Division.",
+   "evidence": [
+    {
+     "url": "https://rules.sos.ga.gov/gac/121-3",
+     "quote": "evidence of having an E.P.A. (Environmental Protection Agency) certification"
+    },
+    {
+     "url": "https://rules.sos.ga.gov/gac/121-3",
+     "quote": "Class I Conditioned Air Contractor licenses are restricted to conditioned air contracting involving conditioned air systems or equipment not exceeding 175,000 BTU of heating and 60,000 BTU of cooling, and Class II licenses are unrestricted."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "roofing": {
+   "status": "unknown",
+   "name": null,
+   "agency": "Georgia State Licensing Board for Residential and General Contractors",
+   "covers": null,
+   "threshold": null,
+   "prerequisites": [],
+   "bond": null,
+   "insurance": null,
+   "summary": "Georgia has no separate state roofing license. Whether a roofing-only business needs a residential or general contractor license depends on the statute's specialty-contractor exemption, which could not be confirmed from an official page.",
+   "url": null,
+   "quote": null,
+   "note": "The Secretary of State's 'Traditional Specialty Contractors' policy page (sos.ga.gov) returns 403 to automated requests; secondary sources say specialty roofers are exempt under O.C.G.A. 43-41-17.",
+   "evidence": [],
+   "pending_reason": "Not confirmed from an official source.",
+   "status_check": "pending_review"
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Pesticide Contractor License + Commercial Pesticide Applicator License (lawn, ornamental, etc.); Structural Pest Control license + Certified Operator (household pests, termites)",
+   "agency": "Georgia Department of Agriculture (non-structural); Georgia Structural Pest Control Commission (structural)",
+   "covers": "Businesses applying pesticides to others' property for a fee, including lawn and landscape spraying; structural pest control is licensed separately.",
+   "threshold": null,
+   "prerequisites": [
+    "Pass the commercial applicator exam (general standards plus at least one category, score of 70%)",
+    "At least one full-time certified commercial applicator employed",
+    "Structural pest control certified operator: two (2) years of service experience (or a related degree plus experience) before taking the exam"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Lawn and landscape pesticide businesses need a Department of Agriculture pesticide contractor license plus a licensed commercial applicator who passed the state exam. Household and termite pest control needs a Structural Pest Control license with a certified operator who has qualifying experience.",
+   "url": "https://agr.georgia.gov/pest-control-faq",
+   "quote": "In order to provide pesticide applications of any type of pesticide, whether general use or restricted use, to the property of another person, and collect a fee for these services, both a Commercial Applicator License and a Pesticide Contractor License are required.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://agr.georgia.gov/pest-control-faq",
+     "quote": "Individuals who wish to obtain a commercial applicator license must pass the general standards examination, as well as least one major category examination with a score of 70%."
+    },
+    {
+     "url": "https://agr.georgia.gov/pesticide-contractors",
+     "quote": "At least one (1) full-time certified commercial applicator in employment licensed in category(ies) of operation."
+    },
+    {
+     "url": "https://rules.sos.ga.gov/gac/620-3",
+     "quote": "Two (2) years of actual service experience as an employer, employee or owner-operator in the Structural Pest Control category(ies) in which certification is sought."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "asbestos": {
+   "status": "state_license",
+   "name": "Asbestos Abatement Contractor license",
+   "agency": "Georgia Environmental Protection Division (EPD), Asbestos Program",
+   "covers": "Contractors removing or encapsulating friable asbestos-containing material from any facility or home.",
+   "threshold": null,
+   "prerequisites": [
+    "Contractor license from EPD before starting removal or encapsulation",
+    "Evidence of satisfactory training kept at project sites"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Asbestos removal contractors must be licensed by Georgia EPD before removing or encapsulating friable asbestos, and must keep their license and training records on each job site.",
+   "url": "https://rules.sos.ga.gov/gac/391-3-14",
+   "quote": "any contractor shall obtain a license prior to engaging in the removal or encapsulation of friable asbestos-containing materials from any facility or residential dwelling.",
+   "note": null,
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "lead_rrp": {
+   "status": "state_license",
+   "name": "Georgia Lead-Safe Renovation firm and renovator certification",
+   "agency": "Georgia Environmental Protection Division (EPD), Lead-Based Paint Program",
+   "covers": "Firms and people doing renovation or lead-based paint activities in pre-1978 housing and child-occupied facilities.",
+   "threshold": null,
+   "prerequisites": [
+    "Firm certification from Georgia EPD",
+    "Accredited renovator training"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Georgia is EPA-authorized and runs its own RRP program, so renovation firms and renovators get certified through Georgia EPD rather than EPA.",
+   "url": "https://rules.sos.ga.gov/gac/391-3-24",
+   "quote": "No person or firm shall offer to perform renovation or lead-based paint activities without obtaining the certification and training required in these Rules.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program",
+     "quote": "EPA administers the RRP Program in most Tribes, states and territories, but has authorized the following to operate their own programs: Alabama, Delaware, Georgia"
+    },
+    {
+     "url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program",
+     "quote": "EPA's RRP Rule requires that anyone paid to perform work that disturbs painted surfaces in homes, childcare facilities and preschools built before 1978 be certified and their employees be trained"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "other": [
+  {
+   "key": "utility_contractor",
+   "name": "Statewide Utility Contractor license",
+   "agency": "Georgia State Construction Industry Licensing Board, Division of Utility Contractors",
+   "trades": [
+    "excavation"
+   ],
+   "summary": "Georgia licenses utility contractors (underground utility work) through the Construction Industry Licensing Board.",
+   "url": "https://rules.sos.ga.gov/gac/121-2",
+   "quote": "Rule 121-2-.07 Statewide Utility Contractor License",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ ]
+}

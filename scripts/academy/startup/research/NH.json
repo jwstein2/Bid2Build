@@ -1,0 +1,65 @@
+{
+ "state": "NH",
+ "researched_on": "2026-11-22",
+ "general": {
+  "workers_comp": {"agency": "NH Department of Labor", "summary": "Employers covered by New Hampshire's workers' compensation law must secure compensation for their employees, by insurance or an approved alternative.", "url": "https://gc.nh.gov/rsa/html/XXIII/281-A/281-A-5.htm", "quote": "shall secure compensation to employees in one of the following ways"}
+ },
+ "credentials": {
+  "residential_building": {"status": "unknown", "name": null, "agency": null, "covers": null, "threshold": null, "prerequisites": [], "bond": null, "insurance": null, "summary": null, "url": null, "quote": null, "note": "New Hampshire is not known to license general or home improvement contractors at the state level, but nh.gov sites (OPLC, SOS, NHES, DRA) block automated fetching, so this could not be confirmed from an official page."},
+  "commercial_building": {"status": "unknown", "name": null, "agency": null, "covers": null, "threshold": null, "prerequisites": [], "bond": null, "insurance": null, "summary": null, "url": null, "quote": null, "note": "Same as residential: no state GC license known; not confirmed because nh.gov sites block automated fetching."},
+  "electrical": {
+   "status": "state_license", "name": "Master and Journeyman Electrician licenses", "agency": "NH Office of Professional Licensure and Certification (Electricians' Board)",
+   "covers": "Electricians doing electrical installations in New Hampshire.", "threshold": null,
+   "prerequisites": ["8,000 hours of service as an apprentice electrician", "At least 600 hours of board-approved education", "Pass the board-approved licensing exam"],
+   "bond": null, "insurance": null,
+   "summary": "New Hampshire licenses master and journeyman electricians. Applicants complete 8,000 hours as an apprentice and at least 600 hours of approved education, then pass the board's exam.",
+   "url": "https://gc.nh.gov/rsa/html/XXX/319-C/319-C-7.htm", "quote": "Completion of 8,000 hours of service as an apprentice electrician.",
+   "evidence": [
+    {"url": "https://gc.nh.gov/rsa/html/XXX/319-C/319-C-7.htm", "quote": "Complete not less than 600 hours of education that meet criteria established by the board"},
+    {"url": "https://gc.nh.gov/rsa/html/XXX/319-C/319-C-7.htm", "quote": "Satisfactory passing of an examination approved by said board as provided in RSA 319-C:8"}
+   ],
+   "note": "Quotes taken via a web reader because gc.nh.gov refuses direct automated requests; any additional master-level requirements not confirmed."
+  },
+  "plumbing": {
+   "status": "state_license", "name": "Master, Journeyman and Apprentice Plumber licenses", "agency": "NH OPLC, Mechanical Licensing Board",
+   "covers": "Plumbers.", "threshold": null,
+   "prerequisites": ["Pass the plumbing license examination"], "bond": null, "insurance": null,
+   "summary": "New Hampshire licenses plumbers at the state level (master, journeyman and apprentice) through the Mechanical Licensing Board, which sets the license exams.",
+   "url": "https://gc.nh.gov/rsa/html/XII/153/153-29.htm", "quote": "the nature of the examinations required for issuance of fuel gas fitter licenses and plumbers licenses",
+   "note": "Experience requirements (apprenticeship, time as journeyman) not confirmed; OPLC site blocks automated fetching."
+  },
+  "mechanical": {
+   "status": "state_license", "name": "Fuel gas fitter licenses (e.g. fuel gas installation technician, service technician, piping installer)", "agency": "NH OPLC, Mechanical Licensing Board",
+   "covers": "Gas fitting work on heating and other fuel gas appliances.", "threshold": null,
+   "prerequisites": ["Pass the fuel gas fitter license examination"], "bond": null, "insurance": null,
+   "summary": "New Hampshire licenses fuel gas fitters through the Mechanical Licensing Board; there is no general state HVAC license known beyond gas fitting.",
+   "url": "https://gc.nh.gov/rsa/html/XII/153/153-29.htm", "quote": "the nature of the examinations required for issuance of fuel gas fitter licenses and plumbers licenses",
+   "note": "Oil heating / refrigeration licensing not confirmed."
+  },
+  "roofing": {"status": "unknown", "name": null, "agency": null, "covers": null, "threshold": null, "prerequisites": [], "bond": null, "insurance": null, "summary": null, "url": null, "quote": null, "note": "No state roofing license known; not confirmed because nh.gov sites block automated fetching."},
+  "pesticide": {
+   "status": "state_license", "name": "Commercial pesticide applicator certificate of registration", "agency": "NH Department of Agriculture, Division of Pesticide Control",
+   "covers": "Anyone applying pesticides commercially (pest control, lawn care, tree spraying).", "threshold": null,
+   "prerequisites": ["Obtain a certificate of registration from the Division before applying pesticides commercially"], "bond": null, "insurance": null,
+   "summary": "Commercial pesticide applicators in New Hampshire must hold a valid certificate of registration from the Division of Pesticide Control.",
+   "url": "https://gc.nh.gov/rsa/html/XL/430/430-33.htm", "quote": "No person shall engage in the commercial application of pesticides",
+   "note": "Exam and business license requirements not confirmed."
+  },
+  "asbestos": {
+   "status": "state_license", "name": "Asbestos abatement license", "agency": "NH Department of Environmental Services",
+   "covers": "Contractors, employers and individuals doing asbestos abatement.", "threshold": null,
+   "prerequisites": [], "bond": null, "insurance": null,
+   "summary": "Asbestos abatement contractors and workers in New Hampshire must first get a license from the Department of Environmental Services.",
+   "url": "https://gc.nh.gov/rsa/html/X/141-E/141-E-10.htm", "quote": "shall first obtain a license from the department"
+  },
+  "lead_rrp": {
+   "status": "no_state_license", "name": "EPA RRP Firm Certification", "agency": "U.S. EPA",
+   "covers": "Firms doing renovation, repair or painting in pre-1978 housing or child-occupied facilities.", "threshold": null,
+   "prerequisites": ["EPA firm certification", "Certified renovator"], "bond": null, "insurance": null,
+   "summary": "New Hampshire is not authorized to run RRP, so renovation firms get certified directly by EPA.",
+   "url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-firm-certification", "quote": "if you do work in an area other than the states or the Tribe listed in the paragraph below, apply for EPA Firm Certification",
+   "evidence": [{"url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-firm-certification", "quote": "Federal law requires all renovation, repair, and painting firms (including sole proprietorships) working in housing, or facilities where children are routinely present, built before 1978, to be certified."}],
+   "note": "NH DHHS licenses lead abatement separately; not verified."
+  }
+ }
+}

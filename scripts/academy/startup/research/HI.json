@@ -1,0 +1,161 @@
+{
+  "state": "HI",
+  "researched_on": "2026-11-22",
+  "general": {
+    "entity": {"agency": "Hawaii DCCA, Business Registration Division (BREG)", "summary": "Register your corporation, LLC, partnership or trade name with DCCA's Business Registration Division.", "url": "https://cca.hawaii.gov/breg/", "quote": "Responsible for processing and maintaining business registration filings for corporations, general and limited partnerships, limited liability partnerships, limited liability limited partnerships, limited liability companies, cooperatives, trade names"},
+    "state_tax": {"agency": "Hawaii Department of Taxation", "summary": "Hawaii has no sales tax; instead every business needs a General Excise Tax (GET) license, applied for online with the Basic Business Application (Form BB-1). Contractor license renewals also need a tax clearance in the same name as the license.", "url": "https://tax.hawaii.gov/geninfo/get/", "quote": "Hawaii does not have a sales tax; instead, we have the GET, which is assessed on all business activities."},
+    "unemployment": {"agency": "Hawaii Department of Labor and Industrial Relations, Unemployment Insurance Division", "summary": "If you have employees working in Hawaii you generally must register with DLIR and pay unemployment taxes, filing reports every quarter.", "url": "https://labor.hawaii.gov/ui/employer-registration/", "quote": "In most cases, if you have employees working in Hawaii, you must pay unemployment taxes on their wages in this state. Tax reports are due quarterly."},
+    "workers_comp": {"agency": "Hawaii Department of Labor and Industrial Relations, Disability Compensation Division", "summary": "Private employers must secure workers' comp for their employees through an authorized insurer or approved self-insurance. Licensed contractors must also keep workers' comp in force (unless excluded) or their license is forfeited.", "url": "https://data.capitol.hawaii.gov/hrscurrent/Vol07_Ch0346-0398/HRS0386/HRS_0386-0121.htm", "quote": "Employers, except the State, any county or political subdivision of the State, or other public entity within the State, shall secure compensation to their employees in one of the following ways"}
+  },
+  "credentials": {
+    "residential_building": {
+      "status": "state_license",
+      "name": "General Building Contractor (B) license, or the appropriate Specialty Contractor (C) license",
+      "agency": "Hawaii Contractors License Board (DCCA Professional and Vocational Licensing)",
+      "covers": "Anyone acting or advertising as a general engineering, general building or specialty contractor, except small jobs that need no building permit.",
+      "threshold": "Projects over $1,500 total (labor and materials), or any job that needs a building permit",
+      "prerequisites": ["Experience meeting the Board's rules (self-employed or unlicensed experience may count if verifiable)", "Pass a written exam", "Be eighteen or older", "History of honesty and financial integrity", "Workers' compensation and liability insurance (and a bond if the Board requires)"],
+      "bond": "Only when required by the Board",
+      "insurance": "Workers' compensation (unless excluded) and comprehensive personal injury and property damage liability insurance",
+      "summary": "Hawaii requires a state contractor license for most construction work, with a small-job exemption only when no building permit is needed. Applicants need Board-approved experience, a passing written exam, a clean financial history, and workers' comp and liability insurance.",
+      "url": "https://data.capitol.hawaii.gov/hrscurrent/Vol10_Ch0436-0474/HRS0444/HRS_0444-0009.htm",
+      "quote": "No person within the purview of this chapter shall act, or assume to act, or advertise, as general engineering contractor, general building contractor, or specialty contractor without a license previously obtained",
+      "evidence": [
+        {"url": "https://data.capitol.hawaii.gov/hrscurrent/Vol10_Ch0436-0474/HRS0444/HRS_0444-0002.htm", "quote": "Any project or operation for which the aggregate contract price for labor and materials is not more than $1,500. This exemption shall not apply in any case where a building permit is required regardless of the aggregate contract price"},
+        {"url": "https://data.capitol.hawaii.gov/hrscurrent/Vol10_Ch0436-0474/HRS0444/HRS_0444-0011.htm", "quote": "Any person unless the person meets the experience requirements as prescribed in the board's rules; provided that the board may accept experience acquired on a self-employed or unlicensed basis if the experience can be verified"},
+        {"url": "https://data.capitol.hawaii.gov/hrscurrent/Vol10_Ch0436-0474/HRS0444/HRS_0444-0011.htm", "quote": "Any person unless the person has successfully passed a written examination as prescribed by the board; (5) Any individual unless the individual is age eighteen years or more"},
+        {"url": "https://data.capitol.hawaii.gov/hrscurrent/Vol10_Ch0436-0474/HRS0444/HRS_0444-0011_0001.htm", "quote": "A licensed contractor shall have and maintain in full force and effect the following: (1) Workers' compensation insurance"},
+        {"url": "https://data.capitol.hawaii.gov/hrscurrent/Vol10_Ch0436-0474/HRS0444/HRS_0444-0011_0001.htm", "quote": "Liability insurance from an insurance company or agency for comprehensive personal injury and property damage liability; and (3) Bond when required by the board"}
+      ],
+      "note": "Exact years of experience per classification are set in the Board's administrative rules (HAR 16-77), not confirmed here."
+    },
+    "commercial_building": {
+      "status": "state_license",
+      "name": "General Building Contractor (B) / General Engineering Contractor (A)",
+      "agency": "Hawaii Contractors License Board (DCCA Professional and Vocational Licensing)",
+      "covers": "General building contractors (structures) and general engineering contractors (fixed works such as roads, utilities, excavation and grading).",
+      "threshold": "Projects over $1,500 total, or any job that needs a building permit",
+      "prerequisites": ["Board-approved experience", "Pass a written exam", "Be eighteen or older", "Workers' compensation and liability insurance"],
+      "bond": "Only when required by the Board",
+      "insurance": "Workers' compensation (unless excluded) and liability insurance",
+      "summary": "Commercial builders use the same Contractors License Board system: a General Building (B) license for structures or a General Engineering (A) license for heavy and civil work, with the same experience, exam and insurance rules.",
+      "url": "https://data.capitol.hawaii.gov/hrscurrent/Vol10_Ch0436-0474/HRS0444/HRS_0444-0007.htm",
+      "quote": "For the purpose of classification, the contracting business includes any or all of the following branches: (1) General engineering contracting; (2) General building contracting; (3) Specialty contracting.",
+      "evidence": [
+        {"url": "https://data.capitol.hawaii.gov/hrscurrent/Vol10_Ch0436-0474/HRS0444/HRS_0444-0002.htm", "quote": "Any project or operation for which the aggregate contract price for labor and materials is not more than $1,500."},
+        {"url": "https://data.capitol.hawaii.gov/hrscurrent/Vol10_Ch0436-0474/HRS0444/HRS_0444-0011.htm", "quote": "Any person unless the person has successfully passed a written examination as prescribed by the board; (5) Any individual unless the individual is age eighteen years or more"}
+      ],
+      "note": null
+    },
+    "electrical": {
+      "status": "state_license",
+      "name": "Journey Worker Electrician / Supervising Electrician licenses (Board of Electricians and Plumbers); Electrical Contractor (C-13) license (Contractors License Board)",
+      "agency": "Hawaii Board of Electricians and Plumbers; Hawaii Contractors License Board",
+      "covers": "Individuals doing electrical work, plus the contracting business.",
+      "threshold": null,
+      "prerequisites": ["Journey worker: at least eighteen years old and five years full-time (at least ten thousand hours) of supervised wiring experience", "Supervising electrician: registered as a journey worker for at least four years (or equivalent)", "Pass the board exam"],
+      "bond": null,
+      "insurance": null,
+      "summary": "Hawaii licenses individual electricians: a journey worker needs years of supervised wiring experience before the exam, and a supervising electrician needs further years as a journey worker. The business also needs an electrical specialty contractor license.",
+      "url": "https://data.capitol.hawaii.gov/hrscurrent/Vol10_Ch0436-0474/HRS0448E/HRS_0448E-0009.htm",
+      "quote": "No person shall act or assume to act as a journey worker electrician, journey worker specialty electrician, supervising electrician",
+      "evidence": [
+        {"url": "https://data.capitol.hawaii.gov/hrscurrent/Vol10_Ch0436-0474/HRS0448E/HRS_0448E-0005.htm", "quote": "To be eligible for the journey worker electrician examination, an applicant shall be at least eighteen years of age and shall provide satisfactory evidence of experience in residential or commercial wiring of at least five years full-time or its equivalent, but not less than ten thousand hours"},
+        {"url": "https://data.capitol.hawaii.gov/hrscurrent/Vol10_Ch0436-0474/HRS0448E/HRS_0448E-0005.htm", "quote": "To be eligible for the supervising electrician examination, an applicant shall have been registered with the board as a journey worker electrician for at least a period of four years or shall have equivalent experience in the trade"},
+        {"url": "https://data.capitol.hawaii.gov/hrscurrent/Vol10_Ch0436-0474/HRS0444/HRS_0444-0007.htm", "quote": "A specialty contractor is a contractor whose operations as such are the performance of construction work requiring special skill such as, but not limited to, electrical"}
+      ],
+      "note": null
+    },
+    "plumbing": {
+      "status": "state_license",
+      "name": "Journey Worker Plumber / Master Plumber licenses (Board of Electricians and Plumbers); Plumbing Contractor (C-37) license",
+      "agency": "Hawaii Board of Electricians and Plumbers; Hawaii Contractors License Board",
+      "covers": "Individuals doing plumbing work, plus the contracting business.",
+      "threshold": null,
+      "prerequisites": ["Journey worker: five years full-time (at least ten thousand hours) as a plumber's helper", "Master: registered as a journey worker plumber for at least two years (or equivalent)", "Pass the board exam"],
+      "bond": null,
+      "insurance": null,
+      "summary": "Plumbers in Hawaii need an individual license: journey worker after years as a helper, master after further years as a journey worker. Plumbing businesses also need a plumbing specialty contractor license.",
+      "url": "https://data.capitol.hawaii.gov/hrscurrent/Vol10_Ch0436-0474/HRS0448E/HRS_0448E-0005.htm",
+      "quote": "To be eligible for the journey worker plumber examination, an applicant shall provide satisfactory evidence of experience of at least five years' full-time or its equivalent, but not less than ten thousand hours, as a journey worker's or master plumber's helper",
+      "evidence": [{"url": "https://data.capitol.hawaii.gov/hrscurrent/Vol10_Ch0436-0474/HRS0448E/HRS_0448E-0005.htm", "quote": "To be eligible for the master plumber examination, an applicant shall have been registered with the board as a journey worker plumber for at least two years or shall have equivalent experience in the trade"}],
+      "note": null
+    },
+    "mechanical": {
+      "status": "state_license",
+      "name": "Specialty Contractor license (e.g., C-52 Ventilating and Air Conditioning)",
+      "agency": "Hawaii Contractors License Board",
+      "covers": "HVAC and other specialized building trades are specialty contractor classifications.",
+      "threshold": "Projects over $1,500 total, or any job that needs a building permit",
+      "prerequisites": ["Board-approved experience", "Pass a written exam", "Workers' compensation and liability insurance"],
+      "bond": null,
+      "insurance": "Workers' compensation (unless excluded) and liability insurance",
+      "summary": "Hawaii has no separate HVAC board; HVAC contractors need the matching specialty contractor license from the Contractors License Board, with the usual experience, exam and insurance requirements.",
+      "url": "https://data.capitol.hawaii.gov/hrscurrent/Vol10_Ch0436-0474/HRS0444/HRS_0444-0007.htm",
+      "quote": "others whose principal contracting business involves the use of specialized building trades or crafts.",
+      "evidence": [{"url": "https://data.capitol.hawaii.gov/hrscurrent/Vol10_Ch0436-0474/HRS0444/HRS_0444-0002.htm", "quote": "Any project or operation for which the aggregate contract price for labor and materials is not more than $1,500."}],
+      "note": "C-52 classification name taken from Board applicant lists; individual HVAC technicians are not separately licensed by the state."
+    },
+    "roofing": {
+      "status": "state_license",
+      "name": "Roofing Specialty Contractor (C-42)",
+      "agency": "Hawaii Contractors License Board",
+      "covers": "Roofing contractors.",
+      "threshold": "Projects over $1,500 total, or any job that needs a building permit",
+      "prerequisites": ["Board-approved experience", "Pass a written exam", "Workers' compensation and liability insurance"],
+      "bond": null,
+      "insurance": "Workers' compensation (unless excluded) and liability insurance",
+      "summary": "Roofing is a specialty contractor classification in Hawaii, so roofers need a specialty contractor license from the Contractors License Board.",
+      "url": "https://data.capitol.hawaii.gov/hrscurrent/Vol10_Ch0436-0474/HRS0444/HRS_0444-0007.htm",
+      "quote": "A specialty contractor is a contractor whose operations as such are the performance of construction work requiring special skill such as, but not limited to, electrical, drywall, painting and decorating, landscaping, flooring, carpet laying by any installation method, plumbing, or roofing work",
+      "evidence": [{"url": "https://data.capitol.hawaii.gov/hrscurrent/Vol10_Ch0436-0474/HRS0444/HRS_0444-0002.htm", "quote": "Any project or operation for which the aggregate contract price for labor and materials is not more than $1,500."}],
+      "note": "Painting, drywall, flooring and landscaping are also specialty classifications."
+    },
+    "pesticide": {
+      "status": "state_license",
+      "name": "Pest Control Operator license (structural pest control)",
+      "agency": "Hawaii Pest Control Board (DCCA Professional and Vocational Licensing)",
+      "covers": "Structural pest control operators (termite and household pest control).",
+      "threshold": null,
+      "prerequisites": ["Be at least eighteen years of age", "Meet the Board's exam and experience requirements", "Workers' compensation insurance", "Liability insurance"],
+      "bond": null,
+      "insurance": "Workers' compensation and liability insurance",
+      "summary": "Pest control businesses need an operator's license from the Pest Control Board, which requires passing the Board's exam and experience requirements and proof of workers' comp and liability insurance.",
+      "url": "https://data.capitol.hawaii.gov/hrscurrent/Vol10_Ch0436-0474/HRS0460J/HRS_0460J-0008.htm",
+      "quote": "To obtain an operator's license, a person shall fulfill the following requirements: (1) File an application as prescribed by the board",
+      "evidence": [{"url": "https://data.capitol.hawaii.gov/hrscurrent/Vol10_Ch0436-0474/HRS0460J/HRS_0460J-0008.htm", "quote": "Be at least eighteen years of age; (4) Satisfy the board's examination and experience requirements"}, {"url": "https://data.capitol.hawaii.gov/hrscurrent/Vol10_Ch0436-0474/HRS0460J/HRS_0460J-0008.htm", "quote": "Submit satisfactory proof to the board that the person has obtained liability insurance, pursuant to section 460J-25"}],
+      "note": "Lawn and agricultural restricted-use pesticide applicator certification is handled separately by the Hawaii Department of Agriculture (not researched here)."
+    },
+    "asbestos": {
+      "status": "state_license",
+      "name": "Asbestos worker / contractor-supervisor certification and abatement contractor registration",
+      "agency": "Hawaii Department of Health, Indoor and Radiological Health Branch, Asbestos Section",
+      "covers": "Asbestos abatement contractors and their workers.",
+      "threshold": null,
+      "prerequisites": ["State of Hawaii certification for every worker", "Asbestos specialty contractor (C-19) license from DCCA"],
+      "bond": null,
+      "insurance": null,
+      "summary": "Asbestos abatement contractors register with the Department of Health, list their state-certified workers, and must hold a C-19 asbestos contractor license from DCCA.",
+      "url": "https://health.hawaii.gov/irhb/files/2013/07/asbestosentity.pdf",
+      "quote": "For abatement contractors, a copy of the current C-19 license from the Department of Commerce and Consumer Affairs (DCCA).",
+      "evidence": [{"url": "https://health.hawaii.gov/irhb/files/2013/07/asbestosentity.pdf", "quote": "A list of employees including name, certification numbers and expiration dates."}],
+      "note": "Registration form dated 2016; confirm current process with the Asbestos Section."
+    },
+    "lead_rrp": {
+      "status": "no_state_license",
+      "name": "EPA Lead-Safe Certified Firm and Certified Renovator",
+      "agency": "U.S. EPA",
+      "covers": "Anyone paid to disturb paint in homes, child care facilities and preschools built before 1978.",
+      "threshold": null,
+      "prerequisites": ["EPA firm certification", "Certified renovator training"],
+      "bond": null,
+      "insurance": null,
+      "summary": "Hawaii does not run its own RRP program, so renovation firms get lead-safe certification directly from EPA.",
+      "url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program",
+      "quote": "EPA administers the RRP Program in most Tribes, states and territories, but has authorized the following to operate their own programs: Alabama, Delaware, Georgia, Iowa, Kansas, Massachusetts, Mississippi, North Carolina, Oklahoma, Oregon, Rhode Island, Utah, Vermont, Washington, Wisconsin",
+      "evidence": [{"url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program", "quote": "EPA's RRP Rule requires that anyone paid to perform work that disturbs painted surfaces in homes, childcare facilities and preschools built before 1978 be certified and their employees be trained"}],
+      "note": null
+    },
+    "other": []
+  }
+}

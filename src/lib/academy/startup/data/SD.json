@@ -1,0 +1,337 @@
+{
+ "state": "SD",
+ "researched_on": "2026-11-22",
+ "checked_at": "2026-11-22T21:48:10Z",
+ "general": {
+  "entity": {
+   "agency": "SD Secretary of State",
+   "summary": "Register your business (LLC, corporation, etc.) with the South Dakota Secretary of State; out-of-state businesses must register before doing business in SD.",
+   "url": "https://sdsos.gov/business-services/corporations/default.aspx",
+   "quote": "Both non-profit and for-profit businesses must be registered with the Secretary of State's office. Out-of-state businesses must be registered before doing business in this state.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "state_tax": {
+   "agency": "SD Department of Revenue",
+   "summary": "Construction contractors in South Dakota must hold a contractor's excise tax license from the Department of Revenue; the 2% excise tax applies to gross receipts on construction projects. Prime contractors give subcontractors exemption certificates for each project.",
+   "url": "https://dor.sd.gov/businesses/taxes/contractors-excise-tax/",
+   "quote": "Any person entering into a contract for construction services (as defined in Division C of the Standard Industrial Classification Manual of 1987) or engaging in services that include the construction, building, installation, or repair of a fixture to real property must have a South Dakota contractor’s tax license. The excise tax imposed on the gross receipts for construction projects is at a rate of 2%.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "unemployment": {
+   "agency": "SD Department of Labor & Regulation, Reemployment Assistance Division",
+   "summary": "Employers register with the DLR Reemployment Assistance Tax Unit (South Dakota's name for unemployment insurance) and pay payroll taxes that fund benefits.",
+   "url": "https://dlr.sd.gov/ra/businesses/default.aspx",
+   "quote": "The Reemployment Assistance Tax Unit is responsible for identifying and registering subject employers, insuring wage reports are filed so benefit eligibility can be established, collecting taxes due, and auditing employers for compliance.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "workers_comp": {
+   "agency": "SD Department of Labor & Regulation",
+   "summary": "South Dakota does not legally require employers to carry workers' compensation insurance, but the state strongly recommends it because an uninsured employer can be sued by an injured worker.",
+   "url": "https://dlr.sd.gov/workers_compensation/default.aspx",
+   "quote": "There is no law in South Dakota requiring any employer to carry workers’ compensation insurance. However, it is highly recommended. An uninsured employer may be sued in civil court by an injured worker.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "local": {
+   "agency": null,
+   "summary": "South Dakota cities set their own licensing; municipalities may also set plumbing standards and inspections that meet the state code.",
+   "url": "https://sdlegislature.gov/api/Statutes/36-25-16.html",
+   "quote": "Nothing in this chapter shall prohibit any municipality by ordinance from making and enforcing requirements and standards regarding plumbing, and from making inspections and collecting fees relating thereto.",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "no_state_license",
+   "name": "No state general contractor license (Contractor's Excise Tax License required)",
+   "agency": "SD Department of Revenue (tax license); cities for local contractor licenses",
+   "covers": "South Dakota has no state builder/remodeler license; every construction contractor needs the state contractor's excise tax license, and some cities license contractors.",
+   "threshold": null,
+   "prerequisites": [
+    "Contractor's excise tax license from the SD Department of Revenue",
+    "Any city contractor license where you work"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "South Dakota does not license general or residential contractors at the state level, but every construction contractor must get a contractor's excise tax license from the Department of Revenue. Check with the city where you work for any local contractor license.",
+   "url": "https://dor.sd.gov/businesses/taxes/contractors-excise-tax/",
+   "quote": "Any person entering into a contract for construction services (as defined in Division C of the Standard Industrial Classification Manual of 1987) or engaging in services that include the construction, building, installation, or repair of a fixture to real property must have a South Dakota contractor’s tax license.",
+   "note": "No official state page saying 'no state GC license' was found; the state's licensing agencies (DLR Electrical and Plumbing Commissions) license only those trades. City pages (e.g. Sioux Falls) blocked automated fetching.",
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "commercial_building": {
+   "status": "no_state_license",
+   "name": "No state general contractor license (Contractor's Excise Tax License required)",
+   "agency": "SD Department of Revenue (tax license); cities for local contractor licenses",
+   "covers": "Same as residential: no state GC license, but the contractor's excise tax license applies to all construction contractors.",
+   "threshold": null,
+   "prerequisites": [
+    "Contractor's excise tax license from the SD Department of Revenue"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "There is no state commercial contractor license in South Dakota. Prime contractors must hold the contractor's excise tax license and issue exemption certificates to their subcontractors for each project.",
+   "url": "https://dor.sd.gov/businesses/taxes/contractors-excise-tax/",
+   "quote": "Except for projects for a qualified utility, it is the prime contractor’s responsibility to issue prime contractor's exemption certificates to all subcontractors for each project.",
+   "note": "Local licensing varies by city.",
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "electrical": {
+   "status": "state_license",
+   "name": "Electrical Contractor License; Journeyman Electrician License; Class B Electrician",
+   "agency": "SD State Electrical Commission (Department of Labor & Regulation)",
+   "covers": "Anyone in business as an electrical contractor or doing electrical work must be licensed by the State Electrical Commission.",
+   "threshold": null,
+   "prerequisites": [
+    "Journeyman: four years (8,000 hours) as a licensed apprentice under an electrical contractor, then pass the journeyman exam",
+    "Contractor: two more years (4,000 hours, at least 2,000 commercial) as a licensed journeyman, then pass the contractor exam",
+    "Contractor: undertaking (bond) of ten thousand dollars and public liability insurance on file"
+   ],
+   "bond": "An undertaking (bond) of ten thousand dollars deposited with the commission.",
+   "insurance": "Public liability insurance of not less than one hundred thousand dollars per occurrence and three hundred thousand dollars aggregate, plus property damage coverage, kept on file.",
+   "summary": "South Dakota licenses electricians and electrical contractors through the State Electrical Commission. You need 4 years as a licensed apprentice to take the journeyman exam and 2 more years as a journeyman to take the contractor exam; contractors also file a bond and liability insurance.",
+   "url": "https://sdlegislature.gov/api/Statutes/36-16-1.html",
+   "quote": "shall obtain a license from the State Electrical Commission before any person may undertake and perform such work to the end that any such work will be safely and properly installed",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://dlr.sd.gov/electrical/licensing.aspx",
+     "quote": "After completing four years (for a total of 8,000 hours) as a licensed apprentice electrician working under the employment and supervision of an electrical contractor, you will be ready to write the journeyman's exam ."
+    },
+    {
+     "url": "https://dlr.sd.gov/electrical/licensing.aspx",
+     "quote": "It will then take another two years as a licensed journeyman (with a total of 4,000 hours of additional work under the employment and supervision of a contractor, including a minimum of 2,000 hours of commercial work) to write the electrical contractor's exam ."
+    },
+    {
+     "url": "https://dlr.sd.gov/electrical/undertaking_insurance.aspx",
+     "quote": "an applicant shall execute and deposit with the State Electrical Commission an undertaking in the sum of ten thousand dollars, and a public liability insurance policy in a sum of not less than one hundred thousand dollars per occurrence and three hundred thousand dollars aggregate limit"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "plumbing": {
+   "status": "state_license",
+   "name": "Plumbing Contractor License; Plumber License",
+   "agency": "SD State Plumbing Commission (Department of Labor & Regulation)",
+   "covers": "Plumbing contractors and plumbers working on plumbing systems statewide.",
+   "threshold": null,
+   "prerequisites": [
+    "Plumber: four years as an apprentice plumber with at least 1,900 hours per year",
+    "Contractor: six years of experience, at least two as a plumbing contractor or plumber, with at least 1,900 hours per year",
+    "Pass the state exam for the license"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Plumbers and plumbing contractors are licensed by the South Dakota Plumbing Commission. A plumber's license takes four years as an apprentice; a contractor license takes six years of experience including two as a plumber or contractor, plus an exam.",
+   "url": "https://dlr.sd.gov/plumbing/licensing.aspx",
+   "quote": "Have six years' experience as a plumbing contractor, plumber, or plumber's apprentice with at least two of those years as a plumbing contractor or plumber.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://dlr.sd.gov/plumbing/licensing.aspx",
+     "quote": "Have spent at least 1,900 hours per year during these four years as an apprentice."
+    },
+    {
+     "url": "https://dlr.sd.gov/plumbing/licensing.aspx",
+     "quote": "Have four years' experience as an apprentice plumber."
+    },
+    {
+     "url": "https://dlr.sd.gov/plumbing/exams.aspx",
+     "quote": "The State Plumbing Commission administers and establishes educational, training, and examination requirements for each of the following occupations:"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "mechanical": {
+   "status": "no_state_license",
+   "name": "No state HVAC/mechanical license (gas appliance installers licensed by Plumbing Commission)",
+   "agency": "SD State Plumbing Commission (appliance license); cities for local mechanical licenses",
+   "covers": "South Dakota has no general state HVAC contractor license; the Plumbing Commission does license appliance contractors and installers.",
+   "threshold": null,
+   "prerequisites": [
+    "Appliance contractor: one year as an appliance installer",
+    "Appliance installer: two years as an appliance apprentice"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "South Dakota does not have a statewide HVAC contractor license, but the Plumbing Commission licenses appliance contractors and installers. Cities may require their own mechanical licenses and permits.",
+   "url": "https://dlr.sd.gov/plumbing/licensing.aspx",
+   "quote": "To apply for an appliance contractor's license , you must: Have one year of experience as an appliance installer.",
+   "note": "No official page explicitly states the absence of a state HVAC license; the DLR licensing lists cover only electrical and plumbing-related occupations. EPA refrigerant certification is federal.",
+   "evidence": [
+    {
+     "url": "https://dlr.sd.gov/plumbing/licensing.aspx",
+     "quote": "To apply for an appliance installer's license , you must: Have two years' experience as an appliance apprentice."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "roofing": {
+   "status": "no_state_license",
+   "name": "No state roofing license",
+   "agency": "SD Department of Revenue (contractor's excise tax license)",
+   "covers": "Roofers need the contractor's excise tax license like other construction contractors; no state roofing license was found.",
+   "threshold": null,
+   "prerequisites": [
+    "Contractor's excise tax license"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "South Dakota has no state roofing license. Roofers, like other construction contractors, need a contractor's excise tax license and any local license the city requires.",
+   "url": "https://dor.sd.gov/businesses/taxes/contractors-excise-tax/",
+   "quote": "Any person entering into a contract for construction services (as defined in Division C of the Standard Industrial Classification Manual of 1987) or engaging in services that include the construction, building, installation, or repair of a fixture to real property must have a South Dakota contractor’s tax license.",
+   "note": "Absence of a state roofing license is inferred from state licensing agency lists; no explicit official statement found.",
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Commercial Pesticide Applicator License",
+   "agency": "SD Department of Agriculture & Natural Resources (DANR)",
+   "covers": "Anyone applying pesticides for hire (pest control, lawn care, tree spraying, etc.).",
+   "threshold": null,
+   "prerequisites": [
+    "Pass the commercial General (core) certification exam",
+    "Pass the category exam(s) for the type of application"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "If you apply pesticides for hire in South Dakota, you need a commercial pesticide applicator license from DANR. You must first pass the General core exam plus the category exams for your work.",
+   "url": "https://danr.sd.gov/Agriculture/Inspection/Pesticide/ApplicatorsDealers/default.aspx",
+   "quote": "If you apply pesticides for hire, or you are a government employee that applies pesticides while performing your work duties, you must have a commercial pesticide applicator license.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://danr.sd.gov/Agriculture/Inspection/Pesticide/ApplicatorsDealers/default.aspx",
+     "quote": "Every tester must take the commercial category G - General (core) certification exam PLUS any other commercial certification exams that pertain to the type of pesticide applications that they will be making."
+    },
+    {
+     "url": "https://danr.sd.gov/Agriculture/Inspection/Pesticide/ApplicatorsDealers/default.aspx",
+     "quote": "Commercial applicators must initially pass commercial certification exams to become eligible for a commercial applicator license."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "asbestos": {
+   "status": "state_license",
+   "name": "Asbestos Abatement Contractor Certificate; worker certification",
+   "agency": "SD Department of Agriculture & Natural Resources (Asbestos Section)",
+   "covers": "Asbestos contractors and workers on abatement projects, including demolition/renovation projects under federal NESHAP rules.",
+   "threshold": null,
+   "prerequisites": [
+    "Complete an approved asbestos training course",
+    "Each worker on the project must be certified"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "South Dakota certifies asbestos abatement contractors and workers. Contractors must finish approved training and use only certified workers; DANR also receives demolition and renovation notifications.",
+   "url": "https://sdlegislature.gov/api/Statutes/34-44-10.html",
+   "quote": "The department shall issue an asbestos abatement certificate to any asbestos contractor who: (1) Successfully completes an approved training course;",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://sdlegislature.gov/api/Statutes/34-44-10.html",
+     "quote": "Demonstrates that each of his workers who works on or is directly responsible for an asbestos abatement project is certified"
+    },
+    {
+     "url": "https://danr.sd.gov/Environment/WasteManagement/Asbestos/default.aspx",
+     "quote": "The office provides technical assistance, issues worker certifications, receives abatement job notifications"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "lead_rrp": {
+   "status": "no_state_license",
+   "name": "EPA Lead-Safe Certified Firm (federal RRP)",
+   "agency": "U.S. EPA",
+   "covers": "Firms doing renovation, repair or painting in pre-1978 housing or child-occupied facilities.",
+   "threshold": null,
+   "prerequisites": [
+    "EPA firm certification",
+    "Certified renovator training"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "South Dakota does not run its own RRP program, so firms working on pre-1978 homes must be certified directly by EPA.",
+   "url": "https://www.epa.gov/node/255913",
+   "quote": "Federal law requires all renovation, repair, and painting firms (including sole proprietorships) working in housing, or facilities where children are routinely present, built before 1978, to be certified.",
+   "note": "South Dakota is not on EPA's list of authorized states.",
+   "evidence": [
+    {
+     "url": "https://www.epa.gov/node/255913",
+     "quote": "EPA's renovation program applies to all states, Tribes and territories where EPA has not specifically provided authorization for that state, Tribe or territory to operate the program themselves."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "other": [
+  {
+   "key": "irrigation",
+   "name": "Underground Irrigation Contractor / Installer License",
+   "agency": "SD State Plumbing Commission",
+   "trades": [
+    "landscaping"
+   ],
+   "summary": "Lawn irrigation contractors need a state license; contractors need one year of experience as an installer.",
+   "url": "https://dlr.sd.gov/plumbing/licensing.aspx",
+   "quote": "To apply for an underground irrigation contractor's license , you must: Have one year experience as an underground irrigation installer.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  {
+   "key": "sewer_water",
+   "name": "Sewer and Water Contractor / Installer License",
+   "agency": "SD State Plumbing Commission",
+   "trades": [
+    "excavation"
+   ],
+   "summary": "Contractors installing sewer and water lines need a state sewer and water license.",
+   "url": "https://dlr.sd.gov/plumbing/licensing.aspx",
+   "quote": "To apply for a sewer and water contractor's license , you must: Have one year of experience as a sewer and water installer.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  {
+   "key": "onsite_wastewater",
+   "name": "Individual and Small On-site Wastewater System Installer",
+   "agency": "SD State Plumbing Commission",
+   "trades": [
+    "excavation"
+   ],
+   "summary": "Septic/on-site wastewater installers need state certification.",
+   "url": "https://dlr.sd.gov/plumbing/licensing.aspx",
+   "quote": "To apply for the individual and small on-site wastewater system installer's license , you must: Fill out the on-site wastewater system installer certification application",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  {
+   "key": "water_conditioning",
+   "name": "Water Conditioning Contractor / Installer License",
+   "agency": "SD State Plumbing Commission",
+   "trades": [
+    "plumbing"
+   ],
+   "summary": "Water softener/conditioning installers need a state license.",
+   "url": "https://dlr.sd.gov/plumbing/licensing.aspx",
+   "quote": "To apply for a water conditioning contractor's license , you must: Have one year experience as a water conditioning installer.",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ ]
+}

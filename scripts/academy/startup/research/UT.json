@@ -1,0 +1,394 @@
+{
+ "state": "UT",
+ "researched_on": "2026-11-22",
+ "general": {
+  "entity": {
+   "agency": "Utah Division of Corporations and Commercial Code",
+   "summary": "Form your corporation, LLC, partnership or DBA with the Utah Division of Corporations. DOPL requires corporations, LLCs and partnerships to be registered there before getting a contractor license.",
+   "url": "https://corporations.utah.gov/",
+   "quote": "Form a Corporation, Limited Liability Company (LLC), Partnership, Business Trust, DBA, and more."
+  },
+  "state_tax": {
+   "agency": "Utah State Tax Commission",
+   "summary": "Contractor license applicants must already have a state withholding tax registration from the Utah State Tax Commission. Businesses that sell taxable goods also apply for a sales tax license.",
+   "url": "https://commerce.utah.gov/dopl/contracting/apply-for-a-license/specialty-contractor-license/",
+   "quote": "Have obtained a state withholding tax registration from the Utah State Tax Commission."
+  },
+  "unemployment": {
+   "agency": "Utah Department of Workforce Services",
+   "summary": "Contractor license applicants with employees must have an unemployment insurance registration from the Department of Workforce Services.",
+   "url": "https://commerce.utah.gov/dopl/contracting/apply-for-a-license/specialty-contractor-license/",
+   "quote": "Have obtained an unemployment registration from the Utah Department of Workforce Services."
+  },
+  "workers_comp": {
+   "agency": "Utah Labor Commission, Industrial Accidents Division",
+   "summary": "With few exceptions, all Utah employers must carry workers' comp for their employees. Contractor license applicants show a workers' comp certificate naming DOPL, or a Workers Compensation Coverage Waiver from the Labor Commission if they have no employees.",
+   "url": "https://laborcommission.utah.gov/divisions/industrial-accidents/",
+   "quote": "With few exceptions, all employers must provide workers’ compensation coverage for their employees."
+  },
+  "local": {
+   "summary": "Cities and counties issue building permits and business licenses; the state's handyman exemption still requires licensed trades for plumbing, electrical and HVAC work.",
+   "url": "https://le.utah.gov/xcode/Title58/Chapter55/C58-55-S305_2025050720250507.html",
+   "quote": "installation, repair, or replacement of a heating, ventilation, or air conditioning system (HVAC) on a Subsection (1)(h)(i) project must be performed by an HVAC contractor licensed by the division;"
+  }
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "state_license",
+   "name": "Contractor License - R100 Residential/Small Commercial (or B100 General Building)",
+   "agency": "Utah Division of Professional Licensing (DOPL)",
+   "covers": "Contractors building or remodeling homes; small remodel/repair jobs under $7,000 (labor and materials) fall under the handyman exemption, with an insurance affirmation filed for jobs over $3,000.",
+   "threshold": "Handyman exemption for alteration/repair/remodel jobs under $7,000 (not for plumbing, electrical, HVAC, gas appliance or similar licensed work).",
+   "prerequisites": [
+    "Two years (4,000 hours) of paid construction-industry experience (or NASCLA exam, construction management degree, or other listed alternative)",
+    "30-hour pre-licensure course",
+    "Pass the Utah Business & Law exam (or qualify by out-of-state license)",
+    "General liability insurance of $1,000,000 per incident and $2,000,000 total",
+    "Workers' comp certificate or coverage waiver",
+    "Business entity registration, federal EIN, withholding and unemployment registrations"
+   ],
+   "bond": null,
+   "insurance": "General liability of at least $1,000,000 per incident and $2,000,000 total with DOPL as certificate holder; workers' comp or waiver.",
+   "summary": "Utah requires a DOPL contractor license for residential construction and remodeling, except small jobs under $7,000 that qualify for the handyman exemption. A general (R100/B100) license takes 2 years of construction experience, a 30-hour course, the Business & Law exam, and liability insurance.",
+   "url": "https://commerce.utah.gov/dopl/contracting/apply-for-a-license/general-contractor/",
+   "quote": "Experience Requirement. Two (2) years of experience in the construction industry. This experience must be at least 4,000 hours (or 2 years) of paid work experience at any time in your life in the construction industry.",
+   "evidence": [
+    {
+     "url": "https://commerce.utah.gov/dopl/contracting/apply-for-a-license/specialty-contractor-license/",
+     "quote": "All general contractors (E100, R100, B100), plumbing and electrical contractors require a 30-hour pre-licensure course"
+    },
+    {
+     "url": "https://commerce.utah.gov/dopl/contracting/apply-for-a-license/specialty-contractor-license/",
+     "quote": "You must have obtained a general liability insurance certificate with minimum required coverage of $1,000,000 for each incident and $2,000,000 in total"
+    },
+    {
+     "url": "https://commerce.utah.gov/dopl/contracting/apply-for-a-license/general-contractor/",
+     "quote": "Utah Business & Law Exam: Apply directly with the authorized exam provider."
+    },
+    {
+     "url": "https://le.utah.gov/xcode/Title58/Chapter55/C58-55-S305_2025050720250507.html",
+     "quote": "a person engaged in the alteration, repair, remodeling, or addition to or improvement of a building with a contracted or agreed value of less than $7,000, including both labor and materials"
+    },
+    {
+     "url": "https://le.utah.gov/xcode/Title58/Chapter55/C58-55-S305_2025050720250507.html",
+     "quote": "if the total value of the project is greater than $3,000, the person shall file with the division a one-time affirmation"
+    },
+    {
+     "url": "https://commerce.utah.gov/dopl/contracting/apply-for-a-license/specialty-contractor-license/",
+     "quote": "Have obtained a Workers Compensation Coverage Waiver from the Utah Labor Commission."
+    }
+   ]
+  },
+  "commercial_building": {
+   "status": "state_license",
+   "name": "Contractor License - B100 General Building Contractor (E100 General Engineering)",
+   "agency": "Utah Division of Professional Licensing (DOPL)",
+   "covers": "General building contractors on commercial projects; the R100 covers residential and small commercial work.",
+   "threshold": null,
+   "prerequisites": [
+    "Two years (4,000 hours) of paid construction-industry experience (or listed alternative)",
+    "30-hour pre-licensure course",
+    "Pass the Utah Business & Law exam",
+    "General liability insurance of $1,000,000 per incident and $2,000,000 total",
+    "Workers' comp certificate or waiver"
+   ],
+   "bond": null,
+   "insurance": "General liability of at least $1,000,000 per incident and $2,000,000 total.",
+   "summary": "Commercial general contractors need a DOPL B100 General Building license. Requirements are the same as for other general classifications: experience, a 30-hour course, the Business & Law exam and liability insurance.",
+   "url": "https://commerce.utah.gov/dopl/contracting/frequently-asked-questions/",
+   "quote": "For a general contractors license (B100, E100, or R100), at least two years (or 4,000 hours) of paid work experience is required in the construction industry. No experience is required for a specialty contractor license.",
+   "evidence": [
+    {
+     "url": "https://commerce.utah.gov/dopl/contracting/apply-for-a-license/specialty-contractor-license/",
+     "quote": "All general contractors (E100, R100, B100), plumbing and electrical contractors require a 30-hour pre-licensure course"
+    },
+    {
+     "url": "https://commerce.utah.gov/dopl/contracting/apply-for-a-license/specialty-contractor-license/",
+     "quote": "You must have obtained a general liability insurance certificate with minimum required coverage of $1,000,000 for each incident and $2,000,000 in total"
+    },
+    {
+     "url": "https://commerce.utah.gov/dopl/contracting/apply-for-a-license/general-contractor/",
+     "quote": "Utah Business & Law Exam: Apply directly with the authorized exam provider."
+    }
+   ]
+  },
+  "electrical": {
+   "status": "state_license",
+   "name": "Electrical Contractor (E200/E201) with Master Electrician qualifier; Journeyman and Master Electrician licenses",
+   "agency": "Utah Division of Professional Licensing (DOPL)",
+   "covers": "Electrical contractors and individual electricians; electrical work on handyman-exempt jobs still must be done by licensed electrical contractors.",
+   "threshold": null,
+   "prerequisites": [
+    "Journeyman: 4-year (576 classroom hours) apprenticeship program plus 8,000 hours of licensed experience, or 16,000 hours of licensed experience; pass written and practical exams",
+    "Master: 8,000 hours as a licensed Journeyman; pass the Master Electrician Law and Rule exam",
+    "Contractor: Master Electrician qualifier, 30-hour pre-licensure course, liability insurance"
+   ],
+   "bond": null,
+   "insurance": "General liability of at least $1,000,000 per incident and $2,000,000 total for the contractor license.",
+   "summary": "Utah licenses electricians and electrical contractors through DOPL. Journeymen need an apprenticeship and thousands of supervised hours plus exams; masters need 8,000 more hours as a journeyman, and an electrical contractor must have a Master Electrician as qualifier.",
+   "url": "https://commerce.utah.gov/dopl/contracting/apply-for-a-license/general-contractor/",
+   "quote": "Electrical Contractors. Must have Master Electrical qualifier.",
+   "evidence": [
+    {
+     "url": "https://commerce.utah.gov/dopl/electrical/apply-for-a-license/journeyman-electrician/utah-applicants/",
+     "quote": "Completion of a 4 year (576 classroom hours) electrical apprenticeship education program. 8,000 hours licensed electrical experience working under supervision of a licensed journeyman or master electrician."
+    },
+    {
+     "url": "https://commerce.utah.gov/dopl/electrical/apply-for-a-license/journeyman-electrician/utah-applicants/",
+     "quote": "16,000 hours of licensed electrical experience working under supervision of a licensed journeyman or master electrician."
+    },
+    {
+     "url": "https://commerce.utah.gov/dopl/electrical/apply-for-a-license/master-electrician/utah-applicants/",
+     "quote": "8,000 hours of experience as a licensed Journeyman Pass the Utah Master Electrician Law and Rule exam"
+    },
+    {
+     "url": "https://commerce.utah.gov/dopl/contracting/apply-for-a-license/specialty-contractor-license/",
+     "quote": "All general contractors (E100, R100, B100), plumbing and electrical contractors require a 30-hour pre-licensure course"
+    },
+    {
+     "url": "https://commerce.utah.gov/dopl/contracting/apply-for-a-license/specialty-contractor-license/",
+     "quote": "You must have obtained a general liability insurance certificate with minimum required coverage of $1,000,000 for each incident and $2,000,000 in total"
+    }
+   ]
+  },
+  "plumbing": {
+   "status": "state_license",
+   "name": "Plumbing Contractor (P200/P201) with Master Plumber qualifier; Journeyman and Master Plumber licenses",
+   "agency": "Utah Division of Professional Licensing (DOPL)",
+   "covers": "Plumbing contractors and individual plumbers; plumbing work on handyman-exempt jobs still requires a licensed plumbing contractor.",
+   "threshold": null,
+   "prerequisites": [
+    "Journeyman: apprenticeship program (576 classroom hours) plus 8,000 hours of licensed experience, or 16,000 hours; pass theory and practical exams",
+    "Master: 4,000 hours of supervisory experience as a licensed journeyman (or 2,000 hours with an associate degree); pass the Master Plumber Law and Rule exam",
+    "Contractor: Master Plumber qualifier, 30-hour pre-licensure course, liability insurance"
+   ],
+   "bond": null,
+   "insurance": "General liability of at least $1,000,000 per incident and $2,000,000 total for the contractor license.",
+   "summary": "Utah licenses plumbers and plumbing contractors through DOPL. Journeymen need an apprenticeship and 8,000 hours (or 16,000 hours without schooling) plus exams; plumbing contractors must have a Master Plumber as qualifier.",
+   "url": "https://commerce.utah.gov/dopl/contracting/apply-for-a-license/general-contractor/",
+   "quote": "Plumbing Contractors. Must have Master Plumber qualifier.",
+   "evidence": [
+    {
+     "url": "https://commerce.utah.gov/dopl/plumbing/apply-for-a-license/journeyman-plumber/utah-applicants/",
+     "quote": "Completion of a plumber's apprenticeship education program (576 classroom hours). 8,000 hours of licensed plumbing experience working under the supervision of a licensed journeyman or master plumber."
+    },
+    {
+     "url": "https://commerce.utah.gov/dopl/plumbing/apply-for-a-license/journeyman-plumber/utah-applicants/",
+     "quote": "16,000 hours of licensed plumber experience working under the supervision of a licensed journeyman or master plumber."
+    },
+    {
+     "url": "https://commerce.utah.gov/dopl/plumbing/apply-for-a-license/master-plumber/utah-applicants/",
+     "quote": "4,000 hours of licensed Journeyman Plumber experience as a supervisor. Pass the Utah Master Plumber Law and Rule Examination."
+    },
+    {
+     "url": "https://commerce.utah.gov/dopl/contracting/apply-for-a-license/specialty-contractor-license/",
+     "quote": "All general contractors (E100, R100, B100), plumbing and electrical contractors require a 30-hour pre-licensure course"
+    },
+    {
+     "url": "https://commerce.utah.gov/dopl/contracting/apply-for-a-license/specialty-contractor-license/",
+     "quote": "You must have obtained a general liability insurance certificate with minimum required coverage of $1,000,000 for each incident and $2,000,000 in total"
+    },
+    {
+     "url": "https://commerce.utah.gov/dopl/plumbing/apply-for-a-license/master-plumber/utah-applicants/",
+     "quote": "Associates of Applied Science degree or a similar degree from an institution recognized by the Council for Higher Education Accreditation (CHEA). 2,000 hours of licensed Journeyman Plumber experience as a supervisor."
+    }
+   ]
+  },
+  "mechanical": {
+   "status": "state_license",
+   "name": "Contractor License - H100 HVAC Contractor",
+   "agency": "Utah Division of Professional Licensing (DOPL)",
+   "covers": "HVAC installation, repair and replacement, including on small handyman-exempt jobs.",
+   "threshold": null,
+   "prerequisites": [
+    "Qualifier passes the H100 written trade exam",
+    "Qualifier is a certified Natural Gas Technician (RMGA or equivalent)",
+    "Qualifier shows 4,000 hours of HVAC employment within the past 5 years (or holds a Utah journeyman/master plumber license)",
+    "Pre-licensure course and liability insurance"
+   ],
+   "bond": null,
+   "insurance": "General liability of at least $1,000,000 per incident and $2,000,000 total.",
+   "summary": "HVAC contractors in Utah need a DOPL H100 license. The qualifier must pass the H100 trade exam, be a certified natural gas technician, and document 4,000 hours of HVAC work in the past 5 years (or hold a plumber license).",
+   "url": "https://commerce.utah.gov/dopl/contracting/apply-for-a-license/general-contractor/",
+   "quote": "Must provide the qualifier’s recent W-2’s, K-1’s, or tax returns showing qualified HVAC employment (4,000 hours within the past 5 years).",
+   "evidence": [
+    {
+     "url": "https://commerce.utah.gov/dopl/contracting/apply-for-a-license/general-contractor/",
+     "quote": "Must pass the written H100 Trade Exam Apply directly with the authorized exam provider."
+    },
+    {
+     "url": "https://commerce.utah.gov/dopl/contracting/apply-for-a-license/general-contractor/",
+     "quote": "Must be a certified Natural Gas Technician. Provide a copy of your RMGA (Rocky Mountain Gas Association) or equivalent certificate with this application."
+    },
+    {
+     "url": "https://commerce.utah.gov/dopl/contracting/apply-for-a-license/specialty-contractor-license/",
+     "quote": "You must have obtained a general liability insurance certificate with minimum required coverage of $1,000,000 for each incident and $2,000,000 in total"
+    }
+   ]
+  },
+  "roofing": {
+   "status": "state_license",
+   "name": "Specialty Contractor License - S280 Roofing Contractor",
+   "agency": "Utah Division of Professional Licensing (DOPL)",
+   "covers": "Roofing contractors (unless working only on handyman-exempt jobs under $7,000).",
+   "threshold": "Handyman exemption for jobs under $7,000.",
+   "prerequisites": [
+    "25-hour pre-licensure course (no experience required for specialty licenses)",
+    "General liability insurance certificate",
+    "Workers' comp certificate or waiver",
+    "Business entity, EIN, withholding and unemployment registrations"
+   ],
+   "bond": null,
+   "insurance": "General liability insurance certificate with DOPL as certificate holder.",
+   "summary": "Utah roofers need a DOPL specialty contractor license in the S280 Roofing classification. Specialty licenses need a 25-hour pre-licensure course and insurance, but no experience.",
+   "url": "https://commerce.utah.gov/dopl/contracting/apply-for-a-license/specialty-contractor-license/",
+   "quote": "Specialty contractors require a 25-hour pre-licensure course.",
+   "evidence": [
+    {
+     "url": "https://commerce.utah.gov/wp-content/uploads/2026/03/contractor-all-classifications.pdf",
+     "quote": "B200 Modular Unit Installation Contractor S280 Roofing Contractor"
+    },
+    {
+     "url": "https://commerce.utah.gov/dopl/contracting/frequently-asked-questions/",
+     "quote": "No experience is required for a specialty contractor license."
+    },
+    {
+     "url": "https://le.utah.gov/xcode/Title58/Chapter55/C58-55-S305_2025050720250507.html",
+     "quote": "a person engaged in the alteration, repair, remodeling, or addition to or improvement of a building with a contracted or agreed value of less than $7,000, including both labor and materials"
+    }
+   ],
+   "note": "The specialty-contractor insurance minimum shown on DOPL's page is the general figure; check the rule for S280-specific amounts."
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Commercial Pesticide Applicator License; Pesticide Applicator Business Registration; Ornamental and Turf Technician permit",
+   "agency": "Utah Department of Agriculture and Food (UDAF)",
+   "covers": "Anyone applying pesticides for hire, and pesticide applicator businesses; lawn herbicide technicians need a permit.",
+   "threshold": null,
+   "prerequisites": [
+    "Show competence (exam) as set by rule",
+    "Register the pesticide applicator business with UDAF",
+    "Ornamental and turf technicians: complete required training"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Utah requires a license from the Department of Agriculture and Food before applying any pesticide for hire, and pesticide application businesses must register. Lawn-care herbicide technicians need an ornamental and turf technician permit.",
+   "url": "https://le.utah.gov/xcode/Title4/Chapter14/C4-14-S103_2022032120220321.html",
+   "quote": "A person shall receive a license before applying: (a) a restricted use pesticide; or (b) a general use pesticide for hire or in exchange for compensation.",
+   "evidence": [
+    {
+     "url": "https://le.utah.gov/xcode/Title4/Chapter14/C4-14-S103_2022032120220321.html",
+     "quote": "showing evidence of competence in the pesticide profession, as established by rule, and complying with the rules adopted by the department under this chapter;"
+    },
+    {
+     "url": "https://le.utah.gov/xcode/Title4/Chapter14/C4-14-S111_2026050620260506.html",
+     "quote": "A pesticide applicator business shall register with the department by: (a) submitting an application on a form provided by the department;"
+    },
+    {
+     "url": "https://le.utah.gov/xcode/Title4/Chapter14/C4-14-S112_2026050620260506.html",
+     "quote": "An individual shall obtain a permit as an ornamental and turf technician before commercially applying a herbicide"
+    }
+   ],
+   "note": "UDAF's website (ag.utah.gov) blocked automated fetching, so statute text is cited."
+  },
+  "asbestos": {
+   "status": "state_license",
+   "name": "Asbestos company and individual certification",
+   "agency": "Utah Department of Environmental Quality, Division of Air Quality (DAQ)",
+   "covers": "Companies and individuals doing asbestos inspections and abatement; renovation and demolition projects require DAQ notification.",
+   "threshold": null,
+   "prerequisites": [
+    "DAQ company certification and individual certification",
+    "Asbestos inspection before renovation/demolition (newer small residential buildings excepted)"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Utah's Division of Air Quality certifies asbestos companies and workers and inspects abatement and demolition projects. Many renovation and demolition projects need an asbestos inspection and notification first.",
+   "url": "https://deq.utah.gov/air-quality/asbestos-program",
+   "quote": "Our team performs compliance inspections of demolition and asbestos abatement projects for which we have been notified, as well as general renovation/remodel projects.",
+   "evidence": [
+    {
+     "url": "https://deq.utah.gov/air-quality/asbestos-program",
+     "quote": "a Utah certified asbestos inspector working for a Utah certified asbestos company"
+    },
+    {
+     "url": "https://deq.utah.gov/air-quality/asbestos-program",
+     "quote": "Residential facilities with four or fewer units built on or after January 1, 1992 will no longer require an asbestos inspection prior to renovation or demolition."
+    }
+   ]
+  },
+  "lead_rrp": {
+   "status": "state_license",
+   "name": "Utah lead-safe renovation (RRP) certification",
+   "agency": "Utah Department of Environmental Quality, Division of Air Quality (EPA-authorized RRP program)",
+   "covers": "Firms and renovators disturbing paint in pre-1978 homes and child-occupied facilities.",
+   "threshold": null,
+   "prerequisites": [
+    "Utah firm certification and certified renovator training"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Utah is authorized by EPA to run its own lead renovation (RRP) program, so contractors working on pre-1978 homes get certified through the Utah Division of Air Quality instead of EPA.",
+   "url": "https://www.epa.gov/node/255913",
+   "quote": "Rhode Island , Utah , Vermont , Washington and Wisconsin , or in the Minnesota Chippewa Tribe - Bois Forte (Nette Lake) should follow the link provided for the state or Tribe for more information about their training and certification requirements. These states are authorized to administer their own RRP programs in lieu of the federal program.",
+   "evidence": [
+    {
+     "url": "https://deq.utah.gov/air-quality/lead-based-paint-program",
+     "quote": "Find a certified professional for your project, learn how to become a certified contractor, or get the information you need to keep your family safe from lead-based paint exposure."
+    },
+    {
+     "url": "https://www.epa.gov/node/255913",
+     "quote": "Federal law requires all renovation, repair, and painting firms (including sole proprietorships) working in housing, or facilities where children are routinely present, built before 1978, to be certified."
+    }
+   ]
+  },
+  "other": [
+   {
+    "key": "gas_appliance",
+    "name": "Natural gas appliance/combustion system certification",
+    "agency": "Utah Division of Professional Licensing (DOPL)",
+    "trades": [
+     "hvac",
+     "plumbing"
+    ],
+    "summary": "Installing or replacing gas appliances or combustion systems, even on small jobs, must be done by a person with the required gas certification.",
+    "url": "https://le.utah.gov/xcode/Title58/Chapter55/C58-55-S305_2025050720250507.html",
+    "quote": "installation, repair, or replacement of a residential or commercial gas appliance or a combustion system on a Subsection (1)(h)(i) project shall be performed by a person who has received certification"
+   },
+   {
+    "key": "fire_sprinkler",
+    "name": "Fire Suppression Systems Contractor",
+    "agency": "Utah Division of Professional Licensing (DOPL)",
+    "trades": [
+     "plumbing"
+    ],
+    "summary": "Water-based fire protection work must be done by a licensed fire suppression contractor or journeyman plumber.",
+    "url": "https://le.utah.gov/xcode/Title58/Chapter55/C58-55-S305_2025050720250507.html",
+    "quote": "installation, repair, or replacement of water-based fire protection systems on a Subsection (1)(h)(i) project must be performed by a licensed fire suppression systems contractor or a licensed journeyman plumber;"
+   },
+   {
+    "key": "alarm",
+    "name": "Alarm Business / Alarm Company Agent License",
+    "agency": "Utah Division of Professional Licensing (DOPL)",
+    "trades": [
+     "electrical"
+    ],
+    "summary": "Alarm system installation requires a licensed alarm business or agent.",
+    "url": "https://le.utah.gov/xcode/Title58/Chapter55/C58-55-S305_2025050720250507.html",
+    "quote": "installation, repair, or replacement of an alarm system on a Subsection (1)(h)(i) project must be performed by a licensed alarm business or company or a licensed alarm company agent;"
+   },
+   {
+    "key": "radon",
+    "name": "Radon mitigation contractor",
+    "agency": "Utah Division of Professional Licensing (DOPL)",
+    "trades": [
+     "basements",
+     "foundations"
+    ],
+    "summary": "Radon mitigation or soil depressurization systems must be installed by a licensed contractor.",
+    "url": "https://le.utah.gov/xcode/Title58/Chapter55/C58-55-S305_2025050720250507.html",
+    "quote": "installation, repair, or replacement of a radon mitigation system or a soil depressurization system must be performed by a licensed contractor;"
+   }
+  ]
+ }
+}

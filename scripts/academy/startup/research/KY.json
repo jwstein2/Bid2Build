@@ -1,0 +1,221 @@
+{
+  "state": "KY",
+  "researched_on": "2026-11-22",
+  "general": {
+    "entity": {
+      "agency": "Kentucky Secretary of State",
+      "summary": "LLCs, corporations and other entities are formed with the Kentucky Secretary of State, mostly online. If you'll do business under a name other than your exact legal name, file a certificate of assumed name (DBA).",
+      "url": "https://www.sos.ky.gov/bus/business-filings/Pages/default.aspx",
+      "quote": "If you decide to form an entity, you can complete most filings online through this website."
+    },
+    "state_tax": {
+      "agency": "Kentucky Department of Revenue",
+      "summary": "Register for state tax accounts (sales and use tax, employer payroll withholding) with the Kentucky Tax Registration Application on MyTaxes.ky.gov.",
+      "url": "https://revenue.ky.gov/Business/Pages/Register-Business.aspx",
+      "quote": "The Kentucky Tax Registration Application allows new businesses or those starting new taxable activities to register for tax accounts."
+    },
+    "unemployment": {
+      "agency": "Kentucky Office of Unemployment Insurance (Kentucky Career Center)",
+      "summary": "Liable employers open an Employer Reserve Account through Kentucky's Unemployment Insurance Self-Service site.",
+      "url": "https://kcc.ky.gov/career/employers/Pages/If-you-are-an-Employer-or-TPA.aspx",
+      "quote": "Apply for an Employer Reserve Account, including for an acquisition or purchase of an existing business;"
+    },
+    "workers_comp": {
+      "agency": "Kentucky Department of Workers' Claims",
+      "summary": "Any business (other than agriculture) with one or more employees in Kentucky must carry workers' compensation. State-licensed electricians, plumbers and HVAC contractors must also show proof of workers' comp to get licensed.",
+      "url": "https://apps.legislature.ky.gov/law/statutes/statute.aspx?id=32533",
+      "quote": "Any person, other than one engaged solely in agriculture, that has in this state one (1) or more employees subject to this chapter."
+    },
+    "local": {
+      "summary": "After forming your business, also register with county and city governments as needed; many Kentucky cities and counties charge occupational license fees.",
+      "url": "https://revenue.ky.gov/Business/Pages/Register-Business.aspx",
+      "quote": "Register with other State, County, and Local Governments as appropriate for your business."
+    }
+  },
+  "credentials": {
+    "residential_building": {
+      "status": "no_state_license",
+      "name": null,
+      "agency": "Cities and counties",
+      "covers": "General and remodeling contractors; any licensing is local.",
+      "threshold": null,
+      "prerequisites": [],
+      "bond": null,
+      "insurance": null,
+      "summary": "Kentucky does not issue a state general or residential contractor license. Check with the city and county where you work for any local license or registration.",
+      "url": "https://revenue.ky.gov/Business/Pages/Register-Business.aspx",
+      "quote": "Register with other State, County, and Local Governments as appropriate for your business.",
+      "note": "No state statute or agency page creating a general/residential contractor license was found; the state Department of Housing, Buildings and Construction licenses electrical, plumbing, HVAC, fire sprinkler and elevator trades only. The quote supports checking local requirements, not the absence of a state license itself."
+    },
+    "commercial_building": {
+      "status": "no_state_license",
+      "name": null,
+      "agency": "Cities and counties",
+      "covers": "Commercial general contractors; any licensing is local.",
+      "threshold": null,
+      "prerequisites": [],
+      "bond": null,
+      "insurance": null,
+      "summary": "There is no state commercial general contractor license in Kentucky; check local requirements.",
+      "url": "https://revenue.ky.gov/Business/Pages/Register-Business.aspx",
+      "quote": "Register with other State, County, and Local Governments as appropriate for your business.",
+      "note": "Same as residential: absence of a state license is inferred from the state's licensing statutes, not stated on one official page."
+    },
+    "electrical": {
+      "status": "state_license",
+      "name": "Electrical Contractor, Master Electrician, Electrician licenses",
+      "agency": "KY Dept. of Housing, Buildings and Construction (DHBC)",
+      "covers": "Electrical contracting businesses and the electricians doing the work.",
+      "threshold": null,
+      "prerequisites": [
+        "Contractor: hold or employ a Kentucky master electrician",
+        "Contractor: pass the Business and Law exam",
+        "Contractor: general liability insurance of not less than $1,000,000 plus workers' comp and unemployment insurance compliance",
+        "Master electrician: 16,000 hours of experience since age sixteen and pass the master exam",
+        "Electrician: 8,000 hours of experience since age sixteen and pass the journeyman exam"
+      ],
+      "bond": null,
+      "insurance": "General liability of not less than $1,000,000; workers' comp (or a notarized waiver for sole proprietors with no employees)",
+      "summary": "Kentucky licenses electrical contractors, master electricians and electricians. A contractor must be or employ a master electrician, pass a business and law exam, and carry at least $1,000,000 in general liability insurance.",
+      "url": "https://dhbc.ky.gov/Documents/Electrical%20New%20Application%20Checklistst%202.4.25.pdf",
+      "quote": "In order to apply for your electrical contractor’s license, you will need a Kentucky master electrician license or employ a Kentucky licensed master electrician.",
+      "evidence": [
+        {"url": "https://dhbc.ky.gov/Documents/Electrical%20New%20Application%20Checklistst%202.4.25.pdf", "quote": "Send a copy of your passing test results for Business and Law Exam with PROV or Pearson Vue."},
+        {"url": "https://apps.legislature.ky.gov/law/statutes/statute.aspx?id=55092", "quote": "Has submitted proof that he or she has complied with workers' compensation and unemployment insurance laws and administrative regulations and has obtained a general liability insurance policy of not less than one million dollars ($1,000,000)."},
+        {"url": "https://dhbc.ky.gov/Documents/Electrical%20New%20Application%20Checklistst%202.4.25.pdf", "quote": "Proof of experience totaling 16,000 hours in the electrical trade since your sixteenth birthday."},
+        {"url": "https://dhbc.ky.gov/Documents/Electrical%20New%20Application%20Checklistst%202.4.25.pdf", "quote": "Proof of experience totaling 8,000 hours in the electrical trade since your sixteenth birthday."},
+        {"url": "https://dhbc.ky.gov/Documents/Electrical%20New%20Application%20Checklistst%202.4.25.pdf", "quote": "If you do not have employees, you may submit a notarized workers compensation waiver. It must state you are the sole proprietor and have no employees."}
+      ],
+      "note": "Approved training, apprenticeship or a degree can substitute for some of the experience hours."
+    },
+    "plumbing": {
+      "status": "state_license",
+      "name": "Master Plumber and Journeyman Plumber licenses",
+      "agency": "KY Dept. of Housing, Buildings and Construction (DHBC)",
+      "covers": "Anyone doing plumbing work; a plumbing business must be run under an active master plumber license.",
+      "threshold": null,
+      "prerequisites": [
+        "Journeyman: two consecutive years as an apprentice plumber (or an approved course plus one year) and pass the state exam",
+        "Master: journeyman license held two years within the past five years, plus two years under a master, and pass the master exam",
+        "General liability insurance of not less than $250,000 and workers' comp/unemployment compliance"
+      ],
+      "bond": null,
+      "insurance": "General liability of not less than $250,000, plus proof of workers' comp and unemployment insurance compliance",
+      "summary": "Kentucky requires a state master or journeyman plumber license to do plumbing. To get the active master license that a plumbing business operates under, you need journeyman experience, a passing exam score and at least $250,000 in liability insurance.",
+      "url": "https://apps.legislature.ky.gov/law/statutes/statute.aspx?id=31186",
+      "quote": "No person shall engage in plumbing or engage in or work at the trade of plumbing: (a) Unless he or she is the holder of a valid and effective active master plumber's license",
+      "evidence": [
+        {"url": "https://apps.legislature.ky.gov/law/statutes/statute.aspx?id=31186", "quote": "maintains general liability insurance in an amount not less than two hundred fifty thousand dollars ($250,000) and submits proof of compliance with workers' compensation and unemployment insurance laws"},
+        {"url": "https://apps.legislature.ky.gov/Law/KAR/815/020/030.pdf", "quote": "Have held a valid journeyman plumber's license for a minimum of two (2) years within the past five (5) years immediately preceding application and be actively employed in plumbing under the supervision of a licensed master plumber for a minimum of two (2) years"},
+        {"url": "https://apps.legislature.ky.gov/Law/KAR/815/020/030.pdf", "quote": "At least two (2) consecutive years of experience as an apprentice plumber"},
+        {"url": "https://apps.legislature.ky.gov/Law/KAR/815/020/030.pdf", "quote": "Complete a department approved course that includes content on the practice of plumbing or the Kentucky State Plumbing Code and at least one (1) year of experience as an apprentice plumber."}
+      ]
+    },
+    "mechanical": {
+      "status": "state_license",
+      "name": "Master HVAC Contractor and Journeyman HVAC Mechanic licenses",
+      "agency": "KY Dept. of Housing, Buildings and Construction (DHBC)",
+      "covers": "Heating, ventilation and air conditioning contracting.",
+      "threshold": null,
+      "prerequisites": [
+        "Master HVAC contractor: be at least 18",
+        "Master: two years as a journeyman under a master HVAC contractor (or two years as a master elsewhere, or as a licensed mechanical engineer)",
+        "Pass the department's HVAC exam",
+        "General liability insurance of not less than $500,000 and property damage insurance of not less than $300,000"
+      ],
+      "bond": null,
+      "insurance": "General liability of not less than $500,000 and property damage of not less than $300,000",
+      "summary": "Kentucky licenses HVAC contractors and mechanics. A master HVAC contractor needs two years as a journeyman under a master, a passing exam, and liability and property damage insurance.",
+      "url": "https://apps.legislature.ky.gov/law/statutes/statute.aspx?id=52407",
+      "quote": "Have been regularly and principally employed or engaged in heating, ventilation, and air conditioning trades as a journeyman heating, ventilation, and air conditioning mechanic for not less than two (2) years under the direction and supervision of a master heating, ventilation, and air conditioning contractor;",
+      "evidence": [
+        {"url": "https://apps.legislature.ky.gov/law/statutes/statute.aspx?id=52407", "quote": "Be at least eighteen (18) years of age;"},
+        {"url": "https://apps.legislature.ky.gov/law/statutes/statute.aspx?id=52407", "quote": "Have passed an examination prescribed by the department to determine the applicant's competency to practice heating, ventilation, and air conditioning contracting"},
+        {"url": "https://apps.legislature.ky.gov/law/statutes/statute.aspx?id=46948", "quote": "general liability insurance in an amount not less than five hundred thousand dollars ($500,000) and property damage insurance in an amount not less than three hundred thousand dollars ($300,000)"}
+      ]
+    },
+    "roofing": {
+      "status": "no_state_license",
+      "name": null,
+      "agency": "Cities and counties",
+      "covers": "Roofing contractors; any licensing is local.",
+      "threshold": null,
+      "prerequisites": [],
+      "bond": null,
+      "insurance": null,
+      "summary": "Kentucky has no state roofing license; check local city and county requirements.",
+      "url": "https://revenue.ky.gov/Business/Pages/Register-Business.aspx",
+      "quote": "Register with other State, County, and Local Governments as appropriate for your business.",
+      "note": "No state roofing licensing statute was found; absence is inferred, not stated on an official page."
+    },
+    "pesticide": {
+      "status": "state_license",
+      "name": "Pesticide Operator's License (lawn/ornamental, etc.); Structural Pest Management License",
+      "agency": "Kentucky Department of Agriculture",
+      "covers": "Businesses applying pesticides to other people's land (lawn care, weed control) and anyone doing structural pest control or fumigation.",
+      "threshold": null,
+      "prerequisites": [
+        "Valid applicator certification in the category (exam)",
+        "Registered as a dealer or employed by a registered dealer",
+        "Surety bond or liability insurance of not less than $1,000,000 for dealers applying pesticides to others' land"
+      ],
+      "bond": "Surety bond or liability insurance of not less than $1,000,000",
+      "insurance": "Liability insurance of not less than $1,000,000 (alternative to bond)",
+      "summary": "A lawn-spraying or pest control business needs a Kentucky Department of Agriculture license: an operator's license backed by certification for lawn and land applications, or a structural pest management license for pest control. The business must carry a $1,000,000 bond or liability insurance.",
+      "url": "https://apps.legislature.ky.gov/law/statutes/statute.aspx?id=51109",
+      "quote": "No person shall engage in the business of applying pesticides to the lands of another within this state at any time without a pesticide operator's license issued by the department.",
+      "evidence": [
+        {"url": "https://apps.legislature.ky.gov/law/statutes/statute.aspx?id=51109", "quote": "No license shall be issued unless the applicant holds a valid certification within this category."},
+        {"url": "https://apps.legislature.ky.gov/law/statutes/statute.aspx?id=51109", "quote": "No license shall be issued unless the applicant is registered as a dealer or is employed by a person who is registered as a dealer."},
+        {"url": "https://apps.legislature.ky.gov/law/statutes/statute.aspx?id=51124", "quote": "No person shall engage in structural pest management or structural fumigation without first obtaining a license from the department certifying competence to make commercial or noncommercial pesticide applications."},
+        {"url": "https://apps.legislature.ky.gov/law/statutes/statute.aspx?id=9539", "quote": "The amount of the surety bond or liability insurance as provided for in this section shall be not less than one million dollars ($1,000,000)."}
+      ],
+      "note": "The Department of Agriculture's own site (www.kyagr.com) is not on a .gov host, so statutes are cited."
+    },
+    "asbestos": {
+      "status": "state_license",
+      "name": "Asbestos abatement entity certificate (and individual accreditation)",
+      "agency": "Kentucky Energy and Environment Cabinet, Division for Air Quality",
+      "covers": "Businesses doing regulated asbestos abatement projects.",
+      "threshold": null,
+      "prerequisites": ["Complete the required asbestos training before applying", "Pass a compliance demonstration on an abatement project"],
+      "bond": null,
+      "insurance": null,
+      "summary": "An asbestos abatement business needs a certificate from the Energy and Environment Cabinet before doing regulated abatement work. Training must be completed before applying.",
+      "url": "https://apps.legislature.ky.gov/Law/KAR/401/058/040.pdf",
+      "quote": "A certificate to engage in an asbestos abatement project has been issued by the cabinet in accordance with this administrative regulation and is currently in effect.",
+      "evidence": [
+        {"url": "https://apps.legislature.ky.gov/Law/KAR/401/058/040.pdf", "quote": "An asbestos abatement entity shall not be considered for certification unless the training requirements of Section 10 of this administrative regulation have been completed prior to application."},
+        {"url": "https://apps.legislature.ky.gov/Law/KAR/401/058/040.pdf", "quote": "including its approval or denial, within thirty (30) days after attendance at the asbestos abatement project demonstration"}
+      ]
+    },
+    "lead_rrp": {
+      "status": "no_state_license",
+      "name": "EPA RRP Firm Certification and Certified Renovator",
+      "agency": "U.S. EPA",
+      "covers": "Paid renovation, repair and painting in pre-1978 housing and child-occupied facilities.",
+      "threshold": null,
+      "prerequisites": ["EPA firm certification", "Certified renovator training"],
+      "bond": null,
+      "insurance": null,
+      "summary": "Kentucky is not authorized to run its own lead renovation program, so firms get RRP certification directly from EPA and use EPA-certified renovators for work on homes built before 1978.",
+      "url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-firm-certification",
+      "quote": "EPA's renovation program applies to all states, Tribes and territories where EPA has not specifically provided authorization for that state, Tribe or territory to operate the program themselves.",
+      "evidence": [
+        {"url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-firm-certification", "quote": "Federal law requires all renovation, repair, and painting firms (including sole proprietorships) working in housing, or facilities where children are routinely present, built before 1978, to be certified."},
+        {"url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program", "quote": "EPA administers the RRP Program in most Tribes, states and territories, but has authorized the following to operate their own programs: Alabama, Delaware, Georgia, Iowa, Kansas, Massachusetts, Mississippi, North Carolina, Oklahoma, Oregon, Rhode Island, Utah, Vermont, Washington, Wisconsin"}
+      ]
+    },
+    "other": [
+      {
+        "key": "fire_sprinkler",
+        "name": "Fire Protection Sprinkler Contractor License/Certificate",
+        "agency": "KY Dept. of Housing, Buildings and Construction (DHBC)",
+        "trades": ["plumbing", "general-contracting"],
+        "summary": "Installing, repairing or inspecting fire sprinkler systems requires a state fire protection sprinkler contractor license or certificate.",
+        "url": "https://apps.legislature.ky.gov/law/statutes/statute.aspx?id=41124",
+        "quote": "no person other than a certificate holder or an employee of a certificate holder shall engage in the preparation of technical drawings, installation, repair, alteration, extension, maintenance or inspection of a fire protection sprinkler system"
+      }
+    ]
+  }
+}

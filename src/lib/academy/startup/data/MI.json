@@ -1,0 +1,299 @@
+{
+ "state": "MI",
+ "researched_on": "2026-11-22",
+ "checked_at": "2026-11-22T21:48:10Z",
+ "general": {
+  "entity": {
+   "agency": "LARA Corporations Division",
+   "summary": "Form your corporation or LLC with LARA's Corporations Division, preferably online through the MiBusiness Registry Portal.",
+   "url": "https://www.michigan.gov/lara/bureau-list/cscl/corps",
+   "quote": "The Division provides services that enable corporations, limited partnerships, limited liability companies, and limited liability partnerships to be formed",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "state_tax": {
+   "agency": "Michigan Department of Treasury",
+   "summary": "Register for Michigan business taxes (sales/use, withholding) online through Michigan Treasury Online or by mailing Form 518. You need a federal EIN to register online.",
+   "url": "https://www.michigan.gov/taxes/questions/tax-faqs/michigan-treasury-online/mto-registration",
+   "quote": "To register for Michigan business taxes, you may either complete the online eRegistration process through MTO or mail Form 518.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "unemployment": {
+   "agency": "Michigan Unemployment Insurance Agency (UIA)",
+   "summary": "You become a liable employer for Michigan unemployment taxes once you have at least one worker in 20 different weeks of a year (or meet the payroll test), and then must register with UIA.",
+   "url": "https://www.michigan.gov/leo/-/media/Project/Websites/leo/Documents/UIA/Publications/MI-Employer-Liability-Toolkit.pdf?rev=c25f0ce0adc44394ab8ab2b847f6d382&hash=33E186F4CBDA42AEF524ACB1517D1573",
+   "quote": "Employment - the employing unit has at least one worker in 20 diferent weeks in a calendar year.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "workers_comp": {
+   "agency": "Workers' Disability Compensation Agency (LEO)",
+   "summary": "Private employers must carry workers' comp if they regularly employ 3 or more people at one time (including part-timers), or even 1 person working 35+ hours a week for 13 weeks or longer in the past 52 weeks.",
+   "url": "https://www.michigan.gov/leo/bureaus-agencies/wdca/insurance-requirements/pages/workers-disability-compensation-insurance-requirements",
+   "quote": "All private employers regularly employing 1 or more employees 35 hours or more per week for 13 weeks or longer during the preceding 52 weeks. b. All private employers regularly employing 3 or more employees at one time. (This includes part-time employees.)",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "state_license",
+   "name": "Residential Builder license; Maintenance & Alteration Contractor license",
+   "agency": "LARA Bureau of Construction Codes",
+   "covers": "Anyone paid to build, repair, alter, add to or improve a residential (or combination residential/commercial) structure. M&A contractors are licensed for specific trades such as carpentry, concrete, roofing, siding, gutters, insulation, masonry, tile, excavation and basement waterproofing.",
+   "threshold": null,
+   "prerequisites": [
+    "60 hours of approved prelicensure education",
+    "Pass the Residential Builder or M&A Contractor exam",
+    "Good moral character"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Michigan requires a residential builder license (or a maintenance & alteration contractor license for specific trades) to build or remodel homes for pay. You must finish 60 hours of approved prelicensure courses and then pass the state exam.",
+   "url": "https://www.michigan.gov/lara/bureau-list/bcc/sections/licensing-section/residential-builders",
+   "quote": "was created to license and regulate persons engaged in the construction of a residential structure or combination residential and commercial structure, or persons who undertake the repair, alteration, addition, subtraction or improvement of a residential structure",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.michigan.gov/lara/bureau-list/bcc/Sections/Licensing-Section/residential-builders/forms/prelicensure-education-requirements-for-residential-builder-and-maintenance-alteration-contractor-a",
+     "quote": "an applicant for a Residential Builder or Maintenance & Alteration Contractor license must complete 60 hours of approved prelicensure education prior to taking the examination or submitting a license application to the Department."
+    },
+    {
+     "url": "https://www.michigan.gov/lara/bureau-list/bcc/Sections/Licensing-Section/residential-builders/forms/prelicensure-education-requirements-for-residential-builder-and-maintenance-alteration-contractor-a",
+     "quote": "Be of good moral character; and Successfully complete the Residential Builder or Maintenance & Alteration Contractor examination"
+    },
+    {
+     "url": "https://www.michigan.gov/lara/bureau-list/bcc/sections/licensing-section/residential-builders/lic-info/maintenance-alteration-contractor-license-information",
+     "quote": "carpentry concrete excavation insulation work masonry siding roofing screens and storm sash gutters tile & marble house wrecking swimming pools basement waterproofing"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "commercial_building": {
+   "status": "no_state_license",
+   "name": null,
+   "agency": "LARA Bureau of Construction Codes",
+   "covers": "Purely commercial general contracting is not covered by the residential builder license; combination residential/commercial structures are.",
+   "threshold": null,
+   "prerequisites": [],
+   "bond": null,
+   "insurance": null,
+   "summary": "Michigan's builder license covers residential and combination residential/commercial structures; the state does not issue a separate general contractor license for purely commercial work. Trade work (electrical, plumbing, mechanical) still needs state trade licenses, and local permits apply.",
+   "url": "https://www.michigan.gov/lara/bureau-list/bcc/sections/licensing-section/residential-builders",
+   "quote": "was created to license and regulate persons engaged in the construction of a residential structure or combination residential and commercial structure",
+   "note": "Absence of a commercial GC license is inferred from the scope of the residential builder law; no page states it outright.",
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "electrical": {
+   "status": "state_license",
+   "name": "Electrical Contractor license; Master Electrician; Electrical Journeyman; Apprentice registration",
+   "agency": "LARA Bureau of Construction Codes",
+   "covers": "Anyone doing business as an electrician needs an electrical contractor license tied to a master electrician.",
+   "threshold": null,
+   "prerequisites": [
+    "Hold or employ a Master Electrician",
+    "Journeyman: 8,000 hours and 4 years as an apprentice, pass exam",
+    "Master: 4,000 hours as a journeyman, hold that license 2 years, pass exam"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "To run an electrical business you need an electrical contractor license, which requires holding or hiring a master electrician. Becoming a journeyman takes 8,000 hours over 4 years as an apprentice plus an exam; a master needs journeyman experience and another exam.",
+   "url": "https://www.michigan.gov/lara/bureau-list/bcc/sections/licensing-section/exam-lic/electrical-examination-licensing-registration-application-information",
+   "quote": "This is required if you want to do business as an electrician. You need to either hold a Master Electrician license or hire someone who holds a Master Electrician license.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.michigan.gov/lara/bureau-list/bcc/sections/licensing-section/exam-lic/electrical-examination-licensing-registration-application-information",
+     "quote": "You need to have completed 8,000 hours AND 4 years as an electrical apprentice."
+    },
+    {
+     "url": "https://www.michigan.gov/lara/bureau-list/bcc/sections/licensing-section/exam-lic/electrical-examination-licensing-registration-application-information",
+     "quote": "You need have completed 4,000 hours as an electrical journey AND have held that license for at least 2 years."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "plumbing": {
+   "status": "state_license",
+   "name": "Plumbing Contractor license; Master Plumber; Journey Plumber",
+   "agency": "LARA Bureau of Construction Codes",
+   "covers": "Plumbing businesses; the contractor must hold or employ a master plumber.",
+   "threshold": null,
+   "prerequisites": [
+    "Hold or employ a licensed master plumber",
+    "Master plumber: 4,000 hours as a journey plumber over at least 2 years, pass exam",
+    "Pass the contractor exam"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "A plumbing contractor license requires a licensed master plumber as owner or representative and passing the exam. Master plumbers need journey plumber experience before testing.",
+   "url": "https://www.michigan.gov/lara/bureau-list/bcc/sections/licensing-section/exam-lic/plumbing-examination-licensing-registration-application-information",
+   "quote": "The applicant must either hold a master plumber license or employ the holder of a master plumber license as his or her representative.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.michigan.gov/lara/bureau-list/bcc/sections/licensing-section/exam-lic/plumbing-examination-licensing-registration-application-information",
+     "quote": "Must have 4,000 hours experience in work as a journey plumber over a period of not less than 2 years immediately preceding the date of the application."
+    },
+    {
+     "url": "https://www.michigan.gov/lara/bureau-list/bcc/sections/licensing-section/exam-lic/plumbing-examination-licensing-registration-application-information",
+     "quote": "Must pay the examination fee and pass the examination. Must pay the license fee. The contractor license will not be issued without master plumber representation."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "mechanical": {
+   "status": "state_license",
+   "name": "Mechanical Contractor license (by work classification)",
+   "agency": "LARA Bureau of Construction Codes",
+   "covers": "HVAC equipment, ductwork, hydronic heating, refrigeration, heating and AC service, fuel gas piping and other mechanical classifications.",
+   "threshold": null,
+   "prerequisites": [
+    "At least 3 years of experience in each work classification",
+    "Pass an exam for each classification"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "HVAC and other mechanical contractors need a state mechanical contractor license for each work classification. Each classification requires 3 years of experience and a passing exam.",
+   "url": "https://www.michigan.gov/lara/bureau-list/bcc/sections/licensing-section/exam-lic/mechanical-examination-licensing-registration-application-information",
+   "quote": "Licensed Mechanical Contractors can perform installations, alterations, servicing, and secure permits. Must have a minimum of 3 years experience in each of the work classifications applied for below.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.michigan.gov/lara/bureau-list/bcc/sections/licensing-section/exam-lic/mechanical-examination-licensing-registration-application-information",
+     "quote": "Must take and pass an examination for each work classification desired."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "roofing": {
+   "status": "state_license",
+   "name": "Maintenance & Alteration Contractor license (roofing trade) or Residential Builder license",
+   "agency": "LARA Bureau of Construction Codes",
+   "covers": "Residential roofing is one of the licensed maintenance & alteration trades.",
+   "threshold": null,
+   "prerequisites": [
+    "60 hours of approved prelicensure education",
+    "Pass the M&A Contractor exam"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Residential roofers need a maintenance & alteration contractor license listing roofing (or a full residential builder license), which requires 60 hours of prelicensure courses and a state exam.",
+   "url": "https://www.michigan.gov/lara/bureau-list/bcc/sections/licensing-section/residential-builders/lic-info/maintenance-alteration-contractor-license-information",
+   "quote": "The trades, or crafts for which a maintenance & alteration contractor is qualified to practice are listed on the license.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.michigan.gov/lara/bureau-list/bcc/sections/licensing-section/residential-builders/lic-info/maintenance-alteration-contractor-license-information",
+     "quote": "carpentry concrete excavation insulation work masonry siding roofing screens and storm sash gutters tile & marble house wrecking swimming pools basement waterproofing"
+    },
+    {
+     "url": "https://www.michigan.gov/lara/bureau-list/bcc/Sections/Licensing-Section/residential-builders/forms/prelicensure-education-requirements-for-residential-builder-and-maintenance-alteration-contractor-a",
+     "quote": "an applicant for a Residential Builder or Maintenance & Alteration Contractor license must complete 60 hours of approved prelicensure education prior to taking the examination or submitting a license application to the Department."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Commercial Applicator certification or Registered Applicator; Pesticide Application Business License",
+   "agency": "Michigan Department of Agriculture and Rural Development (MDARD)",
+   "covers": "Applying pesticides for hire (pest control, lawn care, weed control, tree spraying).",
+   "threshold": null,
+   "prerequisites": [
+    "Pass MDARD exam(s) for certification or registration",
+    "Pesticide application business license for the company"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Applicators must be certified or registered by MDARD after passing exams, and a company that applies pesticides for hire also needs a pesticide application business license.",
+   "url": "https://www.michigan.gov/mdard/licensing/pesticide/pesticide-application-business",
+   "quote": "In addition to becoming certified/registered pesticide applicator, applicators must obtain a pesticide application business license to apply pesticides for hire.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.michigan.gov/mdard/licensing/pesticide/pesticide-applicator-certification",
+     "quote": "To be awarded a certification or registration credential by MDARD, applicators must apply for the credential and pass exam(s) to demonstrate their knowledge of responsible and legal pesticide use."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "asbestos": {
+   "status": "state_license",
+   "name": "Asbestos Abatement Contractor license; worker/supervisor accreditation",
+   "agency": "MIOSHA Asbestos Program (LEO)",
+   "covers": "Any company hired to remove or encapsulate friable asbestos on someone else's property (with limited exceptions for licensed trades).",
+   "threshold": null,
+   "prerequisites": [
+    "Workers' compensation insurance",
+    "Accreditation for all workers and supervisors"
+   ],
+   "bond": null,
+   "insurance": "Workers' compensation insurance.",
+   "summary": "Asbestos removal or encapsulation for others requires a MIOSHA asbestos abatement contractor license. You must have workers' comp and show all workers and supervisors are accredited.",
+   "url": "https://www.michigan.gov/leo/bureaus-agencies/miosha/divisions/construction-safety-and-health-division/asbestos-program/asbestos-abatement-contractor-licensing",
+   "quote": "any individual or company within Michigan that is hired to remove or encapsulate friable asbestos on the premises of another, must be licensed by the Asbestos Program before engaging in any asbestos abatement activities.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.michigan.gov/leo/bureaus-agencies/miosha/divisions/construction-safety-and-health-division/asbestos-program/asbestos-abatement-contractor-licensing",
+     "quote": "To become licensed, contractors must have workers' compensation insurance and proof that all workers and supervisors have been accredited"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "lead_rrp": {
+   "status": "no_state_license",
+   "name": "EPA Lead-Safe Certified Firm + Certified Renovator (federal)",
+   "agency": "U.S. EPA",
+   "covers": "Paid renovation, repair and painting that disturbs paint in pre-1978 homes, childcare facilities and preschools.",
+   "threshold": null,
+   "prerequisites": [
+    "EPA firm certification",
+    "Certified renovator training"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Michigan is not on EPA's list of states running their own RRP program, so renovation firms are certified directly by EPA and need a certified renovator on the job.",
+   "url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program",
+   "quote": "EPA administers the RRP Program in most Tribes, states and territories, but has authorized the following to operate their own programs: Alabama, Delaware, Georgia, Iowa, Kansas, Massachusetts, Mississippi, North Carolina, Oklahoma, Oregon, Rhode Island, Utah, Vermont, Washington, Wisconsin",
+   "note": "Lead abatement (not renovation) is separately licensed by the Michigan Department of Health and Human Services; not verified here.",
+   "evidence": [
+    {
+     "url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program",
+     "quote": "EPA's RRP Rule requires that anyone paid to perform work that disturbs painted surfaces in homes, childcare facilities and preschools built before 1978 be certified and their employees be trained"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "other": [
+  {
+   "key": "residential_salesperson",
+   "name": "Residential Builder / M&A Salesperson license",
+   "agency": "LARA Bureau of Construction Codes",
+   "trades": [
+    "general-contracting",
+    "roofing",
+    "siding",
+    "windows-doors"
+   ],
+   "summary": "Anyone paid to sell or solicit jobs for a residential builder or M&A contractor must hold a salesperson license tied to that licensee.",
+   "url": "https://www.michigan.gov/lara/bureau-list/bcc/sections/licensing-section/residential-builders/lic-info/salesperson-license-information",
+   "quote": "Anyone who, for compensation, solicits or secures business for a residential builder or maintenance and alteration (M&A) contractor must be licensed to that residential builder or M&A contractor as a residential builder or M&A contractor salesperson.",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ ]
+}

@@ -1,0 +1,287 @@
+{
+ "state": "IL",
+ "researched_on": "2026-11-22",
+ "checked_at": "2026-11-22T21:48:10Z",
+ "general": {
+  "entity": {
+   "agency": "Illinois Secretary of State",
+   "summary": "Corporations, S corporations and LLCs doing business in Illinois must register with the Illinois Secretary of State.",
+   "url": "https://tax.illinois.gov/content/dam/soi/en/web/tax/businesses/documents/pio-117.pdf",
+   "quote": "If you are conducting business in Illinois and choose to organize as a corporation, an S corporation, or an LLC, you must register with the Illinois Secretary of State.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "state_tax": {
+   "agency": "Illinois Department of Revenue",
+   "summary": "Register with the Department of Revenue (Form REG-1, online through MyTax Illinois) before you make purchases or sales or hire an employee.",
+   "url": "https://tax.illinois.gov/businesses/registration.html",
+   "quote": "Register with us, using one of the above methods, before you make any purchases, sales, or hire an employee.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "unemployment": {
+   "agency": "Illinois Department of Employment Security (IDES)",
+   "summary": "Employers can register with IDES for unemployment insurance through MyTax Illinois when they register with the Department of Revenue.",
+   "url": "https://tax.illinois.gov/businesses/registration.html",
+   "quote": "If necessary, you may also register with the Illinois Department of Employment Security (IDES) using MyTax Illinois.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "workers_comp": {
+   "agency": "Illinois Workers' Compensation Commission",
+   "summary": "Not confirmed from an official page: the Commission's site loads its content by script and the statute host (ilga.gov) failed a TLS check. Roofing contractors with employees must prove workers' comp coverage to get licensed.",
+   "url": null,
+   "quote": null,
+   "pending_reason": "Official page or quote missing.",
+   "status_check": "pending_review"
+  }
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "local_only",
+   "name": null,
+   "agency": "Cities and counties (no state license)",
+   "covers": "General and residential contractors are not licensed by the state; check with your city or county.",
+   "threshold": null,
+   "prerequisites": [],
+   "bond": null,
+   "insurance": null,
+   "summary": "Illinois has no state general or residential contractor license; the state licensing agency's list of regulated professions has none. Check your city or county for local licensing, and note that roofing and plumbing are licensed by the state.",
+   "url": "https://idfpr.illinois.gov/profs/proflist.html",
+   "quote": "Professions and Industries regulated by IDFPR are organized below alphabetically for your convenience.",
+   "note": "Absence from IDFPR's profession list; Illinois statutes on ilga.gov could not be fetched (TLS certificate error) to cite municipal licensing authority. The Attorney General's Home Repair and Remodeling guidance applies to consumer contracts.",
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "commercial_building": {
+   "status": "local_only",
+   "name": null,
+   "agency": "Cities and counties (no state license)",
+   "covers": "Commercial general contractors are not licensed by the state.",
+   "threshold": null,
+   "prerequisites": [],
+   "bond": null,
+   "insurance": null,
+   "summary": "There is no state commercial general contractor license in Illinois; licensing, if any, is local.",
+   "url": "https://idfpr.illinois.gov/profs/proflist.html",
+   "quote": "Professions and Industries regulated by IDFPR are organized below alphabetically for your convenience.",
+   "note": "Based on absence from IDFPR's profession list.",
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "electrical": {
+   "status": "local_only",
+   "name": null,
+   "agency": "Cities and counties (no state license)",
+   "covers": "Electrical contractors and electricians are not licensed by the state.",
+   "threshold": null,
+   "prerequisites": [],
+   "bond": null,
+   "insurance": null,
+   "summary": "Illinois does not issue a state electrician or electrical contractor license; many cities and counties license electrical contractors locally.",
+   "url": "https://idfpr.illinois.gov/profs/proflist.html",
+   "quote": "Professions and Industries regulated by IDFPR are organized below alphabetically for your convenience.",
+   "note": "Based on absence from IDFPR's profession list; the municipal licensing statute on ilga.gov could not be fetched.",
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "plumbing": {
+   "status": "state_license",
+   "name": "Illinois Plumber license, Apprentice Plumber license, Plumbing Contractor registration",
+   "agency": "Illinois Department of Public Health (IDPH), Plumbing Program",
+   "covers": "Plumbers, apprentices, and any licensed plumber doing work for another person (plumbing contractor).",
+   "threshold": null,
+   "prerequisites": [
+    "At least 4 years as a licensed apprentice plumber",
+    "At least 2 years of high school (or equivalent) plus approved course instruction",
+    "Pass the plumber exam",
+    "Contractor: general liability, bodily injury, property damage and workers' compensation insurance"
+   ],
+   "bond": null,
+   "insurance": "Plumbing contractors: general liability, bodily injury, property damage and workers' compensation insurance",
+   "summary": "Plumbers in Illinois need a state license from IDPH, earned after years as a licensed apprentice and passing the exam. Plumbers who work for others must also register as plumbing contractors and carry liability and workers' comp insurance.",
+   "url": "https://dph.illinois.gov/topics-services/environmental-health-protection/plumbing.html",
+   "quote": "Under the Illinois Plumbing License Law (225 ILCS 320), the Department licenses plumbers, plumbing contractors, plumbers’ apprentices, irrigation contractors and retired plumbers.",
+   "note": "The City of Chicago issues its own plumber licenses with a reciprocity path.",
+   "evidence": [
+    {
+     "url": "https://dph.illinois.gov/topics-services/environmental-health-protection/plumbing.html",
+     "quote": "Applicants must have been employed as a licensed apprentice plumber for a minimum of 4 years, and have successfully completed at least 2 years of high school or equivalent in addition to completing an approved course instruction through a college, university or trade school."
+    },
+    {
+     "url": "https://dph.illinois.gov/topics-services/environmental-health-protection/plumbing.html",
+     "quote": "Plumbing contractors must maintain minimum general liability insurance, bodily injury insurance, property damage insurance, and worker’s compensation insurance."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "mechanical": {
+   "status": "local_only",
+   "name": null,
+   "agency": "Cities and counties (no state license)",
+   "covers": "HVAC contractors are not licensed by the state.",
+   "threshold": null,
+   "prerequisites": [],
+   "bond": null,
+   "insurance": null,
+   "summary": "Illinois has no state HVAC license; check local requirements.",
+   "url": "https://idfpr.illinois.gov/profs/proflist.html",
+   "quote": "Professions and Industries regulated by IDFPR are organized below alphabetically for your convenience.",
+   "note": "Based on absence from IDFPR's profession list.",
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "roofing": {
+   "status": "state_license",
+   "name": "Roofing Contractor license, Limited (residential) or Unlimited, with a Qualifying Party",
+   "agency": "Illinois Department of Financial and Professional Regulation (IDFPR)",
+   "covers": "Roofing contractors; Limited covers residential roofing (8 units or less), Unlimited adds commercial and industrial.",
+   "threshold": null,
+   "prerequisites": [
+    "Designate a qualifying party who passes the Illinois Residential or Residential/Commercial/Industrial exam",
+    "Proof of workers' compensation insurance (if you have employees)",
+    "IDES statement showing an unemployment insurance account in good standing (if you have employees)",
+    "Liability and property damage insurance (form RF-INS)",
+    "Surety bond on the Department's bond form"
+   ],
+   "bond": "Surety bond from a bonding company licensed in Illinois (Limited or Unlimited bond form)",
+   "insurance": "Liability and property damage insurance, plus workers' compensation if you have employees",
+   "summary": "Roofing contractors need a state license from IDFPR. The business must name a qualifying party who passes the state roofing exam, and must submit proof of liability insurance, a surety bond, and, if it has employees, workers' comp and an unemployment insurance account.",
+   "url": "https://idfpr.illinois.gov/content/dam/soi/en/web/idfpr/renewals/apply/forms/rf.pdf",
+   "quote": "This person must take and pass either the Illinois Residential Examination or the Illinois Residential, Commercial and Industrial Examination. A qualifying party is required for any roofing contractor license in Illinois.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://idfpr.illinois.gov/content/dam/soi/en/web/idfpr/renewals/apply/forms/rf.pdf",
+     "quote": "Limited Roofing License means a license made available to contractors whose roofing business is limited to residential roofing, including residential properties consisting of 8 units or less."
+    },
+    {
+     "url": "https://idfpr.illinois.gov/content/dam/soi/en/web/idfpr/renewals/apply/forms/rf.pdf",
+     "quote": "Proof of worker's compensation insurance for roofing which must be in the form of a Certificate of Insurance from the insurance provider"
+    },
+    {
+     "url": "https://idfpr.illinois.gov/content/dam/soi/en/web/idfpr/renewals/apply/forms/rf.pdf",
+     "quote": "Supporting Document RF-INS must be properly completed and submitted. This is the only proof of liability and property damage insurance which will be accepted by this Department."
+    },
+    {
+     "url": "https://idfpr.illinois.gov/content/dam/soi/en/web/idfpr/renewals/apply/forms/rf.pdf",
+     "quote": "must be properly completed and submitted by a bonding company licensed to do business within the State of Illinois."
+    },
+    {
+     "url": "https://idfpr.illinois.gov/content/dam/soi/en/web/idfpr/renewals/apply/forms/rf.pdf",
+     "quote": "A Statement of Account from the Illinois Department of Employment Security indicating"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Commercial Pesticide Applicator / Operator license (IDOA); Structural Pest Control license (IDPH)",
+   "agency": "Illinois Department of Agriculture; Illinois Department of Public Health (structural pest control)",
+   "covers": "Anyone who purchases, uses or supervises use of general or restricted use pesticides for hire (lawn, tree, weed control). Pest control in and on buildings is licensed by IDPH.",
+   "threshold": null,
+   "prerequisites": [
+    "Pass the General Standards exam (70 or more) and category exams",
+    "Certificate of insurance (financial responsibility) for commercial applicators",
+    "At least one licensed applicator at each facility location"
+   ],
+   "bond": null,
+   "insurance": "Certificate of insurance showing financial responsibility for personal injury and property damage",
+   "summary": "Lawn care, tree and weed-control companies applying pesticides for hire need IDOA commercial applicator/operator licenses: pass the state exams, show insurance, and keep a licensed applicator at each location. Structural pest control (insects, rodents in buildings) is licensed separately by IDPH.",
+   "url": "https://agr.illinois.gov/pesticides/certification-and-licensing.html",
+   "quote": "Commercial Applicator or Operator License - required for individuals who purchase, use or supervise the use of pesticides classified for General or Restricted Use for hire.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://agr.illinois.gov/pesticides/certification-and-licensing.html",
+     "quote": "Pass the 100-question General Standards exam or Aerial General Standards exam with a score of 70 or more."
+    },
+    {
+     "url": "https://agr.illinois.gov/pesticides/certification-and-licensing.html",
+     "quote": "commercial applicators must provide a certificate of insurance with proper coverage."
+    },
+    {
+     "url": "https://agr.illinois.gov/pesticides/certification-and-licensing.html",
+     "quote": "Each organization must have at least one person licensed as an applicator at each facility location."
+    },
+    {
+     "url": "https://agr.illinois.gov/pesticides/certification-and-licensing.html",
+     "quote": "The Illinois Department of Public Health certifies and licenses individuals applying pesticides in and on man-made structures."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "asbestos": {
+   "status": "state_license",
+   "name": "Asbestos Abatement Contractor, Supervisor and Worker licenses",
+   "agency": "Illinois Department of Public Health, Lead and Asbestos Licensing Unit",
+   "covers": "Contractors conducting asbestos abatement projects in schools and commercial or public buildings, and their trained workers and supervisors.",
+   "threshold": null,
+   "prerequisites": [
+    "Contractor license and insurance",
+    "Trained and licensed workers and supervisors"
+   ],
+   "bond": null,
+   "insurance": "Required for asbestos abatement contractors",
+   "summary": "Asbestos abatement contractors in Illinois must be licensed by IDPH and carry insurance, and their workers must be trained and licensed.",
+   "url": "https://dph.illinois.gov/topics-services/environmental-health-protection/asbestos.html",
+   "quote": "All contractors who conduct asbestos abatement projects must have insurance and are required to be licensed.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://dph.illinois.gov/topics-services/environmental-health-protection/asbestos.html",
+     "quote": "Workers who manage or abate asbestos in schools, commercial, or public buildings must be trained and licensed."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "lead_rrp": {
+   "status": "no_state_license",
+   "name": "EPA Lead-Safe Certified Firm and Certified Renovator",
+   "agency": "U.S. EPA",
+   "covers": "Anyone paid to disturb paint in homes, child care facilities and preschools built before 1978.",
+   "threshold": null,
+   "prerequisites": [
+    "EPA firm certification",
+    "Certified renovator training"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Illinois is not on EPA's list of authorized RRP programs, so renovation firms get lead-safe certification directly from EPA.",
+   "url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program",
+   "quote": "EPA administers the RRP Program in most Tribes, states and territories, but has authorized the following to operate their own programs: Alabama, Delaware, Georgia, Iowa, Kansas, Massachusetts, Mississippi, North Carolina, Oklahoma, Oregon, Rhode Island, Utah, Vermont, Washington, Wisconsin",
+   "note": "IDPH separately licenses lead abatement (not RRP) professionals.",
+   "evidence": [
+    {
+     "url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program",
+     "quote": "EPA's RRP Rule requires that anyone paid to perform work that disturbs painted surfaces in homes, childcare facilities and preschools built before 1978 be certified and their employees be trained"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "other": [
+  {
+   "key": "irrigation",
+   "name": "Irrigation Contractor registration",
+   "agency": "Illinois Department of Public Health",
+   "trades": [
+    "landscaping"
+   ],
+   "summary": "Contractors who install lawn sprinkler systems must register with IDPH every year.",
+   "url": "https://dph.illinois.gov/topics-services/environmental-health-protection/plumbing.html",
+   "quote": "Each irrigation contractor in the state of Illinois must register annually with the Department",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ ]
+}

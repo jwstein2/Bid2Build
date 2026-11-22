@@ -1,0 +1,349 @@
+{
+ "state": "NM",
+ "researched_on": "2026-11-22",
+ "checked_at": "2026-11-22T21:48:10Z",
+ "general": {
+  "entity": {
+   "agency": "New Mexico Secretary of State",
+   "summary": "LLCs, corporations and limited partnerships register with the New Mexico Secretary of State before doing business.",
+   "url": "https://biz.nm.gov/business-navigator/register-legal-business-structure",
+   "quote": "To conduct business in New Mexico, a business owner must register the structure of the business with the New Mexico Secretary of State",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "state_tax": {
+   "agency": "New Mexico Taxation and Revenue Department",
+   "summary": "Anyone doing business in New Mexico registers with Taxation and Revenue and gets a Business Tax ID (used for gross receipts tax). Contractors must register with Taxation and Revenue as part of getting a CID license.",
+   "url": "https://www.tax.newmexico.gov/businesses/who-must-register-a-business/",
+   "quote": "Anyone who engages in business in New Mexico must register with the Taxation and Revenue Department.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "unemployment": {
+   "agency": "New Mexico Department of Workforce Solutions",
+   "summary": "Register with the Department of Workforce Solutions (and the New Hires Directory) before hiring employees.",
+   "url": "https://biz.nm.gov/business-navigator/workplace-hiring-requirements",
+   "quote": "Employers must register with New Mexico Department of Workforce Solutions and New Mexico New Hires Directory before hiring employees.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "workers_comp": {
+   "agency": "New Mexico Workers' Compensation Administration",
+   "summary": "Contractors licensed under the Construction Industries Licensing Act need workers' comp no matter how few employees they have. Any LLC or corporation, and any business with three or more employees, also needs it.",
+   "url": "https://www.workerscomp.nm.gov/bureaus/employer-compliance/",
+   "quote": "Contractors engaged in contracting or licensed under the New Mexico Construction Industries Licensing Act.",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "state_license",
+   "name": "GB-2 Residential contractor license (or GB-98 General Building)",
+   "agency": "NM Regulation and Licensing Dept., Construction Industries Division (CID)",
+   "covers": "Building, altering, repairing or demolishing homes and apartment buildings of up to four units.",
+   "threshold": null,
+   "prerequisites": [
+    "A certified Qualifying Party (QP) with the required experience (two years of foreman-level experience for GB-2) within the last 10 years",
+    "QP passes the trade exam and the Contractor's Business and Law exam",
+    "License bond",
+    "Register with the required state agencies (e.g. Taxation and Revenue)",
+    "Workers' compensation coverage"
+   ],
+   "bond": "A license bond is required.",
+   "insurance": "Workers' compensation coverage is required for all licensed entities.",
+   "summary": "New Mexico licenses residential builders through CID. The business needs a Qualifying Party who has the required experience and passes the trade and business-and-law exams, plus a license bond and workers' comp.",
+   "url": "https://srca.nm.gov/parts/title14/14.006.0006.html",
+   "quote": "GB-2. Residential. Requires two years’ of foreman level practical or related trade experience. Erect, alter, repair or demolish residences and apartment houses accommodating not more than four family units",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.rld.nm.gov/construction-industries/apply-for-a-construction-industries-license/",
+     "quote": "The company must secure a license bond and register with the agencies listed in #4. NOTE: Workers Compensation coverage is required for all licensed entities."
+    },
+    {
+     "url": "https://www.rld.nm.gov/construction-industries/apply-for-a-construction-industries-license/",
+     "quote": "QP applicants must have the required number of years experience in the field in which they are applying. The experience must be within the 10 years immediately preceding application."
+    },
+    {
+     "url": "https://www.rld.nm.gov/construction-industries/apply-for-a-construction-industries-license/",
+     "quote": "QP applicants must pass the exam(s) applicable to the classification being sought, as well as a Contractor’s Business and Law exam."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "commercial_building": {
+   "status": "state_license",
+   "name": "GB-98 General Building license",
+   "agency": "NM RLD Construction Industries Division",
+   "covers": "Residential and commercial buildings; includes GB-2 work.",
+   "threshold": null,
+   "prerequisites": [
+    "Qualifying Party with four years of foreman-level experience, two years of it commercial",
+    "Pass the trade and Business and Law exams",
+    "License bond",
+    "Workers' compensation"
+   ],
+   "bond": "A license bond is required.",
+   "insurance": "Workers' compensation coverage is required.",
+   "summary": "Commercial building requires a GB-98 license. The Qualifying Party needs four years of foreman-level experience, at least two of them commercial, and must pass the exams.",
+   "url": "https://srca.nm.gov/parts/title14/14.006.0006.html",
+   "quote": "GB-98. General building. Requires four years of foreman level practical or related trade experience of which at two years must be commercial experience.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.rld.nm.gov/construction-industries/apply-for-a-construction-industries-license/",
+     "quote": "QP applicants must pass the exam(s) applicable to the classification being sought, as well as a Contractor’s Business and Law exam."
+    },
+    {
+     "url": "https://www.rld.nm.gov/construction-industries/apply-for-a-construction-industries-license/",
+     "quote": "The company must secure a license bond and register with the agencies listed in #4. NOTE: Workers Compensation coverage is required for all licensed entities."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "electrical": {
+   "status": "state_license",
+   "name": "EE-98 Electrical contractor license; EE-98J journeyman electrician certificate",
+   "agency": "NM RLD Construction Industries Division",
+   "covers": "Electrical contractors and the journeyman electricians who do the work.",
+   "threshold": null,
+   "prerequisites": [
+    "Contractor QP: four years' experience and passing the trade and Business and Law exams",
+    "Journeyman: EE-98J certificate (reciprocal EE-98J based on 8,000 hours of experience)",
+    "License bond and workers' comp for the business"
+   ],
+   "bond": "A license bond is required.",
+   "insurance": "Workers' compensation coverage is required.",
+   "summary": "Electrical contractors need an EE-98 (or electrical specialty) license from CID, with a Qualifying Party who has four years of experience. Individual electricians hold CID journeyman certificates.",
+   "url": "https://srca.nm.gov/parts/title14/14.006.0006.html",
+   "quote": "EE-98. Residential, and commercial and industrial electrical wiring 5000 volts, nominal or less. Requires four years’ experience.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.rld.nm.gov/construction-industries/apply-for-a-construction-industries-license/",
+     "quote": "The only journeyman classification reciprocated in New Mexico is EE-98J, residential and commercial electrical with 8,000 hours of experience."
+    },
+    {
+     "url": "https://www.rld.nm.gov/construction-industries/apply-for-a-construction-industries-license/",
+     "quote": "QP applicants must pass the exam(s) applicable to the classification being sought, as well as a Contractor’s Business and Law exam."
+    },
+    {
+     "url": "https://www.rld.nm.gov/construction-industries/apply-for-a-construction-industries-license/",
+     "quote": "The company must secure a license bond and register with the agencies listed in #4. NOTE: Workers Compensation coverage is required for all licensed entities."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "plumbing": {
+   "status": "state_license",
+   "name": "MM-1 Plumbing license (MM-98 Mechanical covers all mechanical); journeyman plumber certificates",
+   "agency": "NM RLD Construction Industries Division",
+   "covers": "Plumbing contractors.",
+   "threshold": null,
+   "prerequisites": [
+    "Qualifying Party with four years' experience",
+    "Pass the trade and Business and Law exams",
+    "License bond and workers' comp"
+   ],
+   "bond": "A license bond is required.",
+   "insurance": "Workers' compensation coverage is required.",
+   "summary": "Plumbing contractors need an MM-1 (or MM-98) license from CID with a Qualifying Party who has four years of experience and passes the exams.",
+   "url": "https://srca.nm.gov/parts/title14/14.006.0006.html",
+   "quote": "MM-1. Plumbing. Requires four years’ experience. Install, alter, repair , service, and maintain plumbing, plumbing fixtures, and piping",
+   "note": "Journeyman plumber certificate requirements not quoted.",
+   "evidence": [
+    {
+     "url": "https://srca.nm.gov/parts/title14/14.006.0006.html",
+     "quote": "MM-98. Mechanical. Requires four years’ experience. Indicates licensure in individual classifications MM-1 through MM-4"
+    },
+    {
+     "url": "https://www.rld.nm.gov/construction-industries/apply-for-a-construction-industries-license/",
+     "quote": "QP applicants must pass the exam(s) applicable to the classification being sought, as well as a Contractor’s Business and Law exam."
+    },
+    {
+     "url": "https://www.rld.nm.gov/construction-industries/apply-for-a-construction-industries-license/",
+     "quote": "The company must secure a license bond and register with the agencies listed in #4. NOTE: Workers Compensation coverage is required for all licensed entities."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "mechanical": {
+   "status": "state_license",
+   "name": "MM-3 HVAC license; MM-98 Mechanical",
+   "agency": "NM RLD Construction Industries Division",
+   "covers": "HVAC and refrigeration contractors.",
+   "threshold": null,
+   "prerequisites": [
+    "Qualifying Party with four years' experience",
+    "Pass the trade and Business and Law exams",
+    "License bond and workers' comp"
+   ],
+   "bond": "A license bond is required.",
+   "insurance": "Workers' compensation coverage is required.",
+   "summary": "HVAC contractors need an MM-3 (or MM-98 mechanical) license from CID, with a Qualifying Party who has four years of experience.",
+   "url": "https://srca.nm.gov/parts/title14/14.006.0006.html",
+   "quote": "MM-3. Heating, ventilation & air conditioning (HVAC). Requires four years’ experience.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://srca.nm.gov/parts/title14/14.006.0006.html",
+     "quote": "MM-98. Mechanical. Requires four years’ experience. Indicates licensure in individual classifications MM-1 through MM-4"
+    },
+    {
+     "url": "https://www.rld.nm.gov/construction-industries/apply-for-a-construction-industries-license/",
+     "quote": "QP applicants must pass the exam(s) applicable to the classification being sought, as well as a Contractor’s Business and Law exam."
+    },
+    {
+     "url": "https://www.rld.nm.gov/construction-industries/apply-for-a-construction-industries-license/",
+     "quote": "The company must secure a license bond and register with the agencies listed in #4. NOTE: Workers Compensation coverage is required for all licensed entities."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "roofing": {
+   "status": "state_license",
+   "name": "GS-21 Roofing license",
+   "agency": "NM RLD Construction Industries Division",
+   "covers": "Installing, altering or repairing roof systems, including flashing and gutters.",
+   "threshold": null,
+   "prerequisites": [
+    "Qualifying Party with two years of foreman-level experience",
+    "Pass the trade and Business and Law exams",
+    "License bond and workers' comp"
+   ],
+   "bond": "A license bond is required.",
+   "insurance": "Workers' compensation coverage is required.",
+   "summary": "Roofers need a GS-21 Roofing license from CID; the Qualifying Party needs two years of foreman-level experience.",
+   "url": "https://srca.nm.gov/parts/title14/14.006.0006.html",
+   "quote": "GS-21. Roofing. Requires two years of foreman level practical or related trade experience. Install, alter or repair roof systems",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.rld.nm.gov/construction-industries/apply-for-a-construction-industries-license/",
+     "quote": "QP applicants must pass the exam(s) applicable to the classification being sought, as well as a Contractor’s Business and Law exam."
+    },
+    {
+     "url": "https://www.rld.nm.gov/construction-industries/apply-for-a-construction-industries-license/",
+     "quote": "The company must secure a license bond and register with the agencies listed in #4. NOTE: Workers Compensation coverage is required for all licensed entities."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Commercial pesticide applicator license; operator/technician license",
+   "agency": "New Mexico Department of Agriculture (NMSU)",
+   "covers": "Commercial applicators (pest control, lawn/weed, tree) and their operators/technicians.",
+   "threshold": null,
+   "prerequisites": [
+    "Pass the certification exam(s) for each license category",
+    "Proof of financial responsibility (e.g. liability insurance)"
+   ],
+   "bond": null,
+   "insurance": "Proof of financial responsibility, which can be a liability insurance policy.",
+   "summary": "Commercial pesticide applicators in New Mexico must pass certification exams for each category of work and show financial responsibility, such as liability insurance.",
+   "url": "https://srca.nm.gov/parts/title21/21.017.0050.html",
+   "quote": "These license categories represent the certification examinations taken by commercial, public and non-commercial applicators, pest management consultants and public pest management consultants.",
+   "note": "NMDA's own site is nmda.nmsu.edu (university host), so the state rule on srca.nm.gov is cited.",
+   "evidence": [
+    {
+     "url": "https://srca.nm.gov/parts/title21/21.017.0050.html",
+     "quote": "If a commercial pesticide applicator uses a liability insurance policy as proof of financial responsibility, the applicator shall not apply pesticides exempted in the policy."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "asbestos": {
+   "status": "no_state_license",
+   "name": null,
+   "agency": "NM Environment Department, Air Quality Bureau",
+   "covers": "Demolition and renovation involving asbestos.",
+   "threshold": null,
+   "prerequisites": [],
+   "bond": null,
+   "insurance": null,
+   "summary": "No state asbestos contractor license was found. New Mexico adopts the federal hazardous air pollutant rules (40 CFR Part 61, which includes the asbestos NESHAP) for demolition and renovation.",
+   "url": "https://srca.nm.gov/parts/title20/20.002.0078.html",
+   "quote": "the national emission standards for hazardous air pollutants as promulgated by the United States environmental protection agency, 40 CFR Part 61, as amended in the Federal Register through June 28, 2023 are hereby incorporated into this part",
+   "note": "Albuquerque/Bernalillo County administer their own air program; not verified here.",
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "lead_rrp": {
+   "status": "no_state_license",
+   "name": "EPA RRP Firm Certification",
+   "agency": "U.S. EPA",
+   "covers": "Firms doing renovation, repair or painting in pre-1978 housing or child-occupied facilities.",
+   "threshold": null,
+   "prerequisites": [
+    "EPA firm certification",
+    "Certified renovator"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "New Mexico is not authorized to run RRP, so renovation firms get certified directly by EPA.",
+   "url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-firm-certification",
+   "quote": "if you do work in an area other than the states or the Tribe listed in the paragraph below, apply for EPA Firm Certification",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-firm-certification",
+     "quote": "Federal law requires all renovation, repair, and painting firms (including sole proprietorships) working in housing, or facilities where children are routinely present, built before 1978, to be certified."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "other": [
+  {
+   "key": "septic",
+   "name": "MS-3 Septic tanks & sewer",
+   "agency": "NM RLD Construction Industries Division",
+   "trades": [
+    "excavation",
+    "plumbing"
+   ],
+   "summary": "Installing septic tanks and private sewage systems needs an MS-3 license.",
+   "url": "https://srca.nm.gov/parts/title14/14.006.0006.html",
+   "quote": "MS-3. Septic tanks & sewer. Requires two years’ experience. Install, alter, repair , service or maintain septic tanks and private sewage disposal systems",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  {
+   "key": "concrete",
+   "name": "GS-4 Concrete, cement, walkways and driveways",
+   "agency": "NM RLD Construction Industries Division",
+   "trades": [
+    "concrete"
+   ],
+   "summary": "Concrete flatwork contractors need a GS-4 license.",
+   "url": "https://srca.nm.gov/parts/title14/14.006.0006.html",
+   "quote": "GS-4. Concrete, cement, walkways and driveways. Requires two years’ experience practical trade experience, one year of which must be foreman level.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  {
+   "key": "excavation",
+   "name": "GS-8 Earthmoving, excavating and ditching",
+   "agency": "NM RLD Construction Industries Division",
+   "trades": [
+    "excavation"
+   ],
+   "summary": "Excavation and grading contractors need a GS-8 license.",
+   "url": "https://srca.nm.gov/parts/title14/14.006.0006.html",
+   "quote": "GS-8. Earthmoving, excavating and ditching. Requires two years’ experience.",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ ]
+}

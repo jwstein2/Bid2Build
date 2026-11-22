@@ -1,0 +1,232 @@
+{
+ "state": "NY",
+ "researched_on": "2026-11-22",
+ "checked_at": "2026-11-22T21:48:10Z",
+ "general": {
+  "entity": {
+   "agency": "NY Department of State, Division of Corporations",
+   "summary": "Form a corporation (certificate of incorporation), LLC (articles of organization) or limited partnership with the Department of State's Division of Corporations.",
+   "url": "https://dos.ny.gov/form-corporation-or-business",
+   "quote": "Limited Liability Company - Articles of Organization ... Limited Partnership - Certificate of Limited Partnership",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "state_tax": {
+   "agency": "NY Department of Taxation and Finance",
+   "summary": "If you sell taxable goods or services, register for sales tax with the Tax Department through New York Business Express before you start.",
+   "url": "https://www.tax.ny.gov/bus/st/register.htm",
+   "quote": "Every person who sells taxable tangible personal property or taxable services (even if you make sales from your home, are a temporary vendor, or only sell once a year ) must register with the Tax Department through New York Business Express before beginning business.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "unemployment": {
+   "agency": "NY Department of Labor",
+   "summary": "A business becomes liable for unemployment insurance on the first day of the calendar quarter in which it pays $300 or more in wages, and must then register with NYS DOL.",
+   "url": "https://dol.ny.gov/who-employer",
+   "quote": "General business employers are liable on: The first day of the calendar quarter you pay remuneration of $300 or more",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "workers_comp": {
+   "agency": "NY Workers' Compensation Board",
+   "summary": "Virtually every employer in New York must carry workers' compensation for its employees (disability and paid family leave coverage may also be required) and post notice of coverage.",
+   "url": "https://www.wcb.ny.gov/content/main/coverage-required-wc.jsp",
+   "quote": "Virtually all employers in New York State must provide workers' compensation coverage for their employees (WCL §2 and 3). Employers must post notice of coverage in their place(s) of business (WCL §51).",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "local": {
+   "agency": null,
+   "summary": "Home improvement contractors are licensed locally, for example in New York City, Buffalo, and Suffolk, Nassau, Westchester, Putnam and Rockland counties. Check your town or county for permits and codes.",
+   "url": "https://dos.ny.gov/news/consumer-alert-nys-department-states-division-consumer-protection-provides-new-yorkers-tips",
+   "quote": "New York State does not license home improvement contractors. However, some counties and local municipalities do, including New York City, Suffolk, Nassau, Westchester, Putnam, and Rockland counties, and the City of Buffalo.",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "local_only",
+   "name": "Local home improvement contractor licenses (e.g. NYC, Buffalo, Suffolk, Nassau, Westchester, Putnam, Rockland)",
+   "agency": "City/county consumer affairs or licensing offices",
+   "covers": "Home improvement contractors working in a city or county that licenses them.",
+   "threshold": null,
+   "prerequisites": [],
+   "bond": null,
+   "insurance": null,
+   "summary": "New York State does not license home improvement contractors. Several counties and cities do, so check the licensing rules where you work.",
+   "url": "https://dos.ny.gov/news/consumer-alert-nys-department-states-division-consumer-protection-provides-new-yorkers-tips",
+   "quote": "New York State does not license home improvement contractors. However, some counties and local municipalities do, including New York City, Suffolk, Nassau, Westchester, Putnam, and Rockland counties, and the City of Buffalo.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://dos.ny.gov/news/consumer-alert-new-york-department-states-division-consumer-protection-releases-guide-tips-0",
+     "quote": "home improvement contractors must be granted a license to work in New York City and Buffalo, and in the counties of Suffolk, Nassau, Westchester, Putnam, and Rockland."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "commercial_building": {
+   "status": "local_only",
+   "name": null,
+   "agency": "Local building departments",
+   "covers": "General contractors doing commercial work.",
+   "threshold": null,
+   "prerequisites": [],
+   "bond": null,
+   "insurance": null,
+   "summary": "There is no state general contractor license in New York; licensing and permits are handled by cities and counties.",
+   "url": "https://dos.ny.gov/news/consumer-alert-nys-department-states-division-consumer-protection-provides-new-yorkers-tips",
+   "quote": "Check with your town or county about permit requirements and the applicable building codes.",
+   "note": "No state GC license found; the DOS statement addresses home improvement contractors specifically.",
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "electrical": {
+   "status": "local_only",
+   "name": "Local electrician licenses (e.g. NYC Master Electrician)",
+   "agency": "City/county licensing boards",
+   "covers": "Electricians and electrical contractors.",
+   "threshold": null,
+   "prerequisites": [],
+   "bond": null,
+   "insurance": null,
+   "summary": "New York has no statewide electrician license; cities and counties that license trades set their own requirements.",
+   "url": "https://dos.ny.gov/news/consumer-alert-nys-department-states-division-consumer-protection-provides-new-yorkers-tips",
+   "quote": "If your local government requires licensure for home improvement contractors or certain home improvement trades, be sure to only hire a licensed contractor.",
+   "note": "Absence of a state electrical license is inferred; no state page found that says so explicitly.",
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "plumbing": {
+   "status": "local_only",
+   "name": "Local plumber licenses (e.g. NYC Master Plumber)",
+   "agency": "City/county licensing boards",
+   "covers": "Plumbers and plumbing contractors.",
+   "threshold": null,
+   "prerequisites": [],
+   "bond": null,
+   "insurance": null,
+   "summary": "New York has no statewide plumbing license; plumbers are licensed by the cities and counties that require it.",
+   "url": "https://dos.ny.gov/news/consumer-alert-nys-department-states-division-consumer-protection-provides-new-yorkers-tips",
+   "quote": "If your local government requires licensure for home improvement contractors or certain home improvement trades, be sure to only hire a licensed contractor.",
+   "note": "Absence of a state plumbing license is inferred; no state page found that says so explicitly.",
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "mechanical": {
+   "status": "local_only",
+   "name": "Local HVAC / oil burner / refrigeration licenses where required",
+   "agency": "City/county licensing boards",
+   "covers": "HVAC and refrigeration work.",
+   "threshold": null,
+   "prerequisites": [],
+   "bond": null,
+   "insurance": null,
+   "summary": "New York has no statewide HVAC license; some cities and counties license heating or refrigeration trades.",
+   "url": "https://dos.ny.gov/news/consumer-alert-nys-department-states-division-consumer-protection-provides-new-yorkers-tips",
+   "quote": "If your local government requires licensure for home improvement contractors or certain home improvement trades, be sure to only hire a licensed contractor.",
+   "note": "Inferred; EPA Section 608 certification for refrigerants still applies federally.",
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "roofing": {
+   "status": "local_only",
+   "name": null,
+   "agency": null,
+   "covers": "Roofing contractors.",
+   "threshold": null,
+   "prerequisites": [],
+   "bond": null,
+   "insurance": null,
+   "summary": "No state roofing license; roofers follow local home improvement licensing where it exists.",
+   "url": "https://dos.ny.gov/news/consumer-alert-nys-department-states-division-consumer-protection-provides-new-yorkers-tips",
+   "quote": "New York State does not license home improvement contractors. However, some counties and local municipalities do",
+   "note": null,
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Commercial Pesticide Applicator/Technician certification; Pesticide Business Registration",
+   "agency": "NYS Department of Environmental Conservation",
+   "covers": "Anyone applying pesticides for hire (pest control, lawn care, tree spraying) and the business offering that service.",
+   "threshold": null,
+   "prerequisites": [
+    "Pass the core exam and the category exam(s)",
+    "Business registration before offering or advertising applications for hire"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Pest control and lawn-care businesses need a DEC business registration to offer or make pesticide applications for hire, and their applicators must pass the core and category exams to be certified.",
+   "url": "https://dec.ny.gov/environmental-protection/pesticides/business-agency-information",
+   "quote": "A Business Registration is required to offer, advertise, or make pesticide applications for hire.",
+   "note": "Experience-based eligibility for commercial applicators and the insurance certificate for business registration not quoted.",
+   "evidence": [
+    {
+     "url": "https://dec.ny.gov/environmental-protection/pesticides/pesticide-applicator-technician-certification",
+     "quote": "All applicants for certification must pass the core and appropriate category examination(s) to become certified."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "asbestos": {
+   "status": "state_license",
+   "name": "Asbestos Handling License (contractor) and asbestos worker certifications",
+   "agency": "NYS Department of Labor",
+   "covers": "Contractors and workers who disturb asbestos-containing material.",
+   "threshold": null,
+   "prerequisites": [
+    "DOL asbestos certification for each worker",
+    "Notify DOL and EPA at least 10 days before abatement starts"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Anyone who disturbs asbestos in New York must be licensed and certified by the Department of Labor. Licensed abatement contractors must notify DOL and EPA 10 days or more before work starts.",
+   "url": "https://dol.ny.gov/asbestos-new-york-state-facts-and-responsibilities-p224",
+   "quote": "Workers or contractors who disturb ACM in any way must ... be certified and licensed according to New York State law,",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://dol.ny.gov/asbestos-new-york-state-facts-and-responsibilities-p224",
+     "quote": "The licensed Asbestos Abatement Contractor must submit a notification to the Department of Labor and the United States Environmental Protection Agency 10 days or more before the work starts."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "lead_rrp": {
+   "status": "no_state_license",
+   "name": "EPA RRP Firm Certification",
+   "agency": "U.S. EPA",
+   "covers": "Firms doing renovation, repair or painting in pre-1978 housing or child-occupied facilities.",
+   "threshold": null,
+   "prerequisites": [
+    "EPA firm certification",
+    "Certified renovator"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "New York is not authorized to run RRP, so renovation firms get certified directly by EPA.",
+   "url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-firm-certification",
+   "quote": "if you do work in an area other than the states or the Tribe listed in the paragraph below, apply for EPA Firm Certification",
+   "note": "NYC Local Law 1 adds lead-safe requirements in New York City; not verified here.",
+   "evidence": [
+    {
+     "url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-firm-certification",
+     "quote": "Federal law requires all renovation, repair, and painting firms (including sole proprietorships) working in housing, or facilities where children are routinely present, built before 1978, to be certified."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "other": []
+}

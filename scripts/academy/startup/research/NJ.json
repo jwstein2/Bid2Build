@@ -1,0 +1,229 @@
+{
+ "state": "NJ",
+ "researched_on": "2026-11-22",
+ "general": {
+  "entity": {
+   "agency": "NJ Department of the Treasury, Division of Revenue and Enterprise Services",
+   "summary": "Form your corporation or LLC, or register a proprietorship or general partnership, with the Division of Revenue and Enterprise Services.",
+   "url": "https://www.nj.gov/treasury/revenue/",
+   "quote": "If you are forming or authorizing a new corporation, limited liability company, limited partnership or limited liability partnership in NJ Start Here If you are registering a general partnership or proprietorship Start Here"
+  },
+  "state_tax": {
+   "agency": "NJ Division of Revenue and Enterprise Services / Division of Taxation",
+   "summary": "Every business must register for tax and employer purposes with the Division of Revenue using the NJ-REG form, even if it will not collect sales tax.",
+   "url": "https://nj.gov/state/bac/assets/pdf/njbac-doing-business-in-nj-guide.pdf",
+   "quote": "All businesses must “Register for Tax and Employer Purposes” with the New Jersey Division of Revenue using the NJ-REG form, regardless if they plan on collecting sales"
+  },
+  "unemployment": {
+   "agency": "NJ Department of Labor and Workforce Development, Division of Employer Accounts",
+   "summary": "Once your business is registered with the Division of Revenue, the Division of Employer Accounts handles your unemployment and disability insurance contributions.",
+   "url": "https://www.nj.gov/labor/ea/employer-services/register-update/",
+   "quote": "The Division of Employer Accounts handles employers' contributions to the state's Unemployment and Disability Insurance programs. Before you get started with us, make sure your business is registered with the Division of Revenue and Enterprise Services"
+  },
+  "workers_comp": {
+   "agency": "NJ Department of Labor and Workforce Development, Division of Workers' Compensation",
+   "summary": "All New Jersey employers must carry workers' compensation or be approved to self-insure. Home improvement contractors must now also show workers' comp coverage to register.",
+   "url": "https://www.nj.gov/labor/workerscompensation/employer-requirements/",
+   "quote": "New Jersey law requires that all New Jersey employers, not covered by Federal programs, have Workers’ Compensation coverage or be approved for self-insurance."
+  }
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "state_registration",
+   "name": "Home Improvement Contractor Business (HICB) registration; New Home Builder registration",
+   "agency": "NJ Division of Consumer Affairs (HIC); NJ DCA Bureau of Homeowner Protection (new homes)",
+   "covers": "Anyone selling or doing home improvements on residential property; builders of new homes register separately with DCA.",
+   "threshold": null,
+   "prerequisites": [
+    "Proof of commercial general liability insurance of at least $500,000 per occurrence",
+    "Workers' compensation insurance (unless exempt)",
+    "Compliance bond, letter of credit or other additional security",
+    "Ownership disclosure statement"
+   ],
+   "bond": "Additional security (compliance bond, letter of credit or similar) is now required for registration.",
+   "insurance": "Commercial general liability of at least $500,000 per occurrence, plus workers' compensation.",
+   "summary": "New Jersey requires home improvement contractors to register with the Division of Consumer Affairs and show their NJHIC number. You need liability insurance, workers' comp, and additional security before registering. Builders of new homes register with DCA's New Home Warranty program instead.",
+   "url": "https://www.nj.gov/state/bac/assets/pdf/quick-start/home-improvement-contractor.pdf",
+   "quote": "The New Jersey Contractor’s Registration Act requires that all home improvement contractors register with the New Jersey Division of Consumer Affairs and display their registration number known as NJHIC#.",
+   "evidence": [
+    {
+     "url": "https://www.nj.gov/state/bac/assets/pdf/quick-start/home-improvement-contractor.pdf",
+     "quote": "Proof of commercial general liability insurance in a minimum amount of $500,000 per occurrence."
+    },
+    {
+     "url": "https://njconsumeraffairs.gov/Documents/HIC-HEC-Regarding-Changes-To-The-Law-New-Requirements-For-Registration.pdf",
+     "quote": "to maintain workers’ compensation insurance, unless exempt under law, and to obtain to a compliance bond, letter of credit, or other security (“additional security”), discussed below."
+    },
+    {
+     "url": "https://www.nj.gov/dca/codes/publications/pdf_nhw/2010_nhw_pgm.pdf",
+     "quote": "All builders of owner-occupied new homes, including single-family, townhouse, duplex, cooperative, condominium, factory built and modular residences are required to register with the New Home Warranty Program."
+    },
+    {
+     "url": "https://www.nj.gov/state/bac/assets/pdf/quick-start/home-improvement-contractor.pdf",
+     "quote": "provide the documentation as required by the New Jersey Division of Consumer Affairs including but not limited to: ... An Ownership Disclosure Statement"
+    }
+   ]
+  },
+  "commercial_building": {
+   "status": "no_state_license",
+   "name": null,
+   "agency": null,
+   "covers": "General contractors doing commercial work.",
+   "threshold": null,
+   "prerequisites": [],
+   "bond": null,
+   "insurance": null,
+   "summary": "New Jersey has no state license for commercial general contractors; the HIC registration covers residential home improvement only. Contractors bidding on state public works must be classified by DPMC, and trade work still needs the trade licenses.",
+   "url": "https://www.nj.gov/state/bac/assets/pdf/quick-start/home-improvement-contractor.pdf",
+   "quote": "The New Jersey Contractor’s Registration Act requires that all home improvement contractors register with the New Jersey Division of Consumer Affairs",
+   "note": "No state commercial GC license found; DPMC classification for state public work not verified here."
+  },
+  "electrical": {
+   "status": "state_license",
+   "name": "Electrical Contractor license (and Qualified Journeyman registration)",
+   "agency": "NJ Board of Examiners of Electrical Contractors (Division of Consumer Affairs)",
+   "covers": "Electrical contracting businesses; journeymen work under them.",
+   "threshold": null,
+   "prerequisites": [
+    "Five years of experience: a four-year US DOL-approved electrical apprenticeship plus one year as a journeyman electrician",
+    "Pass the electrical contractor licensing exam"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Electrical contractors need a state license from the Board of Examiners of Electrical Contractors. Applicants need five years of experience, including a four-year approved apprenticeship and a year as a journeyman, and must pass the licensing exam.",
+   "url": "https://www.njconsumeraffairs.gov/Adoptions/elecado_10032022.pdf",
+   "quote": "revised the qualifications for licensure of electrical contractors to require five years of experience, including a four-year electrical apprenticeship program accredited and approved by the United States Department of Labor (DOL) and one year as a journeyman electrician.",
+   "evidence": [
+    {
+     "url": "https://www.njconsumeraffairs.gov/Adoptions/elecado_10032022.pdf",
+     "quote": "After an applicant has successfully passed the licensing examination, the applicant shall submit the license fee"
+    }
+   ],
+   "note": "Board web pages block automated fetching; source is the Board's 2022 rule adoption notice."
+  },
+  "plumbing": {
+   "status": "state_license",
+   "name": "Master Plumber license (journeymen and apprentices registered)",
+   "agency": "NJ State Board of Examiners of Master Plumbers (Division of Consumer Affairs)",
+   "covers": "Plumbing businesses must be run by a licensed master plumber; journeymen work under a master.",
+   "threshold": null,
+   "prerequisites": [
+    "Become a journeyman: four years in a US DOL-approved apprenticeship or a bachelor's degree in mechanical, plumbing or sanitary engineering",
+    "Journeyman experience under a licensed master plumber before applying for the master license",
+    "Pass the master plumber exam"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "New Jersey licenses master plumbers at the state level. You first qualify as a journeyman through a four-year approved apprenticeship or an engineering degree, work under a master plumber, then take the master plumber exam.",
+   "url": "https://WWW.NJCONSUMERAFFAIRS.GOV/Adoptions/plumado_010218.pdf",
+   "quote": "\"Journeyman plumber\" means an individual who works under the supervision of a licensed master plumber or supervisory journeyman plumber and who has completed either four years in an apprenticeship program approved by the United States Department of Labor or has been awarded a bachelor's degree in mechanical, plumbing, or sanitary engineering",
+   "note": "Length of journeyman experience required before the master exam not confirmed from a fetchable official page (Board site blocks automated access)."
+  },
+  "mechanical": {
+   "status": "state_license",
+   "name": "Master HVACR Contractor license",
+   "agency": "NJ State Board of Examiners of Heating, Ventilating, Air Conditioning and Refrigeration Contractors",
+   "covers": "HVACR contracting businesses; HVACR journeypersons work under a licensed Master HVACR contractor.",
+   "threshold": null,
+   "prerequisites": [
+    "Five years in the HVACR contracting business, including at least four years in an approved apprenticeship or training program and time as an HVACR journeyperson",
+    "Pass the master HVACR exam",
+    "File a bond and general liability insurance with the board"
+   ],
+   "bond": "A bond is required by the HVACR act.",
+   "insurance": "General liability insurance must be filed with the board.",
+   "summary": "HVAC and refrigeration contractors need a state Master HVACR license. The law requires five years in the trade, including an apprenticeship and journeyperson time, plus a bond and liability insurance.",
+   "url": "https://pub.njleg.gov/Bills/2006/AL07/211_.HTM",
+   "quote": "contracting business for a period of five years next preceding the date of his application for a license.",
+   "evidence": [
+    {
+     "url": "https://pub.njleg.gov/Bills/2006/AL07/211_.HTM",
+     "quote": "Secure, maintain and file with the board a certificate of general liability insurance from an insurance company authorized and licensed to do business in this State"
+    },
+    {
+     "url": "https://WWW.NJCONSUMERAFFAIRS.GOV/Adoptions/hvacrado_08022021.pdf",
+     "quote": "\"HVACR journeyperson\" means any person who installs, alters, repairs, services, maintains, or renovates HVACR systems and who works under the supervision of a Master HVACR contractor"
+    }
+   ],
+   "note": "Source is the 2007 enacted law (P.L.2007, c.211); later amendments may change details. Exam requirement not quoted."
+  },
+  "roofing": {
+   "status": "state_registration",
+   "name": "Home Improvement Contractor registration (no separate roofing license)",
+   "agency": "NJ Division of Consumer Affairs",
+   "covers": "Residential roofing is home improvement work.",
+   "threshold": null,
+   "prerequisites": [
+    "HIC registration with liability insurance"
+   ],
+   "bond": null,
+   "insurance": "Commercial general liability as required for HIC registration.",
+   "summary": "New Jersey has no separate roofing license. Residential roofers register as home improvement contractors.",
+   "url": "https://www.nj.gov/state/bac/assets/pdf/quick-start/home-improvement-contractor.pdf",
+   "quote": "The New Jersey Contractor’s Registration Act requires that all home improvement contractors register with the New Jersey Division of Consumer Affairs and display their registration number known as NJHIC#."
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Pesticide Applicator Business license; Commercial Pesticide Applicator certification; Commercial Pesticide Operator license",
+   "agency": "NJ DEP Pesticide Control Program",
+   "covers": "Businesses applying pesticides for hire (pest control, lawn care, tree spraying) and their applicators/operators.",
+   "threshold": null,
+   "prerequisites": [
+    "Complete a Department-approved basic training course",
+    "Pass the core exam and a category exam",
+    "License the business with DEP before operating"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "A pesticide applicator business must be licensed with NJ DEP before operating, and its applicators must pass a core exam and a category exam after a basic training course.",
+   "url": "https://www.nj.gov/dep/enforcement/pcp/regulations/Subchapter%207%20Changes%20in%20Red%202020.pdf",
+   "quote": "No person shall cause, suffer, allow or permit the operation of a pesticide applicator business as defined by this chapter in the State of New Jersey without first licensing such business with the Department",
+   "evidence": [
+    {
+     "url": "https://www.nj.gov/dep/enforcement/pcp/regulations/Subchapter%206%20Changes%20in%20Red%202020.pdf",
+     "quote": "shall pass a core examination, as well as a specific category examination"
+    },
+    {
+     "url": "https://www.nj.gov/dep/enforcement/pcp/regulations/Subchapter%206%20Changes%20in%20Red%202020.pdf",
+     "quote": "To be eligible to take the core examination, each applicant shall submit to the examination provider proof of completion of a Department-approved basic training course"
+    }
+   ]
+  },
+  "asbestos": {
+   "status": "state_license",
+   "name": "Asbestos abatement employer license",
+   "agency": "NJ Department of Labor and Workforce Development",
+   "covers": "Any company offering to abate asbestos in New Jersey.",
+   "threshold": null,
+   "prerequisites": [],
+   "bond": null,
+   "insurance": null,
+   "summary": "Any company that abates asbestos in New Jersey must be licensed by the Department of Labor and Workforce Development.",
+   "url": "https://www.nj.gov/dca/codes/offices/asbestos.shtml",
+   "quote": "Any company offering to abate asbestos in New Jersey must be licensed through the Department of Labor and Workforce Development."
+  },
+  "lead_rrp": {
+   "status": "no_state_license",
+   "name": "EPA RRP Firm Certification",
+   "agency": "U.S. EPA",
+   "covers": "Firms doing renovation, repair or painting in pre-1978 housing or child-occupied facilities.",
+   "threshold": null,
+   "prerequisites": [
+    "EPA firm certification",
+    "Certified renovator"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "New Jersey is not authorized to run RRP, so renovation firms get certified directly by EPA and use certified renovators.",
+   "url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-firm-certification",
+   "quote": "if you do work in an area other than the states or the Tribe listed in the paragraph below, apply for EPA Firm Certification",
+   "evidence": [
+    {
+     "url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-firm-certification",
+     "quote": "Federal law requires all renovation, repair, and painting firms (including sole proprietorships) working in housing, or facilities where children are routinely present, built before 1978, to be certified."
+    }
+   ],
+   "note": "NJ lead abatement certification not verified here."
+  }
+ }
+}

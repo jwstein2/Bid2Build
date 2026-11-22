@@ -1,0 +1,340 @@
+{
+ "state": "LA",
+ "researched_on": "2026-11-22",
+ "general": {
+  "entity": {
+   "agency": "Louisiana Secretary of State (geauxBIZ)",
+   "summary": "Form your corporation, LLC or partnership, or register a trade name, online through the Secretary of State's geauxBIZ site, which also links you to Louisiana Department of Revenue and Louisiana Workforce Commission registration.",
+   "url": "https://geauxbiz.sos.la.gov/",
+   "quote": "geauxBIZ is the official website for creating, maintaining, and closing your business in the state of Louisiana."
+  },
+  "state_tax": {
+   "agency": "Louisiana Department of Revenue",
+   "summary": "Register your business for state taxes (sales and use, withholding) with the Louisiana Department of Revenue, mostly online through LaTAP.",
+   "url": "https://revenue.louisiana.gov/businesses/",
+   "quote": "Whether you're starting a new business, filing tax returns, making payments, or managing existing tax accounts, you'll find the tools and resources you need here. Most business tax services are available online through LaTAP."
+  },
+  "unemployment": {
+   "agency": "Louisiana Workforce Commission (Louisiana Works)",
+   "summary": "Employers register for a state unemployment tax account with the Louisiana Workforce Commission; geauxBIZ walks new businesses through this step.",
+   "url": "https://geauxbiz.sos.la.gov/",
+   "quote": "Filing your business (such as Corp, LLC, Partnership, and Non-Profit) Registering Tradename/Trademark Registering with LDR Registering with Louisiana Works"
+  },
+  "workers_comp": {
+   "agency": "Louisiana Workforce Commission, Office of Workers' Compensation",
+   "summary": "Louisiana's workers' comp law covers employees in the course of an employer's business. Sole proprietors, partners and certain corporate officers can elect out of coverage for themselves by written agreement with their insurer. Residential, home improvement and mold contractors must show workers' comp to get licensed.",
+   "url": "https://legis.la.gov/legis/Law.aspx?d=83337",
+   "quote": "or a sole proprietor with respect to such sole proprietorship may by written agreement with his insurer or group self-insurance fund elect not to be covered by the provisions of this Chapter"
+  },
+  "local": {
+   "summary": "The state contractor license doesn't replace local rules: parishes and cities enforce building codes and issue permits.",
+   "url": "https://lslbc.gov/wp-content/uploads/Legislative-Changes.pdf",
+   "quote": "Local authorities continue to enforce applicable codes."
+  }
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "threshold",
+   "name": "Residential Building Contractor license; Home Improvement Registration",
+   "agency": "Louisiana State Licensing Board for Contractors (LSLBC)",
+   "covers": "Residential construction or home improvement over $50,000 needs a residential license; home improvement projects of $7,500 or more need a home improvement registration (or a license).",
+   "threshold": "Residential license: residential construction exceeding $50,000. Home improvement registration: projects of seven thousand five hundred dollars or more.",
+   "prerequisites": [
+    "Designate a qualifying party who completes the Business and Law course and passes any required trade exam",
+    "Financial statement showing required net worth ($50,000 for residential licenses)",
+    "General liability insurance of at least $500,000 and proof of workers' compensation",
+    "Business entities must be active and in good standing with the Louisiana Secretary of State"
+   ],
+   "bond": null,
+   "insurance": "General liability of at least $500,000 plus workers' compensation (residential and home improvement)",
+   "summary": "Louisiana requires a state residential contractor license for residential construction over $50,000, and a home improvement registration for remodeling and repair jobs of $7,500 or more. You need a qualifying party who passes the Business and Law course, a financial statement, and at least $500,000 in liability insurance plus workers' comp.",
+   "url": "https://lslbc.louisiana.gov/types-of-licenses/",
+   "quote": "Residential Construction exceeding $50,000 (including labor and materials) of any residential structure.",
+   "evidence": [
+    {
+     "url": "https://lslbc.louisiana.gov/types-of-licenses/",
+     "quote": "to structures which are adjacent to such residence or building for which the project value is seven thousand five hundred dollars or more."
+    },
+    {
+     "url": "https://lslbc.louisiana.gov/checklist-of-items-required-for-initial-license-and-to-maintain-license/",
+     "quote": "Minimum amount of $500,000 in General Liability coverage and proof of Workers’ Compensation for Residential and Home Improvement applicants/licensees."
+    },
+    {
+     "url": "https://lslbc.louisiana.gov/checklist-of-items-required-for-initial-license-and-to-maintain-license/",
+     "quote": "For Commercial, Residential and Mold Applicants, a Qualifying Party(s) must be added to the license and must pass any examination(s) and/or provide any credential required for a classification. The Qualifying Party must complete the Business & Law course."
+    },
+    {
+     "url": "https://lslbc.gov/wp-content/uploads/Legislative-Changes.pdf",
+     "quote": "Required net worth is $50,000 for residential and commercial licenses and most related"
+    },
+    {
+     "url": "https://lslbc.louisiana.gov/checklist-of-items-required-for-initial-license-and-to-maintain-license/",
+     "quote": "must have a registration status of “Active” and “In Good Standing” with the Louisiana Secretary of State and must provide Charter Number."
+    },
+    {
+     "url": "https://lslbc.louisiana.gov/faq/",
+     "quote": "$7,500 or more for home improvement projects"
+    }
+   ],
+   "note": "Home improvement registrants need a $25,000 net worth (per the LSLBC legislative-change memo). An older LSLBC FAQ still cites a $75,000 residential threshold; the Types of Licenses page shows $50,000."
+  },
+  "commercial_building": {
+   "status": "threshold",
+   "name": "Commercial Contractor license (major classifications such as Building Construction)",
+   "agency": "Louisiana State Licensing Board for Contractors (LSLBC)",
+   "covers": "Commercial projects of $50,000 or more, including specialty subcontractors at that value.",
+   "threshold": "Commercial projects with a value of $50,000 or more",
+   "prerequisites": [
+    "Qualifying party completes the Business and Law course and passes the trade exam for each classification",
+    "Financial statement showing a net worth of $50,000"
+   ],
+   "bond": null,
+   "insurance": "Insurance certificates are not required for commercial applicants",
+   "summary": "A state commercial license is required for commercial projects of $50,000 or more (labor and materials). A qualifying party must pass the Business and Law course and any trade exam, and the company must show the required net worth.",
+   "url": "https://lslbc.louisiana.gov/types-of-licenses/",
+   "quote": "Commercial projects with a value of $50,000 or more (including labor and materials) when the property is to be used for commercial purposes.",
+   "evidence": [
+    {
+     "url": "https://lslbc.gov/wp-content/uploads/Legislative-Changes.pdf",
+     "quote": "Required net worth is $50,000 for residential and commercial licenses and most related"
+    },
+    {
+     "url": "https://lslbc.louisiana.gov/checklist-of-items-required-for-initial-license-and-to-maintain-license/",
+     "quote": "Not required to be submitted for Commercial applicants."
+    }
+   ]
+  },
+  "electrical": {
+   "status": "threshold",
+   "name": "LSLBC Electrical classification (contractor license)",
+   "agency": "Louisiana State Licensing Board for Contractors (LSLBC)",
+   "covers": "Electrical contracting on projects exceeding $10,000 (labor and materials).",
+   "threshold": "Electrical projects exceeding $10,000",
+   "prerequisites": [
+    "Qualifying party passes the electrical trade exam and completes the Business and Law course"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Louisiana requires an LSLBC contractor license with the electrical classification for electrical projects over $10,000. Individual electrician (journeyman/master) licensing is handled by local governments.",
+   "url": "https://lslbc.louisiana.gov/types-of-licenses/",
+   "quote": "Electrical/Mechanical/Plumbing projects exceeding $10,000 including labor and materials.",
+   "evidence": [
+    {
+     "url": "https://lslbc.louisiana.gov/checklist-of-items-required-for-initial-license-and-to-maintain-license/",
+     "quote": "For Commercial, Residential and Mold Applicants, a Qualifying Party(s) must be added to the license and must pass any examination(s) and/or provide any credential required for a classification."
+    }
+   ],
+   "note": "No state individual electrician license was found; individual electrician licensing in Louisiana is local (not confirmed from an official page)."
+  },
+  "plumbing": {
+   "status": "state_license",
+   "name": "Journeyman / Master / Residential Plumber license (State Plumbing Board, moving to LSLBC on Jan. 1, 2027); LSLBC plumbing contractor license",
+   "agency": "State Plumbing Board of Louisiana (transferring to LSLBC)",
+   "covers": "Individual plumbers need a state plumber license; businesses offering plumbing need a contractor license, required for plumbing work over $10,000.",
+   "threshold": "Contractor license for plumbing projects exceeding $10,000",
+   "prerequisites": [
+    "Residential plumber: apprentice registration and at least four thousand hours as an unindentured apprentice (or three thousand indentured) under a licensed plumber, plus exam",
+    "Journeyman: pass the written and manual journeyman exam",
+    "Master: licensed journeyman (or board-qualified) who passes the master exam"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Plumbers need a state license (residential, journeyman or master) after apprentice hours and exams. Plumbing businesses also need an LSLBC plumbing contractor license for work over $10,000. Starting January 1, 2027, plumbing licensing moves from the State Plumbing Board to LSLBC.",
+   "url": "https://lslbc.gov/wp-content/uploads/Legislative-Changes.pdf",
+   "quote": "Licensing and regulatory responsibilities will transfer from the State Plumbing Board to LSLBC.",
+   "evidence": [
+    {
+     "url": "https://lslbc.gov/wp-content/uploads/Legislative-Changes.pdf",
+     "quote": "Businesses offering plumbing services must hold the appropriate contractor license."
+    },
+    {
+     "url": "https://www.legis.la.gov/legis/Law.aspx?d=93230",
+     "quote": "Has worked at least four thousand hours as an unindentured apprentice or at least three thousand hours as an indentured apprentice at the manual labor of plumbing under the direct, constant, on-the-job supervision of a journeyman or master plumber licensed by the board."
+    },
+    {
+     "url": "https://www.legis.la.gov/legis/Law.aspx?d=93230",
+     "quote": "if he passes a written and manual journeyman plumber's examination given by the board and pays the fees established by the board."
+    },
+    {
+     "url": "https://www.legis.la.gov/legis/Law.aspx?d=93230",
+     "quote": "The board shall issue a license to any licensed journeyman plumber or other person who qualifies under the board's regulations and who desires to engage in the work of a master plumber, provided he passes a written master plumber's examination"
+    },
+    {
+     "url": "https://lslbc.louisiana.gov/types-of-licenses/",
+     "quote": "Electrical/Mechanical/Plumbing projects exceeding $10,000 including labor and materials."
+    },
+    {
+     "url": "https://lslbc.gov/wp-content/uploads/Legislative-Changes.pdf",
+     "quote": "Plumbing — Act 908 of 2026 Effective January 1, 2027"
+    }
+   ],
+   "note": "The Plumbing Board's own journeyman experience-hour rule was not checked; the transfer to LSLBC takes effect January 1, 2027."
+  },
+  "mechanical": {
+   "status": "threshold",
+   "name": "LSLBC Mechanical classification (contractor license)",
+   "agency": "Louisiana State Licensing Board for Contractors (LSLBC)",
+   "covers": "HVAC/mechanical contracting on projects exceeding $10,000.",
+   "threshold": "Mechanical projects exceeding $10,000",
+   "prerequisites": [
+    "Qualifying party passes the mechanical trade exam and completes the Business and Law course"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "HVAC and other mechanical work over $10,000 requires an LSLBC contractor license with a mechanical classification.",
+   "url": "https://lslbc.louisiana.gov/types-of-licenses/",
+   "quote": "Electrical/Mechanical/Plumbing projects exceeding $10,000 including labor and materials.",
+   "evidence": [
+    {
+     "url": "https://lslbc.louisiana.gov/checklist-of-items-required-for-initial-license-and-to-maintain-license/",
+     "quote": "The Qualifying Party must complete the Business & Law course."
+    }
+   ],
+   "note": "EPA Section 608 certification still applies federally for refrigerant handling."
+  },
+  "roofing": {
+   "status": "threshold",
+   "name": "Residential Roofing classification (LSLBC); Roofing and Sheet Metal, Siding (commercial)",
+   "agency": "Louisiana State Licensing Board for Contractors (LSLBC)",
+   "covers": "Residential roofing projects valued at $7,500 or more; commercial roofing falls under the commercial license threshold.",
+   "threshold": "Residential roofing projects valued at $7,500 or more",
+   "prerequisites": [
+    "LSLBC license with the Residential Roofing or Residential Construction classification",
+    "General liability of at least $500,000 for residential subclassifications"
+   ],
+   "bond": null,
+   "insurance": "General liability of at least $500,000",
+   "summary": "Residential roofing jobs of $7,500 or more now require an LSLBC license with the Residential Roofing or Residential Construction classification. Commercial roofing falls under the commercial license rules.",
+   "url": "https://lslbc.gov/wp-content/uploads/Legislative-Changes.pdf",
+   "quote": "projects valued at $7,500 or more require the Residential",
+   "evidence": [
+    {
+     "url": "https://lslbc.louisiana.gov/exams-classifications/",
+     "quote": "Refers to the construction, installation, or repair of roofs for residential structures."
+    },
+    {
+     "url": "https://lslbc.gov/wp-content/uploads/Legislative-Changes.pdf",
+     "quote": "Minimum liability coverage increases from $100,000 to $500,000 for residential"
+    }
+   ],
+   "note": "The memo's sentence contains PDF ligature characters, so only a fragment is quoted; full text: residential roofing projects valued at $7,500 or more require the Residential Roofing or Residential Construction classification. The memo says these roofing requirements began in January of this year."
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Ground Owner Operator License + Commercial Pesticide Applicator Certification; Structural Pest Control license and Place of Business Permit",
+   "agency": "Louisiana Department of Agriculture and Forestry (LDAF)",
+   "covers": "Lawn/landscape and other commercial pesticide application businesses; structural pest control (termites, household pests) companies and operators.",
+   "threshold": null,
+   "prerequisites": [
+    "Employees who apply pesticides obtain Commercial Pesticide Applicator Certification",
+    "Ground application companies: liability insurance not less than $25,000",
+    "Structural pest control exam eligibility: four years of experience within the last ten years as a registered technician (or a degree plus experience)",
+    "Pest control company: Place of Business Permit with proof of insurance and bond"
+   ],
+   "bond": "Bond required for a structural pest control Place of Business Permit",
+   "insurance": "Liability insurance not less than $25,000 (ground pesticide application companies); insurance required for structural pest control permits",
+   "summary": "Pesticide application businesses need an LDAF business license (such as the Ground Owner Operator License) and certified applicators. Structural pest control requires an individual license, which needs years of supervised experience before the exam, and the company needs a Place of Business Permit with insurance and a bond.",
+   "url": "https://www.ldaf.la.gov/plants/pesticides/pesticide-licensing",
+   "quote": "Your business must be licensed to apply pesticides, sell pesticides, or make pesticide recommendations.",
+   "evidence": [
+    {
+     "url": "https://www.ldaf.la.gov/plants/pesticides/pesticide-licensing",
+     "quote": "Additionally, employees who apply pesticides must obtain Commercial Pesticide Applicator Certification ."
+    },
+    {
+     "url": "https://www.ldaf.la.gov/plants/pesticides/pesticide-licensing",
+     "quote": "Proof of liability insurance not less than $25,000"
+    },
+    {
+     "url": "https://www.ldaf.la.gov/business/pest-control/pest-control-licensing",
+     "quote": "An individual must be licensed to control pests and fumigate structures."
+    },
+    {
+     "url": "https://www.ldaf.la.gov/business/pest-control/pest-control-licensing",
+     "quote": "Four years of experience within the last 10 years as a registered technician under the supervision of a licensee in the licensee phase"
+    },
+    {
+     "url": "https://www.ldaf.la.gov/business/pest-control/pest-control-licensing",
+     "quote": "If you want to operate a structural pest control business, you need a Place of Business Permit."
+    },
+    {
+     "url": "https://www.ldaf.la.gov/business/pest-control/pest-control-licensing",
+     "quote": "Proof of required Insurance and Bond"
+    }
+   ]
+  },
+  "asbestos": {
+   "status": "state_license",
+   "name": "LDEQ Asbestos Accreditation (worker, contractor/supervisor); LSLBC asbestos abatement classification",
+   "agency": "Louisiana Department of Environmental Quality (LDEQ); LSLBC",
+   "covers": "Anyone doing asbestos work must be LDEQ-accredited; contractors need an LSLBC license for asbestos abatement projects of any value.",
+   "threshold": "Asbestos abatement projects with a value of $1 or more need an LSLBC license",
+   "prerequisites": [
+    "LDEQ asbestos accreditation (training) for workers and contractor/supervisors"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Asbestos workers and supervisors must be trained and accredited by LDEQ, and the contracting company needs an LSLBC license for asbestos abatement on any project.",
+   "url": "https://www.deq.louisiana.gov/asbestos-accreditation",
+   "quote": "The Louisiana Department of Environmental Quality (LDEQ) oversees the state’s Asbestos Accreditation Program, which ensures that anyone working with asbestos is properly trained and certified.",
+   "evidence": [
+    {
+     "url": "https://lslbc.louisiana.gov/types-of-licenses/",
+     "quote": "Asbestos, Hazardous Waste, Lead Based Paint Abatement/Removal, and Underground Storage Tanks projects with a value of $1 or more."
+    }
+   ]
+  },
+  "lead_rrp": {
+   "status": "no_state_license",
+   "name": "EPA RRP Firm Certification and Certified Renovator",
+   "agency": "U.S. EPA",
+   "covers": "Paid renovation, repair and painting in pre-1978 housing and child-occupied facilities.",
+   "threshold": null,
+   "prerequisites": [
+    "EPA firm certification",
+    "Certified renovator training"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Louisiana does not run its own lead renovation (RRP) program, so firms get RRP certification directly from EPA. Lead abatement (not renovation) contracting needs an LSLBC license on any project.",
+   "url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-firm-certification",
+   "quote": "EPA's renovation program applies to all states, Tribes and territories where EPA has not specifically provided authorization for that state, Tribe or territory to operate the program themselves.",
+   "evidence": [
+    {
+     "url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-firm-certification",
+     "quote": "Federal law requires all renovation, repair, and painting firms (including sole proprietorships) working in housing, or facilities where children are routinely present, built before 1978, to be certified."
+    },
+    {
+     "url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program",
+     "quote": "EPA administers the RRP Program in most Tribes, states and territories, but has authorized the following to operate their own programs: Alabama, Delaware, Georgia, Iowa, Kansas, Massachusetts, Mississippi, North Carolina, Oklahoma, Oregon, Rhode Island, Utah, Vermont, Washington, Wisconsin"
+    }
+   ]
+  },
+  "other": [
+   {
+    "key": "arborist",
+    "name": "Arborist License",
+    "agency": "Louisiana Department of Agriculture and Forestry (Horticulture Commission)",
+    "trades": [
+     "tree-removal",
+     "tree-trimming"
+    ],
+    "summary": "Anyone working on trees for a fee needs a state arborist license, which requires passing an exam and showing liability (and, if applicable, workers' comp) insurance.",
+    "url": "https://www.ldaf.la.gov/land/arborists",
+    "quote": "Arborist licenses are required if you work on trees for a fee."
+   },
+   {
+    "key": "mold_remediation",
+    "name": "Mold Remediation License",
+    "agency": "Louisiana State Licensing Board for Contractors (LSLBC)",
+    "trades": [
+     "cleaning",
+     "interior-remodeling"
+    ],
+    "summary": "Mold remediation projects of $7,500 or more require an LSLBC license; the qualifying party needs twenty-four hours of mold training.",
+    "url": "https://lslbc.louisiana.gov/types-of-licenses/",
+    "quote": "A Mold Remediation license is required for remediation projects with a value of $7,500 or more."
+   }
+  ]
+ }
+}

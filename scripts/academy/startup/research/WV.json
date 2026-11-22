@@ -1,0 +1,165 @@
+{
+  "state": "WV",
+  "researched_on": "2026-11-22",
+  "general": {
+    "entity": {"agency": "WV Secretary of State (WV One Stop Business Center)", "summary": "Most businesses must register with the West Virginia Secretary of State; you can do it online through the One Stop Business portal.", "url": "https://wvclboard.wv.gov/account/guide.asp", "quote": "Most businesses must register with West Virginia Secretary of State."},
+    "state_tax": {"agency": "WV State Tax Department", "summary": "Every business must get a West Virginia Business Registration Tax Number from the State Tax Department; the Contractor Licensing Board checks it.", "url": "https://wvclboard.wv.gov/account/guide.asp", "quote": "West Virginia requires every entity to obtain a Business Registration Tax Number ."},
+    "unemployment": {"agency": "WorkForce West Virginia, Unemployment Compensation Division", "summary": "If you have employees working in West Virginia you need unemployment compensation coverage through WorkForce West Virginia, and the Contractor Licensing Board asks for proof.", "url": "https://wvclboard.wv.gov/account/guide.asp", "quote": "Your entity is required to provide proof of Workers' Compensation and Unemployment Compensation for all employees working in West Virginia."},
+    "workers_comp": {"agency": "WV Offices of the Insurance Commissioner, Employer Coverage Unit", "summary": "West Virginia employers must carry workers' comp insurance (bought from private insurers). Exemptions must be verified by applying to the Insurance Commissioner's Employer Coverage Unit.", "url": "https://www.wvinsurance.gov/Employer-Coverage", "quote": "All WV employers are statutorily required to maintain workers’ compensation insurance coverage."}
+  },
+  "credentials": {
+    "residential_building": {
+      "status": "threshold",
+      "name": "Contractor License (Residential, Remodeling & Repair, or other classification)",
+      "agency": "WV Contractor Licensing Board (administered by the WV Division of Labor)",
+      "covers": "Anyone who, for pay, builds, alters, repairs, improves or demolishes a structure where the project costs $5,000 or more for residential work.",
+      "threshold": "$5,000 or more for residential work (whole project cost, labor and materials).",
+      "prerequisites": ["Confirm your classification and required exams with the Board", "A qualifier (officer, member, owner or full-time employee) passes the WV Business & Law exam and the trade exam", "Business Registration Tax Number from the State Tax Department", "Secretary of State registration (most businesses)", "Proof of workers' compensation and unemployment coverage for employees", "General liability insurance", "Wage bond status affidavit"],
+      "bond": "Contractors doing commercial construction with employees may need a wage bond (Division of Labor).",
+      "insurance": "General liability insurance; proof of workers' compensation and unemployment coverage for employees.",
+      "summary": "West Virginia requires a state contractor license for residential projects of $5,000 or more. A qualifying person in the business must pass the Business & Law exam and a trade exam, and you must show tax registration, insurance and employee coverage before applying.",
+      "url": "https://wvclboard.wv.gov/www/download_resource.asp?id=20",
+      "quote": "where the cost of the undertaking is $5,000 or more for residential work or $25,000 or more for commercial work.",
+      "evidence": [
+        {"url": "https://wvclboard.wv.gov/account/guide.asp", "quote": "Contact and provide the West Virginia Contractor Licensing Board with your scope of work in order to verify the classification(s) and the exam(s) required for obtaining your contractor license."},
+        {"url": "https://wvclboard.wv.gov/account/guide.asp", "quote": "The person completing the exam(s) must be an officer, member, owner, or a full-time employee."},
+        {"url": "https://wvclboard.wv.gov/about/faq.asp", "quote": "All contractors must take the WV Business & Law exam."},
+        {"url": "https://wvclboard.wv.gov/account/guide.asp", "quote": "A wage bond status affidavit is required to be submitted with your application."},
+        {"url": "https://wvclboard.wv.gov/about/faq.asp", "quote": "Yes, licensing requirements are based on the entire construction project, including the cost of all labor and materials, not individual contracts."}
+      ],
+      "note": "The guide lists General Liability Insurance as a required step; the amount is not stated on the page."
+    },
+    "commercial_building": {
+      "status": "threshold",
+      "name": "Contractor License (General Building, Multi-Family, General Engineering, etc.)",
+      "agency": "WV Contractor Licensing Board",
+      "covers": "Commercial construction projects costing $25,000 or more.",
+      "threshold": "$25,000 or more for commercial work.",
+      "prerequisites": ["Qualifier passes the Business & Law exam and the classification exam", "Tax registration, insurance and employee coverage", "Wage bond if doing commercial construction with employees"],
+      "bond": "Wage bond may be required for commercial construction with employees.",
+      "insurance": "General liability insurance; workers' comp and unemployment coverage for employees.",
+      "summary": "The same West Virginia contractor license covers commercial work, required for commercial projects of $25,000 or more, in classifications like General Building. Commercial contractors with employees should check their wage bond status with the Division of Labor.",
+      "url": "https://wvclboard.wv.gov/www/download_resource.asp?id=20",
+      "quote": "where the cost of the undertaking is $5,000 or more for residential work or $25,000 or more for commercial work.",
+      "evidence": [
+        {"url": "https://wvclboard.wv.gov/account/guide.asp", "quote": "If your entity is performing commercial construction work with employees, contact the Division of Labor – Wage & Hour Section"},
+        {"url": "https://wvclboard.wv.gov/www/download_resource.asp?id=210", "quote": "Contractor Licensing Act Exam - All applicants are required to pass this exam."}
+      ]
+    },
+    "electrical": {
+      "status": "state_license",
+      "name": "Master, Journeyman and Specialty Electrician licenses (State Fire Marshal); Contractor License with Electrical classification",
+      "agency": "WV State Fire Marshal (electricians); WV Contractor Licensing Board (electrical contractors)",
+      "covers": "Individuals doing electrical work, and electrical contracting businesses.",
+      "threshold": null,
+      "prerequisites": ["Journeyman: at least one year of electrical work experience and pass the exam", "Master: at least two years of electrical work experience and pass the exam", "Electrical contractor license: Board accepts a current WV Master Electrician license for the Electrical classification exam"],
+      "bond": null,
+      "insurance": null,
+      "summary": "The State Fire Marshal licenses electricians: journeymen need at least one year of experience and masters at least two. An electrical contracting business also needs a Contractor Licensing Board license in the Electrical classification, for which a WV master electrician license qualifies.",
+      "url": "https://firemarshal.wv.gov/media/37611/download?inline",
+      "quote": "The following classes of license may be issued by the State Fire Marshal: master electrician license, journeyman electrician license, and temporary electrician license.",
+      "evidence": [
+        {"url": "https://firemarshal.wv.gov/media/37611/download?inline", "quote": "“Journeyman electrician” means a person qualified by at least one year of electrical work experience"},
+        {"url": "https://firemarshal.wv.gov/media/37611/download?inline", "quote": "“Master electrician” means a person with at least two years of electrical work experience"},
+        {"url": "https://wvclboard.wv.gov/about/faq.asp", "quote": "West Virginia Fire Marshal - (Electrical Classification) A current Master Electrician license."}
+      ]
+    },
+    "plumbing": {
+      "status": "state_license",
+      "name": "Master Plumber, Journeyman Plumber and Plumber in Training licenses; Contractor License with Plumbing classification",
+      "agency": "WV Division of Labor (plumbers); WV Contractor Licensing Board (plumbing contractors)",
+      "covers": "Anyone performing or offering to perform plumbing work.",
+      "threshold": null,
+      "prerequisites": ["Journeyman: pass the journeyman plumber written exam", "Master: pass the master plumber exam, no sooner than one year after passing the journeyman exam", "Plumbing contractor license in the Plumbing classification for the business"],
+      "bond": null,
+      "insurance": null,
+      "summary": "Anyone doing plumbing work in West Virginia needs a Division of Labor plumber license; the master exam can't be taken until a year after passing the journeyman exam. Plumbing businesses also need a contractor license in the Plumbing classification.",
+      "url": "https://wvclboard.wv.gov/www/download_resource.asp?id=102",
+      "quote": "a person performing or offering to perform plumbing work in this state shall have a license issued by the Commissioner of Labor",
+      "evidence": [
+        {"url": "https://wvclboard.wv.gov/www/download_resource.asp?id=102", "quote": "master plumber written examination may not be taken until one year after passage of the journeyman plumber examination."},
+        {"url": "https://wvclboard.wv.gov/www/download_resource.asp?id=102", "quote": "“Journeyman plumber” means a person qualified by passage of a journeyman plumber written examination"}
+      ]
+    },
+    "mechanical": {
+      "status": "state_license",
+      "name": "HVAC Technician and HVAC Residential Technician licenses; Contractor License with HVAC classification",
+      "agency": "WV Division of Labor (HVAC technicians); WV Contractor Licensing Board (HVAC contractors)",
+      "covers": "Anyone performing or offering to perform work on heating, ventilating and cooling systems.",
+      "threshold": null,
+      "prerequisites": ["HVAC Technician: at least 2,000 hours of HVAC-related work, training and experience, plus exam", "HVAC contractor license in the HVAC classification for the business"],
+      "bond": null,
+      "insurance": null,
+      "summary": "West Virginia requires a Division of Labor license for anyone working on HVAC systems; an HVAC Technician needs at least 2,000 hours of HVAC work and training. HVAC businesses also need a contractor license in the HVAC classification.",
+      "url": "https://wvclboard.wv.gov/www/download_resource.asp?id=100",
+      "quote": "a person performing or offering to perform work on a heating, ventilating, and cooling system in this state shall have a license issued by the Commissioner of Labor",
+      "evidence": [
+        {"url": "https://wvclboard.wv.gov/www/download_resource.asp?id=100", "quote": "“HVAC Technician” means a person with at least 2,000 hours of HVAC-related work, training, and experience"}
+      ]
+    },
+    "roofing": {
+      "status": "threshold",
+      "name": "Contractor License (no separate roofing classification; e.g., Residential, Remodeling & Repair, or Specialty Contractor)",
+      "agency": "WV Contractor Licensing Board",
+      "covers": "Roofers fall under the general contractor license system and its project-cost thresholds.",
+      "threshold": "$5,000 residential / $25,000 commercial project cost.",
+      "prerequisites": ["Business & Law exam plus classification exam", "Same registration and insurance steps as other contractors"],
+      "bond": null,
+      "insurance": "General liability insurance.",
+      "summary": "There is no separate roofing license, but roofers need a West Virginia contractor license when the project meets the cost thresholds. The Board decides the right classification from your scope of work.",
+      "url": "https://wvclboard.wv.gov/www/download_resource.asp?id=210",
+      "quote": "Specialty Contractor - In order to obtain a license as a \"Specialty Contractor,\" the work cannot substantially fall within the scope of any contractor classification listed above.",
+      "evidence": [{"url": "https://wvclboard.wv.gov/www/download_resource.asp?id=20", "quote": "where the cost of the undertaking is $5,000 or more for residential work or $25,000 or more for commercial work."}],
+      "note": "Roofing is not listed as a tested classification on the Board's classification notice."
+    },
+    "pesticide": {
+      "status": "state_license",
+      "name": "Licensed Pesticide Application Business (LPAB) and Commercial Applicator license",
+      "agency": "WV Department of Agriculture, Pesticide & Environmental Services Division",
+      "covers": "Businesses applying pesticides or herbicides to others' land for hire, and the employees who apply them.",
+      "threshold": null,
+      "prerequisites": ["A Qualifying Individual passes the Business (LPAB) exam", "At least one licensed WV Commercial Applicator working for the business"],
+      "bond": null,
+      "insurance": null,
+      "summary": "Businesses applying pesticides for hire must hold a WVDA LPAB license with a Qualifying Individual who passed the business exam and at least one licensed Commercial Applicator.",
+      "url": "https://agriculture.wv.gov/Prerequisite-Licensed-Pesticide-Application-Business-LPAB/",
+      "quote": "A business is required to have a Licensed Pesticide Application Business (LPAB) license, a Qualifying Individual",
+      "evidence": [{"url": "https://agriculture.wv.gov/Prerequisite-Licensed-Pesticide-Application-Business-LPAB/", "quote": "the individual working for the business who needs to be named as the Qualifying Individual for the business will need to schedule to take and pass the Business (LPAB) examination."}]
+    },
+    "asbestos": {
+      "status": "state_license",
+      "name": "Asbestos Contractor License and individual asbestos licenses",
+      "agency": "WV Office of Environmental Health Services, Radiation, Toxics & Indoor Air Division",
+      "covers": "Contractors and workers doing asbestos abatement; abatement projects require notification.",
+      "threshold": null,
+      "prerequisites": ["Asbestos contractor license; workers individually licensed"],
+      "bond": null,
+      "insurance": null,
+      "summary": "West Virginia licenses asbestos abatement contractors and individual asbestos workers; the state processes abatement notifications and inspects jobs to confirm workers are licensed.",
+      "url": "https://oehs.wvdhhr.org/rtia/licensing/",
+      "quote": "Licensing of asbestos, lead, radon & clandestine drug laboratory remediation professionals & contractors",
+      "evidence": [{"url": "https://oehs.wvdhhr.org/rtia/asbestos", "quote": "The asbestos compliance program processes asbestos notifications for abatement projects and conducts onsite inspections of these projects to confirm the workers on site are licensed"}],
+      "note": "Source host oehs.wvdhhr.org is the WV health department's official site but is on .org."
+    },
+    "lead_rrp": {
+      "status": "no_state_license",
+      "name": "EPA RRP Firm Certification and Certified Renovator (federal)",
+      "agency": "U.S. EPA",
+      "covers": "Firms doing renovation, repair or painting that disturbs paint in pre-1978 homes and child-occupied facilities.",
+      "threshold": null,
+      "prerequisites": ["EPA RRP firm certification", "Certified renovator training"],
+      "bond": null,
+      "insurance": null,
+      "summary": "West Virginia is not an EPA-authorized RRP state, so renovation firms get RRP certification from EPA. Lead abatement contractors are separately licensed by the state.",
+      "url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-firm-certification",
+      "quote": "EPA's renovation program applies to all states, Tribes and territories where EPA has not specifically provided authorization for that state, Tribe or territory to operate the program themselves.",
+      "evidence": [{"url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-firm-certification", "quote": "Federal law requires all renovation, repair, and painting firms (including sole proprietorships) working in housing, or facilities where children are routinely present, built before 1978, to be certified."}],
+      "note": "West Virginia is not in EPA's list of authorized RRP states on this page."
+    },
+    "other": [
+      {"key": "fire_sprinkler", "name": "Sprinkler & Fire Protection contractor classification (workers licensed by State Fire Marshal)", "agency": "WV Contractor Licensing Board / State Fire Marshal", "trades": ["plumbing", "general-contracting"], "summary": "Fire sprinkler contracting is a tested contractor classification, and workers must be licensed by the State Fire Marshal.", "url": "https://wvclboard.wv.gov/about/faq.asp", "quote": "Effective December 17, 2020: Tennessee - (Sprinkler & Fire Protection Classification) Workers must be properly licensed by the WV Fire Marshal's Office"},
+      {"key": "manufactured_home", "name": "Manufactured Home Installation classification", "agency": "WV Contractor Licensing Board", "trades": ["general-contracting"], "summary": "Installing HUD-certified manufactured homes is a tested contractor license classification.", "url": "https://wvclboard.wv.gov/www/download_resource.asp?id=210", "quote": "Manufactured Home Installation (HUD Certified Homes Only)"},
+      {"key": "crane_operator", "name": "Crane Operator Certification", "agency": "WV Division of Labor", "trades": ["general-contracting"], "summary": "The Division of Labor certifies crane operators.", "url": "https://labor.wv.gov/licensing", "quote": "Crane Operator Certification"}
+    ]
+  }
+}
