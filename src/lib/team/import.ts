@@ -236,14 +236,31 @@ export function parseCell(c: Column, raw: string): { value?: Cell; error?: strin
 }
 
 /** Rows keyed by column key (raw strings), from a sheet's header + data rows. Example rows are skipped. */
+/** Reports exported from QuickBooks, payroll and accounting apps put the company name, report title and date
+ *  range above the column names. The header is the first of the opening rows that has the required columns. */
+const HEADER_SCAN_ROWS = 10;
+export function headerRowIndex(kind: ImportKind, table: string[][]): number {
+  for (let i = 0; i < Math.min(table.length, HEADER_SCAN_ROWS); i++) {
+    const row = table[i] ?? [];
+    if (row.every((c) => String(c ?? "").trim() === "")) continue;
+    if (matchHeaders(kind, row.map((c) => String(c ?? ""))).missingRequired.length === 0) return i;
+  }
+  return 0;
+}
+
+/** Only our own template's sample row ("EXAMPLE … (delete this row)"); a real "Example Roofing" is imported. */
+export const isTemplateExampleRow = (name: string | undefined) => /^\s*example\b.*\(delete this row\)\s*$/i.test(name ?? "");
+
 export function sheetToRecords(kind: ImportKind, table: string[][]): { records: { line: number; raw: Record<string, string> }[]; ignored: string[]; missingRequired: string[] } {
-  const [header = [], ...data] = table;
+  const at = headerRowIndex(kind, table);
+  const header = table[at] ?? [];
+  const data = table.slice(at + 1);
   const { map, ignored, missingRequired } = matchHeaders(kind, header);
   const records = data.slice(0, MAX_IMPORT_PEOPLE).map((cells, i) => {
     const raw: Record<string, string> = {};
     map.forEach((k, j) => { if (k && cells[j] !== undefined && String(cells[j]).trim() !== "") raw[k] = String(cells[j]); });
-    return { line: i + 2, raw };
-  }).filter((r) => Object.keys(r.raw).length > 0 && !/^example\b/i.test(r.raw.name ?? ""));
+    return { line: at + i + 2, raw };
+  }).filter((r) => Object.keys(r.raw).length > 0 && !isTemplateExampleRow(r.raw.name));
   return { records, ignored, missingRequired };
 }
 

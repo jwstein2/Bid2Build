@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import type { User } from "@supabase/supabase-js";
 import { createAdminClient, createClient, getAuthUser } from "@/lib/supabase/server";
 import { applyDemoDataset } from "./apply";
-import { DEMO_SEED_VERSION, buildDemoDataset } from "./dataset";
+import { DEMO_SEED_VERSION, buildDemoDataset, demoNamespace } from "./dataset";
 import { DEMO_HINT_COOKIE, DEMO_META_KEY, DEMO_RETURN_COOKIE, DEMO_RETURN_MAX_AGE, parseDemoClaim, type DemoClaim, type DemoSessionKind } from "./session";
 
 type Admin = ReturnType<typeof createAdminClient>;
@@ -99,7 +99,7 @@ export async function prepareWorkspace(admin: Admin, owner: string, kind: DemoSe
   if (!ws || !ws.demo_user_id || ws.status === "failed" || opts.reset || stale || outdated) ws = await provision(admin, owner, kind);
   if (ws.status === "ready") return { status: "ready", workspace: ws };
   // The anchor day is fixed when the login is provisioned, so a seed resumed tomorrow stays consistent.
-  const d = buildDemoDataset({ kind, namespace: ws.id, anchor: anchorOf(ws) });
+  const d = buildDemoDataset({ kind, namespace: demoNamespace(ws), anchor: anchorOf(ws) });
   const rpc = async (fn: string, args: Record<string, unknown>) => {
     const { data, error } = await admin.rpc(fn, args);
     if (error) throw new Error(error.message);

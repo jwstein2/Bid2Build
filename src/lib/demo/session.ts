@@ -84,7 +84,8 @@ export const DEMO_BLOCKED: readonly { prefix: string; write?: boolean }[] = [
 /** Paths under a broad prefix that are blocked; the rest of that prefix stays usable in a demo. */
 const NARROW: Record<string, RegExp> = {
   "/api/estimates/": /^\/api\/estimates\/[^/]+\/(signing|countersign)(\/|$)/,
-  "/api/schedules/": /^\/api\/schedules\/[^/]+\/updates(\/|$)/,
+  // Publishing a customer update is blocked; the preview (built on the server, nothing stored or sent) is allowed.
+  "/api/schedules/": /^\/api\/schedules\/[^/]+\/updates(?:$|\/(?!preview$))/,
   "/api/scope/": /^\/api\/scope\/[^/]+\/share(\/|$)/,
   "/api/comms/": /^\/api\/comms\/(?!settings$|preview$)/,
   "/api/comms": /^\/api\/comms$/,

@@ -54,6 +54,10 @@ describe("customer import: QuickBooks Desktop / generic", () => {
     const p = rowsOf(parseCsv(customerTemplateCsv()));
     expect(p.every((x) => x.row === null)).toBe(true);
   });
+  it("a real customer named Example is imported; only the template row is skipped", () => {
+    const p = rowsOf([["Customer"], ["Example Roofing LLC"], ["Example: Jane Doe"]]);
+    expect(p.map((x) => x.row?.name ?? null)).toEqual(["Example Roofing LLC", null]);
+  });
   it("no name column means no header", () => expect(sheetToCustomerRecords([["Amount", "Date"], ["1", "2"]]).headerFound).toBe(false));
   it("cleanPhone strips labels", () => expect(cleanPhone("Mobile: +1 (555) 201-4410")).toBe("+1 (555) 201-4410"));
 });

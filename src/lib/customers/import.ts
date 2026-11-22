@@ -113,7 +113,9 @@ export function parseCustomer(line: number, r: RawCustomer): ParsedCustomer {
   const display = cut(r.displayName, 200);
   // QuickBooks sub-customers / jobs are "Parent:Job"; the parent is its own row.
   if (display.includes(":")) return { line, row: null, skip: "QuickBooks sub-customer or job (the parent customer is imported instead)", warnings };
-  if (/^example\b/i.test(display) || /^example\b/i.test(cut(r.contactName, 50))) return { line, row: null, skip: "Example row from the template", warnings };
+  // Only the template's own sample row ("Example: Jane Doe"); a real customer named "Example Roofing" is kept.
+  const templateRow = (v: string) => /^\s*example\s*:/i.test(v) || /\(delete this row\)\s*$/i.test(v);
+  if (templateRow(display) || templateRow(cut(r.contactName, 50))) return { line, row: null, skip: "Example row from the template", warnings };
   const nameOnly = Object.keys(r).length === 1 && display;
   if (nameOnly && /(accrual|cash) basis|^total\b|^grand total/i.test(display)) return { line, row: null, skip: "Report footer", warnings };
   const first = cut(r.firstName, 100), last = cut(r.lastName, 100);
