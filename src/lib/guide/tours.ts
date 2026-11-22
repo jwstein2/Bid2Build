@@ -18,6 +18,7 @@
  * (messageKey) and resolved through translate(), which falls back to the English text here.
  */
 import { meets, type GuideContext, type PageKey, type Requirement } from "../features/page-guides";
+import { WELCOME_VIDEO } from "../../components/onboarding/steps";
 
 export type GuideRole = "solo" | "owner" | "manager" | "staff";
 export type Workspace = "real" | "demo" | "practice";
@@ -80,7 +81,8 @@ export const TOURS: readonly TourDef[] = [
     workspaces: ["real", "practice"],
     trigger: { kind: "new_account", pages: ["dashboard.pipeline", "dashboard.table"], maxAgeDays: 14 },
     completion: "checklist", optional: true, replayable: true,
-    help: ["video.getting-started", "article.first-bid", "academy"],
+    // The intro video joins this list again once a new one is published.
+    help: [...(WELCOME_VIDEO.src ? ["video.getting-started"] : []), "article.first-bid", "academy"],
     steps: [
       { page: "dashboard.pipeline", href: `${BIDS}?view=pipeline`, target: "bids.new-bid", title: "Estimates start here", body: "Create New Bid opens the builder. Pick your trade and the estimate starts with the usual sections, such as {phases}." },
       { page: "builder.project", continueHint: "Click Create New Bid and pick a trade. The walkthrough picks up in the builder.", target: "builder.customer", title: "Add the customer", body: "Pick an existing customer or type a new one. You can use a made-up name while you learn." },
