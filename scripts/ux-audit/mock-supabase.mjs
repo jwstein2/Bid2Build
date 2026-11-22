@@ -474,6 +474,8 @@ function applyScenario(name) {
   return true;
 }
 if (process.env.MOCK_SCENARIO) applyScenario(process.env.MOCK_SCENARIO);
+// A brand-new solo account (getting started checklist, essentials menu walks): no company, bids, prices or customers.
+if (process.env.MOCK_NEW_ACCOUNT) for (const k of ["business_profiles", "estimates", "estimate_versions", "estimate_groups", "estimate_items", "customers", "saved_items"]) tables[k] = [];
 
 const cors = { "access-control-allow-origin": "*", "access-control-allow-headers": "*", "access-control-allow-methods": "GET,POST,PATCH,PUT,DELETE,OPTIONS", "access-control-expose-headers": "content-range" };
 const send = (res, code, body, extra = {}) => { res.writeHead(code, { "content-type": "application/json", ...cors, ...extra }); res.end(body === undefined ? "" : JSON.stringify(body)); };

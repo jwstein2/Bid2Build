@@ -13,6 +13,8 @@ import { setChecklistHidden } from "@/lib/onboarding/checklist-actions";
  */
 export function GettingStarted({ steps, className }: { steps: ChecklistStep[]; className?: string }) {
   const [open, setOpen] = useState(true);
+  // Phones show just the next step until asked for the rest, so the card doesn't push Home off screen.
+  const [all, setAll] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [pending, start] = useTransition();
   const done = steps.filter((s) => s.done).length;
@@ -22,7 +24,7 @@ export function GettingStarted({ steps, className }: { steps: ChecklistStep[]; c
     <section id="getting-started" aria-labelledby="gs-title" data-testid="getting-started" className={cn("rounded-2xl border border-line bg-surface p-4 shadow-card sm:p-5", className)}>
       <div className="flex flex-wrap items-center gap-3">
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-accent-tint text-accent-ink"><Rocket className="h-5 w-5" aria-hidden /></span>
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 basis-48">
           <h2 id="gs-title" className="font-display text-lg font-extrabold text-navy">Getting started</h2>
           <p className="text-sm text-ink-soft" data-testid="getting-started-progress">{done} of {steps.length} done{next ? ` · Next: ${next.title}` : ""}</p>
         </div>
@@ -41,7 +43,7 @@ export function GettingStarted({ steps, className }: { steps: ChecklistStep[]; c
           {steps.map((s) => {
             const isNext = next?.id === s.id;
             return (
-              <li key={s.id} data-testid={`gs-step-${s.id}`} data-done={s.done ? "true" : "false"} className={cn("flex gap-3 rounded-xl border p-3", isNext ? "border-accent bg-accent-tint/40" : "border-line", s.done && "opacity-75")}>
+              <li key={s.id} data-testid={`gs-step-${s.id}`} data-done={s.done ? "true" : "false"} className={cn("flex gap-3 rounded-xl border p-3", isNext ? "border-accent bg-accent-tint/40" : "border-line", s.done && "opacity-75", !isNext && !all && "max-md:hidden")}>
                 <span className={cn("mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full border text-xs font-bold", s.done ? "border-ok bg-ok text-white" : "border-line-strong text-muted")} aria-hidden>
                   {s.done ? <Check className="h-3.5 w-3.5" /> : steps.indexOf(s) + 1}
                 </span>
@@ -58,6 +60,11 @@ export function GettingStarted({ steps, className }: { steps: ChecklistStep[]; c
             );
           })}
         </ol>
+      )}
+      {open && !all && steps.length > 1 && (
+        <button type="button" onClick={() => setAll(true)} className="mt-2 min-h-11 text-sm font-semibold text-accent-ink underline-offset-2 hover:underline md:hidden" data-testid="getting-started-all">
+          Show all {steps.length} steps
+        </button>
       )}
       {open && <p className="mt-3 text-xs text-muted">Want to look around first? Turn on <Link href="/settings/account#practice" className="font-semibold text-ink underline underline-offset-2">Practice Mode</Link> to explore a sample company. Nothing is sent or charged.</p>}
     </section>
