@@ -73,6 +73,53 @@ export const inWindow = (iso: string | null | undefined, start: number, end: num
 export function windowOf(range: Range, now: Date) { const end = now.getTime(); return { start: end - range.days * DAY, end, prevStart: end - 2 * range.days * DAY }; }
 
 // ---------------------------------------------------------------------------------------------
+// Demo / Practice sample data never reaches an owner report (not even with "include test accounts")
+// ---------------------------------------------------------------------------------------------
+/**
+ * Removes every row owned by a Demo or Practice login, or by its sample company. Demo logins are already left out
+ * of the account list, so without this their rows would count as "unknown owner" and be kept. Since 2026-11-21 each
+ * practice login holds a full 24-month sample company, so this matters for every bid, project and grant count.
+ */
+export function stripSampleData(snap: Snapshot, sample: { userIds: Iterable<string>; companyIds: Iterable<string> }): Snapshot {
+  const users = new Set(sample.userIds);
+  const cos = new Set(sample.companyIds);
+  for (const c of snap.companies) if (c.owner_user_id && users.has(c.owner_user_id)) cos.add(c.id);
+  if (!users.size && !cos.size) return snap;
+  const u = (id: string | null | undefined) => !id || !users.has(id);
+  const co = (id: string | null | undefined) => !id || !cos.has(id);
+  const sampleEstimates = new Set(snap.estimates.filter((e) => !u(e.user_id) || !co(e.company_id)).map((e) => e.id));
+  const sampleSchedules = new Set((snap.product?.schedules ?? []).filter((x) => !u(x.user_id) || !co(x.company_id)).map((x) => x.id));
+  return {
+    ...snap,
+    users: snap.users.filter((x) => u(x.id)),
+    labels: snap.labels,
+    estimates: snap.estimates.filter((e) => !sampleEstimates.has(e.id)),
+    versions: snap.versions.filter((v) => u(v.user_id) && !sampleEstimates.has(v.estimate_id)),
+    signatures: snap.signatures.filter((x) => u(x.user_id) && !sampleEstimates.has(x.estimate_id)),
+    signingRequests: snap.signingRequests.filter((x) => u(x.user_id) && co(x.company_id)),
+    subscriptions: snap.subscriptions.filter((x) => u(x.user_id) && co(x.company_id)),
+    businesses: snap.businesses.filter((x) => u(x.user_id)),
+    companies: snap.companies.filter((c) => co(c.id)),
+    members: snap.members.filter((m) => u(m.user_id) && co(m.company_id)),
+    grants: snap.grants.filter((g) => u(g.user_id) && co(g.company_id)),
+    consents: snap.consents.filter((x) => u(x.user_id)),
+    events: snap.events.filter((x) => u(x.user_id)),
+    leads: snap.leads.filter((x) => u(x.user_id)),
+    outbox: snap.outbox.filter((x) => u(x.user_id)),
+    product: snap.product ? {
+      ...snap.product,
+      stages: snap.product.stages.filter((x) => u(x.user_id)),
+      stageMoves: snap.product.stageMoves.filter((x) => u(x.changed_by)),
+      schedules: snap.product.schedules.filter((x) => !sampleSchedules.has(x.id)),
+      publications: snap.product.publications.filter((x) => !sampleSchedules.has(x.schedule_id) && u(x.published_by)),
+      editors: snap.product.editors.filter((x) => u(x.user_id) && co(x.company_id)),
+      reports: snap.product.reports.filter((x) => u(x.user_id)),
+    } : snap.product,
+    meaningful: snap.meaningful ? snap.meaningful.filter((m) => u(m.user_id) && !sampleEstimates.has(m.estimate_id)) : snap.meaningful,
+  };
+}
+
+// ---------------------------------------------------------------------------------------------
 // Scope: genuine accounts only (default) or everything (owner diagnostic toggle)
 // ---------------------------------------------------------------------------------------------
 export interface Scoped { d: Snapshot; classes: Map<string, Classification>; excluded: Record<AccountClass, number>; includeTest: boolean }

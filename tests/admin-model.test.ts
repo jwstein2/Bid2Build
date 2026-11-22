@@ -4,7 +4,7 @@ import { classifyChannel } from "@/lib/admin/channels";
 import { csvCell } from "@/lib/admin/csv";
 import { filterCustomers, parseCustomerFilters } from "@/lib/admin/customers";
 import {
-  accountFacts, channelReport, cohortFunnel, compare, kpis, monthlyCents, needsAttention, ratio, revenueModel, scope, usageModel,
+  accountFacts, channelReport, cohortFunnel, compare, kpis, monthlyCents, needsAttention, ratio, revenueModel, scope, stripSampleData, usageModel,
   type Snapshot, type SubscriptionRow,
 } from "@/lib/admin/model";
 import { RANGES, href, parseView } from "@/lib/admin/view";
@@ -237,5 +237,48 @@ describe("clickable KPI drilldowns", () => {
   it("drilldowns never surface test or internal accounts the report excluded", () => {
     expect(ids({ cohort: "signups" })).not.toContain("t1");
     expect(ids({ cohort: "signups" })).not.toContain("owner");
+  });
+});
+
+
+describe("Demo / Practice sample data never reaches owner reports (James 2026-11-22)", () => {
+  // A practice login is left out of the account list, so its rows would otherwise look like "unknown owner" and be kept.
+  const withPractice = (): Snapshot => {
+    const s = snap();
+    return {
+      ...s,
+      estimates: [...s.estimates, est("p1", "practice-login", 400), est("p2", "practice-login", 3), { ...est("p3", "someone", 3), company_id: "practice-co" }],
+      versions: [...s.versions, { estimate_id: "p1", user_id: "practice-login", created_at: ago(399), version_number: 1 }],
+      companies: [...s.companies, { id: "practice-co", created_at: ago(3), name: "Practice Builders (sample)", owner_user_id: "practice-login" }],
+      members: [...s.members, { company_id: "practice-co", user_id: "practice-login", role: "owner", status: "active" }],
+      grants: [...s.grants, { ...(s.grants[0] ?? {}), id: "g-practice", email: "practice-abc@example.com", user_id: "practice-login", status: "active", plan: "enterprise", company_id: null } as Snapshot["grants"][number]],
+      meaningful: [{ estimate_id: "p1", user_id: "practice-login", reached_at: ago(399), from_event: false }],
+    };
+  };
+
+  it("drops every row owned by a sample login or its company, including with 'include test accounts'", () => {
+    const clean = stripSampleData(withPractice(), { userIds: ["practice-login"], companyIds: [] });
+    expect(clean.estimates.map((e) => e.id).filter((id) => id.startsWith("p"))).toEqual([]);
+    expect(clean.versions.some((v) => v.user_id === "practice-login")).toBe(false);
+    expect(clean.companies.some((c) => c.id === "practice-co")).toBe(false);
+    expect(clean.members.some((m) => m.company_id === "practice-co")).toBe(false);
+    expect(clean.grants.some((g) => g.user_id === "practice-login")).toBe(false);
+    expect(clean.meaningful).toEqual([]);
+    for (const includeTest of [false, true]) {
+      const sc = scope(clean, includeTest);
+      expect(sc.d.estimates.some((e) => e.id.startsWith("p"))).toBe(false);
+    }
+  });
+
+  it("leaves real accounts' numbers exactly as they were", () => {
+    const before = scope(snap(), false);
+    const after = scope(stripSampleData(withPractice(), { userIds: ["practice-login"], companyIds: ["practice-co"] }), false);
+    expect(kpis(accountFacts(after, NOW), R30, NOW)).toEqual(kpis(accountFacts(before, NOW), R30, NOW));
+    expect(after.d.estimates.length).toBe(before.d.estimates.length);
+  });
+
+  it("without the fix, sample rows would have counted as genuine", () => {
+    const leaked = scope(withPractice(), false);
+    expect(leaked.d.estimates.some((e) => e.id === "p1")).toBe(true);
   });
 });

@@ -253,6 +253,27 @@ d("Practice Mode: 24-month sample company with a simulated bank (20270219003000)
     expect(loss).toBeGreaterThan(0);
   });
 
+  it("never shows up in the owner's admin numbers (20270219004000)", async () => {
+    const admin = await createUser(pool, "owner-admin@built.test");
+    await pool.query("insert into public.admin_roles (user_id, role) values ($1, 'admin')", [admin]);
+    const real = Number((await pool.query("select count(*) from auth.users u where not public.is_demo_account(u.id)")).rows[0].count);
+    const m = (await pool.query("select public.admin_metrics($1) as r", [admin])).rows[0].r;
+    expect(m.accounts).toBe(real);
+    expect(m.trade_popularity).toEqual([]);                     // only sample bids exist in this database
+    const g = (await pool.query("select public.growth_funnel($1, now() - interval '3 years') as r", [admin])).rows[0].r;
+    expect(g.signups_total).toBe(real);
+    expect(g.activated_total).toBe(0);
+    expect(await n("select count(*) from public.growth_meaningful_estimates()")).toBe(0);
+    const c = (await pool.query("select public.admin_comp_list($1, '{}'::jsonb) as r", [admin])).rows[0].r;
+    expect(c.metrics.total).toBe(0);
+    expect(c.rows).toEqual([]);
+    const pt = (await pool.query("select public.admin_proposal_text_metrics($1, 3650) as r", [admin])).rows[0].r;
+    expect(pt.estimates).toBe(0);
+    expect(pt.proposals.exported).toBe(0);
+    // The sample data is really there: the reports leave it out on purpose.
+    expect(await n("select count(*) from public.estimates where user_id = $1", [practice])).toBe(169);
+  });
+
   it("stays isolated: the practising user's real account sees none of it", async () => {
     const seen = await asUser(pool, user, (q) => q("select count(*) from public.fin_bank_transactions"));
     expect(Number(seen.rows[0].count)).toBe(0);
