@@ -220,7 +220,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         // Company alerts the page walkthrough points at (only rendered when there is something to show).
         <div className="space-y-6" data-guide="bids.alerts">
           {awaiting.length > 0 && <AwaitingCountersign rows={awaiting} />}
-          {esign && recentSigned.length > 0 && <RecentlySigned bids={recentSigned} days={RECENT_SIGNED_DAYS} />}
+          {esign && recentSigned.length > 0 && <RecentlySigned bids={recentSigned} days={RECENT_SIGNED_DAYS} userId={user.id} />}
           {reviewQueue && reviewQueue.length > 0 && <ReviewQueue items={reviewQueue} canSchedule={Boolean(pmAccess?.canEdit)} compact max={5} />}
         </div>
       )}
