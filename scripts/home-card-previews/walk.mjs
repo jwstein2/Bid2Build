@@ -51,6 +51,10 @@ for (const [w, h, phone, theme] of [[390, 844, true, "light"], [768, 1024, false
     const pay = await page.getByTestId("widget-fin_cash_received").innerText();
     check("Collected: unverified PMT-0002 not listed", !pay.includes("PMT-0002") && !pay.includes("999.99"), pay.replace(/\n/g, " | "));
     check("Collected: verified listed", pay.includes("PMT-0001") && pay.includes("PMT-0003"));
+    check("Collected headline = verified only", pay.includes("$8,650.00") && pay.includes("1 not yet verified"), pay.split("\n").slice(0, 4).join(" | "));
+    await page.getByTestId("widget-fin_cash_received-explain").locator("summary").click();
+    check("Collected explains its calculation", (await page.getByTestId("widget-fin_cash_received-explain").innerText()).includes("verified payments only"));
+    await page.getByTestId("widget-fin_cash_received").screenshot({ path: `${dir}/card-fin_cash_received-explain.png` });
     const dr = await page.getByTestId("widget-sales_drafts").innerText();
     check("Drafts: most recent first", dr.indexOf("Northwoods") < dr.indexOf("Priya Patel") && dr.indexOf("Priya Patel") < dr.indexOf("Chris Johnson"), dr.replace(/\n/g, " | "));
     check("Drafts: View all drafts", dr.includes("View all drafts"));

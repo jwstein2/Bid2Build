@@ -97,10 +97,10 @@ export async function WidgetBody({ inst, data, viewer }: { inst: WidgetInstance;
   switch (inst.type) {
     case "fin_revenue": return homeFigure((h) => h.kpis.invoiced, "Revenue (invoiced)");
     case "fin_cash_received": {
-      // Headline: the Financials "Collected" figure, unchanged. Preview: only verified payments (never pending or
-      // recorded-but-unchecked ones), newest verification first.
+      // Headline and preview count verified payments only (never pending or recorded-but-unchecked ones); the
+      // unverified count stays in the note. Preview: newest verification first.
       const [home, pays] = await Promise.all([data.finHome(), data.verifiedPayments()]);
-      const f = home?.kpis.collected;
+      const f = home?.collectedVerified;
       if (!f) return <Unavailable title={KPI_LABELS.collected} why="Financials isn't set up for this account yet." />;
       const shown = (pays ?? []).slice(0, previewCount(tall));
       const rows: PreviewRow[] = shown.map((p) => ({
@@ -109,7 +109,8 @@ export async function WidgetBody({ inst, data, viewer }: { inst: WidgetInstance;
       }));
       return <PreviewCard title={KPI_LABELS.collected} value={show(f)} sub={f.sub ?? f.note} href={f.href} action="View records" tone={f.tone} empty={f.empty} hint={f.note}
         status={sandbox ? <Sandbox on /> : <BasisBadge basis={f.basis} />} rows={rows} testId={tid}
-        emptyText={pays === null ? "Verified payments will show here." : "No verified payments yet. Payments show here once they're verified."} />;
+        emptyText={pays === null ? "Verified payments will show here." : "No verified payments yet. Payments show here once they're verified."}
+        explain="Counts verified payments only, minus any refunds. A payment is verified when it's checked against your bank or paid online through Built2Bid. Payments recorded but not yet verified aren't counted; they're listed as “not yet verified”." />;
     }
     case "fin_upcoming_payments": return homeFigure((h) => h.cards.bills_due, "Upcoming payments");
     case "fin_profitability": return homeFigure((h) => h.kpis.projected_margin, "Company profitability");
@@ -180,7 +181,8 @@ export async function WidgetBody({ inst, data, viewer }: { inst: WidgetInstance;
         }));
         return <PreviewCard title={label} value={formatCurrency(sum)} empty={!list.length} tone={bucket === "overdue" && list.length ? "danger" : "default"}
           sub={`${list.length} invoice${list.length === 1 ? "" : "s"} · ${formatCurrency(tot.overdue)} overdue overall`} href={href} action="View invoices" status={<Sandbox on={sandbox} />}
-          rows={rows} more={Math.max(0, list.length - rows.length)} emptyText="No unpaid invoices in this view." testId={tid} />;
+          rows={rows} more={Math.max(0, list.length - rows.length)} emptyText="No unpaid invoices in this view." testId={tid}
+          explain="Unpaid balance on issued invoices in this view, after payments and credits. Overdue invoices are listed first, then the most days overdue, then the largest balance." />;
       }
       return (
         <Frame title={label} href={href} action="View invoices" badge={<Sandbox on={sandbox} />} testId={tid} foot={`${list.length} invoice${list.length === 1 ? "" : "s"} · ${formatCurrency(sum)}`}>
@@ -361,7 +363,8 @@ export async function WidgetBody({ inst, data, viewer }: { inst: WidgetInstance;
       }));
       return <PreviewCard title="Draft bids" value={bids.length} empty={!bids.length}
         sub={!bids.length ? FOCUS.draft.empty : value ? `${formatCurrency(value.toFixed(2))} in latest proposals` : "No proposal totals yet"} href={bidsLink("draft", "all")} action="View all drafts"
-        rows={rows} more={Math.max(0, bids.length - rows.length)} emptyText="No drafts in progress. New bids show here while you build them." testId={tid} />;
+        rows={rows} more={Math.max(0, bids.length - rows.length)} emptyText="No drafts in progress. New bids show here while you build them." testId={tid}
+        explain="Your bids still in Draft. The amount is each draft's latest proposal total. Most recently edited drafts are listed first." />;
     }
     case "sales_awaiting":
     case "sales_won": {
@@ -383,7 +386,8 @@ export async function WidgetBody({ inst, data, viewer }: { inst: WidgetInstance;
           value: b.total !== null ? formatCurrency(b.total.toFixed(2)) : undefined, status: w ? { text: "Won", tone: "ok" as const } : { text: "Lost", tone: "danger" as const } };
       });
       return <PreviewCard title="Win rate" value={rate === null ? "None yet" : `${rate}%`} empty={rate === null} sub={`${won} won · ${lost} lost`} href={bidsLink("decided", String(s.range))} action="View decided bids" hint="Won out of bids that were won or lost"
-        extra={rate === null ? undefined : <WinLossBar won={won} lost={lost} />} rows={rows} emptyText="No bids won or lost yet in this period." testId={tid} />;
+        extra={rate === null ? undefined : <WinLossBar won={won} lost={lost} />} rows={rows} emptyText="No bids won or lost yet in this period." testId={tid}
+        explain="Won bids divided by bids that were won or lost, for bids created in this period. Open bids (draft, sent, awaiting) aren't counted. Won includes approved, scheduled, in progress and completed." />;
     }
     case "sales_avg_value": {
       const bids = ((await data.bids()) ?? []).filter((b) => b.total !== null && inRange(b.createdAt, String(s.range)) && (s.which !== "won" || (FOCUS.won.columns as readonly Column[]).includes(b.column)));

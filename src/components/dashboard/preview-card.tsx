@@ -8,7 +8,7 @@
  */
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Info } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 export type PreviewTone = "ok" | "warn" | "danger" | "neutral";
@@ -38,7 +38,7 @@ export function PreviewPill({ text, tone }: { text: string; tone: PreviewTone })
   return <span className={cn("inline-block whitespace-nowrap rounded-full px-1.5 py-px text-[10px] font-semibold leading-4", PILL[tone])}>{text}</span>;
 }
 
-export function PreviewCard({ title, value, sub, status, tone = "default", empty, href, hint, action, testId, extra, rows, emptyText, more }: {
+export function PreviewCard({ title, value, sub, status, tone = "default", empty, href, hint, action, testId, extra, rows, emptyText, more, explain }: {
   title: string;
   value: ReactNode;
   sub?: ReactNode;
@@ -59,6 +59,8 @@ export function PreviewCard({ title, value, sub, status, tone = "default", empty
   emptyText: string;
   /** "+ N more" count after the shown rows. */
   more?: number;
+  /** Plain-language "How it's calculated" note, behind a small disclosure (keyboard and touch friendly). */
+  explain?: ReactNode;
 }) {
   return (
     <section className="flex h-full min-w-0 flex-col rounded-xl border border-line bg-surface shadow-card" aria-label={title} data-testid={testId} data-preview-card="">
@@ -71,6 +73,14 @@ export function PreviewCard({ title, value, sub, status, tone = "default", empty
         <span className={cn("metric-value tabular mt-1 block truncate font-display text-3xl font-extrabold", empty ? "text-muted" : VALUE_TONE[tone])}>{value}</span>
         {sub && <span className="mt-0.5 block text-xs leading-snug text-muted">{sub}</span>}
       </Link>
+      {explain && (
+        <details className="group/explain mx-4 mb-2 text-[11px] text-muted" data-testid={testId ? `${testId}-explain` : undefined}>
+          <summary className="inline-flex min-h-6 cursor-pointer list-none items-center gap-1 rounded font-semibold hover:text-ink focus-visible:outline-2 focus-visible:outline-focus [&::-webkit-details-marker]:hidden">
+            <Info className="h-3 w-3 shrink-0" aria-hidden />How it&apos;s calculated
+          </summary>
+          <p className="mt-1 rounded-md bg-black/[0.03] px-2 py-1.5 leading-snug text-ink-soft">{explain}</p>
+        </details>
+      )}
       {extra && <div className="px-4 pb-2">{extra}</div>}
       {rows.length ? (
         <ul className="mx-2 divide-y divide-line border-t border-line" data-testid={testId ? `${testId}-rows` : undefined}>
