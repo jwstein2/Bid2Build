@@ -54,12 +54,16 @@ export function toSegments(html: string | null | undefined, max = 320): EcfrSegm
   if (!html) return [];
   const out: EcfrSegment[] = [];
   let len = 0;
-  const decode = (s: string) => s.replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)));
+  // Entities are decoded in one pass (so "&amp;lt;" stays literal "&lt;"). The result is only ever rendered as React text.
+  const ENT: Record<string, string> = { nbsp: " ", amp: "&", lt: "<", gt: ">", quot: '"', "#39": "'" };
+  const decode = (s: string) => s.replace(/&(nbsp|amp|lt|gt|quot|#39|#\d{1,5});/g, (_, e: string) => ENT[e] ?? String.fromCharCode(Number(e.slice(1))));
+  // Inside a hit, drop every angle bracket outright (no tag can survive, however it is nested or split).
+  const strip = (s: string) => s.replace(/<[^<>]*>/g, "").replace(/[<>]/g, "");
   const re = /<strong>([\s\S]*?)<\/strong>|<span class="elipsis">[\s\S]*?<\/span>|<[^>]*>|([^<]+)/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(html)) && len < max) {
     let text: string, hit = false;
-    if (m[1] !== undefined) { text = decode(m[1].replace(/<[^>]*>/g, "")); hit = true; }
+    if (m[1] !== undefined) { text = decode(strip(m[1])); hit = true; }
     else if (m[2] !== undefined) text = decode(m[2]);
     else if (m[0].startsWith("<span")) text = " … ";
     else continue;
