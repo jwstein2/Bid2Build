@@ -5,10 +5,11 @@ import { FeatureHelp } from "@/components/features/feature-help";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { BarChart3, Columns3, List, Search } from "lucide-react";
 import {
-  FOCUS, RANGES, analytics, boardSummary, columnTotals, filterBoard, isFocus, isRange, resolveRange, MIN_DECIDED,
-  type BoardBid, type BoardDateField, type FocusKey, type HistoryRow, type RangeKey,
+  BOARD_LOAD_LIMIT, FOCUS, RANGES, analytics, isColumn, boardSummary, columnTotals, filterBoard, isFocus, isRange, resolveRange, MIN_DECIDED,
+  type BoardBid, type BoardDateField, type Column, type FocusKey, type HistoryRow, type RangeKey,
 } from "@/lib/pipeline/board";
 import type { PaySettings } from "@/lib/pipeline/sales-pay";
+import { readStageQueries } from "@/lib/pipeline/stage-search";
 import { Card } from "@/components/ui/misc";
 import { ButtonLink } from "@/components/ui/button";
 import { MetricCard } from "@/components/ui/metric-card";
@@ -28,12 +29,14 @@ const VIEWS: { id: BidsView; label: string; icon: typeof List; feature?: Feature
 const GUIDE_PAGE = { pipeline: "dashboard.pipeline", table: "dashboard.table", analytics: "dashboard.analytics" } as const;
 
 /** Bids dashboard: Pipeline (default), Table (the existing list with every bid action) and Analytics. */
-export function BidsWorkspace({ bids, history, esign, table, pay, paySaved, migrated, initialView, initialFocus, initialRange, initialQuery, initialDateField }: {
+export function BidsWorkspace({ bids, history, esign, table, pay, paySaved, migrated, initialView, initialFocus, initialRange, initialQuery, initialDateField, initialStage = null, initialStageQueries }: {
   bids: BoardBid[]; history: HistoryRow[]; esign: boolean; table: ReactNode; pay: PaySettings; paySaved: boolean; migrated: boolean; initialView?: BidsView;
   /** From ?focus= and ?range= (validated): a KPI card's filter survives refresh, Back and shared links. */
   initialFocus?: FocusKey | null; initialRange?: RangeKey;
   /** From ?q= and ?date=, so Back from an opened bid card keeps the search and date field. */
   initialQuery?: string; initialDateField?: BoardDateField;
+  /** From ?stage= (expanded stage view) and ?s_<stage>= (each stage's own search). */
+  initialStage?: Column | null; initialStageQueries?: Partial<Record<Column, string>>;
 }) {
   // Browser Back can restore this page from the router cache with props from an earlier visit, so in the
   // browser the address bar is the source of truth. On the server the props come from the same URL.
@@ -53,6 +56,36 @@ export function BidsWorkspace({ bids, history, esign, table, pay, paySaved, migr
   const [custom, setCustom] = useState<{ from?: string; to?: string }>({});
   const [field, setField] = useState<BoardDateField>(() => ((fromUrl ? fromUrl.get("date") : initialDateField) === "created" ? "created" : "activity"));
   const [q, setQ] = useState(() => (fromUrl ? fromUrl.get("q")?.slice(0, 100) : initialQuery) ?? "");
+  // Expanded stage view (?stage=draft). Opening one is a history entry, so browser Back returns to the board too.
+  const [stage, setStageState] = useState<Column | null>(() => {
+    const s = fromUrl ? fromUrl.get("stage") : initialStage;
+    return isColumn(s) ? s : null;
+  });
+  const [stageQueries] = useState(() => (fromUrl ? readStageQueries((k) => fromUrl.get(k)) : initialStageQueries ?? {}));
+  const boardScroll = useRef(0);
+  const openedHere = useRef(false);
+  const setStage = useCallback((c: Column | null) => {
+    const u = new URL(window.location.href);
+    if (c) {
+      boardScroll.current = window.scrollY;
+      openedHere.current = true;
+      u.searchParams.set("view", "pipeline"); u.searchParams.set("stage", c);
+      window.history.pushState(null, "", u);
+      setStageState(c);
+      return;
+    }
+    // Back to Pipeline: step back over the entry we pushed (keeps history tidy); a shared ?stage= link just drops it.
+    if (openedHere.current) { openedHere.current = false; window.history.back(); return; }
+    u.searchParams.delete("stage");
+    window.history.replaceState(null, "", u);
+    setStageState(null);
+  }, []);
+  // Returning to the board puts the page back where it was.
+  const prevStage = useRef(stage);
+  useEffect(() => {
+    if (prevStage.current && !stage) { const y = boardScroll.current; requestAnimationFrame(() => window.scrollTo({ top: y })); }
+    prevStage.current = stage;
+  }, [stage]);
 
   const setViewUrl = useCallback((v: BidsView) => {
     setView(v);
@@ -93,6 +126,9 @@ export function BidsWorkspace({ bids, history, esign, table, pay, paySaved, migr
       setFocusState(isFocus(f) ? f : null);
       const r = u.searchParams.get("range");
       setRangeState(isRange(r) && r !== "custom" ? r : "all");
+      const st = u.searchParams.get("stage");
+      if (!isColumn(st)) openedHere.current = false;
+      setStageState(isColumn(st) ? st : null);
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
@@ -195,7 +231,7 @@ export function BidsWorkspace({ bids, history, esign, table, pay, paySaved, migr
           )}
           <p className="text-xs text-muted">
             Showing each bid&apos;s current stage{range === "all" ? "" : `, filtered by ${field === "created" ? "created date" : "last activity"}: ${rangeLabel}`}. {shown.length} bid{shown.length === 1 ? "" : "s"}.
-            <span className="hidden md:inline"> Drag cards between stages, or use ⋮ to move.</span><span className="md:hidden"> Use ⋮ on a card to move it.</span>
+            <span className="hidden md:inline"> Drag cards between stages, or use ⋮ to move. Click a stage name to see all of its bids.</span><span className="md:hidden"> Swipe sideways for more stages. Use ⋮ on a card to move it.</span>
           </p>
           {bids.length === 0 ? (
             <Card className="p-10 text-center"><p className="font-semibold">No bids yet.</p><p className="mt-1 text-sm text-muted">Create a bid and it shows up here as a Draft.</p></Card>
@@ -208,7 +244,7 @@ export function BidsWorkspace({ bids, history, esign, table, pay, paySaved, migr
                 {(focus === "draft" || focus === "open") && <ButtonLink href="/bids" variant="accent" size="sm">Create New Bid</ButtonLink>}
               </div>
             </Card>
-          ) : <PipelineBoard bids={shown} esign={esign} focus={focusCols ?? undefined} />}
+          ) : <PipelineBoard bids={shown} allBids={bids} capped={bids.length >= BOARD_LOAD_LIMIT} esign={esign} focus={focusCols ?? undefined} expanded={stage} onExpand={setStage} initialQueries={stageQueries} />}
         </>
       )}
       {view === "table" && table}
