@@ -3,7 +3,8 @@ import Link from "next/link";
 import { ExternalLink, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/misc";
 import { reportProblem } from "@/app/(marketing)/academy/codes/actions";
-import { APPLICABILITY, CONTENT_STATUS_LABEL, FEEDBACK_REASONS, KB_DISCLAIMER, REASON_TEXT, citationText, type KbResult } from "@/lib/academy/kb/types";
+import { APPLICABILITY, CONTENT_STATUS_LABEL, FEEDBACK_REASONS, KB_DISCLAIMER, REASON_TEXT, citationText, type KbLocalInfo, type KbResult } from "@/lib/academy/kb/types";
+import { labelFromId } from "@/lib/academy/kb/geo";
 import { stateName } from "@/lib/academy/kb/location";
 import { CopyCitation } from "./copy-citation";
 
@@ -25,6 +26,7 @@ export function ApplicabilityNote({ a }: { a: KbResult["applicability"] | null |
       {meta.help}{reason && reason !== meta.help ? ` ${reason}` : ""}
       {a.scope_note ? ` ${a.scope_note}` : ""}
       {a.other_edition ? ` Enforced edition: ${a.other_edition}.` : ""}
+      {a.reason === "local_not_selected" && <> <a href="#project-location" className="font-semibold text-brand hover:underline">Tell us where the project is</a></>}
     </p>
   );
 }
@@ -118,5 +120,38 @@ export function ReportProblem({ targetType, targetId, returnTo, state }: { targe
         <button type="submit" className="justify-self-start rounded-md bg-navy px-3 py-1.5 font-semibold text-white">Send to reviewers</button>
       </form>
     </details>
+  );
+}
+
+/** The picked local permitting authority: what the state's official directory says, or what to confirm when not on file. */
+export function LocalCard({ id, info, state }: { id: string; info: KbLocalInfo | null; state: string | null }) {
+  const name = info?.name ?? labelFromId(id);
+  const st = stateName(state) ?? "the state";
+  return (
+    <section className="mt-4 rounded-xl border border-line bg-surface p-4 text-sm" data-testid="kb-local-card">
+      <h2 className="text-base font-bold">{name}</h2>
+      {info?.status === "enforces" && (
+        <>
+          <p className="mt-1 text-ink-soft">Enforces the {st} State Building Code locally. Permits and inspections go through its building department.</p>
+          <dl className="mt-2 grid gap-x-4 gap-y-1 sm:grid-cols-[auto_1fr]">
+            {info.phone && <><dt className="font-semibold">Building department</dt><dd><a className="text-brand hover:underline" href={`tel:${info.phone.replace(/\D/g, "")}`}>{info.phone}</a></dd></>}
+            {info.detail?.electrical && <><dt className="font-semibold">Electrical inspections</dt><dd>{info.detail.electrical === "state" ? "State electrical inspector" : "Local electrical inspector"}</dd></>}
+            {info.detail?.plumbing_inspects !== undefined && <><dt className="font-semibold">Plumbing inspections</dt><dd>{info.detail.plumbing_inspects ? "Local" : "Not done locally; confirm with the state"}</dd></>}
+          </dl>
+        </>
+      )}
+      {info?.status === "not_enforced" && (
+        <p className="mt-1 text-ink-soft">Has not adopted the {st} State Building Code for local enforcement, so there may be no local building permit or inspection. The state code is still the standard that applies statewide. Check with {info.county ? `${info.county} County` : "the county"} about zoning, septic and other permits.</p>
+      )}
+      {(!info || info.status === "unknown") && (
+        <p className="mt-1 text-ink-soft">We haven&apos;t verified how {name} handles building permits yet. Contact its building department (or the county for unincorporated areas) to confirm which code edition it enforces and any local amendments.</p>
+      )}
+      {info?.source_url && (
+        <p className="mt-2 text-xs text-muted">
+          Source: <a className="text-brand hover:underline" href={info.source_url} target="_blank" rel="noopener noreferrer">official state directory<ExternalLink className="ml-0.5 inline h-3 w-3" aria-hidden /></a>
+          {info.verified_at ? ` · Last verified ${fmtDate(info.verified_at)}` : ""}
+        </p>
+      )}
+    </section>
   );
 }

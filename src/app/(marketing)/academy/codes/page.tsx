@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { MapPin, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { Container, Notice } from "@/components/ui/misc";
-import { Disclaimer, ReportProblem, ResultCard } from "@/components/academy/kb/parts";
+import { Disclaimer, LocalCard, ReportProblem, ResultCard } from "@/components/academy/kb/parts";
+import { LocationForm } from "@/components/academy/kb/location-form";
 import { trades } from "@/lib/trades/catalog";
-import { coverageFor, kbAccess, listFamilies, localJurisdictions, resolveLocation, searchKb } from "@/lib/academy/kb/server";
+import { coverageFor, kbAccess, listFamilies, localAuthority, resolveLocation, searchKb } from "@/lib/academy/kb/server";
 import { KB_STATES, locationQuery, stateForZip, stateName } from "@/lib/academy/kb/location";
 import { GROUP_LABEL, groupResults, pickAnswer } from "@/lib/academy/kb/answer";
 import { KB_UNVERIFIED } from "@/lib/academy/kb/types";
@@ -33,7 +34,7 @@ export default async function CodesPage({ searchParams }: PageProps<"/academy/co
   const family = one("family") || null;
   const history = one("history") === "1";
   const loc = await resolveLocation(sp);
-  const [families, locals, coverage] = await Promise.all([listFamilies(), localJurisdictions(loc.state), q ? Promise.resolve(null) : coverageFor(loc.state)]);
+  const [families, localInfo, coverage] = await Promise.all([listFamilies(), localAuthority(loc.local), q ? Promise.resolve(null) : coverageFor(loc.state)]);
   const search = q || one("section") ? await searchKb({ q, state: loc.state, local: loc.local, trade: loc.trade, family, section: one("section") || null, history }) : null;
   const answer = search ? pickAnswer(search.results) : null;
   const rest = search ? search.results.filter((r) => r.section_id !== answer?.section_id) : [];
@@ -57,38 +58,19 @@ export default async function CodesPage({ searchParams }: PageProps<"/academy/co
         <Link href={`/academy/codes/coverage${locationQuery(loc)}`} className="text-sm font-semibold text-brand hover:underline">What&apos;s covered</Link>
       </div>
 
-      <form action={saveLocation} className="mt-5 grid gap-3 rounded-xl border border-line bg-surface p-4 sm:grid-cols-[8rem_1fr_1fr_1fr_auto] sm:items-end" data-testid="kb-location">
-        <input type="hidden" name="return_to" value="/academy/codes" />
-        <input type="hidden" name="q" value={q} />
-        <label className="text-xs font-semibold text-muted">ZIP code
-          <input name="zip" inputMode="numeric" pattern="[0-9]{5}" maxLength={5} defaultValue={loc.zip ?? ""} placeholder="55901" className={`mt-1 ${input}`} />
-        </label>
-        <label className="text-xs font-semibold text-muted">State
-          <select name="state" defaultValue={loc.state ?? ""} className={`mt-1 ${input}`}>
-            <option value="">Federal rules only</option>
-            {KB_STATES.map((s) => <option key={s.code} value={s.code}>{s.name}</option>)}
-          </select>
-        </label>
-        <label className="text-xs font-semibold text-muted">City, county or township
-          <select name="local" defaultValue={loc.local ?? ""} className={`mt-1 ${input}`} disabled={!locals.length}>
-            <option value="">{locals.length ? "Not selected" : "None verified yet"}</option>
-            {locals.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
-          </select>
-        </label>
-        <label className="text-xs font-semibold text-muted">Trade
-          <select name="trade" defaultValue={loc.trade ?? ""} className={`mt-1 ${input}`}>
-            <option value="">All trades</option>
-            {trades.filter((t) => t.slug !== "other").map((t) => <option key={t.slug} value={t.slug}>{t.name}</option>)}
-          </select>
-        </label>
-        <button type="submit" className="inline-flex items-center justify-center gap-1 rounded-md bg-navy px-4 py-2 text-sm font-semibold text-white"><MapPin className="h-4 w-4" aria-hidden />Save</button>
-        <p className="text-xs text-muted sm:col-span-5">
-          {loc.from !== "none" && FROM_TEXT[loc.from] ? `Started from ${FROM_TEXT[loc.from]}. ` : ""}
-          {loc.zip && zipState && zipState !== loc.state ? `ZIP ${loc.zip} suggests ${stateName(zipState)}; you're researching ${stateName(loc.state) ?? "federal rules"}. ` : ""}
-          {loc.zip && zipState && zipState === loc.state ? `ZIP ${loc.zip} suggests ${stateName(zipState)}. ` : ""}
-          A ZIP code never decides who issues your permit. Your city, county or township may adopt or amend codes differently.
-        </p>
-      </form>
+      <LocationForm
+        action={saveLocation}
+        q={q}
+        initial={{ zip: loc.zip, state: loc.state, local: loc.local, trade: loc.trade }}
+        states={KB_STATES}
+        trades={trades.filter((t) => t.slug !== "other").map((t) => ({ slug: t.slug, name: t.name }))}
+        note={[
+          loc.from !== "none" && FROM_TEXT[loc.from] ? `Started from ${FROM_TEXT[loc.from]}.` : "",
+          loc.zip && zipState && zipState !== loc.state ? `ZIP ${loc.zip} is in ${stateName(zipState)}; you're researching ${stateName(loc.state) ?? "federal rules"}.` : "",
+          "A ZIP code alone never decides who issues your permit.",
+        ].filter(Boolean).join(" ")}
+      />
+      {loc.local && <LocalCard id={loc.local} info={localInfo} state={loc.state} />}
 
       <form action="/academy/codes" role="search" className="mt-4 grid gap-2 sm:grid-cols-[1fr_auto]">
         {loc.zip && <input type="hidden" name="zip" value={loc.zip} />}
@@ -179,6 +161,7 @@ export default async function CodesPage({ searchParams }: PageProps<"/academy/co
           {coverage && (
             <aside className="rounded-xl border border-line bg-surface p-4">
               <h2 className="text-sm font-bold">{coverage.state ? `On file for ${stateName(coverage.state)}` : "Federal rules on file"}</h2>
+              {coverage.note && <p className="mt-1 text-xs text-ink-soft">{coverage.note}</p>}
               {coverage.families.length ? (
                 <ul className="mt-2 space-y-2 text-sm">
                   {coverage.families.slice(0, 10).map((f) => (

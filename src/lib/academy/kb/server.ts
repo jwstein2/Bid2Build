@@ -9,7 +9,7 @@ import { logError } from "@/lib/http/api";
 import { academyDb, isMissing, loadMe } from "../server";
 import { isAnswered } from "./answer";
 import { LOCATION_COOKIE, locationFrom, parseLocationCookie } from "./location";
-import type { KbLocation, KbResult } from "./types";
+import type { KbLocalInfo, KbLocation, KbResult } from "./types";
 
 /**
  * Academy knowledge engine read layer. Reads run as the visitor (RLS: learners see verified material and title-only
@@ -82,13 +82,14 @@ export async function searchKb(input: SearchInput): Promise<{ results: KbResult[
   return { results, suggestions: ((sugg ?? []) as { term: string; related: string[]; note: string | null }[]), ok: true };
 }
 
-export interface Coverage { state: string | null; families: { family: string; name: string; edition: string; authority: string; effective_date: string | null; status: string; local_confirmation_required: boolean; kind: string; expiration_date: string | null }[] }
+export interface Coverage { state: string | null; note?: string | null; directory?: string | null; families: { family: string; name: string; edition: string; authority: string; effective_date: string | null; status: string; local_confirmation_required: boolean; kind: string; expiration_date: string | null }[] }
 
 /** What is on file for a state (and federal): adopted code families, editions and authorities. */
 export async function coverageFor(state: string | null): Promise<Coverage> {
   const db = await academyDb();
   if (!db) return { state, families: [] };
   const ids = ["US", ...(state ? [state] : [])];
+  const juris = state ? db.from("academy_kb_jurisdictions").select("notes, building_dept_url").eq("id", state).maybeSingle() : null;
   const { data, error } = await db.from("academy_kb_adoptions")
     .select("kind, authority_citation, effective_date, expiration_date, status, local_confirmation_required, jurisdiction_id, academy_kb_sources!academy_kb_adoptions_source_id_fkey(family_slug, edition, short_title, academy_kb_families(name))")
     .in("jurisdiction_id", ids).in("status", ["verified", "pending_review"]).limit(200);
@@ -98,13 +99,14 @@ export async function coverageFor(state: string | null): Promise<Coverage> {
   const families = ((data ?? []) as unknown as Row[])
     .filter((r) => r.academy_kb_sources && (r.kind !== "replaces" || r.jurisdiction_id === state) && (r.jurisdiction_id !== "US" || r.kind === "administers"))
     .map((r) => ({
-      family: r.academy_kb_sources!.family_slug, name: r.kind === "replaces" ? `OSHA-approved State Plan` : r.academy_kb_sources!.academy_kb_families?.name ?? r.academy_kb_sources!.short_title,
+      family: r.academy_kb_sources!.family_slug, name: r.kind === "replaces" ? `OSHA-approved State Plan` : r.academy_kb_sources!.family_slug === "state_code" ? r.academy_kb_sources!.short_title : r.academy_kb_sources!.academy_kb_families?.name ?? r.academy_kb_sources!.short_title,
       edition: r.academy_kb_sources!.edition, authority: r.authority_citation, effective_date: r.effective_date, expiration_date: r.expiration_date, status: r.status,
       local_confirmation_required: r.local_confirmation_required, kind: r.kind,
     }))
-    .filter((f, i, all) => all.findIndex((x) => x.authority === f.authority && x.edition === f.edition) === i)
+    .filter((f, i, all) => all.findIndex((x) => x.family === f.family && x.authority === f.authority && x.edition === f.edition) === i)
     .sort((a, b) => Number(a.family.startsWith("osha") || a.family === "fmcsa" || a.family.startsWith("epa")) - Number(b.family.startsWith("osha") || b.family === "fmcsa" || b.family.startsWith("epa")) || a.name.localeCompare(b.name));
-  return { state, families };
+  const j = juris ? ((await juris).data as { notes: string | null; building_dept_url: string | null } | null) : null;
+  return { state, families, note: j?.notes ?? null, directory: j?.building_dept_url ?? null };
 }
 
 /** States that have at least one verified adoption (for the honest coverage list). */
@@ -151,13 +153,17 @@ export async function trailFor(type: "source" | "adoption" | "section", id: stri
   return (data ?? []) as { checked_at: string; method: string; result: string; source_url: string | null }[];
 }
 
-/** Verified local jurisdictions for a state (none are seeded yet; admins add them as they are verified). */
-export async function localJurisdictions(state: string | null): Promise<{ id: string; name: string; level: string }[]> {
-  if (!state) return [];
+/** The picked local permitting authority, when it is on file (only verified local records are stored). */
+export async function localAuthority(id: string | null): Promise<KbLocalInfo | null> {
+  if (!id) return null;
   const db = await academyDb();
-  if (!db) return [];
-  const { data } = await db.from("academy_kb_jurisdictions").select("id, name, level").eq("state_code", state).in("level", ["county", "municipal", "other"]).eq("active", true).order("name").limit(500);
-  return (data ?? []) as { id: string; name: string; level: string }[];
+  if (!db) return null;
+  const { data, error } = await db.from("academy_kb_jurisdictions")
+    .select("id, name, kind, county_name, local_status, phone, detail, source_url, verified_at").eq("id", id).eq("active", true).maybeSingle();
+  if (error) { if (!(isMissing(error) || error.code === "42703")) logError("academy.kb.local", error); return null; }
+  const r = data as { id: string; name: string; kind: string | null; county_name: string | null; local_status: KbLocalInfo["status"] | null; phone: string | null; detail: KbLocalInfo["detail"] | null; source_url: string | null; verified_at: string | null } | null;
+  if (!r || !r.verified_at) return null;
+  return { id: r.id, name: r.name, kind: r.kind ?? undefined, county: r.county_name ?? undefined, status: r.local_status ?? "unknown", phone: r.phone ?? undefined, detail: r.detail ?? undefined, source_url: r.source_url ?? undefined, verified_at: r.verified_at };
 }
 
 /** Code families for the search filter (only ones with something on file). */
