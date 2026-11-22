@@ -28,13 +28,17 @@ export async function POST(req: Request) {
   if (!isSupabaseConfigured()) return fail(503, "not_configured", "Accounts aren't configured.");
   const user = await getUser();
   if (!user) return fail(401, "not_authenticated", "Sign in required.");
-  const p = z.object({ status: z.enum(["dismissed", "completed"]) }).safeParse(await req.json().catch(() => null));
+  const p = z.object({ status: z.enum(["dismissed", "completed"]), replay: z.boolean().optional() }).safeParse(await req.json().catch(() => null));
   if (!p.success) return fail(400, "invalid", "Invalid request.");
-  const { error } = await (await createClient())
+  const q = (await createClient())
     .from("profiles")
     .update({ onboarding_status: p.data.status, onboarding_updated_at: new Date().toISOString() })
-    .eq("id", user.id)
-    .is("onboarding_status", null);
+    .eq("id", user.id);
+  // The automatic popup records only the first answer. Finishing a replayed tour (e.g. from the Home
+  // getting started checklist) upgrades a dismissed popup to completed, so that checklist step ticks.
+  const { error } = p.data.replay && p.data.status === "completed"
+    ? await q.or("onboarding_status.is.null,onboarding_status.eq.dismissed")
+    : await q.is("onboarding_status", null);
   if (error) {
     logError("onboarding.write", error);
     return fail(500, "write_failed", "Couldn't save onboarding status.");

@@ -3,7 +3,8 @@ import Link from "next/link";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { notFound } from "next/navigation";
 import { CalendarRange, CheckCircle2, FileJson } from "lucide-react";
-import { isPmEnabled } from "@/lib/env";
+import { isFinancialsEnabled, isPmEnabled } from "@/lib/env";
+import { stepsAfterSigning } from "@/lib/guide/next-steps";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { isEsignEnabled } from "@/lib/esign/config";
 import { auditRecord } from "@/lib/esign/audit";
@@ -49,6 +50,7 @@ export default async function SignedProposalPage({ params }: PageProps<"/signed/
   const cstate = contractorOn && user ? await contractorState(supabase, admin, user.id, audit.estimateId) : null;
   const k = contractorOn ? ((await supabase.from("contractor_signatures").select("*").eq("version_id", audit.versionId).maybeSingle()).data as ContractorSignature | null) : null;
   const execution = audit.execution;
+  const next = stepsAfterSigning({ estimateId: audit.estimateId, awaitingContractor: execution?.state === "awaiting_contractor", scheduling: isPmEnabled(), financials: isFinancialsEnabled() });
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -69,6 +71,25 @@ export default async function SignedProposalPage({ params }: PageProps<"/signed/
           <Link href={`/estimates/${audit.estimateId}`} className="inline-flex min-h-10 items-center rounded-lg px-3 text-sm font-semibold text-ink-soft hover:bg-black/5">Open bid</Link>
         </div>
       </div>
+
+      {next.length > 0 && (
+        <Card className="p-4 sm:p-5" aria-labelledby="next-h" data-testid="whats-next">
+          <h2 id="next-h" className="font-display text-lg font-extrabold text-navy">What&apos;s next</h2>
+          <p className="text-sm text-ink-soft">The job is yours. Here&apos;s how to take it from signed to scheduled and paid.</p>
+          <ol className="mt-3 grid gap-2 md:grid-cols-2">
+            {next.map((n, i) => (
+              <li key={n.id} className={`flex gap-3 rounded-xl border p-3 ${i === 0 ? "border-accent bg-accent-tint/40" : "border-line"}`} data-testid={`next-${n.id}`}>
+                <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full border border-line-strong text-xs font-bold text-muted" aria-hidden>{i + 1}</span>
+                <div className="min-w-0">
+                  <p className="font-semibold">{n.title}</p>
+                  <p className="mt-0.5 text-sm text-ink-soft">{n.why}</p>
+                  <Link href={n.href} className={`mt-2 inline-flex min-h-10 items-center rounded-md px-3 text-sm font-semibold ${i === 0 ? "bg-accent text-navy hover:bg-accent-hover" : "border border-line-strong hover:bg-black/5"}`}>{n.label}</Link>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </Card>
+      )}
 
       {sig?.pdf_status !== "ready" && (
         <p className="rounded-lg bg-warn-tint p-3 text-sm text-warn" role="status">
@@ -108,7 +129,9 @@ export default async function SignedProposalPage({ params }: PageProps<"/signed/
       </Card>
 
       {execution && cstate && (
+        <div id="execution" className="scroll-mt-20">
         <ExecutionCard estimateId={audit.estimateId} signatureId={signatureId} versionId={audit.versionId} requestId={audit.request?.id ?? null} execution={execution} state={cstate} />
+        </div>
       )}
 
       <section aria-label="Signed proposal" className="theme-light min-w-0 overflow-x-auto rounded-xl bg-[#e4eaf1] p-2 sm:p-5">

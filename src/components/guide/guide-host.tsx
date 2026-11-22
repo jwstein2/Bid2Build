@@ -222,14 +222,14 @@ export function GuideHost({ launcher = true }: { launcher?: boolean }) {
       {panel && <GuidePanel onClose={closePanel} onStartTour={(id) => void start(id)} onMinimize={() => { closePanel(); toggleMin(true); }} />}
 
       {launcher && !showing && !panel && (min ? (
-        <button type="button" onClick={() => { toggleMin(false); openPanel(); }} aria-label="Open the Built2Bid Guide" data-testid="guide-launcher-min"
+        <button type="button" onClick={() => { toggleMin(false); openPanel(); }} aria-label="Open Help" data-testid="guide-launcher-min"
           className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+1rem)] left-0 md:left-64 z-40 grid h-11 w-6 place-items-center rounded-r-lg bg-navy text-white shadow-lg no-print">
           <Compass className="h-4 w-4" aria-hidden />
         </button>
       ) : (
         <button ref={launcherBtn} type="button" onClick={openPanel} aria-haspopup="dialog" data-testid="guide-launcher"
           className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+1rem)] left-3 md:left-[calc(16rem+0.75rem)] z-40 inline-flex h-11 items-center gap-2 rounded-full bg-navy px-3 text-sm font-semibold text-white shadow-lg ring-1 ring-white/10 hover:bg-navy/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:px-4 no-print">
-          <Compass className="h-5 w-5" aria-hidden /><span className="max-sm:sr-only">Guide</span>
+          <Compass className="h-5 w-5" aria-hidden /><span className="max-sm:sr-only">Help</span>
         </button>
       ))}
     </>

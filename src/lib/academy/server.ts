@@ -132,7 +132,10 @@ export const listCourses = cache(async (opts: { trade?: string | null; pillar?: 
     if (!error) {
       rows = (data ?? []).map((r) => {
         const { academy_lessons, ...rest } = r as unknown as Course & { academy_lessons?: { count: number }[] };
-        return { ...rest, lesson_count: academy_lessons?.[0]?.count ?? 0 };
+        // RLS hides members-only lessons from visitors, so a visitor's count undercounts (the Sales
+        // Academy showed "3 lessons" of 12). The shipped seed knows the full count for seeded courses.
+        const seeded = ALL_COURSES.find((c) => c.slug === rest.slug)?.lessons?.length ?? 0;
+        return { ...rest, lesson_count: Math.max(academy_lessons?.[0]?.count ?? 0, rest.status === "published" ? seeded : 0) };
       });
     } else if (!isMissing(error)) rows = [];
   }

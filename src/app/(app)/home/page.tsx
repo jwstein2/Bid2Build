@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { notFound, redirect } from "next/navigation";
-import { createClient, getUser } from "@/lib/supabase/server";
+import { createClient, getAuthUser, getUser } from "@/lib/supabase/server";
 import { isUnifiedHomeEnabled } from "@/lib/env";
 import { MyWorkCallout } from "@/components/workforce/hub/my-work-callout";
 import { allowed } from "@/lib/dashboard/access";
@@ -11,6 +11,8 @@ import { dataFor, loadLayout, loadViewer, visibleWidgets } from "@/lib/dashboard
 import { defaultTemplate } from "@/lib/dashboard/templates";
 import { DashboardBuilder } from "@/components/dashboard/dashboard-builder";
 import { WidgetBody, Frame } from "@/components/dashboard/widgets";
+import { GettingStarted } from "@/components/onboarding/getting-started";
+import { loadChecklist } from "@/lib/onboarding/checklist-server";
 
 export const metadata: Metadata = { title: "Home", robots: { index: false } };
 
@@ -29,6 +31,8 @@ export default async function HomePage() {
   const loaded = await loadLayout(db, viewer, viewer.mode);
   const { shown } = visibleWidgets(loaded.layout, viewer.access);
   const data = dataFor(db, viewer);
+  const authUser = await getAuthUser();
+  const checklist = authUser ? await loadChecklist(authUser).catch(() => null) : null;
 
   // Render every shown widget in parallel; one failing widget never takes the dashboard down.
   const entries = await Promise.all(shown.map(async (w): Promise<[string, ReactNode]> => {
@@ -53,6 +57,7 @@ export default async function HomePage() {
   return (
     <div className="mx-auto max-w-7xl" data-testid="unified-home">
       <MyWorkCallout className="mb-4" />
+      {checklist && <GettingStarted steps={checklist} className="mb-4" />}
       <DashboardBuilder
         key={viewer.mode}
         mode={viewer.mode}
