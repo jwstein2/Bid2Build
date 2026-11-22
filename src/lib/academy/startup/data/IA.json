@@ -1,0 +1,364 @@
+{
+ "state": "IA",
+ "researched_on": "2026-11-22",
+ "checked_at": "2026-11-22T21:48:10Z",
+ "general": {
+  "entity": {
+   "agency": "Iowa Secretary of State",
+   "summary": "To form an LLC, file a certificate of organization with the Iowa Secretary of State naming the company, its principal office, and an Iowa registered agent. Corporations and limited partnerships also file with the Secretary of State.",
+   "url": "https://www.legis.iowa.gov/docs/code/489.201.pdf",
+   "quote": "One or more persons may act as organizers to form a limited liability company by delivering to the secretary of state for filing a certificate of organization.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "state_tax": {
+   "agency": "Iowa Department of Revenue",
+   "summary": "Register for an Iowa sales/use tax permit (and a withholding permit if you have employees) through GovConnectIowa. Contractors are generally treated as the final consumer of building materials and pay sales tax when they buy them; a contractor who also sells materials at retail needs a sales and use tax permit.",
+   "url": "https://tax.iowa.gov/taxes/tax-guidance/sales-use-excise-tax/iowa-contractors-guide",
+   "quote": "Contractors are generally final consumers of building materials, supplies, and equipment, and must pay sales tax at the time of purchase.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "unemployment": {
+   "agency": "Iowa Workforce Development",
+   "summary": "Set up an Iowa unemployment insurance tax account online at MyIowaUI. Construction contractors need an Iowa UI number to get their state contractor registration, even if they have no employees.",
+   "url": "https://tax.iowa.gov/taxes/file-my-taxes/business-taxes/starting-business",
+   "quote": "To establish your Iowa unemployment insurance tax account and to register with the Division of Labor if you are a construction contractor. You must file your registration form and unemployment insurance quarterly reports online at www.MyIowaUI.org",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "workers_comp": {
+   "agency": "Iowa Dept. of Inspections, Appeals, and Licensing (Workers' Compensation Division)",
+   "summary": "Most employers must carry workers' comp insurance or be approved to self-insure. Proprietors, partners and LLC members are not treated as employees and can make a nonelection of coverage. Contractors with employees must show a workers' comp certificate to register.",
+   "url": "https://dial.iowa.gov/hearings/workers-comp/compliance",
+   "quote": "Iowa law allows for a proprietor, limited liability company member, limited liability partner, or partner to make a nonelection of workers' compensation or employers' liability insurance coverage.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "local": {
+   "agency": null,
+   "summary": "Cities and counties can have their own licensing and permit rules, so check with the local government for each project.",
+   "url": "https://dial.iowa.gov/licenses/building/contractors",
+   "quote": "Contact the city or county government for each project to determine local requirements.",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "state_registration",
+   "name": "Construction Contractor Registration",
+   "agency": "Iowa Dept. of Inspections, Appeals, and Licensing (DIAL)",
+   "covers": "Any individual or business doing construction work (carpenters, roofers, painters, electricians, plumbers and more) that earns at least $2,000 a year from construction. Subcontractors must register separately.",
+   "threshold": "Earning at least $2,000 a year from construction",
+   "prerequisites": [
+    "Iowa unemployment insurance number (required even with no employees)",
+    "Workers' compensation certificate if you have employees",
+    "$25,000 bond for out-of-state contractors"
+   ],
+   "bond": "$25,000 bond for contractors based outside Iowa (guarantees taxes and payments owed to the state)",
+   "insurance": "Workers' compensation certificate if you have employees",
+   "summary": "Iowa has no general contractor competency license, but every construction contractor earning at least $2,000 a year from construction must register with DIAL each year. You need an Iowa unemployment insurance number first, plus workers' comp if you have employees.",
+   "url": "https://dial.iowa.gov/licenses/building/contractors",
+   "quote": "Individuals or businesses making less than $2,000 a year on “construction” work, or who work only on their own real estate or property, are not required to register.",
+   "note": "The page says contractors with employees must carry workers' comp 'and a $25,000 bond', while the FAQ ties the bond to out-of-state contractors; the statute (Iowa Code 91C) applies the bond to out-of-state contractors.",
+   "evidence": [
+    {
+     "url": "https://dial.iowa.gov/licenses/building/contractors",
+     "quote": "All in-state contractors are required to obtain an Iowa unemployment insurance number in order to register, even with no employees."
+    },
+    {
+     "url": "https://dial.iowa.gov/licenses/building/contractors",
+     "quote": "If you have employees, you are also required to carry a Certificate of Workers' Compensation and a $25,000 bond."
+    },
+    {
+     "url": "https://dial.iowa.gov/licenses/building/contractors",
+     "quote": "With few exceptions, each contractor with a principal place of business outside of Iowa must file a $25,000 bond in order to register."
+    },
+    {
+     "url": "https://dial.iowa.gov/licenses/building/contractors",
+     "quote": "Carpenters, electricians, plumbers, roofers, painters and many others must register."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "commercial_building": {
+   "status": "state_registration",
+   "name": "Construction Contractor Registration (same as residential)",
+   "agency": "Iowa Dept. of Inspections, Appeals, and Licensing (DIAL)",
+   "covers": "Same registration as residential: all construction contractors earning at least $2,000 a year from construction.",
+   "threshold": "Earning at least $2,000 a year from construction",
+   "prerequisites": [
+    "Iowa unemployment insurance number",
+    "Workers' compensation certificate if you have employees"
+   ],
+   "bond": "$25,000 bond for out-of-state contractors",
+   "insurance": null,
+   "summary": "Commercial work uses the same state contractor registration as residential work; Iowa has no separate state commercial general contractor license.",
+   "url": "https://dial.iowa.gov/licenses/building/contractors",
+   "quote": "Iowa law requires all individual and business construction contractors (128.11 KB) .pdf performing “construction” work to be registered with the Department of Inspections, Appeals, and Licensing (DIAL) if they earn at least $2,000 a year from construction.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://dial.iowa.gov/licenses/building/contractors",
+     "quote": "With few exceptions, each contractor with a principal place of business outside of Iowa must file a $25,000 bond in order to register."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "electrical": {
+   "status": "state_license",
+   "name": "Electrical Contractor / Residential Electrical Contractor; Class A/B Master, Residential Master, Class A/B Journeyman, Residential Electrician, Apprentice",
+   "agency": "Iowa Electrical Examining Board (DIAL)",
+   "covers": "Anyone planning, laying out, supervising or installing electrical wiring for others; electrical contracting businesses.",
+   "threshold": null,
+   "prerequisites": [
+    "Electrical contractor must be or employ a licensed Class A or B master electrician",
+    "Register with DIAL as a contractor",
+    "Class A master: at least one year as a licensed journeyman plus an exam on the National Electrical Code",
+    "Class A journeyman: complete a registered apprenticeship (or board-approved training/experience) and pass an exam"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Iowa licenses electricians and electrical contractors statewide. An electrical contractor must be or employ a master electrician and be registered with DIAL as a contractor. Journeymen come up through an apprenticeship and an exam; masters need journeyman experience and another exam.",
+   "url": "https://dial.iowa.gov/licenses/building/electrical-licensing/electrical-licensing-faqs",
+   "quote": "An Electrical Contractor license is for a person affiliated with an electrical contracting firm or business who is licensed by the Board as either a Master A or B Electrician or employs a Master A or B Electrician, and who is registered with DIAL as a contractor.",
+   "note": "Residential Master / Residential Electrician licenses cover dwellings of no more than four living units.",
+   "evidence": [
+    {
+     "url": "https://www.legis.iowa.gov/docs/code/103.pdf",
+     "quote": "An applicant for a class A master electrician license shall have at least one year’s experience, acceptable to the board, as a licensed class A or class B journeyman electrician."
+    },
+    {
+     "url": "https://www.legis.iowa.gov/docs/code/103.pdf",
+     "quote": "An applicant for a class A journeyman electrician license shall have successfully completed an apprenticeship training program registered by the office of apprenticeship of the United States department of labor"
+    },
+    {
+     "url": "https://www.legis.iowa.gov/docs/code/103.pdf",
+     "quote": "In addition, an applicant shall meet examination criteria based upon the most recent national electrical code adopted pursuant to section 103.6"
+    },
+    {
+     "url": "https://dial.iowa.gov/licenses/building/electrical-licensing/electrical-licensing-faqs",
+     "quote": "All electrical contractors are required to be registered with DIAL."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "plumbing": {
+   "status": "state_license",
+   "name": "Plumbing Contractor License; Master and Journeyperson Plumber",
+   "agency": "Iowa Plumbing and Mechanical Systems Board (DIAL)",
+   "covers": "Businesses and individuals providing plumbing services for others.",
+   "threshold": null,
+   "prerequisites": [
+    "Hold or employ an active master license in each discipline (master of record)",
+    "Master license: pass the master exam, which requires a journeyperson license with two years of work experience (or a master license elsewhere)",
+    "Public liability insurance of at least $500,000",
+    "Surety bond of at least $5,000",
+    "DIAL contractor registration and an Iowa unemployment insurance number",
+    "Permanent place of business"
+   ],
+   "bond": "Surety bond of at least $5,000",
+   "insurance": "Public liability insurance of at least $500,000",
+   "summary": "Plumbing contractors need a state contractor license from the Plumbing and Mechanical Systems Board, which comes with DIAL contractor registration in one joint application. The business must have a licensed master as master of record, liability insurance and a surety bond.",
+   "url": "https://dial.iowa.gov/licenses/building/plumbing-mechanical/plumbing-licensure/contractor-license",
+   "quote": "Iowa law requires all plumbing and mechanical contractors to be licensed with the board and also registered with DIAL.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://dial.iowa.gov/licenses/building/plumbing-mechanical/plumbing-licensure/contractor-license",
+     "quote": "An applicant must provide the board with evidence that the applicant holds an active master license or employs at least one person who holds an active master license issued under Iowa Code chapter 105 for each discipline"
+    },
+    {
+     "url": "https://dial.iowa.gov/licenses/building/plumbing-mechanical/plumbing-licensure/contractor-license",
+     "quote": "An applicant must provide the board with evidence of a public liability insurance policy issued by an entity licensed to do business in Iowa with a minimum coverage amount of $500,000"
+    },
+    {
+     "url": "https://dial.iowa.gov/licenses/building/plumbing-mechanical/plumbing-licensure/contractor-license",
+     "quote": "An applicant must provide the board with evidence of a surety bond issued by an entity licensed to do business in this state in a minimum amount of $5,000"
+    },
+    {
+     "url": "https://dial.iowa.gov/licenses/building/plumbing-mechanical/plumbing-licensure/master-license",
+     "quote": "To be eligible to sit for the exam, you must have either 1) a master license in another jurisdiction; or 2) a journeyperson license with two years of work experience."
+    },
+    {
+     "url": "https://dial.iowa.gov/licenses/building/plumbing-mechanical/plumbing-licensure/contractor-license",
+     "quote": "Must provide the board with evidence that the applicant maintains a permanent place of business."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "mechanical": {
+   "status": "state_license",
+   "name": "Mechanical / HVAC-Refrigeration / Sheet Metal / Hydronic Contractor License; Master and Journeyperson",
+   "agency": "Iowa Plumbing and Mechanical Systems Board (DIAL)",
+   "covers": "Businesses and individuals providing mechanical, HVAC, refrigeration, sheet metal or hydronic systems services for others.",
+   "threshold": null,
+   "prerequisites": [
+    "Master of record licensed in each discipline performed",
+    "Master license requires a journeyperson license with two years of work experience and passing the master exam",
+    "Public liability insurance of at least $500,000 and a surety bond of at least $5,000",
+    "DIAL contractor registration and Iowa unemployment insurance number"
+   ],
+   "bond": "Surety bond of at least $5,000",
+   "insurance": "Public liability insurance of at least $500,000",
+   "summary": "HVAC, refrigeration, sheet metal, hydronic and mechanical contractors are licensed by the same board and under the same contractor rules as plumbers, with a master license required for each discipline.",
+   "url": "https://dial.iowa.gov/licenses/building/contractors",
+   "quote": "If your business provides any type of plumbing, mechanical, HVAC, refrigeration, sheet metal or hydronic systems services, you are required to obtain a license with the Plumbing & Mechanical Systems Board",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://dial.iowa.gov/licenses/building/plumbing-mechanical/plumbing-licensure/master-license",
+     "quote": "To be eligible to sit for the exam, you must have either 1) a master license in another jurisdiction; or 2) a journeyperson license with two years of work experience."
+    },
+    {
+     "url": "https://dial.iowa.gov/licenses/building/plumbing-mechanical/plumbing-licensure/contractor-license",
+     "quote": "An applicant must provide the board with evidence of a public liability insurance policy issued by an entity licensed to do business in Iowa with a minimum coverage amount of $500,000"
+    },
+    {
+     "url": "https://dial.iowa.gov/licenses/building/plumbing-mechanical/plumbing-licensure/contractor-license",
+     "quote": "An applicant must provide the board with evidence of a surety bond issued by an entity licensed to do business in this state in a minimum amount of $5,000"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "roofing": {
+   "status": "no_state_license",
+   "name": null,
+   "agency": "Iowa Dept. of Inspections, Appeals, and Licensing (DIAL)",
+   "covers": "Roofers fall under the general construction contractor registration.",
+   "threshold": "Earning at least $2,000 a year from construction",
+   "prerequisites": [],
+   "bond": null,
+   "insurance": null,
+   "summary": "Iowa has no separate state roofing license; roofers must hold the state construction contractor registration like other trades.",
+   "url": "https://dial.iowa.gov/licenses/building/contractors",
+   "quote": "The definition of construction is very broad.  Carpenters, electricians, plumbers, roofers, painters and many others must register.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://dial.iowa.gov/licenses/building/contractors",
+     "quote": "Individuals or businesses making less than $2,000 a year on “construction” work, or who work only on their own real estate or property, are not required to register."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Commercial Pesticide Applicator Certification and Commercial Applicator (company) License",
+   "agency": "Iowa Department of Agriculture and Land Stewardship, Pesticide Bureau",
+   "covers": "Anyone in the business of applying pesticides to other people's land or property, including lawn care and pest control.",
+   "threshold": null,
+   "prerequisites": [
+    "Applicator certification by passing the state exam",
+    "Evidence of financial responsibility (surety bond, liability insurance or letter of credit) before the company license is issued"
+   ],
+   "bond": "Surety bond, liability insurance or irrevocable letter of credit as evidence of financial responsibility",
+   "insurance": "Liability insurance can serve as the required financial responsibility",
+   "summary": "A pest control or lawn-spraying business needs a commercial applicator license from the Iowa Department of Agriculture, and the people applying must be certified by passing an exam. The company must also show financial responsibility.",
+   "url": "https://www.legis.iowa.gov/docs/code/206.pdf",
+   "quote": "No person shall engage in the business of applying pesticides to the lands or property of another at any time without being licensed by the secretary.",
+   "note": "Small-equipment lawn and yard care done incidentally (not advertised as pesticide application) is exempt under Iowa Code 206.19.",
+   "evidence": [
+    {
+     "url": "https://www.legis.iowa.gov/docs/code/206.pdf",
+     "quote": "To be initially certified as a commercial, public, or private applicator, a person must complete an educational program which shall consist of an examination required to be passed by the person."
+    },
+    {
+     "url": "https://www.legis.iowa.gov/docs/code/206.pdf",
+     "quote": "The evidence of financial responsibility shall consist of a surety bond, a liability insurance policy, or an irrevocable letter of credit issued by a financial institution."
+    },
+    {
+     "url": "https://iowaagriculture.gov/pesticide-bureau/applicator-licensing-certification",
+     "quote": "The Pesticide Applicator is Certified . The Pesticide Company is Licensed ."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "asbestos": {
+   "status": "state_license",
+   "name": "Asbestos business permit; asbestos worker and contractor/supervisor licenses",
+   "agency": "Iowa Dept. of Inspections, Appeals, and Licensing (DIAL)",
+   "covers": "Businesses removing or encapsulating asbestos and the workers and supervisors doing the work.",
+   "threshold": null,
+   "prerequisites": [
+    "EPA-approved training certificate (worker or contractor/supervisor course)",
+    "Respirator fit test and physical exam with notarized medical certification"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Asbestos removal companies need a state permit, and asbestos workers and supervisors need an annual DIAL license backed by EPA-approved training and a respirator fit test and medical exam.",
+   "url": "https://dial.iowa.gov/licenses/building/asbestos/license",
+   "quote": "A business entity engaging in the removal or encapsulating of asbestos shall hold a permit for that purpose unless the business entity is removing or encapsulating asbestos at its own facility.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://dial.iowa.gov/licenses/building/asbestos/license",
+     "quote": "Attach a copy of a training certificate from a trainer approved by the U.S. Environmental Protection Agency (EPA)."
+    },
+    {
+     "url": "https://dial.iowa.gov/licenses/building/asbestos/license",
+     "quote": "Passage of a respirator fit test and physical examination in accordance with OSHA provisions."
+    },
+    {
+     "url": "https://dial.iowa.gov/licenses/building/asbestos/license",
+     "quote": "Asbestos workers, contractors and supervisors must obtain licenses for all asbestos projects unless they are working for their employer and the employer is exempt from the permit requirement."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "lead_rrp": {
+   "status": "state_license",
+   "name": "Lead-Safe Renovator certification and firm certification",
+   "agency": "Iowa Dept. of Inspections, Appeals, and Licensing (DIAL)",
+   "covers": "Renovations that disturb painted surfaces in pre-1978 homes or child-occupied facilities.",
+   "threshold": null,
+   "prerequisites": [
+    "Eight-hour Lead-Safe Renovator training from an approved provider",
+    "Firm certification"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Iowa runs its own lead-safe renovation program instead of EPA. Each job needs at least one renovator certified by DIAL after an eight-hour course, and the firm must be certified too.",
+   "url": "https://dial.iowa.gov/licenses/building/lead/lead-safe-renovation-and-prerenovation-notification",
+   "quote": "Since April 2010, Iowa law has required certification for renovations that disturb painted surfaces in pre-1978 residential housing or child occupied facilities.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://dial.iowa.gov/licenses/building/lead/lead-safe-renovation-and-prerenovation-notification",
+     "quote": "Certification with the Iowa Department of Inspections, Appeals, and Licensing as a Lead-Safe Renovator. Eight hour Lead-Safe Renovator training course from approved provider"
+    },
+    {
+     "url": "https://dial.iowa.gov/licenses/building/lead/lead-safe-renovation-and-prerenovation-notification",
+     "quote": "Firms must be certified too."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "other": [
+  {
+   "key": "manufactured_home_installer",
+   "name": "Manufactured Home Installer Certification",
+   "agency": "Iowa Dept. of Inspections, Appeals, and Licensing (DIAL)",
+   "trades": [
+    "foundations",
+    "general-contracting"
+   ],
+   "summary": "Installers of manufactured homes must be certified by DIAL after training and passing a test.",
+   "url": "https://dial.iowa.gov/licenses/building/manufactured/how-do-i-apply-manufactured-home-installer",
+   "quote": "Mail the completed application to the department, along with: training certificate;",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ ]
+}

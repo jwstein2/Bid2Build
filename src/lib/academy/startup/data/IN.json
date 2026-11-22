@@ -1,0 +1,253 @@
+{
+ "state": "IN",
+ "researched_on": "2026-11-22",
+ "checked_at": "2026-11-22T21:48:10Z",
+ "general": {
+  "entity": {
+   "agency": "Indiana Secretary of State (INBiz)",
+   "summary": "Form an LLC, corporation or other entity, or make changes to it, online through INBiz, the Secretary of State's business portal.",
+   "url": "https://www.in.gov/sos/business/",
+   "quote": "Business search, workforce management, taxes & fees, and other online resources for your business.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "state_tax": {
+   "agency": "Indiana Department of Revenue",
+   "summary": "Register your business with the Indiana Department of Revenue for sales and withholding taxes; all Indiana businesses must file and pay sales and withholding taxes electronically.",
+   "url": "https://www.in.gov/dor/business-tax/",
+   "quote": "All businesses in Indiana must file and pay their sales and withholding taxes electronically.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "unemployment": {
+   "agency": "Indiana Department of Workforce Development (DWD)",
+   "summary": "Employers who meet DWD's criteria register through the Uplink Employer Self Service portal, get a State Unemployment Tax Account (SUTA) number, and file quarterly wage reports.",
+   "url": "https://www.in.gov/dwd/indiana-unemployment/employers/employer-guide/employer-qualifications-and-special-circumstances",
+   "quote": "If you meet any of these criteria, you must register with DWD, usually through the  Uplink Employer Self Service (ESS) portal .  You will then be assigned a State Unemployment Tax Account (SUTA) number.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "workers_comp": {
+   "agency": "Worker's Compensation Board of Indiana",
+   "summary": "Most Indiana businesses must carry workers' compensation insurance. An independent contractor who doesn't elect coverage must file with the Department of Revenue for a certificate of exemption (clearance certificate), which general contractors often ask for.",
+   "url": "https://www.in.gov/wcb/compliance",
+   "quote": "is not subject to the compensation provisions of  IC 22-3-2 through  IC 22-3-6 and must file a statement with the department of state revenue in accordance with  IC 6-3-7-5 and obtain a certificate of exemption.",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "local_only",
+   "name": null,
+   "agency": "Cities and counties",
+   "covers": "General and residential contractors; Indiana has no state license, and some cities and counties license contractors.",
+   "threshold": null,
+   "prerequisites": [],
+   "bond": null,
+   "insurance": null,
+   "summary": "Indiana does not license general or residential contractors at the state level. Check with the city or county where you work, since some require local contractor licenses or registration.",
+   "url": "https://www.in.gov/pla/professions/",
+   "quote": "Midwifery Nursing Occupational Therapy Optometry Pharmacy Physical Therapy Physician Assistant Physicians Plumbing Podiatric Medicine",
+   "note": "Cited page is the Indiana Professional Licensing Agency's list of licensed professions, which includes Plumbing and Manufactured Home Installers but no general, electrical, HVAC or roofing contractor license. That local governments do the licensing was not confirmed from an official page.",
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "commercial_building": {
+   "status": "local_only",
+   "name": null,
+   "agency": "Cities and counties",
+   "covers": "Commercial general contractors; licensing, if any, is local.",
+   "threshold": null,
+   "prerequisites": [],
+   "bond": null,
+   "insurance": null,
+   "summary": "There is no state commercial contractor license in Indiana; check local requirements.",
+   "url": "https://www.in.gov/pla/professions/",
+   "quote": "Midwifery Nursing Occupational Therapy Optometry Pharmacy Physical Therapy Physician Assistant Physicians Plumbing Podiatric Medicine",
+   "note": "Inferred from the state licensing agency's list of professions.",
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "electrical": {
+   "status": "local_only",
+   "name": null,
+   "agency": "Cities and counties",
+   "covers": "Electricians and electrical contractors; licensing, if any, is local.",
+   "threshold": null,
+   "prerequisites": [],
+   "bond": null,
+   "insurance": null,
+   "summary": "Indiana has no state electrician or electrical contractor license; many cities and counties license electrical contractors locally.",
+   "url": "https://www.in.gov/pla/professions/",
+   "quote": "Midwifery Nursing Occupational Therapy Optometry Pharmacy Physical Therapy Physician Assistant Physicians Plumbing Podiatric Medicine",
+   "note": "Inferred from the state licensing agency's list of professions (no electrical license listed).",
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "plumbing": {
+   "status": "state_license",
+   "name": "Plumbing Contractor, Journeyman Plumber, Apprentice Plumber licenses",
+   "agency": "Indiana Plumbing Commission (Professional Licensing Agency)",
+   "covers": "Plumbing contractors and journeyman plumbers.",
+   "threshold": null,
+   "prerequisites": [
+    "Be at least 18 years old",
+    "Four years in a commission-approved apprenticeship, or four years of plumbing experience",
+    "Plumbing contractor: four years working in a plumbing business under a licensed plumbing contractor (or other listed experience)",
+    "Pass the state exam after the Plumbing Commission approves eligibility"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Indiana licenses plumbing contractors and journeyman plumbers. Both need about four years of apprenticeship or plumbing experience and must pass the state exam after the Plumbing Commission approves their application.",
+   "url": "https://www.in.gov/pla/professions/plumbing-home/plumbing-licensing-information/",
+   "quote": "A person who desires to be licensed as a plumbing contractor is eligible for such a license upon the successful taking of the examination provided in section 15 of this chapter.",
+   "note": "Insurance or bond requirements for plumbing contractors were not confirmed.",
+   "evidence": [
+    {
+     "url": "https://www.in.gov/pla/professions/plumbing-home/plumbing-licensing-information/",
+     "quote": "An applicant who is an Indiana resident must provide evidence that the applicant has completed at least four (4) years in an apprenticeship program approved by the commission"
+    },
+    {
+     "url": "https://www.in.gov/pla/professions/plumbing-home/plumbing-licensing-information/",
+     "quote": "Has worked in a plumbing business under the direction of a licensed plumbing contractor for at least four (4) years."
+    },
+    {
+     "url": "https://www.in.gov/pla/professions/plumbing-home/plumbing-licensing-information/",
+     "quote": "Candidates must have their application for examination reviewed and approved for eligibility by the Plumbing Commission before the candidate may register for the examination."
+    },
+    {
+     "url": "https://www.in.gov/pla/professions/plumbing-home/plumbing-licensing-information/",
+     "quote": "Age Requirement: Must be at least 18 years old."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "mechanical": {
+   "status": "local_only",
+   "name": null,
+   "agency": "Cities and counties",
+   "covers": "HVAC contractors; licensing, if any, is local.",
+   "threshold": null,
+   "prerequisites": [],
+   "bond": null,
+   "insurance": null,
+   "summary": "Indiana has no state HVAC or mechanical contractor license; some cities and counties license HVAC contractors.",
+   "url": "https://www.in.gov/pla/professions/",
+   "quote": "Midwifery Nursing Occupational Therapy Optometry Pharmacy Physical Therapy Physician Assistant Physicians Plumbing Podiatric Medicine",
+   "note": "Inferred from the state licensing agency's list of professions. EPA Section 608 certification still applies federally.",
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "roofing": {
+   "status": "no_state_license",
+   "name": null,
+   "agency": null,
+   "covers": "Roofers; no state license.",
+   "threshold": null,
+   "prerequisites": [],
+   "bond": null,
+   "insurance": null,
+   "summary": "Indiana has no state roofing license; check local requirements.",
+   "url": "https://www.in.gov/pla/professions/",
+   "quote": "Midwifery Nursing Occupational Therapy Optometry Pharmacy Physical Therapy Physician Assistant Physicians Plumbing Podiatric Medicine",
+   "note": "Inferred from the state licensing agency's list of professions.",
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Commercial Pesticide Applicator certification/license; pesticide business license",
+   "agency": "Office of Indiana State Chemist (OISC)",
+   "covers": "Commercial pesticide and fertilizer applicators (lawn care, pest control, tree care) and their businesses.",
+   "threshold": null,
+   "prerequisites": [
+    "Meet minimum competency standards (certification exam) for commercial applicators"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Commercial pesticide applicators and businesses in Indiana are licensed by the Office of Indiana State Chemist, and applicators must meet competency standards.",
+   "url": "https://oisc.purdue.edu/pesticide/",
+   "quote": "individuals who apply pesticides have met minimum competency standards, when required, and apply those pesticides without causing harm to people or property.",
+   "note": "OISC is the official state regulator but is hosted at oisc.purdue.edu (not a .gov host), and the Indiana Code site (iga.in.gov) is JavaScript-only, so this could not be verified from a .gov page. Business license and insurance details were not confirmed.",
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "asbestos": {
+   "status": "state_license",
+   "name": "IDEM asbestos licenses (worker, supervisor, contractor, inspector)",
+   "agency": "Indiana Department of Environmental Management (IDEM)",
+   "covers": "All asbestos professionals, including workers and contractors.",
+   "threshold": null,
+   "prerequisites": [
+    "Meet the training qualifications for your discipline and get an IDEM license"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Asbestos workers, contractors and inspectors must meet training qualifications and hold an IDEM license. Except for homes with four or fewer units, buildings must be inspected by a licensed asbestos inspector before demolition or renovation.",
+   "url": "https://www.in.gov/idem/asbestos/",
+   "quote": "All asbestos professionals in Indiana (inspectors, workers, contractors, and training course providers) must meet  qualifications for their discipline and have a valid license from IDEM.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.in.gov/idem/asbestos/",
+     "quote": "With the exception of residential buildings with four or fewer dwelling units,  facilities must be  inspected by an Indiana-licensed asbestos inspector before demolition or renovation activities can occur."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "lead_rrp": {
+   "status": "no_state_license",
+   "name": "EPA RRP Firm Certification and Certified Renovator",
+   "agency": "U.S. EPA",
+   "covers": "Paid renovation, repair and painting in pre-1978 housing and child-occupied facilities.",
+   "threshold": null,
+   "prerequisites": [
+    "EPA firm certification",
+    "Certified renovator training"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Indiana is not authorized to run its own lead renovation (RRP) program, so firms get RRP certification directly from EPA for work on homes built before 1978.",
+   "url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-firm-certification",
+   "quote": "EPA's renovation program applies to all states, Tribes and territories where EPA has not specifically provided authorization for that state, Tribe or territory to operate the program themselves.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-firm-certification",
+     "quote": "Federal law requires all renovation, repair, and painting firms (including sole proprietorships) working in housing, or facilities where children are routinely present, built before 1978, to be certified."
+    },
+    {
+     "url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program",
+     "quote": "EPA administers the RRP Program in most Tribes, states and territories, but has authorized the following to operate their own programs: Alabama, Delaware, Georgia, Iowa, Kansas, Massachusetts, Mississippi, North Carolina, Oklahoma, Oregon, Rhode Island, Utah, Vermont, Washington, Wisconsin"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "other": [
+  {
+   "key": "manufactured_home_installer",
+   "name": "Manufactured Home Installer License",
+   "agency": "Indiana Professional Licensing Agency",
+   "trades": [
+    "foundations",
+    "general-contracting"
+   ],
+   "summary": "Manufactured home installers are licensed by the state under Title 25, Article 23.7 of the Indiana Code.",
+   "url": "https://www.in.gov/pla/professions/manufactured-home-installers-home/",
+   "quote": "Title 25 Article 23.7 - Manufactured Home Installers",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ ]
+}

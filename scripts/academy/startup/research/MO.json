@@ -1,0 +1,243 @@
+{
+ "state": "MO",
+ "researched_on": "2026-11-22",
+ "general": {
+  "entity": {
+   "agency": "Missouri Secretary of State, Corporations Unit",
+   "summary": "Register your LLC, corporation or fictitious (assumed) business name with the Missouri Secretary of State's Corporations Unit.",
+   "url": "https://www.sos.mo.gov/business/corporations",
+   "quote": "The Corporations Unit of the Secretary of State is responsible for the creation and maintenance filings for all domestic and out-of-state business entities doing business in Missouri."
+  },
+  "state_tax": {
+   "agency": "Missouri Department of Revenue",
+   "summary": "Register with the Department of Revenue for a sales tax license if you sell taxable goods, and for withholding tax once you have employees.",
+   "url": "https://dor.mo.gov/taxation/business/registration/requirements.html",
+   "quote": "A business should also register with the department if it is a corporation responsible for filing and paying corporate tax or if it has employees and is required to remit withholding tax."
+  },
+  "unemployment": {
+   "agency": "Missouri Division of Employment Security (DES)",
+   "summary": "Employers liable for Missouri unemployment tax must register with DES and report their employees' wages every quarter.",
+   "url": "https://labor.mo.gov/des/employers",
+   "quote": "Employers that are liable for Missouri unemployment tax contributions must provide the Division of Employment Security (DES) information on the wages of their covered employees each quarter."
+  },
+  "workers_comp": {
+   "agency": "Missouri Division of Workers' Compensation",
+   "summary": "Construction employers must carry workers' compensation if they have even one employee (part-time or full-time). Other employers need it at five or more employees.",
+   "url": "https://labor.mo.gov/dwc/employers/insurance",
+   "quote": "Missouri Employers involved in the construction industry are required to carry the coverage if they have one or more employees. This applies to all employers, regardless of whether the employees are part-time/casual laborers, full-time"
+  },
+  "local": {
+   "summary": "Missouri leaves most contractor licensing to cities and counties (for example St. Louis and Kansas City). Any local contractor license requires proof of workers' comp coverage or an exemption affidavit.",
+   "url": "https://www.stlouis-mo.gov/government/departments/license/business-license-info/Construction-Contracting-Business.cfm",
+   "quote": "Any city or county which issues an occupational or business license for a contractor in the construction industry shall require a certificate of insurance for workers' compensation coverage"
+  }
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "local_only",
+   "name": null,
+   "agency": "Cities and counties",
+   "covers": "General contractors, remodelers and handymen are licensed (if at all) by the city or county where they work.",
+   "threshold": null,
+   "prerequisites": [
+    "Local license where required",
+    "Proof of workers' comp coverage or an exemption affidavit for any local contractor license"
+   ],
+   "bond": null,
+   "insurance": "Local contractor licenses require a workers' comp certificate or exemption affidavit.",
+   "summary": "Missouri has no state license for general or residential contractors; check with each city or county. For example, St. Louis requires a Construction Industry Contractor Graduated Business License.",
+   "url": "https://www.stlouis-mo.gov/government/departments/license/business-license-info/Construction-Contracting-Business.cfm",
+   "quote": "Your business requires a Construction Industry Contractor Graduated Business License (GBL).",
+   "evidence": [
+    {
+     "url": "https://www.stlouis-mo.gov/government/departments/license/business-license-info/Construction-Contracting-Business.cfm",
+     "quote": "Any city or county which issues an occupational or business license for a contractor in the construction industry shall require a certificate of insurance for workers' compensation coverage"
+    }
+   ],
+   "note": "No official state page was found that states outright that Missouri has no state GC license; this is based on the absence of any state program and local licensing pages."
+  },
+  "commercial_building": {
+   "status": "local_only",
+   "name": null,
+   "agency": "Cities and counties",
+   "covers": "Commercial general contractors are licensed locally.",
+   "threshold": null,
+   "prerequisites": [
+    "Local license where required"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "There is no state commercial contractor license in Missouri; cities and counties license contractors. St. Louis also requires general contractors to report their subcontractors.",
+   "url": "https://www.stlouis-mo.gov/government/departments/license/business-license-info/Construction-Contracting-Business.cfm",
+   "quote": "All general contractors are required to furnish a list of the sub-contractors on any job to the License Collector.",
+   "evidence": [
+    {
+     "url": "https://www.stlouis-mo.gov/government/departments/license/business-license-info/Construction-Contracting-Business.cfm",
+     "quote": "Any city or county which issues an occupational or business license for a contractor in the construction industry shall require a certificate of insurance for workers' compensation coverage"
+    }
+   ],
+   "note": "Same caveat as residential."
+  },
+  "electrical": {
+   "status": "state_license",
+   "name": "Statewide Electrical Contractor license (optional); local electrical licenses",
+   "agency": "Office of Statewide Electrical Contractors (Division of Professional Registration); cities/counties",
+   "covers": "Electrical contractors. The statewide license is optional: it is accepted in place of local licenses, but contractors who meet local requirements do not need it.",
+   "threshold": null,
+   "prerequisites": [
+    "Liability insurance of five hundred thousand dollars",
+    "Pass a nationally accredited electrical exam",
+    "Twelve thousand hours of practical experience (or fewer hours with a journeyman certificate or degree)"
+   ],
+   "bond": "Post a bond with each local government where you work, if it requires one.",
+   "insurance": "Liability insurance of five hundred thousand dollars for the statewide license.",
+   "summary": "Missouri offers an optional statewide electrical contractor license that cities must accept instead of their own license. It requires an exam, liability insurance and documented experience. Contractors working where no local license is required, or who hold the local license, don't need the statewide one.",
+   "url": "https://revisor.mo.gov/main/OneSection.aspx?section=324.920",
+   "quote": "Provide proof of liability insurance in the amount of five hundred thousand dollars, and post a bond with each political subdivision in which he or she will perform work, as required by that political subdivision",
+   "evidence": [
+    {
+     "url": "https://revisor.mo.gov/main/OneSection.aspx?section=324.920",
+     "quote": "Pass a standardized and nationally accredited electrical assessment examination that has been created and administered by a third party and that meets current national industry standards"
+    },
+    {
+     "url": "https://revisor.mo.gov/main/OneSection.aspx?section=324.920",
+     "quote": "Twelve thousand verifiable practical hours installing equipment and associated wiring"
+    },
+    {
+     "url": "https://revisor.mo.gov/main/OneSection.aspx?section=324.920",
+     "quote": "shall not be required to possess a statewide license under sections 324.900 to 324.945 to continue to operate as an electrical contractor in such political su"
+    }
+   ],
+   "note": "pr.mo.gov (the licensing agency site) failed TLS verification with curl, so the statute was cited instead."
+  },
+  "plumbing": {
+   "status": "local_only",
+   "name": null,
+   "agency": "Cities and counties",
+   "covers": "Plumbers and plumbing contractors.",
+   "threshold": null,
+   "prerequisites": [
+    "Local license where required"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Missouri has no state plumbing license; plumbers are licensed by the city or county where they work.",
+   "url": "https://www.stlouis-mo.gov/government/departments/license/business-license-info/Construction-Contracting-Business.cfm",
+   "quote": "Any city or county which issues an occupational or business license for a contractor in the construction industry shall require a certificate of insurance for workers' compensation coverage",
+   "note": "No official state page explicitly says plumbing is local-only; inferred from the absence of a state program."
+  },
+  "mechanical": {
+   "status": "local_only",
+   "name": null,
+   "agency": "Cities and counties",
+   "covers": "HVAC and mechanical contractors.",
+   "threshold": null,
+   "prerequisites": [
+    "Local license where required",
+    "Federal EPA refrigerant-handling certification for refrigerant work"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Missouri has no state HVAC/mechanical license; check city and county requirements.",
+   "url": "https://www.stlouis-mo.gov/government/departments/license/business-license-info/Construction-Contracting-Business.cfm",
+   "quote": "Any city or county which issues an occupational or business license for a contractor in the construction industry shall require a certificate of insurance for workers' compensation coverage",
+   "note": "Inferred from the absence of a state program; not stated on an official state page."
+  },
+  "roofing": {
+   "status": "local_only",
+   "name": null,
+   "agency": "Cities and counties",
+   "covers": "Roofing contractors.",
+   "threshold": null,
+   "prerequisites": [
+    "Local license where required"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Missouri has no state roofing license; some cities license roofers.",
+   "url": "https://www.stlouis-mo.gov/government/departments/license/business-license-info/Construction-Contracting-Business.cfm",
+   "quote": "Any city or county which issues an occupational or business license for a contractor in the construction industry shall require a certificate of insurance for workers' compensation coverage",
+   "note": "Inferred from the absence of a state program."
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Certified Commercial Applicator license; Pesticide Technician / NRUP license",
+   "agency": "Missouri Department of Agriculture, Bureau of Pesticide Control",
+   "covers": "Anyone applying pesticides on others' property for a fee (lawn care, pest control, termite work).",
+   "threshold": null,
+   "prerequisites": [
+    "Pass the CORE exam and at least one category exam",
+    "Proof of insurance or surety bond (financial responsibility)",
+    "Structural categories: pesticide experience or a related associate degree"
+   ],
+   "bond": "Insurance or a surety bond is accepted as proof of financial responsibility.",
+   "insurance": "Commercial applicator insurance (or surety bond) required.",
+   "summary": "To apply pesticides for paying customers you need a Certified Commercial Applicator license: pass the CORE and a category exam and show insurance or a bond. Structural pest control categories also require experience or a related degree.",
+   "url": "https://agriculture.mo.gov/plants/pesticides/",
+   "quote": "while engaged in the business of using pesticides on the lands of another as a direct service to the public in exchange for a fee or compensation.",
+   "evidence": [
+    {
+     "url": "https://agriculture.mo.gov/plants/pesticides/",
+     "quote": "To become certified as a Commercial Applicator, it is required to pass the General Standards of Competence Examination (CORE) and at least one of the category examinations at Pearson Vue to become certified."
+    },
+    {
+     "url": "https://agriculture.mo.gov/plants/pesticides/",
+     "quote": "Commercial Applicator Insurance This acts as evidence of financial responsibility. You may submit an proof of insurance form, surety bond, or this form."
+    },
+    {
+     "url": "https://agriculture.mo.gov/plants/pesticides/",
+     "quote": "the applicant will be required to submit evidence of valid experience using pesticides (in these categories), or evidence of having an Associates of Arts degree"
+    }
+   ],
+   "note": null
+  },
+  "asbestos": {
+   "status": "state_registration",
+   "name": "Asbestos Abatement Contractor registration; individual Asbestos Occupation Certification",
+   "agency": "Missouri Department of Natural Resources, Air Pollution Control Program",
+   "covers": "Removal of regulated asbestos above threshold amounts must be done by a DNR-registered contractor using DNR-certified workers.",
+   "threshold": "160 square feet, 260 linear feet, or 35 cubic feet of regulated asbestos-containing material.",
+   "prerequisites": [
+    "DNR asbestos contractor registration",
+    "DNR certification for every worker and supervisor",
+    "Asbestos inspection before demolition or renovation"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Jobs disturbing asbestos above 160 square feet, 260 linear feet or 35 cubic feet must use a Missouri-registered abatement contractor, and every individual on the project must hold DNR certification.",
+   "url": "https://dnr.mo.gov/document-search/asbestos-requirements-demolition-renovation-projects-schools-pub2554/pub2554",
+   "quote": "If the asbestos inspection determines that 160 square feet, 260 linear feet, 35 cubic feet (threshold quantities), or more of regulated asbestos containing material will be impacted by demolition or renovation activities, all of the regulated asbestos containing material must be removed by a Missouri registered asbestos abatement contr",
+   "evidence": [
+    {
+     "url": "https://dnr.mo.gov/air/business-industry/asbestos/occupation-certification",
+     "quote": "Before an individual can participate in an asbestos project, inspection, Asbestos Hazard Emergency Response Act management plan, abatement project design, or asbestos air sampling in Missouri, that individual must receive certification from the department."
+    }
+   ],
+   "note": null
+  },
+  "lead_rrp": {
+   "status": "no_state_license",
+   "name": "EPA Lead-Safe Certified Firm + Certified Renovator (federal)",
+   "agency": "U.S. EPA",
+   "covers": "Paid renovation, repair and painting that disturbs paint in pre-1978 homes, childcare facilities and preschools.",
+   "threshold": null,
+   "prerequisites": [
+    "EPA firm certification",
+    "Certified renovator training"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Missouri is not on EPA's list of states running their own RRP program, so renovation firms are certified directly by EPA.",
+   "url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program",
+   "quote": "EPA administers the RRP Program in most Tribes, states and territories, but has authorized the following to operate their own programs: Alabama, Delaware, Georgia, Iowa, Kansas, Massachusetts, Mississippi, North Carolina, Oklahoma, Oregon, Rhode Island, Utah, Vermont, Washington, Wisconsin",
+   "evidence": [
+    {
+     "url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program",
+     "quote": "EPA's RRP Rule requires that anyone paid to perform work that disturbs painted surfaces in homes, childcare facilities and preschools built before 1978 be certified and their employees be trained"
+    }
+   ],
+   "note": "Lead abatement (not renovation) is licensed separately by the Missouri Department of Health and Senior Services; not verified here."
+  },
+  "other": []
+ }
+}

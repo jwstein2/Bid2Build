@@ -1,0 +1,357 @@
+{
+ "state": "RI",
+ "researched_on": "2026-11-22",
+ "checked_at": "2026-11-22T21:48:10Z",
+ "general": {
+  "entity": {
+   "agency": "RI Department of State, Business Services Division",
+   "summary": "Form your LLC or corporation (or register a trade name) with the Rhode Island Department of State, which keeps the state business registry.",
+   "url": "https://www.sos.ri.gov/divisions/business-services",
+   "quote": "The Department of State Business Services Division maintains Rhode Island’s state business registry. While we record new business formations and ongoing business registration activity",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "state_tax": {
+   "agency": "RI Division of Taxation",
+   "summary": "If you make retail sales of taxable goods, you need a sales permit from the RI Division of Taxation for each place of business. The contractor registration application also asks for your state withholding tax account number if you have employees.",
+   "url": "https://webserver.rilegislature.gov/Statutes/TITLE44/44-19/44-19-1.htm",
+   "quote": "Every person desiring to engage in or conduct within this state a business of making sales at retail ... shall file with the tax administrator an application for a permit for each place of business.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "unemployment": {
+   "agency": "RI Department of Labor and Training",
+   "summary": "Employers pay unemployment insurance contributions to the RI Department of Labor and Training; your unemployment insurance account number goes on your contractor registration application if you have one.",
+   "url": "https://webserver.rilegislature.gov/Statutes/TITLE5/5-65/5-65-5.htm",
+   "quote": "Unemployment insurance account number, if applicable; (4) State withholding tax account number, if applicable;",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "workers_comp": {
+   "agency": "RI Department of Labor and Training",
+   "summary": "Any business that regularly employs workers must carry workers' compensation insurance (or prove it can self-insure). Registered contractors must keep workers' comp in effect as the law requires and show proof at registration and renewal.",
+   "url": "https://webserver.rilegislature.gov/Statutes/TITLE5/5-65/5-65-7.htm",
+   "quote": "In addition, all contractors shall have in effect workers’ compensation insurance as required under chapter 29 of title 28.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "local": {
+   "agency": null,
+   "summary": "Rhode Island cities and towns may not issue their own contractor registrations or licenses to contractors registered with the state board, but they can still charge a general business license fee. Building permits require your state registration number.",
+   "url": "https://webserver.rilegislature.gov/Statutes/TITLE5/5-65/5-65-3.htm",
+   "quote": "The provisions of this chapter shall be exclusive and no city or town shall require or shall issue any registrations or licenses nor charge any fee for the regulatory registration of any contractor registered with the board.",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "state_registration",
+   "name": "Contractor Registration",
+   "agency": "RI Contractors' Registration and Licensing Board (CRLB)",
+   "covers": "Anyone who bids on or does construction, alteration, repair or improvement work on a structure for others, including remodelers and specialty trades.",
+   "threshold": "Small jobs under $500 total that are casual, minor or inconsequential are exempt (does not apply if you advertise).",
+   "prerequisites": [
+    "Be at least 18 years old",
+    "Complete 5 hours of pre-registration education",
+    "Liability insurance of at least $500,000 combined single limit",
+    "Workers' compensation insurance if required",
+    "Government-issued ID"
+   ],
+   "bond": null,
+   "insurance": "Public liability and property damage insurance of at least $500,000 combined single limit, plus workers' compensation as required by law; proof at registration and renewal.",
+   "summary": "Rhode Island requires every contractor working on structures to register with the Contractors' Registration and Licensing Board before bidding or working. New applicants must finish 5 hours of pre-registration education and show proof of insurance.",
+   "url": "https://webserver.rilegislature.gov/Statutes/TITLE5/5-65/5-65-3.htm",
+   "quote": "A person shall not undertake, offer to undertake, or submit a bid to do work as a contractor on a structure unless that person has a current, valid certificate of registration for all construction work issued by the board.",
+   "note": "The CRLB website (crb.ri.gov) blocks automated fetching, so statute text is cited.",
+   "evidence": [
+    {
+     "url": "https://webserver.rilegislature.gov/Statutes/TITLE5/5-65/5-65-5.htm",
+     "quote": "For new applications, satisfactory proof shall be provided to the board evidencing the completion of five (5) hours of preregistration education units"
+    },
+    {
+     "url": "https://webserver.rilegislature.gov/Statutes/TITLE5/5-65/5-65-5.htm",
+     "quote": "An applicant must be at least eighteen (18) years of age."
+    },
+    {
+     "url": "https://webserver.rilegislature.gov/Statutes/TITLE5/5-65/5-65-7.htm",
+     "quote": "public liability and property damage insurance covering the work of that contractor that shall be subject to this chapter in not less than the following amount: five hundred thousand dollars ($500,000) combined single limit"
+    },
+    {
+     "url": "https://webserver.rilegislature.gov/Statutes/TITLE5/5-65/5-65-2.htm",
+     "quote": "price of all of that person’s contracts for labor, materials, and all other items is less than five hundred dollars ($500) and the work is of a casual, minor, or inconsequential nature."
+    },
+    {
+     "url": "https://webserver.rilegislature.gov/Statutes/TITLE5/5-65/5-65-5.htm",
+     "quote": "A legible copy of a valid government issued identification;"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "commercial_building": {
+   "status": "state_registration",
+   "name": "Contractor Registration (same CRLB registration)",
+   "agency": "RI Contractors' Registration and Licensing Board (CRLB)",
+   "covers": "The same CRLB registration covers commercial (nonresidential) contractors; some consumer-protection sections apply only to residential work.",
+   "threshold": null,
+   "prerequisites": [
+    "Same CRLB registration requirements as residential (insurance, pre-registration education)"
+   ],
+   "bond": null,
+   "insurance": "Same liability and workers' compensation requirements as residential.",
+   "summary": "Commercial contractors register with the same board under the same law. Contractors who do not regularly work on residential structures are excused from some consumer-protection provisions.",
+   "url": "https://webserver.rilegislature.gov/Statutes/TITLE5/5-65/5-65-24.htm",
+   "quote": "the provisions of the following sections of this chapter shall not apply to any contractor who does not regularly, in the course of his or her or its business as a contractor, engage in construction activities as contemplated under this chapter on residential structures",
+   "note": "Commercial roofers need a separate roofing license (see roofing).",
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "electrical": {
+   "status": "state_license",
+   "name": "Electrical Contractor (Certificate A); Journeyperson Electrician (Certificate B)",
+   "agency": "RI Department of Labor and Training, Division of Professional Regulation (Board of Examiners of Electricians)",
+   "covers": "Anyone in the business of installing, maintaining, servicing or testing electrical wiring and equipment; the contractor license lets a business contract, and journeyperson licenses let individuals do the work.",
+   "threshold": null,
+   "prerequisites": [
+    "Journeyperson (Certificate B): 8,000 hours (4 years) as a registered apprentice, then pass the exam",
+    "Contractor (Certificate A): 12,000 hours (6 years) experience and a RI Certificate B held for two years, then pass the exam",
+    "Contractor applicants must be at least 21 years old"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Electrical work in Rhode Island requires a state license from the Department of Labor and Training. Journeypersons need 4 years as a registered apprentice; contractors need 6 years of experience, a journeyperson license held for two years, and a passed exam.",
+   "url": "https://webserver.rilegislature.gov/Statutes/TITLE5/5-6/5-6-2.htm",
+   "quote": "unless that person, firm, or corporation shall have received a license and a certificate for the business, issued by the state board of examiners of electricians of the division of professional regulation of the department of labor and training",
+   "note": "DLT's website blocks automated fetching; statute and rule text are cited.",
+   "evidence": [
+    {
+     "url": "https://rules.sos.ri.gov/Regulations/part/260-30-15-7",
+     "quote": "Those applying for Journeypersons Certificate B License must have at least 8,000 hours (4 years) experience as a registered apprentice."
+    },
+    {
+     "url": "https://rules.sos.ri.gov/Regulations/part/260-30-15-7",
+     "quote": "Applicants for Contractor's Certificate A must have had at least 12,000 hours (6 years) experience and have held a Rhode Island Certificate B for two years."
+    },
+    {
+     "url": "https://rules.sos.ri.gov/Regulations/part/260-30-15-7",
+     "quote": "Applicants filing for Certificate A, E, AF, LPC or SCF Certificates must be at least twenty-one (21) years of age."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "plumbing": {
+   "status": "state_license",
+   "name": "Master Plumber; Journeyperson Plumber",
+   "agency": "RI Department of Labor and Training, Division of Professional Regulation (Board of Plumbing Examiners)",
+   "covers": "Anyone in the plumbing business or contracting for plumbing installation, maintenance or repair needs a master plumber license; individuals doing the work need a journeyperson license.",
+   "threshold": null,
+   "prerequisites": [
+    "Journeyperson: 4 years as a registered apprentice plumber with 8,000 hours of on-the-job training and 576 hours of related instruction, then pass the exam",
+    "Master: hold a journeyperson license for at least one year while employed by a licensed master, then pass the exam"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Plumbing contractors in Rhode Island must hold a master plumber license. Getting there takes a 4-year apprenticeship, a journeyperson license held for at least one year, and passing the master exam.",
+   "url": "https://webserver.rilegislature.gov/Statutes/TITLE5/5-20/5-20-8.htm",
+   "quote": "or enter into contracts or agreements for the installation, maintenance, or repair of plumbing or irrigation systems or water-filtration/treatment systems;",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://webserver.rilegislature.gov/Statutes/TITLE5/5-20/5-20-17.htm",
+     "quote": "showing that the applicant has been actually engaged in plumbing work as an apprentice plumber in the state of Rhode Island for eight thousand (8,000) hours of on-the-job training during a five-year (5) period, which shall include the successful completion of five hundred seventy-six (576) hours of related instruction"
+    },
+    {
+     "url": "https://webserver.rilegislature.gov/Statutes/TITLE5/5-20/5-20-17.htm",
+     "quote": "The applicant shall have possessed, for at least four (4) years prior to the filing of the application, a certificate of registration in full force and effect from the department of labor and training specifying that person as a registered apprentice plumber"
+    },
+    {
+     "url": "https://webserver.rilegislature.gov/Statutes/TITLE5/5-20/5-20-16.htm",
+     "quote": "licensed as a journeyperson plumber or journeyperson irrigator, for a minimum of one year. An affidavit must accompany this application certifying that the applicant was employed by a licensed master plumber"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "mechanical": {
+   "status": "state_license",
+   "name": "Master Pipefitter, Master Refrigeration/Air Conditioning, Sheet Metal Contractor licenses (and journeyperson licenses)",
+   "agency": "RI Department of Labor and Training, Division of Professional Regulation (Mechanical Board)",
+   "covers": "Businesses that install, maintain, repair or service pipefitting, refrigeration/air conditioning, air distribution (sheet metal) or fire sprinkler systems.",
+   "threshold": null,
+   "prerequisites": [
+    "Hold a RI journeyperson license in the trade for at least one year (or equivalent license from another state)",
+    "Pass the master or contractor exam"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "HVAC, refrigeration, pipefitting and sheet metal businesses need a state master or contractor license from the Department of Labor and Training. Applicants must have held a journeyperson license for at least one year and pass an exam.",
+   "url": "https://webserver.rilegislature.gov/Statutes/TITLE28/28-27/28-27-5.htm",
+   "quote": "Advertise or represent in any form or matter that they are masters or that they will install pipefitting or refrigeration/air conditioning, or air distribution systems or perform fire protection sprinkler work, unless the person possesses a valid license issued by the department of labor and training under this chapter.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://webserver.rilegislature.gov/Statutes/TITLE28/28-27/28-27-10.htm",
+     "quote": "The applicant possesses a certificate of license in full force and effect from the department of labor and training specifying that person as a journeyperson licensed as such for a minimum of one year"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "roofing": {
+   "status": "state_license",
+   "name": "Roofing Contractor License (commercial roofing)",
+   "agency": "RI Contractors' Registration and Licensing Board (CRLB)",
+   "covers": "Roofing contractors, in addition to CRLB registration; contractors applying shingles only are exempt from the roofing license (but still need CRLB registration).",
+   "threshold": null,
+   "prerequisites": [
+    "Pass a board-approved roofing exam",
+    "Be in good standing with the CRLB",
+    "All field personnel need a 10-hour OSHA safety course certificate",
+    "Insurance certificate of $2,000,000 per occurrence"
+   ],
+   "bond": null,
+   "insurance": "$2,000,000 per occurrence insurance certificate naming the board as holder.",
+   "summary": "Rhode Island licenses roofing contractors separately from basic registration, but shingle-only roofers are exempt from the roofing license. Licensed roofers must pass an exam, have OSHA 10-hour trained crews, and carry $2,000,000 per occurrence insurance.",
+   "url": "https://webserver.rilegislature.gov/Statutes/TITLE5/5-73/5-73-3.htm",
+   "quote": "Licensing requirements shall not apply to roofing contractors applying shingles only.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://webserver.rilegislature.gov/Statutes/TITLE5/5-73/5-73-3.htm",
+     "quote": "Pass an examination approved or administered by the contractors’ registration and licensing board or has previously been registered as a commercial roofer in good standing"
+    },
+    {
+     "url": "https://webserver.rilegislature.gov/Statutes/TITLE5/5-73/5-73-3.htm",
+     "quote": "All field personnel of the roofing contractor must have a current certificate of completion of the ten-hours (10) OSHA safety course or equivalent thereof"
+    },
+    {
+     "url": "https://webserver.rilegislature.gov/Statutes/TITLE5/5-73/5-73-3.htm",
+     "quote": "Provide the board with an insurance certificate in the amount of two million dollars ($2,000,000) per occurrence"
+    },
+    {
+     "url": "https://webserver.rilegislature.gov/Statutes/TITLE5/5-73/5-73-3.htm",
+     "quote": "All roofing contractors, in addition to the requirements of chapter 65 of this title entitled “Contractors’ Registration and Licensing Board,” if applicable, prior to conducting roofing business in the state of Rhode Island, shall first submit an application to and be licensed"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Commercial Pesticide Applicator License / Certification",
+   "agency": "RI Department of Environmental Management, Division of Agriculture",
+   "covers": "Commercial applicators applying any pesticide (pest control, lawn care, tree spraying) on others' property; restricted-use pesticides require certification.",
+   "threshold": null,
+   "prerequisites": [
+    "Pass DEM licensing/certification exam(s)"
+   ],
+   "bond": null,
+   "insurance": "DEM may set liability limits for spraying operations by rule.",
+   "summary": "Commercial pesticide applicators in Rhode Island must be licensed or certified by DEM, or work under the direct supervision of someone who is. Restricted-use pesticides require certification.",
+   "url": "https://webserver.rilegislature.gov/Statutes/TITLE23/23-25/23-25-11.htm",
+   "quote": "No commercial applicator shall use or supervise the use of any pesticide on land without first becoming a licensed commercial applicator under § 23-25-12 or a certified applicator under § 23-25-13",
+   "note": "DEM's website blocks automated fetching; exam details are set by DEM rule.",
+   "evidence": [
+    {
+     "url": "https://webserver.rilegislature.gov/Statutes/TITLE23/23-25/23-25-12.htm",
+     "quote": "Establishing procedures for filing a license application, applicant qualifications, license classifications if necessary, standards, and the scope and types of examinations necessary to carry out the intent of this chapter;"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "asbestos": {
+   "status": "state_license",
+   "name": "Asbestos Abatement Contractor License",
+   "agency": "RI Department of Health",
+   "covers": "Anyone doing asbestos abatement or removing/disposing of friable asbestos, including during demolition.",
+   "threshold": null,
+   "prerequisites": [
+    "State asbestos contractor license from RIDOH",
+    "Approved abatement plan before permits are issued"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Asbestos abatement in Rhode Island requires a Department of Health license. Building or demolition permits involving asbestos need an approved abatement plan and the licensed contractor's license.",
+   "url": "https://webserver.rilegislature.gov/Statutes/TITLE23/23-24.5/23-24.5-12.htm",
+   "quote": "No person or entity shall undertake an asbestos abatement project or dispose of friable asbestos materials in or from any building or demolition of any portion of a structure containing friable asbestos or asbestiform material unless the director has licensed that person or entity",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://webserver.rilegislature.gov/Statutes/TITLE23/23-24.5/23-24.5-12.htm",
+     "quote": "no building permit or demolition permit involving asbestos abatement shall be issued by any municipal or state official unless the application for the permit includes a certified copy of an approved abatement plan"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "lead_rrp": {
+   "status": "state_license",
+   "name": "State lead-safe renovation (RRP) certification",
+   "agency": "RI Department of Health (EPA-authorized state RRP program)",
+   "covers": "Firms doing renovation, repair or painting in pre-1978 housing or child-occupied facilities.",
+   "threshold": null,
+   "prerequisites": [
+    "Firm certification and trained renovators under the Rhode Island program"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Rhode Island is authorized by EPA to run its own lead renovation (RRP) program, so contractors working on pre-1978 homes get certified through the state rather than EPA.",
+   "url": "https://www.epa.gov/node/255913",
+   "quote": "Rhode Island , Utah , Vermont , Washington and Wisconsin , or in the Minnesota Chippewa Tribe - Bois Forte (Nette Lake) should follow the link provided for the state or Tribe for more information about their training and certification requirements. These states are authorized to administer their own RRP programs in lieu of the federal program.",
+   "note": "State program details are on RIDOH's site, which was not fetched.",
+   "evidence": [
+    {
+     "url": "https://www.epa.gov/node/255913",
+     "quote": "Federal law requires all renovation, repair, and painting firms (including sole proprietorships) working in housing, or facilities where children are routinely present, built before 1978, to be certified."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "other": [
+  {
+   "key": "irrigation",
+   "name": "Master Irrigator License",
+   "agency": "RI Department of Labor and Training, Division of Professional Regulation",
+   "trades": [
+    "landscaping"
+   ],
+   "summary": "Contracting to install, maintain or repair irrigation systems requires a master irrigator license.",
+   "url": "https://webserver.rilegislature.gov/Statutes/TITLE5/5-20/5-20-8.htm",
+   "quote": "No person shall engage in this state in the business of plumbing as a master plumber, or irrigation as a master irrigator",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  {
+   "key": "fire_alarm",
+   "name": "Fire Alarm Contractor License (Certificate AF)",
+   "agency": "RI Department of Labor and Training, Division of Professional Regulation",
+   "trades": [
+    "electrical"
+   ],
+   "summary": "Fire alarm contractors need a Certificate AF; individual installers need a Certificate BF after passing an exam.",
+   "url": "https://webserver.rilegislature.gov/Statutes/TITLE5/5-6/5-6-11.htm",
+   "quote": "A Certificate BF shall be granted to any person who has passed an examination before the division of professional regulation.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  {
+   "key": "oil_burner",
+   "name": "Burner Contractor (Certificate E) / Burnerperson (Certificate F)",
+   "agency": "RI Department of Labor and Training, Division of Professional Regulation",
+   "trades": [
+    "hvac"
+   ],
+   "summary": "Businesses installing and servicing oil and gas burners need a burner contractor license; technicians doing burner wiring need a Certificate F after passing an exam.",
+   "url": "https://webserver.rilegislature.gov/Statutes/TITLE5/5-6/5-6-8.htm",
+   "quote": "A Certificate E shall be issued to any person, firm, or corporation qualified under this chapter and engaged in, or about to engage in, the business of a burner contractor",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ ]
+}

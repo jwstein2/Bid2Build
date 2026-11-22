@@ -1,0 +1,311 @@
+{
+ "state": "DC",
+ "researched_on": "2026-11-22",
+ "checked_at": "2026-11-22T21:48:10Z",
+ "general": {
+  "entity": {
+   "agency": "DC Department of Licensing and Consumer Protection (DLCP), Corporations Division",
+   "summary": "Corporations, partnerships and LLCs must register with DLCP's Corporations Division, stay in good standing, and keep a registered agent before getting a business license.",
+   "url": "https://dlcp.dc.gov/node/1614551",
+   "quote": "For corporations, partnership or limited liability companies (domestic or foreign), you must be registered and in good standing with the Corporations Division. You must also have a Registered Agent.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "state_tax": {
+   "agency": "DC Office of Tax and Revenue (OTR)",
+   "summary": "Register for DC taxes (sales and use, withholding) by filing the FR-500 New Business Registration on MyTax.DC, between registering your entity and getting your DLCP business license.",
+   "url": "https://otr.cfo.dc.gov/page/new-business-registration",
+   "quote": "Register with DLCP if required, then complete the FR 500, then go back to DLCP to obtain your business license.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "unemployment": {
+   "agency": "DC Department of Employment Services (DOES)",
+   "summary": "Once you have employees and a withholding account, register with DOES for unemployment insurance.",
+   "url": "https://otr.cfo.dc.gov/page/new-business-registration",
+   "quote": "Entities registered with a withholding account should contact DOES (Department of Employment Services) for unemployment insurance.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "workers_comp": {
+   "agency": "DC Department of Employment Services, Office of Workers' Compensation",
+   "summary": "Every employer covered by the DC workers' compensation law must insure (or self-insure) payment of compensation for its employees.",
+   "url": "https://code.dccouncil.gov/us/dc/council/code/sections/32-1534",
+   "quote": "Every employer shall secure the payment of compensation under this chapter: (1) by insuring and keeping insured the payment of such compensation",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "local": {
+   "agency": null,
+   "summary": "Every licensed business needs a tax registration with OTR, Clean Hands certification, and (if operating from a DC location) a Certificate of Occupancy or Home Occupation Permit before applying for a Basic Business License.",
+   "url": "https://dlcp.dc.gov/node/1614551",
+   "quote": "However, there are five basic requirements for ALL licensed business activities which must be satisfied prior to submitting a Basic Business License application",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "state_license",
+   "name": "Home Improvement Contractor (HIC) Basic Business License, plus a Home Improvement Salesperson license",
+   "agency": "DC Department of Licensing and Consumer Protection (DLCP)",
+   "covers": "Contractors doing home improvement work on residential property in DC. Every HIC must designate at least one licensed Home Improvement Salesperson.",
+   "threshold": null,
+   "prerequisites": [
+    "Certificate of liability insurance",
+    "Surety bond of $25,000",
+    "Police criminal history report",
+    "Sample home improvement contract",
+    "Tax registration and Clean Hands certification",
+    "Designated Home Improvement Salesperson"
+   ],
+   "bond": "Surety bond of $25,000",
+   "insurance": "Certificate of liability insurance",
+   "summary": "Home improvement contractors in DC need a Home Improvement Contractor business license from DLCP. There is no trade exam, but you must show liability insurance, post a $25,000 surety bond, submit a criminal history report and sample contract, and designate a licensed home improvement salesperson.",
+   "url": "https://dlcp.dc.gov/node/1832226",
+   "quote": "All home improvement contractors are legally required to have a Home Improvement Contractor (HIC) and a Home Improvement Salesperson (HIS) License (or a designated salesperson).",
+   "note": "No experience or exam requirement is listed by DLCP.",
+   "evidence": [
+    {
+     "url": "https://dlcp.dc.gov/node/1832226",
+     "quote": "In order to obtain an HIC license, an applicant must present with the following items : Valid Certificate of Liability Insurance"
+    },
+    {
+     "url": "https://dlcp.dc.gov/node/1832226",
+     "quote": "A sample home improvement contract Surety Bond of $25,000 Tax Registration & Clean Hands Certification Home Improvement Salesperson Designation Letter"
+    },
+    {
+     "url": "https://dlcp.dc.gov/node/1618551",
+     "quote": "Home Improvement Contract Police Criminal History Report Surety Bond ($25,000)"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "commercial_building": {
+   "status": "state_license",
+   "name": "General Contractor/Construction Manager Basic Business License",
+   "agency": "DC Department of Licensing and Consumer Protection (DLCP)",
+   "covers": "Businesses that plan, build, alter, repair, improve or demolish structures beyond home improvement work, including commercial projects and new construction.",
+   "threshold": null,
+   "prerequisites": [
+    "Certificate of liability insurance",
+    "Certificate of Occupancy or Home Occupation Permit",
+    "Contract form",
+    "Corporate registration (if applicable)",
+    "Tax registration and Clean Hands certificate",
+    "Designated Home Improvement Salesperson if doing residential work"
+   ],
+   "bond": null,
+   "insurance": "Certificate of liability insurance",
+   "summary": "General contractors and construction managers need a General Contractor/Construction Manager business license from DLCP. You must show liability insurance, occupancy approval, a contract form and tax/Clean Hands compliance; general contractors doing residential work must also designate a licensed home improvement salesperson.",
+   "url": "https://dlcp.dc.gov/node/1618551",
+   "quote": "General Contractor (A, B, C, G, and H)/Construction Manager Certificate of Liability Insurance Certificate of Occupancy/Home Occupation Permit Contract Corporate Registration (if applicable) Tax Registration & Clean Hands Certificate",
+   "note": "The DC Code's separate construction manager/general contractor occupational licensing part is marked Not Funded, so only the business license applies.",
+   "evidence": [
+    {
+     "url": "https://dlcp.dc.gov/node/1618551",
+     "quote": "Please note that all Home Improvement Contractors and General Contractors doing residential contracting are required to designate and maintain a Basic Business License for at least one (1) Home Improvement Salesperson."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "electrical": {
+   "status": "state_license",
+   "name": "Master, Journeyman and Apprentice Electrician licenses (Board of Industrial Trades)",
+   "agency": "DC Board of Industrial Trades (DLCP Occupational and Professional Licensing)",
+   "covers": "Electricians working in DC; apprentices must work under a licensed master electrician.",
+   "threshold": null,
+   "prerequisites": [
+    "Journeyman: 8,000 hours over at least 4 years as an apprentice (or equivalent), plus a class on the DC electrical code within 2 years before applying",
+    "Master: journeyman requirements plus at least 4 years working as a journeyman"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "DC licenses electricians through the Board of Industrial Trades. A journeyman needs a registered apprenticeship's worth of hours (or equivalent education and experience) and a recent code class; a master needs journeyman qualifications plus years of journeyman work.",
+   "url": "https://code.dccouncil.gov/us/dc/council/code/sections/47-2853.92",
+   "quote": "An applicant for licensure as a master electrician shall establish to the satisfaction of the Board that the applicant has met the requirements of subsection (b) of this section and in addition has worked as a journeyman electrician for at least 4 years.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://code.dccouncil.gov/us/dc/council/code/sections/47-2853.92",
+     "quote": "Worked as an apprentice electrician for at least 8,000 hours over at least 4 years"
+    },
+    {
+     "url": "https://code.dccouncil.gov/us/dc/council/code/sections/47-2853.92",
+     "quote": "has satisfactorily completed a class on Title 12C of the District of Columbia Municipal Regulations or equivalent code within 2 years prior to submittal of the application"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "plumbing": {
+   "status": "state_license",
+   "name": "Master Plumber/Gasfitter, Journeyman Plumber/Gasfitter and Apprentice licenses",
+   "agency": "DC Board of Industrial Trades (DLCP Occupational and Professional Licensing)",
+   "covers": "Plumbers and gasfitters working in DC.",
+   "threshold": null,
+   "prerequisites": [
+    "Journeyman: 8,000 hours over at least 4 years as an apprentice (or equivalent)",
+    "Master: journeyman license (or its requirements) plus at least 4 years working as a journeyman"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "DC licenses plumbers and gasfitters through the Board of Industrial Trades. Journeymen need apprenticeship-level hours; masters need a journeyman license plus several years of journeyman work.",
+   "url": "https://code.dccouncil.gov/us/dc/council/code/sections/47-2853.122",
+   "quote": "An applicant for licensure as a master plumber/gasfitter or master gasfitter shall establish to the satisfaction of the Board that the applicant has a valid license as a journeyman plumber or gasfitter, or has met the requirements of subsection (b) of this section, and has worked as a journeyman plumber or journeyman gasfitter for at least 4 years.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://code.dccouncil.gov/us/dc/council/code/sections/47-2853.122",
+     "quote": "Worked as an apprentice plumber or gasfitter for at least 8,000 hours over at least 4 years"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "mechanical": {
+   "status": "state_license",
+   "name": "Refrigeration and Air Conditioning Master Mechanic / Master Mechanic Limited license",
+   "agency": "DC Board of Industrial Trades (DLCP Occupational and Professional Licensing)",
+   "covers": "People who design, install, maintain or alter refrigeration or air conditioning systems in any building.",
+   "threshold": null,
+   "prerequisites": [
+    "At least 5 consecutive years installing/repairing refrigeration and AC systems, verified by a master mechanic",
+    "Master mechanic limited: proof of CFC (EPA refrigerant) certification"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "HVAC/refrigeration mechanics need a Board of Industrial Trades license. A master mechanic (or the limited license for smaller systems) needs years of verified experience, and the limited license requires CFC certification.",
+   "url": "https://code.dccouncil.gov/us/dc/council/code/sections/47-2853.201",
+   "quote": "the term “refrigeration and air conditioning mechanic” means a person who designs, installs, maintains or alters mechanical systems for refrigeration or air conditioning of any public or private building or vehicle.",
+   "note": "Gas piping falls under the plumber/gasfitter licenses.",
+   "evidence": [
+    {
+     "url": "https://code.dccouncil.gov/us/dc/council/code/sections/47-2853.202",
+     "quote": "Has been employed installing, maintaining, repairing and replacing refrigeration and air conditioning equipment systems less than 25 compressor horsepower or the equivalent tons of refrigeration in the aggregate for a period of at least 5 consecutive years immediately preceding the date of application, as verified in writing by a master mechanic, and (2) Have proof of chlor fluro carbon certification."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "roofing": {
+   "status": "no_state_license",
+   "name": null,
+   "agency": "DC Department of Licensing and Consumer Protection (DLCP)",
+   "covers": "Roofers working on homes need the Home Improvement Contractor license; other roofing falls under the General Contractor/Construction Manager license.",
+   "threshold": null,
+   "prerequisites": [],
+   "bond": null,
+   "insurance": null,
+   "summary": "DC has no separate roofing license. Roofing on homes is home improvement work requiring the Home Improvement Contractor license; other roofing falls under the General Contractor/Construction Manager license.",
+   "url": "https://dlcp.dc.gov/node/1618551",
+   "quote": "Services that involve the planning, acquiring, building, equipping, altering, repairing, improving, or demolishing of any structure or appurtenance.",
+   "note": "DLCP's Contractor and Construction Services category lists only General Contractor/Construction Manager and Home Improvement Contractor.",
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Certified Pesticide Applicator license and Pesticide Operator (business) license",
+   "agency": "DC Department of Energy and Environment (DOEE), Pesticide Program",
+   "covers": "Pest control and pesticide application businesses (operators) and the commercial applicators they employ.",
+   "threshold": null,
+   "prerequisites": [
+    "Pass a written exam (and practical testing where applicable) for commercial applicator certification",
+    "Pesticide operator license for the business"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Pesticide businesses must hold a DOEE pesticide operator license, and their commercial applicators must pass a written exam to be certified.",
+   "url": "https://code.dccouncil.gov/us/dc/council/code/sections/8-406",
+   "quote": "No person shall act in the capacity of a pesticide operator, or advertise as or assume to act as a pesticide operator at any time unless he is licensed by the Mayor",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://code.dccouncil.gov/us/dc/council/code/sections/8-403",
+     "quote": "The Mayor shall require an applicant for commercial applicator certification to show, by written examination, and, as applicable, by practical testing, that he is competent in the proper handling, use, and application of pesticides"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "asbestos": {
+   "status": "state_license",
+   "name": "Asbestos abatement business license (DLCP), asbestos worker license (Board of Industrial Trades), DOEE abatement permit",
+   "agency": "DLCP and DC Department of Energy and Environment (DOEE)",
+   "covers": "Businesses doing asbestos abatement and the workers they use; each project needs a DOEE permit.",
+   "threshold": null,
+   "prerequisites": [
+    "Employees trained to federal asbestos standards and in an approved course",
+    "Use only licensed asbestos workers",
+    "Access to an approved asbestos disposal site"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Asbestos abatement businesses need a DC license, must use only licensed, trained asbestos workers, and must get a DOEE permit for abatement work.",
+   "url": "https://code.dccouncil.gov/us/dc/council/code/sections/8-111.03",
+   "quote": "To obtain or renew a license to engage in asbestos abatement, a business entity shall: (1) Train employees and agents to comply with federal standards for asbestos abatement",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://code.dccouncil.gov/us/dc/council/code/sections/8-111.03",
+     "quote": "Utilize only licensed asbestos workers"
+    },
+    {
+     "url": "https://doee.dc.gov/service/asbestosabatement",
+     "quote": "Issuing asbestos abatement permits to licensed contractors and collecting permit fees."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "lead_rrp": {
+   "status": "no_state_license",
+   "name": "EPA Lead-Safe Certified Firm and Certified Renovator",
+   "agency": "U.S. EPA",
+   "covers": "Anyone paid to disturb paint in homes, child care facilities and preschools built before 1978.",
+   "threshold": null,
+   "prerequisites": [
+    "EPA firm certification",
+    "Certified renovator training for workers (or on-the-job training by a certified renovator)"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "DC is not on EPA's list of authorized RRP programs, so renovation firms get lead-safe certification directly from EPA and use EPA-certified renovators.",
+   "url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program",
+   "quote": "EPA's RRP Rule requires that anyone paid to perform work that disturbs painted surfaces in homes, childcare facilities and preschools built before 1978 be certified and their employees be trained",
+   "note": "DOEE runs separate DC lead-hazard rules; check for local lead-safe requirements.",
+   "evidence": [
+    {
+     "url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program",
+     "quote": "EPA administers the RRP Program in most Tribes, states and territories, but has authorized the following to operate their own programs"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "other": [
+  {
+   "key": "home_improvement_salesperson",
+   "name": "Home Improvement Salesperson license",
+   "agency": "DC Department of Licensing and Consumer Protection (DLCP)",
+   "trades": [
+    "general-contracting",
+    "kitchens",
+    "bathrooms",
+    "roofing",
+    "siding",
+    "windows-doors"
+   ],
+   "summary": "Every home improvement contractor (and general contractor doing residential work) must designate at least one licensed home improvement salesperson; the salesperson applies with a police criminal history report and photo.",
+   "url": "https://dlcp.dc.gov/node/1832226",
+   "quote": "In order to obtain an HIS license, an applicant must present with the following items: Copy of your Police Criminal History Report",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ ]
+}

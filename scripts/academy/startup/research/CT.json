@@ -1,0 +1,310 @@
+{
+ "state": "CT",
+ "researched_on": "2026-11-22",
+ "general": {
+  "entity": {
+   "agency": "Connecticut Secretary of the State (via Business.CT.gov)",
+   "summary": "Choose your business entity and file your business name and formation documents through Business.CT.gov. LLCs and corporations must register with the Secretary of the State before applying for contractor registrations.",
+   "url": "https://business.ct.gov/",
+   "quote": "Learn how to file your business name, choose a business entity, get licensed, and so much more."
+  },
+  "state_tax": {
+   "agency": "Connecticut Department of Revenue Services (DRS)",
+   "summary": "If your activities are subject to sales and use tax, register with DRS through myconneCT to get a Sales and Use Tax Permit (one per location).",
+   "url": "https://portal.ct.gov/drs/sales-tax/tax-information",
+   "quote": "You are required to register with the Department of Revenue Services (DRS) for sales and use tax if you intend to engage in any of the following activities in Connecticut:"
+  },
+  "unemployment": {
+   "agency": "Connecticut Department of Labor, Unemployment Insurance Tax Division",
+   "summary": "When you become a liable employer, apply for an unemployment insurance Employer Account Number (EAN) with the CT Department of Labor and file and pay contributions electronically.",
+   "url": "https://portal.ct.gov/dol/divisions/unemployment-insurance-tax",
+   "quote": "Apply for an unemployment insurance Employer Account Number (EAN)."
+  },
+  "workers_comp": {
+   "agency": "Connecticut Workers' Compensation Commission",
+   "summary": "With few exceptions, all Connecticut employers must carry workers' compensation for their employees. Sole proprietors are covered only if they opt in; corporate officers, LLC members and partners may elect to be excluded.",
+   "url": "https://portal.ct.gov/wcc/knowledge-base/articles/employers/workers-compensation-insurance",
+   "quote": "With few exceptions, all employers in the State of Connecticut are required to have workers' compensation insurance for their employees, as defined under the Workers’ Compensation Act."
+  }
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "state_registration",
+   "name": "Home Improvement Contractor registration; New Home Construction Contractor registration",
+   "agency": "Connecticut Department of Consumer Protection (DCP)",
+   "covers": "Anyone contracting with a consumer to work on residential property (roofs, siding, decks, flooring, painting, landscaping, fences, windows, etc.) needs Home Improvement registration; anyone building new homes needs New Home Construction registration.",
+   "threshold": "Home improvement: contracts under $200 are exempt. New home construction: contracts on the same new home under $3,500 combined are exempt.",
+   "prerequisites": [
+    "LLCs/corporations must first register with the CT Secretary of the State",
+    "New Home Construction: general liability insurance of at least $20,000",
+    "Register as the correct legal entity (an individual registration does not cover an LLC)"
+   ],
+   "bond": null,
+   "insurance": "New Home Construction Contractors need general liability insurance of at least $20,000.",
+   "summary": "Connecticut requires home improvement contractors to register with the Department of Consumer Protection for residential jobs of $200 or more. Builders of new homes register separately as New Home Construction Contractors and need at least $20,000 of liability insurance. Work covered by a trade license (electrical, plumbing, HVAC) falls under that license instead.",
+   "url": "https://portal.ct.gov/dcp/license-services-division/all-license-applications/home-improvement-applications",
+   "quote": "Under the Connecticut Home Improvement Act, an individual and/or business is required to register with the Department of Consumer Protection if they are contracting with a consumer to perform work on residential property.",
+   "evidence": [
+    {
+     "url": "https://portal.ct.gov/dcp/license-services-division/all-license-applications/home-improvement-applications",
+     "quote": "Work where the contract is less than $200"
+    },
+    {
+     "url": "https://portal.ct.gov/dcp/license-services-division/all-license-applications/home-improvement-applications",
+     "quote": "Any permanent change to residential property, including but not limited to driveways, swimming pools, porches, garages, roofs, siding, insulation, flooring, patios, landscaping, painting, fences, doors and windows, waterproofing, and alarm systems not requiring electrical work."
+    },
+    {
+     "url": "https://portal.ct.gov/dcp/license-services-division/all-license-applications/new-home-construction-contractor-applications",
+     "quote": "Any person or business that builds a new home needs a registration, inclusive of speculative housing."
+    },
+    {
+     "url": "https://portal.ct.gov/dcp/license-services-division/all-license-applications/new-home-construction-contractor-applications",
+     "quote": "All applicants must obtain general liability insurance of no less than $20,000 to be eligible for a registration."
+    },
+    {
+     "url": "https://portal.ct.gov/dcp/license-services-division/all-license-applications/new-home-construction-contractor-applications",
+     "quote": "Contractors who engage in one or more contracts related to the same new home with a combined value of less than $3,500"
+    },
+    {
+     "url": "https://portal.ct.gov/dcp/license-services-division/all-license-applications/new-home-construction-contractor-applications",
+     "quote": "Legal entities (both in-state and out-of-state) must register their business with the CT Secretary of State’s Office prior to applying."
+    }
+   ],
+   "note": "Both registrations include a guaranty fund fee (fees not recorded)."
+  },
+  "commercial_building": {
+   "status": "threshold",
+   "name": "Major Contractor registration",
+   "agency": "Connecticut Department of Consumer Protection (DCP)",
+   "covers": "Contractors and structural subcontractors (including roofing, masonry, structural framework) working on 'threshold' buildings, such as those with 150,000 square feet or more of floor area. Small commercial buildings below the thresholds do not need it.",
+   "threshold": "Threshold buildings only (e.g., 150,000 square feet of gross floor area, plus other limits in the building code chapter).",
+   "prerequisites": [
+    "Two credit references (one from the trade industry, one from a financial institution)",
+    "Legal entities register with the CT Secretary of the State first"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Connecticut has no general commercial contractor license for ordinary projects. A Major Contractor registration is required only for large 'threshold' buildings, and applicants need two credit references.",
+   "url": "https://portal.ct.gov/dcp/license-services-division/all-license-applications/major-contractor-registration-application",
+   "quote": "Any person or business engaged in the construction, structural repair, structural alteration, dismantling or demolition of a structure or addition that exceeds any of the following threshold limits.",
+   "evidence": [
+    {
+     "url": "https://portal.ct.gov/dcp/license-services-division/all-license-applications/major-contractor-registration-application",
+     "quote": "Contains 150,000 square feet of gross floor area"
+    },
+    {
+     "url": "https://portal.ct.gov/dcp/license-services-division/all-license-applications/major-contractor-registration-application",
+     "quote": "An applicant for a Major Contractor Registration is required to submit two credit references. One must come from the trade industry (supplier or subcontractor) and one from a financial institution."
+    },
+    {
+     "url": "https://portal.ct.gov/dcp/license-services-division/all-license-applications/major-contractor-registration-application",
+     "quote": "Work done on small commercial buildings (below threshold limits listed above)"
+    }
+   ],
+   "note": null
+  },
+  "electrical": {
+   "status": "state_license",
+   "name": "Electrical Contractor and Journeyperson licenses",
+   "agency": "Connecticut Department of Consumer Protection, Occupational and Professional Licensing",
+   "covers": "Electrical work; contractors and journeypersons are licensed by the state.",
+   "threshold": null,
+   "prerequisites": [
+    "Journeyperson: complete a CT Department of Labor apprenticeship (or equivalent experience and training)",
+    "Contractor: hold the journeyperson license for more than two years (or equivalent experience and training)",
+    "Pass the state exam"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Connecticut licenses electricians at two levels. You become a journeyperson after a Department of Labor apprenticeship, and can apply for a contractor license after holding the journeyperson license for more than two years.",
+   "url": "https://portal.ct.gov/dcp/license-services-division/all-license-applications/electrical-license",
+   "quote": "Contractor License Types: If you have held the respective journeyperson license for more than two years, apply here:",
+   "evidence": [
+    {
+     "url": "https://portal.ct.gov/dcp/license-services-division/all-license-applications/electrical-license",
+     "quote": "Journeyperson License Types: If you completed an apprenticeship with the Connecticut Department of Labor, apply here:"
+    }
+   ],
+   "note": "Exam requirement is general knowledge for CT trade licenses; not quoted from this page."
+  },
+  "plumbing": {
+   "status": "state_license",
+   "name": "Plumbing and Pipefitting Contractor and Journeyperson licenses",
+   "agency": "Connecticut Department of Consumer Protection, Occupational and Professional Licensing",
+   "covers": "Plumbing and pipefitting work.",
+   "threshold": null,
+   "prerequisites": [
+    "Journeyperson: complete a CT Department of Labor apprenticeship (or equivalent experience and training)",
+    "Contractor: hold the journeyperson license for more than two years"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Plumbers and pipefitters are licensed by the state as journeypersons (after a Department of Labor apprenticeship) and as contractors (after more than two years as a journeyperson).",
+   "url": "https://portal.ct.gov/dcp/license-services-division/all-license-applications/plumbing-and-pipefitting-licensing",
+   "quote": "Contractor License Types: If you have held the respective journeyperson license for more than two years, apply here:",
+   "evidence": [
+    {
+     "url": "https://portal.ct.gov/dcp/license-services-division/all-license-applications/plumbing-and-pipefitting-licensing",
+     "quote": "Journeyperson License Types: If you completed an apprenticeship with the Connecticut Department of Labor, apply here:"
+    }
+   ],
+   "note": null
+  },
+  "mechanical": {
+   "status": "state_license",
+   "name": "Heating, Cooling and Sheet Metal Work Contractor and Journeyperson licenses",
+   "agency": "Connecticut Department of Consumer Protection, Occupational and Professional Licensing",
+   "covers": "Heating, cooling (HVAC/refrigeration) and sheet metal work.",
+   "threshold": null,
+   "prerequisites": [
+    "Journeyperson: complete a CT Department of Labor apprenticeship (or equivalent experience and training)",
+    "Contractor: hold the journeyperson license for more than two years"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "HVAC and sheet metal workers are licensed by the state, with the same apprenticeship-to-journeyperson-to-contractor path (more than two years as a journeyperson before the contractor license).",
+   "url": "https://portal.ct.gov/dcp/license-services-division/all-license-applications/heating-cooling-and-sheet-metal-work-licenses",
+   "quote": "Contractor License Types: If you have held the respective journeyperson license for more than two years, apply here",
+   "evidence": [
+    {
+     "url": "https://portal.ct.gov/dcp/license-services-division/all-license-applications/heating-cooling-and-sheet-metal-work-licenses",
+     "quote": "Journeyperson License Types: If you completed an apprenticeship with the Connecticut Department of Labor, apply here:"
+    }
+   ],
+   "note": null
+  },
+  "roofing": {
+   "status": "no_state_license",
+   "name": "No separate roofing license; Home Improvement Contractor registration covers residential roofing",
+   "agency": "Connecticut Department of Consumer Protection",
+   "covers": "Residential roofing falls under Home Improvement registration; roofing on large threshold buildings falls under Major Contractor registration.",
+   "threshold": null,
+   "prerequisites": [],
+   "bond": null,
+   "insurance": null,
+   "summary": "Connecticut has no stand-alone roofing license. Residential roofers register as Home Improvement Contractors, and roofing on large threshold buildings needs Major Contractor registration.",
+   "url": "https://portal.ct.gov/dcp/license-services-division/all-license-applications/home-improvement-applications",
+   "quote": "Any permanent change to residential property, including but not limited to driveways, swimming pools, porches, garages, roofs, siding, insulation, flooring, patios, landscaping, painting, fences, doors and windows",
+   "evidence": [
+    {
+     "url": "https://portal.ct.gov/dcp/license-services-division/all-license-applications/major-contractor-registration-application",
+     "quote": "Work includes, but is not limited to, roofing, masonry and structural framework."
+    }
+   ],
+   "note": null
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Pesticide Application Business Registration; Commercial Supervisory and Operational certification",
+   "agency": "Connecticut Department of Energy and Environmental Protection (DEEP), Pesticide Management Program",
+   "covers": "Any business applying pesticides for hire (exterminators, lawn services, arborists) needs a business registration, plus individually certified applicators.",
+   "threshold": null,
+   "prerequisites": [
+    "A commercial supervisory certificate holder responsible for the applications",
+    "Business Certificate of Registration from DEEP before operating"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Pest control, lawn care and other pesticide businesses must register with DEEP before operating, in addition to having certified applicators. The person who decides what and how to apply needs a commercial supervisory certificate; others need an operator certificate and work under a supervisor.",
+   "url": "https://portal.ct.gov/deep/pesticides/business-registration/pesticide-business-registration",
+   "quote": "A Certificate of Registration from the Connecticut Department of Energy and Environmental Protection (DEEP) is required prior to any person operating a pesticide application business in Connecticut. The business registration is required in addition to individual applicator certification.",
+   "evidence": [
+    {
+     "url": "https://portal.ct.gov/DEEP/Pesticides/Pesticide-Certification-General/Pesticide-CertificationLicensing",
+     "quote": "A commercial supervisory certificate is required for commercial applicators who are responsible for deciding whether or not pesticides are to be applied"
+    },
+    {
+     "url": "https://portal.ct.gov/DEEP/Pesticides/Pesticide-Certification-General/Pesticide-CertificationLicensing",
+     "quote": "The operator certification only allows the holder to use pesticides under the direction of a certified supervisor"
+    }
+   ],
+   "note": null
+  },
+  "asbestos": {
+   "status": "state_license",
+   "name": "Asbestos Contractor license; certified asbestos supervisors and workers",
+   "agency": "Connecticut Department of Public Health, Asbestos Program / Environmental Practitioner Licensure Unit",
+   "covers": "Asbestos abatement involving more than three linear or three square feet must be done by a licensed asbestos contractor using certified supervisors and workers.",
+   "threshold": "Abatement of more than three linear feet or three square feet.",
+   "prerequisites": [
+    "DPH asbestos contractor license",
+    "Certified asbestos supervisors and workers",
+    "Pre-renovation/pre-demolition inspection by a licensed asbestos inspector where required"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Asbestos contractors must be licensed by the Department of Public Health. Abatement of more than three linear or three square feet must be done by a licensed contractor using certified supervisors and workers.",
+   "url": "https://portal.ct.gov/dph/asbestos-program/asbestos-program/asbestos-licensure-of-contractors-and-consultants",
+   "quote": "All asbestos contractors and asbestos consultants must be licensed by the Department of Public Health (DPH) to practice abatement or consultation services in the State of Connecticut.",
+   "evidence": [
+    {
+     "url": "https://portal.ct.gov/dph/asbestos-program/asbestos-program/asbestos-licensure-of-contractors-and-consultants",
+     "quote": "Asbestos abatement work involving more than three (3) linear or three (3) square feet must be conducted by a licensed asbestos contractor using certified asbestos supervisors and asbestos workers."
+    },
+    {
+     "url": "https://portal.ct.gov/dph/asbestos-program/asbestos-program/asbestos-licensure-of-contractors-and-consultants",
+     "quote": "An Inspector should be contacted when a pre-renovation inspection or pre-demolition inspection is required."
+    }
+   ],
+   "note": null
+  },
+  "lead_rrp": {
+   "status": "no_state_license",
+   "name": "EPA Lead-Safe (RRP) Firm Certification and Certified Renovator",
+   "agency": "U.S. Environmental Protection Agency",
+   "covers": "Firms paid to do work that disturbs paint in homes and child-occupied facilities built before 1978.",
+   "threshold": null,
+   "prerequisites": [
+    "EPA firm certification",
+    "At least one EPA Certified Renovator (training course)"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Connecticut is not EPA-authorized for the renovation (RRP) program, so firms get RRP certification from EPA. Anyone paid to disturb paint in pre-1978 homes or child-occupied facilities must be certified.",
+   "url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-firm-certification",
+   "quote": "EPA's renovation program applies to all states, Tribes and territories where EPA has not specifically provided authorization for that state, Tribe or territory to operate the program themselves.",
+   "evidence": [
+    {
+     "url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program",
+     "quote": "EPA administers the RRP Program in most Tribes, states and territories, but has authorized the following to operate their own programs: Alabama, Delaware, Georgia, Iowa, Kansas, Massachusetts, Mississippi, North Carolina, Oklahoma, Oregon, Rhode Island, Utah, Vermont, Washington, Wisconsin"
+    },
+    {
+     "url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-contractors",
+     "quote": "In general, anyone who is paid to perform work that disturbs paint in housing and child-occupied facilities built before 1978 must be certified. This includes all firms, even sole proprietorships."
+    }
+   ],
+   "note": "CT DPH separately licenses lead abatement contractors and consultants; not researched."
+  },
+  "other": [
+   {
+    "key": "arborist",
+    "name": "Arborist License (commercial pesticide supervisor category 3D) and arborist business registration",
+    "agency": "Connecticut DEEP, Pesticide Management Program",
+    "trades": [
+     "tree-trimming",
+     "tree-removal"
+    ],
+    "summary": "Anyone advertising, soliciting or contracting to do tree care (pruning, trimming, bracing, feeding) needs a state arborist license, which requires written and oral exams; the business also needs a DEEP registration.",
+    "url": "https://portal.ct.gov/deep/pesticides/arborist/commercial-arborist-license",
+    "quote": "An arborist license is required for persons advertising, soliciting or contracting to do arboriculture in Connecticut."
+   },
+   {
+    "key": "home_improvement_salesperson",
+    "name": "Home Improvement Salesperson registration",
+    "agency": "Connecticut Department of Consumer Protection",
+    "trades": [
+     "roofing",
+     "siding",
+     "windows-doors",
+     "kitchens",
+     "bathrooms",
+     "exterior-remodeling",
+     "interior-remodeling"
+    ],
+    "summary": "Salespeople who negotiate or solicit home improvement contracts for a registered contractor must register with DCP as home improvement salespersons (officers, members or partners of a registered entity are exempt).",
+    "url": "https://portal.ct.gov/dcp/license-services-division/all-license-applications/home-improvement-salesperson-registration",
+    "quote": "A home improvement salesperson is any individual who negotiates or offers to negotiate a home improvement contract with a consumer"
+   }
+  ]
+ }
+}

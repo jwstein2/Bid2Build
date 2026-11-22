@@ -1,0 +1,190 @@
+{
+  "state": "ME",
+  "researched_on": "2026-11-22",
+  "general": {
+    "entity": {
+      "agency": "Maine Secretary of State, Bureau of Corporations, Elections and Commissions",
+      "summary": "To form an LLC, file a certificate of formation with the Maine Secretary of State. Sole proprietors and general partnerships use the Secretary of State's trade name information instead.",
+      "url": "https://legislature.maine.gov/statutes/31/title31sec1531.html",
+      "quote": "One or more authorized persons must execute a certificate of formation. The certificate of formation must be filed in the office of the Secretary of State"
+    },
+    "state_tax": {
+      "agency": "Maine Revenue Services",
+      "summary": "Register a new business with Maine Revenue Services through the Maine Tax Portal. On construction contracts, the contractor is treated as the last user of materials and pays sales or use tax when buying them, rather than charging sales tax on the job.",
+      "url": "https://www.maine.gov/revenue/sites/maine.gov.revenue/files/inline-files/IB04%20FINAL%20Contractors%20and%20Subcontractors_2025_12_22.pdf",
+      "quote": "The contractor, as the last user of the materials as tangible personal property, pays a sales or use tax when purchasing the materials."
+    },
+    "unemployment": {
+      "agency": "Maine Department of Labor, Bureau of Unemployment Compensation",
+      "summary": "Employers register with the Maine Department of Labor for an unemployment tax account and file quarterly wage reports through ReEmployME.",
+      "url": "https://www.maine.gov/unemployment/employers/",
+      "quote": "Assist employers with registering, filling quarterly wage reports, and making payments."
+    },
+    "workers_comp": {
+      "agency": "Maine Workers' Compensation Board",
+      "summary": "Every private employer, including a contractor who hires and pays employees, must carry workers' compensation insurance or self-insure. Owners working alone are not employees unless they elect coverage for themselves.",
+      "url": "https://legislature.maine.gov/statutes/39-A/title39-Asec401.html",
+      "quote": "Every private employer, including an independent contractor who hires and pays employees, is subject to this Act and shall secure the payment of compensation with respect to all employees by purchasing a workers' compensation policy or self-insuring"
+    }
+  },
+  "credentials": {
+    "residential_building": {
+      "status": "no_state_license",
+      "name": null,
+      "agency": "Maine Attorney General (Home Construction Contracts Act enforcement)",
+      "covers": "Home builders and remodelers; there is no state license, but home construction contracts over $3,000 must be in writing.",
+      "threshold": "Written contract required for home construction contracts over $3,000",
+      "prerequisites": [],
+      "bond": null,
+      "insurance": null,
+      "summary": "Maine has no state license for general or residential contractors. State law does require a signed written contract for any home construction job over $3,000 in materials or labor, and towns may have their own rules.",
+      "url": "https://legislature.maine.gov/statutes/10/title10sec1487.html",
+      "quote": "Any home construction contract for more than $3,000 in materials or labor must be in writing and must be signed by both the home construction contractor and the homeowner or lessee.",
+      "note": "No statute creating a state general/residential contractor license was found; absence is inferred from the state's licensing lists, not stated outright on the cited page."
+    },
+    "commercial_building": {
+      "status": "no_state_license",
+      "name": null,
+      "agency": null,
+      "covers": "Commercial general contractors; no state license.",
+      "threshold": null,
+      "prerequisites": [],
+      "bond": null,
+      "insurance": null,
+      "summary": "Maine has no state commercial general contractor license; trade licenses (electrical, plumbing, fuel/gas) still apply.",
+      "url": "https://legislature.maine.gov/statutes/10/title10sec1487.html",
+      "quote": "Any home construction contract for more than $3,000 in materials or labor must be in writing",
+      "note": "The cited statute covers home construction only; absence of a commercial contractor license is inferred, not stated."
+    },
+    "electrical": {
+      "status": "state_license",
+      "name": "Master Electrician, Journeyman Electrician (plus Limited, Apprentice, Helper licenses)",
+      "agency": "Maine Electricians' Examining Board (Office of Professional and Occupational Regulation)",
+      "covers": "Anyone in the business of installing electrical wiring and equipment; a master license is the business-level license.",
+      "threshold": null,
+      "prerequisites": [
+        "Journeyman exam: 8,000 hours as a licensed apprentice or helper plus a 576-hour program of study",
+        "Master exam: 4,000 hours as a journeyman (or 12,000 hours of electrical experience) plus a 576-hour program of study",
+        "Pass the board exam"
+      ],
+      "bond": null,
+      "insurance": null,
+      "summary": "Maine licenses electricians statewide. To run an electrical business you need a Master Electrician license, which requires journeyman experience, a 576-hour course of study and an exam.",
+      "url": "https://www.maine.gov/pfr/professionallicensing/professions/electricians/licensing/master-electrician-senior-master-electrician",
+      "quote": "A Master Electrician is a qualified individual engaging in, or about to engage in, the business of installing electrical wires, conduits, apparatus, fixtures and other electrical equipment.",
+      "evidence": [
+        {"url": "https://www.maine.gov/pfr/professionallicensing/professions/electricians/licensing/master-electrician-senior-master-electrician", "quote": "Complete at least 4,000 hours of service as a journeyman electrician or at least 12,000 hours of experience in electrical installations, as defined in section 1101, and complete a program of study comprising 576 hours"},
+        {"url": "https://www.maine.gov/pfr/professionallicensing/professions/electricians/licensing/journeyman-electrician-senior-journeyman-electrician", "quote": "Complete at least 8,000 hours of service as a licensed apprentice or helper and satisfactorily complete a program of study comprising 576 hours"}
+      ]
+    },
+    "plumbing": {
+      "status": "state_license",
+      "name": "Master Plumber, Journeyman Plumber (plus Trainee)",
+      "agency": "Maine Plumbers' Examining Board (Office of Professional and Occupational Regulation)",
+      "covers": "Anyone in the business of installing plumbing; journeymen work under a master.",
+      "threshold": null,
+      "prerequisites": [
+        "Master exam: at least one year with 2,000 hours as a licensed journeyman, or four years with 8,000 hours as a licensed trainee under a master",
+        "Pass the board exam"
+      ],
+      "bond": null,
+      "insurance": null,
+      "summary": "Plumbers are licensed by the state. A Master Plumber license, needed to be in the plumbing business, requires journeyman or trainee experience and passing the board exam.",
+      "url": "https://www.maine.gov/pfr/professionallicensing/professions/plumbers-examining-board/licensing/individual-licenses",
+      "quote": "A Master Plumber means any person licensed by the Board, to engage in, or about to engage in, the business of installing plumbing or plumbing systems.",
+      "evidence": [
+        {"url": "https://www.maine.gov/pfr/professionallicensing/professions/plumbers-examining-board/licensing/individual-licenses", "quote": "A minimum of at least one year with 2,000 hours of work in the field of plumbing installations as a licensed journeyman plumber; or a minimum of at least four years with 8,000 hours of work in the field of plumbing installations as a licensed trainee plumber under the supervision of a licensed master plumber."}
+      ]
+    },
+    "mechanical": {
+      "status": "state_license",
+      "name": "Oil Burner / Solid Fuel Technician (Apprentice, Journeyman, Master); Propane and Natural Gas Technician",
+      "agency": "Maine Fuel Board (Office of Professional and Occupational Regulation)",
+      "covers": "Installing or servicing oil-burning and solid fuel heating equipment, and propane/natural gas appliances and piping. Maine has no general HVAC license beyond these.",
+      "threshold": null,
+      "prerequisites": [
+        "Master Oil Burner Technician exam: at least 4 years of licensed experience, at least 2 of them as a licensed journeyman",
+        "Propane/natural gas endorsements: pass a board exam and complete certified employee training"
+      ],
+      "bond": null,
+      "insurance": null,
+      "summary": "Heating trades are licensed by the Maine Fuel Board: oil burner and solid fuel technicians (apprentice, journeyman, master) and propane and natural gas technicians. A master oil burner license needs four years of licensed experience, two of them as a journeyman.",
+      "url": "https://www.maine.gov/pfr/professionallicensing/professions/maine-fuel-board/licensing/individual-licenses",
+      "quote": "A Master Oil Burner Technician is a person who is licensed by the Board to engage in the business of installing or servicing oil-burning equipment in the State of Maine.",
+      "evidence": [
+        {"url": "https://www.maine.gov/pfr/professionallicensing/professions/maine-fuel-board/licensing/individual-licenses", "quote": "Complete at least 4 years of licensed experience. At least 2 of the 4 years of licensed experience must be as a licensed Journeyman."},
+        {"url": "https://www.maine.gov/pfr/professionallicensing/professions/maine-fuel-board/licensing/individual-licenses", "quote": "must pass an examination approved by the board and must have successfully completed the certified employee training program for the endorsement sought."}
+      ],
+      "note": "No separate state refrigeration/air-conditioning license was found; EPA Section 608 certification applies federally."
+    },
+    "roofing": {
+      "status": "no_state_license",
+      "name": null,
+      "agency": null,
+      "covers": "Roofers; no state license, but home construction contract rules apply.",
+      "threshold": "Written contract for home construction over $3,000",
+      "prerequisites": [],
+      "bond": null,
+      "insurance": null,
+      "summary": "Maine has no state roofing license. Residential roofing jobs over $3,000 still need a written, signed home construction contract.",
+      "url": "https://legislature.maine.gov/statutes/10/title10sec1487.html",
+      "quote": "Any home construction contract for more than $3,000 in materials or labor must be in writing and must be signed by both the home construction contractor and the homeowner or lessee.",
+      "note": "Absence of a roofing license is inferred, not stated on an official page."
+    },
+    "pesticide": {
+      "status": "state_license",
+      "name": "Commercial Applicator certification/license; Spray Contracting Firm license",
+      "agency": "Maine Board of Pesticides Control",
+      "covers": "Commercial pesticide applicators (lawn care, pest control, tree spraying) and the firms that employ them.",
+      "threshold": null,
+      "prerequisites": [
+        "Commercial applicator certification from the board before applying pesticides",
+        "Proof of financial responsibility for commercial applicators and spray contracting firms"
+      ],
+      "bond": null,
+      "insurance": "Proof of financial responsibility in amounts set by board rule",
+      "summary": "Commercial pesticide applicators and spray contracting firms must be certified and licensed by the Board of Pesticides Control before applying any pesticide, and must show financial responsibility.",
+      "url": "https://legislature.maine.gov/statutes/22/title22sec1471-D.html",
+      "quote": "No commercial applicator may use or supervise the use of any pesticide within the State without prior certification from the board",
+      "evidence": [
+        {"url": "https://legislature.maine.gov/statutes/22/title22sec1471-D.html", "quote": "No spray contracting firm may use or supervise the use of any pesticide within the State without prior certification from the board."},
+        {"url": "https://legislature.maine.gov/statutes/22/title22sec1471-D.html", "quote": "Commercial applicators and spray contracting firms shall be required by the board to provide proof of financial responsibility in custom application"}
+      ]
+    },
+    "asbestos": {
+      "status": "state_license",
+      "name": "Asbestos abatement business license and individual certification",
+      "agency": "Maine Department of Environmental Protection (DEP)",
+      "covers": "Removing, repairing or disturbing more than 3 square or linear feet of asbestos-containing material.",
+      "threshold": "Asbestos abatement over 3 square feet or 3 linear feet",
+      "prerequisites": ["DEP license or certification", "Written notice to DEP before abatement over 3 square or linear feet"],
+      "bond": null,
+      "insurance": null,
+      "summary": "Asbestos abatement businesses and workers must be licensed or certified by Maine DEP, and DEP must be notified in writing before abatement work over 3 square or linear feet.",
+      "url": "https://legislature.maine.gov/statutes/38/title38sec1273.html",
+      "quote": "No person or owner or operator may engage in any asbestos abatement activities in the State, unless licensed or certified pursuant to this chapter",
+      "evidence": [
+        {"url": "https://legislature.maine.gov/statutes/38/title38sec1273.html", "quote": "A person, owner or operator may not engage in any asbestos abatement activity over 3 linear feet or 3 square feet of asbestos-containing material unless that person, owner or operator notifies the commissioner in writing."}
+      ]
+    },
+    "lead_rrp": {
+      "status": "no_state_license",
+      "name": "EPA RRP Firm Certification and Certified Renovator",
+      "agency": "U.S. EPA",
+      "covers": "Paid renovation, repair and painting in pre-1978 housing and child-occupied facilities.",
+      "threshold": null,
+      "prerequisites": ["EPA firm certification", "Certified renovator training"],
+      "bond": null,
+      "insurance": null,
+      "summary": "Maine is not authorized to run its own lead renovation (RRP) program, so firms get RRP certification directly from EPA for work on homes built before 1978.",
+      "url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-firm-certification",
+      "quote": "EPA's renovation program applies to all states, Tribes and territories where EPA has not specifically provided authorization for that state, Tribe or territory to operate the program themselves.",
+      "evidence": [
+        {"url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-firm-certification", "quote": "Federal law requires all renovation, repair, and painting firms (including sole proprietorships) working in housing, or facilities where children are routinely present, built before 1978, to be certified."},
+        {"url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program", "quote": "EPA administers the RRP Program in most Tribes, states and territories, but has authorized the following to operate their own programs: Alabama, Delaware, Georgia, Iowa, Kansas, Massachusetts, Mississippi, North Carolina, Oklahoma, Oregon, Rhode Island, Utah, Vermont, Washington, Wisconsin"}
+      ],
+      "note": "Maine DEP separately licenses lead abatement (not renovation) professionals; not researched here."
+    },
+    "other": []
+  }
+}

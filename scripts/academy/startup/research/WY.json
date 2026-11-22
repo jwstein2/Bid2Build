@@ -1,0 +1,144 @@
+{
+  "state": "WY",
+  "researched_on": "2026-11-22",
+  "general": {
+    "entity": {"agency": "WY Secretary of State, Business Division", "summary": "Form a Wyoming LLC or corporation with the Secretary of State; domestic LLCs and corporations can file online. Every entity needs a registered agent.", "url": "https://sos.wyo.gov/Business/docs/HowToCreateAWyomingCompany.pdf", "quote": "All business entities filed in Wyoming need a registered agent to accept service of process."},
+    "state_tax": {"agency": "WY Department of Revenue, Excise Tax Division", "summary": "Contractors working on real property usually don't need a Wyoming sales tax license, because they pay sales tax on their materials as the end consumer. You need one if you also sell tangible goods; non-resident contractors have project reporting rules.", "url": "https://excise-tax-div.wyo.gov/general-administrative/excise-tax-faqs", "quote": "In most cases, no. Contractors are the end consumers of their materials used in real property and pay sales tax to the vendor (as long as a contractor is not also selling or working on tangible personal property)."},
+    "unemployment": {"agency": "WY Department of Workforce Services, Unemployment Insurance", "summary": "Under Wyoming's unemployment law, a business with anyone performing service as an employee is an employer; register with the Department of Workforce Services when you hire.", "url": "https://wyoleg.gov/statutes/compress/title27.pdf", "quote": "As used in this act, \"employer\" means any employing unit: (i) For whom a worker performs service as an employee;"},
+    "workers_comp": {"agency": "WY Department of Workforce Services, Workers' Compensation Division (state fund)", "summary": "Construction is an extrahazardous industry in Wyoming, so construction employers must cover their workers through the state workers' comp fund. Sole proprietors and partners are not covered unless they elect coverage.", "url": "https://wyoleg.gov/NXT/gateway.dll/2022%20Wyoming%20Statutes%2F2022%20Titles%2F1549%2F1576%2F1577", "quote": "This act applies to the following, which shall be deemed extrahazardous employment: ... (D) Construction, sector 23;"},
+    "local": {"summary": "Wyoming leaves contractor licensing (except electrical) to the city or county where the work happens; check each local jurisdiction.", "url": "https://wyomingbusiness.org/business/start/startup-resources/", "quote": "Contractor licensing (except electrical) is not done by the state of Wyoming. Rather, the option to license contractors is deferred to the local jurisdiction where the construction activity is to take place."}
+  },
+  "credentials": {
+    "residential_building": {
+      "status": "local_only",
+      "name": null,
+      "agency": "Local city/county building departments",
+      "covers": "General and residential contractors are licensed (if at all) by the local jurisdiction.",
+      "threshold": null,
+      "prerequisites": [],
+      "bond": null,
+      "insurance": null,
+      "summary": "Wyoming has no state general or residential contractor license. Cities and counties decide whether to license contractors, so check with the local building department where you work.",
+      "url": "https://wyomingbusiness.org/business/start/startup-resources/",
+      "quote": "Contractor licensing (except electrical) is not done by the state of Wyoming. Rather, the option to license contractors is deferred to the local jurisdiction where the construction activity is to take place."
+    },
+    "commercial_building": {
+      "status": "local_only",
+      "name": null,
+      "agency": "Local city/county building departments",
+      "covers": "Commercial general contractors are licensed locally, if at all.",
+      "threshold": null,
+      "prerequisites": [],
+      "bond": null,
+      "insurance": null,
+      "summary": "There is no state commercial contractor license in Wyoming; licensing is up to local jurisdictions.",
+      "url": "https://wyomingbusiness.org/business/start/startup-resources/",
+      "quote": "Contractor licensing (except electrical) is not done by the state of Wyoming. Rather, the option to license contractors is deferred to the local jurisdiction where the construction activity is to take place."
+    },
+    "electrical": {
+      "status": "state_license",
+      "name": "Electrical Contractor license; Journeyman and Master Electrician licenses",
+      "agency": "WY Department of Fire Prevention and Electrical Safety (State Fire Marshal), Electrical Safety",
+      "covers": "Electrical contracting businesses and individual electricians; electricians must work for a licensed electrical contractor.",
+      "threshold": null,
+      "prerequisites": ["Journeyman exam: 4 years (8,000 hours) of supervised electrical work plus 576 hours of approved apprenticeship classroom instruction", "Master exam: 8 years (16,000 hours) of experience, 4 years (8,000 hours) as a licensed journeyman", "Electrical contractor: employ full-time a Wyoming licensed master electrician as master of record"],
+      "bond": null,
+      "insurance": null,
+      "summary": "Electrical is the one construction trade Wyoming licenses statewide. An electrical contractor must employ a full-time Wyoming master electrician; journeymen need 4 years (8,000 hours) of experience plus apprenticeship classes, and masters need 8 years including 4 as a journeyman.",
+      "url": "https://wsfm.wyo.gov/electrical-safety/licensing",
+      "quote": "Electrical Contractors must actively employ in a full-time capacity a Wyoming licensed master electrician who will serve as the master of record.",
+      "evidence": [
+        {"url": "https://wsfm.wyo.gov/electrical-safety/licensing", "quote": "the applicant must present evidence of 4 years (8,000 hours) of work experience in the electrical wiring industry and 144 hours per year, or 576 hours over a four year apprenticeship"},
+        {"url": "https://wsfm.wyo.gov/electrical-safety/licensing", "quote": "the applicant must present evidence of 8 years (16,000 hours) of work experience in the electrical wiring industry, of which 4 years (8,000 hours) is documented as a licensed journeyman"},
+        {"url": "https://wsfm.wyo.gov/electrical-safety/licensing", "quote": "Any Master Electrician performing electrical work in the State of Wyoming shall be employed at all times by an Electrical Contractor who carries a current Wyoming Electrical Contractor’s license."}
+      ]
+    },
+    "plumbing": {
+      "status": "local_only",
+      "name": null,
+      "agency": "Local city/county building departments",
+      "covers": "Plumbing contractors and plumbers are licensed locally where required.",
+      "threshold": null,
+      "prerequisites": [],
+      "bond": null,
+      "insurance": null,
+      "summary": "Wyoming does not license plumbing contractors at the state level; cities and counties may require their own plumbing licenses.",
+      "url": "https://wyomingbusiness.org/business/start/startup-resources/",
+      "quote": "Contractor licensing (except electrical) is not done by the state of Wyoming. Rather, the option to license contractors is deferred to the local jurisdiction where the construction activity is to take place.",
+      "note": "The source speaks of contractor licensing generally; individual plumber licensing is also handled by some cities (e.g., journeyman/master licenses), not the state."
+    },
+    "mechanical": {
+      "status": "local_only",
+      "name": null,
+      "agency": "Local city/county building departments",
+      "covers": "HVAC/mechanical contractors are licensed locally where required.",
+      "threshold": null,
+      "prerequisites": [],
+      "bond": null,
+      "insurance": null,
+      "summary": "Wyoming has no state HVAC or mechanical contractor license; check local requirements. HVAC electrical work still falls under state electrical licensing.",
+      "url": "https://wyomingbusiness.org/business/start/startup-resources/",
+      "quote": "Contractor licensing (except electrical) is not done by the state of Wyoming. Rather, the option to license contractors is deferred to the local jurisdiction where the construction activity is to take place."
+    },
+    "roofing": {
+      "status": "local_only",
+      "name": null,
+      "agency": "Local city/county building departments",
+      "covers": "Roofing contractors are licensed locally where required.",
+      "threshold": null,
+      "prerequisites": [],
+      "bond": null,
+      "insurance": null,
+      "summary": "Wyoming has no state roofing license; some cities and counties license roofers.",
+      "url": "https://wyomingbusiness.org/business/start/startup-resources/",
+      "quote": "Contractor licensing (except electrical) is not done by the state of Wyoming. Rather, the option to license contractors is deferred to the local jurisdiction where the construction activity is to take place."
+    },
+    "pesticide": {
+      "status": "state_license",
+      "name": "Commercial Applicator license (certified applicator)",
+      "agency": "WY Department of Agriculture, Technical Services (Pesticide Program)",
+      "covers": "Certified applicators using or supervising use of restricted-use pesticides on others' property.",
+      "threshold": null,
+      "prerequisites": ["Become a certified applicator (pass the certification exams) before licensing"],
+      "bond": null,
+      "insurance": null,
+      "summary": "Wyoming licenses commercial pesticide applicators through the Department of Agriculture. A commercial applicator must first be certified, and the statutory definition centers on restricted-use pesticides.",
+      "url": "https://wyoleg.gov/statutes/compress/title35.pdf",
+      "quote": "\"Commercial applicator\" means a certified applicator (whether or not he is a private applicator with respect to some uses) who uses or supervises the use of any pesticide which is classified for restricted use",
+      "evidence": [{"url": "https://wyoleg.gov/statutes/compress/title35.pdf", "quote": "Licenses shall include but are not limited to: (i) Commercial applicator license;"}],
+      "note": "Whether general-use pesticide application for hire (e.g., lawn care) needs a license is set in Department rules; not confirmed here."
+    },
+    "asbestos": {
+      "status": "no_state_license",
+      "name": null,
+      "agency": "WY Department of Environmental Quality, Air Quality Division, Asbestos Program",
+      "covers": "No state asbestos license; regulated asbestos projects require notification and AHERA-type training certificates on site.",
+      "threshold": null,
+      "prerequisites": ["AHERA-type training certificate from an accredited provider for each person performing or supervising an asbestos project", "Notify DEQ at least 10 working days before renovation disturbing regulated asbestos or any demolition"],
+      "bond": null,
+      "insurance": null,
+      "summary": "Wyoming has no asbestos contractor license, but workers and supervisors on asbestos projects must carry current AHERA-type training certificates. DEQ must be notified at least 10 working days before covered renovation or demolition.",
+      "url": "https://deq.wyoming.gov/aqd/asbestos/",
+      "quote": "There is no registration or licensure program for companies or individuals in the State of Wyoming. We do require that each person performing or supervising an asbestos project have a copy of their current AHERA-type training certificate with them at the project site during the entire length of the project.",
+      "evidence": [{"url": "https://deq.wyoming.gov/aqd/asbestos/", "quote": "The form must be provided to the program at least 10 working days prior to the start of any renovation activity that will create or disturb Regulated Asbestos-Containing Material (RACM) and 10 working days prior to the start of any demolition activity in a facility."}]
+    },
+    "lead_rrp": {
+      "status": "no_state_license",
+      "name": "EPA RRP Firm Certification and Certified Renovator (federal)",
+      "agency": "U.S. EPA",
+      "covers": "Firms doing renovation, repair or painting that disturbs paint in pre-1978 homes and child-occupied facilities.",
+      "threshold": null,
+      "prerequisites": ["EPA RRP firm certification", "Certified renovator training"],
+      "bond": null,
+      "insurance": null,
+      "summary": "Wyoming is not an EPA-authorized RRP state, so renovation firms get RRP certification directly from EPA.",
+      "url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-firm-certification",
+      "quote": "EPA's renovation program applies to all states, Tribes and territories where EPA has not specifically provided authorization for that state, Tribe or territory to operate the program themselves.",
+      "evidence": [{"url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-firm-certification", "quote": "Federal law requires all renovation, repair, and painting firms (including sole proprietorships) working in housing, or facilities where children are routinely present, built before 1978, to be certified."}],
+      "note": "Wyoming is not in EPA's list of authorized RRP states on this page."
+    },
+    "other": [
+      {"key": "low_voltage", "name": "Low Voltage/Limited Electrical Contractor license", "agency": "WY Department of Fire Prevention and Electrical Safety", "trades": ["electrical"], "summary": "Wyoming also issues low voltage/limited electrical contractor licenses, renewed each July 1.", "url": "https://wsfm.wyo.gov/electrical-safety/licensing", "quote": "All low voltage/limited electrical contractor licenses will expire on July 1 next following the date of issue."}
+    ]
+  }
+}

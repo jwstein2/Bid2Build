@@ -1,0 +1,154 @@
+{
+  "state": "PA",
+  "researched_on": "2026-11-22",
+  "general": {
+    "entity": {"agency": "PA Department of State, Bureau of Corporations and Charitable Organizations", "summary": "Form an LLC or corporation, or register a fictitious (assumed) name, with the PA Department of State through its online Business Filing Services portal.", "url": "https://www.pa.gov/services/dos/register-a-business", "quote": "Register your business and file other types of business-related forms quickly and easily using our online Business Filing Services site."},
+    "state_tax": {"agency": "PA Department of Revenue", "summary": "If you sell taxable items or perform taxable services, get a Sales, Use and Hotel Occupancy Tax License by registering through myPATH. Register for employer withholding there as well when you hire.", "url": "https://www.pa.gov/agencies/revenue/resources/tax-types-and-information/sales-use-and-hotel-occupancy-tax", "quote": "Required for any business that sells taxable items or performs taxable services."},
+    "unemployment": {"agency": "PA Department of Labor & Industry, Office of Unemployment Compensation Tax Services", "summary": "Once you have employees, register with UC Tax Services and make quarterly unemployment tax payments.", "url": "https://www.pa.gov/agencies/dli/departments-offices/workers-and-employers/unemployment-tax-services1", "quote": "Employers make contributions in the form of quarterly tax payments. These payments are the main source of funding for UC benefit payments."},
+    "workers_comp": {"agency": "PA Department of Labor & Industry, Bureau of Workers' Compensation", "summary": "Workers' compensation is mandatory for most Pennsylvania employers, bought from a licensed insurer or the State Workers' Insurance Fund (SWIF). Employers without coverage can be sued by employees and prosecuted.", "url": "https://www.pa.gov/agencies/dli/programs-services/workers-compensation", "quote": "Workers' compensation coverage is mandatory for most employers under Pennsylvania law. Employers who do not have workers' compensation coverage may be subject to lawsuits by employees and to criminal prosecution by the commonwealth."},
+    "local": {"summary": "Some of Pennsylvania's municipalities license contractors, most often home improvement contractors, electricians and plumbers. The state keeps no list, so check with each municipality.", "url": "https://www.pa.gov/agencies/dli/programs-services/labor-management-relations/bureau-of-occupational-and-industrial-safety/uniform-construction-code-home/contractor-licensing", "quote": "Typically, these requirements pertain to home improvement contractors, electrical contractors (or electricians), and plumbing contractors (or plumbers)."}
+  },
+  "credentials": {
+    "residential_building": {
+      "status": "state_registration",
+      "name": "Home Improvement Contractor (HIC) Registration under HICPA",
+      "agency": "PA Office of Attorney General",
+      "covers": "Contractors who do at least $5,000 worth of home improvements per year (remodeling, roofing, siding, decks, painting and similar work on homes).",
+      "threshold": "At least $5,000 of home improvements per year",
+      "prerequisites": ["Register with the Attorney General's Office before doing covered work", "Liability insurance of at least $50,000 personal injury and $50,000 property damage", "Background disclosures (prior bankruptcies, criminal pleas or convictions)"],
+      "bond": null,
+      "insurance": "At least $50,000 personal injury liability and $50,000 property damage coverage",
+      "summary": "Pennsylvania has no general contractor license, but home improvement contractors doing at least $5,000 of work a year must register with the Attorney General. You need at least $50,000 each of personal injury and property damage liability insurance, and you must disclose your background.",
+      "url": "https://www.attorneygeneral.gov/businesses-and-organizations/home-improvement-contractor-registration/",
+      "quote": "The law requires that all contractors who perform at least $5,000 worth of home improvements per year register with the Attorney General's Office.",
+      "evidence": [
+        {"url": "https://www.attorneygeneral.gov/businesses-and-organizations/home-improvement-contractor-registration/frequently-asked-questions/", "quote": "Insurance policy information showing at least $50,000 of personal injury liability coverage and $50,000 of property damage coverage"},
+        {"url": "https://www.attorneygeneral.gov/businesses-and-organizations/home-improvement-contractor-registration/frequently-asked-questions/", "quote": "Background disclosures, including information on prior bankruptcies and criminal pleas or convictions;"}
+      ]
+    },
+    "commercial_building": {
+      "status": "no_state_license",
+      "name": null,
+      "agency": null,
+      "covers": "General contractors on commercial projects.",
+      "threshold": null,
+      "prerequisites": [],
+      "bond": null,
+      "insurance": null,
+      "summary": "Pennsylvania has no state license for most construction contractors, including commercial general contractors. Some municipalities (such as Philadelphia) have their own contractor licensing.",
+      "url": "https://www.pa.gov/agencies/dli/programs-services/labor-management-relations/bureau-of-occupational-and-industrial-safety/uniform-construction-code-home/contractor-licensing",
+      "quote": "The Commonwealth of Pennsylvania currently has no licensure or certification requirements for most construction contractors (or their employees)."
+    },
+    "electrical": {
+      "status": "local_only",
+      "name": null,
+      "agency": "Municipalities",
+      "covers": "Electrical contractors and electricians.",
+      "threshold": null,
+      "prerequisites": [],
+      "bond": null,
+      "insurance": null,
+      "summary": "Pennsylvania has no state electrician or electrical contractor license. Some municipalities license electricians, and the state keeps no record of those requirements.",
+      "url": "https://www.pa.gov/agencies/dli/programs-services/labor-management-relations/bureau-of-occupational-and-industrial-safety/uniform-construction-code-home/contractor-licensing",
+      "quote": "Typically, these requirements pertain to home improvement contractors, electrical contractors (or electricians), and plumbing contractors (or plumbers). Since the Commonwealth has no jurisdiction in this matter"
+    },
+    "plumbing": {
+      "status": "local_only",
+      "name": null,
+      "agency": "Municipalities",
+      "covers": "Plumbing contractors and plumbers.",
+      "threshold": null,
+      "prerequisites": [],
+      "bond": null,
+      "insurance": null,
+      "summary": "Pennsylvania has no state plumbing license. Plumbers are licensed by some municipalities; check with each city or township where you work.",
+      "url": "https://www.pa.gov/agencies/dli/programs-services/labor-management-relations/bureau-of-occupational-and-industrial-safety/uniform-construction-code-home/contractor-licensing",
+      "quote": "Typically, these requirements pertain to home improvement contractors, electrical contractors (or electricians), and plumbing contractors (or plumbers). Since the Commonwealth has no jurisdiction in this matter"
+    },
+    "mechanical": {
+      "status": "no_state_license",
+      "name": null,
+      "agency": null,
+      "covers": "HVAC, refrigeration and sheet metal contractors.",
+      "threshold": null,
+      "prerequisites": [],
+      "bond": null,
+      "insurance": null,
+      "summary": "Pennsylvania has no state HVAC or mechanical contractor license. Some municipalities may license mechanical trades, and residential HVAC jobs may require HICPA registration.",
+      "url": "https://www.pa.gov/agencies/dli/programs-services/labor-management-relations/bureau-of-occupational-and-industrial-safety/uniform-construction-code-home/contractor-licensing",
+      "quote": "The Commonwealth of Pennsylvania currently has no licensure or certification requirements for most construction contractors (or their employees)."
+    },
+    "roofing": {
+      "status": "no_state_license",
+      "name": "Home Improvement Contractor Registration (for residential roofing)",
+      "agency": "PA Office of Attorney General",
+      "covers": "Residential roofers register as home improvement contractors if they do at least $5,000 of home improvement work per year.",
+      "threshold": "At least $5,000 of home improvements per year",
+      "prerequisites": ["HICPA registration", "Liability insurance of at least $50,000 personal injury and $50,000 property damage"],
+      "bond": null,
+      "insurance": "At least $50,000 personal injury and $50,000 property damage (HICPA)",
+      "summary": "Pennsylvania has no separate roofing license. Residential roofers fall under home improvement contractor registration with the Attorney General.",
+      "url": "https://www.attorneygeneral.gov/businesses-and-organizations/home-improvement-contractor-registration/",
+      "quote": "The law requires that all contractors who perform at least $5,000 worth of home improvements per year register with the Attorney General's Office.",
+      "evidence": [
+        {"url": "https://www.attorneygeneral.gov/businesses-and-organizations/home-improvement-contractor-registration/frequently-asked-questions/", "quote": "Insurance policy information showing at least $50,000 of personal injury liability coverage and $50,000 of property damage coverage"}
+      ]
+    },
+    "pesticide": {
+      "status": "state_license",
+      "name": "Pesticide Application Business License; Commercial Applicator certification",
+      "agency": "PA Department of Agriculture",
+      "covers": "Businesses that apply pesticides on others' property (pest control, lawn care, tree care) need a pesticide business license; their applicators need commercial applicator certification.",
+      "threshold": null,
+      "prerequisites": ["At least one certified applicator employed by the business", "Meet financial responsibility (insurance) requirements", "Applicators pass a core test and one or more category tests"],
+      "bond": null,
+      "insurance": "Certificate of insurance naming the PA Department of Agriculture as certificate holder",
+      "summary": "Pennsylvania requires a pesticide business license for companies applying pesticides for others. The business needs at least one certified applicator (who passed the core and category exams) and must show proof of insurance.",
+      "url": "https://www.pa.gov/agencies/pda/plants-land-water/plant-industry/pesticide-programs/pesticide-application-businesses",
+      "quote": "The requirements to obtain and hold a pesticide business license are as follows: have at least one certified applicator, meet financial responsibility (insurance) required",
+      "evidence": [
+        {"url": "https://www.pa.gov/agencies/pda/plants-land-water/plant-industry/pesticide-programs/pesticide-applicators-registered-technicians-and-certification-exams", "quote": "Pass two tests (one core and one or more category tests) and be employed by a company with pesticide business license."},
+        {"url": "https://www.pa.gov/agencies/pda/plants-land-water/plant-industry/pesticide-programs/pesticide-application-businesses", "quote": "a business will have to have their insurance company create a certificate of insurance that has the Pennsylvania Department of Agriculture listed as the certificate holder."}
+      ]
+    },
+    "asbestos": {
+      "status": "state_license",
+      "name": "Asbestos Contractor certification; asbestos worker, supervisor and individual contractor certifications",
+      "agency": "PA Department of Labor & Industry (certification); PA DEP (project notification)",
+      "covers": "Contractors doing asbestos removal and everyone who enters containment.",
+      "threshold": null,
+      "prerequisites": ["A company employee certified as \"Contractor (Individual)\"", "Workers and supervisors complete EPA or PA approved training and get L&I certification", "Notify DEP before abating friable asbestos over the threshold"],
+      "bond": null,
+      "insurance": null,
+      "summary": "Pennsylvania certifies asbestos contractors and workers through the Department of Labor & Industry. A firm can only be certified if one of its employees holds the individual contractor certification, and all workers need approved training.",
+      "url": "https://www.pa.gov/agencies/dli/programs-services/labor-management-relations/bureau-of-occupational-and-industrial-safety/asbestos-occupations",
+      "quote": "All individuals who enter containment must hold current certification from the Department of Labor and Industry. All individuals who perform asbestos removal must work for a contractor who holds current certification from the Department of Labor and Industry.",
+      "evidence": [
+        {"url": "https://www.pa.gov/agencies/dli/programs-services/labor-management-relations/bureau-of-occupational-and-industrial-safety/asbestos-occupations", "quote": "The contracting firm will not be certified if an employee in the company has not been so certified."},
+        {"url": "https://www.pa.gov/agencies/dli/programs-services/labor-management-relations/bureau-of-occupational-and-industrial-safety/asbestos-occupations", "quote": "Provide a copy of the certificate for your most recent EPA or PA approved training course."},
+        {"url": "https://www.pa.gov/agencies/dli/programs-services/labor-management-relations/bureau-of-occupational-and-industrial-safety/asbestos-occupations", "quote": "The same form must be completed when abating friable asbestos material of more than 3 square or 3 linear feet and submitted to DEP"}
+      ]
+    },
+    "lead_rrp": {
+      "status": "no_state_license",
+      "name": "EPA Renovation, Repair and Painting (RRP) firm certification",
+      "agency": "U.S. EPA (PA L&I certifies lead abatement only)",
+      "covers": "Contractors disturbing paint in homes and child-occupied facilities built before 1978.",
+      "threshold": null,
+      "prerequisites": ["EPA firm certification and an EPA-certified renovator"],
+      "bond": null,
+      "insurance": null,
+      "summary": "Pennsylvania is not on EPA's list of states running their own RRP program, so renovation firms get RRP certification from EPA. Lead abatement (permanent removal) is separate and requires PA Department of Labor & Industry certification.",
+      "url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program",
+      "quote": "EPA administers the RRP Program in most Tribes, states and territories, but has authorized the following to operate their own programs: Alabama, Delaware, Georgia, Iowa, Kansas, Massachusetts, Mississippi, North Carolina, Oklahoma, Oregon, Rhode Island, Utah, Vermont, Washington, Wisconsin",
+      "evidence": [
+        {"url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program", "quote": "Approximately three-quarters of the homes in the United States built before 1978 still contain some lead-based paint."},
+        {"url": "https://www.pa.gov/agencies/dli/programs-services/labor-management-relations/bureau-of-occupational-and-industrial-safety/lead-occupations", "quote": "Act 44 of 1995 and its regulations require that the Department of Labor & Industry (Department) be notified of work where lead-based paint is present and that persons certified by the Department perform this work"}
+      ]
+    },
+    "other": [
+      {"key": "crane_operator", "name": "Crane Operator license", "agency": "PA Department of State, State Board of Crane Operators", "trades": ["general-contracting", "framing", "pole-barns"], "summary": "Pennsylvania licenses crane operators through the State Board of Crane Operators.", "url": "https://www.pa.gov/agencies/dli/programs-services/labor-management-relations/bureau-of-occupational-and-industrial-safety/uniform-construction-code-home/contractor-licensing", "quote": "This act establishes a Crane Operators Board and licensure requirements for crane operators."},
+      {"key": "manufactured_home_installer", "name": "Manufactured Housing Installer certification", "agency": "PA Department of Community & Economic Development", "trades": ["general-contracting", "foundations"], "summary": "Installers of manufactured homes must follow the Manufactured Housing Improvement Act, administered by DCED.", "url": "https://www.pa.gov/agencies/dli/programs-services/labor-management-relations/bureau-of-occupational-and-industrial-safety/uniform-construction-code-home/contractor-licensing", "quote": "requires that all manufactured homes installed in the Commonwealth be subject to certain provisions of the law and regulations that are intended to assure proper installation of every manufactured home."}
+    ]
+  }
+}

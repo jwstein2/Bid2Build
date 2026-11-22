@@ -1,0 +1,262 @@
+{
+ "state": "NE",
+ "researched_on": "2026-11-22",
+ "checked_at": "2026-11-22T21:48:10Z",
+ "general": {
+  "entity": {
+   "agency": "Nebraska Secretary of State, Business Services Division",
+   "summary": "Register your corporation, LLC, partnership or trade name with the Nebraska Secretary of State.",
+   "url": "https://sos.nebraska.gov/business-services",
+   "quote": "Registrations are recorded for corporations, limited liability companies, limited partnerships, limited liability partnerships, trade names and trademarks.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "state_tax": {
+   "agency": "Nebraska Department of Revenue",
+   "summary": "Nebraska contractors choose a contractor tax option. An Option 1 contractor must hold a Nebraska sales tax permit and collects tax on materials it sells to customers.",
+   "url": "https://revenue.nebraska.gov/about/frequently-asked-questions/nebraska-construction-contractors-faqs",
+   "quote": "An Option 1 contractor is required to hold a Nebraska Sales Tax Permit.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "unemployment": {
+   "agency": "Nebraska Department of Labor",
+   "summary": "You become an employer under Nebraska unemployment law once you have one or more people working for you in twenty different calendar weeks in a year; then set up an NDOL unemployment tax account.",
+   "url": "https://nebraskalegislature.gov/laws/statutes.php?statute=48-603",
+   "quote": "twenty different calendar weeks, whether or not such weeks are or were consecutive, within either the current or preceding calendar year",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "workers_comp": {
+   "agency": "Nebraska Workers' Compensation Court",
+   "summary": "Workers' comp applies to every employer with one or more employees in its regular business. Contractors with employees must also file a workers' comp certificate with their contractor registration.",
+   "url": "https://nebraskalegislature.gov/laws/statutes.php?statute=48-106",
+   "quote": "to every resident employer in this state and nonresident employer performing work in this state who employs one or more employees in the regular trade, business, profession, or vocation of such employer.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "local": {
+   "agency": null,
+   "summary": "Plumbing is licensed by cities and villages that set up a plumbing board (for example Omaha and Lincoln), not by the state. Check with your city for plumbing, mechanical and building permits.",
+   "url": "https://nebraskalegislature.gov/laws/statutes.php?statute=18-1907",
+   "quote": "Any person desiring to do any plumbing, or to work at the business of plumbing, in any city or village which has established a plumbing board, shall make written application to the plumbing board for examination for a license",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "state_registration",
+   "name": "Contractor Registration",
+   "agency": "Nebraska Department of Labor",
+   "covers": "Every contractor and subcontractor (including general contractors) who works on real property other than their own.",
+   "threshold": null,
+   "prerequisites": [
+    "Register with the Nebraska Department of Labor before working",
+    "If you have employees, file a workers' compensation certificate of insurance (ACORD 25) naming the Department of Labor"
+   ],
+   "bond": null,
+   "insurance": "Workers' compensation certificate on file if you have one or more employees.",
+   "summary": "Nebraska has no state contractor license, but all contractors and subcontractors must register with the Department of Labor. Contractors with employees must keep a current workers' comp certificate on file or they are dropped from the registered list.",
+   "url": "https://dol.nebraska.gov/conreg",
+   "quote": "The Nebraska Contractor Registration Act requires contractors and subcontractors doing business in Nebraska to register with the Nebraska Department of Labor.",
+   "note": "Cities may also license or register contractors.",
+   "evidence": [
+    {
+     "url": "https://dol.nebraska.gov/conreg",
+     "quote": "All contractors with one or more employees must provide a current Workers’ Compensation Certificate of Insurance (ACORD 25) with the Department of Labor listed as the certificate holder."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "commercial_building": {
+   "status": "state_registration",
+   "name": "Contractor Registration (same as residential)",
+   "agency": "Nebraska Department of Labor",
+   "covers": "All contractors, residential or commercial.",
+   "threshold": null,
+   "prerequisites": [
+    "Register with the Nebraska Department of Labor",
+    "Workers' comp certificate on file if you have employees"
+   ],
+   "bond": null,
+   "insurance": "Workers' compensation certificate if you have employees.",
+   "summary": "The same Department of Labor contractor registration covers commercial work; there is no separate state general contractor license.",
+   "url": "https://dol.nebraska.gov/conreg",
+   "quote": "A contractor is any person or business, including subcontractors and general contractors, who engage in or arrange for work on real property other than their own property.",
+   "note": null,
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "electrical": {
+   "status": "state_license",
+   "name": "Electrical Contractor license (Class A / Class B); Journeyman Electrician license",
+   "agency": "Nebraska State Electrical Division",
+   "covers": "Electrical contractors and the electricians who do the work. A Class B contractor license is limited to smaller residential systems in smaller towns.",
+   "threshold": null,
+   "prerequisites": [
+    "Journeyman: at least four years (8000 hours) of verifiable electrical experience, usually as a registered apprentice",
+    "Contractor: at least one year of experience as a licensed journeyman electrician (or a four-year electrical engineering degree plus that year)",
+    "Pass the state licensing exam"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Electrical work in Nebraska requires a state license. Electricians start as registered apprentices, become journeymen after four years of experience, and can then qualify for an electrical contractor license after a year as a licensed journeyman.",
+   "url": "https://electrical.nebraska.gov/electrical-contractor",
+   "quote": "Have at least one year experience, acceptable to the Board, as a licensed journeyman electrician.",
+   "note": "Exam requirement is stated by the Division (PSI exams) but not quoted here; some cities (e.g. Omaha, Lincoln) also license electricians.",
+   "evidence": [
+    {
+     "url": "https://electrical.nebraska.gov/journeyman-electrician",
+     "quote": "Have at least four years of verifiable experience (8000 Hours), acceptable to the board, in the electrical trade. Registration as an apprentice electrician for those years shall, on the approval of the board, constitute evidence of such experience."
+    },
+    {
+     "url": "https://electrical.nebraska.gov/electrical-contractor",
+     "quote": "Be a graduate of a four-year electrical engineering course in an accredited college or university and have at least one year experience, acceptable to the board, as a licensed journeyman electrician"
+    },
+    {
+     "url": "https://nebraskalegislature.gov/laws/statutes.php?statute=81-2107",
+     "quote": "A Class B electrical contractor license shall be valid only in regard to systems of not over four hundred amperes in capacity in structures used and maintained as residential dwellings"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "plumbing": {
+   "status": "local_only",
+   "name": "City plumbing license (where a plumbing board exists)",
+   "agency": "City/village plumbing boards",
+   "covers": "Anyone doing plumbing in a city or village that has a plumbing board.",
+   "threshold": null,
+   "prerequisites": [
+    "Pass the local plumbing board's examination"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Nebraska has no statewide plumbing license. Cities and villages with a plumbing board examine and license plumbers, so check with the city where you work.",
+   "url": "https://nebraskalegislature.gov/laws/statutes.php?statute=18-1907",
+   "quote": "The plumbing board shall examine the applicant as to his or her practical knowledge of plumbing, house drainage, ventilation, and sanitation, which examination shall be practical as well as theoretical",
+   "note": null,
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "mechanical": {
+   "status": "no_state_license",
+   "name": null,
+   "agency": null,
+   "covers": "HVAC, refrigeration and gas work.",
+   "threshold": null,
+   "prerequisites": [],
+   "bond": null,
+   "insurance": null,
+   "summary": "No state HVAC/mechanical license was found; Nebraska only requires contractor registration with the Department of Labor. Cities such as Omaha and Lincoln license mechanical and gas trades locally.",
+   "url": "https://dol.nebraska.gov/conreg",
+   "quote": "The Nebraska Contractor Registration Act requires contractors and subcontractors doing business in Nebraska to register with the Nebraska Department of Labor.",
+   "note": "Absence of a state mechanical license inferred from state agency sources; local licensing not verified here.",
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "roofing": {
+   "status": "no_state_license",
+   "name": null,
+   "agency": null,
+   "covers": "Roofing contractors.",
+   "threshold": null,
+   "prerequisites": [
+    "Contractor registration with the Department of Labor"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "There is no separate state roofing license. Roofers register like any other contractor with the Nebraska Department of Labor.",
+   "url": "https://dol.nebraska.gov/conreg",
+   "quote": "A contractor is any person or business, including subcontractors and general contractors, who engage in or arrange for work on real property other than their own property.",
+   "note": null,
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Commercial Pesticide Applicator certification and license",
+   "agency": "Nebraska Department of Agriculture",
+   "covers": "Anyone applying structural (pest control) or lawn care pesticides to someone else's property for hire, and anyone using restricted-use pesticides.",
+   "threshold": null,
+   "prerequisites": [
+    "Pass the general standards exam and at least one category exam (e.g. Structural and Health Related Pest Control)"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Pest control and lawn care companies that apply pesticides for hire need a commercial applicator license from the Department of Agriculture. You must pass a general exam plus a category exam first.",
+   "url": "https://nda.nebraska.gov/pesticide/cert",
+   "quote": "In Nebraska, people who apply general-use structural or lawn care pesticides FOR HIRE are required to be certified and licensed as commercial applicators.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://nda.nebraska.gov/pesticide/cert",
+     "quote": "To become certified as a commercial pesticide applicator in Nebraska, an individual must successfully complete a general standards exam and at least one specific category exam."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "asbestos": {
+   "status": "state_license",
+   "name": "Asbestos business entity license; individual asbestos occupation licenses (worker, supervisor, etc.)",
+   "agency": "Nebraska DHHS",
+   "covers": "Firms doing asbestos projects and each person working on one.",
+   "threshold": null,
+   "prerequisites": [
+    "Individual license for every worker or supervisor on the project (approved training)",
+    "Firm must have proper equipment and access to an approved asbestos disposal site"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Anyone working on an asbestos project in Nebraska needs a DHHS license, and the business itself must hold a business entity license showing it has the equipment, licensed staff and a disposal site.",
+   "url": "https://dhhs.ne.gov/licensure/Pages/Asbestos-Occupation-Licensing.aspx",
+   "quote": "Any person working on an asbestos project or in an asbestos occupation in Nebraska must obtain a license.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://nebraskalegislature.gov/laws/statutes.php?statute=71-6304",
+     "quote": "Ensure that each employee or agent of the business entity who will come into contact with asbestos or who will be present on an asbestos project is licensed as required by the Asbestos Control Act"
+    },
+    {
+     "url": "https://nebraskalegislature.gov/laws/statutes.php?statute=71-6304",
+     "quote": "Have access to at least one approved asbestos disposal site for deposit of all asbestos waste that the business entity will generate during the term of the license"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "lead_rrp": {
+   "status": "no_state_license",
+   "name": "EPA RRP Firm certification (federal)",
+   "agency": "U.S. EPA (RRP); Nebraska DHHS (abatement)",
+   "covers": "Firms doing renovation, repair or painting that disturbs paint in pre-1978 homes, child care facilities and preschools.",
+   "threshold": null,
+   "prerequisites": [
+    "EPA firm certification",
+    "Certified renovator trained by an EPA-approved provider"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Nebraska does not run its own RRP program: renovation firms get certified by EPA and use EPA-trained certified renovators. Separate Nebraska DHHS licenses apply to lead abatement work.",
+   "url": "https://dhhs.ne.gov/Pages/Lead-Contractor-Resources.aspx",
+   "quote": "requires that firms performing renovation, repair, and painting projects that disturb lead-based paint in homes, child care facilities and pre-schools built before 1978: have their firm certified by EPA; use certified renovators who are trained by EPA-approved training providers",
+   "note": "Nebraska is not authorized to run RRP; EPA certifies firms. Separate DHHS licenses cover lead abatement, not ordinary renovation.",
+   "evidence": [
+    {
+     "url": "https://dhhs.ne.gov/Pages/Lead-Contractor-Resources.aspx",
+     "quote": "Contractors and firms conducting lead-based paint activities in the state are required to be licensed in Nebraska."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "other": []
+}

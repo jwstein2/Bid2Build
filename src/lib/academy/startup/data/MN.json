@@ -1,0 +1,346 @@
+{
+ "state": "MN",
+ "researched_on": "2026-11-22",
+ "checked_at": "2026-11-22T21:48:10Z",
+ "general": {
+  "entity": {
+   "agency": "Minnesota Secretary of State",
+   "summary": "Register your business (LLC, corporation, or assumed name) with the Minnesota Secretary of State. If you work under a name other than your own legal name, file a Certificate of Assumed Name.",
+   "url": "https://www.sos.mn.gov/business-liens/start-a-business/",
+   "quote": "This section contains information to help you through the process of starting a business: The basic instructions for forming, naming, and registering a business, descriptions of the types of businesses in Minnesota",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "state_tax": {
+   "agency": "Minnesota Department of Revenue",
+   "summary": "Get a Minnesota Tax ID Number and a sales and use tax account before you make any taxable sales.",
+   "url": "https://www.revenue.state.mn.us/guide/registering-your-business",
+   "quote": "Before you make any taxable sales in Minnesota, you must register for a Minnesota Tax ID Number and a Sales and Use Tax account.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "unemployment": {
+   "agency": "Minnesota Unemployment Insurance Program (DEED)",
+   "summary": "Once you pay wages to employees in Minnesota, register with the Minnesota Unemployment Insurance Program as soon as possible after the first paycheck.",
+   "url": "https://ui.mn.gov/employers/help-and-support/emp-hbook/new-registration.jsp",
+   "quote": "every individual or organization that pays covered wages in Minnesota must register with the Minnesota Unemployment Insurance (UI) Program. Registration should be done as soon as possible after the first wages are paid for covered employment in Minnesota.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "workers_comp": {
+   "agency": "Minnesota Department of Labor and Industry",
+   "summary": "Minnesota has no minimum headcount: if you have even one part-time employee you generally must carry workers' compensation insurance. Some owners and family members are exempt under state law.",
+   "url": "https://dli.mn.gov/business/workers-compensation/work-comp-who-needs-workers-compensation-coverage",
+   "quote": "There is no minimum number of employees an employer must have before insurance is required; therefore, an employer with only one part-time employee generally must provide coverage.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "local": {
+   "agency": null,
+   "summary": "Cities can add their own licensing on top of state rules, for example for mechanical (HVAC) contractors and workers.",
+   "url": "https://www.dli.mn.gov/business/plumbing-contractors/mechanical-contractor-bond-requirements",
+   "quote": "In addition to filing a bond with DLI, mechanical contractors must comply with local licensing requirements.",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "state_license",
+   "name": "Residential Building Contractor license / Residential Remodeler license",
+   "agency": "Minnesota Department of Labor and Industry (DLI)",
+   "covers": "Anyone contracting directly with a homeowner (1-4 unit homes) for work in more than one special skill (carpentry, interior finishing, exterior finishing, roofing, masonry/concrete, etc.). Remodelers work only on existing structures; building contractors can also build new homes. Single-skill specialty contractors register instead (except roofers).",
+   "threshold": "Contractors with gross annual residential receipts under $15,000 can get a Certificate of Exemption instead.",
+   "prerequisites": [
+    "Name a qualifying person (owner, officer or managing employee) who passes the DLI written exam",
+    "Proof of general liability insurance and workers' compensation compliance",
+    "Business name filed with the Secretary of State (assumed name if different)"
+   ],
+   "bond": null,
+   "insurance": "Liability coverage of at least $100,000 per occurrence, $300,000 aggregate and $25,000 property damage, plus workers' compensation compliance.",
+   "summary": "If you sell more than one type of skilled work directly to Minnesota homeowners, you need a residential building contractor or remodeler license from DLI. Your qualifying person must pass a DLI exam first, and you must show liability insurance and workers' comp compliance.",
+   "url": "https://www.dli.mn.gov/business/residential-contractors/residential-contractor-licensing",
+   "quote": "Any individual or company that contracts directly with an owner of residential real estate (one to four units) to provide work in more than one special skill must have a residential building contractor or residential remodeler license.",
+   "note": "Single-skill residential subcontractors and specialty contractors must register through the Construction Contractor Registration Program.",
+   "evidence": [
+    {
+     "url": "https://www.dli.mn.gov/business/residential-contractors/residential-contractor-licensing",
+     "quote": "Residential building contractors whose gross annual receipts from their residential activities are less than $15,000 and have a Certificate of Exemption."
+    },
+    {
+     "url": "https://www.dli.mn.gov/business/residential-contractors/residential-contractor-licensing",
+     "quote": "pass a written exam administered by the Minnesota Department of Labor and Industry (DLI)."
+    },
+    {
+     "url": "https://www.dli.mn.gov/business/residential-contractors/residential-contractor-licensing",
+     "quote": "The minimum coverage is $100,000 per occurrence, $300,000 aggregate, and $25,000 in property damage coverage."
+    },
+    {
+     "url": "https://www.dli.mn.gov/business/residential-contractors/residential-contractor-licensing",
+     "quote": "Specialty contractors who provide only one special skill are not required to have a state license ( except residential roofers )."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "commercial_building": {
+   "status": "state_registration",
+   "name": "Construction Contractor Registration",
+   "agency": "Minnesota Department of Labor and Industry (DLI)",
+   "covers": "Contractors doing commercial projects, and single-specialty residential contractors, who do not hold a residential contractor license or another trade license.",
+   "threshold": null,
+   "prerequisites": [
+    "Workers' compensation certificate of compliance",
+    "Disclosure of business owners, partners, officers and members"
+   ],
+   "bond": null,
+   "insurance": "Workers' compensation compliance form is part of the registration.",
+   "summary": "Minnesota has no state general contractor license for commercial work, but commercial contractors must register with DLI's Construction Contractor Registration Program. If your work needs a trade license (electrical, plumbing, etc.), get that license instead of registering.",
+   "url": "https://www.dli.mn.gov/business/construction-contractor-registration",
+   "quote": "The Contractor Registration Program is for those who provide one specialty skill for residential projects and for all commercial projects, if they do not hold a residential contractor's license.",
+   "note": "Cities may also license or permit commercial contractors.",
+   "evidence": [
+    {
+     "url": "https://www.dli.mn.gov/business/construction-contractor-registration",
+     "quote": "Workers' Compensation Certificate of Compliance Disclosure of Business Owners, Partners, Officers and Members"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "electrical": {
+   "status": "state_license",
+   "name": "Electrical Contractor license; Master / Journeyworker Electrician licenses",
+   "agency": "Minnesota Department of Labor and Industry (DLI)",
+   "covers": "Any business or individual that contracts to do electrical work. Employees doing the work must be licensed journeyworker or master electricians, or registered unlicensed electricians under supervision.",
+   "threshold": null,
+   "prerequisites": [
+    "A responsible licensed individual holding an active master electrician license (owner, officer or W-2 employee)",
+    "Proof of public liability insurance and workers' compensation",
+    "$25,000 surety bond"
+   ],
+   "bond": "$25,000 surety bond on a DLI form.",
+   "insurance": "Liability coverage of at least $100,000 per occurrence, $300,000 aggregate and $50,000 property damage, plus workers' compensation.",
+   "summary": "To contract for electrical work you need a DLI electrical contractor license. Your company must have a master electrician as its responsible licensed individual, carry liability and workers' comp insurance, and file a surety bond.",
+   "url": "https://www.dli.mn.gov/business/electrical-contractors/electrical-contractor-licensing-basics",
+   "quote": "Businesses and individuals that contract to perform electrical work in Minnesota must have an electrical contractor license.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.dli.mn.gov/business/electrical-contractors/electrical-contractor-licensing-basics",
+     "quote": "Hold an active master electrician license, and Be an owner, officer, or member of the business applying for the license, or a W-2 employee"
+    },
+    {
+     "url": "https://www.dli.mn.gov/business/electrical-contractors/electrical-contractor-licensing-basics",
+     "quote": "Provide a $25,000 surety bond."
+    },
+    {
+     "url": "https://www.dli.mn.gov/business/electrical-contractors/electrical-contractor-licensing-basics",
+     "quote": "Minimum coverage of $100,000 per occurrence, $300,000 aggregate, and $50,000 in property damage coverage."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "plumbing": {
+   "status": "state_license",
+   "name": "Plumbing Contractor license (or Restricted Plumbing Contractor); Master / Journeyworker Plumber licenses",
+   "agency": "Minnesota Department of Labor and Industry (DLI)",
+   "covers": "Businesses that contract to do plumbing work. A restricted plumbing contractor may work only in communities under 5,000 population.",
+   "threshold": null,
+   "prerequisites": [
+    "A responsible licensed individual holding an active master plumber license",
+    "Proof of public liability insurance and workers' compensation",
+    "$25,000 surety bond"
+   ],
+   "bond": "$25,000 surety bond on a DLI form.",
+   "insurance": "Products liability of at least $50,000 per person and $100,000 per occurrence, property damage of at least $10,000, plus workers' compensation.",
+   "summary": "Plumbing contractors need a DLI plumbing contractor license with a master plumber as the responsible licensed individual, a surety bond, and liability and workers' comp insurance. Workers must be licensed plumbers, registered unlicensed plumbers or apprentices.",
+   "url": "https://www.dli.mn.gov/business/plumbing-contractors/plumbing-contractor-licensing-basics",
+   "quote": "Businesses and individuals that contract to perform plumbing work in Minnesota must have a plumbing contractor license or a restricted plumbing contractor license.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.dli.mn.gov/business/plumbing-contractors/plumbing-contractor-licensing-basics",
+     "quote": "A plumbing contractor license is required for plumbing work in Minnesota communities with a population over 5,000."
+    },
+    {
+     "url": "https://www.dli.mn.gov/business/plumbing-contractors/plumbing-contractor-licensing-basics",
+     "quote": "Hold an active master plumber license, and Be an owner, officer, or member of the business applying for the license"
+    },
+    {
+     "url": "https://www.dli.mn.gov/business/plumbing-contractors/plumbing-contractor-licensing-basics",
+     "quote": "Provide a $25,000 surety bond"
+    },
+    {
+     "url": "https://www.dli.mn.gov/business/plumbing-contractors/plumbing-contractor-licensing-basics",
+     "quote": "Policy must provide products liability insurance with limits of at least $50,000 per person and $100,000 per occurrence and property damage insurance with limits of at least $10,000."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "mechanical": {
+   "status": "state_registration",
+   "name": "Mechanical contractor bond filing",
+   "agency": "Minnesota Department of Labor and Industry (DLI)",
+   "covers": "Businesses contracting for gas, heating, ventilation, air conditioning, fuel burning or refrigeration work.",
+   "threshold": null,
+   "prerequisites": [
+    "File a $25,000 mechanical contractor bond with DLI",
+    "Meet any city license or competency card requirements"
+   ],
+   "bond": "$25,000 mechanical contractor bond filed with DLI.",
+   "insurance": null,
+   "summary": "Minnesota has no state HVAC/mechanical license, but businesses doing gas, heating, cooling or refrigeration work must file a mechanical contractor bond with DLI. Many cities require their own mechanical license or competency cards for workers.",
+   "url": "https://www.dli.mn.gov/business/plumbing-contractors/mechanical-contractor-bond-requirements",
+   "quote": "While there is no state license required for mechanical contractors, businesses must file a $25,000 mechanical contractor bond with DLI in order to contract to perform gas, heating, ventilation, cooling, air conditioning, fuel burning or refrigeration work.",
+   "note": "High pressure piping (steam/process piping) is a separate DLI license; see other.",
+   "evidence": [
+    {
+     "url": "https://www.dli.mn.gov/business/plumbing-contractors/mechanical-contractor-bond-requirements",
+     "quote": "However, cities may require licensure or a competency card for workers performing mechanical work."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "roofing": {
+   "status": "state_license",
+   "name": "Residential Roofer license",
+   "agency": "Minnesota Department of Labor and Industry (DLI)",
+   "covers": "Companies that contract directly with homeowners (1-4 units) for roofing only. Gutters, soffit and fascia need a residential building contractor or remodeler license.",
+   "threshold": null,
+   "prerequisites": [
+    "Designate a qualifying person who passes the required exam",
+    "$15,000 surety bond",
+    "Liability insurance",
+    "Workers' compensation certificate or written exemption statement"
+   ],
+   "bond": "$15,000 surety bond.",
+   "insurance": "Liability insurance of at least $300,000 per occurrence including at least $10,000 property damage; workers' compensation or a written exemption explanation.",
+   "summary": "Roofers working for homeowners need a DLI residential roofer license (or a residential building contractor/remodeler license). A qualifying person must pass the exam, and the company must file a surety bond and proof of insurance.",
+   "url": "https://www.dli.mn.gov/business/residential-contractors/residential-contractor-licensing",
+   "quote": "Any individual or company that contracts directly with an owner of residential real estate (one to four units) to provide just roofing work must have a residential building contractor, residential remodeler, or residential roofer license.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.dli.mn.gov/business/residential-contractors/roofer-license",
+     "quote": "The qualifying person is the individual who must take the required examination and fulfill the continuing education requirements for the licensee."
+    },
+    {
+     "url": "https://www.dli.mn.gov/business/residential-contractors/roofer-license",
+     "quote": "A $15,000 surety bond and power of attorney."
+    },
+    {
+     "url": "https://www.dli.mn.gov/business/residential-contractors/roofer-license",
+     "quote": "Liability insurance with limits of at least $300,000 per occurrence, which must include at least $10,000 property damage coverage."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Commercial Pesticide Applicator license; Structural Pest Control Applicator license",
+   "agency": "Minnesota Department of Agriculture (MDA)",
+   "covers": "Anyone applying pesticides (including weed killers) for hire, such as lawn care; structural applicators treat in, on or around buildings (pest control).",
+   "threshold": null,
+   "prerequisites": [
+    "Pass the Core exam (Category A) plus at least one use-category exam"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Applying pesticides for paying customers requires an MDA commercial applicator license; pest control in and around buildings requires a structural pest control license. You must pass MDA's core exam and at least one category exam.",
+   "url": "https://www.mda.state.mn.us/pesticide-fertilizer/pesticide-applicator-licensing",
+   "quote": "Commercial: applicator makes pesticide applications for-hire (customers are billed or invoiced)",
+   "note": "A structural pest control company license also exists at MDA; its page blocked automated fetching.",
+   "evidence": [
+    {
+     "url": "https://www.mda.state.mn.us/pesticide-fertilizer/pesticide-applicator-licensing",
+     "quote": "Licenses are issued to applicators that receive a passing score in Core Exam (Category A) and at least one additional exam category."
+    },
+    {
+     "url": "https://www.mda.state.mn.us/pesticide-fertilizer/pesticide-applicator-licensing",
+     "quote": "Structural: applicator makes pesticide applications in, on, or around structures"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "asbestos": {
+   "status": "state_license",
+   "name": "Asbestos Contractor license; Asbestos Worker / Site Supervisor certification",
+   "agency": "Minnesota Department of Health (MDH)",
+   "covers": "Companies doing asbestos-related work (removal, encapsulation, enclosure, prep) at or above regulated amounts, which are much lower in residences.",
+   "threshold": "Regulated amounts in residences: 10 linear feet on pipes, 6 square feet on other components, or 1 cubic foot.",
+   "prerequisites": [
+    "MDH asbestos contractor license",
+    "Individual MDH certification for workers and site supervisors"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Asbestos removal above small amounts requires an MDH asbestos contractor license, and workers and supervisors need individual MDH certification. In homes the thresholds are very small, so most real asbestos jobs are covered.",
+   "url": "https://www.health.state.mn.us/communities/environment/asbestos/prof/license.html",
+   "quote": "A contractor must be licensed by the Minnesota Department of Health (MDH) to perform asbestos-related work (ARW).",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.health.state.mn.us/communities/environment/asbestos/prof/license.html",
+     "quote": "260 linear feet of friable ACM on pipes, (10 linear feet on pipes in residences), 160 square feet of friable ACM on other facility components, (6 square feet in residences) or, 35 cubic feet of friable ACM on or off facility components (1 cubic foot in residences)."
+    },
+    {
+     "url": "https://www.health.state.mn.us/communities/environment/asbestos/prof/index.html",
+     "quote": "Individual Asbestos Certification lists the requirements for individual asbestos certifications including Asbestos Worker, Site Supervisor, Inspector, Management Planner or Project Designer."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "lead_rrp": {
+   "status": "no_state_license",
+   "name": "EPA Lead-Safe Certified Firm + Certified Renovator (federal)",
+   "agency": "U.S. EPA (MDH certifies lead abatement firms separately)",
+   "covers": "Renovation, repair and painting in pre-1978 homes and child-occupied facilities.",
+   "threshold": null,
+   "prerequisites": [
+    "EPA firm certification",
+    "Certified renovator from an accredited training course"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Minnesota is not on EPA's list of states running their own RRP program, so renovation firms get certified directly by EPA and need a certified renovator. Lead abatement (as opposed to renovation) requires MDH lead firm certification.",
+   "url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program",
+   "quote": "EPA administers the RRP Program in most Tribes, states and territories, but has authorized the following to operate their own programs: Alabama, Delaware, Georgia, Iowa, Kansas, Massachusetts, Mississippi, North Carolina, Oklahoma, Oregon, Rhode Island, Utah, Vermont, Washington, Wisconsin",
+   "note": "No state RRP credential: EPA certifies firms directly. MDH has been working toward its own Minnesota RRP program (rulemaking); check MDH for changes.",
+   "evidence": [
+    {
+     "url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program",
+     "quote": "EPA's RRP Rule requires that anyone paid to perform work that disturbs painted surfaces in homes, childcare facilities and preschools built before 1978 be certified and their employees be trained"
+    },
+    {
+     "url": "https://www.health.state.mn.us/communities/environment/lead/prof/rrpfaq.html",
+     "quote": "To become certified as a firm, a contractor must submit an application and fee to EPA."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "other": [
+  {
+   "key": "high_pressure_piping",
+   "name": "High Pressure Piping Contractor license",
+   "agency": "Minnesota Department of Labor and Industry",
+   "trades": [
+    "hvac",
+    "plumbing"
+   ],
+   "summary": "Businesses installing high pressure (steam/process) piping need a DLI high pressure piping contractor license and must employ a licensed master pipefitter.",
+   "url": "https://www.dli.mn.gov/business/high-pressure-piping-contractors",
+   "quote": "High pressure piping contractors must first employ an individual who has a master pipefitter license. The business may then apply for a Minnesota high pressure piping contractor license.",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ ]
+}

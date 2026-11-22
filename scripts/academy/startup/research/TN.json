@@ -1,0 +1,184 @@
+{
+  "state": "TN",
+  "researched_on": "2026-11-22",
+  "general": {
+    "entity": {"agency": "TN Secretary of State, Division of Business Services", "summary": "Corporations, LLCs and limited partnerships file formation documents with the Tennessee Secretary of State. Contractor license applicants that are corporations or LLCs must show proof of that registration.", "url": "https://sos.tn.gov/node/319", "quote": "What types of business entities file documents with the Secretary of State? ... All of the above business entities file formation documents."},
+    "state_tax": {"agency": "TN Department of Revenue", "summary": "If your business grosses $100,000 or more in a Tennessee county or city, register for and pay the state and city business tax with the Department of Revenue. Register separately for sales and use tax if you sell taxable goods.", "url": "https://www.tn.gov/revenue/taxes/business-tax.html", "quote": "Generally, if you conduct business within any county and/or incorporated municipality in Tennessee, and your business grosses $100,000 or more, then you should register for and remit business tax."},
+    "unemployment": {"agency": "TN Department of Labor and Workforce Development", "summary": "Every Tennessee employer must complete an online registration, which determines whether you owe unemployment insurance premiums.", "url": "https://www.tn.gov/workforce/employers/tax-and-insurance-redirect/unemployment-insurance-tax.html", "quote": "Every employer in Tennessee is required to complete an online registration. Submitting this registration will determine the status of your liability for unemployment insurance."},
+    "workers_comp": {"agency": "TN Bureau of Workers' Compensation", "summary": "Construction businesses generally must carry workers' comp on everyone, including the owners; other businesses need it at 5 or more employees. Construction owners can apply to the state Exemption Registry to exempt themselves, but must still cover any employee.", "url": "https://www.tn.gov/workforce/injuries-at-work/employers/employers/who-must-carry-insurance.html", "quote": "Generally speaking, businesses engaged in the construction industry are required to have workers’ compensation coverage for everyone including the business owners. Other businesses need insurance if there are five or more employees."},
+    "local": {"summary": "Many Tennessee cities and counties do their own permitting and electrical/plumbing licensing; the state limited electrician and plumber licenses apply only where the state Division of Fire Prevention does the permits and inspections.", "url": "https://www.tn.gov/commerce/regboards/contractors/license/get/lle.html", "quote": "Always first check with your local government to see if they accept the LLE license or if they have a local licensing requirement for permits and inspections."}
+  },
+  "credentials": {
+    "residential_building": {
+      "status": "threshold",
+      "name": "Contractor License (Residential BC-A) for projects of $25,000 or more; Home Improvement License ($3,000 to $24,999 in participating counties)",
+      "agency": "TN Board for Licensing Contractors (Dept. of Commerce & Insurance)",
+      "covers": "Prime contractors on projects of $25,000 or more; residential remodelers on $3,000 to $24,999 jobs in Bradley, Davidson, Hamilton, Haywood, Knox, Marion, Robertson, Rutherford and Shelby counties.",
+      "threshold": "Contractor license at $25,000 or more; Home Improvement license from $3,000 to $24,999 in participating counties.",
+      "prerequisites": ["Qualifying agent passes the Business and Law exam (and the BC-A trade exam), or completes the Limited License course for jobs under $125,000", "CPA-reviewed financial statement (or audited for limits over $3,000,000), or a surety bond of at least 50% of the monetary limit", "Letter of reference", "General liability insurance and workers' compensation (unless exempt)", "Home Improvement: $10,000 surety bond plus general liability and workers' comp insurance"],
+      "bond": "Contractor: optional surety bond of at least 50% of the monetary limit instead of a financial statement. Home Improvement: $10,000 surety bond (or cash/property bond or letter of credit).",
+      "insurance": "General liability based on monetary limit and workers' compensation unless exempt; Home Improvement requires general liability and workers' comp.",
+      "summary": "Tennessee requires a state contractor license before bidding or contracting on projects of $25,000 or more, which takes exams, a financial statement or bond, and insurance. In nine counties, residential remodeling jobs from $3,000 to $24,999 need a Home Improvement license with a $10,000 bond and insurance.",
+      "url": "https://www.tn.gov/commerce/regboards/contractors/license/get/contractor.html",
+      "quote": "A contractor’s license is required before contracting, including bidding, offering to engage, or negotiating a price, for projects of $25,000 or more when acting as a prime contractor, certain subcontractor, or construction manager/consultant.",
+      "evidence": [
+        {"url": "https://www.tn.gov/commerce/regboards/contractors/license/get/home-improvement.html", "quote": "A Home Improvement license is required for residential remodeling projects from $3,000 to $24,999; however, this only applies to the counties adopting the law. Currently, this applies to the following counties: Bradley, Davidson, Hamilton, Haywood, Knox, Marion, Robertson, Rutherford, and Shelby."},
+        {"url": "https://www.tn.gov/commerce/regboards/contractors/license/get/home-improvement.html", "quote": "Surety Bond: In the amount of $10,000 (or other financial responsibility in the form of a cash or property bond, or an irrevocable Letter of Credit)."},
+        {"url": "https://www.tn.gov/commerce/regboards/contractors/license/get/contractor.html", "quote": "residential contractors who wish to perform work costing less than $125,000 (based on a financial statement) may complete a Limited License course through a Tennessee community college or vocational school."},
+        {"url": "https://www.tn.gov/commerce/regboards/contractors/license/get/contractor.html", "quote": "A “ Reviewed ” financial statement is required for limits of $3,000,000 or less. ... The surety bond must be in an amount equal to at least 50% of the monetary limit requested."},
+        {"url": "https://www.tn.gov/commerce/regboards/contractors/license/get/contractor.html", "quote": "General Liability insurance is required based on your monetary limit. Workers’ Compensation insurance is also required, unless proof of exemption is provided."},
+        {"url": "https://www.tn.gov/commerce/regboards/contractors/license/get/contractor.html", "quote": "Contractor applicants are required to take the Tennessee “Business and Law” exam, and a trade exam is required for certain license classifications."}
+      ]
+    },
+    "commercial_building": {
+      "status": "threshold",
+      "name": "Contractor License (Commercial BC-B, Industrial BC-C, and combined classifications)",
+      "agency": "TN Board for Licensing Contractors (Dept. of Commerce & Insurance)",
+      "covers": "Prime contractors, construction managers and consultants on projects of $25,000 or more; masonry subcontractors at $100,000 or more.",
+      "threshold": "Projects of $25,000 or more (masonry subcontract portion $100,000 or more).",
+      "prerequisites": ["Qualifying agent passes the Business and Law exam and any required trade exam", "CPA-reviewed or audited financial statement, or a surety bond of at least 50% of the monetary limit", "Letter of reference", "General liability insurance and workers' compensation (unless exempt)", "Proof of Secretary of State registration for corporations and LLCs"],
+      "bond": "Optional surety bond of at least 50% of the monetary limit instead of a financial statement.",
+      "insurance": "General liability based on the monetary limit, plus workers' compensation unless exempt.",
+      "summary": "The same Board licenses commercial and industrial contractors for projects of $25,000 or more. Your monetary limit depends on your financial statement (or bond), and your qualifying agent must pass the required exams.",
+      "url": "https://www.tn.gov/commerce/regboards/contractors/license/get/contractor.html",
+      "quote": "Masonry subcontractors must be licensed when the masonry portion is $100,000 or more. Construction managers and consultants must be licensed when the total project value is $25,000 or more.",
+      "evidence": [
+        {"url": "https://www.tn.gov/commerce/regboards/contractors/license/get/contractor.html", "quote": "Contractor applicants are required to take the Tennessee “Business and Law” exam, and a trade exam is required for certain license classifications."},
+        {"url": "https://www.tn.gov/commerce/regboards/contractors/license/get/contractor.html", "quote": "The surety bond must be in an amount equal to at least 50% of the monetary limit requested."},
+        {"url": "https://www.tn.gov/commerce/regboards/contractors/license/get/contractor.html", "quote": "General Liability insurance is required based on your monetary limit. Workers’ Compensation insurance is also required, unless proof of exemption is provided."},
+        {"url": "https://www.tn.gov/commerce/regboards/contractors/license/get/contractor.html", "quote": "Limited Liability Companies (LLC): Submit Articles of Organization and proof of registration with the Secretary of State, including out-of-state entities."}
+      ]
+    },
+    "electrical": {
+      "status": "threshold",
+      "name": "Contractor License - Electrical (CE) for $25,000 or more; Limited Licensed Electrician (LLE) under $25,000",
+      "agency": "TN Board for Licensing Contractors (Dept. of Commerce & Insurance)",
+      "covers": "Electrical contractors (prime, or subcontractors whose electrical portion is $25,000 or more) need a CE contractor license; electricians doing jobs under $25,000 where the state Division of Fire Prevention handles permits need an LLE.",
+      "threshold": "Contractor license at $25,000 or more; LLE for work under $25,000 in state-inspected areas.",
+      "prerequisites": ["CE: qualifying agent passes the Electrical (CE) trade exam and the Business and Law exam, plus financial statement or bond and insurance", "LLE: pass the LLE trade exam"],
+      "bond": "Contractor: optional surety bond of at least 50% of the monetary limit instead of a financial statement.",
+      "insurance": "Contractor: general liability and workers' compensation unless exempt.",
+      "summary": "Electrical contractors working on jobs of $25,000 or more need a state contractor license with the Electrical classification. For smaller jobs in areas where the state does the inspections, individual electricians need a Limited Licensed Electrician license; many cities have their own electrician licensing instead.",
+      "url": "https://www.tn.gov/commerce/regboards/contractors/license/get/lle.html",
+      "quote": "The Limited Licensed Electrician (LLE) license is only required by electricians performing work in a municipality utilizing the Division of Fire Prevention for permits or inspections and covers work less than $25,000 per project.",
+      "evidence": [
+        {"url": "https://www.tn.gov/commerce/regboards/contractors/license/get/contractor.html", "quote": "Subcontractors must be licensed when contracting directly with a contractor, not the owner, to perform electrical, mechanical, plumbing, HVAC, or roofing work when that portion of the project is $25,000 or more, including materials, equipment, and labor."},
+        {"url": "https://www.tn.gov/commerce/regboards/contractors/license/get/lle.html", "quote": "The LLE license is issued to individuals passing the LLE trade exam."},
+        {"url": "https://www.tn.gov/commerce/regboards/contractors/license/get/contractor.html", "quote": "The surety bond must be in an amount equal to at least 50% of the monetary limit requested."}
+      ]
+    },
+    "plumbing": {
+      "status": "threshold",
+      "name": "Contractor License - Plumbing (CMC-A) for $25,000 or more; Limited Licensed Plumber (LLP) under $25,000",
+      "agency": "TN Board for Licensing Contractors (Dept. of Commerce & Insurance)",
+      "covers": "Plumbing contractors on jobs of $25,000 or more need a CMC-A contractor license; plumbers on jobs under $25,000 where the state Division of Fire Prevention handles permits need an LLP.",
+      "threshold": "Contractor license at $25,000 or more; LLP for work under $25,000 in state-inspected areas (maintenance under $500 exempt).",
+      "prerequisites": ["CMC-A: Board pre-approval before taking the plumbing trade exam, plus the Business and Law exam, financial statement or bond, and insurance", "LLP: pass the LLP trade exam"],
+      "bond": "Contractor: optional surety bond of at least 50% of the monetary limit instead of a financial statement.",
+      "insurance": "Contractor: general liability and workers' compensation unless exempt.",
+      "summary": "Plumbing contractors on jobs of $25,000 or more need a state contractor license with the Plumbing (CMC-A) classification, which requires Board pre-approval to sit for the exam. Smaller jobs in state-inspected areas need a Limited Licensed Plumber license; many cities license plumbers locally.",
+      "url": "https://www.tn.gov/commerce/regboards/contractors/license/get/llp.html",
+      "quote": "The Limited Licensed Plumber (LLP) license is only required by plumbers performing work in a municipality utilizing the Division of Fire Prevention for permits or inspections and covers work less than $25,000 per project. Note that general maintenance work that is less than $500 is exempt from the LLP license.",
+      "evidence": [
+        {"url": "https://www.tn.gov/commerce/regboards/contractors/license/get/contractor.html", "quote": "Pre-approval is required by the Board to take the plumbing CMC-A or full mechanical CMC exam."},
+        {"url": "https://www.tn.gov/commerce/regboards/contractors/license/get/contractor.html", "quote": "Subcontractors must be licensed when contracting directly with a contractor, not the owner, to perform electrical, mechanical, plumbing, HVAC, or roofing work when that portion of the project is $25,000 or more, including materials, equipment, and labor."},
+        {"url": "https://www.tn.gov/commerce/regboards/contractors/license/get/llp.html", "quote": "The LLP license is issued to individuals passing the LLP trade exam."},
+        {"url": "https://www.tn.gov/commerce/regboards/contractors/license/get/contractor.html", "quote": "The surety bond must be in an amount equal to at least 50% of the monetary limit requested."}
+      ]
+    },
+    "mechanical": {
+      "status": "threshold",
+      "name": "Contractor License - HVAC (CMC-C) or Full Mechanical (CMC)",
+      "agency": "TN Board for Licensing Contractors (Dept. of Commerce & Insurance)",
+      "covers": "HVAC/mechanical contractors on jobs of $25,000 or more (prime, or as a subcontractor when the HVAC portion is $25,000 or more).",
+      "threshold": "$25,000 or more.",
+      "prerequisites": ["Qualifying agent passes the HVAC (CMC-C) trade exam (full CMC requires Board pre-approval) and the Business and Law exam", "Financial statement or surety bond", "General liability and workers' comp insurance"],
+      "bond": "Optional surety bond of at least 50% of the monetary limit instead of a financial statement.",
+      "insurance": "General liability and workers' compensation unless exempt.",
+      "summary": "HVAC contractors need a state contractor license with an HVAC or mechanical classification for jobs of $25,000 or more. There is no separate state HVAC technician license; smaller jobs fall under local rules.",
+      "url": "https://www.tn.gov/commerce/regboards/contractors/license/get/contractor.html",
+      "quote": "Subcontractors must be licensed when contracting directly with a contractor, not the owner, to perform electrical, mechanical, plumbing, HVAC, or roofing work when that portion of the project is $25,000 or more, including materials, equipment, and labor.",
+      "evidence": [
+        {"url": "https://www.tn.gov/commerce/regboards/contractors/license/get/contractor.html", "quote": "Pre-approval is required by the Board to take the plumbing CMC-A or full mechanical CMC exam."},
+        {"url": "https://www.tn.gov/commerce/regboards/contractors/license/get/contractor.html", "quote": "The surety bond must be in an amount equal to at least 50% of the monetary limit requested."},
+        {"url": "https://www.tn.gov/commerce/regboards/contractors/license/get/contractor.html", "quote": "General Liability insurance is required based on your monetary limit. Workers’ Compensation insurance is also required, unless proof of exemption is provided."}
+      ],
+      "note": "The statement that there is no separate state HVAC technician license is based on the Board's license list; local jurisdictions may license mechanical work."
+    },
+    "roofing": {
+      "status": "threshold",
+      "name": "Contractor License (roofing work of $25,000 or more); Home Improvement License covers residential roofing in participating counties",
+      "agency": "TN Board for Licensing Contractors (Dept. of Commerce & Insurance)",
+      "covers": "Roofing subcontractors when the roofing portion is $25,000 or more; residential roofing from $3,000 to $24,999 in Home Improvement counties.",
+      "threshold": "$25,000 or more (contractor license); $3,000 to $24,999 residential in participating counties (Home Improvement).",
+      "prerequisites": ["Contractor license: exams, financial statement or bond, insurance", "Home Improvement: $10,000 surety bond, general liability and workers' comp insurance"],
+      "bond": "Home Improvement: $10,000 surety bond.",
+      "insurance": "General liability and workers' compensation.",
+      "summary": "Tennessee has no separate roofing license, but roofers need a contractor license when the roofing work is $25,000 or more. In the Home Improvement counties, residential roofing jobs from $3,000 to $24,999 need a Home Improvement license.",
+      "url": "https://www.tn.gov/commerce/regboards/contractors/license/get/home-improvement.html",
+      "quote": "This applies to construction or improvements of driveways, swimming pools, porches, garages, landscaping, fences, roofing, painting, and other improvements.",
+      "evidence": [
+        {"url": "https://www.tn.gov/commerce/regboards/contractors/license/get/contractor.html", "quote": "Subcontractors must be licensed when contracting directly with a contractor, not the owner, to perform electrical, mechanical, plumbing, HVAC, or roofing work when that portion of the project is $25,000 or more, including materials, equipment, and labor."},
+        {"url": "https://www.tn.gov/commerce/regboards/contractors/license/get/home-improvement.html", "quote": "A Home Improvement license is required for residential remodeling projects from $3,000 to $24,999; however, this only applies to the counties adopting the law."},
+        {"url": "https://www.tn.gov/commerce/regboards/contractors/license/get/home-improvement.html", "quote": "Surety Bond: In the amount of $10,000 (or other financial responsibility in the form of a cash or property bond, or an irrevocable Letter of Credit)."}
+      ]
+    },
+    "pesticide": {
+      "status": "state_license",
+      "name": "Pest Control Charter (business) and Pest Control License (by category); Commercial Certification",
+      "agency": "TN Department of Agriculture, Pesticide Section",
+      "covers": "Any company offering custom pesticide application (pest control, termite, lawn and turf, tree care) needs a charter for each location and at least one licensee per category of service.",
+      "threshold": null,
+      "prerequisites": ["Become commercially certified in the category before the license exam", "Qualify for the license exam with two years of verifiable experience under a licensee, a related four-year degree, or a similar license from another state", "Pass the license exam", "Charter: $10,000 surety bond and liability insurance of at least $250,000 per incident and $500,000 aggregate"],
+      "bond": "Charter: $10,000 surety bond; $50,000 bond for new companies with a WDO, GRC, FUM or BDC licensee.",
+      "insurance": "Liability insurance of at least $250,000 per incident and $500,000 aggregate.",
+      "summary": "Tennessee pest control and lawn-spraying businesses need a pest control charter for each location plus a licensed person in each service category. Licensees must be certified, have two years of experience (or a related degree), and pass an exam; the charter needs a bond and liability insurance.",
+      "url": "https://www.tn.gov/agriculture/businesses/pesticides/certification.html",
+      "quote": "TAPA requires that a company providing or offering for sale any custom pesticide application must have a pest control charter.",
+      "evidence": [
+        {"url": "https://www.tn.gov/agriculture/businesses/pesticides/certification.html", "quote": "License applicants must be commercially certified prior to the examination date. Applicants must qualify for the examination by: having two years verifiable experience working under a licensee in that category, or having a four-year college degree with major studies in a related field, or holding a similar license in another state."},
+        {"url": "https://www.tn.gov/agriculture/businesses/pesticides/certification.html", "quote": "a $10,000 surety bond, and proof of liability insurance with the minimum coverages of $250,000 per incident and $500,000 aggregate."},
+        {"url": "https://www.tn.gov/agriculture/businesses/pesticides/certification.html", "quote": "A $50,000 bond is required for new companies holding a WDO, GRC, FUM, or BDC licensee."},
+        {"url": "https://www.tn.gov/agriculture/businesses/pesticides/certification.html", "quote": "A charter also requires that there be at least one licensee in each category of service offered."}
+      ]
+    },
+    "asbestos": {
+      "status": "state_license",
+      "name": "Asbestos Accreditation (firms and individuals)",
+      "agency": "TN Department of Environment and Conservation (TDEC), Toxic Substances Program",
+      "covers": "Persons and firms performing asbestos activities in schools or public and commercial buildings.",
+      "threshold": null,
+      "prerequisites": ["Firm and individual asbestos accreditation from TDEC", "Accredited training for each discipline"],
+      "bond": null,
+      "insurance": null,
+      "summary": "Asbestos work in Tennessee schools and public or commercial buildings must be done by TDEC-accredited firms and people, and accreditation cards must be on site. A state contractor license may also be needed for abatement contracts.",
+      "url": "https://www.tn.gov/environment/program-areas/solid-waste/toxic-substances/asbestos.html",
+      "quote": "The Asbestos Accreditation Requirements are applicable to all persons and firms who perform asbestos activities in schools or public and commercial buildings",
+      "evidence": [
+        {"url": "https://www.tn.gov/environment/program-areas/solid-waste/toxic-substances/asbestos.html", "quote": "Asbestos accreditation cards must always be present at the work site."}
+      ],
+      "note": "Single-family homes are not covered by the accreditation rule as quoted; federal NESHAP notification rules may still apply to demolition."
+    },
+    "lead_rrp": {
+      "status": "no_state_license",
+      "name": "EPA Lead-Safe Certified Firm (federal RRP)",
+      "agency": "U.S. EPA",
+      "covers": "Firms doing renovation, repair or painting in pre-1978 housing or child-occupied facilities.",
+      "threshold": null,
+      "prerequisites": ["EPA firm certification", "Certified renovator training"],
+      "bond": null,
+      "insurance": null,
+      "summary": "Tennessee is not EPA-authorized for RRP, so firms working on pre-1978 homes must be certified directly by EPA.",
+      "url": "https://www.epa.gov/node/255913",
+      "quote": "Federal law requires all renovation, repair, and painting firms (including sole proprietorships) working in housing, or facilities where children are routinely present, built before 1978, to be certified.",
+      "evidence": [
+        {"url": "https://www.epa.gov/node/255913", "quote": "EPA's renovation program applies to all states, Tribes and territories where EPA has not specifically provided authorization for that state, Tribe or territory to operate the program themselves."}
+      ],
+      "note": "Tennessee runs a state lead abatement (not RRP) program through TDEC."
+    },
+    "other": [
+      {"key": "masonry", "name": "Licensed Masonry Contractor (LMC)", "agency": "TN Board for Licensing Contractors", "trades": ["masonry"], "summary": "Masonry subcontractors need a masonry contractor license when the masonry portion is $100,000 or more.", "url": "https://www.tn.gov/commerce/regboards/contractors/license/get/contractor.html", "quote": "Masonry subcontractors must be licensed when the masonry portion is $100,000 or more."},
+      {"key": "fire_sprinkler", "name": "Fire Sprinkler contractor classification (CMC-D)", "agency": "TN Board for Licensing Contractors", "trades": ["plumbing"], "summary": "Fire sprinkler work is a separate contractor license classification.", "url": "https://www.tn.gov/commerce/regboards/contractors/license/get/contractor.html", "quote": "The following is a list of trade exams for contractors (building, electrical, and mechanical) offered and includes combined exams:"}
+    ]
+  }
+}

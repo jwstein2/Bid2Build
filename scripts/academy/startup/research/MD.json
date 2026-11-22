@@ -1,0 +1,232 @@
+{
+  "state": "MD",
+  "researched_on": "2026-11-22",
+  "general": {
+    "entity": {
+      "agency": "Maryland State Department of Assessments and Taxation (SDAT)",
+      "summary": "Form an LLC by filing articles of organization with SDAT (the 'Department'), usually online through Maryland Business Express. Corporations and partnerships also register with SDAT.",
+      "url": "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gca&section=4A-202&enactments=false",
+      "quote": "Any person may form a limited liability company by causing articles of organization to be executed and filed for record with the Department."
+    },
+    "state_tax": {
+      "agency": "Comptroller of Maryland",
+      "summary": "A business making retail sales needs a sales and use tax license from the Comptroller before it starts selling; register for state tax accounts (sales and use, withholding) through Maryland Business Express or the Comptroller.",
+      "url": "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gtg&section=11-702&enactments=false",
+      "quote": "A person shall be licensed by the Comptroller before the person may:"
+    },
+    "unemployment": {
+      "agency": "Maryland Department of Labor, Division of Unemployment Insurance",
+      "summary": "Employers register for an unemployment insurance account and file wage reports through Maryland's BEACON portal. Employers with Maryland employees must also register for the FAMLI (paid family and medical leave) program.",
+      "url": "https://labor.maryland.gov/employment/unemployment.shtml",
+      "quote": "Employers with one or more employees localized in Maryland must register with Maryland’s Family and Medical Leave Insurance (FAMLI) program."
+    },
+    "workers_comp": {
+      "agency": "Maryland Workers' Compensation Commission",
+      "summary": "Every employer must secure workers' compensation for its covered employees through an authorized insurer or approved self-insurance. Paid corporate officers and LLC members count as covered employees, though some may elect to be exempt.",
+      "url": "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gle&section=9-402&enactments=false",
+      "quote": "each employer shall secure compensation for all covered employees of the employer by:"
+    },
+    "local": {
+      "summary": "Counties and municipalities also regulate electricians: each must either register electricians under standards at least as strict as the state's or require the state license.",
+      "url": "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gbo&section=6-301&enactments=false",
+      "quote": "adopt regulations that have qualifications that are at least as stringent as the qualifications under § 6–304 of this subtitle, to provide for the regulation and registration of master electricians, journeyperson electricians, or apprentice electricians"
+    }
+  },
+  "credentials": {
+    "residential_building": {
+      "status": "state_license",
+      "name": "Maryland Home Improvement Commission (MHIC) Contractor License; Home Builder Registration (new homes)",
+      "agency": "Maryland Department of Labor, Home Improvement Commission; Office of the Attorney General (home builders)",
+      "covers": "Anyone doing home improvement (alteration, remodeling, repair or replacement on an existing residence). New home builders register separately with the Attorney General's Home Builder Registration Unit.",
+      "threshold": null,
+      "prerequisites": [
+        "Pass the MHIC contractor exam before applying",
+        "General liability insurance of at least $500,000",
+        "Meet the Commission's financial solvency guidelines, or get an indemnitor or surety bond",
+        "Pay the Guaranty Fund assessment"
+      ],
+      "bond": "Surety bond or indemnitor only if you don't meet the financial solvency guidelines",
+      "insurance": "General liability of at least $500,000",
+      "summary": "Home improvement contractors must hold an MHIC contractor license. You must pass the MHIC exam first, carry at least $500,000 in general liability insurance, and show financial solvency (or post a bond). Building new homes requires a separate Home Builder Registration with the Attorney General.",
+      "url": "https://labor.maryland.gov/license/mhic/",
+      "quote": "The Maryland Home Improvement Commission licenses and regulates home improvement contractors and salespersons. Home improvement work includes alteration, remodeling, repair or replacement of a building or part of a building used as a residence.",
+      "evidence": [
+        {"url": "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gbr&section=8-302&enactments=false", "quote": "An applicant for a contractor’s or salesperson’s license must pass the examination prior to submitting an application for a license."},
+        {"url": "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gbr&section=8-302.1&enactments=false", "quote": "An applicant for a contractor license shall maintain general liability insurance in the amount of at least $500,000."},
+        {"url": "https://labor.maryland.gov/license/mhic/mhicapply.shtml", "quote": "Any applicant who does not meet the Commission's financial solvency guidelines may obtain an indemnitor or purchase a surety bond:"},
+        {"url": "https://labor.maryland.gov/license/mhic/mhicfaq.shtml", "quote": "All builders who build homes in Maryland must be registered with the Home Builder Registration Unit of the Office of the Attorney General."},
+        {"url": "https://labor.maryland.gov/license/mhic/", "quote": "The Commission has a Guaranty Fund (The Fund) supported by licensed contractors, who pay a Guaranty Fund assessment when they obtain their Home Improvement license"}
+      ]
+    },
+    "commercial_building": {
+      "status": "no_state_license",
+      "name": null,
+      "agency": null,
+      "covers": "Commercial general contractors; the MHIC license covers only residential home improvement.",
+      "threshold": null,
+      "prerequisites": [],
+      "bond": null,
+      "insurance": null,
+      "summary": "Maryland has no state commercial general contractor license; the MHIC license is limited to home improvement work on residences. State trade licenses (electrical, plumbing, HVACR) still apply to commercial work, and counties may have their own requirements.",
+      "url": "https://labor.maryland.gov/license/mhic/",
+      "quote": "Home improvement work includes alteration, remodeling, repair or replacement of a building or part of a building used as a residence.",
+      "note": "Absence of a state commercial contractor license is inferred from the licensing boards' scopes, not stated outright on an official page."
+    },
+    "electrical": {
+      "status": "state_license",
+      "name": "Master Electrician, Journeyperson Electrician, Apprentice Electrician",
+      "agency": "Maryland State Board of Electricians",
+      "covers": "All electrical work in Maryland; counties may register electricians under equal or stricter standards or require the state license.",
+      "threshold": null,
+      "prerequisites": [
+        "Master: at least 7 years of electrical work under a master electrician (up to 3 years of credit for formal training)",
+        "Journeyperson: at least 4 years of electrical work under a master electrician (approved apprenticeship counts)",
+        "Pass the state exam (70% passing score)"
+      ],
+      "bond": null,
+      "insurance": "Master electricians must carry insurance meeting Maryland requirements",
+      "summary": "All electrical work in Maryland must be done by a licensed master, journeyperson or apprentice electrician. A master license, which you need to run an electrical business, requires seven years of supervised experience and passing the state exam.",
+      "url": "https://labor.maryland.gov/license/elec/",
+      "quote": "All electrical work in Maryland must be performed by a licensed Master, Journeyperson, or Apprentice Electrician .",
+      "evidence": [
+        {"url": "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gbo&section=6-304&enactments=false", "quote": "an applicant for a master electrician license shall have been engaged or employed regularly and principally in providing electrical services for all types of electrical equipment and apparatuses for at least 7 years while under the direction and supervision of:"},
+        {"url": "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gbo&section=6-304&enactments=false", "quote": "The State Board may allow an applicant up to 3 years of credit toward the experience required under paragraph (1) of this subsection"},
+        {"url": "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gbo&section=6-304&enactments=false", "quote": "an applicant for a journeyperson electrician license shall have been engaged or employed regularly and principally in providing electrical services for all types of electrical equipment and apparatuses for at least 4 years"},
+        {"url": "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gbo&section=6-306&enactments=false", "quote": "The passing score for each examination shall be 70%."},
+        {"url": "https://labor.maryland.gov/license/elec/eleclic.shtml", "quote": "A Certificate of Insurance meeting Maryland requirements."}
+      ],
+      "note": "The insurance quote comes from the reciprocal master application list; the exact insurance amount was not confirmed."
+    },
+    "plumbing": {
+      "status": "state_license",
+      "name": "Master Plumber, Journey Plumber, Apprentice Plumber (also Natural Gas Fitter)",
+      "agency": "Maryland State Board of Plumbing",
+      "covers": "Anyone providing plumbing or natural gas services.",
+      "threshold": null,
+      "prerequisites": [
+        "Journey: apprentice license for at least 4 years with at least 7,500 hours of training under a master, plus 32 hours of backflow prevention training",
+        "Master: at least 3,750 hours as a journey plumber under a master, and a journey license held for at least 2 years",
+        "Pass the board exam"
+      ],
+      "bond": null,
+      "insurance": null,
+      "summary": "Plumbers must be licensed by the State Board of Plumbing. A journey license takes four years as an apprentice (7,500 training hours), and a master license takes two more years as a journey plumber plus a board exam.",
+      "url": "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gbo&section=12-301&enactments=false",
+      "quote": "an individual shall be licensed by the Board to provide plumbing services before the individual may provide plumbing services in the State.",
+      "evidence": [
+        {"url": "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gbo&section=12-302&enactments=false", "quote": "shall have held, for a period of at least 4 years, an apprentice plumber license or a license of equal stature"},
+        {"url": "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gbo&section=12-302&enactments=false", "quote": "shall have completed at least 7,500 hours of training in providing plumbing services under the direction and control of a licensed master plumber"},
+        {"url": "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gbo&section=12-302&enactments=false", "quote": "shall have completed at least 32 hours of training in the testing of backflow prevention devices"},
+        {"url": "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gbo&section=12-302&enactments=false", "quote": "shall have completed at least 3,750 hours of training in providing plumbing services as a journey plumber licensed in this State or another state"},
+        {"url": "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gbo&section=12-302&enactments=false", "quote": "if an applicant resides in this State, shall have a journey plumber license for at least 2 years"}
+      ]
+    },
+    "mechanical": {
+      "status": "state_license",
+      "name": "HVACR Master, Master Restricted, Limited, Journeyman and Apprentice licenses",
+      "agency": "Maryland Board of Heating, Ventilation, Air Conditioning and Refrigeration Contractors",
+      "covers": "Anyone providing commercial or residential HVACR services.",
+      "threshold": null,
+      "prerequisites": [
+        "Master: licensed journeyman with at least three years of experience under an HVACR master",
+        "Master: worked at least 1,875 hours in the year before applying",
+        "Pass the master exam with a score of 70%",
+        "Journeyman: apprentice for at least four years with at least 6,000 hours of training",
+        "Insurance for master contractors who contract work"
+      ],
+      "bond": null,
+      "insurance": "Required for master contractors who contract work (amount not confirmed)",
+      "summary": "Maryland licenses HVACR contractors and mechanics. A master license requires three years as a licensed journeyman under a master, recent work hours, a passing exam and insurance if you contract work.",
+      "url": "https://labor.maryland.gov/license/hvacr/hvacrlicreq.shtml",
+      "quote": "Must have been licensed as a journeyman and regularly and principally employed to provide all areas of HVACR services for at least three years of active experience under the direction and control of a HVACR master;",
+      "evidence": [
+        {"url": "https://labor.maryland.gov/license/hvacr/hvacrlicreq.shtml", "quote": "Worked a minimum of 1,875 hours in the year prior to applying for the master license;"},
+        {"url": "https://labor.maryland.gov/license/hvacr/hvacrlicreq.shtml", "quote": "Passed the master examination with a score of 70%"},
+        {"url": "https://labor.maryland.gov/license/hvacr/hvacrlicreq.shtml", "quote": "Must have been licensed as an apprentice for at least four years and during that period must have completed at least 6,000 hours of training"},
+        {"url": "https://labor.maryland.gov/license/hvacr/hvacrlicreq.shtml", "quote": "Insurance requirement for master contractors who contract work"}
+      ]
+    },
+    "roofing": {
+      "status": "no_state_license",
+      "name": null,
+      "agency": "Maryland Home Improvement Commission",
+      "covers": "Residential roofing is home improvement work and needs an MHIC license; there is no separate roofing license.",
+      "threshold": null,
+      "prerequisites": ["MHIC contractor license (for residential roofing)"],
+      "bond": null,
+      "insurance": null,
+      "summary": "Maryland has no separate roofing license, but roofing on existing homes is home improvement work that requires an MHIC contractor license.",
+      "url": "https://labor.maryland.gov/license/mhic/mhicwhatishi.shtml",
+      "quote": "Siding Railings Roofs Sod (when landscaping)"
+    },
+    "pesticide": {
+      "status": "state_license",
+      "name": "Pesticide Business License; Certified Pest Control Applicator",
+      "agency": "Maryland Department of Agriculture",
+      "covers": "Pest control and lawn/landscape pesticide businesses and the applicators who apply pesticides commercially.",
+      "threshold": null,
+      "prerequisites": [
+        "Applicator certificate by passing a written exam",
+        "Annual business license with evidence of financial responsibility"
+      ],
+      "bond": null,
+      "insurance": "Evidence of financial responsibility required for the business license",
+      "summary": "A pest control or lawn-care pesticide business needs an annual Maryland Department of Agriculture business license with proof of financial responsibility. Commercial applicators must pass a written exam to be certified.",
+      "url": "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gag&section=5-207&enactments=false",
+      "quote": "Each place of business engaged in the business of conducting pest control shall obtain an annual license indicating the category of operation.",
+      "evidence": [
+        {"url": "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gag&section=5-207&enactments=false", "quote": "shall demonstrate competence to consult on pest control or to apply pesticides safely in the State by passing a written examination prepared and administered by the Department."},
+        {"url": "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gag&section=5-207&enactments=false", "quote": "shall provide evidence of financial responsibility as required by the Department."}
+      ]
+    },
+    "asbestos": {
+      "status": "state_license",
+      "name": "Asbestos removal/encapsulation business license",
+      "agency": "Maryland Department of the Environment (MDE)",
+      "covers": "Businesses that remove or encapsulate asbestos.",
+      "threshold": null,
+      "prerequisites": [
+        "Workers who contact asbestos complete an MDE-approved asbestos removal course",
+        "Access to at least 1 approved asbestos disposal site"
+      ],
+      "bond": null,
+      "insurance": null,
+      "summary": "Any business that removes or encapsulates asbestos must be licensed by MDE first. Its workers must complete an approved asbestos course, and it must have access to an approved disposal site.",
+      "url": "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gen&section=6-409&enactments=false",
+      "quote": "a business entity or public unit shall be licensed by the Department before the business entity or public unit removes or encapsulates any asbestos in this State.",
+      "evidence": [
+        {"url": "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gen&section=6-410&enactments=false", "quote": "Have completed a course of instruction on asbestos removal and encapsulation approved by the Department."},
+        {"url": "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gen&section=6-410&enactments=false", "quote": "Has access to at least 1 approved asbestos disposal site for deposit of all asbestos waste"}
+      ]
+    },
+    "lead_rrp": {
+      "status": "no_state_license",
+      "name": "EPA RRP Firm Certification and Certified Renovator",
+      "agency": "U.S. EPA",
+      "covers": "Paid renovation, repair and painting in pre-1978 housing and child-occupied facilities.",
+      "threshold": null,
+      "prerequisites": ["EPA firm certification", "Certified renovator training"],
+      "bond": null,
+      "insurance": null,
+      "summary": "Maryland is not authorized to run its own lead renovation (RRP) program, so firms get RRP certification directly from EPA for work on homes built before 1978.",
+      "url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-firm-certification",
+      "quote": "EPA's renovation program applies to all states, Tribes and territories where EPA has not specifically provided authorization for that state, Tribe or territory to operate the program themselves.",
+      "evidence": [
+        {"url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-firm-certification", "quote": "Federal law requires all renovation, repair, and painting firms (including sole proprietorships) working in housing, or facilities where children are routinely present, built before 1978, to be certified."},
+        {"url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program", "quote": "EPA administers the RRP Program in most Tribes, states and territories, but has authorized the following to operate their own programs: Alabama, Delaware, Georgia, Iowa, Kansas, Massachusetts, Mississippi, North Carolina, Oklahoma, Oregon, Rhode Island, Utah, Vermont, Washington, Wisconsin"}
+      ],
+      "note": "Maryland MDE separately regulates lead abatement and rental-housing lead programs; not researched here."
+    },
+    "other": [
+      {
+        "key": "home_builder_registration",
+        "name": "Home Builder Registration",
+        "agency": "Maryland Office of the Attorney General, Home Builder Registration Unit",
+        "trades": ["general-contracting", "additions"],
+        "summary": "Builders of new homes in Maryland must register with the Attorney General's Home Builder Registration Unit; the MHIC license does not cover new home construction.",
+        "url": "https://labor.maryland.gov/license/mhic/mhicfaq.shtml",
+        "quote": "The Home Improvement Commission license does not cover new home construction."
+      }
+    ]
+  }
+}

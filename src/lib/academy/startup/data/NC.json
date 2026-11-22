@@ -1,0 +1,359 @@
+{
+ "state": "NC",
+ "researched_on": "2026-11-22",
+ "checked_at": "2026-11-22T21:48:10Z",
+ "general": {
+  "entity": {
+   "agency": "NC Secretary of State",
+   "summary": "Form an LLC or corporation with the NC Secretary of State. If you do business under a name other than your own legal name, file an assumed business name certificate with the register of deeds in each county where you work; the Secretary of State keeps a statewide searchable database of those filings.",
+   "url": "https://sosnc.gov/divisions/business_registration/assumed_business_names",
+   "quote": "keeps the filing of assumed business name information at the registers of deeds' offices across the state and has the following new features",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "state_tax": {
+   "agency": "NC Department of Revenue",
+   "summary": "Register with the NC Department of Revenue for a Certificate of Registration if you sell taxable goods or services at retail; register for withholding tax when you have employees.",
+   "url": "https://ncdor.gov/who-should-register-sales-and-use-tax",
+   "quote": "Every business, person, or facilitator engaged in business in North Carolina of one or more of the following must register online or by mail with the Department to obtain a Certificate of Registration",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "unemployment": {
+   "agency": "NC Division of Employment Security (DES)",
+   "summary": "Most businesses owe state unemployment tax once they pay at least $1,500 in wages in a quarter or employ at least one worker in 20 different weeks of a year. Set up an employer account in NCSUITS.",
+   "url": "https://des.nc.gov/employers/am-i-required-pay-taxes",
+   "quote": "General Business Paid quarterly wages of at least $1,500; OR Employed at least one worker in 20 different weeks during a calendar year.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "workers_comp": {
+   "agency": "NC Industrial Commission",
+   "summary": "In general, a business with three or more employees must carry workers' compensation insurance or qualify as self-insured. Corporate officers count toward the three, though officers can exclude themselves from coverage.",
+   "url": "https://ic.nc.gov/employers.html",
+   "quote": "In general, any employer who employs three or more employees must have workers' compensation insurance coverage or qualify as a self-insured employer.",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "threshold",
+   "name": "General Contractor license (Residential or Building classification)",
+   "agency": "NC Licensing Board for General Contractors",
+   "covers": "Anyone who bids on, builds, or manages construction of a building or improvement costing $40,000 or more. The Residential classification covers contractors building only homes under the NC Residential Code.",
+   "threshold": "Projects costing $40,000 or more",
+   "prerequisites": [
+    "Be at least 18 years old",
+    "Show financial responsibility as set by the Board",
+    "Name a qualifier who has passed the Board's examination",
+    "Consent to a criminal background check if the Board requires it"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "North Carolina requires a general contractor license for any project costing $40,000 or more. The license comes in limited, intermediate and unlimited levels and in classifications including Building and Residential. Work under $40,000 does not need this state license, though local permits still apply.",
+   "url": "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_87/GS_87-1.html",
+   "quote": "where the cost of the undertaking is forty thousand dollars ($40,000) or more, or undertakes to erect a North Carolina labeled manufactured modular building",
+   "note": "The Board's own site (nclbgc.org) blocked automated fetching, so the statute is cited.",
+   "evidence": [
+    {
+     "url": "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_87/GS_87-10.html",
+     "quote": "(1) Be at least 18 years of age. (2) Possess good moral character as determined by the Board. (3) Provide evidence of financial responsibility as determined by the Board."
+    },
+    {
+     "url": "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_87/GS_87-10.html",
+     "quote": "An applicant shall identify an individual who has successfully passed an examination approved by the Board who, for purposes of this section, shall be known as the \"qualifier\""
+    },
+    {
+     "url": "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_87/GS_87-10.html",
+     "quote": "(1a) Residential contractor, which shall include any general contractor constructing only residences which are required to conform to the North Carolina Residential Code"
+    },
+    {
+     "url": "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_87/GS_87-10.html",
+     "quote": "(5) Consent to a criminal background check if required by the Board."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "commercial_building": {
+   "status": "threshold",
+   "name": "General Contractor license (Building classification)",
+   "agency": "NC Licensing Board for General Contractors",
+   "covers": "Same general contractor license as residential; the Building classification covers commercial, industrial, public and residential buildings for projects of $40,000 or more.",
+   "threshold": "Projects costing $40,000 or more",
+   "prerequisites": [
+    "Be at least 18 years old",
+    "Show financial responsibility as set by the Board",
+    "Name a qualifier who has passed the Board's examination"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Commercial work uses the same general contractor license, in the Building classification. A limited license caps single projects at $750,000 and an intermediate license at $1,500,000; an unlimited license has no cap.",
+   "url": "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_87/GS_87-10.html",
+   "quote": "(1) Building contractor, which shall include private, public, commercial, industrial and residential buildings of all types.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_87/GS_87-1.html",
+     "quote": "where the cost of the undertaking is forty thousand dollars ($40,000) or more"
+    },
+    {
+     "url": "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_87/GS_87-10.html",
+     "quote": "the holder of an intermediate license shall be entitled to act as general contractor for any single project with a value of up to one million five hundred thousand dollars ($1,500,000)"
+    },
+    {
+     "url": "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_87/GS_87-10.html",
+     "quote": "the holder of a limited license shall be entitled to act as general contractor for any single project with a value of up to seven hundred fifty thousand dollars ($750,000)"
+    },
+    {
+     "url": "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_87/GS_87-10.html",
+     "quote": "(1) Be at least 18 years of age. (2) Possess good moral character as determined by the Board. (3) Provide evidence of financial responsibility as determined by the Board."
+    },
+    {
+     "url": "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_87/GS_87-10.html",
+     "quote": "An applicant shall identify an individual who has successfully passed an examination approved by the Board"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "electrical": {
+   "status": "state_license",
+   "name": "Electrical Contractor license",
+   "agency": "NC State Board of Examiners of Electrical Contractors",
+   "covers": "Any business that installs, maintains, alters or repairs electrical wiring, devices or equipment.",
+   "threshold": null,
+   "prerequisites": [
+    "The business must list a qualified individual who has passed the Board's qualifying examination for the license classification",
+    "That qualified individual must be on active duty at each place of business to supervise the electrical work"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "North Carolina licenses electrical contracting businesses at the state level. Each license must list a qualified individual who passed the Board's exam and who supervises the work.",
+   "url": "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_87/GS_87-43.html",
+   "quote": "No person, partnership, firm or corporation shall engage, or offer to engage, in the business of electrical contracting within the State of North Carolina without having received a license in the applicable classification",
+   "note": "Individual journeyman/master electrician cards are not part of the state contractor statute; local rules may apply.",
+   "evidence": [
+    {
+     "url": "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_87/GS_87-41.1.html",
+     "quote": "A \"qualified individual\" is an individual who is qualified in a specific license classification as a result of having taken and passed the qualifying examination required by this Article"
+    },
+    {
+     "url": "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_87/GS_87-43.html",
+     "quote": "In each separate place of business operated by an electrical contractor at least one listed qualified individual shall be regularly on active duty and shall have the specific duty and authority to supervise and direct all electrical wiring"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "plumbing": {
+   "status": "state_license",
+   "name": "Plumbing Contractor license (Class I or Class II)",
+   "agency": "NC State Board of Examiners of Plumbing, Heating, and Fire Sprinkler Contractors",
+   "covers": "Anyone in the business of plumbing contracting. Class I covers all structures; Class II covers single-family detached homes.",
+   "threshold": null,
+   "prerequisites": [
+    "Pass the Board's examination",
+    "Be at least 18 and of good moral character if the Board requires it",
+    "Experience the Board may require, up to two years (half may be coursework)"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "North Carolina requires a state plumbing contractor license before doing or offering plumbing work. You must pass the Board's exam, and the Board may require up to two years of experience first.",
+   "url": "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_87/GS_87-21.html",
+   "quote": "the Board shall establish two classes of licenses: Class I covering all plumbing, heating, and fire sprinkler systems for all structures, and Class II covering plumbing and heating systems in single-family detached residential dwellings.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_87/GS_87-21.html",
+     "quote": "Prior to taking the examination, the applicant may be required by the Board to establish that the applicant is at least 18 years of age and is of good moral character. The Board may require experience as a condition of examination, provided that (i) the experience required may not exceed two years"
+    },
+    {
+     "url": "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_87/GS_87-21.html",
+     "quote": "a license shall be obtained, in accordance with the provisions of this Article, before any person, firm or corporation shall engage in, or offer to engage in, the business of plumbing, heating, or fire sprinkler contracting"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "mechanical": {
+   "status": "state_license",
+   "name": "Heating Contractor license (Heating Group 1, 2 or 3); Fuel Piping license",
+   "agency": "NC State Board of Examiners of Plumbing, Heating, and Fire Sprinkler Contractors",
+   "covers": "HVAC and heating contractors. Heating Group 3 includes systems in single-family homes; a separate restricted fuel piping license covers gas piping work.",
+   "threshold": null,
+   "prerequisites": [
+    "Pass the Board's examination for the heating group",
+    "Experience the Board may require, up to two years"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "HVAC work in North Carolina needs a state heating license from the same Board that licenses plumbers. Licenses are split into heating groups, and there is a separate fuel piping license for gas lines.",
+   "url": "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_87/GS_87-21.html",
+   "quote": "Systems installed in single-family residences are included under heating group number three, regardless of size.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_87/GS_87-21.html",
+     "quote": "The Board shall establish and issue a fuel piping license for use by persons who do not possess the required Class I or Class II plumbing or heating license"
+    },
+    {
+     "url": "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_87/GS_87-21.html",
+     "quote": "The Board may require experience as a condition of examination, provided that (i) the experience required may not exceed two years"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "roofing": {
+   "status": "threshold",
+   "name": "General Contractor license, Specialty (Roofing) classification",
+   "agency": "NC Licensing Board for General Contractors",
+   "covers": "Roofing jobs of $40,000 or more fall under the general contractor law, which includes specialty classifications for building trades.",
+   "threshold": "Projects costing $40,000 or more",
+   "prerequisites": [
+    "Name a qualifier who has passed the Board's examination",
+    "Show financial responsibility as set by the Board"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "North Carolina has no separate roofing license. Roofing projects of $40,000 or more need a general contractor license, which can be limited to a specialty classification such as roofing.",
+   "url": "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_87/GS_87-10.html",
+   "quote": "(4) Specialty contractor, which shall include those whose operations as such are the performance of construction work requiring special skill and involving the use of specialized building trades or crafts",
+   "note": "The Roofing specialty is defined in Board rule 21 NCAC 12A .0202, which could not be fetched from an official host.",
+   "evidence": [
+    {
+     "url": "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_87/GS_87-1.html",
+     "quote": "where the cost of the undertaking is forty thousand dollars ($40,000) or more"
+    },
+    {
+     "url": "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_87/GS_87-10.html",
+     "quote": "An applicant shall identify an individual who has successfully passed an examination approved by the Board"
+    },
+    {
+     "url": "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_87/GS_87-10.html",
+     "quote": "(3) Provide evidence of financial responsibility as determined by the Board."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Structural Pest Control License; Commercial Ground Applicator pesticide license",
+   "agency": "NC Dept. of Agriculture & Consumer Services, Structural Pest Control and Pesticides Division",
+   "covers": "Structural pest control (termites, household pests, fumigation) for hire needs a Structural Pest Control License. Landscapers and lawn/tree companies applying pesticides for pay on others' property need a Commercial Ground Applicator license.",
+   "threshold": null,
+   "prerequisites": [
+    "Qualify as an NC Certified Applicator in the phase",
+    "Two years of documented structural pest control experience in that phase",
+    "Pass the license exam in that phase",
+    "Provide proof of insurance before the license is issued"
+   ],
+   "bond": null,
+   "insurance": "Proof of insurance, sent by the insurer, before the structural license is issued",
+   "summary": "To run a pest control business in North Carolina you need a Structural Pest Control License for each phase of work. You must first be a Certified Applicator, have two years of experience, pass an exam, and show proof of insurance. Lawn and landscape pesticide application for pay needs a separate commercial pesticide license.",
+   "url": "https://www.ncagr.gov/divisions/structural-pest-control-and-pesticides/structural/licensing-and-certification",
+   "quote": "Qualify as a NC Certified Applicator (CA) (in good standing) in the phase in which they wish to become licensed , and Have two years of independently verifiable documented experience in structural pest control work in that phase, then Pass an examination in that phase.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.ncagr.gov/divisions/structural-pest-control-and-pesticides/structural/licensing-and-certification",
+     "quote": "All licensees must provide proof of insurance before the license is issued."
+    },
+    {
+     "url": "https://ncagr.gov/divisions/structural-pest-control-and-pesticides/pesticide/licensing-and-certification/licenses",
+     "quote": "This license is required for anyone applying pesticides (non-aerial) for compensation on someone else's property per the NC Pesticide Law of 1971"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "asbestos": {
+   "status": "state_license",
+   "name": "Asbestos accreditation; asbestos removal permits and demolition notifications",
+   "agency": "NC DHHS, Health Hazards Control Unit",
+   "covers": "People who do asbestos management work (abatement workers, supervisors, inspectors) must be accredited; asbestos removal projects need permits and demolitions need notification.",
+   "threshold": null,
+   "prerequisites": [
+    "Complete an approved asbestos accreditation training course"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "North Carolina accredits people who do asbestos work and issues permits for asbestos removal projects and demolition notifications. Training comes from state-approved courses.",
+   "url": "https://www.dph.ncdhhs.gov/programs/environmental-health/health-hazards-control-unit",
+   "quote": "Issues permits for asbestos and lead removal projects / issues demolition notifications. Accredits people who perform asbestos management activities in N.C.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.dph.ncdhhs.gov/programs/environmental-health/health-hazards-control-unit",
+     "quote": "Approves asbestos accreditation/lead certification training courses; accredits training providers."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "lead_rrp": {
+   "status": "state_license",
+   "name": "NC Renovation, Repair and Painting (RRP) firm and individual certification",
+   "agency": "NC DHHS, Health Hazards Control Unit",
+   "covers": "Paid renovation, repair and painting that disturbs lead-based paint in homes or child-occupied facilities built before 1978.",
+   "threshold": null,
+   "prerequisites": [
+    "Complete RRP training before applying for certification"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "North Carolina runs its own RRP program: the state, not EPA, certifies renovation firms and individuals. Complete training first, then apply for state certification; permits are also required for covered projects.",
+   "url": "https://www.dph.ncdhhs.gov/programs/environmental-health/health-hazards-control-unit/lead/renovation-repair-and-painting",
+   "quote": "NC's Health Hazards Control Unit certifies individuals and firms to perform renovation, repair and painting.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.dph.ncdhhs.gov/programs/environmental-health/health-hazards-control-unit/lead/renovation-repair-and-painting",
+     "quote": "Individuals and firms must first complete training before applying for certification."
+    },
+    {
+     "url": "https://www.dph.ncdhhs.gov/programs/environmental-health/health-hazards-control-unit/lead/renovation-repair-and-painting",
+     "quote": "North Carolina requires certification and permits for paid renovation, repair and painting (RRP) projects that disturb lead-based paint in"
+    },
+    {
+     "url": "https://www.dph.ncdhhs.gov/programs/environmental-health/health-hazards-control-unit/lead/renovation-repair-and-painting",
+     "quote": "Child-occupied facilities (daycares, preschools, etc.) built before 1978"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "other": [
+  {
+   "key": "fire_sprinkler",
+   "name": "Fire Sprinkler Contractor license",
+   "agency": "NC State Board of Examiners of Plumbing, Heating, and Fire Sprinkler Contractors",
+   "trades": [
+    "plumbing"
+   ],
+   "summary": "Fire sprinkler contracting needs a state license from the plumbing and heating board, obtained by examination.",
+   "url": "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_87/GS_87-21.html",
+   "quote": "a license shall be obtained, in accordance with the provisions of this Article, before any person, firm or corporation shall engage in, or offer to engage in, the business of plumbing, heating, or fire sprinkler contracting",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  {
+   "key": "limited_plumbing_irrigation",
+   "name": "Limited Plumbing Contractor license (exterior water/sewer lines, irrigation backflow)",
+   "agency": "NC State Board of Examiners of Plumbing, Heating, and Fire Sprinkler Contractors",
+   "trades": [
+    "landscaping",
+    "excavation"
+   ],
+   "summary": "A limited plumbing license lets contractors without a full plumbing license install exterior water service lines, backflow preventers for irrigation, and small exterior sewer lines.",
+   "url": "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_87/GS_87-21.html",
+   "quote": "The Board shall establish and issue a limited plumbing contractor license for use by persons who do not possess the required Class I or Class II plumbing license",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ ]
+}

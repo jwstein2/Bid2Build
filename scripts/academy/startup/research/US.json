@@ -1,0 +1,104 @@
+{
+ "facts": [
+  {
+   "key": "structure",
+   "name": "Choose a business structure",
+   "agency": "U.S. Small Business Administration",
+   "trades": [
+    "*"
+   ],
+   "summary": "Decide between a sole proprietorship, partnership, LLC or corporation before you register. The structure affects your taxes, paperwork and how much your personal assets are exposed if the business is sued. An LLC does not replace insurance.",
+   "url": "https://www.sba.gov/business-guide/launch-your-business/choose-business-structure",
+   "quote": "Your business structure affects how much you pay in taxes , your ability to raise money, the paperwork you need to file, and your personal liability."
+  },
+  {
+   "key": "ein",
+   "name": "Employer Identification Number (EIN)",
+   "agency": "IRS",
+   "trades": [
+    "*"
+   ],
+   "summary": "Get a free federal tax ID (EIN) from the IRS online. You need it to open a business bank account, hire employees and register with your state. Only apply on irs.gov; sites that charge for an EIN are not the IRS.",
+   "url": "https://www.irs.gov/businesses/small-businesses-self-employed/get-an-employer-identification-number",
+   "quote": "Use this tool to get an EIN directly from the IRS in minutes for free."
+  },
+  {
+   "key": "worker_classification",
+   "name": "Employee or independent contractor",
+   "agency": "IRS",
+   "when": "Before you pay anyone to help you",
+   "trades": [
+    "*"
+   ],
+   "summary": "Before you pay helpers, decide whether they are employees or independent contractors. It depends on how much control you have over how the work is done, not on what you call them. Employees mean payroll taxes, unemployment insurance and workers' comp.",
+   "url": "https://www.irs.gov/businesses/small-businesses-self-employed/independent-contractor-self-employed-or-employee",
+   "quote": "What matters is that you have the right to control the details of how the services are performed."
+  },
+  {
+   "key": "lead_rrp",
+   "name": "EPA Lead-Safe (RRP) firm certification and certified renovator",
+   "agency": "U.S. EPA (or your state, if EPA-authorized)",
+   "when": "Before you disturb paint in homes or child-occupied facilities built before 1978",
+   "trades": [
+    "roofing",
+    "siding",
+    "decks",
+    "kitchens",
+    "bathrooms",
+    "interior-remodeling",
+    "exterior-remodeling",
+    "drywall",
+    "painting",
+    "electrical",
+    "plumbing",
+    "hvac",
+    "flooring",
+    "tile",
+    "framing",
+    "finish-carpentry",
+    "cabinets-countertops",
+    "windows-doors",
+    "insulation",
+    "gutters",
+    "pressure-washing",
+    "demolition",
+    "basements",
+    "additions",
+    "garages",
+    "commercial-remodeling",
+    "general-contracting",
+    "handyman",
+    "masonry",
+    "foundations"
+   ],
+   "summary": "If you will be paid to disturb paint in homes built before 1978, your firm must be certified and the work must be done or supervised by a certified renovator who has taken the training. This applies even to sole proprietors. Get this before you advertise that work.",
+   "url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-contractors",
+   "quote": "In general, anyone who is paid to perform work that disturbs paint in housing and child-occupied facilities built before 1978 must be certified. This includes all firms, even sole proprietorships."
+  },
+  {
+   "key": "epa_608",
+   "name": "EPA Section 608 technician certification",
+   "agency": "U.S. EPA",
+   "when": "Before you service or install equipment that contains refrigerant",
+   "trades": [
+    "hvac"
+   ],
+   "summary": "Anyone who services, repairs or disposes of refrigerant equipment (air conditioners, heat pumps, refrigeration) must pass an EPA-approved Section 608 certification test first. Most HVAC licenses assume you already have it.",
+   "url": "https://www.epa.gov/section608/section-608-technician-certification-requirements",
+   "quote": "EPA regulations (40 CFR Part 82, Subpart F) under Section 608 of the Clean Air Act require that technicians who maintain, service, repair, or dispose of equipment that could release refrigerants into the atmosphere must be certified."
+  },
+  {
+   "key": "usdot",
+   "name": "Commercial vehicle rules (USDOT)",
+   "agency": "FMCSA (U.S. DOT)",
+   "when": "If your truck, or truck and trailer, is rated 10,001 pounds or more and crosses state lines",
+   "trades": [
+    "*"
+   ],
+   "summary": "A truck or truck-and-trailer rated 10,001 pounds or more that is used in interstate commerce is a commercial motor vehicle under federal rules, which brings a USDOT number and driver rules. Many states apply similar rules to trips inside the state.",
+   "url": "https://www.ecfr.gov/api/versioner/v1/full/2026-11-01/title-49.xml?section=390.5",
+   "link": "https://www.ecfr.gov/current/title-49/section-390.5",
+   "quote": "Commercial motor vehicle means any self-propelled or towed motor vehicle used on a highway in interstate commerce to transport passengers or property ... 4,536 kg (10,001 pounds) or more"
+  }
+ ]
+}

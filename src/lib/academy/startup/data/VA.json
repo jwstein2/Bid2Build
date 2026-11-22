@@ -1,0 +1,390 @@
+{
+ "state": "VA",
+ "researched_on": "2026-11-22",
+ "checked_at": "2026-11-22T21:48:10Z",
+ "general": {
+  "entity": {
+   "agency": "Virginia State Corporation Commission (SCC), Clerk's Office",
+   "summary": "Form a Virginia LLC by filing Articles of Organization with the State Corporation Commission, online or on paper.",
+   "url": "https://www.scc.virginia.gov/businesses/new-business-resources/business-types/",
+   "quote": "File Online or complete Articles of Organization (Form LLC1011-DOC)",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "state_tax": {
+   "agency": "Virginia Department of Taxation (Virginia Tax)",
+   "summary": "Register your business online with Virginia Tax to get account numbers for sales and use tax, withholding and other taxes.",
+   "url": "https://www.tax.virginia.gov/register",
+   "quote": "When you complete your registration, you’ll receive your Virginia Tax account number for each tax type, your sales tax certificate (if you registered to collect retail sales or use tax)",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "unemployment": {
+   "agency": "Virginia Employment Commission (VEC)",
+   "summary": "You become liable for Virginia unemployment tax once you have a quarterly payroll of $1,500 or more or employ someone for 20 weeks in a year; register through VEC's iReg.",
+   "url": "https://www.vec.virginia.gov/employer-responsibilities",
+   "quote": "Have a quarterly payroll of $1,500 or more, or Employ someone for at least 20 weeks (about 4.5 months) in a calendar year",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "workers_comp": {
+   "agency": "Virginia Workers' Compensation Commission",
+   "summary": "A business with more than two employees regularly employed in Virginia must carry workers' comp. Contractors must count their subcontractors' employees toward that total.",
+   "url": "https://workcomp.virginia.gov/content/employers",
+   "quote": "If the total of the contractor’s employees plus the sum total of subcontractors’ employees is more than two, then coverage is required.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "local": {
+   "agency": null,
+   "summary": "A state contractor license does not replace local licensing; check with your city or county Commissioner of the Revenue and Building Official.",
+   "url": "https://www.dpor.virginia.gov/sites/default/files/boards/Contractors/Contractor%20Application%20Instructions.pdf",
+   "quote": "the business must also comply with local licensing requirements set forth by the localities (cities, towns, and counties) in which your business plans to do work",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "threshold",
+   "name": "Contractor License, Class A, B or C (Residential Building RBC or Home Improvement HIC classification)",
+   "agency": "Virginia DPOR, Board for Contractors",
+   "covers": "Businesses doing construction, removal, repair or improvements over $1,000 per job; class depends on job size and yearly volume.",
+   "threshold": "Class C: jobs over $1,000 but less than $30,000; Class B: $30,000 to under $150,000; Class A: $150,000 or more.",
+   "prerequisites": [
+    "Board-approved pre-license course completed by a member of responsible management or the designated employee",
+    "A Qualified Individual with 2 years (Class C), 3 years (Class B) or 5 years (Class A) of experience in the classification",
+    "Class A and B: a Designated Employee who has passed the business exams",
+    "Class A and B: minimum net worth ($15,000 for Class B, $45,000 for Class A) or a surety bond"
+   ],
+   "bond": "Class A/B may use a surety bond to meet the financial requirement.",
+   "insurance": null,
+   "summary": "Virginia licenses contractor businesses in three classes based on job size. Even Class C (jobs over $1,000) requires a pre-license course and an experienced Qualified Individual; Classes A and B also need a Designated Employee who passed exams and a minimum net worth.",
+   "url": "https://law.lis.virginia.gov/vacode/title54.1/chapter11/section54.1-1100/",
+   "quote": "\"Class C contractors\" perform or manage construction, removal, repair, or improvements when (i) the total value referred to in a single contract or project is over $1,000 but less than $30,000",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://law.lis.virginia.gov/vacode/title54.1/chapter11/section54.1-1100/",
+     "quote": "the total value referred to in a single contract or project is $30,000 or more, but less than $150,000"
+    },
+    {
+     "url": "https://law.lis.virginia.gov/vacode/title54.1/chapter11/section54.1-1100/",
+     "quote": "\"Class A contractors\" perform or manage construction, removal, repair, or improvements when (i) the total value referred to in a single contract or project is $150,000 or more"
+    },
+    {
+     "url": "https://www.dpor.virginia.gov/sites/default/files/boards/Contractors/Contractor%20Application%20Instructions.pdf",
+     "quote": "Must have the minimum years of experience in the classification or specialty – 2 years for a Class C license, 3 years for a Class B license and 5 years for a Class A license."
+    },
+    {
+     "url": "https://www.dpor.virginia.gov/sites/default/files/boards/Contractors/Contractor%20Application%20Instructions.pdf",
+     "quote": "All classes of license require the pre-license course to be completed."
+    },
+    {
+     "url": "https://www.dpor.virginia.gov/sites/default/files/boards/Contractors/Contractor%20Application%20Instructions.pdf",
+     "quote": "worth/equity requirements (At least $15,000 for Class B or $45,000 for Class A applicants)"
+    },
+    {
+     "url": "https://www.dpor.virginia.gov/sites/default/files/boards/Contractors/Contractor%20Application%20Instructions.pdf",
+     "quote": "All Class A & Class B license applicants must declare a Designated Employee who has successfully completed the appropriate business examinations"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "commercial_building": {
+   "status": "threshold",
+   "name": "Contractor License, Class A, B or C (Commercial Building CBC / Commercial Improvement CIC classification)",
+   "agency": "Virginia DPOR, Board for Contractors",
+   "covers": "Same class A/B/C license system as residential, with commercial classifications.",
+   "threshold": "Jobs over $1,000 (class by job size).",
+   "prerequisites": [
+    "Pre-license course",
+    "Qualified Individual with required experience who passes the classification exam",
+    "Class A/B: Designated Employee exam and net worth"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Commercial contractors use the same DPOR Class A/B/C license, choosing the Commercial Building or Commercial Improvement classification. These designations require pre-approval and an exam.",
+   "url": "https://www.dpor.virginia.gov/sites/default/files/boards/Contractors/Contractor%20Application%20Instructions.pdf",
+   "quote": "Applicants are required to be pre-approved and pass an examination for the following designations",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.dpor.virginia.gov/sites/default/files/boards/Contractors/Contractor%20Application%20Instructions.pdf",
+     "quote": "If you are applying for Commercial Building (CBC) or Commercial Improvement (CIC) only"
+    },
+    {
+     "url": "https://www.dpor.virginia.gov/sites/default/files/boards/Contractors/Contractor%20Application%20Instructions.pdf",
+     "quote": "All classes of license require the pre-license course to be completed."
+    },
+    {
+     "url": "https://law.lis.virginia.gov/vacode/title54.1/chapter11/section54.1-1100/",
+     "quote": "\"Class C contractors\" perform or manage construction, removal, repair, or improvements when (i) the total value referred to in a single contract or project is over $1,000 but less than $30,000"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "electrical": {
+   "status": "state_license",
+   "name": "Contractor License with Electrical (ELE) classification; Journeyman and Master Electrician tradesman licenses",
+   "agency": "Virginia DPOR, Board for Contractors (Tradesman program)",
+   "covers": "Electrical contractor businesses (need a master electrician) and individual electricians.",
+   "threshold": null,
+   "prerequisites": [
+    "Journeyman: education plus practical experience (e.g., 240 hours of vocational training and four years of experience) and pass the exam",
+    "Master: hold a journeyman license for at least one year (or nine years of experience) and pass the exam",
+    "Contractor firm: a master tradesman license as a condition of licensure"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Virginia licenses electricians as journeymen and masters through DPOR, based on training, experience and an exam. An electrical contractor business needs a Class A/B/C contractor license, and the Board requires a master tradesman license for it.",
+   "url": "https://law.lis.virginia.gov/vacode/title54.1/chapter11/section54.1-1100/",
+   "quote": "The Board shall require a master tradesmen license as a condition of licensure for electrical, plumbing, and heating, ventilation, and air conditioning contractors.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://law.lis.virginia.gov/admincode/title18/agency50/chapter30/section39/",
+     "quote": "An applicant for examination to be licensed as a journeyman electrician, plumber, or HVAC tradesman must furnish evidence that one of the following experience and education standards has been attained"
+    },
+    {
+     "url": "https://law.lis.virginia.gov/admincode/title18/agency50/chapter30/section39/",
+     "quote": "240 hours of formal vocational training in the trade Four years of practical experience in the trade for which licensure is desired"
+    },
+    {
+     "url": "https://law.lis.virginia.gov/admincode/title18/agency50/chapter30/section39/",
+     "quote": "Having held a valid journeyman license in the trade for which licensure is desired for a minimum of one year"
+    },
+    {
+     "url": "https://law.lis.virginia.gov/admincode/title18/agency50/chapter30/section39/",
+     "quote": "Nine years of practical experience in the trade for which licensure is desired."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "plumbing": {
+   "status": "state_license",
+   "name": "Contractor License with Plumbing (PLB) classification; Residential, Journeyman and Master Plumber tradesman licenses",
+   "agency": "Virginia DPOR, Board for Contractors (Tradesman program)",
+   "covers": "Plumbing contractor businesses (need a master plumber) and individual plumbers; a residential plumber license allows residential-only work.",
+   "threshold": null,
+   "prerequisites": [
+    "Residential plumber: e.g., 160 hours of vocational training and two years of practical experience, plus exam",
+    "Journeyman: education plus practical experience, plus exam",
+    "Master: one year as a journeyman, three years as a residential tradesman, or nine years of experience, plus exam",
+    "Contractor firm: master tradesman license"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Plumbers are licensed by DPOR as residential, journeyman or master tradesmen based on training, experience and an exam. A plumbing contractor business needs a contractor license backed by a master plumber.",
+   "url": "https://law.lis.virginia.gov/vacode/title54.1/chapter11/section54.1-1100/",
+   "quote": "The Board shall require a master tradesmen license as a condition of licensure for electrical, plumbing, and heating, ventilation, and air conditioning contractors.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://law.lis.virginia.gov/admincode/title18/agency50/chapter30/section39/",
+     "quote": "160 hours of formal vocational training in the trade Two years of practical experience in the trade for which licensure is desired"
+    },
+    {
+     "url": "https://law.lis.virginia.gov/admincode/title18/agency50/chapter30/section39/",
+     "quote": "Having held a valid residential HVAC tradesman or residential plumber tradesman license in the trade for which licensure is desired for three years"
+    },
+    {
+     "url": "https://law.lis.virginia.gov/admincode/title18/agency50/chapter30/section39/",
+     "quote": "Having held a valid journeyman license in the trade for which licensure is desired for a minimum of one year"
+    },
+    {
+     "url": "https://law.lis.virginia.gov/admincode/title18/agency50/chapter30/section39/",
+     "quote": "Nine years of practical experience in the trade for which licensure is desired."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "mechanical": {
+   "status": "state_license",
+   "name": "Contractor License with HVAC (HVA) classification; Residential HVAC Mechanic, Journeyman and Master HVAC tradesman; Gas Fitter licenses",
+   "agency": "Virginia DPOR, Board for Contractors (Tradesman program)",
+   "covers": "HVAC contractor businesses and individual HVAC tradesmen; gas fitting, LP gas and natural gas fitting are separately licensed.",
+   "threshold": null,
+   "prerequisites": [
+    "Residential HVAC or journeyman HVAC: vocational training plus practical experience, and pass the exam",
+    "Master HVAC: one year as a journeyman (or other listed path) and pass the exam",
+    "Contractor firm: master tradesman license",
+    "Gas fitter: training and experience per the gas fitter standards"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Virginia licenses HVAC tradesmen (residential, journeyman, master) and gas fitters through DPOR. An HVAC contractor business needs a contractor license and a master HVAC tradesman.",
+   "url": "https://law.lis.virginia.gov/vacode/title54.1/chapter11/section54.1-1100/",
+   "quote": "The Board shall require a master tradesmen license as a condition of licensure for electrical, plumbing, and heating, ventilation, and air conditioning contractors.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://law.lis.virginia.gov/admincode/title18/agency50/chapter30/section39/",
+     "quote": "An applicant for examination to be licensed as a residential HVAC tradesman or residential plumber tradesman must furnish evidence that one of the following experience and education standards has been attained"
+    },
+    {
+     "url": "https://law.lis.virginia.gov/admincode/title18/agency50/chapter30/section39/",
+     "quote": "An applicant for examination to be licensed as a journeyman liquefied petroleum gas fitter, natural gas fitter provider, or gas fitter tradesman must furnish evidence"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "roofing": {
+   "status": "threshold",
+   "name": "Contractor License, Class A, B or C with Roofing (ROC) specialty",
+   "agency": "Virginia DPOR, Board for Contractors",
+   "covers": "Roofing businesses doing jobs over $1,000.",
+   "threshold": "Jobs over $1,000 (class by job size).",
+   "prerequisites": [
+    "Pre-license course",
+    "Qualified Individual with required experience, pre-approved and passing the roofing exam"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Roofing is a specialty classification on the Virginia contractor license. The Qualified Individual must be pre-approved and pass an exam for it.",
+   "url": "https://www.dpor.virginia.gov/sites/default/files/boards/Contractors/Contractor%20Application%20Instructions.pdf",
+   "quote": "FIN – Finish Carpentry ROC – Roofing",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.dpor.virginia.gov/sites/default/files/boards/Contractors/Contractor%20Application%20Instructions.pdf",
+     "quote": "Applicants are required to be pre-approved and pass an examination for the following designations"
+    },
+    {
+     "url": "https://law.lis.virginia.gov/vacode/title54.1/chapter11/section54.1-1100/",
+     "quote": "\"Class C contractors\" perform or manage construction, removal, repair, or improvements when (i) the total value referred to in a single contract or project is over $1,000 but less than $30,000"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Pesticide Business License and Commercial Pesticide Applicator certification",
+   "agency": "Virginia Department of Agriculture and Consumer Services (VDACS), Office of Pesticide Services",
+   "covers": "Any business that applies, sells, mixes or recommends pesticides for pay, and the applicators who apply them.",
+   "threshold": null,
+   "prerequisites": [
+    "Pass the Commercial Pesticide Applicator Examination (applicators)",
+    "Business license applicant or an employee passes a written exam (waived if a certified commercial applicator)"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Businesses applying pesticides for pay need a VDACS Pesticide Business License, and applicators must pass the commercial applicator exam to be certified.",
+   "url": "https://vdacs.virginia.gov/pesticide-business-license.shtml",
+   "quote": "A pesticide business license is required for any person or business operating in Virginia, which, in",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://vdacs.virginia.gov/pesticide-business-license.shtml",
+     "quote": "applicant or his employee is certified as a commercial applicator, the exam requirement is waived."
+    },
+    {
+     "url": "https://www.vdacs.virginia.gov/pesticide-commercial-applicator.shtml",
+     "quote": "Apply to the Office of Pesticide Services to take the Commercial Pesticide Applicator Examination."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "asbestos": {
+   "status": "state_license",
+   "name": "Asbestos Contractor License (and individual asbestos worker/supervisor licenses)",
+   "agency": "Virginia DPOR, Board for Asbestos, Lead, and Home Inspectors",
+   "covers": "Anyone contracting for pay to carry out or work on an asbestos project.",
+   "threshold": null,
+   "prerequisites": [
+    "DPOR asbestos contractor license; workers and supervisors individually licensed after accredited training"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "It is illegal to contract for asbestos work in Virginia without a DPOR asbestos contractor license; individual asbestos workers and supervisors are licensed by the same board.",
+   "url": "https://law.lis.virginia.gov/vacode/title54.1/chapter5/section54.1-503/",
+   "quote": "It shall be unlawful for any person who does not have an asbestos contractor's license to contract with another person, for compensation, to carry out an asbestos project or to perform any work on an asbestos project.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.dpor.virginia.gov/Boards/ALHI",
+     "quote": "The Board for Asbestos, Lead, and Home Inspectors licenses individuals engaged in asbestos remediation, lead-based paint remediation and renovation, and home inspection."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "lead_rrp": {
+   "status": "no_state_license",
+   "name": "EPA RRP Firm Certification and Certified Renovator (federal)",
+   "agency": "U.S. EPA",
+   "covers": "Firms doing renovation, repair or painting that disturbs paint in pre-1978 homes and child-occupied facilities.",
+   "threshold": null,
+   "prerequisites": [
+    "EPA RRP firm certification",
+    "Certified renovator training"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Virginia is not an EPA-authorized RRP state, so renovation firms get RRP certification directly from EPA. Lead abatement (not routine renovation) is licensed separately by DPOR.",
+   "url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-firm-certification",
+   "quote": "EPA's renovation program applies to all states, Tribes and territories where EPA has not specifically provided authorization for that state, Tribe or territory to operate the program themselves.",
+   "note": "Virginia is not in EPA's list of authorized RRP states on this page.",
+   "evidence": [
+    {
+     "url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-firm-certification",
+     "quote": "Federal law requires all renovation, repair, and painting firms (including sole proprietorships) working in housing, or facilities where children are routinely present, built before 1978, to be certified."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "other": [
+  {
+   "key": "gas_fitter",
+   "name": "Gas Fitter, LP Gas Fitter, Natural Gas Fitter Provider licenses",
+   "agency": "Virginia DPOR, Board for Contractors",
+   "trades": [
+    "hvac",
+    "plumbing"
+   ],
+   "summary": "Gas fitting work requires a DPOR gas fitter license based on training and experience.",
+   "url": "https://law.lis.virginia.gov/admincode/title18/agency50/chapter30/section39/",
+   "quote": "An applicant for examination to be licensed as a journeyman liquefied petroleum gas fitter, natural gas fitter provider, or gas fitter tradesman must furnish evidence",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  {
+   "key": "certified_designations",
+   "name": "Blasting, manufactured home, radon mitigation and fire sprinkler certifications",
+   "agency": "Virginia DPOR, Board for Contractors",
+   "trades": [
+    "general-contracting",
+    "excavation",
+    "demolition",
+    "basements"
+   ],
+   "summary": "These contractor classifications require the qualified individual to hold a certification first.",
+   "url": "https://www.dpor.virginia.gov/sites/default/files/boards/Contractors/Contractor%20Application%20Instructions.pdf",
+   "quote": "Applicants must hold a Certification for the following designations",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  {
+   "key": "landscape_irrigation",
+   "name": "Landscape Irrigation (ISC) and Landscape Services (LSC) contractor classifications",
+   "agency": "Virginia DPOR, Board for Contractors",
+   "trades": [
+    "landscaping"
+   ],
+   "summary": "Landscape irrigation and landscape services are contractor classifications requiring pre-approval and an exam.",
+   "url": "https://www.dpor.virginia.gov/sites/default/files/boards/Contractors/Contractor%20Application%20Instructions.pdf",
+   "quote": "CIC – Commercial improvement ISC – Landscape irrigation",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ ]
+}

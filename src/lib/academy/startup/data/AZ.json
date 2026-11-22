@@ -1,0 +1,343 @@
+{
+ "state": "AZ",
+ "researched_on": "2026-11-22",
+ "checked_at": "2026-11-22T21:48:10Z",
+ "general": {
+  "entity": {
+   "agency": "Arizona Corporation Commission, Corporations Division (trade names: Arizona Secretary of State)",
+   "summary": "Choose an entity type and file it with the Arizona Corporation Commission (corporations and LLCs). Trade names are registered separately with the Arizona Secretary of State.",
+   "url": "https://azcc.gov/corporations/ten-steps-to-starting-a-business-in-az",
+   "quote": "Choose an entity type for the business (corporation, nonprofit corporation, or limited liability company (“LLC”)).",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "state_tax": {
+   "agency": "Arizona Department of Revenue",
+   "summary": "Contractors doing taxable construction work need a Transaction Privilege Tax (TPT) license from the Department of Revenue. New contractors must be licensed with the Registrar of Contractors first and usually must post a tax bond, so they apply on the paper Joint Tax Application (JT-1) instead of online.",
+   "url": "https://azdor.gov/transaction-privilege-tax/contracting-guidelines/bond-contractors",
+   "quote": "Contractors engaging in taxable construction projects or activities are required to obtain a TPT license. New contractors and out-of-state contractors are required to be licensed with the Registrar of Contractors and, in most cases, must post a bond with the Arizona Department of Revenue (ADOR).",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "unemployment": {
+   "agency": "Arizona Department of Economic Security (registered via the ADOR/DES Joint Tax Application)",
+   "summary": "Register for unemployment insurance and state withholding on the same Joint Tax Application (JT-1) used for your TPT license.",
+   "url": "https://azdor.gov/transaction-privilege-tax/tpt-license/applying-tpt-license",
+   "quote": "The Arizona Joint Tax Application (JT-1) is used to apply for transaction privilege tax, use tax, and Employer Withholding and Unemployment Insurance.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "workers_comp": {
+   "agency": "Industrial Commission of Arizona",
+   "summary": "Every employer with workers regularly employed in the business (full or part of the year) is covered by Arizona workers' compensation law. A contractor you supervise and their employees can count as your employees. Contractor license applicants must attest to workers' comp compliance.",
+   "url": "https://www.azleg.gov/ars/23/00902.htm",
+   "quote": "every person who employs any workers or operatives regularly employed in the same business or establishment under contract of hire, including covered employees pursuant to a professional employer agreement, except domestic servants.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "local": {
+   "agency": null,
+   "summary": "The state does not issue general business licenses, but cities may require a business license to work there.",
+   "url": "https://azdor.gov/transaction-privilege-tax/contracting-guidelines/contracting-faqs",
+   "quote": "A business license may be required by a city to do business in that city. This requirement varies depending on the city in which you are conducting business. The state does not require or issue business licenses.",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "state_license",
+   "name": "Residential contractor license (general residential or specialty residential), or dual license",
+   "agency": "Arizona Registrar of Contractors (ROC)",
+   "covers": "Anyone who contracts to build, alter, repair, improve or demolish residential structures, including pools. Only casual or minor jobs under $1,000 that need no building permit are exempt (the handyman exemption).",
+   "threshold": "Jobs under $1,000 that are casual/minor and need no building permit are exempt; unlicensed persons must advertise as 'not a licensed contractor'.",
+   "prerequisites": [
+    "A qualifying party with at least four years of practical or management experience in the type of work (two within the last ten years)",
+    "Qualifying party passes the written exam(s) taken within two years before applying",
+    "Surety bond or cash deposit",
+    "Join the Residential Contractors' Recovery Fund (or post an extra bond)",
+    "Attest to workers' compensation compliance"
+   ],
+   "bond": "General residential: $5,000 to $15,000; specialty residential: $1,000 to $7,500.",
+   "insurance": "Workers' compensation where required by law.",
+   "summary": "Arizona licenses all contractors through the Registrar of Contractors, including residential. Your qualifying party needs four years of experience in the trade and must pass the ROC exams. Residential contractors also post a bond and pay into the Residential Contractors' Recovery Fund.",
+   "url": "https://www.azleg.gov/ars/32/01102.htm",
+   "quote": "General residential contracting, which is engaging in the contracting business by any general contractor or subcontractor who undertakes to construct, alter, repair, add to, subtract from, improve, move, wreck or demolish any residential structure or appurtenances including swimming pools on or within residential property lines.",
+   "note": "The ROC website (roc.az.gov / azroc.gov) blocks automated fetching, so this is based on the Arizona Revised Statutes.",
+   "evidence": [
+    {
+     "url": "https://www.azleg.gov/ars/32/01122.htm",
+     "quote": "Have a minimum of four years' practical or management trade experience, at least two of which must have been within the last ten years, dealing specifically with the type of construction"
+    },
+    {
+     "url": "https://www.azleg.gov/ars/32/01122.htm",
+     "quote": "Successfully show, by written examination taken not more than two years before application, if required, qualification in the kind of work for which the applicant proposes to contract"
+    },
+    {
+     "url": "https://www.azleg.gov/ars/32/01152.htm",
+     "quote": "General residential contractors and subclassifications of general residential contractors shall furnish a surety bond or cash deposit in an amount of not more than $15,000 and not less than $5,000."
+    },
+    {
+     "url": "https://www.azleg.gov/ars/32/01152.htm",
+     "quote": "Specialty residential contractors shall furnish a surety bond or cash deposit in an amount of not more than $7,500 and not less than $1,000."
+    },
+    {
+     "url": "https://www.azleg.gov/ars/32/01152.htm",
+     "quote": "Participate in the residential contractors' recovery fund and pay the assessment prescribed by section 32-1126, subsection G."
+    },
+    {
+     "url": "https://www.azleg.gov/ars/32/01121.htm",
+     "quote": "is less than $1,000. The work or operations that are exempt under this paragraph shall be of a casual or minor nature. This exemption does not apply: (a) In any case in which the performance of the work requires a local building permit."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "commercial_building": {
+   "status": "state_license",
+   "name": "General commercial building contractor license (or general dual license for both residential and commercial)",
+   "agency": "Arizona Registrar of Contractors (ROC)",
+   "covers": "Contractors building, altering or superintending structures on commercial property. A dual license covers both residential and commercial work.",
+   "threshold": null,
+   "prerequisites": [
+    "A qualifying party with at least four years of experience in the type of work",
+    "Qualifying party passes the written exam(s)",
+    "Surety bond or cash deposit sized to annual volume"
+   ],
+   "bond": "Set by annual volume; five thousand dollars if annual volume is under one hundred fifty thousand dollars, up to $100,000 for large contractors.",
+   "insurance": "Workers' compensation where required by law.",
+   "summary": "Commercial general contractors need an ROC commercial or dual license. The same experience and exam rules apply, and the bond depends on your expected annual volume of work.",
+   "url": "https://www.azleg.gov/ars/32/01102.htm",
+   "quote": "General commercial building contracting, which is engaging in the contracting business in connection with any structure built, being built or to be built on commercial property",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.azleg.gov/ars/32/01151.htm",
+     "quote": "It is unlawful for any person, firm, partnership, corporation, association or other organization, or a combination of any of them, to engage in the business of, submit a bid or respond to a request for qualification or a request for proposals for construction services as, act or offer to act in the capacity of or purport to have the capacity of a contractor without having a contractor's license in good standing"
+    },
+    {
+     "url": "https://www.azleg.gov/ars/32/01122.htm",
+     "quote": "Have a minimum of four years' practical or management trade experience, at least two of which must have been within the last ten years"
+    },
+    {
+     "url": "https://www.azleg.gov/ars/32/01152.htm",
+     "quote": "If the estimated annual volume of construction work of the applicant is less than one hundred fifty thousand dollars, the applicant shall furnish a surety bond or cash deposit of five thousand dollars."
+    },
+    {
+     "url": "https://www.azleg.gov/ars/32/01152.htm",
+     "quote": "If the estimated annual volume of construction work of the applicant is $10,000,000 or more, the applicant must furnish a surety bond or cash deposit of not less than $50,000 or more than $100,000."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "electrical": {
+   "status": "state_license",
+   "name": "ROC specialty contractor license (electrical classification: residential, commercial or dual)",
+   "agency": "Arizona Registrar of Contractors (ROC)",
+   "covers": "Electrical contracting businesses. Arizona has no statewide journeyman/master electrician license; some cities regulate individual tradespeople.",
+   "threshold": null,
+   "prerequisites": [
+    "A qualifying party with at least four years of experience in electrical work",
+    "Qualifying party passes the trade and business exams",
+    "Surety bond"
+   ],
+   "bond": "Specialty residential: $1,000 to $7,500; specialty commercial set by volume.",
+   "insurance": null,
+   "summary": "Electrical contractors need an ROC specialty license in the electrical classification. The qualifying party needs four years of experience and passes the exams. There is no state journeyman electrician license.",
+   "url": "https://www.azleg.gov/ars/32/01102.htm",
+   "quote": "Specialty residential contracting, which is engaging in the residential contracting business by the performance of construction work requiring special skill and involving the use of specialized construction trades or crafts within residential property lines.",
+   "note": "Specific classification codes (e.g., C-11/R-11) are in Ariz. Admin. Code R4-9-102/103; the ROC and Secretary of State rule sites blocked automated fetching, and the absence of a state journeyman license was not confirmed from an official page.",
+   "evidence": [
+    {
+     "url": "https://www.azleg.gov/ars/32/01122.htm",
+     "quote": "Have a minimum of four years' practical or management trade experience, at least two of which must have been within the last ten years"
+    },
+    {
+     "url": "https://www.azleg.gov/ars/32/01152.htm",
+     "quote": "Specialty residential contractors shall furnish a surety bond or cash deposit in an amount of not more than $7,500 and not less than $1,000."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "plumbing": {
+   "status": "state_license",
+   "name": "ROC specialty contractor license (plumbing classification)",
+   "agency": "Arizona Registrar of Contractors (ROC)",
+   "covers": "Plumbing contracting businesses (residential, commercial or dual). Individual journeyman plumber licensing, where it exists, is local (e.g., some cities).",
+   "threshold": null,
+   "prerequisites": [
+    "A qualifying party with at least four years of plumbing experience",
+    "Qualifying party passes the trade and business exams",
+    "Surety bond"
+   ],
+   "bond": "Specialty residential: $1,000 to $7,500.",
+   "insurance": null,
+   "summary": "Plumbing contractors need an ROC specialty license in the plumbing classification, with a qualifying party who has four years of experience and passes the exams.",
+   "url": "https://www.azleg.gov/ars/32/01102.htm",
+   "quote": "Specialty commercial contracting, which is engaging in the contracting business in the performance of construction work requiring special skill and involving the use of specialized construction trades or crafts other than residential contracting.",
+   "note": "Classification codes are in the ROC rules (R4-9-102/103), which could not be fetched.",
+   "evidence": [
+    {
+     "url": "https://www.azleg.gov/ars/32/01122.htm",
+     "quote": "Have a minimum of four years' practical or management trade experience, at least two of which must have been within the last ten years"
+    },
+    {
+     "url": "https://www.azleg.gov/ars/32/01152.htm",
+     "quote": "Specialty residential contractors shall furnish a surety bond or cash deposit in an amount of not more than $7,500 and not less than $1,000."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "mechanical": {
+   "status": "state_license",
+   "name": "ROC specialty contractor license (air conditioning/HVAC classification)",
+   "agency": "Arizona Registrar of Contractors (ROC)",
+   "covers": "HVAC, refrigeration and mechanical contracting businesses.",
+   "threshold": null,
+   "prerequisites": [
+    "A qualifying party with at least four years of experience in the trade",
+    "Qualifying party passes the trade and business exams",
+    "Surety bond"
+   ],
+   "bond": "Specialty residential: $1,000 to $7,500.",
+   "insurance": null,
+   "summary": "HVAC contractors need an ROC specialty license for their classification, with a qualifying party who has four years of experience and passes the exams.",
+   "url": "https://www.azleg.gov/ars/32/01102.htm",
+   "quote": "Specialty dual licensed contracting, which is engaging in the contracting business in the performance of construction work requiring special skill and involving the use of specialized construction trades or crafts in residential and commercial contracting.",
+   "note": "Classification codes are in the ROC rules, which could not be fetched.",
+   "evidence": [
+    {
+     "url": "https://www.azleg.gov/ars/32/01122.htm",
+     "quote": "Have a minimum of four years' practical or management trade experience, at least two of which must have been within the last ten years"
+    },
+    {
+     "url": "https://www.azleg.gov/ars/32/01152.htm",
+     "quote": "Specialty residential contractors shall furnish a surety bond or cash deposit in an amount of not more than $7,500 and not less than $1,000."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "roofing": {
+   "status": "state_license",
+   "name": "ROC specialty contractor license (roofing classification)",
+   "agency": "Arizona Registrar of Contractors (ROC)",
+   "covers": "Roofing contractors (residential, commercial or dual).",
+   "threshold": null,
+   "prerequisites": [
+    "A qualifying party with at least four years of roofing experience",
+    "Qualifying party passes the trade and business exams",
+    "Surety bond"
+   ],
+   "bond": "Specialty residential: $1,000 to $7,500.",
+   "insurance": null,
+   "summary": "Roofers need an ROC specialty license, with a qualifying party who has four years of experience and passes the exams.",
+   "url": "https://www.azleg.gov/ars/32/01102.htm",
+   "quote": "Specialty residential contracting, which is engaging in the residential contracting business by the performance of construction work requiring special skill and involving the use of specialized construction trades or crafts within residential property lines.",
+   "note": "Classification codes are in the ROC rules, which could not be fetched.",
+   "evidence": [
+    {
+     "url": "https://www.azleg.gov/ars/32/01122.htm",
+     "quote": "Have a minimum of four years' practical or management trade experience, at least two of which must have been within the last ten years"
+    },
+    {
+     "url": "https://www.azleg.gov/ars/32/01152.htm",
+     "quote": "Specialty residential contractors shall furnish a surety bond or cash deposit in an amount of not more than $7,500 and not less than $1,000."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Pest management business license, qualifying party registration and certified applicator",
+   "agency": "Arizona Department of Agriculture, Pest Management Division",
+   "covers": "Any business doing pest management (structural pest control, weed control, turf and ornamental) for hire.",
+   "threshold": null,
+   "prerequisites": [
+    "A qualifying party who is a certified qualified applicator, registered in each category of work",
+    "Applicators must be certified",
+    "Financial security (insurance, bond or deposit) of at least five hundred thousand dollars; extra bond or rider for termite work"
+   ],
+   "bond": "Termite treatment businesses need a surety bond or liability insurance rider for termite damage.",
+   "insurance": "Liability insurance, bond, or deposit of at least five hundred thousand dollars.",
+   "summary": "Pest control and weed control companies need a pest management business license from the Department of Agriculture. You must have a registered qualifying party who is a certified applicator in each category, and carry liability coverage of at least five hundred thousand dollars.",
+   "url": "https://www.azleg.gov/ars/3/03615.htm",
+   "quote": "A person who engages in the business of pest management shall obtain a valid business license from the division.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.azleg.gov/ars/3/03616.htm",
+     "quote": "A person shall not engage in the business of pest management in any category without a qualifying party registered in that category. B. To be a qualifying party, an individual must: 1. Be a certified qualified applicator."
+    },
+    {
+     "url": "https://www.azleg.gov/ars/3/03615.htm",
+     "quote": "The amount of the deposit, insurance, self-insured retention or bond shall be at least five hundred thousand dollars"
+    },
+    {
+     "url": "https://www.azleg.gov/ars/3/03615.htm",
+     "quote": "Either of the following if the business licensee performs termite treatments:"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "asbestos": {
+   "status": "no_state_license",
+   "name": "Asbestos NESHAP renovation/demolition notification",
+   "agency": "Arizona Department of Environmental Quality (ADEQ) or county air agencies (e.g., Maricopa County Air Quality Department)",
+   "covers": "Anyone demolishing a structure (even with no asbestos) or renovating with regulated asbestos-containing material must file advance notice with ADEQ or the county air agency.",
+   "threshold": null,
+   "prerequisites": [
+    "File a NESHAP notification at least 10 business days before regulated renovation or any demolition"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Arizona does not issue its own asbestos contractor license found in this research, but demolition and asbestos renovation projects require advance notification. In Maricopa County, notice must be filed at least 10 business days before work starts, even for demolitions with no asbestos.",
+   "url": "https://www.maricopa.gov/1701/Asbestos",
+   "quote": "An asbestos NESHAP notification must be submitted to the AQD Online Porta l at least 10 business days before the start of any regulated renovation or demolition project.",
+   "note": "ADEQ's own asbestos pages (azdeq.gov) blocked automated fetching; the county page is used as the official source. Whether Arizona certifies asbestos abatement contractors was not confirmed.",
+   "evidence": [
+    {
+     "url": "https://www.maricopa.gov/1701/Asbestos",
+     "quote": "Demolition notifications are required regardless of the presence of asbestos."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "lead_rrp": {
+   "status": "no_state_license",
+   "name": "EPA Lead-Safe (RRP) Firm Certification and Certified Renovator",
+   "agency": "U.S. Environmental Protection Agency",
+   "covers": "Firms paid to do work that disturbs paint in homes and child-occupied facilities built before 1978.",
+   "threshold": null,
+   "prerequisites": [
+    "EPA firm certification",
+    "At least one EPA Certified Renovator (training course)"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Arizona is not authorized to run its own lead renovation program, so firms get RRP certification from EPA. Anyone paid to disturb paint in pre-1978 homes or child-occupied facilities must be certified.",
+   "url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-firm-certification",
+   "quote": "EPA's renovation program applies to all states, Tribes and territories where EPA has not specifically provided authorization for that state, Tribe or territory to operate the program themselves.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program",
+     "quote": "EPA administers the RRP Program in most Tribes, states and territories, but has authorized the following to operate their own programs: Alabama, Delaware, Georgia, Iowa, Kansas, Massachusetts, Mississippi, North Carolina, Oklahoma, Oregon, Rhode Island, Utah, Vermont, Washington, Wisconsin"
+    },
+    {
+     "url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-contractors",
+     "quote": "In general, anyone who is paid to perform work that disturbs paint in housing and child-occupied facilities built before 1978 must be certified. This includes all firms, even sole proprietorships."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "other": []
+}

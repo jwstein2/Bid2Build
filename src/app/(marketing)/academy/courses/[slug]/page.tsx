@@ -13,6 +13,8 @@ import { ACCESS_LABEL, LEVEL_LABEL, pillarMeta } from "@/lib/academy/types";
 import { openGraphFor } from "@/lib/seo/open-graph";
 import { site } from "@/lib/site";
 import { createClient } from "@/lib/supabase/server";
+import { StateRequirementsPanel } from "@/components/academy/startup/state-panel";
+import { resolveLocation } from "@/lib/academy/kb/server";
 
 export async function generateMetadata({ params }: PageProps<"/academy/courses/[slug]">): Promise<Metadata> {
   const { slug } = await params;
@@ -41,6 +43,7 @@ export default async function CoursePage({ params, searchParams }: PageProps<"/a
   const modules = [...new Map(outline.map((o) => [o.module_id ?? "none", o.module_title ?? "Lessons"])).entries()];
   const minutes = outline.reduce((s, o) => s + (o.estimated_minutes ?? 0), 0);
   const covers = await signedMediaUrls([course.cover_path]);
+  const startup = course.pillar === "getting_started" && trade ? await resolveLocation(sp) : null;
   let saved = false;
   if (me.member && user && !course.id.startsWith("static-")) {
     const { data: b } = await (await createClient()).from("academy_bookmarks").select("target_id").eq("user_id", user.id).eq("target_type", "course").eq("target_id", course.id).maybeSingle();
@@ -71,6 +74,7 @@ export default async function CoursePage({ params, searchParams }: PageProps<"/a
             {course.content_class === "mixed" && <span className="rounded bg-black/5 px-2 py-1 text-ink-soft">Built2Bid lessons + credited expert resources</span>}
           </div>
           {course.description && <p className="mt-5 max-w-3xl leading-relaxed text-ink-soft">{course.description}</p>}
+          {startup && trade && <StateRequirementsPanel state={startup.state} trade={trade.slug} tradeName={trade.name} />}
 
           {live ? (
             <section className="mt-8" aria-labelledby="outline-h">

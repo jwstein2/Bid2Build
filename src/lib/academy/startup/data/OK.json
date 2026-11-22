@@ -1,0 +1,341 @@
+{
+ "state": "OK",
+ "researched_on": "2026-11-22",
+ "checked_at": "2026-11-22T21:48:10Z",
+ "general": {
+  "entity": {
+   "agency": "Oklahoma Secretary of State",
+   "summary": "Form an LLC by filing signed articles of organization with the Oklahoma Secretary of State (online at business.sos.ok.gov, by mail or in person). Corporations file a certificate of incorporation; sole proprietors using another name can file a trade name report.",
+   "url": "https://oklahoma.gov/content/dam/ok/en/sos/documents/businesses/forms/Fm0074.pdf",
+   "quote": "Prepare and file with the Secretary of State one signed copy of the articles of organization.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "state_tax": {
+   "agency": "Oklahoma Tax Commission",
+   "summary": "Register with the Oklahoma Tax Commission for the permits and accounts you need, such as a sales tax permit if you sell taxable goods and a withholding account when you have employees.",
+   "url": "https://oklahoma.gov/tax/businesses/new-business-center.html",
+   "quote": "Starting a new business may require you to register with the Oklahoma Tax Commission or a different state, city or county agency.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "unemployment": {
+   "agency": "Oklahoma Employment Security Commission (OESC)",
+   "summary": "You generally owe Oklahoma unemployment tax once you pay $1,500 or more in wages in a calendar quarter, or have at least one employee working at least one day a week for 20 weeks in a year. Register with OESC.",
+   "url": "https://oklahoma.gov/oesc/employers/tax.html",
+   "quote": "They pay wages totaling $1,500 or more in any calendar quarter ... They have had at least one employee working for a minimum of one day per week for a total of 20 weeks during the calendar year",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "workers_comp": {
+   "agency": "Oklahoma Workers' Compensation Commission",
+   "summary": "Every employer must provide workers' compensation for its employees. Sole proprietors, partners, LLC members and corporate officers who own and run their own business (and are not subcontractors) may exclude themselves, but their employees must still be covered. Roofers must show workers' comp coverage or exemption to register.",
+   "url": "https://oklahoma.gov/content/dam/ok/en/cib/documents/rules/title_85a_courtesy_excerpts.pdf",
+   "quote": "Every employer shall secure compensation as provided under this act to its employees for compensable injuries without regard to fault.",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "no_state_license",
+   "name": null,
+   "agency": null,
+   "covers": "General contractors, remodelers, handymen and subcontractors doing framing, carpentry, drywall, painting, guttering, fencing and similar work.",
+   "threshold": null,
+   "prerequisites": [],
+   "bond": null,
+   "insurance": null,
+   "summary": "Oklahoma does not license general contractors, remodelers or general-construction subcontractors at the state level. Trade work (electrical, plumbing, mechanical, roofing) still needs state licensing or registration, and cities may have their own rules.",
+   "url": "https://oklahoma.gov/content/experience-fragments/sok-wcm/en/business/common-licensing/building-and-general-construction-contractors/jcr:content/root.html",
+   "quote": "In Oklahoma, general contractors are not required to have state licenses to perform their construction services.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://oklahoma.gov/content/experience-fragments/sok-wcm/en/business/common-licensing/building-and-general-construction-contractors/jcr:content/root.html",
+     "quote": "state licenses are not required for small general contractors or subcontractors who do commercial or residential renovation, remodeling and repair construction projects."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "commercial_building": {
+   "status": "no_state_license",
+   "name": null,
+   "agency": null,
+   "covers": "General contractors on commercial buildings, roads, utilities and industrial projects.",
+   "threshold": null,
+   "prerequisites": [],
+   "bond": null,
+   "insurance": null,
+   "summary": "Oklahoma has no state general contractor license for commercial work either. Check city or county requirements, and use licensed trades for electrical, plumbing, mechanical and roofing work.",
+   "url": "https://oklahoma.gov/content/experience-fragments/sok-wcm/en/business/common-licensing/building-and-general-construction-contractors/jcr:content/root.html",
+   "quote": "This includes commercial or residential buildings, roads, bridges and highways, installation of residential and municipal utilities, industrial and oil field installations and other various projects.",
+   "note": null,
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "electrical": {
+   "status": "state_license",
+   "name": "Electrical Contractor license (Unlimited or Residential); Electrical Journeyman license",
+   "agency": "Oklahoma Construction Industries Board (CIB)",
+   "covers": "Electrical contractors and journeymen. Contractors must be an owner, partner or officer of the electrical firm.",
+   "threshold": null,
+   "prerequisites": [
+    "Unlimited contractor: 12,000 verifiable hours of electrical experience, including 4,000 hours as a licensed Unlimited Journeyman",
+    "Residential contractor: 8,000 verifiable hours, including 4,000 hours as a journeyman under a contractor",
+    "Pass the CIB exam",
+    "Before the license goes active: $5,000 surety bond and at least $50,000 general liability insurance"
+   ],
+   "bond": "$5,000 corporate surety bond payable to the CIB",
+   "insurance": "Commercial general liability of at least $50,000",
+   "summary": "Oklahoma licenses electricians and electrical contractors through the Construction Industries Board. Contractors work up from apprentice to journeyman and need thousands of verified hours. After passing the exam, the license stays inactive until the CIB gets a $5,000 bond and proof of $50,000 liability insurance.",
+   "url": "https://oklahoma.gov/cib/your-industry/electrical/electrical-contractor.html",
+   "quote": "All Electrical Contractors must be an Owner, Partner, or Officer in the electrical firm. The following are the license categories for electrical contracting which is the highest ranking electrical license.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://oklahoma.gov/cib/your-industry/electrical/electrical-contractor.html",
+     "quote": "12,000 Verifiable Hours on the job experience in electrical construction work Proof of 4,000 hours experience as a licensed Unlimited Electrical Journeyman"
+    },
+    {
+     "url": "https://oklahoma.gov/cib/your-industry/electrical/electrical-contractor.html",
+     "quote": "8,000 verifiable hours total 4,000 hours as a Residential or Unlimited Journeyman Electrician under the employment and supervision of an Electrical Contractor"
+    },
+    {
+     "url": "https://oklahoma.gov/cib/your-industry/active-contractor-requirements.html",
+     "quote": "An Active (Plumbing/Electrical/Mechanical) Contractor is required to carry a five thousand dollar ($5,000.00) Corporate Surety Bond payable to the Oklahoma Construction Industries Board"
+    },
+    {
+     "url": "https://oklahoma.gov/cib/your-industry/active-contractor-requirements.html",
+     "quote": "An Active (Plumbing/Electrical/Mechanical) Contractor must provide a certificate of insurance evidencing a minimum of $50,000.00 commercial general liability insurance"
+    },
+    {
+     "url": "https://oklahoma.gov/cib/your-industry/active-contractor-requirements.html",
+     "quote": "After you have successfully passed your exams, your license will be inactive until the CIB receives proof of the bond and insurance listed below"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "plumbing": {
+   "status": "state_license",
+   "name": "Plumbing Contractor license; Plumbing Journeyman license",
+   "agency": "Oklahoma Construction Industries Board (CIB)",
+   "covers": "Plumbing contractors and journeyman plumbers.",
+   "threshold": null,
+   "prerequisites": [
+    "Be at least 18 years old",
+    "Three years of plumbing experience under a licensed plumbing contractor (journeyman level), plus one more year for a contractor license",
+    "Pass the CIB exam",
+    "Before the license goes active: $5,000 surety bond and at least $50,000 general liability insurance"
+   ],
+   "bond": "$5,000 corporate surety bond payable to the CIB",
+   "insurance": "Commercial general liability of at least $50,000",
+   "summary": "Oklahoma requires a state plumbing license from the CIB. A contractor needs the journeyman requirements (three years' experience) plus one more year, must pass the exam, and must file a $5,000 bond and $50,000 liability insurance to activate the license.",
+   "url": "https://oklahoma.gov/cib/your-industry/plumbing/plumbing-contractor.html",
+   "quote": "Applicants for a contractor license must meet the same requirements as a journeyman with an additional one (1) year of experience in the Plumbing trade.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://oklahoma.gov/cib/your-industry/plumbing/plumbing-contractor.html",
+     "quote": "eighteen (18) years of age or older and have either: three (3) years of experience in the plumbing trade while employed by a licensed plumbing contractor"
+    },
+    {
+     "url": "https://oklahoma.gov/cib/your-industry/active-contractor-requirements.html",
+     "quote": "An Active (Plumbing/Electrical/Mechanical) Contractor is required to carry a five thousand dollar ($5,000.00) Corporate Surety Bond payable to the Oklahoma Construction Industries Board"
+    },
+    {
+     "url": "https://oklahoma.gov/cib/your-industry/active-contractor-requirements.html",
+     "quote": "An Active (Plumbing/Electrical/Mechanical) Contractor must provide a certificate of insurance evidencing a minimum of $50,000.00 commercial general liability insurance"
+    },
+    {
+     "url": "https://oklahoma.gov/cib/your-industry/active-contractor-requirements.html",
+     "quote": "After you have successfully passed your exams, your license will be inactive until the CIB receives proof of the bond and insurance listed below"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "mechanical": {
+   "status": "state_license",
+   "name": "Mechanical Contractor license (HVAC/R and other categories); Mechanical Journeyman license",
+   "agency": "Oklahoma Construction Industries Board (CIB)",
+   "covers": "HVAC, refrigeration, sheet metal, process piping and ground-source piping contractors and journeymen. The contractor must be a permanent employee, owner, partner or officer of the firm.",
+   "threshold": null,
+   "prerequisites": [
+    "Be at least 18 years old",
+    "Three years of verifiable mechanical experience in the category (school hours can substitute for part), plus one more year for a contractor license",
+    "Pass the CIB exam",
+    "Before the license goes active: $5,000 surety bond and at least $50,000 general liability insurance"
+   ],
+   "bond": "$5,000 corporate surety bond payable to the CIB",
+   "insurance": "Commercial general liability of at least $50,000",
+   "summary": "HVAC and other mechanical work in Oklahoma needs a CIB license. Journeymen need three years of experience in their category; contractors need one more year, a passing exam, and a $5,000 bond plus $50,000 liability insurance.",
+   "url": "https://oklahoma.gov/cib/your-industry/mechanical/mechanical-contractor.html",
+   "quote": "Applicants for a contractor license must meet the same requirements as a journeyman with an additional one (1) year of experience in the mechanical trade.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://oklahoma.gov/cib/your-industry/mechanical/mechanical-journeyman.html",
+     "quote": "Applicants for a journeyman license must be at least eighteen (18) years of age and have (A) three (3) years of verifiable experience in the mechanical trade in the category for which the applicant is applying"
+    },
+    {
+     "url": "https://oklahoma.gov/cib/your-industry/active-contractor-requirements.html",
+     "quote": "An Active (Plumbing/Electrical/Mechanical) Contractor is required to carry a five thousand dollar ($5,000.00) Corporate Surety Bond payable to the Oklahoma Construction Industries Board"
+    },
+    {
+     "url": "https://oklahoma.gov/cib/your-industry/active-contractor-requirements.html",
+     "quote": "An Active (Plumbing/Electrical/Mechanical) Contractor must provide a certificate of insurance evidencing a minimum of $50,000.00 commercial general liability insurance"
+    },
+    {
+     "url": "https://oklahoma.gov/cib/your-industry/active-contractor-requirements.html",
+     "quote": "After you have successfully passed your exams, your license will be inactive until the CIB receives proof of the bond and insurance listed below"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "roofing": {
+   "status": "state_registration",
+   "name": "Roofing Contractor Registration (with Commercial Endorsement for commercial work; new Residential Roofing Endorsement)",
+   "agency": "Oklahoma Construction Industries Board (CIB)",
+   "covers": "Resident and nonresident roofing contractors offering roofing services in Oklahoma.",
+   "threshold": null,
+   "prerequisites": [
+    "Proof of general liability insurance of at least $500,000",
+    "Proof of workers' compensation coverage or exemption",
+    "Proof of lawful presence",
+    "Commercial endorsement: pass the commercial roofing exam",
+    "Residential Roofing Endorsement required to keep doing residential roofing after January 1, 2028"
+   ],
+   "bond": null,
+   "insurance": "General liability of at least $500,000, with the CIB as certificate holder; workers' compensation or exemption",
+   "summary": "Oklahoma roofers must register with the CIB and show at least $500,000 in liability insurance plus workers' comp coverage or an exemption. Commercial roofing needs an endorsement with an exam. A new Residential Roofing Endorsement will be required for residential roofing starting January 1, 2028.",
+   "url": "https://oklahoma.gov/cib/your-industry/roofing/active-roofing-contractor-requirements.html",
+   "quote": "To obtain the registration, the contractor must submit their qualifications, show evidence of liability insurance of no less than $500,000.00, show evidence of workers' compensation insurance coverage or exemption from coverage",
+   "note": "Residential endorsement transition starts January 1, 2027; registrants in good standing by then can be grandfathered with continuing education or the exam.",
+   "evidence": [
+    {
+     "url": "https://oklahoma.gov/cib/your-industry/roofing/active-roofing-contractor-requirements.html",
+     "quote": "Obtain a Roofing Contractor Registration by providing and submitting a completed application, along with proof of compliance with workers' compensation laws, proof of lawful presence, and required fees."
+    },
+    {
+     "url": "https://oklahoma.gov/cib/your-industry/roofing/active-roofing-contractor-requirements.html",
+     "quote": "Once your application is approved and you are eligible for examination, you will be provided the contact information of the third-party testing vendor"
+    },
+    {
+     "url": "https://oklahoma.gov/cib/news/new-residential-roofing-endorsement-required-by-house-bill-1628.html",
+     "quote": "extended the deadline for roofers to obtain the residential endorsement to January 1, 2028 in order to continue to engage in or offer to engage in residential roofing work."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Commercial Pesticide Applicator certification and Commercial Pesticide Business License",
+   "agency": "Oklahoma Department of Agriculture, Food & Forestry",
+   "covers": "Anyone applying pesticides for hire, including pest control, lawn care and tree spraying businesses.",
+   "threshold": null,
+   "prerequisites": [
+    "Pass the Core exam and the category exam (some categories also need a practical exam)",
+    "Obtain a pesticide business license (certification alone is not a license)",
+    "Proof of financial responsibility (liability insurance)"
+   ],
+   "bond": null,
+   "insurance": "Proof of financial responsibility (liability coverage) is required for commercial applicators",
+   "summary": "To apply pesticides for hire in Oklahoma, you must pass the Core and category exams to become a certified applicator, then get a commercial pesticide business license. Commercial applicators must show proof of liability insurance.",
+   "url": "https://ag.ok.gov/pesticides/",
+   "quote": "This certification card is not a license to do pesticide work; a pesticide business license must be obtained by any certified applicator wishing to do pesticide work (commercial, non-commercial or consultant) or must be obtained by his/her employer.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://ag.ok.gov/pesticides/",
+     "quote": "Applicator certification requires the successful completion of at least two examinations: The \"Core\" exam, consisting of knowledge required in all categories of certification; and the category exam itself."
+    },
+    {
+     "url": "https://ag.ok.gov/pesticides/",
+     "quote": "A commercial applicator must provide proof of financial responsibility"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "asbestos": {
+   "status": "state_license",
+   "name": "Asbestos Abatement Contractor License; worker and supervisor licenses",
+   "agency": "Oklahoma Department of Labor",
+   "covers": "Contractors that remove, encapsulate or enclose friable asbestos, and their workers and supervisors.",
+   "threshold": null,
+   "prerequisites": [
+    "Complete required asbestos training and refresher courses",
+    "Carry environmental impairment insurance"
+   ],
+   "bond": null,
+   "insurance": "Environmental impairment insurance",
+   "summary": "Oklahoma requires an Asbestos Abatement Contractor License from the Department of Labor for removing, encapsulating or enclosing friable asbestos. Contractors need specific training and environmental impairment insurance.",
+   "url": "https://oklahoma.gov/labor/safety-and-health/workplace-safety/asbestos-abatement/licensing-requirements/asbestos-abatement-contractor.html",
+   "quote": "The Asbestos Abatement Contractor License is required for any contractor engaged in the removal, encapsulation, or enclosure of friable asbestos-containing materials.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://oklahoma.gov/labor/safety-and-health/workplace-safety/asbestos-abatement/licensing-requirements/asbestos-abatement-contractor.html",
+     "quote": "Contractors must have environmental impairment insurance, providing financial protection against potential liabilities."
+    },
+    {
+     "url": "https://oklahoma.gov/labor/safety-and-health/workplace-safety/asbestos-abatement/licensing-requirements/asbestos-abatement-contractor.html",
+     "quote": "Licensed contractors must complete specific training and refresher courses"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "lead_rrp": {
+   "status": "state_license",
+   "name": "Oklahoma DEQ RRP Firm certification and Certified Renovator",
+   "agency": "Oklahoma Department of Environmental Quality, Air Quality Division",
+   "covers": "Firms doing renovation, repair and painting in homes or child-occupied facilities that may have lead-based paint.",
+   "threshold": null,
+   "prerequisites": [
+    "Renovators complete RRP training (EPA curriculum) from a DEQ-accredited provider",
+    "Firm applies for DEQ RRP firm certification through nForm"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Oklahoma runs its own RRP program through DEQ, so firms get certified by DEQ rather than EPA. The program closely follows EPA's, and firm certifications last 5 years.",
+   "url": "https://oklahoma.gov/deq/divisions/air-quality/lead-based-paint/rrp-firms.html",
+   "quote": "RRP Firm certifications last 5 years, and the certified list is split into two tables",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://oklahoma.gov/deq/divisions/air-quality/lead-based-paint/lead-based-paint-faqs.html",
+     "quote": "For the most part the DEQ RRP program is identical to the EPA program."
+    },
+    {
+     "url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program",
+     "quote": "has authorized the following to operate their own programs: Alabama, Delaware, Georgia, Iowa, Kansas, Massachusetts, Mississippi, North Carolina, Oklahoma"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "other": [
+  {
+   "key": "fire_sprinkler_alarm",
+   "name": "Fire Sprinkler, Alarm and Locksmith licenses",
+   "agency": "Oklahoma Department of Labor",
+   "trades": [
+    "general-contracting",
+    "electrical"
+   ],
+   "summary": "The Department of Labor licenses fire sprinkler, alarm and locksmith businesses and workers.",
+   "url": "https://oklahoma.gov/labor/safety-and-health/workplace-safety/asbestos-abatement/licensing-requirements/asbestos-abatement-contractor.html",
+   "quote": "Alarm, Locksmith, Fire Sprinkler and Welder licensees: Processing will be temporarily interrupted in December as we move to a new online licensing system.",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ ]
+}

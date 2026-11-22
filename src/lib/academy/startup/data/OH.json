@@ -1,0 +1,307 @@
+{
+ "state": "OH",
+ "researched_on": "2026-11-22",
+ "checked_at": "2026-11-22T21:48:10Z",
+ "general": {
+  "entity": {
+   "agency": "Ohio Secretary of State",
+   "summary": "Form an LLC by filing articles of organization with the Ohio Secretary of State (corporations file articles of incorporation). Sole proprietors operating under another name can register a trade name or fictitious name with the Secretary of State.",
+   "url": "https://codes.ohio.gov/ohio-revised-code/section-1706.16",
+   "quote": "In order to form a limited liability company, one or more persons shall execute articles of organization and deliver the articles to the secretary of state for filing.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "state_tax": {
+   "agency": "Ohio Department of Taxation",
+   "summary": "If you make retail sales of goods or taxable services, get a vendor's license. On a real-property construction contract, the contractor is treated as the consumer of the materials: you pay sales or use tax on materials and generally do not charge sales tax to the customer. Installing business fixtures can be a taxable sale.",
+   "url": "https://dam.assets.ohio.gov/image/upload/tax.ohio.gov/communications/information_releases/landscaping%20info%20release%2011-2012%20final.pdf",
+   "quote": "construction contractor is the consumer of all materials used in performing the construction contract and must pay sales or use",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "unemployment": {
+   "agency": "Ohio Department of Job and Family Services",
+   "summary": "You must register for Ohio unemployment tax once you have at least one employee during some part of a day in twenty different weeks of a year, or pay fifteen hundred dollars or more in wages in a calendar quarter. Register through ODJFS.",
+   "url": "https://codes.ohio.gov/ohio-revised-code/section-4141.011",
+   "quote": "The employer had at least one individual in employment for some portion of a day in each of twenty different calendar weeks, in either the current or the preceding calendar year",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "workers_comp": {
+   "agency": "Ohio Bureau of Workers' Compensation (BWC)",
+   "summary": "Ohio employers with one or more employees must carry workers' compensation through the state BWC fund (Ohio has no private market, except qualifying self-insurers). Sole proprietors, partners and LLC members are not automatically covered and can elect coverage for themselves.",
+   "url": "https://codes.ohio.gov/ohio-revised-code/section-4123.01",
+   "quote": "Every person in the service of any person, firm, or private corporation, including any public service corporation, that (i) employs one or more persons regularly in the same business",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "local_only",
+   "name": null,
+   "agency": "Local building departments",
+   "covers": "General contractors, remodelers and home builders.",
+   "threshold": null,
+   "prerequisites": [],
+   "bond": null,
+   "insurance": null,
+   "summary": "Ohio has no state license for general or residential building contractors. Cities and counties regulate residential contractors, often through local registration, and some require a state trade license for residential work too.",
+   "url": "https://com.ohio.gov/divisions-and-programs/industrial-compliance/boards/ohio-construction-industry-licensing-board",
+   "quote": "While residential contractor regulation remains the responsibility of local jurisdictions, local building and health departments may also require state licensure for residential contractors at their discretion.",
+   "note": null,
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "commercial_building": {
+   "status": "local_only",
+   "name": null,
+   "agency": "Local building departments",
+   "covers": "General contractors on commercial projects.",
+   "threshold": null,
+   "prerequisites": [],
+   "bond": null,
+   "insurance": null,
+   "summary": "Ohio does not license general contractors at the state level. The state board licenses only commercial electrical, HVAC, plumbing, hydronics and refrigeration contractors; general contracting is regulated by cities and counties.",
+   "url": "https://com.ohio.gov/divisions-and-programs/industrial-compliance/boards/ohio-construction-industry-licensing-board",
+   "quote": "is responsible for licensing qualified contractors in the electrical, heating, ventilating and air conditioning (HVAC), plumbing, hydronics, and refrigeration trades.",
+   "note": null,
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "electrical": {
+   "status": "state_license",
+   "name": "Electrical Contractor license (OCILB Master License)",
+   "agency": "Ohio Construction Industry Licensing Board (Dept. of Commerce)",
+   "covers": "Electrical contractors doing commercial work. Residential electrical work is regulated locally, and many local building departments also require the state license.",
+   "threshold": null,
+   "prerequisites": [
+    "Be at least eighteen years old",
+    "Five years as a tradesperson in the trade (or registered engineer with three years of construction business experience, or other experience the Board accepts)",
+    "Maintain contractor's liability insurance in an amount set by the Board",
+    "Pass the licensing examination"
+   ],
+   "bond": null,
+   "insurance": "Contractor's liability insurance in an amount the Board sets, in one company name",
+   "summary": "Ohio licenses commercial electrical contractors through the OCILB. To sit for the exam you need five years of experience in the trade and contractor's liability insurance. Local building departments must check the state license before issuing commercial permits.",
+   "url": "https://codes.ohio.gov/ohio-revised-code/section-4740.06",
+   "quote": "Either have been a tradesperson in the type of licensed trade for which the application is filed for not less than five years immediately prior to the date the application is filed",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://codes.ohio.gov/ohio-revised-code/section-4740.06",
+     "quote": "Maintain contractor's liability insurance in an amount the appropriate specialty section of the board determines and only in one contracting company name"
+    },
+    {
+     "url": "https://codes.ohio.gov/ohio-revised-code/section-4740.06",
+     "quote": "be a currently registered engineer in this state with three years of business experience in the construction industry in the trade"
+    },
+    {
+     "url": "https://codes.ohio.gov/ohio-revised-code/section-4740.06",
+     "quote": "To qualify to take an examination, an individual shall: (1) Be at least eighteen years of age"
+    },
+    {
+     "url": "https://com.ohio.gov/divisions-and-programs/industrial-compliance/boards/ohio-construction-industry-licensing-board",
+     "quote": "State law requires local building and health departments that maintain contractor registration programs to verify state licensure prior to issuing permits for commercial work."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "plumbing": {
+   "status": "state_license",
+   "name": "Plumbing Contractor license (OCILB Master License)",
+   "agency": "Ohio Construction Industry Licensing Board (Dept. of Commerce)",
+   "covers": "Plumbing contractors doing commercial work; residential plumbing is regulated locally (local health or building departments may require the state license).",
+   "threshold": null,
+   "prerequisites": [
+    "Be at least eighteen years old",
+    "Five years as a tradesperson in the trade (or qualifying engineer experience)",
+    "Maintain contractor's liability insurance in an amount set by the Board",
+    "Pass the licensing examination"
+   ],
+   "bond": null,
+   "insurance": "Contractor's liability insurance in an amount the Board sets",
+   "summary": "Ohio licenses commercial plumbing contractors through the OCILB. You need five years in the trade, liability insurance, and a passing exam score. Residential plumbing rules are set locally.",
+   "url": "https://com.ohio.gov/divisions-and-programs/industrial-compliance/boards/ohio-construction-industry-licensing-board",
+   "quote": "Individuals who successfully meet the Board's qualifications and pass the required licensing examination are issued a state contractor license, commonly referred to as a Master License.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://codes.ohio.gov/ohio-revised-code/section-4740.06",
+     "quote": "Either have been a tradesperson in the type of licensed trade for which the application is filed for not less than five years immediately prior to the date the application is filed"
+    },
+    {
+     "url": "https://codes.ohio.gov/ohio-revised-code/section-4740.06",
+     "quote": "Maintain contractor's liability insurance in an amount the appropriate specialty section of the board determines"
+    },
+    {
+     "url": "https://codes.ohio.gov/ohio-revised-code/section-4740.06",
+     "quote": "To qualify to take an examination, an individual shall: (1) Be at least eighteen years of age"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "mechanical": {
+   "status": "state_license",
+   "name": "HVAC Contractor, Refrigeration Contractor and Hydronics Contractor licenses (OCILB)",
+   "agency": "Ohio Construction Industry Licensing Board (Dept. of Commerce)",
+   "covers": "HVAC, refrigeration and hydronics (hot-water heating) contractors doing commercial work; residential HVAC is regulated locally.",
+   "threshold": null,
+   "prerequisites": [
+    "Be at least eighteen years old",
+    "Five years as a tradesperson in the trade (or qualifying engineer experience)",
+    "Maintain contractor's liability insurance in an amount set by the Board",
+    "Pass the licensing examination"
+   ],
+   "bond": null,
+   "insurance": "Contractor's liability insurance in an amount the Board sets",
+   "summary": "Ohio licenses commercial HVAC, refrigeration and hydronics contractors through the OCILB, with the same five-year experience, insurance and exam requirements as other trades. Residential HVAC is handled by local building departments.",
+   "url": "https://com.ohio.gov/divisions-and-programs/industrial-compliance/boards/ohio-construction-industry-licensing-board",
+   "quote": "is responsible for licensing qualified contractors in the electrical, heating, ventilating and air conditioning (HVAC), plumbing, hydronics, and refrigeration trades.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://codes.ohio.gov/ohio-revised-code/section-4740.06",
+     "quote": "Either have been a tradesperson in the type of licensed trade for which the application is filed for not less than five years immediately prior to the date the application is filed"
+    },
+    {
+     "url": "https://codes.ohio.gov/ohio-revised-code/section-4740.06",
+     "quote": "Maintain contractor's liability insurance in an amount the appropriate specialty section of the board determines"
+    },
+    {
+     "url": "https://codes.ohio.gov/ohio-revised-code/section-4740.06",
+     "quote": "To qualify to take an examination, an individual shall: (1) Be at least eighteen years of age"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "roofing": {
+   "status": "local_only",
+   "name": null,
+   "agency": "Local building departments",
+   "covers": "Roofing contractors.",
+   "threshold": null,
+   "prerequisites": [],
+   "bond": null,
+   "insurance": null,
+   "summary": "Ohio has no state roofing license. The state board licenses only electrical, HVAC, plumbing, hydronics and refrigeration contractors, so roofers are regulated by cities and counties.",
+   "url": "https://com.ohio.gov/divisions-and-programs/industrial-compliance/boards/ohio-construction-industry-licensing-board",
+   "quote": "While residential contractor regulation remains the responsibility of local jurisdictions",
+   "note": null,
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Pesticide Business License; Commercial Applicator License",
+   "agency": "Ohio Department of Agriculture",
+   "covers": "Businesses that apply pesticides for others (pest control, lawn care, tree care) need a pesticide business license, and each location must employ at least one licensed commercial applicator.",
+   "threshold": null,
+   "prerequisites": [
+    "Pass the general exam and each pesticide-use category exam for the commercial applicator license",
+    "Employ at least one licensed commercial applicator at each business location"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Ohio requires a pesticide business license from the Department of Agriculture to own or run a pesticide business. Each business location must employ at least one licensed commercial applicator, who has passed the general and category exams.",
+   "url": "https://codes.ohio.gov/ohio-revised-code/section-921.09",
+   "quote": "No person shall own or operate a pesticide business without obtaining a license from the director of agriculture.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://codes.ohio.gov/ohio-revised-code/section-921.09",
+     "quote": "The owner or operator of a pesticide business shall employ at least one commercial applicator for each pesticide business location the owner or operator owns or operates."
+    },
+    {
+     "url": "https://codes.ohio.gov/ohio-revised-code/section-921.06",
+     "quote": "the applicant has passed both the general examination and each applicable pesticide-use category examination"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "asbestos": {
+   "status": "state_license",
+   "name": "Asbestos Hazard Abatement Contractor license; specialist and worker certifications",
+   "agency": "Ohio EPA, Division of Air Pollution Control (Asbestos Program)",
+   "covers": "Businesses that remove, enclose, repair or encapsulate friable asbestos above the regulated amount, and their workers and supervisors.",
+   "threshold": "Friable asbestos projects greater than 50 linear feet or 50 square feet",
+   "prerequisites": [
+    "All employees on asbestos projects certified as asbestos hazard abatement specialists or workers",
+    "Specialist certification requires a five-day EPA-approved contractor/supervisor course; worker certification requires a four-day course"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Ohio EPA licenses asbestos abatement contractors for friable asbestos jobs over 50 linear or square feet. Everyone on the job must hold an Ohio asbestos specialist or worker certification, which requires EPA-approved training.",
+   "url": "https://dam.assets.ohio.gov/image/upload/epa.ohio.gov/Portals/27/atu/asbestos/AsbestosHazardAbatementContractorLicense.pdf",
+   "quote": "Ohio EPA's Asbestos Program licenses business entities and certifies personnel directly involved with the asbestos abatement industry.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://dam.assets.ohio.gov/image/upload/epa.ohio.gov/Portals/27/atu/asbestos/AsbestosHazardAbatementContractorLicense.pdf",
+     "quote": "renovation, enclosure, repair, or encapsulation of friable asbestos-containing materials in an amount greater than 50 linear feet or 50 square feet) must be licensed as an asbestos hazard abatement contractor."
+    },
+    {
+     "url": "https://dam.assets.ohio.gov/image/upload/epa.ohio.gov/Portals/27/atu/asbestos/AsbestosHazardAbatementContractorLicense.pdf",
+     "quote": "Ensure that all employees who come in contact with asbestos or who will be responsible for an asbestos hazard abatement project are certified as either asbestos hazard abatement specialists or asbestos hazard abatement workers."
+    },
+    {
+     "url": "https://dam.assets.ohio.gov/image/upload/epa.ohio.gov/Portals/27/atu/asbestos/AsbestosHazardAbatementContractorLicense.pdf",
+     "quote": "This certification requires successful completion of a U.S. EPA-approved five-day asbestos contractor/supervisor initial training course"
+    },
+    {
+     "url": "https://dam.assets.ohio.gov/image/upload/epa.ohio.gov/Portals/27/atu/asbestos/AsbestosHazardAbatementContractorLicense.pdf",
+     "quote": "This certification requires successful completion of a U.S. EPA-approved four-day asbestos hazard abatement worker initial training course"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "lead_rrp": {
+   "status": "no_state_license",
+   "name": "EPA Renovation, Repair and Painting (RRP) firm certification",
+   "agency": "U.S. EPA",
+   "covers": "Contractors disturbing paint in homes and child-occupied facilities built before 1978.",
+   "threshold": null,
+   "prerequisites": [
+    "EPA firm certification and an EPA-certified renovator"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Ohio is not on EPA's list of states that run their own RRP program, so renovation firms get RRP certification directly from EPA. (Lead abatement, which is different from RRP, is licensed by the Ohio Department of Health.)",
+   "url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program",
+   "quote": "EPA administers the RRP Program in most Tribes, states and territories, but has authorized the following to operate their own programs: Alabama, Delaware, Georgia, Iowa, Kansas, Massachusetts, Mississippi, North Carolina, Oklahoma, Oregon, Rhode Island, Utah, Vermont, Washington, Wisconsin",
+   "note": "Ohio Department of Health lead abatement licensing was not verified from an official page here.",
+   "evidence": [
+    {
+     "url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program",
+     "quote": "Approximately three-quarters of the homes in the United States built before 1978 still contain some lead-based paint."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "other": [
+  {
+   "key": "hydronics_refrigeration",
+   "name": "Hydronics Contractor and Refrigeration Contractor licenses",
+   "agency": "Ohio Construction Industry Licensing Board",
+   "trades": [
+    "hvac",
+    "plumbing"
+   ],
+   "summary": "Ohio issues separate state licenses for hydronics (hot-water heating) and refrigeration contractors doing commercial work.",
+   "url": "https://com.ohio.gov/divisions-and-programs/industrial-compliance/boards/ohio-construction-industry-licensing-board",
+   "quote": "is responsible for licensing qualified contractors in the electrical, heating, ventilating and air conditioning (HVAC), plumbing, hydronics, and refrigeration trades.",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ ]
+}

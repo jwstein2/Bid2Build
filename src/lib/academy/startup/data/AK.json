@@ -1,0 +1,328 @@
+{
+ "state": "AK",
+ "researched_on": "2026-11-22",
+ "checked_at": "2026-11-22T21:48:10Z",
+ "general": {
+  "entity": {
+   "agency": "Alaska Department of Commerce, Community, and Economic Development, Division of Corporations, Business and Professional Licensing",
+   "summary": "To form an LLC, sign articles of organization and file them with the Department of Commerce. Corporations and other entities also file with the same division.",
+   "url": "https://www.akleg.gov/basis/statutes.asp?media=print&secStart=10.50.070&secEnd=10.50.080",
+   "quote": "One or more persons may organize a limited liability company by signing articles of organization and delivering the signed articles to the department for filing.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "state_tax": {
+   "agency": "Alaska Department of Commerce, Community, and Economic Development (state business license)",
+   "summary": "Every business in Alaska must first get a state business license. Alaska has no statewide sales tax or personal income tax, but many cities and boroughs charge their own sales tax, so check locally.",
+   "url": "https://www.akleg.gov/basis/statutes.asp?media=print&secStart=43.70.010&secEnd=43.70.120",
+   "quote": "For the privilege of engaging in a business in the state, a person shall first apply, on forms prescribed by the commissioner, and obtain a license, and pay the license fee provided for in AS 43.70.030 .",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "unemployment": {
+   "agency": "Alaska Department of Labor and Workforce Development, Employment Security Tax",
+   "summary": "If you have employees, set up an employment security tax account to report and pay unemployment insurance contributions. Sole proprietors, partners and LLC members are not counted as employees.",
+   "url": "https://labor.alaska.gov/estax/faq/AccountStatus.htm",
+   "quote": "If you have employees, you will need to set up an account with us to report and pay unemployment insurance contributions on your employees.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "workers_comp": {
+   "agency": "Alaska Department of Labor and Workforce Development, Division of Workers' Compensation",
+   "summary": "Employers must secure workers' compensation for their employees. If a subcontractor fails to cover its workers, the contractor above it becomes liable. Contractor registration also requires proof of workers' comp to the extent the law requires it.",
+   "url": "https://www.akleg.gov/basis/statutes.asp?media=print&secStart=23.30.045&secEnd=23.30.045",
+   "quote": "If the employer is a subcontractor and fails to secure the payment of compensation to its employees, the contractor is liable for and shall secure the payment of the compensation to employees of the subcontractor.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "local": {
+   "agency": null,
+   "summary": "Cities and boroughs may issue their own contractor licenses, but they cannot make a state-registered contractor post another bond for them.",
+   "url": "https://www.akleg.gov/basis/statutes.asp?media=print&secStart=08.18.011&secEnd=08.18.181",
+   "quote": "A contractor or home inspector who is registered with the state under this chapter may not be required to give bond in applying for or holding a license issued by a political subdivision for a similar occupation.",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "state_license",
+   "name": "General Contractor registration with Residential Contractor Endorsement",
+   "agency": "Alaska Department of Commerce, Community, and Economic Development (Construction Contractors)",
+   "covers": "General contractors who build or alter privately owned homes of one to four units. All contractors (general, mechanical, specialty) must register before bidding or working.",
+   "threshold": null,
+   "prerequisites": [
+    "Contractor registration as a general contractor (with bond and insurance)",
+    "Pass the residential contractor exam and apply within 12 months of passing",
+    "Complete the Alaska Craftsman Home Program (or equivalent) or a postsecondary arctic engineering course within the two years before applying"
+   ],
+   "bond": "$20,000 surety bond for a general contractor with residential endorsement doing only residential work.",
+   "insurance": "Workers' compensation (where required) and general liability insurance.",
+   "summary": "Every contractor in Alaska must register with the state before bidding or working. To build or remodel homes of one to four units you also need a residential contractor endorsement, which requires passing an exam and completing a cold-climate building course. Residential-only general contractors post a $20,000 bond.",
+   "url": "https://www.akleg.gov/basis/statutes.asp?media=print&secStart=08.18.011&secEnd=08.18.181",
+   "quote": "A general contractor may not undertake the construction or alteration, or submit a bid to undertake the construction or alteration of a privately-owned residential structure of one to four units or advertise or publicly represent that the general contractor may undertake work of this type in the state without a residential contractor endorsement issued under this section.",
+   "note": "Alaska also has a handyman category in regulation; not verified here.",
+   "evidence": [
+    {
+     "url": "https://www.akleg.gov/basis/statutes.asp?media=print&secStart=08.18.011&secEnd=08.18.181",
+     "quote": "A person may not submit a bid or work as a contractor until that person has been issued a certificate of registration as a contractor by the department."
+    },
+    {
+     "url": "https://www.akleg.gov/basis/statutes.asp?media=print&secStart=08.18.011&secEnd=08.18.181",
+     "quote": "applies for an endorsement within 12 months after passing the examination required under (2) of this subsection;"
+    },
+    {
+     "url": "https://www.akleg.gov/basis/statutes.asp?media=print&secStart=08.18.011&secEnd=08.18.181",
+     "quote": "within the two years preceding the date of application for the endorsement, has satisfactorily completed either the Alaska craftsman home program sponsored by the department, or its equivalent, or a postsecondary course in arctic engineering, or its equivalent;"
+    },
+    {
+     "url": "https://www.akleg.gov/basis/statutes.asp?media=print&secStart=08.18.011&secEnd=08.18.181",
+     "quote": "general contractor with a residential contractor endorsement under AS 08.18.025 who performs exclusively residential work shall be $20,000;"
+    },
+    {
+     "url": "https://www.akleg.gov/basis/statutes.asp?media=print&secStart=08.18.011&secEnd=08.18.181",
+     "quote": "public liability and property damage insurance covering the applicant's contracting operations in this state"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "commercial_building": {
+   "status": "state_registration",
+   "name": "General Contractor registration",
+   "agency": "Alaska Department of Commerce, Community, and Economic Development (Construction Contractors)",
+   "covers": "Anyone who, as an independent business, builds, alters, repairs, moves or demolishes buildings or other fixed structures, including excavation and site work. The same registration covers residential work (which also needs the residential endorsement).",
+   "threshold": null,
+   "prerequisites": [
+    "Surety bond filed with the registration ($25,000 for a general contractor)",
+    "Proof of workers' compensation (where required) and general liability insurance"
+   ],
+   "bond": "$25,000 surety bond for a general contractor; $5,000 if each project is $10,000 or less.",
+   "insurance": "Workers' compensation (where required) and public liability and property damage insurance.",
+   "summary": "Commercial general contractors register with the state. Registration requires a surety bond ($25,000 for a general contractor) and proof of liability and workers' compensation insurance.",
+   "url": "https://www.akleg.gov/basis/statutes.asp?media=print&secStart=08.18.011&secEnd=08.18.181",
+   "quote": "“contractor” means a person who, in the pursuit of an independent business, undertakes or offers to perform, or claims to have the capacity to perform, or submits a bid for a project to construct, alter, repair, move, or demolish a building, highway, road, railroad, or any type of fixed structure",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.akleg.gov/basis/statutes.asp?media=print&secStart=08.18.011&secEnd=08.18.181",
+     "quote": "general contractor shall be $25,000;"
+    },
+    {
+     "url": "https://www.akleg.gov/basis/statutes.asp?media=print&secStart=08.18.011&secEnd=08.18.181",
+     "quote": "contractor whose work on one project with an aggregate contract price of $10,000 or less, including all labor, materials, and other items, when the work is not part of a larger or major operation or otherwise divided into contracts of less than $10,000 to evade a higher bonding requirement, shall be $5,000."
+    },
+    {
+     "url": "https://www.akleg.gov/basis/statutes.asp?media=print&secStart=08.18.011&secEnd=08.18.181",
+     "quote": "public liability and property damage insurance covering the applicant's contracting operations in this state"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "electrical": {
+   "status": "state_license",
+   "name": "Electrical Contractor registration + Electrical Administrator license; Electrician Certificate of Fitness",
+   "agency": "Dept. of Commerce (contractor registration, electrical administrator); Dept. of Labor and Workforce Development, Mechanical Inspection (certificates of fitness)",
+   "covers": "Electrical contracting businesses must be or employ a licensed electrical administrator. Individuals doing electrical wiring need a certificate of fitness from the Department of Labor.",
+   "threshold": null,
+   "prerequisites": [
+    "Electrical contractor must be, or employ, a licensed Electrical Administrator (exam required)",
+    "Electricians must first obtain a certificate of fitness (trainees must be in a registered apprenticeship)",
+    "Contractor registration bond and insurance"
+   ],
+   "bond": "$10,000 surety bond (specialty contractor).",
+   "insurance": "Workers' compensation (where required) and general liability insurance.",
+   "summary": "An electrical contracting business registers as a contractor and must be or employ a licensed electrical administrator, who passes a state exam. Each electrician also needs a Department of Labor certificate of fitness.",
+   "url": "https://www.akleg.gov/basis/statutes.asp?media=print&secStart=08.18.011&secEnd=08.18.181",
+   "quote": "The department may not issue a certificate of registration as an electrical contractor to an applicant unless the applicant is, or employs, a person currently licensed as an electrical administrator under AS 08.40 .",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.akleg.gov/basis/statutes.asp?media=print&secStart=18.62.010&secEnd=18.62.120",
+     "quote": "A person engaged in one of the following trades shall first obtain from the department the appropriate certificate of fitness in that trade: (1) electrical wiring subject to the standards established in AS 18.60.580"
+    },
+    {
+     "url": "https://www.akleg.gov/basis/statutes.asp?media=print&secStart=08.40.005&secEnd=08.40.490",
+     "quote": "A person may not act as an electrical administrator in the state without a license issued by the department unless the person is covered by an exclusion under AS 08.40.190 ."
+    },
+    {
+     "url": "https://www.akleg.gov/basis/statutes.asp?media=print&secStart=18.62.010&secEnd=18.62.120",
+     "quote": "the department may not issue a trainee level certificate of fitness under (a) of this section unless the applicant is indentured in an apprenticeship program registered with the United States Department of Labor"
+    },
+    {
+     "url": "https://www.akleg.gov/basis/statutes.asp?media=print&secStart=08.18.011&secEnd=08.18.181",
+     "quote": "mechanical or specialty contractor or home inspector shall be $10,000; or"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "plumbing": {
+   "status": "state_license",
+   "name": "Mechanical Contractor registration + Mechanical Administrator license; Plumber Certificate of Fitness",
+   "agency": "Dept. of Commerce (contractor registration, mechanical administrator); Dept. of Labor and Workforce Development (certificates of fitness)",
+   "covers": "Plumbing businesses register as mechanical contractors and must be or employ a licensed mechanical administrator. Individuals doing plumbing need a plumber certificate of fitness.",
+   "threshold": null,
+   "prerequisites": [
+    "Mechanical contractor must be, or employ, a licensed Mechanical Administrator (exam required)",
+    "Plumbers must first obtain a certificate of fitness from the Department of Labor"
+   ],
+   "bond": "$10,000 surety bond (mechanical contractor).",
+   "insurance": "Workers' compensation (where required) and general liability insurance.",
+   "summary": "Plumbing contractors register as mechanical contractors and need a licensed mechanical administrator. Each plumber must first get a plumber certificate of fitness from the Department of Labor.",
+   "url": "https://www.akleg.gov/basis/statutes.asp?media=print&secStart=18.62.010&secEnd=18.62.120",
+   "quote": "plumbing subject to the uniform plumbing code; in this paragraph, “uniform plumbing code” means the minimum plumbing code adopted for the state under AS 18.60.705 .",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.akleg.gov/basis/statutes.asp?media=print&secStart=18.62.010&secEnd=18.62.120",
+     "quote": "A person engaged in one of the following trades shall first obtain from the department the appropriate certificate of fitness in that trade"
+    },
+    {
+     "url": "https://www.akleg.gov/basis/statutes.asp?media=print&secStart=08.18.011&secEnd=08.18.181",
+     "quote": "The department may not issue a certificate of registration as a mechanical contractor to an applicant unless the applicant is, or employs, a person currently licensed as a mechanical administrator under AS 08.40 ."
+    },
+    {
+     "url": "https://www.akleg.gov/basis/statutes.asp?media=print&secStart=08.18.011&secEnd=08.18.181",
+     "quote": "mechanical or specialty contractor or home inspector shall be $10,000; or"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "mechanical": {
+   "status": "state_license",
+   "name": "Mechanical Contractor registration + Mechanical Administrator license",
+   "agency": "Alaska Department of Commerce, Community, and Economic Development",
+   "covers": "HVAC, heating, refrigeration and other mechanical contractors.",
+   "threshold": null,
+   "prerequisites": [
+    "Be, or employ, a licensed Mechanical Administrator (passes a state exam)",
+    "Contractor registration bond and insurance"
+   ],
+   "bond": "$10,000 surety bond (mechanical contractor).",
+   "insurance": "Workers' compensation (where required) and general liability insurance.",
+   "summary": "Mechanical (HVAC) contractors register with the state and must be or employ a mechanical administrator who has passed the state licensing exam. The bond is $10,000.",
+   "url": "https://www.akleg.gov/basis/statutes.asp?media=print&secStart=08.18.011&secEnd=08.18.181",
+   "quote": "The department may not issue a certificate of registration as a mechanical contractor to an applicant unless the applicant is, or employs, a person currently licensed as a mechanical administrator under AS 08.40 .",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.akleg.gov/basis/statutes.asp?media=print&secStart=08.40.005&secEnd=08.40.490",
+     "quote": "A person may not act as a mechanical administrator without a license unless the person is covered by an exclusion under AS 08.40.390 ."
+    },
+    {
+     "url": "https://www.akleg.gov/basis/statutes.asp?media=print&secStart=08.18.011&secEnd=08.18.181",
+     "quote": "mechanical or specialty contractor or home inspector shall be $10,000; or"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "roofing": {
+   "status": "state_registration",
+   "name": "Specialty Contractor registration",
+   "agency": "Alaska Department of Commerce, Community, and Economic Development",
+   "covers": "Roofers and other single-trade contractors register as specialty contractors; there is no separate roofing exam license.",
+   "threshold": null,
+   "prerequisites": [
+    "Surety bond and insurance with the contractor registration"
+   ],
+   "bond": "$10,000 surety bond (specialty contractor).",
+   "insurance": "Workers' compensation (where required) and general liability insurance.",
+   "summary": "Alaska has no separate roofing license, but roofers must register as specialty contractors before bidding or working, with a $10,000 bond and insurance.",
+   "url": "https://www.akleg.gov/basis/statutes.asp?media=print&secStart=08.18.011&secEnd=08.18.181",
+   "quote": "A general contractor may not use a bid or proposal from, award a bid or proposal to, contract with, or allow a person required to be registered under this chapter to work for the general contractor as a specialty contractor unless the person is registered as a specialty contractor under this chapter.",
+   "note": "Specialty contractor categories are set by regulation; roofing as a named category was not separately confirmed.",
+   "evidence": [
+    {
+     "url": "https://www.akleg.gov/basis/statutes.asp?media=print&secStart=08.18.011&secEnd=08.18.181",
+     "quote": "mechanical or specialty contractor or home inspector shall be $10,000; or"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Commercial Pesticide Applicator Certification",
+   "agency": "Alaska Department of Environmental Conservation, Pesticide Control Program",
+   "covers": "Anyone doing custom, commercial or contract pesticide application (pest control, lawn and weed control, tree spraying), unless applying general-use pesticides under direct supervision of a certified applicator.",
+   "threshold": null,
+   "prerequisites": [
+    "Be at least 18 years old",
+    "Attend an approved training session or course",
+    "Pass the written core and category exams"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Commercial pesticide applicators must be certified by the Department of Environmental Conservation in each category they work in. You must be 18, complete approved training and pass written exams.",
+   "url": "https://www.akleg.gov/basis/aac.asp?media=print&secStart=18.90.200&secEnd=18.90.990",
+   "quote": "engage in the custom, commercial, or contract use of a pesticide unless that use is application of a general-use pesticide under the direct, on-the-job supervision of a certified applicator certified in the applicable category of use;",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.akleg.gov/basis/aac.asp?media=print&secStart=18.90.200&secEnd=18.90.990",
+     "quote": "is at least 18 years of age; (2) attends a training session or completes an Internet or other correspondence course approved by the department; and (3) demonstrates knowledge of state and federal pesticide statutes and regulations"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "asbestos": {
+   "status": "state_license",
+   "name": "Asbestos abatement worker certification",
+   "agency": "Alaska Department of Labor and Workforce Development, AKOSH",
+   "covers": "Anyone employed to abate asbestos hazards must be certified through an approved training program.",
+   "threshold": null,
+   "prerequisites": [
+    "Complete a Department of Labor-approved asbestos certification program"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Workers who remove or abate asbestos must be certified through a training program approved by the Alaska Department of Labor (AKOSH).",
+   "url": "https://www.akleg.gov/basis/statutes.asp?media=print&secStart=18.31.010&secEnd=18.31.900",
+   "quote": "A person may not be employed to abate an asbestos health hazard unless the person has been certified in a program approved by the Department of Labor and Workforce Development",
+   "note": "Federal EPA NESHAP notification rules for demolition/renovation also apply; not separately researched.",
+   "evidence": [
+    {
+     "url": "https://labor.alaska.gov/lss/home.htm",
+     "quote": "The section also administers certification programs for asbestos abatement, hazardous painting, and explosives handlers to assure this work is done safely."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "lead_rrp": {
+   "status": "no_state_license",
+   "name": "EPA Lead-Safe (RRP) Firm Certification and Certified Renovator",
+   "agency": "U.S. Environmental Protection Agency",
+   "covers": "Firms paid to do work that disturbs paint in homes and child-occupied facilities built before 1978.",
+   "threshold": null,
+   "prerequisites": [
+    "EPA firm certification",
+    "At least one EPA Certified Renovator (training course)"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Alaska does not run its own lead renovation program, so firms apply to EPA for RRP firm certification. Anyone paid to disturb paint in pre-1978 homes or child-occupied facilities must be certified.",
+   "url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-firm-certification",
+   "quote": "EPA's renovation program applies to all states, Tribes and territories where EPA has not specifically provided authorization for that state, Tribe or territory to operate the program themselves.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program",
+     "quote": "EPA administers the RRP Program in most Tribes, states and territories, but has authorized the following to operate their own programs: Alabama, Delaware, Georgia, Iowa, Kansas, Massachusetts, Mississippi, North Carolina, Oklahoma, Oregon, Rhode Island, Utah, Vermont, Washington, Wisconsin"
+    },
+    {
+     "url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-contractors",
+     "quote": "In general, anyone who is paid to perform work that disturbs paint in housing and child-occupied facilities built before 1978 must be certified. This includes all firms, even sole proprietorships."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "other": []
+}

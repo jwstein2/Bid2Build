@@ -12,12 +12,13 @@ const PRIMARY: Tab[] = [
 
 type Tab = { href: string; label: string; short?: string; match: (p: string) => boolean };
 const CODES: Tab = { href: "/academy/codes", label: "Codes", match: (p: string) => p.startsWith("/academy/codes") };
+const START: Tab = { href: "/academy/start", label: "Start a business", short: "Start", match: (p: string) => p.startsWith("/academy/start") };
 const STUDY: Tab = { href: "/academy/study", label: "Study", match: (p: string) => p.startsWith("/academy/study") };
 
-/** The primary Academy tabs (Community first; Codes and Study once the code library is on), plus a small secondary menu. */
+/** The primary Academy tabs (Community first, Start a business always; Codes and Study once the code library is on), plus a small secondary menu. */
 export function AcademyTabs({ secondary, codes = false }: { secondary: { href: string; label: string }[]; codes?: boolean }) {
   const path = usePathname() ?? "/academy";
-  const tabs = codes ? [...PRIMARY.slice(0, 2), CODES, STUDY, ...PRIMARY.slice(2)] : PRIMARY;
+  const tabs = codes ? [...PRIMARY.slice(0, 2), START, CODES, STUDY, ...PRIMARY.slice(2)] : [...PRIMARY.slice(0, 2), START, ...PRIMARY.slice(2)];
   return (
     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
       <nav aria-label="Academy" className="-mx-1 flex max-w-full gap-1 overflow-x-auto px-1" data-testid="academy-tabs">

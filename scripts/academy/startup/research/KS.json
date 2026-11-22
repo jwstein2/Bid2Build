@@ -1,0 +1,279 @@
+{
+ "state": "KS",
+ "researched_on": "2026-11-22",
+ "general": {
+  "entity": {
+   "agency": "Kansas Secretary of State",
+   "summary": "Corporations, LLCs, LLPs and LPs must register with the Kansas Secretary of State; sole proprietors do not, and general partnerships may optionally file.",
+   "url": "https://sos.ks.gov/businesses/register-a-business.html",
+   "quote": "All corporations, limited liability companies (LLCs), limited liability partnerships (LLPs), limited partnerships (LPs), and any other entity formed under the Kansas General Corporation Code, must register with the Kansas Secretary of State."
+  },
+  "state_tax": {
+   "agency": "Kansas Department of Revenue",
+   "summary": "Register for business taxes (sales/use, withholding) through the KDOR Customer Service Center. Contractors are treated as the final consumer of materials they install and pay sales or use tax on them; labor on residential work and original construction is generally exempt, while commercial remodeling labor is generally taxable.",
+   "url": "https://www.ksrevenue.gov/pub1525.html",
+   "quote": "All contractors (whether contractors or contractor-retailers) are considered to be the final user or consumer of the materials they install for others, and must pay Kansas sales or use tax on them."
+  },
+  "unemployment": {
+   "agency": "Kansas Department of Labor",
+   "summary": "Employers register with the Kansas Department of Labor for unemployment taxes, separately from KDOR tax registration.",
+   "url": "https://www.ksrevenue.gov/busregistration.html",
+   "quote": "You may also need to register with the Kansas Secretary of State for corporations to do business in Kansas or with the Kansas Department of Labor for unemployment taxes."
+  },
+  "workers_comp": {
+   "agency": "Kansas Department of Labor, Division of Workers Compensation",
+   "summary": "The workers compensation act covers most employers, but an employer whose total gross annual payroll was not more than $20,000 (and is expected to stay at or under $20,000) is exempt; wages paid to family members don't count toward that total.",
+   "url": "https://www.kslegislature.gov/li/b2025_26/statute/044_000_0000_chapter/044_005_0000_article/044_005_0005_section/044_005_0005_k/",
+   "quote": "wherein the employer had a total gross annual payroll for the preceding calendar year of not more than $20,000 for all employees and wherein the employer reasonably estimates that such employer will not have a total gross annual payroll for the current calendar year of more than $20,000 for all employees"
+  },
+  "local": {
+   "summary": "Kansas leaves general, building, electrical, plumbing and HVAC contractor licensing to cities and counties. A license earned by passing a state-designated standard exam is valid in any other city or county that requires one.",
+   "url": "https://www.kslegislature.gov/li/b2025_26/statute/012_000_0000_chapter/012_015_0000_article/012_015_0057_section/012_015_0057_k/",
+   "quote": "Any county or city requiring the licensure of general contractors, building contractors and residential contractors practicing within the county or city may conduct examinations designated by K.S.A. 12-1556"
+  }
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "local_only",
+   "name": null,
+   "agency": "Cities and counties",
+   "covers": "General, building and residential contractors are licensed (if at all) by the city or county where the work is done.",
+   "threshold": null,
+   "prerequisites": [
+    "Where a city or county requires a license: pass a standard exam designated by K.S.A. 12-1556"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Kansas has no state general or residential contractor license. Cities and counties that license contractors use designated standard exams, and a license earned that way is honored by other Kansas cities and counties that require one.",
+   "url": "https://www.kslegislature.gov/li/b2025_26/statute/012_000_0000_chapter/012_015_0000_article/012_015_0057_section/012_015_0057_k/",
+   "quote": "Any county or city requiring the licensure of general contractors, building contractors and residential contractors practicing within the county or city may conduct examinations designated by K.S.A. 12-1556",
+   "evidence": [
+    {
+     "url": "https://www.kslegislature.gov/li/b2025_26/statute/012_000_0000_chapter/012_015_0000_article/012_015_0057_section/012_015_0057_k/",
+     "quote": "All such licenses shall be valid in any other county or city which requires examination and licensure of such contractors for practice in such county or city."
+    }
+   ]
+  },
+  "commercial_building": {
+   "status": "local_only",
+   "name": null,
+   "agency": "Cities and counties",
+   "covers": "Same as residential: general and building contractors are licensed locally.",
+   "threshold": null,
+   "prerequisites": [
+    "Where a city or county requires a license: pass a standard exam designated by K.S.A. 12-1556"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "There is no state commercial contractor license in Kansas; check the city or county where the job is.",
+   "url": "https://www.kslegislature.gov/li/b2025_26/statute/012_000_0000_chapter/012_015_0000_article/012_015_0057_section/012_015_0057_k/",
+   "quote": "The certificate of competency received by any person who successfully passes an examination designated by K.S.A. 12-1556 shall be valid proof of competency for licensure, without additional examination, in any county or city of the state which requires licensure of such contractors"
+  },
+  "electrical": {
+   "status": "local_only",
+   "name": "Local electrical contractor / master / journeyman / residential electrician licenses",
+   "agency": "Cities and counties",
+   "covers": "Electricians and electrical contractors working in a city or county that requires a license.",
+   "threshold": null,
+   "prerequisites": [
+    "Journeyman or residential: two years of documented field experience (up to one year can be trade schooling)",
+    "Master: a journeyman certificate held for two years",
+    "Pass a designated standard exam (ICC, IAPMO or Prometric) with a score of at least 75%"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Kansas does not issue electrical licenses at the state level, but state law sets the rules for cities and counties that do: standard exams, two years of field experience for a journeyman, and two years as a journeyman for a master. A certificate earned this way is honored statewide where licensing is required.",
+   "url": "https://www.kslegislature.gov/li/b2025_26/statute/012_000_0000_chapter/012_015_0000_article/012_015_0026_section/012_015_0026_k/",
+   "quote": "Any county or city requiring the licensure of electricians practicing within the county or city may conduct examinations designated by K.S.A. 12-1525, and amendments thereto, for the purpose of determining the competency of applicants for such licensure",
+   "evidence": [
+    {
+     "url": "https://www.kslegislature.gov/li/b2025_26/statute/012_000_0000_chapter/012_015_0000_article/012_015_0026_section/012_015_0026_k/",
+     "quote": "Before issuing a journeyman or residential certificate, the issuing jurisdiction shall verify the validity of the applicant's documented proof of a minimum of two years field experience."
+    },
+    {
+     "url": "https://www.kslegislature.gov/li/b2025_26/statute/012_000_0000_chapter/012_015_0000_article/012_015_0026_section/012_015_0026_k/",
+     "quote": "Before issuing a master certificate, the issuing jurisdiction shall verify the validity of the applicant's documented proof of having a valid journeyman certificate for a minimum of two years."
+    },
+    {
+     "url": "https://www.kslegislature.gov/li/b2025_26/statute/012_000_0000_chapter/012_015_0000_article/012_015_0026_section/012_015_0026_k/",
+     "quote": "prescribing a minimum score of 75% for passage of examinations"
+    },
+    {
+     "url": "https://www.kslegislature.gov/li/b2025_26/statute/012_000_0000_chapter/012_015_0000_article/012_015_0026_section/012_015_0026_k/",
+     "quote": "No more than one year of the requirement may be satisfied by trade related schooling."
+    }
+   ]
+  },
+  "plumbing": {
+   "status": "local_only",
+   "name": "Local plumbing contractor / master / journeyman plumber licenses",
+   "agency": "Cities and counties",
+   "covers": "Plumbers working in a city or county that requires a license.",
+   "threshold": null,
+   "prerequisites": [
+    "Journeyman: two years of documented field experience (up to one year can be trade schooling)",
+    "Master: a journeyman certificate held for two years, or four years of field experience",
+    "Pass a designated standard exam"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Plumbing is licensed by cities and counties, not the state. State law requires two years of field experience for a journeyman and two years as a journeyman (or four years of field experience) for a master, and a certificate from a designated exam is honored statewide where licensing is required.",
+   "url": "https://www.kslegislature.gov/li/b2025_26/statute/012_000_0000_chapter/012_015_0000_article/012_015_0009_section/012_015_0009_k/",
+   "quote": "Any county or city requiring the licensure of plumbers practicing within the county or city may conduct examinations designated by K.S.A. 12-1508, and amendments thereto, for the purpose of determining the competency of applicants for such licensure",
+   "evidence": [
+    {
+     "url": "https://www.kslegislature.gov/li/b2025_26/statute/012_000_0000_chapter/012_015_0000_article/012_015_0009_section/012_015_0009_k/",
+     "quote": "Before issuing a journeyman certificate, the issuing jurisdiction shall verify the validity of the applicant's documented proof of a minimum of two years field experience."
+    },
+    {
+     "url": "https://www.kslegislature.gov/li/b2025_26/statute/012_000_0000_chapter/012_015_0000_article/012_015_0009_section/012_015_0009_k/",
+     "quote": "Before issuing a master certificate, the issuing jurisdiction shall verify the validity of the applicant's documented proof of having a valid journeyman certificate for a minimum of two years or having field experience for a minimum of four years."
+    }
+   ]
+  },
+  "mechanical": {
+   "status": "local_only",
+   "name": "Local mechanical (HVAC) contractor / master / journeyman licenses",
+   "agency": "Cities and counties",
+   "covers": "HVAC contractors and mechanics working in a city or county that requires a license.",
+   "threshold": null,
+   "prerequisites": [
+    "Journeyman HVAC mechanic: two years of documented field experience",
+    "Master HVAC: a journeyman certificate held for two years, or four years of field experience",
+    "Pass a designated standard exam"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "HVAC licensing is handled by cities and counties under state-set rules: two years of field experience for a journeyman and two years as a journeyman (or four years of field experience) for a master.",
+   "url": "https://www.kslegislature.gov/li/b2025_26/statute/012_000_0000_chapter/012_015_0000_article/012_015_0042_section/012_015_0042_k/",
+   "quote": "Any county or city requiring the licensure of mechanical heating, ventilation and air conditioning contractors and master and journeyman heating, ventilation and air conditioning mechanics practicing within the county or city may conduct examinations designated by K.S.A. 12-1541",
+   "evidence": [
+    {
+     "url": "https://www.kslegislature.gov/li/b2025_26/statute/012_000_0000_chapter/012_015_0000_article/012_015_0042_section/012_015_0042_k/",
+     "quote": "Before issuing a journeyman heating, ventilation and air conditioning mechanic certificate, the issuing jurisdiction shall verify the validity of the applicant's documented proof of a minimum of two years field experience."
+    },
+    {
+     "url": "https://www.kslegislature.gov/li/b2025_26/statute/012_000_0000_chapter/012_015_0000_article/012_015_0042_section/012_015_0042_k/",
+     "quote": "Before issuing a master heating, ventilation and air conditioning certificate, the issuing jurisdiction shall verify the validity of the applicant's documented proof of having a valid journeyman certificate for a minimum of two years or having field experience for a minimum of four years."
+    }
+   ]
+  },
+  "roofing": {
+   "status": "state_registration",
+   "name": "Roofing Contractor Registration",
+   "agency": "Kansas Attorney General",
+   "covers": "Anyone (including subcontractors and out-of-state contractors) who does commercial or residential roofing for a fee or offers roofing services.",
+   "threshold": null,
+   "prerequisites": [
+    "Be at least 18 years old",
+    "Certificate of liability insurance of not less than $500,000",
+    "Proof of workers' compensation coverage, or an affidavit of exemption or self-insurance"
+   ],
+   "bond": null,
+   "insurance": "General liability of not less than $500,000 plus workers' compensation (or exemption affidavit)",
+   "summary": "Kansas requires roofing contractors to register with the Attorney General before doing or offering roofing work. You must file a liability insurance certificate of at least $500,000 and show workers' comp coverage or an exemption.",
+   "url": "https://www.kslegislature.gov/li/b2025_26/statute/050_000_0000_chapter/050_006_0000_article/050_006_0123_section/050_006_0123_k/",
+   "quote": "No person shall engage in the business of or act in the capacity of a roofing contractor within this state without having a valid registration certificate as required by this act.",
+   "evidence": [
+    {
+     "url": "https://www.kslegislature.gov/li/b2025_26/statute/050_000_0000_chapter/050_006_0000_article/050_006_0125_section/050_006_0125_k/",
+     "quote": "To obtain a roofing contractor registration certificate under this act, an applicant who is at least 18 years of age shall submit an application under oath"
+    },
+    {
+     "url": "https://www.kslegislature.gov/li/b2025_26/statute/050_000_0000_chapter/050_006_0000_article/050_006_0125_section/050_006_0125_k/",
+     "quote": "A copy of the roofing contractor's certificate of liability insurance shall be filed with the application and shall be not less than $500,000."
+    },
+    {
+     "url": "https://www.kslegislature.gov/li/b2025_26/statute/050_000_0000_chapter/050_006_0000_article/050_006_0125_section/050_006_0125_k/",
+     "quote": "Proof satisfactory to the attorney general that the applicant has secured either workers' compensation coverage satisfactory under the workers' compensation act or an affidavit of exemption or self-insurance"
+    },
+    {
+     "url": "https://www.kslegislature.gov/li/b2025_26/statute/050_000_0000_chapter/050_006_0000_article/050_006_0122_section/050_006_0122_k/",
+     "quote": "Engages in the business of commercial or residential roofing services for a fee"
+    }
+   ],
+   "note": "The Attorney General's roofing registration web pages block automated fetching, so the statute is cited."
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Pesticide Business License; Certified Commercial Applicator",
+   "agency": "Kansas Department of Agriculture",
+   "covers": "Businesses that apply pesticides or do pest control on another person's property.",
+   "threshold": null,
+   "prerequisites": [
+    "Be or employ a certified commercial applicator in each category applied for",
+    "Surety bond or certificate of liability insurance under K.S.A. 2-2448"
+   ],
+   "bond": "Surety bond or liability insurance certificate (K.S.A. 2-2448)",
+   "insurance": "Liability insurance certificate (alternative to a surety bond)",
+   "summary": "A pest control or lawn-spraying business needs a Kansas pesticide business license. The business must be or employ a certified commercial applicator in each category, and must file a surety bond or liability insurance certificate.",
+   "url": "https://www.kslegislature.gov/li/b2025_26/statute/002_000_0000_chapter/002_024_0000_article/002_024_0040_section/002_024_0040_k/",
+   "quote": "it is unlawful for any pesticide business that has not been issued a pesticide business license to:",
+   "evidence": [
+    {
+     "url": "https://www.kslegislature.gov/li/b2025_26/statute/002_000_0000_chapter/002_024_0000_article/002_024_0040_section/002_024_0040_k/",
+     "quote": "No pesticide business license may be issued to any person until such person is or has in such person's employ one or more individuals who are certified commercial applicators in each of the categories for which the license application is made."
+    },
+    {
+     "url": "https://www.kslegislature.gov/li/b2025_26/statute/002_000_0000_chapter/002_024_0000_article/002_024_0040_section/002_024_0040_k/",
+     "quote": "if the applicant files the surety bond or certificate of liability insurance required under K.S.A. 2-2448"
+    }
+   ],
+   "note": "The Kansas Department of Agriculture website blocks automated fetching, so the statute is cited."
+  },
+  "asbestos": {
+   "status": "state_license",
+   "name": "Asbestos business entity license",
+   "agency": "Kansas Department of Health and Environment (KDHE)",
+   "covers": "Businesses removing or encapsulating friable asbestos-containing materials.",
+   "threshold": null,
+   "prerequisites": [
+    "Employees who contact asbestos trained under EPA and U.S. Department of Labor rules",
+    "Access to an approved asbestos disposal site"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "A business doing asbestos removal or encapsulation needs a KDHE license. Its workers must be trained under federal EPA and OSHA rules, and it must have access to an approved disposal site.",
+   "url": "https://www.kslegislature.gov/li/b2025_26/statute/065_000_0000_chapter/065_053_0000_article/065_053_0002_section/065_053_0002_k/",
+   "quote": "no business entity shall engage in an asbestos project unless the entity holds a license issued by the secretary for that purpose.",
+   "evidence": [
+    {
+     "url": "https://www.kslegislature.gov/li/b2025_26/statute/065_000_0000_chapter/065_053_0000_article/065_053_0004_section/065_053_0004_k/",
+     "quote": "Ensure that each employee or agent of the business entity who will come into contact with asbestos or who will engage in an asbestos project is trained in accordance with all applicable asbestos training provisions"
+    },
+    {
+     "url": "https://www.kslegislature.gov/li/b2025_26/statute/065_000_0000_chapter/065_053_0000_article/065_053_0004_section/065_053_0004_k/",
+     "quote": "have access to at least one approved asbestos disposal site for deposit of all asbestos waste that the business entity will generate during the term of the license"
+    }
+   ],
+   "note": "KDHE's website blocks automated fetching, so the statute is cited."
+  },
+  "lead_rrp": {
+   "status": "state_license",
+   "name": "Renovation firm license and certified renovator (KDHE)",
+   "agency": "Kansas Department of Health and Environment (KDHE)",
+   "covers": "Paid work that disturbs paint in pre-1978 homes, child care facilities and preschools.",
+   "threshold": null,
+   "prerequisites": [
+    "Firm license and a certified renovator (trained in lead-safe work practices)"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Kansas is authorized by EPA to run its own lead renovation (RRP) program, so renovation firms and renovators are certified through KDHE rather than EPA.",
+   "url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program",
+   "quote": "EPA administers the RRP Program in most Tribes, states and territories, but has authorized the following to operate their own programs: Alabama, Delaware, Georgia, Iowa, Kansas,",
+   "evidence": [
+    {
+     "url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program",
+     "quote": "EPA's RRP Rule requires that anyone paid to perform work that disturbs painted surfaces in homes, childcare facilities and preschools built before 1978 be certified and their employees be trained"
+    },
+    {
+     "url": "https://www.kslegislature.gov/li/b2025_26/statute/065_000_0000_chapter/065_001_0000_article/065_001_0203_section/065_001_0203_k/",
+     "quote": "In order to qualify for a certificate, an individual must have successfully completed an accredited training program and pass a third party exam as required by the secretary."
+    }
+   ],
+   "note": "KDHE's lead pages block automated fetching; the KDHE renovation firm/renovator rules (K.A.R. 28-72) could not be quoted. The statute quote on training and exam applies to lead-based paint activities (inspection, assessment, abatement)."
+  },
+  "other": []
+ }
+}

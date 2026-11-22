@@ -1,0 +1,390 @@
+{
+ "state": "CA",
+ "researched_on": "2026-11-22",
+ "checked_at": "2026-11-22T21:48:10Z",
+ "general": {
+  "entity": {
+   "agency": "California Secretary of State (bizfile Online)",
+   "summary": "Register your corporation, LLC or limited partnership with the California Secretary of State through bizfile Online.",
+   "url": "https://www.sos.ca.gov/business-programs/bizfile",
+   "quote": "Newly registered Corporations, Limited Liability Companies (LLC), and Limited Partnerships (LP) will now utilize a 12-character ID that starts with the letter “B”.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "state_tax": {
+   "agency": "California Department of Tax and Fee Administration (CDTFA)",
+   "summary": "Construction contractors who sell or lease tangible goods generally need a CDTFA seller's permit. A general contractor who only hires subcontractors usually does not, but may have to register as a qualified purchaser for use tax.",
+   "url": "https://www.cdtfa.ca.gov/industry/construction-contractors/getting-started.htm",
+   "quote": "Construction contractors in California who sell or lease tangible personal property, which the law defines as an item that can be seen, weighed, measured, felt, or touched, are generally required to register with us for a seller's permit.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "unemployment": {
+   "agency": "California Employment Development Department (EDD)",
+   "summary": "Register with EDD once you pay more than $100 in wages to one or more employees in a calendar quarter. EDD handles unemployment insurance, disability insurance and state income tax withholding.",
+   "url": "https://taxes.ca.gov/payroll-tax/doing-business/",
+   "quote": "An employer registers with EDD after paying over $100 in total wages to one or more employees in a calendar quarter:",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "workers_comp": {
+   "agency": "California Department of Industrial Relations, Division of Workers' Compensation",
+   "summary": "California employers must have workers' compensation insurance even with only one employee. Roofers must carry it even with no employees, and CSLB requires it on file for some classes (concrete, HVAC, asbestos, roofing, tree service) regardless of employees.",
+   "url": "https://www.dir.ca.gov/dwc/employer.htm",
+   "quote": "California employers are required by law to have workers' compensation insurance, even if they have only one employee.",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "state_license",
+   "name": "B General Building Contractor or B-2 Residential Remodeling Contractor license (CSLB)",
+   "agency": "Contractors State License Board (CSLB)",
+   "covers": "Anyone who builds or alters structures when the job needs a building permit, uses employees, or totals $1,000 or more in labor and materials. B-2 covers remodels of existing wood-frame homes using at least three unrelated trades.",
+   "threshold": "Licensing required if the project needs a building permit, uses employee labor, or costs $1,000 or more (labor and materials).",
+   "prerequisites": [
+    "A qualifying individual with at least four years of journey-level (or foreman/supervisor/contractor) experience in the classification",
+    "Pass the law and business exam and the trade exam",
+    "Pass the asbestos open book exam",
+    "Contractor's bond of $15,000",
+    "Proof of workers' compensation insurance (or exemption if no employees) and fingerprinting"
+   ],
+   "bond": "$15,000 contractor bond (plus a Bond of Qualifying Individual when qualified by an RME or a non-owner RMO).",
+   "insurance": "Workers' compensation certificate or exemption.",
+   "summary": "California requires a CSLB license for jobs of $1,000 or more, or any job needing a permit or employees. The qualifying person needs four years of journey-level experience and must pass two exams. You also file a $15,000 contractor bond and proof of workers' comp.",
+   "url": "https://web.cslb.ca.gov/Contractors/Applicants/Contractors_License/Exam_Application/Before_Applying_For_License.aspx",
+   "quote": "must be licensed by the California Contractors State License Board (CSLB) if the project requires a building permit or uses any additional workers or the total cost (labor and materials) of one or more contracts on the project is $1,000 or more.",
+   "note": "LLC licensees have additional liability insurance requirements not verified here.",
+   "evidence": [
+    {
+     "url": "https://www.cslb.ca.gov/contractors/applicants/contractors_license/exam_application/experience_for_exam.aspx",
+     "quote": "You must have at least four (4) years of experience, in the class you are applying for, to qualify to take the examination. Credit for experience is given only for experience at a journey level or as a foreman, supervising employee, contractor, or owner-builder."
+    },
+    {
+     "url": "https://www.cslb.ca.gov/Contractors/Applicants/",
+     "quote": "As a condition of licensure, an applicant must take and pass two examinations:"
+    },
+    {
+     "url": "https://www.cslb.ca.gov/Contractors/Applicants/",
+     "quote": "After you pass your license examination, you must take the Abestos Open Book Exam and sign the verification form."
+    },
+    {
+     "url": "https://cslb.ca.gov/Resources/GuidesAndPublications/BuildingYourCareerAsContractor.pdf",
+     "quote": "bond or cash deposit payable to CSLB in the amount of $15,000. CSLB does not issue bonds."
+    },
+    {
+     "url": "https://www.cslb.ca.gov/About_Us/Public_Info_FAQ.aspx",
+     "quote": "After the qualifier passes the exam(s), CSLB will send information about how to submit the initial license fee and other required documents (bonds, proof of workers’ compensation insurance, fingerprinting, etc.) before licensure."
+    },
+    {
+     "url": "https://www.cslb.ca.gov/About_Us/Library/Licensing_Classifications/Licensing_Classifications_Detail.aspx?Class=B-2",
+     "quote": "A residential remodeling contractor is a contractor whose principal contracting business is in connection with any project to make improvements to, on, or in an existing residential wood frame structure, and the project requires the use of at least three unrelated building trades or crafts for a single contract."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "commercial_building": {
+   "status": "state_license",
+   "name": "B General Building Contractor license (same license as residential); A General Engineering for engineering works",
+   "agency": "Contractors State License Board (CSLB)",
+   "covers": "Commercial general building work; the same CSLB B license covers both residential and commercial.",
+   "threshold": "Same $1,000 / permit / employee rule as residential.",
+   "prerequisites": [
+    "Qualifying individual with at least four years of journey-level experience",
+    "Pass the law and business exam and the trade exam",
+    "Contractor's bond of $15,000 and workers' comp proof"
+   ],
+   "bond": "$15,000 contractor bond.",
+   "insurance": "Workers' compensation certificate or exemption.",
+   "summary": "California does not split residential and commercial: the CSLB B General Building license covers both. The same experience, exam and bond rules apply.",
+   "url": "https://www.cslb.ca.gov/About_Us/Library/Licensing_Classifications/",
+   "quote": "B - General Building Contractor.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.cslb.ca.gov/contractors/applicants/contractors_license/exam_application/experience_for_exam.aspx",
+     "quote": "You must have at least four (4) years of experience, in the class you are applying for, to qualify to take the examination."
+    },
+    {
+     "url": "https://cslb.ca.gov/Resources/GuidesAndPublications/BuildingYourCareerAsContractor.pdf",
+     "quote": "bond or cash deposit payable to CSLB in the amount of $15,000. CSLB does not issue bonds."
+    },
+    {
+     "url": "https://web.cslb.ca.gov/Contractors/Applicants/Contractors_License/Exam_Application/Before_Applying_For_License.aspx",
+     "quote": "must be licensed by the California Contractors State License Board (CSLB) if the project requires a building permit or uses any additional workers or the total cost (labor and materials) of one or more contracts on the project is $1,000 or more."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "electrical": {
+   "status": "state_license",
+   "name": "C-10 Electrical Contractor license (CSLB); General or Residential Electrician certification (DIR)",
+   "agency": "CSLB (contractor license); Dept. of Industrial Relations, Electrician Certification Unit (individual electricians)",
+   "covers": "Electrical contracting businesses need a C-10 license. Electricians working for C-10 contractors must be state-certified.",
+   "threshold": null,
+   "prerequisites": [
+    "C-10: qualifier with four years of journey-level experience, passes the exams, $15,000 bond",
+    "General electrician certification: 8000 hours of work for a C-10 contractor, then pass the state exam",
+    "Residential electrician certification: 4800 hours of work for a C-10 contractor"
+   ],
+   "bond": "$15,000 contractor bond for the C-10 license.",
+   "insurance": null,
+   "summary": "Electrical contractors need a CSLB C-10 license. Employees doing electrical work for a C-10 contractor must hold a DIR electrician certification, which takes 8000 hours of experience for a general electrician (4800 for residential).",
+   "url": "https://www.cslb.ca.gov/About_Us/Library/Licensing_Classifications/Licensing_Classifications_Detail.aspx?Class=C10",
+   "quote": "An electrical contractor places, installs, erects or connects any electrical wires, fixtures, appliances, apparatus, raceways, conduits, solar photovoltaic cells or any part thereof, which generate, transmit, transform or utilize electrical energy in any form or for any purpose.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://dir.ca.gov/dlse/ECU/ecu_faq.htm",
+     "quote": "Certification is required only for those persons who perform work as electricians for contractors licensed as class C-10 electrical contractors under the Contractors' State License Board Rules and Regulations."
+    },
+    {
+     "url": "https://dir.ca.gov/t8/291_1.html",
+     "quote": "General Electrician: 8000 hours of work for a C-10 electrical contractor installing, constructing or maintaining electrical systems covered by the National Electrical Code."
+    },
+    {
+     "url": "https://dir.ca.gov/t8/291_1.html",
+     "quote": "Residential Electrician: 4800 hours of work for a C-10 electrical contractor installing, constructing, or maintaining electrical systems covered by the National Electric Code."
+    },
+    {
+     "url": "https://www.cslb.ca.gov/contractors/applicants/contractors_license/exam_application/experience_for_exam.aspx",
+     "quote": "You must have at least four (4) years of experience, in the class you are applying for, to qualify to take the examination."
+    },
+    {
+     "url": "https://cslb.ca.gov/Resources/GuidesAndPublications/BuildingYourCareerAsContractor.pdf",
+     "quote": "bond or cash deposit payable to CSLB in the amount of $15,000. CSLB does not issue bonds."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "plumbing": {
+   "status": "state_license",
+   "name": "C-36 Plumbing Contractor license (CSLB)",
+   "agency": "Contractors State License Board (CSLB)",
+   "covers": "Plumbing contracting businesses. California has no state journeyman plumber license.",
+   "threshold": null,
+   "prerequisites": [
+    "Qualifier with four years of journey-level plumbing experience",
+    "Pass the law and business exam and the C-36 trade exam",
+    "$15,000 contractor bond and workers' comp proof"
+   ],
+   "bond": "$15,000 contractor bond.",
+   "insurance": "Workers' compensation certificate or exemption.",
+   "summary": "Plumbing contractors need a CSLB C-36 license, with a qualifier who has four years of journey-level experience and passes the exams.",
+   "url": "https://www.cslb.ca.gov/About_Us/Library/Licensing_Classifications/Licensing_Classifications_Detail.aspx?Class=C36",
+   "quote": "A plumbing contractor provides a means for a supply of safe water, ample in volume and of suitable temperature for the purpose intended and the proper disposal of fluid waste from the premises in all structures and fixed works.",
+   "note": "Absence of a state journeyman plumber license is from general knowledge; not confirmed with an official quote.",
+   "evidence": [
+    {
+     "url": "https://www.cslb.ca.gov/contractors/applicants/contractors_license/exam_application/experience_for_exam.aspx",
+     "quote": "You must have at least four (4) years of experience, in the class you are applying for, to qualify to take the examination."
+    },
+    {
+     "url": "https://cslb.ca.gov/Resources/GuidesAndPublications/BuildingYourCareerAsContractor.pdf",
+     "quote": "bond or cash deposit payable to CSLB in the amount of $15,000. CSLB does not issue bonds."
+    },
+    {
+     "url": "https://www.cslb.ca.gov/About_Us/Library/Licensing_Classifications/",
+     "quote": "Hazardous substance removal certifications are only issued to contractors who hold an “A”, “B”, C-10, C-12, C-21, C-34, C-36, C-49, C-57, or C-61/D-40 contractor license."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "mechanical": {
+   "status": "state_license",
+   "name": "C-20 Warm-Air Heating, Ventilating and Air-Conditioning Contractor license (CSLB)",
+   "agency": "Contractors State License Board (CSLB)",
+   "covers": "HVAC contractors. C-20 licensees must keep a workers' compensation certificate on file even with no employees.",
+   "threshold": null,
+   "prerequisites": [
+    "Qualifier with four years of journey-level HVAC experience",
+    "Pass the law and business exam and the C-20 trade exam",
+    "$15,000 contractor bond",
+    "Workers' compensation insurance certificate on file (required for C-20)"
+   ],
+   "bond": "$15,000 contractor bond.",
+   "insurance": "Workers' compensation certificate required for C-20 regardless of employees.",
+   "summary": "HVAC contractors need a CSLB C-20 license. Besides the four-year experience requirement and exams, C-20 contractors must keep a workers' compensation certificate on file even if they have no employees.",
+   "url": "https://www.cslb.ca.gov/About_Us/Library/Licensing_Classifications/Licensing_Classifications_Detail.aspx?Class=C20",
+   "quote": "A warm-air heating, ventilating and air-conditioning contractor fabricates, installs, maintains, services and repairs warm-air heating systems and water heating heat pumps",
+   "note": "EPA Section 608 refrigerant certification also applies to technicians (federal).",
+   "evidence": [
+    {
+     "url": "https://www.cslb.ca.gov/About_Us/Public_Info_FAQ.aspx",
+     "quote": "You hold a classification in C-8 Concrete, C-20 Warm-Air Heating, Ventilating and Air-Conditioning, C-22 Asbestos Abatement, C-39 Roofing classification, and/or D-49 Tree Service. These classifications are required by Business and Professions Code section 7125 to have a Certificate of Workers' Compensation Insurance or a Certificate of Self-Insurance on file with CSLB."
+    },
+    {
+     "url": "https://www.cslb.ca.gov/contractors/applicants/contractors_license/exam_application/experience_for_exam.aspx",
+     "quote": "You must have at least four (4) years of experience, in the class you are applying for, to qualify to take the examination."
+    },
+    {
+     "url": "https://cslb.ca.gov/Resources/GuidesAndPublications/BuildingYourCareerAsContractor.pdf",
+     "quote": "bond or cash deposit payable to CSLB in the amount of $15,000. CSLB does not issue bonds."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "roofing": {
+   "status": "state_license",
+   "name": "C-39 Roofing Contractor license (CSLB)",
+   "agency": "Contractors State License Board (CSLB)",
+   "covers": "Roofing contractors. Roofers must carry workers' compensation even with no employees.",
+   "threshold": null,
+   "prerequisites": [
+    "Qualifier with four years of journey-level roofing experience",
+    "Pass the law and business exam and the C-39 trade exam",
+    "$15,000 contractor bond",
+    "Workers' compensation insurance on file (required for roofers even without employees)"
+   ],
+   "bond": "$15,000 contractor bond.",
+   "insurance": "Workers' compensation required even with no employees.",
+   "summary": "Roofers need a CSLB C-39 license. Unlike most trades, roofing contractors must carry workers' compensation insurance even if they have no employees.",
+   "url": "https://www.cslb.ca.gov/About_Us/Library/Licensing_Classifications/Licensing_Classifications_Detail.aspx?Class=C39",
+   "quote": "A roofing contractor installs products and repairs surfaces that seal, waterproof and weatherproof structures.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.dir.ca.gov/dwc/employer.htm",
+     "quote": "Please be advised that if you are a roofer and don't have any employees, you are still required to carry workers' compensation insurance ."
+    },
+    {
+     "url": "https://www.cslb.ca.gov/contractors/applicants/contractors_license/exam_application/experience_for_exam.aspx",
+     "quote": "You must have at least four (4) years of experience, in the class you are applying for, to qualify to take the examination."
+    },
+    {
+     "url": "https://cslb.ca.gov/Resources/GuidesAndPublications/BuildingYourCareerAsContractor.pdf",
+     "quote": "bond or cash deposit payable to CSLB in the amount of $15,000. CSLB does not issue bonds."
+    },
+    {
+     "url": "https://www.cslb.ca.gov/About_Us/Public_Info_FAQ.aspx",
+     "quote": "You hold a classification in C-8 Concrete, C-20 Warm-Air Heating, Ventilating and Air-Conditioning, C-22 Asbestos Abatement, C-39 Roofing classification, and/or D-49 Tree Service."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Structural Pest Control Operator / Field Representative / Applicator license and company registration (SPCB); Qualified Applicator, Pest Control Business and Maintenance Gardener licenses (DPR)",
+   "agency": "Structural Pest Control Board (structural/termite); Department of Pesticide Regulation (landscape, maintenance gardener, other pest control)",
+   "covers": "Structural pest control (household pests, termites, fumigation) is licensed by the Structural Pest Control Board. Pest control businesses and maintenance gardeners applying pesticides for hire (lawn, landscape, weeds) are licensed by DPR.",
+   "threshold": null,
+   "prerequisites": [
+    "Structural operator: complete required pre-operator courses, pass the operator exam, submit Live Scan and experience documents",
+    "DPR: pass exams for the Qualified Applicator license/certificate; business must hold the applicable DPR business license"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "California licenses pest control at two agencies. Structural pest control (termites, household pests) needs Structural Pest Control Board licenses; operators complete pre-operator courses and an exam. Lawn, landscape and maintenance gardener pest control for hire is licensed by the Department of Pesticide Regulation.",
+   "url": "https://www.cdpr.ca.gov/docs/license/liccert.htm",
+   "quote": "The State of California requires a license or certification for many categories of professional pesticide applicators, as well as businesses that sell or apply pesticides or use pest control methods/devices for hire − such as pest control businesses, maintenance gardener pest control businesses, pest control dealers, and pesticide brokers.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.pestboard.ca.gov/exam/index.shtml",
+     "quote": "Take the required Pre-Operator Courses for the branch(es) you are applying for."
+    },
+    {
+     "url": "https://www.pestboard.ca.gov/exam/index.shtml",
+     "quote": "If you pass, fill out the Operator license application using the SPCB online licensing system"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "asbestos": {
+   "status": "state_license",
+   "name": "Cal/OSHA Asbestos Contractor Registration; CSLB C-22 Asbestos Abatement license or asbestos certification",
+   "agency": "Cal/OSHA (DIR) and Contractors State License Board",
+   "covers": "Contractors removing 100 square feet or more of asbestos-containing material must register with Cal/OSHA; abatement also needs a CSLB C-22 classification or asbestos certification on an existing license. All new CSLB licensees take the asbestos open-book exam.",
+   "threshold": "Registration applies to removing 100 square feet or more of asbestos-containing material.",
+   "prerequisites": [
+    "CSLB C-22 classification or asbestos certification",
+    "Cal/OSHA asbestos contractor registration",
+    "Workers' compensation certificate on file (required for C-22)"
+   ],
+   "bond": null,
+   "insurance": "Workers' compensation certificate required for C-22.",
+   "summary": "Asbestos removal of 100 square feet or more requires Cal/OSHA contractor registration, and the contractor needs a CSLB C-22 Asbestos Abatement classification or certification. Asbestos certification only allows abatement within license classes you already hold.",
+   "url": "https://www.dir.ca.gov/dosh/asbestos.html",
+   "quote": "Registration with Cal/OSHA is required for contractors and employers that remove asbestos having an asbestos fiber content of more than 0.1% and 100 square feet or more of surface area of asbestos-containing material.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.cslb.ca.gov/About_Us/Library/Licensing_Classifications/",
+     "quote": "Please note: Contractors with an asbestos certification can only perform abatement work within the license classification(s) they already hold."
+    },
+    {
+     "url": "https://www.cslb.ca.gov/About_Us/Library/Licensing_Classifications/",
+     "quote": "C-22 - Asbestos Abatement Contractor"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "lead_rrp": {
+   "status": "no_state_license",
+   "name": "EPA Lead-Safe (RRP) Firm Certification and Certified Renovator",
+   "agency": "U.S. Environmental Protection Agency",
+   "covers": "Firms paid to do work that disturbs paint in homes and child-occupied facilities built before 1978.",
+   "threshold": null,
+   "prerequisites": [
+    "EPA firm certification",
+    "At least one EPA Certified Renovator (training course)"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "California is not EPA-authorized for the renovation (RRP) program, so firms get RRP certification from EPA. Anyone paid to disturb paint in pre-1978 homes or child-occupied facilities must be certified.",
+   "url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-firm-certification",
+   "quote": "EPA's renovation program applies to all states, Tribes and territories where EPA has not specifically provided authorization for that state, Tribe or territory to operate the program themselves.",
+   "note": "California Department of Public Health separately certifies lead abatement workers/supervisors (not researched; cdph.ca.gov failed TLS from this environment).",
+   "evidence": [
+    {
+     "url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program",
+     "quote": "EPA administers the RRP Program in most Tribes, states and territories, but has authorized the following to operate their own programs: Alabama, Delaware, Georgia, Iowa, Kansas, Massachusetts, Mississippi, North Carolina, Oklahoma, Oregon, Rhode Island, Utah, Vermont, Washington, Wisconsin"
+    },
+    {
+     "url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-contractors",
+     "quote": "In general, anyone who is paid to perform work that disturbs paint in housing and child-occupied facilities built before 1978 must be certified. This includes all firms, even sole proprietorships."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "other": [
+  {
+   "key": "tree_service",
+   "name": "D-49 Tree Service / C-49 Tree and Palm Contractor (CSLB)",
+   "agency": "Contractors State License Board",
+   "trades": [
+    "tree-removal",
+    "tree-trimming"
+   ],
+   "summary": "Tree removal and pruning contractors need a CSLB tree classification, and tree service licensees must keep workers' comp on file.",
+   "url": "https://www.cslb.ca.gov/About_Us/Library/Licensing_Classifications/Licensing_Classifications_Detail.aspx?Class=C49",
+   "quote": "A Tree and Palm contractor plants, maintains, and removes trees and palms. The duties include pruning, stump grinding, and tree, palm, or limb guying.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  {
+   "key": "landscaping",
+   "name": "C-27 Landscaping Contractor (CSLB)",
+   "agency": "Contractors State License Board",
+   "trades": [
+    "landscaping"
+   ],
+   "summary": "Landscaping contractors need a CSLB C-27 license, subject to the same permit/employee/dollar rule as other CSLB licenses.",
+   "url": "https://www.cslb.ca.gov/About_Us/Library/Licensing_Classifications/",
+   "quote": "C-27 - Landscaping Contractor",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ ]
+}

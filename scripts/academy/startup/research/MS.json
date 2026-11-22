@@ -1,0 +1,172 @@
+{
+ "state": "MS",
+ "researched_on": "2026-11-22",
+ "general": {
+  "entity": {"agency": "Mississippi Secretary of State", "summary": "Corporations, LLCs and LLPs must be registered and in good standing with the Mississippi Secretary of State before applying for a contractor license.", "url": "https://www.msboc.us/contractors/licenses/", "quote": "If operating as a Corporation, Limited Liability Corporation, or Limited Liability Partnership, you must be registered with the Mississippi Secretary of State, and show proof of good standing with the Mississippi Secretary of State before applying for a contractor license."},
+  "state_tax": {"agency": "Mississippi Department of Revenue", "summary": "Mississippi charges a 3.5% contractor's tax on non-residential jobs over $10,000, and the prime contractor must get a Material Purchase Certificate before starting work. Residential jobs are not subject to the contractor's tax, but materials are subject to sales tax. A Mississippi sales or use tax number is required on commercial license applications.", "url": "https://www.dor.ms.gov/business/sales-use-tax/guide-construction-contractors", "quote": "The Sales Tax Law levies a 3.5% contractor's tax on all non-residential construction activities when the total contract price or compensation received exceeds $10,000.00."},
+  "unemployment": {"agency": "Mississippi Department of Employment Security (MDES)", "summary": "Employers in Mississippi pay unemployment insurance tax and must register with MDES, then report and file.", "url": "https://mdes.ms.gov/employers/unemployment-tax/", "quote": "Unemployment Insurance Tax is paid by the employer. As an employer in Mississippi, you are required to do certain things as it related to the Unemployment Insurance Tax program: Registering Reporting and Filing"},
+  "workers_comp": {"agency": "Mississippi Workers' Compensation Commission", "summary": "Employers with 5 or more regular employees must carry workers' compensation insurance. With fewer than 5 it is optional.", "url": "https://www.mwcc.ms.gov/pdf/WCFacts2013.pdf", "quote": "All employers with five (5) employees regularly employed are required to provide workers' compensation insurance coverage. If the employer has less than five (5) employees, workers' compensation coverage is not mandatory"}
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "threshold",
+   "name": "Residential Building / Residential Remodeling license",
+   "agency": "Mississippi State Board of Contractors (MSBOC)",
+   "covers": "New home construction over $50,000 and residential remodeling or additions over $10,000.",
+   "threshold": "New residential construction over $50,000; remodeling/additions over $10,000.",
+   "prerequisites": ["Qualifying party (owner, officer or responsible managing employee) who takes the exams", "Pass the Law and Business Management exam (plus a trade exam for some classifications)", "Entity registered and in good standing with the Secretary of State"],
+   "bond": null,
+   "insurance": null,
+   "summary": "Mississippi requires an MSBOC residential license for new homes over $50,000 and remodeling or additions over $10,000. Your qualifying party must pass the Law and Business Management exam, and some classifications also need a trade exam.",
+   "url": "https://www.msboc.us/general-info/frequently-asked-questions/",
+   "quote": "All contractors performing new residential construction over $50,000, residential remodeling or additions over $10,000, or residential roofing over $10,000, are required to have a license issued by MSBOC.",
+   "evidence": [
+    {"url": "https://www.msboc.us/general-info/frequently-asked-questions/", "quote": "All applicants must take a Law and Business Management exam. Depending on the classification, a trade exam may also be required."},
+    {"url": "https://www.msboc.us/contractors/licenses/", "quote": "A Qualifying Party is the individual responsible for taking any required exams. The Qualifying Party must be an owner, officer or responsible managing employee."}
+   ],
+   "note": "Licenses must be renewed annually."
+  },
+  "commercial_building": {
+   "status": "threshold",
+   "name": "Commercial contractor license (Building Construction and other major/specialty classifications)",
+   "agency": "Mississippi State Board of Contractors (MSBOC)",
+   "covers": "All contractors and subcontractors on commercial jobs over $50,000, including equipment installation.",
+   "threshold": "Commercial jobs over $50,000.",
+   "prerequisites": ["Qualifying party who passes the Law and Business Management exam (and trade exam if required)", "CPA-reviewed financial statement showing net worth of $50,000 (major classification) or $20,000 (specialty)", "Mississippi sales or use tax number"],
+   "bond": null,
+   "insurance": null,
+   "summary": "Commercial jobs over $50,000 require an MSBOC commercial license. Applicants need a qualifying party who passes the exams and a CPA-reviewed financial statement showing a minimum net worth.",
+   "url": "https://www.msboc.us/general-info/frequently-asked-questions/",
+   "quote": "All contractors and subcontractors performing work on commercial jobs over $50,000, including equipment installation, are required to have a commercial license issued by MSBOC.",
+   "evidence": [
+    {"url": "https://www.msboc.us/contractors/licenses/", "quote": "The reviewed financial statement must demonstrate a net worth of $50,000 or greater if applying for a major classification, or a net worth of $20,000 or greater if applying for a specialty classification."},
+    {"url": "https://www.msboc.us/contractors/licenses/", "quote": "A Mississippi Sales Tax Number or Use Tax Number is required on all commercial applications."}
+   ],
+   "note": null
+  },
+  "electrical": {
+   "status": "state_license",
+   "name": "Residential Electrical license; commercial Electrical Work classification",
+   "agency": "Mississippi State Board of Contractors (MSBOC)",
+   "covers": "Subcontractors doing residential electrical work, and electrical contractors on commercial jobs over $50,000.",
+   "threshold": "Commercial: jobs over $50,000.",
+   "prerequisites": ["Qualifying party who passes the required MSBOC exams"],
+   "bond": null,
+   "insurance": null,
+   "summary": "Electrical subcontractors on home projects must be licensed by MSBOC, and commercial electrical jobs over $50,000 need a commercial license. Mississippi has no state journeyman/master electrician card; cities may license individual electricians.",
+   "url": "https://www.msboc.us/general-info/frequently-asked-questions/",
+   "quote": "Subcontractors performing residential electrical, mechanical, HVAC, or plumbing work on a residential construction or residential improvement project are required to be licensed by MSBOC.",
+   "evidence": [
+    {"url": "https://www.msboc.us/general-info/frequently-asked-questions/", "quote": "All contractors and subcontractors performing work on commercial jobs over $50,000, including equipment installation, are required to have a commercial license issued by MSBOC."},
+    {"url": "https://www.msboc.us/contractors/licenses/", "quote": "Choose from Residential Building, Residential Remodeling, Residential Roofing, Construction Manager, Residential Solar, Residential Mechanical, Residential HVAC, Residential Plumbing, and Residential Electrical."}
+   ],
+   "note": "No state individual electrician license was found; individual licensing is typically local (not verified)."
+  },
+  "plumbing": {
+   "status": "state_license",
+   "name": "Residential Plumbing license; commercial Mechanical Work (plumbing) classification",
+   "agency": "Mississippi State Board of Contractors (MSBOC)",
+   "covers": "Subcontractors doing residential plumbing, and plumbing contractors on commercial jobs over $50,000.",
+   "threshold": "Commercial: jobs over $50,000.",
+   "prerequisites": ["Qualifying party who passes the required MSBOC exams"],
+   "bond": null,
+   "insurance": null,
+   "summary": "Plumbing subcontractors on home projects must be licensed by MSBOC, and commercial plumbing jobs over $50,000 need a commercial license.",
+   "url": "https://www.msboc.us/general-info/frequently-asked-questions/",
+   "quote": "Subcontractors performing residential electrical, mechanical, HVAC, or plumbing work on a residential construction or residential improvement project are required to be licensed by MSBOC.",
+   "evidence": [
+    {"url": "https://www.msboc.us/general-info/frequently-asked-questions/", "quote": "All contractors and subcontractors performing work on commercial jobs over $50,000, including equipment installation, are required to have a commercial license issued by MSBOC."}
+   ],
+   "note": "Individual plumber licensing is local in Mississippi (not verified here)."
+  },
+  "mechanical": {
+   "status": "state_license",
+   "name": "Residential HVAC / Residential Mechanical license; commercial Mechanical Work classification",
+   "agency": "Mississippi State Board of Contractors (MSBOC)",
+   "covers": "Subcontractors doing residential HVAC/mechanical work, and mechanical contractors on commercial jobs over $50,000.",
+   "threshold": "Commercial: jobs over $50,000.",
+   "prerequisites": ["Qualifying party who passes the required MSBOC exams"],
+   "bond": null,
+   "insurance": null,
+   "summary": "HVAC and mechanical subcontractors on home projects must be licensed by MSBOC, and commercial mechanical jobs over $50,000 need a commercial license under the Mechanical Work classification.",
+   "url": "https://www.msboc.us/general-info/frequently-asked-questions/",
+   "quote": "Subcontractors performing residential electrical, mechanical, HVAC, or plumbing work on a residential construction or residential improvement project are required to be licensed by MSBOC.",
+   "evidence": [
+    {"url": "https://www.msboc.us/general-info/frequently-asked-questions/", "quote": "All contractors and subcontractors performing work on commercial jobs over $50,000, including equipment installation, are required to have a commercial license issued by MSBOC."}
+   ],
+   "note": null
+  },
+  "roofing": {
+   "status": "threshold",
+   "name": "Residential Roofing license",
+   "agency": "Mississippi State Board of Contractors (MSBOC)",
+   "covers": "Residential roofing jobs over $10,000; commercial roofing falls under the commercial license over $50,000.",
+   "threshold": "Residential roofing over $10,000.",
+   "prerequisites": ["Qualifying party who passes the Law and Business Management exam"],
+   "bond": null,
+   "insurance": null,
+   "summary": "Residential roofers need an MSBOC residential roofing license for jobs over $10,000.",
+   "url": "https://www.msboc.us/general-info/frequently-asked-questions/",
+   "quote": "All contractors performing new residential construction over $50,000, residential remodeling or additions over $10,000, or residential roofing over $10,000, are required to have a license issued by MSBOC.",
+   "evidence": [
+    {"url": "https://www.msboc.us/general-info/frequently-asked-questions/", "quote": "All applicants must take a Law and Business Management exam. Depending on the classification, a trade exam may also be required."}
+   ],
+   "note": null
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Pest/Weed Control operator license (Bureau of Plant Industry); Certified Commercial Applicator card",
+   "agency": "Mississippi Department of Agriculture and Commerce, Bureau of Plant Industry",
+   "covers": "Anyone paid to do pest control or weed control.",
+   "threshold": null,
+   "prerequisites": ["High school diploma plus four years of experience with a licensed operator within the past six years, or qualifying college coursework", "Pass the license exam"],
+   "bond": null,
+   "insurance": null,
+   "summary": "Anyone paid for pest or weed control needs a state license; a commercial applicator card alone is not enough. You qualify through four years of experience with a licensed operator or college coursework in the category.",
+   "url": "https://www.mdac.ms.gov/bureaus-departments/bpi/regulation-of-professional-services/frequently-asked-questions/",
+   "quote": "Anyone who receives fees for pest control and/or weed control services in Mississippi must be licensed.",
+   "evidence": [
+    {"url": "https://www.mdac.ms.gov/bureaus-departments/bpi/regulation-of-professional-services/frequently-asked-questions/", "quote": "you must be at least a high school graduate or equivalent and have, in addition at least four years experience with a licensed operator within the past six years."},
+    {"url": "https://www.mdac.ms.gov/bureaus-departments/bpi/regulation-of-professional-services/frequently-asked-questions/", "quote": "The Certified Commercial Applicator Card is not a license."}
+   ],
+   "note": null
+  },
+  "asbestos": {
+   "status": "state_license",
+   "name": "Asbestos Contractor certification (plus supervisor/worker certification)",
+   "agency": "Mississippi Department of Environmental Quality (MDEQ)",
+   "covers": "Contractors, supervisors and workers doing asbestos abatement.",
+   "threshold": null,
+   "prerequisites": ["MDEQ-approved training", "MDEQ certification for the contractor and each worker"],
+   "bond": null,
+   "insurance": null,
+   "summary": "Asbestos abatement contractors, supervisors and workers must be trained and certified by MDEQ, and a contractor may not use uncertified workers.",
+   "url": "https://www.mdeq.ms.gov/air/asbestos/accreditation-and-certification/",
+   "quote": "Persons or individuals who perform asbestos abatement activities as management planners, project designers, inspectors, contractors, supervisors, workers, and air monitors must be properly trained and be certified by MDEQ.",
+   "note": null
+  },
+  "lead_rrp": {
+   "status": "state_license",
+   "name": "MDEQ Lead-Based Paint Renovation Firm certification + Lead Renovator certification",
+   "agency": "Mississippi Department of Environmental Quality (MDEQ)",
+   "covers": "Renovation, repair and painting in pre-1978 homes and child-occupied facilities.",
+   "threshold": null,
+   "prerequisites": ["Renovator training from an EPA or MDEQ accredited provider", "MDEQ firm and individual certification (renewed yearly)"],
+   "bond": null,
+   "insurance": null,
+   "summary": "Mississippi runs its own EPA-authorized RRP program, so renovation firms and renovators are certified by MDEQ, not EPA. Certification must be renewed every year.",
+   "url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program",
+   "quote": "EPA administers the RRP Program in most Tribes, states and territories, but has authorized the following to operate their own programs: Alabama, Delaware, Georgia, Iowa, Kansas, Massachusetts, Mississippi",
+   "evidence": [
+    {"url": "https://www.mdeq.ms.gov/lead-based-paint-certification-and-accreditation/", "quote": "To become lead-safe certified for renovation activities where individuals conduct work as a Lead Renovator or a Lead Dust Sampling Technician, the individual must attend training for the activity that is to be done."},
+    {"url": "https://www.mdeq.ms.gov/lead-based-paint-certification-and-accreditation/", "quote": "The MDEQ Certification is valid for one (1) year and must be re-applied for each year. The application for the certification/recertification of a firm is available HERE."},
+    {"url": "https://www.epa.gov/lead/lead-renovation-repair-and-painting-program", "quote": "EPA's RRP Rule requires that anyone paid to perform work that disturbs painted surfaces in homes, childcare facilities and preschools built before 1978 be certified and their employees be trained"}
+   ],
+   "note": null
+  },
+  "other": [
+   {"key": "fire_sprinkler", "name": "Commercial license for fire sprinkler work", "agency": "Mississippi State Board of Contractors", "trades": ["plumbing"], "summary": "Fire sprinkler work needs a commercial MSBOC license on public projects over $5,000 and private projects over $10,000.", "url": "https://www.msboc.us/general-info/frequently-asked-questions/", "quote": "A commercial license is also required for any contract involving the construction, reconstruction, repair, or maintenance of fire sprinkler systems on public projects over $5,000 and private projects over $10,000."},
+   {"key": "residential_solar", "name": "Residential Solar / Construction Manager license", "agency": "Mississippi State Board of Contractors", "trades": ["electrical", "roofing"], "summary": "Construction managers and residential solar contractors also need a state license.", "url": "https://www.msboc.us/general-info/frequently-asked-questions/", "quote": "A state license is also required for construction managers and residential solar contractors."}
+  ]
+ }
+}

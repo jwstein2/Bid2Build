@@ -1,0 +1,355 @@
+{
+ "state": "OR",
+ "researched_on": "2026-11-22",
+ "checked_at": "2026-11-22T21:48:10Z",
+ "general": {
+  "entity": {
+   "agency": "Oregon Secretary of State, Corporation Division",
+   "summary": "Register your LLC or corporation with the Secretary of State's Corporation Division. A sole proprietor operating under any name other than their own must register an assumed business name there.",
+   "url": "https://sos.oregon.gov/business/Pages/starting-business.aspx",
+   "quote": "The Oregon Secretary of State's Corporation Division is the place to register your assumed business name, LLC, corporation, or nonprofit corporation.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "state_tax": {
+   "agency": "Oregon Department of Revenue",
+   "summary": "Oregon has no general sales tax, so there is no sales tax permit. Register with the Department of Revenue for the tax programs that apply to you, such as payroll withholding once you have employees (done through Combined Employer Registration).",
+   "url": "https://www.oregon.gov/dor/programs/businesses/Pages/business-registration.aspx",
+   "quote": "When registering your business with the Oregon Department of Revenue you will need to provide us with information about your business.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "unemployment": {
+   "agency": "Oregon Employment Department",
+   "summary": "You become an employer for Oregon unemployment insurance once you employ one or more people in each of 18 separate weeks in a year, or your payroll reaches $1,000 in a calendar quarter. Register through Combined Employer Registration.",
+   "url": "https://oregon.public.law/statutes/ors_657.025",
+   "quote": "\"employer\" means any employing unit which employs one or more individuals in an employment subject to this chapter in each of 18 separate weeks during any calendar year, or in which the employing unit's total payroll during any calendar quarter amounts to $1,000 or more.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "workers_comp": {
+   "agency": "Oregon DCBS Workers' Compensation Division",
+   "summary": "If you have employees, you must carry workers' compensation insurance (or be self-insured). Commercial contractors must carry workers' compensation insurance. Sole owners with no employees are not required to cover themselves.",
+   "url": "https://www.oregon.gov/ccb/pages/ccb%20license.aspx",
+   "quote": "Workers compensation insurance is required if your business has employees. Commercial contractors must have workers compensation insurance.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "local": {
+   "agency": null,
+   "summary": "Cities and counties may also require a business license, permit or zoning approval.",
+   "url": "https://sos.oregon.gov/business/Pages/starting-business.aspx",
+   "quote": "Cities and counties may also require a business license or permit. Check with your city and county to determine license, permit or zoning requirements.",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "state_license",
+   "name": "CCB Contractor License, Residential endorsement (Residential General, Specialty or Limited Contractor)",
+   "agency": "Oregon Construction Contractors Board (CCB)",
+   "covers": "Generally anyone paid to do construction work that improves real property, including remodelers, handymen and specialty trades, on homes and small commercial structures.",
+   "threshold": null,
+   "prerequisites": [
+    "Be at least 18 years old",
+    "A Responsible Managing Individual completes 16 hours of pre-license training and passes the Oregon exam",
+    "Surety bond on a CCB form ($25,000 for Residential General Contractor)",
+    "General liability insurance ($500,000 per occurrence for Residential General Contractor)",
+    "Workers' compensation insurance if you will have employees"
+   ],
+   "bond": "Residential General Contractor $25,000; Residential Specialty $20,000; Residential Limited $15,000",
+   "insurance": "Residential General Contractor $500,000 per occurrence; Residential Specialty $300,000; Residential Limited $100,000",
+   "summary": "Oregon requires a CCB license for almost anyone paid to do construction work. The license holder's managing person must take 16 hours of training and pass an exam, and the business must file a surety bond and liability insurance sized to its endorsement.",
+   "url": "https://www.oregon.gov/ccb/pages/ccb%20license.aspx",
+   "quote": "Generally, Oregon law requires anyone who works for compensation in any construction activity involving improvements to real property to be licensed.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.oregon.gov/ccb/pages/ccb%20license.aspx",
+     "quote": "Be at least 18 years old. Complete at least 16 hours of pre-license training from an approved pre-license education provider and pass the Oregon exam."
+    },
+    {
+     "url": "https://www.oregon.gov/ccb/pages/ccb%20license.aspx",
+     "quote": "Residential general contractor: $25,000 Residential specialty contractor: $20,000 Residential limited contractor: $15,000"
+    },
+    {
+     "url": "https://www.oregon.gov/ccb/pages/ccb%20license.aspx",
+     "quote": "Residential General Contractor: $500,000 per occurrence Residential Specialty Contractor: $300,000 per occurrence Residential Limited Contractor: $100,000 per occurrence"
+    },
+    {
+     "url": "https://www.oregon.gov/ccb/pages/ccb%20license.aspx",
+     "quote": "Obtain Workers Compensation Insurance, if you will be hiring employees"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "commercial_building": {
+   "status": "state_license",
+   "name": "CCB Contractor License, Commercial endorsement (Commercial General or Specialty, Level 1 or 2)",
+   "agency": "Oregon Construction Contractors Board (CCB)",
+   "covers": "Contractors working on large commercial structures (a residential endorsement covers small commercial). Contractors doing both need both endorsements.",
+   "threshold": null,
+   "prerequisites": [
+    "16-hour pre-license training and Oregon exam (or NASCLA commercial exam plus the Oregon exam)",
+    "Construction experience: Level 1 needs 8 years, Level 2 needs 4 years",
+    "Commercial surety bond ($80,000 for Commercial General Level 1; $25,000 for Level 2)",
+    "Liability insurance ($2,000,000 aggregate for Commercial General Level 1; $1,000,000 for Level 2)",
+    "Workers' compensation insurance"
+   ],
+   "bond": "Commercial General Contractor Level 1 $80,000; Level 2 $25,000",
+   "insurance": "Commercial General Contractor Level 1 $2,000,000 aggregate; Level 2 $1,000,000 aggregate; workers' compensation required",
+   "summary": "Commercial contractors in Oregon need a CCB license with a commercial endorsement. Level 1 requires 8 years of experience and Level 2 requires 4 years, plus training and exam, a commercial bond, liability insurance, and workers' compensation coverage.",
+   "url": "https://www.oregon.gov/ccb/Documents/Endorsement%20Chart.pdf",
+   "quote": "Contractors with a commercial endorsement may work on both large and small commercial projects.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.oregon.gov/ccb/Documents/Endorsement%20Chart.pdf",
+     "quote": "A Level 1 contractor must have 8 years of aggregate"
+    },
+    {
+     "url": "https://www.oregon.gov/ccb/Documents/Endorsement%20Chart.pdf",
+     "quote": "A Level 2 contractor must have 4 years of"
+    },
+    {
+     "url": "https://www.oregon.gov/ccb/pages/ccb%20license.aspx",
+     "quote": "Commercial General Contractor Level 1: $80,000 Commercial General Contractor Level 2: $25,000"
+    },
+    {
+     "url": "https://www.oregon.gov/ccb/pages/ccb%20license.aspx",
+     "quote": "Commercial General Contractor, Level 1: $2,000,000 aggregate Commercial General Contractor, Level 2: $1,000,000 aggregate"
+    },
+    {
+     "url": "https://www.oregon.gov/ccb/pages/ccb%20license.aspx",
+     "quote": "Complete at least 16 hours of pre-license training from an approved pre-license education provider and pass the Oregon exam."
+    },
+    {
+     "url": "https://www.oregon.gov/ccb/pages/ccb%20license.aspx",
+     "quote": "Commercial contractors must have workers compensation insurance."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "electrical": {
+   "status": "state_license",
+   "name": "Electrical Contractor license (BCD) plus CCB license; General Journeyman and General Supervising Electrician licenses",
+   "agency": "Oregon Building Codes Division (BCD), Electrical and Elevator Board; CCB",
+   "covers": "Businesses doing electrical installations, and the electricians who do and supervise the work.",
+   "threshold": null,
+   "prerequisites": [
+    "CCB contractor license",
+    "Employ at least one full-time general supervising electrician",
+    "Journeyman: at least 8,000 hours of qualifying experience",
+    "Supervising electrician: 8,000 hours to qualify as journeyman plus 8,000 more hours of journeyman-level work"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Electrical contractors in Oregon need a state electrical contractor license from BCD on top of the CCB license, and must keep at least one full-time general supervising electrician on staff. Individual electricians are licensed by BCD; journeymen need 8,000 hours of experience.",
+   "url": "https://oregon.public.law/rules/oar_918-282-0010",
+   "quote": "Shall continuously employ at least one full-time general supervising electrician except as otherwise exempted",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://oregon.public.law/rules/oar_918-282-0140",
+     "quote": "Qualifying experience to become a journeyman electrician, that is at least 8,000 hours of work experience"
+    },
+    {
+     "url": "https://oregon.public.law/rules/oar_918-282-0140",
+     "quote": "Additional qualifying experience as a journeyman, that is at least 8,000 hours of work experience that is equivalent to journeyman work."
+    },
+    {
+     "url": "https://www.oregon.gov/ccb/pages/ccb%20license.aspx",
+     "quote": "Generally, Oregon law requires anyone who works for compensation in any construction activity involving improvements to real property to be licensed."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "plumbing": {
+   "status": "state_license",
+   "name": "Plumbing Contractor license (BCD) plus CCB license; Journeyman Plumber license",
+   "agency": "Oregon Building Codes Division / State Plumbing Board; CCB",
+   "covers": "Anyone working as or advertising as a plumbing contractor, or laying out or superintending plumbing installations; journeyman plumbers.",
+   "threshold": null,
+   "prerequisites": [
+    "CCB contractor license",
+    "Plumbing contractor license",
+    "Only licensed journeyman plumbers may do journeyman work for the contractor"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Oregon requires a state plumbing contractor license (in addition to the CCB license) to work as or advertise as a plumbing contractor. The contractor license does not let you do the plumbing yourself; that takes a journeyman plumber license.",
+   "url": "https://oregon.public.law/statutes/ors_447.040",
+   "quote": "A person may not work as a plumbing contractor, or advertise or purport to be a plumbing contractor, and a member or employee of a firm, partnership or corporation may not engage in the layout or superintending of plumbing installations, without having obtained the plumbing contractor license",
+   "note": "Experience requirements for journeyman plumbers (OAR 918-695) were not checked.",
+   "evidence": [
+    {
+     "url": "https://oregon.public.law/statutes/ors_447.040",
+     "quote": "A plumbing contractor license does not authorize the contractor to work as a journeyman plumber."
+    },
+    {
+     "url": "https://oregon.public.law/statutes/ors_693.030",
+     "quote": "Permit or suffer any person to work as a journeyman plumber who does not hold a valid journeyman plumber license."
+    },
+    {
+     "url": "https://www.oregon.gov/ccb/pages/ccb%20license.aspx",
+     "quote": "Generally, Oregon law requires anyone who works for compensation in any construction activity involving improvements to real property to be licensed."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "mechanical": {
+   "status": "state_license",
+   "name": "CCB Contractor License (no separate statewide HVAC trade license found)",
+   "agency": "Oregon Construction Contractors Board (CCB)",
+   "covers": "HVAC and sheet metal contractors need a CCB license like any construction contractor; electrical parts of HVAC work fall under BCD electrical licensing.",
+   "threshold": null,
+   "prerequisites": [
+    "16-hour pre-license training and Oregon exam (Responsible Managing Individual)",
+    "CCB surety bond and liability insurance for the endorsement"
+   ],
+   "bond": "Set by CCB endorsement",
+   "insurance": "Set by CCB endorsement",
+   "summary": "We found no separate statewide HVAC license in Oregon; HVAC contractors need the general CCB contractor license with its training, exam, bond and insurance. Any electrical wiring work requires BCD electrical licensing.",
+   "url": "https://www.oregon.gov/ccb/pages/ccb%20license.aspx",
+   "quote": "Generally, Oregon law requires anyone who works for compensation in any construction activity involving improvements to real property to be licensed.",
+   "note": "No official page states outright that there is no HVAC trade license; boiler and limited electrical licenses from BCD may apply to some mechanical work.",
+   "evidence": [
+    {
+     "url": "https://www.oregon.gov/ccb/pages/ccb%20license.aspx",
+     "quote": "Complete at least 16 hours of pre-license training from an approved pre-license education provider and pass the Oregon exam."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "roofing": {
+   "status": "no_state_license",
+   "name": "CCB Contractor License (no separate roofing license)",
+   "agency": "Oregon Construction Contractors Board (CCB)",
+   "covers": "Roofers need a CCB contractor license like any other construction contractor.",
+   "threshold": null,
+   "prerequisites": [
+    "16-hour pre-license training and Oregon exam",
+    "CCB surety bond and liability insurance"
+   ],
+   "bond": "Set by CCB endorsement",
+   "insurance": "Set by CCB endorsement",
+   "summary": "Oregon has no separate roofing license. Roofers must hold a CCB contractor license, with the same training, exam, bond and insurance requirements as other contractors.",
+   "url": "https://www.oregon.gov/ccb/pages/ccb%20license.aspx",
+   "quote": "Generally, Oregon law requires anyone who works for compensation in any construction activity involving improvements to real property to be licensed.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.oregon.gov/ccb/pages/ccb%20license.aspx",
+     "quote": "Complete at least 16 hours of pre-license training from an approved pre-license education provider and pass the Oregon exam."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Commercial Pesticide Operator license (business) and Commercial Pesticide Applicator license",
+   "agency": "Oregon Department of Agriculture, Pesticides Program",
+   "covers": "Businesses that apply pesticides to other people's property (pest control, lawn care, tree care) need a pesticide operator license; their applicators need commercial applicator licenses.",
+   "threshold": null,
+   "prerequisites": [
+    "Applicators pass the required ODA exams",
+    "Operator carries liability insurance of at least $25,000 bodily injury and $25,000 property damage"
+   ],
+   "bond": null,
+   "insurance": "Public liability policy of at least $25,000 bodily injury and $25,000 property damage",
+   "summary": "Oregon requires businesses that apply pesticides for others to hold a pesticide operator license, and their applicators to hold commercial applicator licenses. ODA won't issue the operator license without liability insurance of at least $25,000 for bodily injury and $25,000 for property damage.",
+   "url": "https://www.oregon.gov/oda/pesticides/licensing/Pages/license-requirements.aspx",
+   "quote": "commercial applicators are employed by businesses (pesticide operator) that apply pesticides to other's property",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://oregon.public.law/statutes/ors_634.116",
+     "quote": "The department shall not issue or renew a pesticide operator's license until the applicant or licensee has furnished evidence to the department, in the form of a public liability policy"
+    },
+    {
+     "url": "https://oregon.public.law/statutes/ors_634.116",
+     "quote": "must be not less than $25,000 for bodily injury to one or more persons and not less than $25,000 for property damage."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "asbestos": {
+   "status": "state_license",
+   "name": "Asbestos Abatement Contractor License; worker and supervisor certification",
+   "agency": "Oregon Department of Environmental Quality (DEQ)",
+   "covers": "Contractors doing asbestos abatement, and their workers and supervisors.",
+   "threshold": null,
+   "prerequisites": [
+    "Asbestos training",
+    "Documented previous asbestos abatement experience",
+    "Registration with the CCB and the Oregon Business Registry"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Oregon DEQ licenses asbestos abatement contractors and certifies workers and supervisors. You need training, documented abatement experience, and CCB and business registry registration first.",
+   "url": "https://www.oregon.gov/deq/Hazards-and-Cleanup/Pages/Asbestos-for-Businesses.aspx",
+   "quote": "Licensing and certification for asbestos abatement requires training, documentation of previous asbestos abatement experience, and registration with the Construction Contractors Board and the Oregon Business Registry.",
+   "note": null,
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "lead_rrp": {
+   "status": "state_license",
+   "name": "Lead-Based Paint Renovation (LBPR) contractor license (CCB); OHA firm certification for non-CCB firms",
+   "agency": "Oregon Construction Contractors Board and Oregon Health Authority",
+   "covers": "CCB-licensed contractors doing renovation, repair or painting on pre-1978 homes and child-occupied facilities.",
+   "threshold": null,
+   "prerequisites": [
+    "CCB contractor license",
+    "Renovators trained by an OHA-accredited training provider"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Oregon runs its own RRP program. CCB-licensed contractors working on pre-1978 homes or child-occupied facilities must get the CCB's Lead-Based Paint Renovation license and use renovators trained by OHA-accredited providers.",
+   "url": "https://www.oregon.gov/oha/PH/HEALTHYENVIRONMENTS/HEALTHYNEIGHBORHOODS/LEADPOISONING/Pages/rrp.aspx",
+   "quote": "CCB issues the Lead-Based Paint Renovation (LBPR) contractor license for CCB licensed contractors.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.oregon.gov/oha/PH/HEALTHYENVIRONMENTS/HEALTHYNEIGHBORHOODS/LEADPOISONING/Pages/rrp.aspx",
+     "quote": "In 2010, EPA authorized the Oregon Construction Contractors Board (CCB) and the Oregon Health Authority (OHA) to administer and enforce the rule instead of EPA."
+    },
+    {
+     "url": "https://www.oregon.gov/oha/PH/HEALTHYENVIRONMENTS/HEALTHYNEIGHBORHOODS/LEADPOISONING/Pages/rrp.aspx",
+     "quote": "The rule requires that individuals and firms conducting renovation, repair and painting projects on pre-1978 homes and child-occupied facilities (child care and schools) be trained and certified to follow lead-safe work practices."
+    },
+    {
+     "url": "https://www.oregon.gov/oha/PH/HEALTHYENVIRONMENTS/HEALTHYNEIGHBORHOODS/LEADPOISONING/Pages/rrp.aspx",
+     "quote": "The rule also states that firms must use certified renovators trained by OHA accredited training providers to follow lead-safe work practices."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "other": [
+  {
+   "key": "landscape_contractor",
+   "name": "Landscape Contractor license",
+   "agency": "Oregon Landscape Contractors Board",
+   "trades": [
+    "landscaping",
+    "fencing"
+   ],
+   "summary": "Landscape contractors register with the Landscape Contractors Board rather than the CCB.",
+   "url": "https://sos.oregon.gov/business/Pages/starting-business.aspx",
+   "quote": "For example, construction and landscape contractors need to register with the Construction Contractors Board or Landscape Contractors Board .",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ ]
+}

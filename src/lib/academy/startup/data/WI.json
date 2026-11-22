@@ -1,0 +1,296 @@
+{
+ "state": "WI",
+ "researched_on": "2026-11-22",
+ "checked_at": "2026-11-22T21:48:10Z",
+ "general": {
+  "entity": {
+   "agency": "WI Department of Financial Institutions (DFI)",
+   "summary": "LLCs and corporations are formed with the Department of Financial Institutions; Wisconsin's One Stop Business Registration lets you register with DFI, Revenue and Workforce Development together.",
+   "url": "https://www.revenue.wi.gov/Pages/Businesses/New-Business-home.aspx",
+   "quote": "One Stop Business Registration to register your business with multiple agencies, including the Department of Financial Institutions and the Department of Workforce Development.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "state_tax": {
+   "agency": "WI Department of Revenue",
+   "summary": "Register with the Department of Revenue for sales tax and withholding permits, either directly or through One Stop Business Registration.",
+   "url": "https://www.revenue.wi.gov/Pages/Businesses/New-Business-home.aspx",
+   "quote": "Register with Department of Revenue if any of the following apply",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "unemployment": {
+   "agency": "WI Department of Workforce Development, Unemployment Insurance Division",
+   "summary": "You become a covered employer for unemployment insurance if you pay $1,500 or more in wages in a quarter, or employ someone in 20 or more weeks in a year.",
+   "url": "https://dwd.wisconsin.gov/ui201/t1201",
+   "quote": "You paid wages of $1,500 or more in a quarter in any calendar year or; ... You employed one or more individuals in employment for some part of a day in 20 or more weeks in any calendar year.",
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "workers_comp": {
+   "agency": "WI Department of Workforce Development, Worker's Compensation Division",
+   "summary": "You must carry workers' comp (from a private insurer) once you employ 3 or more people, or pay $500 or more in wages in a quarter to 1 or more employees. Small closely held corporations with no more than two officers and no other employees can opt out.",
+   "url": "https://dwd.wisconsin.gov/dwd/publications/wc/wkc-13328-p.htm",
+   "quote": "Employ 3 or more full-time or part-time employees. ... Pay gross wages of $500 or more in any quarter for 1 or more employees for work done in Wisconsin.",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "credentials": {
+  "residential_building": {
+   "status": "state_license",
+   "name": "Dwelling Contractor certification (business) and Dwelling Contractor Qualifier certification (individual)",
+   "agency": "WI Department of Safety and Professional Services (DSPS)",
+   "covers": "Contractors who obtain building permits for one- and two-family dwellings (new homes, additions, remodels needing a permit).",
+   "threshold": null,
+   "prerequisites": [
+    "Dwelling Contractor Qualifier (owner or employee) completes at least 12 hours in an approved qualifier course",
+    "Surety bond of at least $25,000 (proof of financial responsibility)",
+    "General liability insurance of at least $250,000 per occurrence",
+    "Attest compliance with workers' comp and unemployment requirements"
+   ],
+   "bond": "Surety bond of at least $25,000.",
+   "insurance": "General liability insurance of at least $250,000 per occurrence.",
+   "summary": "To pull building permits on one- and two-family homes in Wisconsin, your business needs a Dwelling Contractor certification and must hold or employ a certified Dwelling Contractor Qualifier, who completes a 12-hour course. The business must show a bond and liability insurance.",
+   "url": "https://dsps.wi.gov/Pages/Professions/DwellingContractorQualifier/Default.aspx",
+   "quote": "no person may obtain a building permit for a one and two family dwelling unless the person compiles with the following",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://dsps.wi.gov/Pages/Professions/DwellingContractorQualifier/Default.aspx",
+     "quote": "Holds a Dwelling contractor certification or a Dwelling Contractor Restricted Certification issued by the Department."
+    },
+    {
+     "url": "https://dsps.wi.gov/a-z-professions-list/dwelling-contractor-qualifier-dcq/new-licensure/",
+     "quote": "Complete at least 12 hours in an approved initial qualifier course in dwelling construction."
+    },
+    {
+     "url": "https://dsps.wi.gov/a-z-professions-list/dwelling-contractor-dc/new-licensure/",
+     "quote": "A copy of a bond of at least $25,000 endorsed by a surety company authorized to do business in Wisconsin."
+    },
+    {
+     "url": "https://dsps.wi.gov/a-z-professions-list/dwelling-contractor-dc/new-licensure/",
+     "quote": "A certificate of general liability insurance of at least $250,000 per occurrence."
+    },
+    {
+     "url": "https://dsps.wi.gov/a-z-professions-list/dwelling-contractor-dc/new-licensure/",
+     "quote": "By submitting this application the applicant is attesting that the business is in compliance with worker's compensation requirements and unemployment compensation requirements"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "commercial_building": {
+   "status": "no_state_license",
+   "name": null,
+   "agency": "WI Department of Safety and Professional Services",
+   "covers": "The Dwelling Contractor credential applies to one- and two-family dwelling permits; there is no general state commercial contractor license.",
+   "threshold": null,
+   "prerequisites": [],
+   "bond": null,
+   "insurance": null,
+   "summary": "Wisconsin has no statewide general contractor license for commercial work; the Dwelling Contractor certification is tied to permits for one- and two-family homes. Trade credentials (electrical, plumbing, HVAC) still apply.",
+   "url": "https://dsps.wi.gov/Pages/Professions/DwellingContractor/Default.aspx",
+   "quote": "For the owner, partner, or chief executive of a contracting business seeking certification to obtain building permits for one- and two-family dwellings for the first time.",
+   "note": "No DSPS page found stating outright that commercial general contractors are unlicensed; inferred from the dwelling-only scope.",
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "electrical": {
+   "status": "state_license",
+   "name": "Electrical Contractor license (business); Master and Journeyman Electrician licenses (individual)",
+   "agency": "WI Department of Safety and Professional Services",
+   "covers": "Electrical contracting businesses and individual electricians.",
+   "threshold": null,
+   "prerequisites": [
+    "Journeyman: a 3-year approved electrician apprenticeship, or 48 months and 8,000 hours of experience, then pass the exam",
+    "Master: twelve months as a licensed journeyman (or 60 months with 10,000 hours, or an electrical engineering degree), then pass the exam",
+    "Electrical contractor: applied for by the owner, partner or CEO (no exam)"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Wisconsin licenses electrical contracting businesses and individual electricians through DSPS. Journeymen qualify through a 3-year apprenticeship or 8,000 hours of experience; masters need twelve months as a licensed journeyman. Both must pass an exam.",
+   "url": "https://dsps.wi.gov/a-z-professions-list/journeyman-electrician/licensure-by-examination/",
+   "quote": "Completion of a construction electrician apprenticeship program in installing, repairing, and maintaining electrical wiring that has a duration of at least 3 years",
+   "note": "Statute requiring an electrical contractor to employ a master electrician (Wis. Stat. 101.862) could not be fetched; not stated here.",
+   "evidence": [
+    {
+     "url": "https://dsps.wi.gov/a-z-professions-list/journeyman-electrician/licensure-by-examination/",
+     "quote": "Experience in installing, repairing, and maintaining electrical wiring during a period of not less than 48 months, with at least 8,000 hours of experience over that period."
+    },
+    {
+     "url": "https://dsps.wi.gov/a-z-professions-list/master-electrician/licensure-by-examination/",
+     "quote": "Twelve months of experience in installing, repairing, and maintaining electrical wiring while being licensed as a Journeyman Electrician"
+    },
+    {
+     "url": "https://dsps.wi.gov/a-z-professions-list/master-electrician/licensure-by-examination/",
+     "quote": "Experience in installing, repairing, and maintaining electrical wiring during a period of not less than 60 months, with at least 10,000 hours of experience over that period"
+    },
+    {
+     "url": "https://dsps.wi.gov/a-z-professions-list/electrical-contractor/licensure-by-examination/",
+     "quote": "The person applying for an electrical contractor license shall be one of the following:"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "plumbing": {
+   "status": "state_license",
+   "name": "Master Plumber and Journeyman Plumber licenses (plus restricted service/appliance licenses)",
+   "agency": "WI Department of Safety and Professional Services",
+   "covers": "Individual plumbers; plumbing work is done under licensed master plumbers.",
+   "threshold": null,
+   "prerequisites": [
+    "Journeyman: complete a recognized plumbing apprenticeship program, then pass the exam",
+    "Master: at least 1,000 hours per year for at least 3 years as a Wisconsin licensed journeyman (or an engineering degree), then pass the exam"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Wisconsin licenses plumbers through DSPS. Journeymen must finish a recognized apprenticeship and pass an exam; masters need 3 years as a licensed journeyman (1,000 hours a year) and another exam.",
+   "url": "https://dsps.wi.gov/a-z-professions-list/journeyman-plumber/licensure-by-examination/",
+   "quote": "A person applying for a Journeyman Plumber license examination shall have completed a plumbing apprenticeship program recognized under Wisconsin Statute chapter 106 or the Federal Department of Labor",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://dsps.wi.gov/a-z-professions-list/master-plumber/licensure-by-examination/",
+     "quote": "At least 1,000 hours of plumbing related work experience per year for at least 3 years as a Wisconsin licensed journeyman plumber"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "mechanical": {
+   "status": "state_registration",
+   "name": "HVAC Contractor registration (business) and HVAC Qualifier certification (individual)",
+   "agency": "WI Department of Safety and Professional Services",
+   "covers": "HVAC contracting businesses register with DSPS; the HVAC Qualifier is an individual exam-based credential.",
+   "threshold": null,
+   "prerequisites": [
+    "HVAC Contractor registration applied for by the owner, partner or CEO",
+    "HVAC Qualifier exam: at least 1000 hours per year for at least 4 years of HVAC experience, or 4 years of HVAC-related schooling, or a combination"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "HVAC businesses register with DSPS as HVAC Contractors. The HVAC Qualifier credential requires about 4 years of HVAC experience or schooling and an exam.",
+   "url": "https://dsps.wi.gov/a-z-professions-list/hvac-contractor/new-licensure/",
+   "quote": "The person applying for a HVAC Contractor registration shall be one of the following:",
+   "note": "Whether an HVAC contractor must employ an HVAC Qualifier is set in SPS 305; not quoted here.",
+   "evidence": [
+    {
+     "url": "https://dsps.wi.gov/a-z-professions-list/hvac-qualifier/licensure-by-examination/",
+     "quote": "At least 1000 hours per year for at least 4 years of experience in supervising or performing the design, installation, servicing or maintenance of HVAC systems or equipment"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "roofing": {
+   "status": "no_state_license",
+   "name": null,
+   "agency": "WI Department of Safety and Professional Services",
+   "covers": "No separate roofing license; roofers pulling permits on one- and two-family dwellings need the Dwelling Contractor certification.",
+   "threshold": null,
+   "prerequisites": [],
+   "bond": null,
+   "insurance": null,
+   "summary": "Wisconsin has no separate roofing license. If a roofing job on a one- or two-family home needs a building permit, the contractor pulling it must hold the Dwelling Contractor certification and employ a Dwelling Contractor Qualifier.",
+   "url": "https://dsps.wi.gov/Pages/Professions/DwellingContractorQualifier/Default.aspx",
+   "quote": "no person may obtain a building permit for a one and two family dwelling unless the person compiles with the following",
+   "note": "Roofing is not listed among DSPS trade credentials.",
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "pesticide": {
+   "status": "state_license",
+   "name": "Commercial Pesticide Applicator certification and license; Pesticide Business License",
+   "agency": "WI Department of Agriculture, Trade and Consumer Protection (DATCP)",
+   "covers": "For-hire pesticide applicators (pest control, lawn care, tree spraying) and the businesses employing them.",
+   "threshold": null,
+   "prerequisites": [
+    "Pass the category certification exam",
+    "Individual Commercial Applicator License",
+    "Work for or obtain a Pesticide Business License"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "For-hire applicators need certification (by exam), an individual commercial applicator license, and must work for a business holding a Pesticide Business License. Businesses must employ certified and licensed applicators.",
+   "url": "https://datcp.wi.gov/Pages/Licenses_Permits/CommercialApplicator.aspx",
+   "quote": "For-hire applicators need three things before making a commercial application:",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://datcp.wi.gov/Pages/Licenses_Permits/CommercialApplicator.aspx",
+     "quote": "Work for or obtain a Pesticide Business License (PBL) (this gets renewed annually, January 1-December 31)."
+    },
+    {
+     "url": "https://datcp.wi.gov/Documents2/PesticideLicensingFactSheet.pdf",
+     "quote": "Businesses must employ certified AND"
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "asbestos": {
+   "status": "state_license",
+   "name": "Asbestos company and individual certification",
+   "agency": "WI Department of Health Services, Asbestos Program",
+   "covers": "Persons and companies doing regulated asbestos work during renovation or demolition.",
+   "threshold": null,
+   "prerequisites": [
+    "DHS asbestos training and certification for workers and the company"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Wisconsin DHS certifies people and companies that do regulated asbestos work, such as abatement during renovation or demolition.",
+   "url": "https://www.dhs.wisconsin.gov/asbestos/index.htm",
+   "quote": "helps protect people from exposure to asbestos from building renovations and demolitions by ensuring proper training and certification for persons and companies conducting regulated asbestos work.",
+   "note": null,
+   "evidence": [],
+   "pending_reason": null,
+   "status_check": "verified"
+  },
+  "lead_rrp": {
+   "status": "state_license",
+   "name": "Lead Company certification and Lead-Safe Renovator certification",
+   "agency": "WI Department of Health Services, Lead-Safe Wisconsin",
+   "covers": "Renovation that disturbs paint in houses and child care centers built before 1978.",
+   "threshold": null,
+   "prerequisites": [
+    "Certify your company with DHS (sole proprietors certify under a company name)",
+    "Individual lead-safe renovator training and certification"
+   ],
+   "bond": null,
+   "insurance": null,
+   "summary": "Wisconsin runs its own lead-safe renovation program instead of EPA. Both your company and the individual renovator must be certified by DHS to do paint-disturbing work in pre-1978 homes and child care centers.",
+   "url": "https://dhs.wisconsin.gov/lead/training-certification.htm",
+   "quote": "You must go through training and get certified to work with lead-based paint in houses and child care centers built before 1978. Both individual and company certification are needed.",
+   "note": null,
+   "evidence": [
+    {
+     "url": "https://www.epa.gov/lead/renovation-repair-and-painting-program-firm-certification",
+     "quote": "These states are authorized to administer their own RRP programs in lieu of the federal program."
+    }
+   ],
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ },
+ "other": [
+  {
+   "key": "fire_sprinkler",
+   "name": "Automatic Fire Sprinkler Contractor and Fitter licenses",
+   "agency": "WI Department of Safety and Professional Services",
+   "trades": [
+    "plumbing",
+    "general-contracting"
+   ],
+   "summary": "DSPS credentials fire sprinkler contractors, fitters and testers.",
+   "url": "https://dsps.wi.gov/a-z-professions-list/hvac-contractor/new-licensure/",
+   "quote": "Automatic Fire Sprinkler Contractor",
+   "pending_reason": null,
+   "status_check": "verified"
+  }
+ ]
+}
