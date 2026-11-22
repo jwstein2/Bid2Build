@@ -54,6 +54,13 @@ describe("study engine", () => {
     expect(score(set, ans)).toMatchObject({ right: 1, total: 3, percent: 33 });
     expect(recommendations(set, ans, [{ slug: "b", title: "B", about: "", state: null }])[0]).toMatchObject({ slug: "b", title: "B", missed: 1 });
   });
+  it("counts a multiple-choice item marked Got it as right in flashcard mode", () => {
+    const set = [row(1, "a"), row(2, "a"), row(3, "a")];
+    const ans = { "id-1": true, "id-2": true, "id-3": true };
+    expect(score(set, ans, "flashcards")).toMatchObject({ right: 3, total: 3 });
+    expect(recommendations(set, ans, [], "flashcards")).toEqual([]);
+    expect(score(set, ans, "quiz").right).toBe(0);
+  });
   it("builds exam pools from the exam's decks and state", () => {
     expect(examPool(rows, { decks: ["a", "mn"], state: null })).toHaveLength(30);
     expect(examPool(rows, { decks: ["a", "mn"], state: "MN" })).toHaveLength(40);

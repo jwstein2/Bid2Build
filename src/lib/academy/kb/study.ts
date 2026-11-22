@@ -85,23 +85,28 @@ export function pickQuestions(pool: StudyRow[], count: number, seed: number, mis
 
 export type Answers = Record<string, number | boolean>;
 
-export function isRight(row: StudyRow, a: number | boolean | undefined) {
-  return row.kind === "question" ? typeof a === "number" && a === row.correct : a === true;
+/**
+ * Whether an answer is right. In flashcard mode every card (including multiple-choice items shown as a card) is
+ * marked "Got it" (true) or "Missed it" (false); in quizzes and exams a question's answer is the chosen option index.
+ */
+export function isRight(row: StudyRow, a: number | boolean | undefined, mode?: StudyMode) {
+  if (mode === "flashcards" || row.kind === "flashcard") return a === true;
+  return typeof a === "number" && a === row.correct;
 }
 
-export function score(rows: StudyRow[], answers: Answers) {
-  const right = rows.filter((r) => isRight(r, answers[r.id])).length;
+export function score(rows: StudyRow[], answers: Answers, mode?: StudyMode) {
+  const right = rows.filter((r) => isRight(r, answers[r.id], mode)).length;
   const answered = rows.filter((r) => answers[r.id] !== undefined).length;
   return { right, answered, total: rows.length, percent: rows.length ? Math.round((right / rows.length) * 100) : 0 };
 }
 
 /** Topics to study next: decks where the learner missed the most, worst first. */
-export function recommendations(rows: StudyRow[], answers: Answers, decks: DeckInfo[]) {
+export function recommendations(rows: StudyRow[], answers: Answers, decks: DeckInfo[], mode?: StudyMode) {
   const tally = new Map<string, { missed: number; total: number }>();
   for (const r of rows) {
     const t = tally.get(r.deck) ?? { missed: 0, total: 0 };
     t.total += 1;
-    if (!isRight(r, answers[r.id])) t.missed += 1;
+    if (!isRight(r, answers[r.id], mode)) t.missed += 1;
     tally.set(r.deck, t);
   }
   return [...tally.entries()]
