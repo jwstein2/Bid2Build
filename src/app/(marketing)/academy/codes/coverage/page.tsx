@@ -10,9 +10,10 @@ import { KB_STATES, locationQuery, stateName } from "@/lib/academy/kb/location";
 export const metadata: Metadata = { title: "Code Library Coverage", robots: { index: false, follow: false } };
 
 export default async function CoveragePage({ searchParams }: PageProps<"/academy/codes/coverage">) {
+  const sp = await searchParams;
   const access = await kbAccess();
   if (!access.enabled && !access.staff) notFound();
-  const loc = await resolveLocation(await searchParams);
+  const loc = await resolveLocation(sp);
   const [states, federal, mine] = await Promise.all([verifiedStates(), coverageFor(null), loc.state ? coverageFor(loc.state) : Promise.resolve(null)]);
   const covered = KB_STATES.filter((s) => states.has(s.code));
   return (

@@ -26,10 +26,10 @@ const KIND: Record<string, string> = { source_change: "Source change", new_docum
 const sum = (o: Record<string, number> | null | undefined, k: string) => o?.[k] ?? 0;
 
 export default async function ManageCodes({ searchParams }: PageProps<"/academy/manage/codes">) {
+  const sp = await searchParams;
   const s = await requireAcademyStaff(["admin", "instructor"]);
   if (!s) notFound();
   const admin = s.me.role === "admin";
-  const sp = await searchParams;
   const access = await kbAccess();
   const flash = <Flash msg={typeof sp.msg === "string" ? sp.msg : undefined} err={typeof sp.err === "string" ? sp.err : undefined} />;
   if (!access.migrated) {

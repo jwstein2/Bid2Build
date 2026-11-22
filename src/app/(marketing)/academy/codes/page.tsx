@@ -24,9 +24,10 @@ const FROM_TEXT: Record<string, string> = {
 };
 
 export default async function CodesPage({ searchParams }: PageProps<"/academy/codes">) {
+  // Read the request first so the page is always rendered per request (never prerendered as a 404).
+  const sp = await searchParams;
   const access = await kbAccess();
   if (!access.enabled && !access.staff) notFound();
-  const sp = await searchParams;
   const one = (k: string) => (typeof sp[k] === "string" ? (sp[k] as string).trim() : "");
   const q = one("q").slice(0, 300);
   const family = one("family") || null;
