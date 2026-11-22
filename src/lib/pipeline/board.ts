@@ -12,10 +12,15 @@
  * move to Won is labeled "Approved manually" and never pretends to be a signature.
  */
 import type { BidSigning } from "@/lib/esign/status";
+import { calendarHref } from "@/lib/projects/calendar-link";
 
 export const STAGES = ["draft", "ready_for_review", "approved", "sent", "pending", "won", "scheduled", "in_progress", "completed", "lost"] as const;
 export type Stage = (typeof STAGES)[number];
 export const isStage = (s: unknown): s is Stage => typeof s === "string" && (STAGES as readonly string[]).includes(s);
+
+/** Most bids the Bids dashboard loads for the board (newest activity first). Stage searches past it use universal search. */
+export const BOARD_LOAD_LIMIT = 500;
+export const isColumn = (s: unknown): s is Column => typeof s === "string" && (COLUMNS as readonly string[]).includes(s);
 
 export const COLUMNS = ["draft", "ready", "sent", "awaiting", "won", "scheduled", "in_progress", "completed", "lost"] as const;
 export type Column = (typeof COLUMNS)[number];
@@ -52,6 +57,10 @@ export interface BoardBid {
   wonAt: string | null; lostReason: string | null;
   latestVersion: { id: string; number: number; total: number; subtotal: number | null; cost: number | null } | null;
   signing: BidSigning | null;
+  /** Searchable only (pipeline mini search); never shown on cards. Optional: older loaders leave them out. */
+  customerEmail?: string | null; address?: string | null;
+  /** The bid's project schedule (Projects), when one exists: lets job cards open the calendar or project. */
+  scheduleId?: string | null;
 }
 
 export function stageColumn(stage: Stage, status: BoardBid["status"]): Column {
@@ -136,9 +145,13 @@ export function nextAction(b: BoardBid, esign: boolean, scheduling = false): Nex
       if (b.signing?.state === "expired") return { label: "Resend signing link", href: proposal };
       return { label: "Review customer response", href: proposal };
     case "won": return scheduling ? { label: "Schedule Now", href: `/projects/new?estimate=${b.id}` } : { label: "Schedule Now", move: "scheduled" };
-    case "scheduled": return { label: "Start job", move: "in_progress" };
-    case "in_progress": return { label: "Mark completed", move: "completed" };
-    case "completed": return b.signing?.signed ? { label: "View signed proposal", href: `/signed/${b.signing.signed.id}` } : { label: "Review proposal", href: proposal };
+    // With a project schedule, job cards open it: the company calendar for Scheduled, the project otherwise.
+    // Start job / Mark completed stay in the card's Move to menu.
+    case "scheduled": return scheduling && b.scheduleId ? { label: "View schedule", href: calendarHref({ project: b.scheduleId }) } : { label: "Start job", move: "in_progress" };
+    case "in_progress": return scheduling && b.scheduleId ? { label: "View project", href: `/projects/${b.scheduleId}` } : { label: "Mark completed", move: "completed" };
+    case "completed":
+      if (scheduling && b.scheduleId) return { label: "View completed project", href: `/projects/${b.scheduleId}` };
+      return b.signing?.signed ? { label: "View signed proposal", href: `/signed/${b.signing.signed.id}` } : { label: "Review proposal", href: proposal };
     case "lost": return { label: "Review proposal", href: proposal };
   }
 }

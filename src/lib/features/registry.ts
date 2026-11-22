@@ -86,7 +86,7 @@ const DEFS = {
     target: "pipeline",
     view: "pipeline",
     description: "See every bid as a card from Draft to Won, drag it to a new stage, and see what's next for each one.",
-    walkthrough: { title: "Your bids as a pipeline", body: "Each column is a sales stage. Drag a card or use its menu to move it. A signed bid moves to Won by itself.", cta: "Show pipeline" },
+    walkthrough: { title: "Your bids as a pipeline", body: "Each column is a sales stage. Drag a card or use its menu to move it. Search inside any stage, or click its name to see all of its bids. A signed bid moves to Won by itself.", cta: "Show pipeline" },
     release: "4.0.0",
     status: "released",
   },

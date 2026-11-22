@@ -555,6 +555,14 @@ if (process.env.MOCK_PIPELINE && ESIGN) {
   add(7, "Driveway replacement", "Sam Lopez", ["concrete"], "lost", 4100, 2900, { created_at: iso(70), updated_at: iso(50), stage_changed_at: iso(50), lost_reason: "Postponed to next year" });
   add(8, "Siding + trim", "Avery Moore", ["siding"], "sent", 13750, 9900, { created_at: iso(16), updated_at: iso(6), stage_changed_at: iso(6) });
   add(9, "Basement finish (estimating)", "Morgan Reyes", ["basement-finishing"], "draft", null, null, { status: "draft", created_at: iso(1), updated_at: iso(0) });
+  // Compact pipeline walk (MOCK_PIPELINE_MANY=1): a crowded Draft stage plus one customer with bids in two stages.
+  if (process.env.MOCK_PIPELINE_MANY) {
+    const people = ["Alex Turner", "Blake Ruiz", "Casey Fox", "Drew Hall", "Emery Stone", "Finley Park", "Gray Lopez", "Harper Lane", "Indy Cole", "Jesse Moss", "Kai Reed", "Logan Shaw", "Micah Dunn", "Noel Grant", "Oakley Hart", "Parker Wade", "Quinn Vale", "Rowan Price"];
+    people.forEach((c, i) => add(20 + i, `${["Kitchen", "Bath", "Roof", "Deck", "Siding", "Window"][i % 6]} estimate`, c, ["decks"], "draft", null, null, { status: "draft", created_at: iso(i + 2), updated_at: iso(i + 1), project_address: `${100 + i} Elm St` }));
+    add(40, "Deck Replacement", "John Anderson", ["decks"], "pending", 18400, 12000, { created_at: iso(20), updated_at: iso(4), stage_changed_at: iso(4), customer_email: "john.anderson@example.test" });
+    add(41, "Garage addition", "John Anderson", ["general"], "won", 42000, 30000, { created_at: iso(60), updated_at: iso(30), stage_changed_at: iso(30), won_at: iso(30) });
+    for (let i = 0; i < 6; i++) add(50 + i, `Gutter guard ${i + 1}`, `Sent Customer ${i + 1}`, ["gutters"], "sent", 1500 + i * 700, 1000, { created_at: iso(15 + i), updated_at: iso(5 + i), stage_changed_at: iso(5 + i) });
+  }
   const h = (est, from, to, d, note = null) => ({ id: tables.estimate_stage_history?.length ?? 0, estimate_id: est, from_stage: from, to_stage: to, created_at: iso(d), effective_at: iso(d), note, changed_by: USER.id });
   tables.estimate_stage_history = [
     h(E(2), "ready_for_review", "sent", 2), h(E(4), "ready_for_review", "pending", 31), h(E(5), "won", "scheduled", 3),

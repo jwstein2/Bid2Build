@@ -152,7 +152,7 @@ for (const theme of ["light", "dark", "black"]) {
   await page.getByTestId("metric-awaiting").click(); await page.waitForTimeout(500);
   const url = page.url();
   check(`[${theme}] Awaiting signature card filters the board (?focus=awaiting)`, /focus=awaiting/.test(url) && await page.getByTestId("pipeline-focus-note").isVisible());
-  const cols = await page.locator('[data-testid^="column-"]:not([data-testid$="-value"])').count();
+  const cols = await page.locator('section[data-testid^="column-"]').count();
   check(`[${theme}] only the Awaiting column is shown`, cols === 1, String(cols));
   await shot(page, `bids-awaiting-${theme}`);
   if (theme === "light") {

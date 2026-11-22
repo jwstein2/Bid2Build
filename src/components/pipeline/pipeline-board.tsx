@@ -1,22 +1,39 @@
 "use client";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
-import * as Menu from "@radix-ui/react-dropdown-menu";
-import { CheckCircle2, ChevronDown, Hourglass, Clock, MoreVertical, UserCheck, ArrowRight } from "lucide-react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { ArrowRight, ChevronsDown, Maximize2 } from "lucide-react";
 import {
-  COLUMN_HINTS, COLUMN_LABELS, COLUMNS, JOB_COLUMNS, SALES_COLUMNS, approvalOf, checkMove, columnOf, columnTotals, lastActivity,
-  nextAction, stageForColumn, valueOf, type BoardBid, type Column, type Stage,
+  COLUMN_HINTS, COLUMN_LABELS, COLUMNS, JOB_COLUMNS, SALES_COLUMNS, checkMove, columnOf, columnTotals, lastActivity,
+  stageForColumn, type BoardBid, type Column, type ColumnTotal, type Stage,
 } from "@/lib/pipeline/board";
+import { SEARCH_PLACEHOLDER, stageQueryParam } from "@/lib/pipeline/stage-search";
 import { cn } from "@/lib/cn";
-import { isPmEnabled } from "@/lib/env";
 import { MoveDialog, type MoveExtras } from "./move-dialog";
-import { money, relDay } from "./format";
+import { BidCard } from "./bid-card";
+import { OtherStageResults, ResultsLabel, StageSearchInput, onResultKeys, useStageSearch } from "./stage-search";
+import { StageView } from "./stage-view";
+import { money } from "./format";
+
+/** Cards fully visible in a stage before its list scrolls. */
+export const VISIBLE_CARDS = 4;
 
 type Toast = { text: string; tone: "ok" | "danger"; undo?: () => void } | null;
 
-/** Kanban board. Native drag-and-drop on desktop; every move is also in each card's "Move to" menu (keyboard + touch). */
-export function PipelineBoard({ bids, esign, focus }: { bids: BoardBid[]; esign: boolean; focus?: Column[] }) {
+type ColumnQueries = Partial<Record<Column, string>>;
+
+/**
+ * Kanban board. Native drag-and-drop on desktop; every move is also in each card's "Move to" menu (keyboard + touch).
+ * Each stage shows at most four cards and scrolls on its own; its header opens the expanded stage view, and its own
+ * mini search finds bids in that stage first, then in every other stage.
+ *
+ *   bids     the bids on the board (after the toolbar's search and date filters): counts, totals, cards
+ *   allBids  every bid loaded for the person (no filters): what the stage searches look through
+ *   capped   the loader hit its row limit, so stage searches also ask the universal search
+ */
+export function PipelineBoard({ bids, allBids, esign, focus, capped = false, expanded = null, onExpand, initialQueries }: {
+  bids: BoardBid[]; allBids?: BoardBid[]; esign: boolean; focus?: Column[]; capped?: boolean;
+  expanded?: Column | null; onExpand?: (c: Column | null) => void; initialQueries?: ColumnQueries;
+}) {
   const router = useRouter();
   const [overrides, setOverrides] = useState<Record<string, { stage: Stage; wonAt?: string | null }>>({});
   const [pending, setPending] = useState<{ bid: BoardBid; to: Column; confirm: "won" | "lost" | "reopen" | "job" } | null>(null);
@@ -29,11 +46,24 @@ export function PipelineBoard({ bids, esign, focus }: { bids: BoardBid[]; esign:
 
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
-  const view = useMemo(() => bids.map((b) => {
-    // An optimistic override only applies until the refreshed server data shows the same stage.
+  // Each stage's mini search keeps its own text here, so opening a stage view and coming back keeps it.
+  const [queries, setQueries] = useState<ColumnQueries>(() => initialQueries ?? {});
+  const setQuery = useCallback((c: Column, v: string) => setQueries((q) => ({ ...q, [c]: v })), []);
+  // ...and in the address bar, so Back from an opened bid brings each stage's search back.
+  useEffect(() => {
+    const u = new URL(window.location.href);
+    const before = u.search;
+    for (const c of COLUMNS) { const v = queries[c]?.trim(); if (v) u.searchParams.set(stageQueryParam(c), v.slice(0, 100)); else u.searchParams.delete(stageQueryParam(c)); }
+    if (u.search !== before) window.history.replaceState(window.history.state, "", u);
+  }, [queries]);
+
+  // An optimistic override only applies until the refreshed server data shows the same stage.
+  const apply = useCallback((list: BoardBid[]) => list.map((b) => {
     const o = overrides[b.id];
     return o && o.stage !== b.stage ? { ...b, ...o } : b;
-  }), [bids, overrides]);
+  }), [overrides]);
+  const view = useMemo(() => apply(bids), [apply, bids]);
+  const searchable = useMemo(() => (allBids ? apply(allBids) : view), [apply, allBids, view]);
   const totals = useMemo(() => columnTotals(view), [view]);
   const byCol = useMemo(() => {
     const m = Object.fromEntries(COLUMNS.map((c) => [c, [] as BoardBid[]])) as Record<Column, BoardBid[]>;
@@ -86,7 +116,8 @@ export function PipelineBoard({ bids, esign, focus }: { bids: BoardBid[]; esign:
   const dragged = dragId ? view.find((b) => b.id === dragId) ?? null : null;
   const draggedNow = () => (dragRef.current ? view.find((b) => b.id === dragRef.current) ?? null : null);
   const colProps = (c: Column) => ({
-    col: c, bids: byCol[c], total: totals[c], esign, onMove: request,
+    col: c, bids: byCol[c], total: totals[c], esign, onMove: request, allBids: searchable, capped,
+    query: queries[c] ?? "", onQuery: (v: string) => setQuery(c, v), onOpen: () => onExpand?.(c),
     dropState: dragged ? (checkMove(dragged, c).ok ? (overCol === c ? "over" : "can") : "no") as "over" | "can" | "no" : null,
     onDragOver: (e: React.DragEvent) => { const b = draggedNow(); if (b && checkMove(b, c).ok) { e.preventDefault(); if (overCol !== c) setOverCol(c); } },
     onDrop: (e: React.DragEvent) => { e.preventDefault(); setOverCol(null); const b = draggedNow(); dragRef.current = null; setDragId(null); if (b) request(b, c); },
@@ -95,30 +126,28 @@ export function PipelineBoard({ bids, esign, focus }: { bids: BoardBid[]; esign:
 
   return (
     <div data-testid="pipeline-board">
-      {/* Row 1: selling stages. Row 2: jobs and the separate Lost / Declined outcome. Wide screens fit all columns;
-          narrower ones scroll sideways; phones stack collapsible sections. */}
-      {focus ? (
-        // A KPI card narrowed the board: only the stages behind that number, in one row.
-        <div className="overflow-x-auto md:pb-1" data-testid="pipeline-focus">
-          <div className="flex flex-col gap-3 md:grid md:items-start" style={{ gridTemplateColumns: `repeat(${focus.length}, minmax(200px, 1fr))` }}>
-            {focus.map((c) => <BoardColumn key={c} {...colProps(c)} forceOpen />)}
-          </div>
-        </div>
-      ) : (
-        <>
-          <div className="overflow-x-auto md:pb-1">
-            <div className="flex flex-col gap-3 md:grid md:grid-cols-[repeat(5,minmax(200px,1fr))] md:items-start">
-              {SALES_COLUMNS.map((c) => <BoardColumn key={c} {...colProps(c)} />)}
-            </div>
-          </div>
-          <h3 className="mb-2 mt-5 text-xs font-bold uppercase tracking-wider text-muted">Jobs &amp; outcomes</h3>
-          <div className="overflow-x-auto md:pb-1">
-            <div className="flex flex-col gap-3 md:grid md:grid-cols-[repeat(4,minmax(200px,1fr))] md:items-start">
-              {[...JOB_COLUMNS, "lost" as const].map((c) => <BoardColumn key={c} {...colProps(c)} />)}
-            </div>
-          </div>
-        </>
+      {expanded && (
+        <StageView
+          key={expanded} col={expanded} bids={byCol[expanded]} total={totals[expanded]} allBids={searchable} capped={capped} esign={esign} onMove={request}
+          initialQuery={queries[expanded] ?? ""} onBack={() => onExpand?.(null)}
+        />
       )}
+      {/* The board stays mounted under the stage view so each stage's search and scroll position survive the round trip.
+          Row 1: selling stages. Row 2: jobs and the separate Lost / Declined outcome. Wide screens fit every column;
+          narrower ones scroll sideways, one stage at a time on phones. */}
+      <div className={cn(expanded && "hidden")} data-testid="pipeline-columns">
+        {focus ? (
+          // A KPI card narrowed the board: only the stages behind that number, in one row.
+          <StageRow testId="pipeline-focus" cols={focus.length}>{focus.map((c) => <BoardColumn key={c} {...colProps(c)} />)}</StageRow>
+        ) : (
+          <>
+            <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted">Sales pipeline</h3>
+            <StageRow cols={5}>{SALES_COLUMNS.map((c) => <BoardColumn key={c} {...colProps(c)} />)}</StageRow>
+            <h3 className="mb-2 mt-5 text-xs font-bold uppercase tracking-wider text-muted">Jobs &amp; outcomes</h3>
+            <StageRow cols={4}>{[...JOB_COLUMNS, "lost" as const].map((c) => <BoardColumn key={c} {...colProps(c)} />)}</StageRow>
+          </>
+        )}
+      </div>
       {pending && (
         <MoveDialog
           bid={pending.bid} to={pending.to} kind={pending.confirm}
@@ -139,122 +168,146 @@ export function PipelineBoard({ bids, esign, focus }: { bids: BoardBid[]; esign:
   );
 }
 
-function BoardColumn({ col, bids, total, esign, onMove, dropState, onDragOver, onDrop, onDragStart, onDragEnd, forceOpen }: {
-  col: Column; bids: BoardBid[]; total: { count: number; value: number; unpriced: number }; esign: boolean; forceOpen?: boolean;
+
+/** One row of stages: a grid on tablets and desktops, a sideways-scrolling strip of stages on phones. */
+function StageRow({ cols, testId, children }: { cols: number; testId?: string; children: React.ReactNode }) {
+  return (
+    <div className="snap-x snap-mandatory overflow-x-auto overscroll-x-contain pb-2 md:snap-none md:pb-1" data-testid={testId}>
+      <div className="flex gap-3 md:grid md:items-start" style={{ gridTemplateColumns: `repeat(${cols}, minmax(200px, 1fr))` }}>{children}</div>
+    </div>
+  );
+}
+
+function BoardColumn({ col, bids, total, esign, onMove, dropState, onDragOver, onDrop, onDragStart, onDragEnd, allBids, capped, query, onQuery, onOpen }: {
+  col: Column; bids: BoardBid[]; total: ColumnTotal; esign: boolean;
   onMove: (b: BoardBid, to: Column) => void; dropState: "over" | "can" | "no" | null;
   onDragOver: (e: React.DragEvent) => void; onDrop: (e: React.DragEvent) => void; onDragStart: (id: string) => void; onDragEnd: () => void;
+  allBids: BoardBid[]; capped: boolean; query: string; onQuery: (v: string) => void; onOpen: () => void;
 }) {
-  // Mobile: columns stack and collapse. Empty columns and Lost start collapsed.
-  const [open, setOpen] = useState(Boolean(forceOpen) || (col !== "lost" && col !== "completed" && bids.length > 0));
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const resultsRef = useRef<HTMLDivElement | null>(null);
+  const s = useStageSearch(allBids, query, col, capped);
+  const searching = s.q.length > 0;
   const headId = `col-${col}`;
+  const valueText = total.count && total.count === total.unpriced ? "No prices yet" : money(total.value);
+  const card = (b: BoardBid) => <BidCard b={b} esign={esign} onMove={onMove} onDragStart={onDragStart} onDragEnd={onDragEnd} />;
   return (
     <section
-      aria-labelledby={headId} data-testid={`column-${col}`} data-guide="bids.stage" onDragOver={onDragOver} onDrop={onDrop}
+      data-search-scope aria-labelledby={headId} data-testid={`column-${col}`} data-guide="bids.stage" onDragOver={onDragOver} onDrop={onDrop}
       className={cn(
-        "rounded-xl border bg-surface transition-colors",
+        "flex w-[min(86vw,340px)] shrink-0 snap-start flex-col rounded-xl border bg-surface transition-colors md:w-auto md:min-w-0",
         dropState === "over" ? "border-accent ring-2 ring-accent/40" : dropState === "can" ? "border-dashed border-accent/60" : dropState === "no" ? "opacity-50" : "border-line",
       )}
     >
-      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open}
-        className="flex w-full items-start justify-between gap-2 p-3 text-left md:cursor-default">
+      {/* The whole heading opens this stage's full view. */}
+      <button
+        type="button" onClick={onOpen} data-testid={`column-${col}-open`} title={`Open all ${COLUMN_LABELS[col]} bids`}
+        aria-label={`${COLUMN_LABELS[col]}: ${total.count} bid${total.count === 1 ? "" : "s"}, ${valueText}. Open the full stage.`}
+        className="group/head flex w-full items-start justify-between gap-2 rounded-t-xl px-3 pb-2 pt-3 text-left transition-colors hover:bg-paper focus-visible:bg-paper active:bg-brand-tint"
+      >
         <span className="min-w-0">
-          <span id={headId} className="block text-sm font-bold text-navy">{COLUMN_LABELS[col]} <span className="font-semibold text-muted">· {total.count}</span></span>
-          <span className="block text-xs text-muted" title={COLUMN_HINTS[col]}>
-            <span className="tabular font-semibold text-ink-soft" data-testid={`column-${col}-value`}>{total.count && total.count === total.unpriced ? "No prices yet" : money(total.value)}</span>
+          <span id={headId} className="block truncate text-sm font-bold text-navy decoration-2 underline-offset-2 group-hover/head:underline">
+            {COLUMN_LABELS[col]} <span className="font-semibold text-muted">· {total.count}</span>
+          </span>
+          <span className="block text-xs text-muted">
+            <span className="tabular font-semibold text-ink-soft" data-testid={`column-${col}-value`}>{valueText}</span>
             {total.unpriced > 0 && total.unpriced < total.count && <> · {total.unpriced} not priced</>}
           </span>
         </span>
-        <ChevronDown aria-hidden className={cn("mt-0.5 h-4 w-4 shrink-0 text-muted transition-transform", open && "rotate-180", "md:hidden")} />
+        <span className="mt-0.5 inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-[11px] font-semibold text-muted transition-colors group-hover/head:bg-brand-tint group-hover/head:text-navy">
+          <Maximize2 className="h-3.5 w-3.5" aria-hidden /><span className="hidden 2xl:inline">Expand</span>
+        </span>
       </button>
-      <div className={cn(open ? "block" : "hidden", "md:block")}>
-        {bids.length === 0 ? (
-          <p className="px-3 pb-3 text-xs text-muted">{COLUMN_HINTS[col]}</p>
-        ) : (
-          <ul className="space-y-2 px-2 pb-2">
-            {bids.map((b) => <li key={b.id}><BidCard b={b} esign={esign} onMove={onMove} onDragStart={onDragStart} onDragEnd={onDragEnd} /></li>)}
-          </ul>
-        )}
+      {/* The stage's own search stays put; only the list under it scrolls. */}
+      <div className="px-2 pb-2">
+        <StageSearchInput
+          col={col} value={query} onChange={onQuery} placeholder={SEARCH_PLACEHOLDER[col]} inputRef={inputRef} busy={s.busy}
+          onArrowDown={() => resultsRef.current?.querySelector<HTMLElement>("[data-result], [data-card-link]")?.focus()}
+        />
       </div>
+      <div className="border-t border-line" />
+      {searching ? (
+        <div ref={resultsRef} onKeyDown={onResultKeys} data-testid={`column-${col}-results`}
+          className="max-h-[30rem] overflow-y-auto overscroll-y-contain p-2">
+          <p className="sr-only" aria-live="polite">{s.local.length} in {COLUMN_LABELS[col]}, {s.other.length + s.remote.length} in other stages.</p>
+          <ResultsLabel>In {COLUMN_LABELS[col]} · {s.local.length}</ResultsLabel>
+          {s.local.length === 0 ? (
+            <p className="px-1 pb-1 text-xs text-muted" data-testid="local-empty">No matches in this stage.</p>
+          ) : (
+            <ul className="space-y-2">{s.local.map((m) => <li key={m.bid.id}>{card(m.bid)}</li>)}</ul>
+          )}
+          <OtherStageResults matches={s.other} remote={s.remote} q={s.q} />
+          {s.local.length + s.other.length + s.remote.length === 0 && !s.busy && (
+            <p className="px-1 pt-2 text-xs text-muted" data-testid="search-empty">No bids match “{query.trim()}” in any stage.</p>
+          )}
+        </div>
+      ) : bids.length === 0 ? (
+        <p className="px-3 py-3 text-xs text-muted">{COLUMN_HINTS[col]}</p>
+      ) : (
+        <CardList col={col} count={bids.length} onOpen={onOpen}>{bids.map((b) => <li key={b.id}>{card(b)}</li>)}</CardList>
+      )}
     </section>
   );
 }
 
-function BidCard({ b, esign, onMove, onDragStart, onDragEnd }: { b: BoardBid; esign: boolean; onMove: (b: BoardBid, to: Column) => void; onDragStart: (id: string) => void; onDragEnd: () => void }) {
-  const col = columnOf(b);
-  const value = valueOf(b);
-  const approval = approvalOf(b);
-  const action = nextAction(b, esign, isPmEnabled());
+/**
+ * A stage's cards: exactly four fit before the list scrolls inside the column (measured, since card heights vary
+ * with badges and width). A fade and a "more" control say there are more; View all opens the stage view.
+ */
+function CardList({ col, count, onOpen, children }: { col: Column; count: number; onOpen: () => void; children: React.ReactNode }) {
+  const ref = useRef<HTMLUListElement | null>(null);
+  const [maxH, setMaxH] = useState<number | null>(null);
+  const [atEnd, setAtEnd] = useState(true);
+  const over = count > VISIBLE_CARDS;
+  const check = useCallback(() => {
+    const el = ref.current;
+    if (el) setAtEnd(el.scrollTop + el.clientHeight >= el.scrollHeight - 4);
+  }, []);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const measure = () => {
+      if (!over) { setMaxH(null); setAtEnd(true); return; }
+      const li = el.children[VISIBLE_CARDS - 1] as HTMLElement | undefined;
+      // Hidden (stage view open): keep the last measurement.
+      if (!li || li.offsetHeight === 0) return;
+      setMaxH(li.offsetTop + li.offsetHeight + 8);
+      check();
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [over, count, check]);
+  const more = count - VISIBLE_CARDS;
   return (
-    <article
-      draggable onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", b.id); onDragStart(b.id); }} onDragEnd={onDragEnd}
-      data-testid="bid-card" data-guide="bids.card" data-bid={b.id}
-      // The whole card opens the bid: the title link stretches over the card (after:inset-0), and the menu and
-      // next-action button sit above it (relative z-10), so they keep their own clicks. Drag still moves the card.
-      className="card-link-host group relative cursor-pointer rounded-lg border border-line bg-surface p-3 shadow-sm transition-[border-color,box-shadow] hover:border-brand/50 hover:shadow-md active:cursor-grabbing"
-    >
-      <div className="flex items-start gap-2">
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-xs font-semibold text-muted">{b.customer || "No customer yet"}</p>
-          <Link
-            href={`/estimates/${b.id}`} draggable={false} data-card-link data-testid="card-link"
-            className="line-clamp-2 text-sm font-bold leading-snug text-ink group-hover:text-brand after:absolute after:inset-0 after:rounded-lg after:content-['']"
-          >{b.title}</Link>
-        </div>
-        <MoveMenu b={b} col={col} onMove={onMove} />
+    <>
+      <div className="relative">
+        <ul
+          ref={ref} onScroll={over ? check : undefined} data-testid={`column-${col}-list`} data-scrollable={over ? "true" : "false"}
+          tabIndex={over ? 0 : undefined} aria-label={over ? `${COLUMN_LABELS[col]} bids, ${count} in this stage. Scroll for more.` : undefined}
+          style={over && maxH ? { maxHeight: maxH } : undefined}
+          // Until measured, a cap close to four compact cards avoids a first paint thousands of pixels tall.
+          className={cn("relative space-y-2 p-2", over && "overflow-y-auto overscroll-y-contain [scrollbar-width:thin]", over && !maxH && "max-h-[33rem]")}
+        >
+          {children}
+        </ul>
+        {over && !atEnd && <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-8 rounded-b-none bg-gradient-to-t from-surface to-transparent" />}
       </div>
-      <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-        <span className="tabular text-sm font-extrabold text-navy">{value === null ? <span className="font-semibold text-muted">Not priced yet</span> : money(value, true)}</span>
-        <SignBadge b={b} />
-        {approval?.kind === "manual" && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-brand-tint px-2 py-0.5 font-bold text-brand" data-testid="manual-approval">
-            <UserCheck className="h-3 w-3" aria-hidden />Approved manually{approval.at ? ` ${new Date(approval.at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}` : ""}
-          </span>
-        )}
+      <div className="mt-auto flex items-center justify-between gap-2 rounded-b-xl border-t border-line px-2 py-1">
+        {over ? (
+          <button type="button" data-testid={`column-${col}-more`}
+            onClick={() => ref.current?.scrollBy({ top: (ref.current.clientHeight || 300) * 0.8, behavior: "smooth" })}
+            aria-label={`Scroll for ${more} more`} title="Scroll for more"
+            className={cn("inline-flex min-h-8 items-center gap-1 whitespace-nowrap rounded-md px-1.5 text-[11px] font-semibold text-muted hover:bg-black/5 hover:text-navy", atEnd && "invisible")}>
+            <ChevronsDown className="h-3.5 w-3.5" aria-hidden />{more} more
+          </button>
+        ) : <span />}
+        <button type="button" onClick={onOpen} data-testid={`column-${col}-view-all`}
+          className="inline-flex min-h-8 items-center gap-1 whitespace-nowrap rounded-md px-1.5 text-xs font-bold text-accent-ink hover:bg-accent-tint">
+          View all{over ? ` ${count}` : ""}<ArrowRight className="h-3.5 w-3.5" aria-hidden />
+        </button>
       </div>
-      {col === "lost" && b.lostReason && <p className="mt-1 line-clamp-2 text-xs text-ink-soft">Reason: {b.lostReason}</p>}
-      <p className="mt-1 text-[11px] text-muted">#{b.number} · {relDay(lastActivity(b))}</p>
-      <div className="mt-2 flex justify-end">
-        {action && (action.href ? (
-          <Link href={action.href} draggable={false} className="relative z-10 inline-flex min-h-8 items-center gap-1 rounded-md bg-brand-tint px-2 text-xs font-bold text-navy hover:bg-accent-tint" data-testid="next-action">{action.label}<ArrowRight className="h-3 w-3" aria-hidden /></Link>
-        ) : (
-          <button type="button" onClick={() => onMove(b, action.move!)} className="relative z-10 inline-flex min-h-8 items-center gap-1 rounded-md bg-accent px-2 text-xs font-bold text-navy hover:bg-accent-hover" data-testid="next-action">{action.label}<ArrowRight className="h-3 w-3" aria-hidden /></button>
-        ))}
-      </div>
-    </article>
-  );
-}
-
-function SignBadge({ b }: { b: BoardBid }) {
-  const s = b.signing;
-  if (!s || s.state === "none") return null;
-  if (s.signed) return <span className="inline-flex items-center gap-1 rounded-full bg-ok-tint px-2 py-0.5 font-bold text-ok" data-testid="esigned"><CheckCircle2 className="h-3 w-3" aria-hidden />E-signed v{s.signed.versionNumber}</span>;
-  if (s.state === "awaiting") return <span className="inline-flex items-center gap-1 rounded-full bg-accent-tint px-2 py-0.5 font-bold text-accent-dark"><Hourglass className="h-3 w-3" aria-hidden />Signing link out</span>;
-  return <span className="inline-flex items-center gap-1 rounded-full bg-black/5 px-2 py-0.5 font-bold text-ink-soft"><Clock className="h-3 w-3" aria-hidden />Link {s.state}</span>;
-}
-
-function MoveMenu({ b, col, onMove }: { b: BoardBid; col: Column; onMove: (b: BoardBid, to: Column) => void }) {
-  return (
-    <Menu.Root>
-      <Menu.Trigger aria-label={`Move ${b.title}`} className="relative z-10 -mr-1 -mt-1 grid h-9 w-9 shrink-0 place-items-center rounded-md text-muted hover:bg-black/5 hover:text-navy" data-testid="move-menu" data-guide="bids.card-menu">
-        <MoreVertical className="h-4 w-4" />
-      </Menu.Trigger>
-      <Menu.Portal>
-        <Menu.Content align="end" sideOffset={4} className="z-50 min-w-56 rounded-xl border border-line bg-surface p-1 shadow-2xl">
-          <Menu.Label className="px-2 py-1 text-xs font-bold uppercase tracking-wider text-muted">Move to</Menu.Label>
-          {COLUMNS.filter((c) => c !== col).map((c) => {
-            const chk = checkMove(b, c);
-            return (
-              <Menu.Item key={c} disabled={!chk.ok} onSelect={() => onMove(b, c)} title={chk.ok ? undefined : chk.reason}
-                className="flex min-h-10 cursor-pointer items-center rounded-md px-2 text-sm outline-none data-[disabled]:cursor-not-allowed data-[disabled]:text-muted data-[highlighted]:bg-brand-tint">
-                {COLUMN_LABELS[c]}
-              </Menu.Item>
-            );
-          })}
-          <Menu.Separator className="my-1 h-px bg-line" />
-          <Menu.Item asChild><Link href={`/estimates/${b.id}`} className="flex min-h-10 items-center rounded-md px-2 text-sm outline-none data-[highlighted]:bg-brand-tint">Open bid</Link></Menu.Item>
-          {b.signing?.signed && <Menu.Item asChild><Link href={`/signed/${b.signing.signed.id}`} className="flex min-h-10 items-center rounded-md px-2 text-sm outline-none data-[highlighted]:bg-brand-tint">View signed proposal</Link></Menu.Item>}
-        </Menu.Content>
-      </Menu.Portal>
-    </Menu.Root>
+    </>
   );
 }

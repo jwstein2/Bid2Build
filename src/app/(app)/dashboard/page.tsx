@@ -33,7 +33,8 @@ import { ReferCard } from "./refer-card";
 import { TrialBanner } from "@/components/billing/trial-banner";
 import { referralLink, type MyReferral } from "@/lib/growth/referral";
 import { BidsWorkspace, type BidsView } from "@/components/pipeline/bids-workspace";
-import { isFocus, isRange, isStage, type BoardBid, type HistoryRow } from "@/lib/pipeline/board";
+import { BOARD_LOAD_LIMIT, isColumn, isFocus, isRange, isStage, type BoardBid, type HistoryRow } from "@/lib/pipeline/board";
+import { readStageQueries } from "@/lib/pipeline/stage-search";
 import { DEFAULT_PAY, sanitizePay } from "@/lib/pipeline/sales-pay";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { CHECKLIST_DISMISSED_KEY, checklistSteps, isMeaningfulItem, MEANINGFUL_ITEMS, showChecklist, type ChecklistStep } from "@/lib/growth/activation";
@@ -43,15 +44,16 @@ import { loadEffectiveAccess } from "@/lib/access/server";
 import { restrictedFor } from "@/lib/access/effective";
 import { buildNav } from "@/lib/access/nav";
 
-const EST_COLS = "id, title, customer_name, trades, status, updated_at, estimate_number, created_at";
+// customer_email + project_address: searchable from the pipeline stage searches (never shown on cards).
+const EST_COLS = "id, title, customer_name, customer_email, project_address, trades, status, updated_at, estimate_number, created_at";
 
 /** Personal bids with their pipeline fields. Falls back to the pre-V4 columns until the migration runs. */
 async function loadBids(supabase: SupabaseClient, userId: string) {
-  const full = await supabase.from("estimates").select(`${EST_COLS}, pipeline_stage, stage_changed_at, won_at, lost_reason`).eq("user_id", userId).order("updated_at", { ascending: false }).limit(500);
+  const full = await supabase.from("estimates").select(`${EST_COLS}, pipeline_stage, stage_changed_at, won_at, lost_reason`).eq("user_id", userId).order("updated_at", { ascending: false }).limit(BOARD_LOAD_LIMIT);
   if (!full.error) return { rows: full.data ?? [], migrated: true };
-  const basic = await supabase.from("estimates").select(`${EST_COLS}, pipeline_stage, stage_changed_at, lost_reason`).eq("user_id", userId).order("updated_at", { ascending: false }).limit(500);
+  const basic = await supabase.from("estimates").select(`${EST_COLS}, pipeline_stage, stage_changed_at, lost_reason`).eq("user_id", userId).order("updated_at", { ascending: false }).limit(BOARD_LOAD_LIMIT);
   if (!basic.error) return { rows: basic.data ?? [], migrated: false };
-  const legacy = await supabase.from("estimates").select(EST_COLS).eq("user_id", userId).order("updated_at", { ascending: false }).limit(500);
+  const legacy = await supabase.from("estimates").select(EST_COLS).eq("user_id", userId).order("updated_at", { ascending: false }).limit(BOARD_LOAD_LIMIT);
   return { rows: legacy.data ?? [], migrated: false };
 }
 
@@ -106,7 +108,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   const pmOn = isPmEnabled();
   // Every independent read goes out at once: one database round trip of waiting instead of six in a row.
   const [{ rows: estimates, migrated }, { data: versions }, credits, { data: biz }, libraryAccess, company, { data: referralData },
-    { data: gifts }, { data: trialRows }, history, { data: payRow }, [{ data: reqRows }, { data: sigRows }], [reviewQueue, pmAccess], { data: freeItemsOk }] = await Promise.all([
+    { data: gifts }, { data: trialRows }, history, { data: payRow }, [{ data: reqRows }, { data: sigRows }], [reviewQueue, pmAccess], { data: freeItemsOk }, { data: schedRows }] = await Promise.all([
     // "My bids" stays personal: Enterprise owners/managers can also read teammates' company bids (RLS),
     // which belong in the company Command Center, not here.
     loadBids(supabase, user.id),
@@ -134,6 +136,9 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     pmOn ? Promise.all([loadReviewQueue(supabase), loadPmAccess(supabase)]) : Promise.resolve([null, null] as const),
     // V8 batch 5: Saved Items are free once SQL 20270106001000 ran (missing function = false).
     supabase.rpc("saved_items_free_ok"),
+    // Job cards on the board open their project schedule (calendar / project page). Ids only; RLS applies.
+    pmOn ? supabase.from("project_schedules").select("id, estimate_id").eq("user_id", user.id).neq("status", "archived").order("updated_at", { ascending: false }).limit(1000)
+      : Promise.resolve({ data: null }),
   ]);
   const gift = ((gifts ?? []) as { state: string; program_state: string; channel_name: string | null; workspace_name: string; expires_at: string | null }[])
     .find((g) => g.state === "active" && g.program_state === "active") ?? null;
@@ -155,7 +160,9 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   } : null;
   const latest = new Map<string, { id: string; version_number: number; total: number; subtotal?: number | string | null; total_cost?: number | string | null }>();
   for (const v of versions ?? []) if (!latest.has(v.estimate_id)) latest.set(v.estimate_id, v);
-  type Est = { id: string; title: string; customer_name: string; trades: string[]; status: BidRow["status"]; updated_at: string; estimate_number: string; created_at: string; pipeline_stage?: string; stage_changed_at?: string | null; won_at?: string | null; lost_reason?: string | null };
+  const scheduleOf = new Map<string, string>();
+  for (const r of (schedRows ?? []) as { id: string; estimate_id: string | null }[]) if (r.estimate_id && !scheduleOf.has(r.estimate_id)) scheduleOf.set(r.estimate_id, r.id);
+  type Est = { id: string; title: string; customer_name: string; customer_email?: string | null; project_address?: string | null; trades: string[]; status: BidRow["status"]; updated_at: string; estimate_number: string; created_at: string; pipeline_stage?: string; stage_changed_at?: string | null; won_at?: string | null; lost_reason?: string | null };
   const ests = (estimates ?? []) as Est[];
   const board: BoardBid[] = ests.map((e) => {
     const v = latest.get(e.id);
@@ -165,6 +172,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
       stageChangedAt: e.stage_changed_at ?? null, wonAt: e.won_at ?? null, lostReason: e.lost_reason ?? null,
       latestVersion: v ? { id: v.id, number: v.version_number, total: Number(v.total), subtotal: v.subtotal == null ? null : Number(v.subtotal), cost: v.total_cost == null ? null : Number(v.total_cost) } : null,
       signing: esign ? signing.get(e.id) ?? { state: "none", signed: null, latest: null } : null,
+      customerEmail: e.customer_email ?? null, address: e.project_address ?? null, scheduleId: scheduleOf.get(e.id) ?? null,
     };
   });
   const rows: BidRow[] = ests.map((e) => ({
@@ -219,7 +227,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
       {ests.length === 0 && <FirstBidStart companyName={biz?.company_name?.trim() || null} />}
       {checklist && <ActivationChecklist steps={checklist} />}
       {!checklist && ests.length > 0 && <ProfileReminder missing={missing} dismissedSignature={reminderDismissed} />}
-      <BidsWorkspace bids={board} history={history} esign={esign} pay={pay} paySaved={Boolean(payRow)} migrated={migrated} initialView={initialView} initialFocus={isFocus(sp.focus) ? sp.focus : null} initialRange={isRange(sp.range) ? sp.range : undefined} initialQuery={typeof sp.q === "string" ? sp.q.slice(0, 100) : ""} initialDateField={sp.date === "created" ? "created" : "activity"} table={<BidList rows={rows} />} />
+      <BidsWorkspace bids={board} history={history} esign={esign} pay={pay} paySaved={Boolean(payRow)} migrated={migrated} initialView={initialView} initialFocus={isFocus(sp.focus) ? sp.focus : null} initialRange={isRange(sp.range) ? sp.range : undefined} initialQuery={typeof sp.q === "string" ? sp.q.slice(0, 100) : ""} initialDateField={sp.date === "created" ? "created" : "activity"} initialStage={isColumn(sp.stage) ? sp.stage : null} initialStageQueries={readStageQueries((k) => (typeof sp[k] === "string" ? sp[k] : null))} table={<BidList rows={rows} />} />
       <div className="grid gap-4 lg:grid-cols-3">
         {credits && <CreditBalances credits={credits} className="lg:col-span-2" showUpgrade={false} enterprise={enterprise} />}
         <div className="grid gap-4">

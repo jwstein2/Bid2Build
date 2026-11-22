@@ -180,7 +180,7 @@ export const PAGE_GUIDES = {
       S.viewTabs,
       { target: "bids.kpis", title: "Your pipeline at a glance", body: "Active pipeline value, open bids, drafts, sent, awaiting signature, won value and win rate. Click a card to show only those bids; click it again to show all." },
       { target: "bids.search", title: "Search and date filters", body: "Search by project, customer or bid number, and pick a date range. Filters only change what you see, never the bids." },
-      { target: "bids.stage", title: "Stages", body: "Each column is a sales stage, from Draft to Won, with the total value of the bids in it. A signed bid moves to Won by itself.", feature: "pipeline" },
+      { target: "bids.stage", title: "Stages", body: "Each column is a stage, with its bid count and total value. Four cards show at a time and the rest scroll inside the column. Each stage has its own search, which also finds the bid if it is in another stage. Click a stage name to see all of its bids. A signed bid moves to Won by itself.", feature: "pipeline" },
       { target: "bids.card", title: "Bid cards", body: "Each card shows the customer, the value and what's next. Click a card to open the bid; drag it, or use ⋮, to move it to another stage.", hint: "For {job}, the card's next step tells you whether to finish the estimate, send it or follow up." },
       { target: "bids.card-menu", title: "Move a bid", body: "The ⋮ menu moves a bid to another stage without dragging, which is handy on a phone. Nothing moves until you pick a stage." },
       S.newBid,
