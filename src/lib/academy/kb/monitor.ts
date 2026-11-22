@@ -42,8 +42,10 @@ export function fingerprintText(plan: MonitorPlan, body: string): string | null 
   if (plan.kind === "revisor") {
     const m = /<div[^>]*id="rule"[^>]*>([\s\S]*?)<div[^>]*id="(?:footer|history)/.exec(body) ?? /<div[^>]*id="rule"[^>]*>([\s\S]*)/.exec(body);
     if (!m) return null;
-    const text = norm(m[1].replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, " ").replace(/<[^>]+>/g, " ")
-      .replace(/&nbsp;|&#160;/g, " ").replace(/&amp;/g, "&").replace(/&sect;|&#167;/g, "§"))
+    // Only hashed for change detection (never rendered). Entities are decoded in one pass so "&amp;nbsp;" stays literal.
+    const ENT: Record<string, string> = { "&nbsp;": " ", "&#160;": " ", "&amp;": "&", "&sect;": "§", "&#167;": "§" };
+    const text = norm(m[1].replace(/<(script|style)\b[\s\S]*?<\/\1\s*>/gi, " ").replace(/<[^>]+>/g, " ")
+      .replace(/&(?:nbsp|#160|amp|sect|#167);/gi, (e) => ENT[e.toLowerCase()] ?? e))
       // The "Published Electronically" stamp changes without any change to the rule.
       .replace(/Published Electronically:\s*[A-Za-z]+ \d{1,2}, \d{4}/g, "");
     return text.length > 40 ? text : null;

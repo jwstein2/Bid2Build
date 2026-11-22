@@ -132,3 +132,12 @@ describe("Academy source monitoring", () => {
     expect(compare(rplan, 0, null, null).result).toBe("unreachable");
   });
 });
+
+describe("Academy source monitoring: HTML handling", () => {
+  it("drops scripts in any case and decodes entities once", () => {
+    const plan = planFor("https://www.revisor.mn.gov/rules/1309.0311/")!;
+    const t = fingerprintText(plan, `<div id="rule"><SCRIPT>x()</SCRIPT ><p>1309.0311 STAIRWAYS. Width&nbsp;36 inches &amp;nbsp; and &sect; 2 of the rule text here.</p></div><div id="footer">`);
+    expect(t).not.toContain("x()");
+    expect(t).toContain("Width 36 inches &nbsp; and § 2");
+  });
+});
