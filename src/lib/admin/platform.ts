@@ -2,6 +2,7 @@ import "server-only";
 import type { createAdminClient } from "@/lib/supabase/server";
 import { isDemoLogin } from "@/lib/demo/session";
 import type { EstimateRow } from "./metrics";
+import { stripSampleData } from "./model";
 import type { ProductData } from "./product";
 import type {
   BusinessRow, CompanyRow, ConsentRow, CostRow, EventRow, GrantRow, LabelRow, LeadRow, MeaningfulRow, MemberRow, OutboxRow, SignatureRow,
@@ -29,8 +30,8 @@ async function optional<T>(db: Db, table: string, columns: string, order = "crea
   try { return await all<T>(db, table, columns, order); } catch { return null; }
 }
 
-/** Every auth account with its email and sign-in state (service role only). */
-async function authUsers(db: Db): Promise<UserRow[] | null> {
+/** Every auth account with its email and sign-in state (service role only). Demo / practice logins go to `sample`. */
+async function authUsers(db: Db, sample: Set<string>): Promise<UserRow[] | null> {
   const out: UserRow[] = [];
   try {
     for (let page = 1; page <= 50; page++) {
@@ -38,7 +39,7 @@ async function authUsers(db: Db): Promise<UserRow[] | null> {
       if (error) return null;
       const users = data?.users ?? [];
       // Demo / practice logins are sample accounts, not customers.
-      for (const u of users) if (!isDemoLogin(u)) out.push({ id: u.id, email: u.email ?? null, created_at: u.created_at, email_confirmed_at: u.email_confirmed_at ?? null, last_sign_in_at: u.last_sign_in_at ?? null });
+      for (const u of users) if (isDemoLogin(u)) sample.add(u.id); else out.push({ id: u.id, email: u.email ?? null, created_at: u.created_at, email_confirmed_at: u.email_confirmed_at ?? null, last_sign_in_at: u.last_sign_in_at ?? null });
       if (users.length < PAGE) break;
     }
     return out;
@@ -54,12 +55,13 @@ async function authUsers(db: Db): Promise<UserRow[] | null> {
  */
 export async function loadSnapshot(db: Db, callerId: string): Promise<Snapshot> {
   const since7 = new Date(Date.now() - 7 * 86_400_000).toISOString();
+  const sampleUsers = new Set<string>();
   const [
     metrics, users, profiles, labels, admins, estimates, versions, signatures, signingRequests, subscriptions,
     businesses, companies, members, grants, consents, events, leads, leadsV2, costs, outbox, stripeEvents,
   ] = await Promise.all([
     db.rpc("admin_metrics", { p_caller: callerId }),
-    authUsers(db),
+    authUsers(db, sampleUsers),
     all<{ id: string; created_at: string }>(db, "profiles", "id,created_at"),
     optional<LabelRow>(db, "admin_account_labels", "user_id,label,note,updated_at", "updated_at"),
     optional<{ user_id: string }>(db, "admin_roles", "user_id", "user_id"),
@@ -80,14 +82,20 @@ export async function loadSnapshot(db: Db, callerId: string): Promise<Snapshot> 
     optional<OutboxRow>(db, "email_outbox", "kind,user_id,status,last_error,attempts,created_at,updated_at"),
     db.from("stripe_events").select("id,type,received_at,processed_at,error").gte("received_at", since7).order("received_at", { ascending: false }).limit(2000),
   ]);
-  const [product, meaningful] = await Promise.all([
+  const [product, meaningful, workspaces, retired] = await Promise.all([
     loadProduct(db),
     db.rpc("growth_meaningful_estimates").then((r) => (r.error ? null : ((r.data ?? []) as MeaningfulRow[])), () => null),
+    optional<{ demo_user_id: string | null; company_id: string | null }>(db, "demo_workspaces", "demo_user_id,company_id"),
+    optional<{ demo_user_id: string | null; company_id: string | null }>(db, "demo_retired_logins", "demo_user_id,company_id", "demo_user_id"),
   ]);
+  // Demo / Practice logins and their sample companies: from Auth, the registry (current and retired logins) and labels.
+  const sampleCompanies = new Set<string>();
+  for (const w of [...(workspaces ?? []), ...(retired ?? [])]) { if (w.demo_user_id) sampleUsers.add(w.demo_user_id); if (w.company_id) sampleCompanies.add(w.company_id); }
+  for (const l of labels ?? []) if (l.label === "demo") sampleUsers.add(l.user_id);
   const pm = new Map((product.pmSubs ?? []).map((x) => [x.stripe_subscription_id, x]));
   const m = (metrics.data ?? {}) as { import_failures_7d?: number; pdf_errors_7d?: number };
   const extra = new Map((leadsV2 ?? []).filter((l) => l.user_id).map((l) => [l.user_id!, l]));
-  return {
+  return stripSampleData({
     users: users ?? profiles.map((p) => ({ id: p.id, email: null, created_at: p.created_at, email_confirmed_at: null, last_sign_in_at: null })),
     usersSource: users ? "auth" : "profiles",
     labels: labels ?? [], labelsInstalled: labels !== null,
@@ -102,7 +110,7 @@ export async function loadSnapshot(db: Db, callerId: string): Promise<Snapshot> 
     product: product.data,
     meaningful,
     loadedAt: new Date().toISOString(),
-  };
+  }, { userIds: sampleUsers, companyIds: sampleCompanies });
 }
 
 /**
