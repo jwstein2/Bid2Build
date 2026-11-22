@@ -3,13 +3,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { REVEAL_FEATURE_EVENT, START_TOUR_EVENT } from "@/lib/features/state";
-import { Sparkles, CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, HardHat, LayoutTemplate, LogOut, ArrowLeftRight, X, UserCog, Clock, Receipt, Gauge, SquareKanban, CalendarRange, GraduationCap, Palette, Landmark, Shapes, Bot, House, Newspaper, ChevronDown } from "lucide-react";
+import { CreditCard, FileText, LayoutDashboard, Library, Menu, Settings, Shield, Building2, Users, HardHat, LayoutTemplate, LogOut, ArrowLeftRight, X, UserCog, Clock, Receipt, Gauge, SquareKanban, CalendarRange, GraduationCap, Palette, Landmark, Shapes, Bot, House, Newspaper, ChevronDown, LifeBuoy } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ButtonLink } from "@/components/ui/button";
 import { Logo } from "./logo";
 import { PremiumDiamond } from "../billing/premium";
-import { ReplayTourButton } from "../onboarding/replay-tour-button";
-import { FeatureTourButton } from "../features/tour-buttons";
+import { OPEN_GUIDE_EVENT } from "../guide/client";
 import type { FeatureId } from "@/lib/features/registry";
 import type { ThemePref } from "@/lib/theme";
 import { ThemeToggle } from "../theme/theme-toggle";
@@ -240,10 +239,12 @@ export function AppSidebar({ essentials = false, isAdmin, email, company, access
           </>
         )}
         <p className="mt-3 px-3 pb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#B8C6D4]">Help</p>
-        <ReplayTourButton className={cn(item, "w-full text-left text-[#C9D6E3] hover:bg-white/5 hover:text-white")} />
-        <FeatureTourButton className={cn(item, "w-full text-left text-[#C9D6E3] hover:bg-white/5 hover:text-white")} />
-        <Link href="/academy" className={cn(item, "text-[#C9D6E3] hover:bg-white/5 hover:text-white")} data-testid="nav-academy"><GraduationCap className="h-4 w-4" aria-hidden /> Contractor Academy</Link>
-        <Link href="/whats-new" aria-current={active("/whats-new") ? "page" : undefined} className={cn(item, active("/whats-new") ? "bg-white/10 text-white" : "text-[#C9D6E3] hover:bg-white/5 hover:text-white")} data-testid="nav-whats-new"><Sparkles className="h-4 w-4" aria-hidden /> What&apos;s New</Link>
+        {/* One way in to help (2026-11-22): the Help panel holds the page walkthrough, tours, the getting
+            started checklist and tour, search, the Academy, What's New and Contact support. */}
+        <button type="button" onClick={() => { setOpen(false); window.dispatchEvent(new Event(OPEN_GUIDE_EVENT)); }} aria-haspopup="dialog" data-testid="nav-help"
+          className={cn(item, "w-full text-left text-[#C9D6E3] hover:bg-white/5 hover:text-white")}>
+          <LifeBuoy className="h-4 w-4 shrink-0" aria-hidden /> Help &amp; guides
+        </button>
         {(practice || demo) && <PracticeNavToggle active={demo} className={cn(item, "w-full text-left text-[#C9D6E3] hover:bg-white/5 hover:text-white")} />}
         {isAdmin && !demo && <DemoNavItem className={cn(item, "w-full text-left text-[#C9D6E3] hover:bg-white/5 hover:text-white")} />}
         {isAdmin && (

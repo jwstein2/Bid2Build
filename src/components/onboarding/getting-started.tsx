@@ -19,7 +19,7 @@ export function GettingStarted({ steps, className }: { steps: ChecklistStep[]; c
   const next = nextStep(steps);
   if (hidden) return null;
   return (
-    <section aria-labelledby="gs-title" data-testid="getting-started" className={cn("rounded-2xl border border-line bg-surface p-4 shadow-card sm:p-5", className)}>
+    <section id="getting-started" aria-labelledby="gs-title" data-testid="getting-started" className={cn("rounded-2xl border border-line bg-surface p-4 shadow-card sm:p-5", className)}>
       <div className="flex flex-wrap items-center gap-3">
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-accent-tint text-accent-ink"><Rocket className="h-5 w-5" aria-hidden /></span>
         <div className="min-w-0 flex-1">
@@ -29,7 +29,7 @@ export function GettingStarted({ steps, className }: { steps: ChecklistStep[]; c
         <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="gs-list" className="inline-flex min-h-11 items-center gap-1 rounded-md px-2 text-sm font-semibold text-ink-soft hover:bg-black/5">
           {open ? <><ChevronUp className="h-4 w-4" aria-hidden /> Collapse</> : <><ChevronDown className="h-4 w-4" aria-hidden /> Show steps</>}
         </button>
-        <button type="button" disabled={pending} onClick={() => start(async () => { setHidden(true); await setChecklistHidden(true); })} className="min-h-11 rounded-md px-2 text-sm text-muted hover:bg-black/5 hover:text-ink" data-testid="getting-started-hide">
+        <button type="button" disabled={pending} onClick={() => start(async () => { setHidden(true); await setChecklistHidden(true); })} className="min-h-11 rounded-md px-2 text-sm text-muted hover:bg-black/5 hover:text-ink" data-testid="getting-started-hide" title="You can bring it back from Help &amp; guides">
           Hide
         </button>
       </div>

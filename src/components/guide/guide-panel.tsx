@@ -1,7 +1,9 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BookOpen, CheckCircle2, ChevronRight, CirclePlay, Compass, ListChecks, Minus, RotateCcw, Search, Sparkles, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { BookOpen, CheckCircle2, ChevronRight, CirclePlay, Compass, GraduationCap, ListChecks, Mail, Minus, RotateCcw, Search, Sparkles, X } from "lucide-react";
+import { setChecklistHidden } from "@/lib/onboarding/checklist-actions";
 import { activePage } from "@/components/features/feature-host";
 import { loadGuideContext, startFeatureTour, type GuideView } from "@/components/features/client";
 import { DemoEnterButton } from "@/components/demo/demo-controls";
@@ -38,6 +40,8 @@ export function GuidePanel({ onClose, onStartTour, onMinimize }: { onClose: () =
   }, [onClose]);
 
   const ws = state?.workspace ?? "real";
+  const router = useRouter();
+  const [reopening, setReopening] = useState(false);
   const tours = ctx ? eligibleTours(ctx, ws) : [];
   const index = useMemo(() => (ctx ? helpIndex(ctx, ws, pickTrade([], ctx.trades)) : []), [ctx, ws]);
   const results = q.trim().length >= 2 ? searchHelp(index, q, 6, page) : [];
@@ -74,9 +78,9 @@ export function GuidePanel({ onClose, onStartTour, onMinimize }: { onClose: () =
       className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+1rem)] left-3 right-3 z-50 flex max-h-[min(640px,calc(100dvh-2rem))] flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-2xl sm:right-auto sm:w-[380px] no-print">
       <div className="flex items-center gap-2 border-b border-line px-4 py-3">
         <Compass className="h-5 w-5 text-accent-ink" aria-hidden />
-        <h2 id="guide-title" className="flex-1 font-display text-base font-extrabold text-navy">Built2Bid Guide</h2>
-        <button type="button" onClick={onMinimize} aria-label="Minimize the Guide" className="grid h-11 w-11 place-items-center rounded-md text-muted hover:bg-black/5 sm:h-9 sm:w-9" data-testid="guide-minimize"><Minus className="h-4 w-4" aria-hidden /></button>
-        <button type="button" onClick={onClose} aria-label="Close the Guide" className="grid h-11 w-11 place-items-center rounded-md text-muted hover:bg-black/5 sm:h-9 sm:w-9" data-testid="guide-close"><X className="h-4 w-4" aria-hidden /></button>
+        <h2 id="guide-title" className="flex-1 font-display text-base font-extrabold text-navy">Help &amp; guides</h2>
+        <button type="button" onClick={onMinimize} aria-label="Minimize Help" className="grid h-11 w-11 place-items-center rounded-md text-muted hover:bg-black/5 sm:h-9 sm:w-9" data-testid="guide-minimize"><Minus className="h-4 w-4" aria-hidden /></button>
+        <button type="button" onClick={onClose} aria-label="Close Help" className="grid h-11 w-11 place-items-center rounded-md text-muted hover:bg-black/5 sm:h-9 sm:w-9" data-testid="guide-close"><X className="h-4 w-4" aria-hidden /></button>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto p-2">
@@ -131,16 +135,17 @@ export function GuidePanel({ onClose, onStartTour, onMinimize }: { onClose: () =
 
         <p className="px-3 pb-1 pt-3 text-xs font-bold uppercase tracking-wide text-muted">Learn</p>
         {ws !== "demo" && (
-          <Link href="/dashboard#first-bid-checklist" className={row} onClick={() => { recordGuide({ event: "checklist_opened" }); onClose(); }} data-testid="guide-checklist">
-            <ListChecks className="h-4 w-4 shrink-0 text-muted" aria-hidden /><span className="flex-1 font-semibold">First-bid checklist</span>
-          </Link>
-        )}
-        {video && (
-          <button type="button" className={row} onClick={() => { onClose(); window.dispatchEvent(new Event(OPEN_TOUR_EVENT)); }} data-testid="guide-video">
-            <CirclePlay className="h-4 w-4 shrink-0 text-muted" aria-hidden /><span className="flex-1 font-semibold">{video.title}</span>
+          <button type="button" className={row} data-testid="guide-checklist" disabled={reopening}
+            onClick={() => { recordGuide({ event: "checklist_opened" }); setReopening(true); void setChecklistHidden(false).finally(() => { onClose(); router.push("/home#getting-started"); }); }}>
+            <ListChecks className="h-4 w-4 shrink-0 text-muted" aria-hidden /><span className="flex-1 font-semibold">Getting started checklist</span>
           </button>
         )}
-        <Link href="/academy" className={row} onClick={onClose}><BookOpen className="h-4 w-4 shrink-0 text-muted" aria-hidden /><span className="flex-1 font-semibold">Contractor Academy</span></Link>
+        <button type="button" className={row} onClick={() => { onClose(); window.dispatchEvent(new Event(OPEN_TOUR_EVENT)); }} data-testid="guide-video">
+          <CirclePlay className="h-4 w-4 shrink-0 text-muted" aria-hidden /><span className="flex-1 font-semibold">{video ? video.title : "Getting started tour (2 min)"}</span>
+        </button>
+        <Link href="/academy" className={row} onClick={onClose} data-testid="guide-academy"><GraduationCap className="h-4 w-4 shrink-0 text-muted" aria-hidden /><span className="flex-1"><span className="block font-semibold">Contractor Academy</span><span className="block text-xs text-muted">Free courses on sales, estimating and running the business</span></span></Link>
+        <Link href="/whats-new" className={row} onClick={onClose} data-testid="guide-whats-new"><Sparkles className="h-4 w-4 shrink-0 text-muted" aria-hidden /><span className="flex-1 font-semibold">What&apos;s new</span></Link>
+        <a href="mailto:support@built2bid.org" className={row} data-testid="guide-support"><Mail className="h-4 w-4 shrink-0 text-muted" aria-hidden /><span className="flex-1"><span className="block font-semibold">Contact support</span><span className="block text-xs text-muted">support@built2bid.org. A real person reads every message.</span></span></a>
         {ws !== "demo" && tours.some((t) => t.id === "first-estimate") && (
           <button type="button" className={row} onClick={() => onStartTour("first-estimate")} data-testid="guide-restart">
             <RotateCcw className="h-4 w-4 shrink-0 text-muted" aria-hidden /><span className="flex-1 font-semibold">Restart onboarding</span>
