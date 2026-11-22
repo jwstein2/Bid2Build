@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
-import { ChevronRight, UserPlus } from "lucide-react";
+import { ChevronRight, FileUp, UserPlus } from "lucide-react";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { Badge, Card } from "@/components/ui/misc";
 import { ButtonLink } from "@/components/ui/button";
@@ -56,6 +56,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
         {summaries.length > 0 && (
           <div className="flex flex-wrap gap-2" data-guide="customers.new">
             <ButtonLink href="/dashboard/customers/new" variant="secondary"><UserPlus className="h-4 w-4" aria-hidden /> New customer</ButtonLink>
+            <ButtonLink href="/dashboard/customers/import" variant="secondary" data-testid="customers-import-link"><FileUp className="h-4 w-4" aria-hidden /> Import from QuickBooks / CSV</ButtonLink>
             <ButtonLink href="/bids" variant="accent">Create New Bid</ButtonLink>
           </div>
         )}
@@ -75,6 +76,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
             <p className="mx-auto mt-2 max-w-md text-ink-soft">Customers appear here automatically when you name them on a bid. You can also add one now and pick them on your next bid.</p>
             <div className="mt-5 flex flex-wrap justify-center gap-3">
               <ButtonLink href="/dashboard/customers/new" variant="secondary"><UserPlus className="h-4 w-4" aria-hidden /> Create Your First Customer</ButtonLink>
+              <ButtonLink href="/dashboard/customers/import" variant="secondary" data-testid="customers-import-empty"><FileUp className="h-4 w-4" aria-hidden /> Import from QuickBooks / CSV</ButtonLink>
               <ButtonLink href="/bids" variant="accent">Create a New Bid</ButtonLink>
             </div>
           </Card>

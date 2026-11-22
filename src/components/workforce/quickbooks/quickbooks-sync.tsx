@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { CircleCheck, Link2, RefreshCw, Send, Unplug } from "lucide-react";
+import { Banknote, CircleCheck, FileUp, Link2, RefreshCw, Send, Unplug } from "lucide-react";
 import { Button, buttonClass } from "@/components/ui/button";
 import { Badge, Card, Notice } from "@/components/ui/misc";
 import { api } from "@/components/schedule/client";
@@ -21,7 +21,7 @@ const SKIP_LABEL: Record<string, string> = {
 const today = () => new Date().toISOString().slice(0, 10);
 const fmt = (iso: string | null) => (iso ? new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "never");
 
-export function QuickBooksSync({ configured, workers, projects }: { configured: boolean; workers: { id: string; name: string }[]; projects: { id: string; name: string }[] }) {
+export function QuickBooksSync({ configured, workers, projects, isFinancialsOn = false }: { configured: boolean; workers: { id: string; name: string }[]; projects: { id: string; name: string }[]; isFinancialsOn?: boolean }) {
   const [s, setS] = useState<Status | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -65,7 +65,12 @@ export function QuickBooksSync({ configured, workers, projects }: { configured: 
   }
 
   if (!configured) {
-    return <Notice title="Coming soon">Connecting QuickBooks Online is almost ready. Until then, use <Link className="underline" href="/projects/workforce/time-tracking?tab=payroll">Payroll CSV</Link> to export hours.</Notice>;
+    return (
+      <div className="space-y-4">
+        <Notice title="Coming soon">Connecting QuickBooks Online is almost ready. Until then, use <Link className="underline" href="/projects/workforce/time-tracking?tab=payroll">Payroll CSV</Link> to export hours.</Notice>
+        <AddExistingData isFinancialsOn={isFinancialsOn} />
+      </div>
+    );
   }
   if (!s) return err ? <Notice tone="danger">{err}</Notice> : <p className="text-sm text-muted">Loading…</p>;
   const c = s.connection;
@@ -88,6 +93,8 @@ export function QuickBooksSync({ configured, workers, projects }: { configured: 
             {(!c || c.status === "needs_reauth") && (
               <a href="/api/integrations/quickbooks/connect" className={buttonClass("primary", "md")} data-testid="qb-connect">{c ? "Reconnect QuickBooks" : "Connect QuickBooks"}</a>
             )}
+            <a href="/import" className={buttonClass("secondary", "md")} data-testid="qb-add-existing"><FileUp className="h-4 w-4" aria-hidden /> Add existing data</a>
+            {isFinancialsOn && <a href="/financials/accounting/bank" className={buttonClass("secondary", "md")} data-testid="qb-upload-statement"><Banknote className="h-4 w-4" aria-hidden /> Upload bank statement</a>}
             {c && <Button variant="secondary" onClick={disconnect} disabled={busy === "disconnect"} data-testid="qb-disconnect"><Unplug className="h-4 w-4" aria-hidden /> Disconnect</Button>}
           </div>
         </div>
@@ -168,5 +175,21 @@ export function QuickBooksSync({ configured, workers, projects }: { configured: 
         </>
       )}
     </div>
+  );
+}
+
+/** Beside Connect QuickBooks: the way in for past data (customer lists, bank statements, team, prices). */
+export function AddExistingData({ isFinancialsOn }: { isFinancialsOn: boolean }) {
+  return (
+    <Card className="flex flex-wrap items-center justify-between gap-3 p-5" data-testid="qb-existing-data">
+      <div>
+        <h2 className="text-lg font-bold text-navy">Add existing data</h2>
+        <p className="text-sm text-ink-soft">Bring in past customers from a QuickBooks export, bank statements, your team and price lists.</p>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <a href="/import" className={buttonClass("secondary", "md")} data-testid="qb-add-existing"><FileUp className="h-4 w-4" aria-hidden /> Add existing data</a>
+        {isFinancialsOn && <a href="/financials/accounting/bank" className={buttonClass("secondary", "md")} data-testid="qb-upload-statement"><Banknote className="h-4 w-4" aria-hidden /> Upload bank statement</a>}
+      </div>
+    </Card>
   );
 }
