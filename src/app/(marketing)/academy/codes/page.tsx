@@ -55,7 +55,10 @@ export default async function CodesPage({ searchParams }: PageProps<"/academy/co
           <h1 className="font-display text-3xl font-extrabold">Codes &amp; Regulations</h1>
           <p className="mt-1 max-w-2xl text-ink-soft">Search verified construction code citations for your state and trade. Every answer shows its source, edition and when it was last checked. If we can&apos;t verify it, we say so.</p>
         </div>
-        <Link href={`/academy/codes/coverage${locationQuery(loc)}`} className="text-sm font-semibold text-brand hover:underline">What&apos;s covered</Link>
+        <div className="flex gap-4">
+          <Link href="/academy/study" className="text-sm font-semibold text-brand hover:underline">Flashcards &amp; quizzes</Link>
+          <Link href={`/academy/codes/coverage${locationQuery(loc)}`} className="text-sm font-semibold text-brand hover:underline">What&apos;s covered</Link>
+        </div>
       </div>
 
       <LocationForm
