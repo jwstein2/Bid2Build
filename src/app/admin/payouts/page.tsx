@@ -4,6 +4,7 @@ import { requireStaffCap, hasTwoStep, TWO_STEP_FINANCE } from "@/lib/staff/serve
 import { PayoutLedger, type PayoutRow } from "@/components/payouts/ledger";
 import { CLASSIFICATION, FEE_REASON, HOLD_REASON, feeLine, money, type FeePolicy } from "@/lib/payouts/labels";
 import { QuickBooksTab } from "./quickbooks-tab";
+import { ReconciliationTab } from "./reconciliation-tab";
 import { activateLive, approveFeePolicy, approveFunding, approvePayout, cancelPayout, pause, reconcile, runNow, saveLimits, saveMode, saveThreshold, simulate } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -18,12 +19,14 @@ type Overview = { settings: Settings; fee_policies: Fee[]; payouts: PayoutRow[];
 
 const OK: Record<string, string> = { mode: "Mode saved.", limits: "Limits saved.", paused: "All payouts paused.", resumed: "Payouts resumed.", fees: "Fee schedule approved. Recipient-paid fees apply only to people who accepted this disclosure.",
   funding: "Funding account approved. Live activation (if any) was cleared and needs to be done again.", live: "Live payouts activated.", approved: "Payout approved.", canceled: "Payout canceled; its statements can be paid again.",
-  qb_connected: "QuickBooks connected.", qb_account: "Expense account saved.", qb_sent: "QuickBooks:", qb_checked: "QuickBooks:", qb_disconnected: "QuickBooks disconnected.", sim_posted: "Simulated: settled.", sim_failed: "Simulated: failed.", sim_returned: "Simulated: returned by bank.", ran: "Run finished.", reconciled: "Saved.", threshold: "Threshold saved." };
+  qb_connected: "QuickBooks connected.", qb_account: "Expense account saved.", qb_sent: "QuickBooks:", qb_checked: "QuickBooks:", qb_disconnected: "QuickBooks disconnected.", sim_posted: "Simulated: settled.", sim_failed: "Simulated: failed.", sim_returned: "Simulated: returned by bank.", ran: "Run finished.", reconciled: "Saved.", threshold: "Threshold saved.",
+  recon_ran: "Reconciliation finished.", recon_settings: "Standing authorization saved.", recon_ack: "Exception acknowledged." };
 const ERR: Record<string, string> = { two_step: TWO_STEP_FINANCE, env_live: "PAYOUTS_ALLOW_LIVE isn't 'true' on the server. Set it in Netlify (Production) and redeploy first.", confirm: "Tick the confirmation box.",
   provider_is_mock: "Switch the provider to Stripe Global Payouts first.", funding_not_approved: "Approve the funding account first.", fee_policy_not_approved: "Approve the fee schedule first.",
   use_activation: "Use the live activation checklist.", owner_only: "Owner only.", invalid: "Please check the form.",
   qb_unavailable: "QuickBooks keys aren't set on the server yet.", qb_busy: "Too many tries. Wait a few minutes.", qb_declined: "QuickBooks sign-in was cancelled.", qb_failed: "QuickBooks didn't respond as expected. Try again.",
-  qb_not_connected: "Connect QuickBooks first.", qb_none_selected: "Select at least one item." };
+  qb_not_connected: "Connect QuickBooks first.", qb_none_selected: "Select at least one item.",
+  recon_busy: "A reconciliation is already running. Try again in a minute.", recon_failed: "Reconciliation couldn't run. Try again.", recon_not_installed: "Run migration 20270223001000 first.", note_required: "Add a short note (what you checked)." };
 const btn = "cc-mono rounded-md border border-[var(--cc-line)] px-3 py-1.5 text-xs text-white hover:border-[var(--cc-blue)]";
 const CHECKLIST: [string, string][] = [
   ["provider_approved", "Stripe approved Built2Bid for Global Payouts (paying our own US contractors) on the live account"],
@@ -37,7 +40,7 @@ const CHECKLIST: [string, string][] = [
   ["test_run_passed", "A full test-mode run (connect bank, schedule, send, settle, fail, return) worked as expected"],
 ];
 
-export default async function PayoutsPage({ searchParams }: { searchParams: Promise<{ tab?: string; ok?: string; err?: string; summary?: string; status?: string; year?: string; month?: string }> }) {
+export default async function PayoutsPage({ searchParams }: { searchParams: Promise<{ tab?: string; ok?: string; err?: string; summary?: string; status?: string; year?: string; month?: string; q?: string; program?: string; from?: string; to?: string }> }) {
   const sp = await searchParams;
   const tab = sp.tab ?? "overview";
   const { user, db, owner } = await requireStaffCap("payouts.view");
@@ -52,7 +55,7 @@ export default async function PayoutsPage({ searchParams }: { searchParams: Prom
   const transit = by(["submitting", "submitted"]);
   const failed = by(["failed", "returned"]);
   const paidLive = o.payouts.filter((p) => p.status === "paid" && p.mode === "live");
-  const tabs = [["overview", "Overview"], ["ledger", "All payouts"], ["exceptions", "Exceptions"], ["quickbooks", "QuickBooks"], ["settings", "Automation & activation"], ["tax", "Year-end tax"], ["costs", "Cost report"]]
+  const tabs = [["overview", "Overview"], ["reconciliation", "Reconciliation"], ["ledger", "All payouts"], ["exceptions", "Exceptions"], ["quickbooks", "QuickBooks"], ["settings", "Automation & activation"], ["tax", "Year-end tax"], ["costs", "Cost report"]]
     .map(([v, l]) => ({ value: v, label: l, href: `/admin/payouts?tab=${v}` }));
   const ownerActions = (p: PayoutRow) => owner ? (
     <div className="flex flex-col gap-1">
@@ -117,6 +120,7 @@ export default async function PayoutsPage({ searchParams }: { searchParams: Prom
       </>)}
 
       {tab === "quickbooks" && <QuickBooksTab db={db} owner={owner} />}
+      {tab === "reconciliation" && <ReconciliationTab db={db} caller={user.id} owner={owner} q={{ q: sp.q, program: sp.program, status: sp.status, from: sp.from, to: sp.to }} />}
 
       {tab === "ledger" && (
         <Panel title="All payouts" action={<form className="flex gap-2"><input type="hidden" name="tab" value="ledger" /><select name="status" defaultValue={sp.status ?? ""} className="field field-sm"><option value="">All</option>{["scheduled", "held", "needs_approval", "submitted", "paid", "failed", "returned", "canceled"].map((x) => <option key={x}>{x}</option>)}</select><button className={btn}>Filter</button></form>}>

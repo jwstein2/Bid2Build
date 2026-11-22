@@ -13,6 +13,8 @@ import { rewardReferrer } from "@/lib/growth/referral-server";
 import { recordEvent } from "@/lib/growth/events";
 import { salesChargeDispute, salesChargeRefunded, syncSalesBilling } from "@/lib/sales/billing-server";
 import { affiliateChargeDispute, affiliateChargeRefunded, syncAffiliateBilling } from "@/lib/affiliates/billing-server";
+import { recordChargeFact, recordInvoiceFact } from "@/lib/reconciliation/evidence";
+import type { StripeInvoiceLike } from "@/lib/reconciliation/facts";
 
 /** List value of a new subscription's first period, in USD, from its price (for ad conversion value only). */
 function listValueUsd(sub: Stripe.Subscription): number | null {
@@ -31,6 +33,9 @@ const HANDLED = new Set([
   "customer.subscription.resumed",
   "invoice.paid",
   "invoice.payment_failed",
+  // Reconciliation evidence only (billing_invoice_facts). Delivered once added to the endpoint in Stripe; optional.
+  "invoice.voided",
+  "invoice.marked_uncollectible",
   // Sales Portal: a refund can reverse a rep's commission. Only arrives once the event is added to the
   // webhook endpoint in Stripe; nothing else depends on it.
   "charge.refunded",
@@ -78,9 +83,17 @@ export async function POST(req: Request) {
     let subscriptionId: string | null = null;
     const obj = event.data.object as unknown as Record<string, unknown>;
     if (event.type === "charge.refunded") {
+      // Reconciliation evidence first (never throws), then the existing commission handlers.
+      await recordChargeFact(admin, stripe, obj as unknown as Stripe.Charge);
       await salesChargeRefunded(admin, stripe, obj as unknown as Stripe.Charge);
       await affiliateChargeRefunded(admin, stripe, obj as unknown as Stripe.Charge);
     } else if (event.type === "charge.dispute.created" || event.type === "charge.dispute.closed") {
+      const d = obj as unknown as Stripe.Dispute;
+      const chargeId = typeof d.charge === "string" ? d.charge : d.charge?.id;
+      if (chargeId) {
+        const status = event.type === "charge.dispute.created" ? "open" : d.status === "won" ? "won" : "lost";
+        await recordChargeFact(admin, stripe, await stripe.charges.retrieve(chargeId), { status }).catch(() => "failed");
+      }
       await salesChargeDispute(admin, stripe, obj as unknown as Stripe.Dispute, event.type === "charge.dispute.closed");
       await affiliateChargeDispute(admin, stripe, obj as unknown as Stripe.Dispute, event.type === "charge.dispute.closed");
     } else if (event.type.startsWith("customer.subscription.")) {
@@ -96,12 +109,17 @@ export async function POST(req: Request) {
       const inv = obj as { parent?: { subscription_details?: { subscription?: string | { id: string } } }; subscription?: string | { id: string } };
       const ref = inv.parent?.subscription_details?.subscription ?? inv.subscription;
       if (ref) subscriptionId = typeof ref === "string" ? ref : ref.id;
+      // Stripe's record of the invoice for reconciliation (payment verification). Never throws.
+      else await recordInvoiceFact(admin, obj as unknown as StripeInvoiceLike, { failed: event.type === "invoice.payment_failed" });
     }
 
     if (subscriptionId) {
       const sub = await stripe.subscriptions.retrieve(subscriptionId);
       const res = await applySubscription(admin, sub, event.created);
       if (!res.userId) throw new Error(`No user for subscription ${subscriptionId}`);
+      if (event.type.startsWith("invoice.")) {
+        await recordInvoiceFact(admin, obj as unknown as StripeInvoiceLike, { userId: res.userId, failed: event.type === "invoice.payment_failed" });
+      }
       // Sales Portal: keep a rep-attributed customer's plan and commission basis current, and create the
       // sale-month / anniversary commission from a paid invoice. Idempotent in the database; never throws.
       await syncSalesBilling(admin, stripe, sub, res.userId, {

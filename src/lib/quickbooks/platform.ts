@@ -8,8 +8,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { openToken, sealToken } from "@/lib/tax-banking/bank/token-crypto";
 import { logError } from "@/lib/http/api";
 import { qbEnvironment, type QbEnvironment } from "./config";
-import { QbError, companyName, createBill, createVendor, findVendorByName, getBill, listExpenseAccounts, refreshTokens, revokeToken, type QbTokens } from "./client";
-import { billPayload, billState, isDuplicateName, qbQuote, vendorPayload, displayName, type Payee } from "./payout-bills";
+import { QbError, companyName, createBill, createBillPayment, createVendor, findVendorByName, getBill, listBankAccounts, listExpenseAccounts, refreshTokens, revokeToken, type QbTokens } from "./client";
+import { billPayload, billPaymentPayload, billState, isDuplicateName, qbQuote, vendorPayload, displayName, type Payee } from "./payout-bills";
 
 type Db = SupabaseClient;
 
@@ -94,6 +94,7 @@ export async function disconnectPlatform(db: Db): Promise<void> {
 }
 
 export const expenseAccounts = (db: Db, c: PlatformConnection) => withToken(db, c, (t) => listExpenseAccounts(c.environment, c.realmId, t));
+export const bankAccounts = (db: Db, c: PlatformConnection) => withToken(db, c, (t) => listBankAccounts(c.environment, c.realmId, t));
 
 export async function setExpenseAccount(db: Db, c: PlatformConnection, id: string): Promise<boolean> {
   const acct = (await expenseAccounts(db, c)).find((a) => a.id === id);
@@ -125,7 +126,7 @@ export async function recentBills(db: Db, limit = 100): Promise<BillRow[]> {
 }
 
 /** The payee's QuickBooks vendor: the saved match, else an existing vendor with the same name, else a new 1099 vendor. */
-async function vendorFor(db: Db, c: PlatformConnection, t: string, item: Candidate): Promise<string> {
+async function vendorFor(db: Db, c: PlatformConnection, t: string, item: Payee & { payeeKind: string; payeeId: string }): Promise<string> {
   const { data } = await db.from("qb_payee_vendors").select("qb_vendor_id").eq("payee_kind", item.payeeKind).eq("payee_id", item.payeeId).eq("realm_id", c.realmId).maybeSingle();
   if (data) return String((data as { qb_vendor_id: string }).qb_vendor_id);
   const name = displayName(item.payeeName);
@@ -206,4 +207,83 @@ export async function checkPaidBills(db: Db): Promise<{ checked: number; paid: n
   }
   await db.from("qb_platform_connection").update({ last_check_at: new Date().toISOString() }).eq("id", true);
   return { checked: open.length, paid, voided };
+}
+
+/**
+ * Standing authorization (Reconciliation settings → "Create QuickBooks bills automatically"): bills every obligation that is
+ * ready (payment verified, compliance complete), as the owner who authorized it. Same guards as the manual button.
+ */
+export async function autoSendBills(db: Db, authorizedBy: string): Promise<SendSummary & { skipped_reason?: string }> {
+  const c = await platformConnection(db);
+  if (!c || c.status !== "active") return { created: 0, failed: 0, skipped: 0, errors: [], skipped_reason: "not_connected" };
+  if (!c.expenseAccountId) return { created: 0, failed: 0, skipped: 0, errors: [], skipped_reason: "no_expense_account" };
+  const list = await candidates(db, c.environment);
+  if (!list) return { created: 0, failed: 0, skipped: 0, errors: [], skipped_reason: "not_installed" };
+  if (list.automationLive) return { created: 0, failed: 0, skipped: 0, errors: [], skipped_reason: "automatic_payouts_live" };
+  const ids = list.items.filter((i) => i.blockers.length === 0).map((i) => i.sourceId);
+  if (!ids.length) return { created: 0, failed: 0, skipped: 0, errors: [] };
+  return sendBills(db, c, authorizedBy, ids);
+}
+
+async function payeeFor(db: Db, kind: string, id: string): Promise<Payee | null> {
+  if (kind === "sales_rep") {
+    const { data } = await db.from("sales_reps").select("full_name, email, phone, staff_members(legal_first_name, legal_last_name, email, phone, address_line1, address_line2, city, state, postal_code)").eq("id", id).maybeSingle();
+    if (!data) return null;
+    const r = data as unknown as { full_name: string; email: string | null; phone: string | null; staff_members: Record<string, string | null> | Record<string, string | null>[] | null };
+    const sm = (Array.isArray(r.staff_members) ? r.staff_members[0] : r.staff_members) ?? {};
+    const legal = [sm.legal_first_name, sm.legal_last_name].filter(Boolean).join(" ").trim();
+    return { payeeName: legal || r.full_name, givenName: sm.legal_first_name, familyName: sm.legal_last_name, email: sm.email ?? r.email, phone: sm.phone ?? r.phone,
+      line1: sm.address_line1, line2: sm.address_line2, city: sm.city, state: sm.state, postalCode: sm.postal_code };
+  }
+  const { data } = await db.from("affiliates").select("business_name, legal_name, display_name, email, phone, address_line1, address_line2, city, state, postal_code").eq("id", id).maybeSingle();
+  if (!data) return null;
+  const a = data as Record<string, string | null>;
+  return { payeeName: (a.business_name || a.legal_name || a.display_name || a.email || "Affiliate").trim(), email: a.email, phone: a.phone,
+    line1: a.address_line1, line2: a.address_line2, city: a.city, state: a.state, postalCode: a.postal_code };
+}
+
+/**
+ * Books payouts the payment provider settled (verified) into Built2Bid's live QuickBooks: one bill per obligation plus a
+ * bill payment from the chosen bank account. Bookkeeping only; reserved first so a repeat never doubles. Production only.
+ */
+export async function recordProviderPayouts(db: Db, bankAccountId: string): Promise<{ recorded: number; failed: number; errors: string[]; skipped_reason?: string }> {
+  const out = { recorded: 0, failed: 0, errors: [] as string[] };
+  const c = await platformConnection(db);
+  if (!c || c.status !== "active") return { ...out, skipped_reason: "not_connected" };
+  if (c.environment !== "production") return { ...out, skipped_reason: "sandbox" };
+  if (!c.expenseAccountId || !/^\d{1,32}$/.test(bankAccountId)) return { ...out, skipped_reason: "accounts_not_chosen" };
+  const { data, error } = await db.rpc("qb_provider_items", { p_env: c.environment });
+  if (error) return { ...out, skipped_reason: "not_installed" };
+  const items = (data as { payout_id: string; payout_ref: string; settled_at: string; source_kind: string; source_id: string; amount_cents: number; payee_kind: string; payee_id: string; bill_id: string | null }[]).slice(0, 50);
+  if (!items.length) return out;
+  const t = await token(db, c);
+  for (const it of items) {
+    try {
+      let billId = it.bill_id;
+      if (!billId) {
+        const r = await db.rpc("qb_provider_bill_reserve", { p_payout: it.payout_id, p_source_kind: it.source_kind, p_source_id: it.source_id, p_realm: c.realmId, p_env: c.environment });
+        if (r.error || !r.data) { out.errors.push(`${it.payout_ref}: ${r.error?.message ?? "not reserved"}`.slice(0, 200)); continue; }
+        billId = String(r.data);
+      }
+      const { data: row } = await db.from("qb_payout_bills").select("doc_number, description, amount_cents, qb_bill_id").eq("id", billId).single();
+      const b = row as { doc_number: string; description: string; amount_cents: number; qb_bill_id: string | null };
+      const payee = await payeeFor(db, it.payee_kind, it.payee_id);
+      if (!payee) throw new Error("payee_not_found");
+      const vendorId = await vendorFor(db, c, t, { ...payee, payeeKind: it.payee_kind, payeeId: it.payee_id });
+      const day = new Date(it.settled_at ?? Date.now()).toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
+      let qbBill = b.qb_bill_id;
+      if (!qbBill) {
+        qbBill = await createBill(c.environment, c.realmId, t, billPayload({ vendorId, accountId: c.expenseAccountId, amountCents: b.amount_cents, docNumber: b.doc_number, description: `${b.description} - ${payee.payeeName}`, txnDate: day }), billId);
+        await db.from("qb_payout_bills").update({ status: "open", qb_bill_id: qbBill, sent_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", billId);
+      }
+      const payId = await createBillPayment(c.environment, c.realmId, t, billPaymentPayload({ vendorId, bankAccountId, billId: qbBill, amountCents: b.amount_cents, txnDate: day, note: `Built2Bid ${b.doc_number}: paid by payout ${it.payout_ref}` }), `${billId}-pay`.slice(0, 50));
+      await db.rpc("qb_provider_bill_paid", { p_bill: billId, p_payment_id: payId });
+      out.recorded++;
+    } catch (e) {
+      out.failed++; out.errors.push(`${it.payout_ref}: ${(e as Error).message}`.slice(0, 200));
+      logError("quickbooks.provider_payout", e, { intuit_tid: e instanceof QbError ? e.tid ?? undefined : undefined });
+      if (e instanceof QbError && e.reauth) break;
+    }
+  }
+  return out;
 }
