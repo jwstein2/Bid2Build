@@ -16,6 +16,7 @@ The Academy is a free classroom and community for contractors at `/academy`. It 
 | Pages | `src/app/(marketing)/academy/**` |
 | Components | `src/components/academy/**`, `src/components/marketing/academy-promo.tsx` |
 | Tests | `tests/academy.test.ts`, `tests/db/academy.test.ts`, `tests/db/academy-rollback.test.ts` |
+| Code library (knowledge engine, code search) | See `docs/academy/expansion/README.md` |
 
 ## Pages
 

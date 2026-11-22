@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { AlertTriangle, ExternalLink, Mail, Pencil, Phone, Plus } from "lucide-react";
+import { AlertTriangle, CalendarDays, ExternalLink, Mail, Pencil, Phone, Plus } from "lucide-react";
+import { calendarHref } from "@/lib/projects/calendar-link";
 import { Button } from "@/components/ui/button";
 import { Badge, Notice } from "@/components/ui/misc";
 import { api } from "@/components/schedule/client";
@@ -22,7 +23,8 @@ function BookingRow({ b, today }: { b: Booking; today: string }) {
       <div className="min-w-0">
         <Link href={`/projects/${b.scheduleId}`} className="font-semibold text-navy hover:underline">{b.project}</Link>
         <p className="text-xs text-ink-soft">{[b.customer, b.task, b.trade ? tradeLabel(b.trade) : null].filter(Boolean).join(" · ")}{b.via ? ` · via ${b.via.name}` : ""}</p>
-        <p className="text-xs text-muted">{formatRange(b.start, b.end)}{b.startTime && b.endTime ? ` · ${b.startTime}–${b.endTime}` : ""}{b.hours ? ` · ${b.hours} h est.` : ""}</p>
+        <p className="text-xs text-muted">{formatRange(b.start, b.end)}{b.startTime && b.endTime ? ` · ${b.startTime}–${b.endTime}` : ""}{b.hours ? ` · ${b.hours} h est.` : ""}
+          {" · "}<Link href={calendarHref({ project: b.scheduleId, task: b.taskId, date: b.start })} className="inline-flex items-center gap-0.5 font-semibold text-accent-ink hover:underline" data-testid="wf-booking-calendar"><CalendarDays className="h-3 w-3" aria-hidden />View on calendar</Link></p>
         {b.notes && <p className="mt-0.5 text-xs text-ink-soft">{b.notes}</p>}
       </div>
       <Badge tone={LIFECYCLE_TONE[b.lifecycle]}>{b.lifecycle === "in_progress" && b.start > today ? "Confirmed" : LIFECYCLE_LABEL[b.lifecycle]}</Badge>
@@ -109,7 +111,10 @@ export function WorkforceProfile({ wf, r, today, open, onOpenChange, onAssign, o
           : <p className="mt-1 text-sm text-muted">Not on a job right now.</p>}
       </section>
       <section aria-labelledby="wf-p-next" data-guide="workforce.schedule">
-        <h3 id="wf-p-next" className="text-sm font-bold uppercase tracking-wide text-muted">Upcoming schedule ({upcoming.length})</h3>
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h3 id="wf-p-next" className="text-sm font-bold uppercase tracking-wide text-muted">Upcoming schedule ({upcoming.length})</h3>
+          {bookings.some((b) => b.via === null) && <Link href={calendarHref({ member: `r:${r.id}`, date: upcoming.find((b) => b.via === null)?.start ?? null })} className="inline-flex min-h-9 items-center gap-1 text-sm font-semibold text-accent-ink hover:underline" data-testid="wf-open-schedule"><CalendarDays className="h-4 w-4" aria-hidden />Open schedule</Link>}
+        </div>
         {upcoming.length ? <ul className="divide-y divide-line">{upcoming.map((b) => <BookingRow key={b.taskId} b={b} today={today} />)}</ul>
           : <p className="mt-1 text-sm text-muted">Nothing scheduled yet.{wf.canManage && r.status === "active" ? " Use Assign to project to book them." : ""}</p>}
       </section>
@@ -135,7 +140,7 @@ export function WorkforceProfile({ wf, r, today, open, onOpenChange, onAssign, o
           </ol>
         )}
       </section>
-      <p className="flex items-center gap-1 text-xs text-muted"><ExternalLink className="h-3.5 w-3.5" aria-hidden />Project links open the schedule in PM Hub. Changes there show here right away.</p>
+      <p className="flex items-center gap-1 text-xs text-muted"><ExternalLink className="h-3.5 w-3.5" aria-hidden />Project names open the project in PM Hub; View on calendar and Open schedule open the company calendar. Changes there show here right away.</p>
     </Drawer>
   );
 }

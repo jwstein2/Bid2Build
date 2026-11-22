@@ -64,7 +64,7 @@ const TEAM: CapabilityRequirement[] = [need("team_directory")];
 export const QUICK_ACTIONS = {
   create_bid: { label: "Create bid", href: "/bids", requires: [need("bids", "create")] },
   customers: { label: "Customers", href: "/dashboard/customers", requires: [need("customers")] },
-  open_schedule: { label: "Open schedule", href: "/projects", requires: SCHEDULE },
+  open_schedule: { label: "Open schedule", href: "/projects?view=calendar", requires: SCHEDULE },
   create_invoice: { label: "Create invoice", href: "/financials/records?view=jobs&do=invoice", requires: [...FIN_PROJECT, need("invoices")], write: true },
   record_payment: { label: "Record payment", href: "/financials/records?view=jobs&do=payment", requires: [...FIN_PROJECT, need("payments")], write: true },
   add_expense: { label: "Add expense", href: "/financials/records?view=jobs&do=expense", requires: [...FIN_PROJECT, need("expenses", "create")], write: true },

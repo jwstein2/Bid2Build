@@ -13,11 +13,18 @@ const BUSINESS = { general_contractor: "General contractor", subcontractor: "Sub
 const MIX = { residential: "Residential", commercial: "Commercial", both: "Both" };
 const CONTRACT = { lump_sum: "Lump sum (fixed price)", time_and_materials: "Time & materials", cost_plus: "Cost plus", mixed: "It varies" };
 
+/** Choosing a home state checks it under "States you work in" once, keeping every other selection.
+ *  It stays a separate, freely unchecked box after that; nothing re-adds it on load, save or refresh. */
+export function withHomeState<T extends { primaryState: string | null; serviceStates: string[] }>(x: T, s: string | null): T {
+  return { ...x, primaryState: s, serviceStates: s && !x.serviceStates.includes(s) ? [...x.serviceStates, s].sort() : x.serviceStates };
+}
+
 /** Tax setup (also the onboarding step). No permit numbers, no filing, no paid provider is switched on here. */
 export function TaxProfileForm({ initial, states, canEdit }: { initial: Profile; states: StateOpt[]; canEdit: boolean }) {
   const { busy, msg, run } = useTb();
   const [f, setF] = useState<Profile>(initial);
   const set = <K extends keyof Profile>(k: K, v: Profile[K]) => setF((x) => ({ ...x, [k]: v }));
+  const pickHomeState = (s: string | null) => setF((x) => withHomeState(x, s));
   const toggleState = (s: string) => set("serviceStates", f.serviceStates.includes(s) ? f.serviceStates.filter((x) => x !== s) : [...f.serviceStates, s].sort());
   const reg = (s: string) => f.registrations.find((r) => r.state === s)?.registered ?? false;
   const setReg = (s: string, v: boolean) => set("registrations", [...f.registrations.filter((r) => r.state !== s), { state: s, registered: v }]);
@@ -31,7 +38,7 @@ export function TaxProfileForm({ initial, states, canEdit }: { initial: Profile;
       </div>
       <fieldset disabled={!canEdit} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <label className="label" htmlFor="tp-primary">Home state
-          <select id="tp-primary" className="field mt-1" value={f.primaryState ?? ""} onChange={(e) => set("primaryState", e.target.value || null)}>
+          <select id="tp-primary" className="field mt-1" value={f.primaryState ?? ""} onChange={(e) => pickHomeState(e.target.value || null)}>
             <option value="">Choose…</option>{states.map((s) => <option key={s.code} value={s.code}>{s.name}</option>)}
           </select></label>
         <label className="label" htmlFor="tp-biz">Business type
