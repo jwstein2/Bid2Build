@@ -26,6 +26,7 @@ export const TOOLS = [
   { href: "/admin/marketing/radar", label: "Opportunity Radar" },
   { href: "/admin/sales", label: "Outreach funnel (Sales)" },
   { href: "/admin/referrals", label: "Referrals" },
+  { href: "/admin/academy-rewards", label: "Academy rewards" },
   { href: "/admin/onboarding", label: "Onboarding & Guide" },
   { href: "/admin/market", label: "Market intelligence" },
   { href: "/admin/news", label: "Industry news sources" },

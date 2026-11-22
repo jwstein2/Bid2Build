@@ -4,6 +4,7 @@ import http from "node:http";
 import { handleRadarRest, pgRestPath, radarRestEnabled } from "../radar/pg-rest.mjs";
 import { ops, opsRpc, opsStorage, opsTables, seedOps } from "./mock-ops.mjs";
 import { installWorkforce } from "../workforce/mock-workforce.mjs";
+import { installChallenge } from "../academy/mock-challenge.mjs";
 
 const PORT = Number(process.env.MOCK_PORT ?? 54321);
 const NOW = Date.now();
@@ -346,6 +347,9 @@ const rpcs = {
   // V8 batch 5: Saved Items for every plan (SQL 20270106001000 run). /__freeitems?off=1 simulates "not run yet".
   saved_items_free_ok: true,
 };
+// Academy monthly challenge screenshots (scripts/academy/challenge-shots.mjs): /__challenge?state=...
+const challenge = installChallenge({ rpcs, tables, iso, USER });
+challenge.init();
 
 // Admin command center screenshots: synthetic platform-wide data (scripts/admin-cc/seed.mjs).
 let authAdminUsers = null;
@@ -619,6 +623,7 @@ http.createServer((req, res) => {
   req.on("end", () => {
     const bodyBuf = Buffer.concat(bufs); raw = bodyBuf.toString("utf8");
     if (req.method === "OPTIONS") return send(res, 204);
+    if (challenge.handle(u, res, send)) return;
     if (u.pathname === "/__scenario") {
       authDelayMs = Number(u.searchParams.get("authDelayMs") ?? 0);
       return applyScenario(u.searchParams.get("name") ?? "") ? send(res, 200, { ok: true }) : send(res, 400, { error: "unknown scenario" });

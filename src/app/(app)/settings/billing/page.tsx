@@ -19,6 +19,8 @@ import Link from "next/link";
 import { AnnualNudge, CancelStep } from "@/components/offers/billing-offers";
 import { annualNudgeEligible, annualSavings } from "@/lib/offers/policy";
 import { LegalStatusCompact } from "@/components/legal/legal-status";
+import { loadChallenge } from "@/lib/academy/rewards-server";
+import { rewardHeadline, rewardPhase, shortDate as rewardDate } from "@/lib/academy/rewards";
 
 export const metadata: Metadata = { title: "Subscription", robots: { index: false } };
 
@@ -38,12 +40,13 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
     try { await reconcileUser(createAdminClient(), getStripe(), user.id); } catch { /* webhook will catch up */ }
   }
   const supabase = await createClient();
-  const [{ data: subs }, credits, { data: bc }, { data: compRows }, company] = await Promise.all([
+  const [{ data: subs }, credits, { data: bc }, { data: compRows }, company, academy] = await Promise.all([
     supabase.from("subscriptions").select("*").order("updated_at", { ascending: false }),
     loadCreditStatus(supabase),
     supabase.from("billing_customers").select("stripe_customer_id").maybeSingle(),
     supabase.rpc("my_comp_access"), // errors (migration not applied yet) just mean "no complimentary access"
     loadMyCompany(supabase),
+    loadChallenge(), // null before the Academy rewards migration
   ]);
   const q = credits ? { unlimited: credits.unlimited } : null;
   const pm = isPmEnabled() && credits?.unlimited ? await loadPmAccess(supabase) : null;
@@ -122,6 +125,17 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
         <div id="project-command-center" className="scroll-mt-20" data-guide="billing.pm-addon"><PmAddonCard state={pm} periodEnd={current?.current_period_end ?? null} annual={current?.plan === "annual" && !process.env.STRIPE_PRICE_PM_ADDON_ANNUAL} yearly={current?.plan === "annual" && Boolean(process.env.STRIPE_PRICE_PM_ADDON_ANNUAL)} purchasable={isPmBillingConfigured("addon")} /></div>
       )}
       {credits && !credits.unlimited && <div data-guide="billing.credits"><CreditBalances credits={credits} showUpgrade={false} /></div>}
+      {academy?.reward && (
+        <Card className="p-5" data-testid="billing-academy-reward">
+          <p className="text-sm text-muted">Academy reward</p>
+          <p className="font-bold">{rewardHeadline(rewardPhase(academy))}</p>
+          <p className="mt-1 text-sm text-ink-soft">One free month of Individual Unlimited for completing the monthly Academy challenge (earned {rewardDate(academy.reward.qualified_at)}).
+            {academy.reward.action === "comp_days" && academy.reward.activates_at ? ` Active ${rewardDate(academy.reward.activates_at)} to ${rewardDate(academy.reward.expires_at)}.` : ""}
+            {academy.reward.action === "stripe_credit" && academy.reward.status === "applied" ? " Applied as a credit to your next monthly bill." : ""}
+            {" "}Add-ons are not included and keep billing as usual.</p>
+          <Link href="/academy/challenge" className="mt-2 inline-block text-sm font-semibold text-brand underline">Academy progress and reward history</Link>
+        </Card>
+      )}
 
       {(!q?.unlimited || compOnly) && stripeReady && (
         <div className="grid gap-4 sm:grid-cols-2" data-guide="billing.upgrade">

@@ -8,6 +8,8 @@ import { listTrades, loadMe } from "@/lib/academy/server";
 import { PILLARS, US_STATES } from "@/lib/academy/types";
 import { createClient } from "@/lib/supabase/server";
 import { leaveAcademy, updateProfile } from "../actions";
+import { ChallengeCard } from "@/components/academy/challenge-card";
+import { loadChallenge } from "@/lib/academy/rewards-server";
 
 export const metadata: Metadata = { title: "My Academy profile", robots: { index: false, follow: false } };
 
@@ -21,9 +23,10 @@ export default async function SettingsPage({ searchParams }: PageProps<"/academy
   const sp = await searchParams;
   const { me, migrated, user } = await loadMe();
   if (!me.member || !user) return <MembersOnly me={me} migrated={migrated} what="Your Academy profile" />;
-  const [{ data }, trades] = await Promise.all([
+  const [{ data }, trades, challenge] = await Promise.all([
     (await createClient()).from("academy_members").select("display_name, headline, bio, trades, primary_trade, state_code, company_name, interests, show_company, show_location, show_trades, directory_visible, leaderboard_visible").eq("user_id", user.id).maybeSingle(),
     listTrades(),
+    loadChallenge(),
   ]);
   const m = data as Member | null;
   if (!m) return <MembersOnly me={me} migrated={migrated} what="Your Academy profile" />;
@@ -39,6 +42,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/academy
       <div className="max-w-2xl">
         <h1 className="font-display text-2xl font-extrabold">My Academy profile</h1>
         <p className="mt-1 text-sm text-ink-soft">This profile is separate from your Built2Bid business profile. Changing it doesn&apos;t change your estimates or proposals. <Link href={`/academy/members/${user.id}`} className="font-semibold text-accent-ink underline">View my profile</Link></p>
+        {challenge && <ChallengeCard status={challenge} className="mt-4" />}
         <div className="mt-3"><Flash msg={typeof sp.msg === "string" ? sp.msg : undefined} err={typeof sp.err === "string" ? sp.err : undefined} /></div>
         <form action={updateProfile} className="mt-4 grid gap-4 rounded-xl border border-line bg-surface p-5 shadow-card" data-testid="profile-form">
           <label className="text-sm font-semibold">Display name<input name="display_name" required minLength={2} maxLength={60} defaultValue={m.display_name} className={input} /></label>
