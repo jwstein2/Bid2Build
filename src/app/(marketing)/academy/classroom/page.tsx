@@ -7,6 +7,8 @@ import { CourseCard } from "@/components/academy/course-card";
 import { listCourses, listTrades, loadMe, myProgress } from "@/lib/academy/server";
 import { openGraphFor } from "@/lib/seo/open-graph";
 import { site } from "@/lib/site";
+import { ChallengeCard } from "@/components/academy/challenge-card";
+import { loadChallenge } from "@/lib/academy/rewards-server";
 
 const title = "Contractor Classroom: Free Business Courses by Trade";
 const description = "Free business courses for contractors, organized by trade: sales, estimating, project management, financials, hiring, recurring revenue and safety.";
@@ -20,7 +22,7 @@ const FAMILIES = ["Exterior", "Interior", "Systems", "Sitework", "Structures", "
 export default async function ClassroomPage({ searchParams }: PageProps<"/academy/classroom">) {
   const sp = await searchParams;
   const q = typeof sp.q === "string" ? sp.q.slice(0, 60).trim() : "";
-  const [{ me }, trades, all, progress] = await Promise.all([loadMe(), listTrades(), listCourses({}), myProgress()]);
+  const [{ me }, trades, all, progress, challenge] = await Promise.all([loadMe(), listTrades(), listCourses({}), myProgress(), loadChallenge()]);
   const tradeName = new Map(trades.map((t) => [t.slug, t.name]));
   const tradeIcon = new Map(trades.map((t) => [t.slug, t.icon ?? "Hammer"]));
   const general = all.filter((c) => !c.trade_slug);
@@ -42,6 +44,13 @@ export default async function ClassroomPage({ searchParams }: PageProps<"/academ
           <input id="course-q" name="q" defaultValue={q} placeholder="Search courses or trades" className="w-full rounded-md border border-line-strong bg-surface py-2 pr-3 pl-9 text-sm" />
         </form>
       </div>
+
+      {challenge ? <ChallengeCard status={challenge} className="mt-6 max-w-xl" /> : (
+        <Link href="/academy/challenge" className="mt-6 block max-w-xl rounded-xl border border-line bg-surface p-4 shadow-card hover:border-line-strong" data-testid="challenge-promo">
+          <span className="block font-bold">Learn More. Build Better. Earn a Free Month.</span>
+          <span className="mt-1 block text-sm text-ink-soft">Finish 4 trainings and pass one 20-question quiz (80%) in the same month to earn one free month of Individual Unlimited. One per account, lifetime.</span>
+        </Link>
+      )}
 
       {q ? (
         <section className="mt-8">

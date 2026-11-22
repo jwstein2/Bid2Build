@@ -13,6 +13,7 @@ export default async function AcademyLayout({ children }: { children: React.Reac
   // write always failed silently and last_seen_at was never set.
   const secondary = [
     ...(me.member ? [{ href: "/academy/saved", label: "Saved" }, { href: "/academy/settings", label: "My profile" }] : []),
+    { href: "/academy/challenge", label: "Free month" },
     { href: "/academy/about", label: "About" },
     ...(me.role && ["admin", "moderator", "instructor"].includes(me.role) ? [{ href: "/academy/manage", label: "Manage" }] : []),
   ];

@@ -13,6 +13,7 @@ import { createAdminClient, createClient, getUser } from "@/lib/supabase/server"
 import { sniffImage } from "@/lib/security/upload";
 import { rateLimit } from "@/lib/http/api";
 import { academyErrorMessage } from "@/lib/academy/types";
+import { deliverMyReward } from "@/lib/academy/rewards-server";
 
 const uuid = z.string().uuid();
 const str = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
@@ -211,7 +212,7 @@ export async function moderate(form: FormData) {
 // ---------------------------------------------------------------------------------------------------------
 export async function completeLesson(form: FormData) {
   const id = str(form, "lesson_id"); const ret = safePath(str(form, "return_to"), "/academy/classroom");
-  const { db } = await session(ret);
+  const { user, db } = await session(ret);
   if (!uuid.safeParse(id).success) redirect(ret);
   const done = form.get("done") !== "false";
   const score = form.get("quiz_score") ? Number(form.get("quiz_score")) : null;
@@ -219,5 +220,7 @@ export async function completeLesson(form: FormData) {
   if (error) redirect(back(ret, { err: academyErrorMessage(error.message) }));
   revalidatePath(ret);
   const r = data as { course_complete: boolean } | null;
-  redirect(back(ret, { msg: !done ? "Marked as not complete." : r?.course_complete ? "Course complete. Nice work: a badge has been added to your profile." : "Lesson marked complete." }));
+  // Finishing a course can complete the monthly Academy challenge; deliver the free month if it was just earned.
+  if (done && r?.course_complete) await deliverMyReward(user.id);
+  redirect(back(ret, { msg: !done ? "Marked as not complete." : r?.course_complete ? "Course complete. Nice work: a badge has been added to your profile, and it counts toward your monthly Academy challenge." : "Lesson marked complete." }));
 }
