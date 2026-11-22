@@ -16,6 +16,8 @@ import { landingFor, PRICE_DISPLAYS } from "@/lib/trades/landing";
 import { TrackLandingView } from "@/components/analytics/track-view";
 import { quantityToolForTrade, toolBySlug } from "@/lib/marketing/tools";
 import { ACADEMY_TRADES } from "@/lib/academy/content/catalog";
+import { WELCOME_VIDEO } from "@/components/onboarding/steps";
+import { VideoPlaceholder } from "@/components/onboarding/video-placeholder";
 
 export const dynamicParams = false;
 export function generateStaticParams() {
@@ -122,10 +124,16 @@ export default async function TradePage({ params }: PageProps<"/bids/[trade]">) 
               </figure>
               <div>
                 <h2 className="text-2xl font-extrabold">See Built2Bid in action</h2>
-                <p className="mt-2 text-ink-soft">A short walkthrough of building an estimate and sending the proposal. Captions are on.</p>
-                <video className="mt-5 aspect-video w-full rounded-lg border border-line bg-black" controls preload="none" playsInline poster="/media/meet-built2bid-poster.webp" data-testid="demo-video">
-                  <source src="/media/meet-built2bid-v1.mp4" type="video/mp4" />
-                </video>
+                {WELCOME_VIDEO.src ? (
+                  <>
+                    <p className="mt-2 text-ink-soft">A short walkthrough of building an estimate and sending the proposal. Captions are on.</p>
+                    <video className="mt-5 aspect-video w-full rounded-lg border border-line bg-black" controls preload="none" playsInline poster={WELCOME_VIDEO.poster ?? undefined} data-testid="demo-video">
+                      <source src={WELCOME_VIDEO.src} type="video/mp4" />
+                    </video>
+                  </>
+                ) : (
+                  <VideoPlaceholder className="mt-5" tone="light" />
+                )}
 
                 <h2 className="mt-10 flex items-center gap-2 text-2xl font-extrabold"><Calculator className="h-6 w-6 text-accent-dark" aria-hidden />How the {lower} calculators work</h2>
                 <p className="mt-2 text-ink-soft">{L.calculator}</p>

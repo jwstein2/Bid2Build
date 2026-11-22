@@ -167,6 +167,9 @@ describe("help search", () => {
 
   it("help destinations are internal links or the shipped video", () => {
     for (const r of HELP_RESOURCES) expect(r.href.startsWith("/")).toBe(true);
-    expect(fs.existsSync(path.join(__dirname, "..", "public", getResource("video.getting-started")!.href))).toBe(true);
+    // While a new intro video is being made (WELCOME_VIDEO.src null) the video isn't listed at all.
+    const video = getResource("video.getting-started");
+    if (video) expect(fs.existsSync(path.join(__dirname, "..", "public", video.href))).toBe(true);
+    else expect(HELP_RESOURCES.some((r) => r.kind === "video")).toBe(false);
   });
 });

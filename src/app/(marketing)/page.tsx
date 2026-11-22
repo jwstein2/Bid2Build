@@ -14,6 +14,7 @@ import { plans, site } from "@/lib/site";
 import { AccountCtas } from "@/components/account/account-ctas";
 import { AcademyPromo } from "@/components/marketing/academy-promo";
 import { ReplayTourButton } from "@/components/onboarding/replay-tour-button";
+import { WELCOME_VIDEO, welcomeVideoReady } from "@/components/onboarding/steps";
 import { InstallAppButton } from "@/components/marketing/install-app-button";
 import { getAccountStatus } from "@/lib/account/server";
 import { COMPANY, PROMISES } from "@/lib/marketing/about";
@@ -103,7 +104,7 @@ export default async function HomePage() {
               howHref="#how-it-works" className="lg:mt-8" />
             <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-1">
             <ReplayTourButton testId="watch-demo" className="inline-flex min-h-11 items-center gap-2 rounded-lg px-1 text-sm font-semibold text-cyan underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan">
-              Watch Demo <span className="font-normal text-[#B8C6D4]">(3 min)</span>
+              {welcomeVideoReady() ? <>Watch Demo{WELCOME_VIDEO.duration && <span className="font-normal text-[#B8C6D4]"> ({WELCOME_VIDEO.duration})</span>}</> : <>Take the 2-minute tour</>}
             </ReplayTourButton>
             <InstallAppButton />
             </div>

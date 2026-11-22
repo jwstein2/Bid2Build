@@ -3,14 +3,22 @@
  * New Bid workflow (trade → company or customer & project → estimate → scope → proposal); it never
  * creates or edits a bid. Images are stills from the "Meet Built2Bid" video (public/media/onboarding).
  */
-export const WELCOME_VIDEO = {
-  src: "/media/meet-built2bid-v1.mp4",
-  poster: "/media/meet-built2bid-poster.webp",
+/**
+ * The intro video. `src: null` means a new video is being made (James, 2026-11-22: the old one quoted
+ * outdated pricing): the tour, the homepage and the trade pages show <VideoPlaceholder> instead.
+ * To ship the new video: put it in public/media under a NEW file name (mp4s are cached as immutable,
+ * e.g. meet-built2bid-v2.mp4), optionally a poster, then set src, poster and duration here.
+ */
+export const WELCOME_VIDEO: { src: string | null; poster: string | null; width: number; height: number; duration: string | null } = {
+  src: null,
+  poster: null,
   width: 1280,
   height: 720,
   /** Shown on the play button. */
-  duration: "2:56",
-} as const;
+  duration: null,
+};
+
+export const welcomeVideoReady = () => Boolean(WELCOME_VIDEO.src);
 
 export interface TourStep {
   id: string;
@@ -30,8 +38,8 @@ export const TOUR_STEPS: readonly TourStep[] = [
     label: "Welcome",
     title: "Welcome to Built2Bid!",
     subtitle: "Let's build your first bid.",
-    body: "Built2Bid makes creating professional contractor estimates simple. Watch this quick introduction, then take a guided tour to learn how to build your first bid.",
-    note: "Built2Bid helps you build, price, and present professional estimates. The video is optional: every step of the tour makes sense on its own.",
+    body: "Built2Bid makes creating professional contractor estimates simple. This quick guided tour shows you how to build your first bid.",
+    note: "Built2Bid helps you build, price, and present professional estimates. Every step of the tour makes sense on its own.",
     media: { kind: "video" },
   },
   {

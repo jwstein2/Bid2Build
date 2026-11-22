@@ -4,7 +4,8 @@ import { ArrowLeft, ArrowRight, Check, Play, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 import { Button } from "../ui/button";
-import { TOUR_STEPS, WELCOME_VIDEO, type TourStep } from "./steps";
+import { TOUR_STEPS, WELCOME_VIDEO, welcomeVideoReady, type TourStep } from "./steps";
+import { VideoPlaceholder } from "./video-placeholder";
 
 export type TourExit = "dismissed" | "completed";
 
@@ -78,7 +79,7 @@ export function OnboardingTour({ open, onExit, onCreateBid }: {
           <div ref={bodyRef} id="onboarding-body" className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5">
             {/* The video stays mounted (hidden) on later steps so going Back keeps its position. */}
             <div className={index === 0 ? "" : "hidden"}>
-              <WelcomeVideo videoRef={videoRef} />
+              {welcomeVideoReady() ? <WelcomeVideo videoRef={videoRef} /> : <VideoPlaceholder className="mx-auto max-w-[calc(42dvh*16/9)] shadow-card" />}
             </div>
             {step.media.kind === "image" && (
               <figure className="mx-auto w-full max-w-[calc(42dvh*16/9)] overflow-hidden rounded-xl border border-line bg-paper shadow-card">
@@ -164,14 +165,14 @@ function WelcomeVideo({ videoRef }: { videoRef: React.RefObject<HTMLVideoElement
         controls
         playsInline
         preload="none"
-        poster={WELCOME_VIDEO.poster}
+        poster={WELCOME_VIDEO.poster ?? undefined}
         width={WELCOME_VIDEO.width}
         height={WELCOME_VIDEO.height}
         onPlay={() => setStarted(true)}
         aria-label="Meet Built2Bid introduction video (captions are shown in the video)"
       >
-        <source src={WELCOME_VIDEO.src} type="video/mp4" />
-        Your browser can&apos;t play this video. <a href={WELCOME_VIDEO.src}>Download the Meet Built2Bid video</a>.
+        <source src={WELCOME_VIDEO.src ?? undefined} type="video/mp4" />
+        Your browser can&apos;t play this video. <a href={WELCOME_VIDEO.src ?? undefined}>Download the Meet Built2Bid video</a>.
       </video>
       {!started && (
         <button
@@ -182,7 +183,7 @@ function WelcomeVideo({ videoRef }: { videoRef: React.RefObject<HTMLVideoElement
         >
           <span className="flex items-center gap-2.5 rounded-full bg-accent py-2.5 pl-3 pr-4 font-display font-bold text-navy shadow-lg ring-4 ring-white/30 transition group-hover:scale-105">
             <span className="grid h-8 w-8 place-items-center rounded-full bg-navy text-accent"><Play className="ml-0.5 h-4 w-4" fill="currentColor" aria-hidden /></span>
-            Play video <span className="font-semibold text-navy">{WELCOME_VIDEO.duration}</span>
+            Play video {WELCOME_VIDEO.duration && <span className="font-semibold text-navy">{WELCOME_VIDEO.duration}</span>}
           </span>
         </button>
       )}

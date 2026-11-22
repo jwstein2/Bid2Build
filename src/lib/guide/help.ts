@@ -8,11 +8,13 @@
  */
 import { PAGE_GUIDES, isPageKey, resolveGuide, type GuideContext, type PageKey, type TradeGroup } from "../features/page-guides";
 import { eligibleTours, type Workspace } from "./tours";
+import { WELCOME_VIDEO } from "../../components/onboarding/steps";
 
 export interface HelpResource { id: string; kind: "video" | "article" | "link"; title: string; description: string; href: string }
 
 export const HELP_RESOURCES: readonly HelpResource[] = [
-  { id: "video.getting-started", kind: "video", title: "Meet Built2Bid (2 min video)", description: "A short tour of building, sending and tracking a bid.", href: "/media/meet-built2bid-v1.mp4" },
+  // The intro video is listed only while one is published (a new one is being made: WELCOME_VIDEO.src null).
+  ...(WELCOME_VIDEO.src ? [{ id: "video.getting-started", kind: "video" as const, title: "Meet Built2Bid (intro video)", description: "A short tour of building, sending and tracking a bid.", href: WELCOME_VIDEO.src }] : []),
   { id: "article.first-bid", kind: "article", title: "Your first bid, step by step", description: "Pick a trade, price line items, preview and send.", href: "/learn" },
   { id: "article.projects", kind: "article", title: "Project Command Center basics", description: "Turning won bids into scheduled projects.", href: "/projects" },
   { id: "article.enterprise", kind: "article", title: "Company setup", description: "Seats, roles, teams and billing for Team.", href: "/company" },
