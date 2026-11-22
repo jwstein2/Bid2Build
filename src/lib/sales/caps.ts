@@ -45,6 +45,7 @@ export const ADMIN_TABS = [
   { id: "analytics", label: "Activity & analytics" },
   { id: "leads", label: "All leads" },
   { id: "recycling", label: "Lead recycling" },
+  { id: "nurture", label: "Follow-up emails" },
   { id: "customers", label: "Customers" },
   { id: "commissions", label: "Commission approvals" },
   { id: "recognition", label: "Recognition & incentives" },

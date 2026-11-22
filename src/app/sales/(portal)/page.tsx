@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AttentionCard, type Attention } from "./leads/attention";
+import { CampaignStatsCard, type CampaignStats } from "@/components/sales/campaign-stats";
 import { Card, Notice } from "@/components/ui/misc";
 import { ShareLink } from "@/components/sales/share-link";
 import { cookies } from "next/headers";
@@ -46,6 +47,9 @@ export default async function SalesOverview({ searchParams }: { searchParams: Pr
   // V8.7 lead recycling (hidden until 20270122001000 is applied).
   const [attRes, acadRes] = await Promise.all([db.rpc("sales_my_attention"), db.rpc("sales_my_academy")]);
   const attention = attRes.error || !attRes.data ? null : (attRes.data as Attention);
+  // Follow-up and nurture campaigns (hidden until 20270221001000 is applied and an admin turns them on).
+  const campRes = await db.rpc("sales_my_campaign_stats", { p_days: 90 });
+  const campStats = campRes.error || !campRes.data ? null : (campRes.data as CampaignStats);
   // V8.4 P3 (hidden until 20270119001000 is applied).
   const winsRes = await db.rpc("sales_team_wins", {});
   // Ten-year term amendment (hidden until 20270209001000 is applied).
@@ -142,6 +146,7 @@ export default async function SalesOverview({ searchParams }: { searchParams: Pr
         </Card>
       )}
       {attention && <AttentionCard data={attention} compact />}
+      {campStats?.enabled && <CampaignStatsCard s={campStats} />}
       {successes && <SuccessCelebration items={successes} firstName={o.rep.full_name.split(" ")[0]} animate={prefs?.animations ?? true} />}
       {prefs && prefs.status === "not_started" && onboardingComplete(steps) && !welcome && (
         <Card className="flex flex-wrap items-center justify-between gap-3 p-4 text-sm">

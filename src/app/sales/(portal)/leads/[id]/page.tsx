@@ -10,6 +10,10 @@ import { DISPOSITIONS, DISPOSITION_LABEL } from "@/lib/sales/leads-admin";
 import { callReadiness, DNC_REGISTRY_URL, localTimeLabel } from "@/lib/sales/calling";
 import { StarterScript } from "@/components/sales/starter-script";
 import { EmailStatusPanel } from "@/components/sales/email-status";
+import { CallOutcomeCard, CampaignPanel, type CampaignState } from "@/components/sales/campaign-panel";
+import { createAdminClient } from "@/lib/supabase/server";
+import { previewNext } from "@/lib/sales/nurture/preview";
+import type { SendContext } from "@/lib/sales/nurture/runner";
 
 export const metadata = { title: "Lead" };
 const input = "min-h-11 w-full rounded-lg border border-line bg-white px-3 text-sm";
@@ -25,6 +29,18 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
   if (error || !data) notFound();
   const { lead: l, activities, tasks, duplicates } = data as { lead: Lead; activities: LeadActivity[]; tasks: LeadTask[]; duplicates: Duplicate[] };
   const ready = callReadiness(l);
+  // Follow-up and nurture campaigns (hidden until 20270221001000 is applied and an admin turns them on).
+  const campRes = await db.rpc("sales_campaign_lead", { p_lead: l.id });
+  const camp = campRes.error || !campRes.data ? null : (campRes.data as CampaignState);
+  const nextMsg = camp?.live?.messages.find((m) => m.status === "scheduled" || m.status === "failed");
+  let preview: { rendered: ReturnType<typeof previewNext>["rendered"]; endsAs: string | null; at: string | null } | null = null;
+  if (camp?.live && nextMsg && nextMsg.step > 0) {
+    // The rep can see this lead (checked above); the context function is service-role only.
+    const { data: ctx } = await createAdminClient().rpc("sales_campaign_context", { p_message: nextMsg.id });
+    if (ctx) preview = { ...previewNext(ctx as SendContext), at: nextMsg.scheduled_for };
+  }
+  const lastCallAct = activities.find((a) => a.kind === "call");
+  const lastCall = lastCallAct ? `${lastCallAct.disposition ? DISPOSITION_LABEL[lastCallAct.disposition] ?? lastCallAct.disposition : "Call"} · ${when(lastCallAct.occurred_at)}` : null;
   const dnc = l.dnc_status ?? "unchecked";
   return (
     <div className="space-y-6">
@@ -93,6 +109,7 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
             <h2 className="text-lg font-bold">Starter script</h2>
             <div className="mt-2"><StarterScript leadId={l.id} disabled={!!l.do_not_contact} /></div>
           </Card>
+          {camp?.enabled && !l.do_not_contact && <CallOutcomeCard leadId={l.id} state={camp} defaultTz="America/Chicago" />}
           <Card className="p-5">
             <h2 className="text-lg font-bold">Log an activity</h2>
             <form action={logActivity} className="mt-3 grid gap-3 sm:grid-cols-[160px_160px_1fr]">
@@ -103,7 +120,7 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
               <div><button className={btn}>Log it</button></div>
             </form>
           </Card>
-          <Card className="p-5">
+          <Card className="p-5" id="history">
             <h2 className="text-lg font-bold">History</h2>
             <ol className="mt-3 space-y-3 text-sm">
               {activities.length === 0 && <li className="text-ink-soft">Nothing yet.</li>}
@@ -117,6 +134,7 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
           </Card>
         </div>
         <div className="space-y-6">
+          {camp?.enabled && <CampaignPanel leadId={l.id} company={l.company_name} state={camp} lastCall={lastCall} preview={preview} />}
           <Card className="p-5">
             <h2 className="text-lg font-bold">Tasks</h2>
             <ul className="mt-2 space-y-2 text-sm">

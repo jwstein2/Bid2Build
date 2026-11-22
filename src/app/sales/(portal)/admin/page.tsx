@@ -22,6 +22,8 @@ import { LeadsPanel, type AdminLeads, type PendingAssign, type PossibleDup } fro
 import { ADMIN_LEAD_ERRORS, cleanFilters, LIFECYCLE, lifecycle } from "@/lib/sales/leads-admin";
 import { cookies } from "next/headers";
 import { CompensationPanel } from "./compensation-panel";
+import { NurturePanel, type NurtureAdmin } from "./nurture-panel";
+import { NURTURE_ERRORS } from "@/lib/sales/nurture/templates";
 import { COMP_ERRORS, type AdminCompensation, type AdminDrawings, type AdminPrograms } from "@/lib/sales/compensation";
 import { sendInvite } from "./rep-actions";
 import { inviteEmailsOn, } from "@/lib/sales/invite-email";
@@ -256,6 +258,8 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
           ));
   if (tab === "leads" && sp.confirm) { try { pendingAssign = JSON.parse((await cookies()).get("sales_assign_pending")?.value ?? "null"); } catch { pendingAssign = null; } }
   const recFilters: RecycleFilters = { rep: /^[0-9a-f-]{36}$/i.test(sp.rep ?? "") ? sp.rep : undefined, trade: (sp.trade ?? "").slice(0, 40) || undefined, source: ["import", "owner", "places"].includes(sp.source ?? "") ? sp.source : undefined, days: ["7", "30", "90"].includes(sp.days ?? "") ? sp.days : undefined };
+  const nurtureRes = tab === "nurture" ? await db.rpc("admin_sales_nurture", { p_caller: user.id }) : null;
+  const nurture = nurtureRes && !nurtureRes.error ? (nurtureRes.data as NurtureAdmin) : null;
   const recycleRes = tab === "recycling" ? await db.rpc("admin_sales_recycle_overview", { p_caller: user.id, p: { ...recFilters, days: Number(recFilters.days ?? 7) } }) : null;
   const recycle = recycleRes && !recycleRes.error ? (recycleRes.data as RecycleOverview) : null;
   const manageRes = tab === "team" ? await db.rpc("admin_sales_rep_manage_list", { p_caller: user.id }) : null;
@@ -329,6 +333,7 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
     ...(tab === "recognition" ? RECOGNITION_ERRORS : {}),
     ...(tab === "compensation" ? Object.fromEntries(Object.entries(COMP_ERRORS).map(([k, v]) => [`comp_${k}`, v])) : {}),
     ...(tab === "leads" || tab === "team" || tab === "recycling" ? ADMIN_LEAD_ERRORS : {}),
+    ...(tab === "nurture" ? NURTURE_ERRORS : {}),
   } as Record<string, string>)[sp.err] ?? "That didn't work. Check the form and try again." : null;
 
   return (
@@ -453,6 +458,9 @@ export default async function SalesHub({ searchParams }: { searchParams: Promise
         <LeadsPanel data={v86Leads} filters={leadFilters} canAssign={has("reassign_leads")} pending={pendingAssign} dups={dups} view={sp.view} importCard={importCard}
           reps={h.reps.filter((r) => r.status === "active" || r.status === "invited").map((r) => ({ id: r.id, name: r.full_name }))} />
       )}
+      {tab === "nurture" && (nurture
+        ? <NurturePanel data={nurture} canSettings={has("manage_reps")} canAct={has("reassign_leads")} />
+        : <Notice tone="warn">Follow-up emails aren&apos;t installed yet. Run the follow-up email SQL (<code className="break-all">supabase/migrations/20270221001000_sales_nurture.sql</code>) in the Supabase SQL Editor, then reload.</Notice>)}
       {tab === "recycling" && (recycle
         ? <RecyclingPanel data={recycle} filters={recFilters} canAct={has("reassign_leads")} canSettings={has("manage_reps")}
             reps={h.reps.filter((r) => r.status === "active").map((r) => ({ id: r.id, name: r.full_name }))} />

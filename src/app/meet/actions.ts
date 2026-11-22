@@ -6,6 +6,7 @@ import { busyTimes, createEvent, deleteEvent } from "@/lib/sales/google";
 import { hashToken, newToken, SESSIONS, agendaFor, type SessionId } from "@/lib/sales/calendar";
 import { sendBookingEmail } from "@/lib/sales/booking-email";
 import { site } from "@/lib/site";
+import { verifyBookingRef } from "@/lib/sales/nurture/tokens";
 
 /**
  * Public client self-scheduling. Runs with the service role but only through the booking functions,
@@ -14,11 +15,12 @@ import { site } from "@/lib/site";
  */
 const ERR: Record<string, string> = { slot_taken: "taken", too_many_bookings: "too_many", invalid_contact: "contact", invalid_session: "invalid", not_found: "invalid", not_cancelable: "closed" };
 const code = (m?: string) => ERR[Object.keys(ERR).find((k) => (m ?? "").includes(k)) ?? "not_found"];
-const isSession = (s: string): s is SessionId => s === "win" || s === "run" || s === "grow";
+const isSession = (s: string): s is SessionId => s === "win" || s === "run" || s === "grow" || s === "intro";
 
 export async function bookSession(fd: FormData) {
   const slug = String(fd.get("slug") ?? "").toLowerCase().slice(0, 40), session = String(fd.get("session") ?? ""), at = String(fd.get("at") ?? "");
-  const back = (e: string) => redirect(`/meet/${encodeURIComponent(slug)}?${new URLSearchParams({ session, err: e })}`);
+  const ref = String(fd.get("ref") ?? "").slice(0, 80);
+  const back = (e: string) => redirect(`/meet/${encodeURIComponent(slug)}?${new URLSearchParams({ session, err: e, ...(ref ? { ref } : {}) })}`);
   if (fd.get("website")) back("invalid"); // honeypot
   if (!(await rateLimit("meet-book", 8, 10 * 60_000))) back("slow");
   if (!isSession(session) || Number.isNaN(Date.parse(at))) back("invalid");
@@ -35,10 +37,13 @@ export async function bookSession(fd: FormData) {
   });
   if (error) back(code(error.message));
   const b = data as { id: string; starts_at: string; ends_at: string; plan: string | null; rep_id: string; rep_name: string; rep_email: string; time_zone: string; meeting_link: string | null };
+  // Booked from a sales follow-up email: link it to that campaign (stops the follow-ups, logs the meeting).
+  const campaignId = verifyBookingRef(ref);
+  if (campaignId) await admin.rpc("sales_campaign_booking_link", { p_campaign: campaignId, p_booking: b.id }).then(() => null, () => null);
   const manageUrl = new URL(`/meet/booking/${token}`, site.url).toString();
   const email = String(fd.get("email") ?? "").trim().toLowerCase();
   const gid = await createEvent(admin, b.rep_id, { summary: `${SESSIONS[session as SessionId].title}: ${String(fd.get("name"))}`,
-    description: [`Built2Bid onboarding session booked through your link.`, "", ...agendaFor(session as SessionId, b.plan).map((x) => `- ${x}`), "", `Customer: ${email}`].join("\n"),
+    description: [session === "intro" ? "Built2Bid walkthrough booked through your link." : `Built2Bid onboarding session booked through your link.`, "", ...agendaFor(session as SessionId, b.plan).map((x) => `- ${x}`), "", `Customer: ${email}`].join("\n"),
     start: b.starts_at, end: b.ends_at, attendee: email, location: b.meeting_link });
   if (gid) await admin.rpc("sales_calendar_mark", { p_kind: "booking", p_id: b.id, p_google_event_id: gid });
   if (await sendBookingEmail({ id: b.id, kind: "confirmed", to: email, name: String(fd.get("name")), session: session as SessionId, start: b.starts_at, end: b.ends_at, tz: b.time_zone, repName: b.rep_name, repEmail: b.rep_email, meetingLink: b.meeting_link, plan: b.plan, manageUrl })) {
