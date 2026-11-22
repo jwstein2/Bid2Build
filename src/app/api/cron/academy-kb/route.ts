@@ -13,6 +13,8 @@ const UA = "Built2Bid-Academy-SourceMonitor/1.0 (+https://built2bid.org/academy)
  *   ?phase=check       fingerprint up to 8 official sources not checked in 28 days; a change or a dead link opens a
  *                      review-queue item for an admin. No AI, no content edits.
  *   ?phase=semiannual  queue the six-month review of every source (deduplicated per half-year)
+ *   ?phase=coverage    monthly 50-state + DC coverage audit (real test searches per state); results show in
+ *                      Manage Academy → Codes → Coverage. Read-only apart from the run record.
  * Does nothing until the knowledge-engine migration is applied (the RPCs are missing and the job answers "off").
  */
 export async function POST(req: Request) {
@@ -27,6 +29,11 @@ export async function POST(req: Request) {
       const { data, error } = await db.rpc("academy_kb_queue_semiannual");
       if (error) return json({ ok: true, off: true });
       return json({ ok: true, queued: data });
+    }
+    if (phase === "coverage") {
+      const { data, error } = await db.rpc("academy_kb_run_coverage_audit", { p_trigger: "scheduled" });
+      if (error) return json({ ok: true, off: true });
+      return json({ ok: true, run: data });
     }
     const { data: due, error } = await db.rpc("academy_kb_due_checks", { p_limit: 8 });
     if (error) return json({ ok: true, off: true });

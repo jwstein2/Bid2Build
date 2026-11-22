@@ -489,7 +489,7 @@
    "model_evidence_url": null,
    "model_evidence_quote": null,
    "local_directory_url": null,
-   "notes": "The current edition is the 2025 Title 24, effective 2026-01-01; the next triennial edition (2028) is not yet in effect. Other parts not entered as families: Part 7 (California Wildland-Urban Interface Code, based on the 2024 IWUIC), Part 11 (CALGreen, a state-written green code), Part 8 (Historical Building Code) and Part 12 (Referenced Standards). Errata for several 2025 parts took effect in January 2026, per BSC Information Bulletin 26-01. dgs.ca.gov blocks curl (403); the BSC Codes page and the 2025 Guide to Title 24 PDF were read through WebFetch. Some state agencies (HCD, DSA, OSHPD/HCAI, SFM) adopt different amendments by occupancy, so applicability varies by building type.",
+   "notes": "The current edition is the 2025 Title 24, effective 2026-01-01; the next triennial edition (2028) is not yet in effect. Other parts not entered as families: Part 7 (California Wildland-Urban Interface Code, based on the 2024 IWUIC), Part 8 (Historical Building Code) and Part 12 (Referenced Standards). Errata for several 2025 parts took effect in January 2026, per BSC Information Bulletin 26-01. dgs.ca.gov blocks curl (403); the BSC Codes page and the 2025 Guide to Title 24 PDF were read through WebFetch. Some state agencies (HCD, DSA, OSHPD/HCAI, SFM) adopt different amendments by occupancy, so applicability varies by building type. CALGreen (Part 11) added 2026-11-22 from the BSC Codes page.",
    "adoptions": [
     {
      "family": "ibc",
@@ -626,6 +626,23 @@
      "status": "verified",
      "pending_reason": null,
      "page_hash": "55a5722e2edbcc2a8bfded8ff792e0f2f4b2ba63e33af69d7d3f1c1191490a57"
+    },
+    {
+     "family": "state_green",
+     "model_edition": null,
+     "state_code_name": "2025 California Green Building Standards Code (CALGreen, Title 24, Part 11)",
+     "applies_to": "all",
+     "authority_citation": "Cal. Code Regs., tit. 24, pt. 11; Cal. Health & Safety Code § 18901 et seq.",
+     "official_url": "https://www.dgs.ca.gov/BSC/Codes",
+     "effective_date": "2026-01-01",
+     "statewide": true,
+     "local_amendments_allowed": true,
+     "scope_note": "A state-written green building code (CALGreen). Local jurisdictions may adopt stricter tiers.",
+     "evidence_quote": "BSC Codes page: \"Part 11 - California Green Building Standards Code also referred to as CALGreen\" | BSC Codes page: \"The 2025 California Building Standards Code (Cal. Code Regs., Title 24) will be published July 1, 2025, with an effective date of January 1, 2026.\"",
+     "evidence_url": "https://www.dgs.ca.gov/BSC/Codes",
+     "status": "verified",
+     "pending_reason": null,
+     "page_hash": "0bda0f4b6a511c433f4dae3f1f7eeb4c3768d9b0284a88771f1e082bb1fe6b15"
     }
    ]
   },

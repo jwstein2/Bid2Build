@@ -3,23 +3,33 @@ import Link from "next/link";
 import { ExternalLink, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/misc";
 import { reportProblem } from "@/app/(marketing)/academy/codes/actions";
-import { APPLICABILITY, CONTENT_STATUS_LABEL, FEEDBACK_REASONS, KB_DISCLAIMER, REASON_TEXT, citationText, type KbLocalInfo, type KbResult } from "@/lib/academy/kb/types";
+import { CONTENT_STATUS_LABEL, FEEDBACK_REASONS, KB_DISCLAIMER, REASON_TEXT, citationText, type KbLocalInfo, type KbResult } from "@/lib/academy/kb/types";
 import { labelFromId } from "@/lib/academy/kb/geo";
 import { stateName } from "@/lib/academy/kb/location";
 import { CopyCitation } from "./copy-citation";
+import { STATUS, displayStatus, type DisplayStatus } from "@/lib/academy/kb/answer";
 
 const fmtDate = (d: string | null | undefined) => (d ? new Date(`${d.slice(0, 10)}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) : null);
 export { fmtDate };
 
+const PUBLIC_STATUS: Record<string, DisplayStatus> = {
+  verified_applicable: STATUS.verified, jurisdiction_confirmation_needed: STATUS.local, source_review_needed: STATUS.review,
+  not_adopted: STATUS.reference, superseded: STATUS.historical, unavailable: STATUS.reference,
+};
+
+export function StatusPill({ s }: { s: DisplayStatus }) {
+  return <Badge tone={s.tone}><ShieldCheck className="h-3 w-3" aria-hidden />{s.label}</Badge>;
+}
+
+/** One plain status for visitors (the detailed applicability reason is in the note and the admin pages). */
 export function ApplicabilityBadge({ a }: { a: KbResult["applicability"] | null | undefined }) {
   if (!a) return null;
-  const meta = APPLICABILITY[a.status] ?? APPLICABILITY.unavailable;
-  return <Badge tone={meta.tone === "muted" ? "neutral" : meta.tone}><ShieldCheck className="h-3 w-3" aria-hidden />{meta.label}</Badge>;
+  return <StatusPill s={PUBLIC_STATUS[a.status] ?? STATUS.reference} />;
 }
 
 export function ApplicabilityNote({ a }: { a: KbResult["applicability"] | null | undefined }) {
   if (!a) return null;
-  const meta = APPLICABILITY[a.status] ?? APPLICABILITY.unavailable;
+  const meta = PUBLIC_STATUS[a.status] ?? STATUS.reference;
   const reason = a.reason ? REASON_TEXT[a.reason] : null;
   return (
     <p className="text-xs text-ink-soft">
@@ -71,24 +81,25 @@ export function StatusBadge({ status }: { status: string }) {
 }
 
 /** A result card: answer text (verified only), applicability, facts, citation, report link. */
-export function ResultCard({ r, returnTo, state, strong }: { r: KbResult; returnTo: string; state: string | null; strong?: boolean }) {
+export function ResultCard({ r, returnTo, state, strong, staff }: { r: KbResult; returnTo: string; state: string | null; strong?: boolean; staff?: boolean }) {
   const verified = r.section_status === "verified" && r.body_kind !== "title_only";
+  const status = displayStatus(r, state);
   return (
     <li className={`rounded-xl border bg-surface p-4 shadow-card ${strong ? "border-ok/40" : "border-line"}`} data-testid="kb-result">
       <div className="flex flex-wrap items-center gap-2">
-        <ApplicabilityBadge a={r.applicability} />
-        {r.section_status !== "verified" && <StatusBadge status={r.section_status} />}
+        <StatusPill s={status} />
+        {staff && r.section_status !== "verified" && <StatusBadge status={r.section_status} />}
         {r.amend_action && <Badge tone="brand">State amendment</Badge>}
       </div>
       <h3 className="mt-2 font-semibold">
         <Link href={`/academy/codes/section/${r.section_id}${state ? `?state=${state}` : ""}`} className="hover:underline">{r.citation}: {r.title}</Link>
       </h3>
       {verified && r.summary && <p className="mt-1 text-sm text-ink">{r.summary}</p>}
-      {!verified && <p className="mt-1 text-sm text-ink-soft">Title only. The requirement text has not been verified yet, so it is not shown.</p>}
+      {!verified && <p className="mt-1 text-sm text-ink-soft">{r.applicability?.status === "not_adopted" ? "A different edition is in force here. Use the official source for the adopted requirement." : "Section title only. Read the requirement in the official source."}</p>}
       {verified && r.exceptions && <p className="mt-1 text-xs text-ink-soft"><span className="font-semibold">Exceptions: </span>{r.exceptions}</p>}
-      <div className="mt-2"><ApplicabilityNote a={r.applicability} /></div>
       <details className="mt-2">
-        <summary className="cursor-pointer text-xs font-semibold text-muted">Source details</summary>
+        <summary className="cursor-pointer text-xs font-semibold text-muted">Edition and verification details</summary>
+        <div className="mb-2"><ApplicabilityNote a={r.applicability} /></div>
         <div className="mt-2"><ResultFacts r={r} /></div>
       </details>
       <div className="mt-3 flex flex-wrap items-center gap-3">

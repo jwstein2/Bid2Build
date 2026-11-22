@@ -71,3 +71,21 @@ export function labelFromId(id: string): string {
   const one = parts[0] ?? "";
   return one.endsWith("-county") ? `Unincorporated ${title(one.replace(/-county$/, ""))} County` : title(one);
 }
+
+/**
+ * What the ZIP field should say. Each situation gets its own message; none of them blocks a statewide search.
+ * - resolved: one area, picked automatically · multiple: the visitor picks · no_local_data: a real ZIP with no areas
+ * - unknown: not a Census ZIP (PO-box-only, unique or unassigned) · failed: the lookup didn't load · mismatch: ZIP is in another state
+ */
+export type ZipStatus = "none" | "incomplete" | "loading" | "resolved" | "multiple" | "no_local_data" | "unknown" | "failed" | "mismatch";
+export function zipStatusFor(i: { zip: string; loading: boolean; shardStatus: "ok" | "unknown" | "failed" | null; options: GeoOption[]; state: string | null | undefined }): ZipStatus {
+  if (!i.zip) return "none";
+  if (!/^\d{5}$/.test(i.zip)) return "incomplete";
+  if (i.loading || !i.shardStatus) return "loading";
+  if (i.shardStatus === "failed") return "failed";
+  if (i.shardStatus === "unknown") return "unknown";
+  if (!i.options.length) return "no_local_data";
+  const zipState = i.options[0].id.slice(0, 2);
+  if (i.state && i.state !== zipState) return "mismatch";
+  return i.options.length > 1 ? "multiple" : "resolved";
+}

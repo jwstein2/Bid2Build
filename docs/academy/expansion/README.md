@@ -79,3 +79,11 @@ Known gaps: Minnesota plumbing code (chapter 4714) not yet seeded; FMCSA definit
 1. "How to read a codebook" lesson, five-minute lessons, learning paths (tables already exist), more decks for other states as they are verified.
 2. Start Your Contracting Business guide, licences/insurance, tool kits, suppliers, BLS earnings comparison (wages vs business profit), Grow Your Business, DOT/safety.
 3. More verified states (WI, IA, TX, FL, CA), grounded Haiku explanations behind `kb_ai_explain` and the existing AI guard, and the advisory "Check applicable codes" panel for estimates.
+
+## PR 4: Codes UI/UX, California check, 50-state coverage audit
+
+- **Search page** (`/academy/codes`): compact Project location (ZIP | State | Trade, local jurisdiction, "Refine location"), a ZIP status for each case (resolved, multiple, no local data, not a Census ZIP such as 96199, lookup failed, ZIP in another state), and a statewide search that never waits on the local lookup. Separate idle / no match / reference / answer / technical-failure states; the empty page no longer says "No verified answer". "Available codes" lists the state's verified codes with edition, status and official link; "Search this code" appears only where text is searchable.
+- **Quick answer rule**: the answer must come from the same kind of rule as the best match, so an OSHA jobsite-stair rule no longer answers "deck stair riser height".
+- **Public statuses**: Verified for Selected Jurisdiction, Statewide Source Available, Local Verification Needed, Historical Edition, Under Review, Official Reference Only. Raw flags are staff-only.
+- **California**: 2025 Title 24 parts are verified as official references (text is copyrighted model-code text, so it is linked, not stored). CALGreen (Part 11) added.
+- **Coverage audit**: `academy_kb_run_coverage_audit()` (migration 20270222005000) runs 6 real searches per state + DC with the page's answer rule and stores the state × category matrix. Manage Academy → Codes → 50-state coverage audit, "Run audit now", and monthly on the 1st via the existing cron. Rollback: `docs/academy/rollback_20270222005000.sql`.

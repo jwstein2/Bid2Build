@@ -124,3 +124,17 @@ export async function registerDocument(form: FormData) {
   revalidatePath(PATH);
   go({ msg: "Document saved and queued for review." });
 }
+
+/** Runs the 50-state + DC coverage audit now (real searches, no AI, no outside calls). Admins and instructors. */
+export async function runCoverageAudit() {
+  const { user } = await staff(["admin", "instructor"]);
+  const { data, error } = await (await createClient()).rpc("academy_kb_run_coverage_audit", { p_trigger: "manual" });
+  if (error) {
+    if (/rate_limited/.test(error.message)) redirect("/academy/manage/codes/coverage?err=" + encodeURIComponent("An audit just ran. Try again in a few minutes."));
+    logError("academy.kb.coverage_audit", error);
+    redirect("/academy/manage/codes/coverage?err=" + encodeURIComponent("The audit couldn't run. Has the coverage-audit SQL been applied?"));
+  }
+  await audit(user.id, "kb_coverage_audit", "coverage_run", typeof data === "string" ? data : null);
+  revalidatePath("/academy/manage/codes/coverage");
+  redirect("/academy/manage/codes/coverage?msg=" + encodeURIComponent("Coverage audit finished."));
+}
