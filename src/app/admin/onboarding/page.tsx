@@ -1,6 +1,8 @@
 import { PageHead, Panel, Table } from "@/components/admin/cc";
 import { requireAdmin } from "@/lib/admin/server";
 import { getTour } from "@/lib/guide/tours";
+import { loadReport } from "@/lib/admin/load";
+import { biggestDrop, setupFunnel } from "@/lib/admin/setup-funnel";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Onboarding & Guide" };
@@ -31,12 +33,33 @@ export default async function OnboardingOverview({ searchParams }: { searchParam
   const real = (o?.tours ?? []).filter((t) => t.workspace === "real");
   const other = (o?.tours ?? []).filter((t) => t.workspace !== "real");
   const title = (id: string) => getTour(id)?.title ?? id;
+  // Setup funnel: genuine accounts only (same scope as Product usage), signed up in the chosen window.
+  const { r } = await loadReport({}).catch(() => ({ r: null }));
+  const funnel = r ? setupFunnel(r.facts, r.now.getTime() - days * 864e5, r.now.getTime()) : null;
+  const drop = funnel ? biggestDrop(funnel) : null;
 
   return (
     <div className="space-y-6">
       <PageHead kicker={`Onboarding · last ${days} days`} title="Are new contractors getting started?"
         intro="Guided tours, the Built2Bid Guide and time to first estimate. Counts come from first-party guide events; internal and test accounts are left out, and Demo/Practice activity is reported separately."
         right={<nav className="flex gap-1 text-xs">{RANGES.map((d) => <a key={d} href={`/admin/onboarding?days=${d}`} aria-current={d === days ? "page" : undefined} className={`rounded-md border px-2 py-1 ${d === days ? "border-[var(--cc-green)] text-[var(--cc-green)]" : "border-[var(--cc-line)] text-[#b9cbd6]"}`}>{d} days</a>)}</nav>} />
+      <Panel kicker={`Genuine accounts that signed up in the last ${days} days`} title="Setup funnel: where new contractors stop">
+        {funnel && funnel[0].count > 0 ? (
+          <>
+            <div className="space-y-2" data-testid="setup-funnel">
+              {funnel.map((f) => (
+                <div key={f.key} className="grid grid-cols-[minmax(0,14rem)_1fr_auto] items-center gap-3 text-sm">
+                  <span className="truncate">{f.label}</span>
+                  <span className="h-3 overflow-hidden rounded-full bg-[var(--cc-line)]" aria-hidden><span className="block h-full rounded-full bg-[var(--cc-green)]" style={{ width: `${Math.round((f.fromStart ?? 0) * 100)}%` }} /></span>
+                  <span className="cc-mono w-28 text-right text-white">{f.count}<span className="ml-2 text-xs text-[#8fa6b4]">{f.fromPrev === null ? "" : pct(f.count, funnel[funnel.indexOf(f) - 1].count)}</span></span>
+                </div>
+              ))}
+            </div>
+            {drop && drop.fromPrev !== null && drop.fromPrev < 1 && <p className="mt-3 text-sm">Biggest drop: <b>{drop.label}</b>. Only {pct(drop.count, funnel[funnel.indexOf(drop) - 1].count)} of the accounts at the step before got there.</p>}
+            <p className="mt-2 text-[11px] text-[#8fa6b4]">Each step counts accounts that reached it at any time so far. Percent beside each count is of the step above. Test, internal and demo accounts are left out.</p>
+          </>
+        ) : <p className="text-sm text-[#8fa6b4]">{funnel ? "No genuine sign-ups in this period yet." : "The account report couldn't be read."}</p>}
+      </Panel>
       {!o && <Panel title="Report unavailable"><p className="text-sm">The onboarding report couldn&apos;t be read. If the Demo Mode &amp; Guide SQL (20270102001000) hasn&apos;t been run yet, run it first.</p></Panel>}
       {o && (
         <>
