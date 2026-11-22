@@ -3,26 +3,30 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
 
-const PRIMARY = [
+const PRIMARY: Tab[] = [
   { href: "/academy", label: "Community", match: (p: string) => p === "/academy" || p.startsWith("/academy/post") },
   { href: "/academy/classroom", label: "Classroom", match: (p: string) => p.startsWith("/academy/classroom") || p.startsWith("/academy/courses") },
   { href: "/academy/members", label: "Members", match: (p: string) => p.startsWith("/academy/members") },
   { href: "/academy/leaderboard", label: "Leaderboard", short: "Leaders", match: (p: string) => p.startsWith("/academy/leaderboard") },
 ];
 
-/** The four primary Academy tabs (Community first), plus a small secondary menu. */
-export function AcademyTabs({ secondary }: { secondary: { href: string; label: string }[] }) {
+type Tab = { href: string; label: string; short?: string; match: (p: string) => boolean };
+const CODES: Tab = { href: "/academy/codes", label: "Codes", match: (p: string) => p.startsWith("/academy/codes") };
+
+/** The primary Academy tabs (Community first; Codes once the code library is on), plus a small secondary menu. */
+export function AcademyTabs({ secondary, codes = false }: { secondary: { href: string; label: string }[]; codes?: boolean }) {
   const path = usePathname() ?? "/academy";
+  const tabs = codes ? [...PRIMARY.slice(0, 2), CODES, ...PRIMARY.slice(2)] : PRIMARY;
   return (
     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
       <nav aria-label="Academy" className="-mx-1 flex max-w-full gap-1 overflow-x-auto px-1" data-testid="academy-tabs">
-        {PRIMARY.map((t) => {
+        {tabs.map((t) => {
           const on = t.match(path);
           return (
             <Link key={t.href} href={t.href} aria-current={on ? "page" : undefined}
               className={cn("whitespace-nowrap rounded-full px-2.5 py-2 text-[13px] font-semibold sm:px-4 sm:text-sm transition-colors duration-(--motion-fast)",
                 on ? "bg-navy text-white" : "text-ink-soft hover:bg-brand-tint hover:text-navy")}>
-              {"short" in t && t.short ? <><span className="sm:hidden">{t.short}</span><span className="hidden sm:inline">{t.label}</span></> : t.label}
+              {t.short ? <><span className="sm:hidden">{t.short}</span><span className="hidden sm:inline">{t.label}</span></> : t.label}
             </Link>
           );
         })}

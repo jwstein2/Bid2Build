@@ -4,9 +4,10 @@ import { AcademyTabs } from "@/components/academy/academy-tabs";
 import { AcademyPresence } from "@/components/academy/presence";
 import { Container } from "@/components/ui/misc";
 import { loadMe } from "@/lib/academy/server";
+import { kbAccess } from "@/lib/academy/kb/server";
 
 export default async function AcademyLayout({ children }: { children: React.ReactNode }) {
-  const { me } = await loadMe();
+  const [{ me }, kb] = await Promise.all([loadMe(), kbAccess()]);
   // Presence runs in the browser (AcademyPresence): a heartbeat while the member is active, live stats for everyone.
   // It used to be an after() callback here, but cookies() can't be read inside after() in a Server Component, so the
   // write always failed silently and last_seen_at was never set.
@@ -24,7 +25,7 @@ export default async function AcademyLayout({ children }: { children: React.Reac
             <span className="grid h-8 w-8 place-items-center rounded-lg bg-navy text-cyan" aria-hidden><GraduationCap className="h-4 w-4" /></span>
             Contractor Academy
           </Link>
-          <div className="mt-3"><AcademyTabs secondary={secondary} /></div>
+          <div className="mt-3"><AcademyTabs secondary={secondary} codes={kb.enabled || (kb.staff && kb.migrated)} /></div>
         </Container>
       </div>
       {children}
