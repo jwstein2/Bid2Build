@@ -52,7 +52,13 @@ export default async function BanksPage({ searchParams }: { searchParams: Promis
       intro="Connect your business bank to see bank-reported balances and bring transactions into reconciliation automatically. Read-only: Built2Bid can't move money, never asks for your bank login, and stores only the last 4 digits of an account."
       actions={<ConnectBank mode={mode} canConnect={canManage} laterHref={sp.onboarding ? "/financials" : undefined} />}>
       {mode === "plaid" && ctx.access.sandbox && process.env.PLAID_ENV !== "production" && <Notice title="Plaid test mode">This practice book uses Plaid&apos;s test banks. Sign in with user_good / pass_good. No real bank is contacted.</Notice>}
-      {mode === "mock" && <Notice title="Practice mode">Bank connections here use a practice bank with made-up data. Real banks connect only in your real books after the owner approves a provider.</Notice>}
+      {live.some((c) => c.sandbox) && (
+        <Notice title="Simulation — no real transaction" tone="warn">
+          This is a simulated bank with made-up sample data. It is not a real bank connection: no bank login, account number, token or money is involved,
+          and it never contacts a bank. Create a free account and connect your own bank in your real books to see your actual balances.
+        </Notice>
+      )}
+      {mode === "mock" && !live.some((c) => c.sandbox) && <Notice title="Practice mode">Bank connections here use a practice bank with made-up data. Real banks connect only in your real books after the owner approves a provider.</Notice>}
       {!live.length && (
         <div className="rounded-xl border border-dashed border-line p-6 text-center">
           <p className="font-display text-lg font-extrabold">No bank connected yet</p>
@@ -68,12 +74,12 @@ export default async function BanksPage({ searchParams }: { searchParams: Promis
             <div className="flex flex-wrap items-center gap-2">
               <h2 id={`conn-${c.id}`} className="font-display text-lg font-extrabold">{c.institution}</h2>
               <Badge tone={st.tone}>{st.label}</Badge>
-              {c.sandbox && <Badge>Practice</Badge>}
+              {c.sandbox && <Badge tone="warn">Simulated bank · not a real account</Badge>}
               {c.historyPartial && <Badge tone="warn">Partial history</Badge>}
               <span className="text-sm text-muted">Last updated {c.lastSuccessAt ? fmtWhen(c.lastSuccessAt) : "never"}</span>
             </div>
             {st.help && <p className="text-sm text-ink-soft">{st.help}{c.errorMessage ? ` (${c.errorMessage})` : ""}</p>}
-            {stale && c.status === "active" && <p className="text-sm text-warn">This balance is more than {STALE_HOURS} hours old. Refresh to update it.</p>}
+            {stale && c.status === "active" && !c.sandbox && <p className="text-sm text-warn">This balance is more than {STALE_HOURS} hours old. Refresh to update it.</p>}
             <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {accts.map((a) => (
                 <li key={a.id} className="rounded-lg border border-line p-3">
@@ -91,7 +97,9 @@ export default async function BanksPage({ searchParams }: { searchParams: Promis
                 </li>
               ))}
             </ul>
-            <ConnectionActions id={c.id} status={c.status} canWrite={canRefresh} canManage={canManage} />
+            {c.sandbox
+              ? <p className="text-sm text-muted">Sample feed for practice: it doesn&apos;t refresh or reconnect, and nothing here moves money.</p>
+              : <ConnectionActions id={c.id} status={c.status} canWrite={canRefresh} canManage={canManage} />}
           </section>
         );
       })}

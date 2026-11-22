@@ -22,7 +22,12 @@ export function demoSteps(d: DemoDataset): { kind: string; rows: unknown }[] {
     ...chunk(d.estimates.map(({ id, createdAt, payload, version, stages }) => ({ id, createdAt, payload, version, stages })), 20).map((rows) => ({ kind: "estimates", rows })),
     ...chunk(d.schedules, 15).map((rows) => ({ kind: "schedules", rows })),
     ...chunk(d.invoices, 33).map((rows) => ({ kind: "invoices", rows })),
+    ...(d.changeOrders.length ? [{ kind: "changes", rows: d.changeOrders }] : []),
     ...chunk(d.comms, 200).map((rows) => ({ kind: "comms", rows })),
+    // Simulated bank: the feed (one statement per month), then posting in chunks, then reconciliations + cash plan.
+    { kind: "bank", rows: { ...d.bank, reconcile: undefined, statements: d.bank.statements.map((s) => ({ ...s, transactions: s.transactions.map((t) => ({ txnRef: t.txnRef, date: t.date, description: t.description, amount: t.amount, checkNumber: t.checkNumber })) })) } },
+    ...chunk(d.bank.statements.flatMap((s) => s.transactions).filter((t) => t.post).map((t) => ({ txnRef: t.txnRef, post: t.post })), 150).map((rows) => ({ kind: "bank_post", rows })),
+    { kind: "bank_finish", rows: { reconcile: d.bank.reconcile, cashPlan: d.cashPlan } },
     { kind: "finish", rows: {} },
   ];
 }

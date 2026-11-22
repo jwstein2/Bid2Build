@@ -53,7 +53,7 @@ export function CashView({ b, stripe, monthStart }: { b: BankingData; stripe: St
           {b.accounts.length === 0 ? <Empty>No accounts in the designated book yet. Connect the bank (read-only) in that account&apos;s Financials → Banking, then refresh.</Empty> : (
             <Table head={["Account", "Available", "Current", "As of", "Connection"]}>
               {b.accounts.map((a) => (
-                <tr key={a.id} className={a.excluded ? "opacity-50" : ""}><td className="text-white">{a.name} ••{a.last4 ?? "?"}<div className="text-[11px] text-ink-soft">{a.institution_name ?? a.source}{a.excluded ? " · excluded (personal)" : ""}{a.sandbox ? " · sandbox" : ""}</div></td>
+                <tr key={a.id} className={a.excluded ? "opacity-50" : ""}><td className="text-white">{a.name} ••{a.last4 ?? "?"}<div className="text-[11px] text-ink-soft">{a.institution_name ?? a.source}{a.excluded ? " · excluded (personal)" : ""}{a.sandbox ? " · simulated (not a real bank)" : ""}</div></td>
                   <td>{a.available == null ? <span className="text-ink-soft">not reported</span> : money(Math.round(a.available * 100))}</td><td>{a.current == null ? "—" : money(Math.round(a.current * 100))}</td>
                   <td className="text-[11px] text-ink-soft">{a.as_of ? new Date(a.as_of).toLocaleString() : "—"}</td><td className="text-xs">{a.connection_status ?? (a.source === "statement_import" ? "statement import" : "—")}</td></tr>))}
             </Table>

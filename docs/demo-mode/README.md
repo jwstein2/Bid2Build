@@ -3,7 +3,7 @@
 ## What it is
 
 - **Demo Mode** is for the platform owner only. It opens a fully populated sample contracting company in a separate workspace, so the owner can demo Built2Bid without touching real data.
-- **Practice Mode** is optional and off unless `PRACTICE_MODE=on`. It gives any signed-in contractor a small sample workspace (3 bids) to practise in.
+- **Practice Mode** is on for every signed-in user (emergency switch `PRACTICE_MODE=off`). Since 2026-11-21 it gives each person the same full sample company as the owner demo, under the name "Practice Builders (sample)": 24 months of history, current and scheduled work, Financials and a simulated bank (see below). An older practice workspace starts fresh the next time it is opened.
 - **Guided Experience engine** covers the tours (first bid, Project Command Center / PM Hub, Enterprise owner/manager/staff, demo walkthrough), smart offers, tour progress, the bottom-left **Built2Bid Guide**, help search, optional Ask Built2Bid, and the owner overview at `/admin/onboarding`.
 
 ## How isolation works
@@ -57,3 +57,14 @@ Reset (from the DEMO MODE banner, with an inline confirmation) never deletes any
 ## Database
 
 Migration `supabase/migrations/20270102001000_demo_mode_guide.sql` is additive and safe to run twice. Rollback: `docs/demo-mode/rollback_20270102001000.sql`.
+
+
+## 24-month history and the simulated bank (2026-11-21, migration 20270219003000)
+
+- **History.** 72 completed, invoiced and collected jobs spread through the last 24 months along a northern building-season curve (busy summers, quiet winters), plus the current pipeline, jobs underway (some delayed), scheduled future jobs and open bids. Some invoices are overdue.
+- **Exceptions.** Every 7th started job overruns (finished ones end in a loss after rework). Change orders: two approved, one waiting on the customer, one declined. One customer overpays and gets a $250 refund check. Quarterly owner draws are excluded from the books with a reason.
+- **Simulated bank.** "Maple Hollow Community Bank (SIMULATED)", "Business Checking (SIMULATED)" ••0000. It is provider `mock` with `sandbox = true`: there are no credentials, no stored token, no API calls, no syncing (`next_sync_at` is null) and no money movement. The app refuses Refresh and Reconnect for it (`simulated_bank`). Every bank line ends in "(SIMULATED)".
+- **Bank feed.** Deposits mirror recorded payments (same `SIM-` reference). Job costs come from each estimate's own cost lines (supplies at the start, subcontractors at the end). Labour runs through biweekly payroll, and overhead, utilities, fuel and quarterly estimated tax fill in the rest. Each month is its own feed with a month-end balance. The opening balance keeps the running balance above $8,000.
+- **Reconciled.** Every month end at least 20 days back is reconciled to the cent with nothing unmatched. The last 7 days of lines are left unmatched so the user has something to practise on. A forward cash plan (payroll, rent, insurance, truck loan, the next estimated tax payment) feeds the V9 cash forecast. Forecast events are dated in the future only.
+- **Isolation.** All of it is written by `demo_apply` as the demo login through the app's own RPCs, inside the demo company. Normal RLS keeps it away from the practising user's real account.
+- **Deviation from the spec.** The spec asks for one shared fixture. Instead, the deterministic fixture is written once per practice workspace, so each person can make reversible edits without touching anyone else's. A workspace is roughly 10,000 rows, counting audit history.

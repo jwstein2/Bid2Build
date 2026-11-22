@@ -15,6 +15,7 @@ const d = describe.skipIf(!ok);
 d("Demo Mode isolation (20270102001000)", () => {
   let pool: Pool, drop: () => Promise<void>;
   let owner: string, stranger: string, demo: string, ws: { workspaceId: string; companyId: string; demoUserId: string };
+  let data0: ReturnType<typeof buildDemoDataset>;
   const ANCHOR = "2026-11-18";
 
   beforeAll(async () => {
@@ -27,10 +28,11 @@ d("Demo Mode isolation (20270102001000)", () => {
     demo = await createUser(pool, "owner-demo-1@example.com");
     ws = (await pool.query("select public.demo_provision($1, $2, 'owner_demo') as r", [owner, demo])).rows[0].r;
     const data = buildDemoDataset({ kind: "owner_demo", namespace: ws.workspaceId, anchor: ANCHOR });
-    const r = await applyDemoDataset(pgRpc(pool), ws.workspaceId, data, { budgetMs: 120_000 });
+    data0 = data;
+    const r = await applyDemoDataset(pgRpc(pool), ws.workspaceId, data, { budgetMs: 300_000 });
     expect(r.error).toBeUndefined();
     expect(r.done).toBe(true);
-  }, 180_000);
+  }, 400_000);
   afterAll(async () => { await drop?.(); });
 
   it("only the platform owner can create an owner demo, only with a reserved demo email and a fresh login", async () => {
@@ -48,9 +50,9 @@ d("Demo Mode isolation (20270102001000)", () => {
   it("seeds the documented sample company", async () => {
     const n = async (sql: string, p: unknown[] = []) => Number((await pool.query(sql, p)).rows[0].count);
     expect(await n("select count(*) from public.customers where user_id = $1", [demo])).toBe(150);
-    expect(await n("select count(*) from public.estimates where user_id = $1", [demo])).toBe(125);
+    expect(await n("select count(*) from public.estimates where user_id = $1", [demo])).toBe(169);
     expect(await n("select count(*) from public.project_schedules s join public.estimates e on e.id = s.estimate_id where e.user_id = $1", [demo])).toBe(45);
-    expect(await n("select count(*) from public.fin_invoices i join public.fin_books b on b.id = i.book_id where b.company_id = $1 or b.owner_user_id = $2", [ws.companyId, demo])).toBe(65);
+    expect(await n("select count(*) from public.fin_invoices i join public.fin_books b on b.id = i.book_id where b.company_id = $1 or b.owner_user_id = $2", [ws.companyId, demo])).toBe(data0.invoices.length);
     expect(await n("select count(*) from public.pm_resources where company_id = $1 and kind = 'staff'", [ws.companyId])).toBe(8);
     expect(await n("select count(*) from public.pm_resources where company_id = $1 and kind = 'subcontractor'", [ws.companyId])).toBe(18);
     // V7.3 Contractors & Workforce: Red's Electric holds four workers; crews have members and stated capacity.
@@ -170,3 +172,92 @@ d("Demo Mode isolation (20270102001000)", () => {
     expect(o.tours.find((t: { tourId: string; workspace: string }) => t.tourId === "demo-tour")?.workspace).toBe("demo");
   });
 });
+
+d("Practice Mode: 24-month sample company with a simulated bank (20270219003000)", () => {
+  let pool: Pool, drop: () => Promise<void>;
+  let user: string, practice: string, ws: { workspaceId: string; companyId: string; demoUserId: string };
+  let data: ReturnType<typeof buildDemoDataset>;
+  // The seed runs as of "today" in the database, so anchor on today like the server does.
+  const ANCHOR = new Date().toISOString().slice(0, 10);
+  const n = async (sql: string, p: unknown[] = []) => Number((await pool.query(sql, p)).rows[0].count);
+
+  beforeAll(async () => {
+    ({ pool, drop } = await freshDb("b2b_practice_24m"));
+    user = await createUser(pool, "contractor@built.test");   // any signed-in user, not an admin
+    practice = await createUser(pool, "practice-abc123def4@example.com");
+    ws = (await pool.query("select public.demo_provision($1, $2, 'practice') as r", [user, practice])).rows[0].r;
+    data = buildDemoDataset({ kind: "practice", namespace: ws.workspaceId, anchor: ANCHOR });
+    const r = await applyDemoDataset(pgRpc(pool), ws.workspaceId, data, { budgetMs: 300_000 });
+    expect(r.error ? `${r.step}: ${r.error}` : undefined).toBeUndefined();
+    expect(r.done).toBe(true);
+  }, 400_000);
+  afterAll(async () => { await drop?.(); });
+
+  it("gives Practice the full company on a no-billing complimentary grant", async () => {
+    expect(ws.companyId).toBeTruthy();
+    expect(await n("select count(*) from public.estimates where user_id = $1", [practice])).toBe(169);
+    expect(await n("select count(*) from public.complimentary_grants where user_id = $1 and status = 'active' and plan = 'enterprise'", [practice])).toBe(1);
+    expect(await n("select count(*) from public.subscriptions where user_id = $1 or company_id = $2", [practice, ws.companyId])).toBe(0);
+    // Two years of history: the oldest bid is more than 23 months back.
+    const oldest = (await pool.query("select min(created_at)::date d from public.estimates where user_id = $1", [practice])).rows[0].d as Date;
+    expect((Date.now() - oldest.getTime()) / 86_400_000).toBeGreaterThan(700);
+  });
+
+  it("the bank is clearly fake: mock, sandbox, SIMULATED names, no token, never syncs", async () => {
+    const c = (await pool.query("select c.* from public.fin_bank_connections c join public.fin_books b on b.id = c.book_id where b.company_id = $1", [ws.companyId])).rows;
+    expect(c).toHaveLength(1);
+    expect(c[0]).toMatchObject({ provider: "mock", sandbox: true, status: "active", next_sync_at: null });
+    expect(c[0].institution_name).toMatch(/SIMULATED/);
+    expect(c[0].provider_item_ref).toMatch(/^demo-sim:/);
+    expect(await n("select count(*) from public.fin_bank_connection_secrets where connection_id = $1", [c[0].id])).toBe(0);
+    const a = (await pool.query("select * from public.fin_bank_accounts where connection_id = $1", [c[0].id])).rows;
+    expect(a).toHaveLength(1);
+    expect(a[0]).toMatchObject({ last4: "0000", kind: "checking" });
+    expect(a[0].name).toMatch(/SIMULATED/);
+    // Every bank line says SIMULATED.
+    expect(await n("select count(*) from public.fin_bank_transactions where account_id = $1 and description not like '%(SIMULATED)'", [a[0].id])).toBe(0);
+  });
+
+  it("reconciles to the cent: monthly statements, balances, matched lines, month-end reconciliations", async () => {
+    const acct = (await pool.query("select a.id from public.fin_bank_accounts a join public.fin_bank_connections c on c.id = a.connection_id join public.fin_books b on b.id = c.book_id where b.company_id = $1", [ws.companyId])).rows[0].id;
+    const lines = data.bank.statements.flatMap((s) => s.transactions);
+    expect(await n("select count(*) from public.fin_bank_transactions where account_id = $1", [acct])).toBe(lines.length);
+    expect(await n("select count(*) from public.fin_bank_imports where account_id = $1 and file_name like '%(SIMULATED)%'", [acct])).toBe(data.bank.statements.filter((s) => s.transactions.length).length);
+    const bal = (await pool.query("select public.fin_bank_balance($1, current_date) as b", [acct])).rows;
+    // fin_bank_balance needs view permission: read it as the practice login.
+    const asPractice = await asUser(pool, practice, (q) => q("select public.fin_bank_balance($1, current_date) as b", [acct]));
+    expect(asPractice.rows[0].b).toBe(data.bank.currentBalance);
+    expect(bal).toBeDefined();
+    const latest = (await pool.query("select current_balance from public.fin_bank_balances where account_id = $1 order by as_of desc limit 1", [acct])).rows[0];
+    expect(latest.current_balance).toBe(data.bank.currentBalance);
+    const unmatched = await n("select count(*) from public.fin_bank_transactions t where t.account_id = $1 and not exists (select 1 from public.fin_bank_matches m where m.bank_txn_id = t.id and m.status = 'active')", [acct]);
+    expect(unmatched).toBe(lines.filter((t) => !t.post).length);
+    const rec = (await pool.query("select status, difference from public.fin_reconciliations where account_id = $1", [acct])).rows;
+    expect(rec).toHaveLength(data.bank.reconcile.length);
+    expect(rec.every((x) => x.status === "reconciled" && Number(x.difference) === 0)).toBe(true);
+    expect(data.bank.reconcile.length).toBeGreaterThanOrEqual(22);
+  });
+
+  it("has realistic exceptions: refund, change orders, overdue invoices, owner draws excluded, a loss-making job", async () => {
+    const book = (await pool.query("select id from public.fin_books where company_id = $1 and sandbox_of is null", [ws.companyId])).rows[0].id;
+    expect(await n("select count(*) from public.fin_refunds where book_id = $1 and status = 'active'", [book])).toBe(1);
+    const co = (await pool.query("select status from public.change_orders where company_id = $1 order by status", [ws.companyId])).rows.map((x) => x.status);
+    expect(co).toEqual(["approved", "approved", "declined", "sent"]);
+    expect(await n("select count(*) from public.fin_invoices where book_id = $1 and status in ('issued', 'partially_paid', 'open', 'overdue', 'sent') and due_date < current_date", [book])).toBeGreaterThan(0);
+    expect(await n("select count(*) from public.fin_bank_matches where book_id = $1 and target_type = 'excluded'", [book])).toBe(8);
+    expect(await n("select count(*) from public.fin_cash_events where book_id = $1", [book])).toBe(data.cashPlan.length);
+    // At least one job cost more than it billed.
+    const loss = await n(`select count(*) from public.fin_jobs j where j.book_id = $1 and
+      (select coalesce(sum(amount), 0) from public.fin_expenses x where x.job_id = j.id) >
+      (select coalesce(sum(total), 0) from public.fin_invoices i where i.job_id = j.id and i.status <> 'void')`, [book]);
+    expect(loss).toBeGreaterThan(0);
+  });
+
+  it("stays isolated: the practising user's real account sees none of it", async () => {
+    const seen = await asUser(pool, user, (q) => q("select count(*) from public.fin_bank_transactions"));
+    expect(Number(seen.rows[0].count)).toBe(0);
+    const est = await asUser(pool, user, (q) => q("select count(*) from public.estimates"));
+    expect(Number(est.rows[0].count)).toBe(0);
+  });
+});
+
