@@ -23,6 +23,7 @@ import { add as addWidget, configure, fitSize, move, newInstance, remove, resize
 import { TEMPLATES, TEMPLATE_KEYS, INTERESTS, availableInterests, buildTemplate, suggestLayout, type InterestKey, type TemplateKey } from "@/lib/dashboard/templates";
 import type { DashboardAccess } from "@/lib/dashboard/access";
 import { phoneHalfWidth } from "@/lib/dashboard/phone";
+import { PreviewSkeleton } from "./preview-card";
 
 export interface BuilderProps {
   mode: DashboardMode;
@@ -49,6 +50,8 @@ export interface BuilderProps {
 
 type Status = { kind: "idle" } | { kind: "saving" } | { kind: "saved" } | { kind: "error"; message: string } | { kind: "conflict" } | { kind: "offline"; message: string };
 
+/** Summary cards that preview records under their number; they load with a matching skeleton. */
+const PREVIEW_TYPES = new Set(["fin_ar", "fin_cash_received", "sales_drafts", "sales_win_rate"]);
 const SPAN_LG = { 1: "lg:col-span-1", 2: "lg:col-span-2", 3: "lg:col-span-3", 4: "lg:col-span-4" } as const;
 const SPAN_MD = { 1: "md:col-span-1", 2: "md:col-span-2", 3: "md:col-span-2", 4: "md:col-span-2" } as const;
 const PENDING_KEY = (m: DashboardMode) => `b2b.dashboard.pending.${m}`;
@@ -343,7 +346,7 @@ export function DashboardBuilder(p: BuilderProps) {
                   </div>
                 )}
                 <div className={cn("h-full", editing && "pointer-events-none select-none pt-12 opacity-90")} inert={editing || undefined}>
-                  {node ?? <div className="h-full animate-pulse rounded-xl border border-line bg-surface p-4"><p className="text-sm font-semibold text-ink-soft">{def?.title ?? title}</p><p className="mt-2 text-xs text-muted">{p.ready ? "Loading…" : "Shows once saved."}</p></div>}
+                  {node ?? (p.ready && PREVIEW_TYPES.has(w.type) ? <PreviewSkeleton title={def?.title ?? title} /> : <div className="h-full animate-pulse rounded-xl border border-line bg-surface p-4"><p className="text-sm font-semibold text-ink-soft">{def?.title ?? title}</p><p className="mt-2 text-xs text-muted">{p.ready ? "Loading…" : "Shows once saved."}</p></div>)}
                 </div>
               </li>
             );

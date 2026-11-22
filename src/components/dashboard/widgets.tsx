@@ -24,6 +24,8 @@ import type { WidgetInstance } from "@/lib/dashboard/schema";
 import type { DashboardData, DashboardViewer } from "@/lib/dashboard/server";
 import { ChartView } from "./charts";
 import { IndustryBriefingWidget } from "@/components/news/industry-briefing-widget";
+import { PreviewCard, WinLossBar, type PreviewRow } from "./preview-card";
+import { arPreview, arStatus, decidedPreview, draftPreview, isWon, paymentStatus, previewCount } from "@/lib/dashboard/previews";
 
 const fmtDay = (d: string) => { const [y, m, dd] = d.slice(0, 10).split("-").map(Number); return new Date(Date.UTC(y, m - 1, dd)).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }); };
 const show = (f: Figure) => (f.money ? formatCurrency(f.value) : f.value);
@@ -94,7 +96,21 @@ export async function WidgetBody({ inst, data, viewer }: { inst: WidgetInstance;
 
   switch (inst.type) {
     case "fin_revenue": return homeFigure((h) => h.kpis.invoiced, "Revenue (invoiced)");
-    case "fin_cash_received": return homeFigure((h) => h.kpis.collected, KPI_LABELS.collected);
+    case "fin_cash_received": {
+      // Headline: the Financials "Collected" figure, unchanged. Preview: only verified payments (never pending or
+      // recorded-but-unchecked ones), newest verification first.
+      const [home, pays] = await Promise.all([data.finHome(), data.verifiedPayments()]);
+      const f = home?.kpis.collected;
+      if (!f) return <Unavailable title={KPI_LABELS.collected} why="Financials isn't set up for this account yet." />;
+      const shown = (pays ?? []).slice(0, previewCount(tall));
+      const rows: PreviewRow[] = shown.map((p) => ({
+        key: p.id, href: p.href ?? "/financials/records?view=payments", label: p.customer ?? p.job ?? `Payment ${p.number}`,
+        detail: `Verified ${fmtDay(p.verifiedAt)} · ${p.number}${p.source === "stripe" ? " · online" : ""}`, value: formatCurrency(p.amount), status: paymentStatus(p),
+      }));
+      return <PreviewCard title={KPI_LABELS.collected} value={show(f)} sub={f.sub ?? f.note} href={f.href} action="View records" tone={f.tone} empty={f.empty} hint={f.note}
+        status={sandbox ? <Sandbox on /> : <BasisBadge basis={f.basis} />} rows={rows} testId={tid}
+        emptyText={pays === null ? "Verified payments will show here." : "No verified payments yet. Payments show here once they're verified."} />;
+    }
     case "fin_upcoming_payments": return homeFigure((h) => h.cards.bills_due, "Upcoming payments");
     case "fin_profitability": return homeFigure((h) => h.kpis.projected_margin, "Company profitability");
     case "fin_uncategorized": return homeFigure((h) => h.cards.uncoded_costs, "Uncategorized expenses");
@@ -156,8 +172,15 @@ export async function WidgetBody({ inst, data, viewer }: { inst: WidgetInstance;
       const href = `/financials/receivables?bucket=${bucket}`;
       const label = bucket === "open" ? "Outstanding receivables" : bucket === "overdue" ? "Overdue receivables" : bucket === "due_soon" ? "Due in 14 days" : "Receivables";
       if (s.view !== "table") {
-        return <MetricCard className="h-full" title={label} value={formatCurrency(sum)} empty={!list.length} tone={bucket === "overdue" && list.length ? "danger" : "default"}
-          sub={`${list.length} invoice${list.length === 1 ? "" : "s"} · ${formatCurrency(tot.overdue)} overdue overall`} href={href} action="View invoices" status={<Sandbox on={sandbox} />} testId={tid} />;
+        const n = previewCount(tall);
+        const rows: PreviewRow[] = arPreview(list, n).map((r) => ({
+          key: r.invoice_id, href: `/financials/jobs/${r.estimate_id}#fin-invoices`, label: r.customer_name || r.job_name || "Customer",
+          detail: `${r.number ? `${r.number} · ` : ""}${r.days_overdue > 0 ? `${r.days_overdue} day${r.days_overdue === 1 ? "" : "s"} overdue` : `Due ${fmtDay(r.due_date)}`}`,
+          value: formatCurrency(r.balance), status: arStatus(r, t, soon),
+        }));
+        return <PreviewCard title={label} value={formatCurrency(sum)} empty={!list.length} tone={bucket === "overdue" && list.length ? "danger" : "default"}
+          sub={`${list.length} invoice${list.length === 1 ? "" : "s"} · ${formatCurrency(tot.overdue)} overdue overall`} href={href} action="View invoices" status={<Sandbox on={sandbox} />}
+          rows={rows} more={Math.max(0, list.length - rows.length)} emptyText="No unpaid invoices in this view." testId={tid} />;
       }
       return (
         <Frame title={label} href={href} action="View invoices" badge={<Sandbox on={sandbox} />} testId={tid} foot={`${list.length} invoice${list.length === 1 ? "" : "s"} · ${formatCurrency(sum)}`}>
@@ -328,21 +351,39 @@ export async function WidgetBody({ inst, data, viewer }: { inst: WidgetInstance;
         </Frame>
       );
     }
-    case "sales_drafts":
+    case "sales_drafts": {
+      const all = (await data.bids()) ?? [];
+      const bids = all.filter((b) => (FOCUS.draft.columns as readonly Column[]).includes(b.column));
+      const value = bids.reduce((t, b) => t + (b.total ?? 0), 0);
+      const rows: PreviewRow[] = draftPreview(bids, previewCount(tall)).map((b) => ({
+        key: b.id, href: `/estimates/${b.id}`, label: b.customer || b.title,
+        detail: `${b.customer ? `${b.title} · ` : ""}Updated ${fmtDay(b.updatedAt)}`, value: b.total !== null ? formatCurrency(b.total.toFixed(2)) : undefined,
+      }));
+      return <PreviewCard title="Draft bids" value={bids.length} empty={!bids.length}
+        sub={!bids.length ? FOCUS.draft.empty : value ? `${formatCurrency(value.toFixed(2))} in latest proposals` : "No proposal totals yet"} href={bidsLink("draft", "all")} action="View all drafts"
+        rows={rows} more={Math.max(0, bids.length - rows.length)} emptyText="No drafts in progress. New bids show here while you build them." testId={tid} />;
+    }
     case "sales_awaiting":
     case "sales_won": {
-      const focus = inst.type === "sales_drafts" ? "draft" : inst.type === "sales_awaiting" ? "awaiting" : "won";
+      const focus = inst.type === "sales_awaiting" ? "awaiting" : "won";
       const range = inst.type === "sales_won" ? String(s.range) : "all";
       const bids = ((await data.bids()) ?? []).filter((b) => (FOCUS[focus].columns as readonly Column[]).includes(b.column) && inRange(b.createdAt, range));
       const value = bids.reduce((t, b) => t + (b.total ?? 0), 0);
-      return <MetricCard className="h-full" title={inst.type === "sales_drafts" ? "Draft bids" : inst.type === "sales_awaiting" ? "Awaiting signature" : "Approved proposals"} value={bids.length} empty={!bids.length}
+      return <MetricCard className="h-full" title={inst.type === "sales_awaiting" ? "Awaiting signature" : "Approved proposals"} value={bids.length} empty={!bids.length}
         sub={!bids.length ? FOCUS[focus].empty : value ? `${formatCurrency(value.toFixed(2))} in latest proposals` : "No proposal totals yet"} href={bidsLink(focus, range)} action="View bids" testId={tid} />;
     }
     case "sales_win_rate": {
       const bids = ((await data.bids()) ?? []).filter((b) => inRange(b.createdAt, String(s.range)));
       const won = bids.filter((b) => (FOCUS.won.columns as readonly Column[]).includes(b.column)).length, lost = bids.filter((b) => b.column === "lost").length;
       const rate = won + lost ? Math.round((won / (won + lost)) * 100) : null;
-      return <MetricCard className="h-full" title="Win rate" value={rate === null ? "None yet" : `${rate}%`} empty={rate === null} sub={`${won} won · ${lost} lost`} href={bidsLink("decided", String(s.range))} action="View decided bids" hint="Won out of bids that were won or lost" testId={tid} />;
+      // Preview rows come from the same decided bids the rate counts (same range), newest decision first.
+      const rows: PreviewRow[] = decidedPreview(bids, previewCount(tall)).map((b) => {
+        const w = isWon(b.column);
+        return { key: b.id, href: `/estimates/${b.id}`, label: b.customer || b.title, detail: `${b.customer ? `${b.title} · ` : ""}${fmtDay(b.stageAt ?? b.updatedAt)}`,
+          value: b.total !== null ? formatCurrency(b.total.toFixed(2)) : undefined, status: w ? { text: "Won", tone: "ok" as const } : { text: "Lost", tone: "danger" as const } };
+      });
+      return <PreviewCard title="Win rate" value={rate === null ? "None yet" : `${rate}%`} empty={rate === null} sub={`${won} won · ${lost} lost`} href={bidsLink("decided", String(s.range))} action="View decided bids" hint="Won out of bids that were won or lost"
+        extra={rate === null ? undefined : <WinLossBar won={won} lost={lost} />} rows={rows} emptyText="No bids won or lost yet in this period." testId={tid} />;
     }
     case "sales_avg_value": {
       const bids = ((await data.bids()) ?? []).filter((b) => b.total !== null && inRange(b.createdAt, String(s.range)) && (s.which !== "won" || (FOCUS.won.columns as readonly Column[]).includes(b.column)));

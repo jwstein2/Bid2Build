@@ -21,7 +21,7 @@ export const GROUP_LABELS: Record<Group, string> = {
 };
 
 /** Data a widget reads. One load per source per page view, however many widgets use it. */
-export type Source = "bids" | "signing" | "company_summary" | "customers" | "schedules" | "tasks" | "review" | "fin_home" | "fin_acct" | "fin_jobs" | "ar" | "pl" | "time";
+export type Source = "bids" | "signing" | "company_summary" | "customers" | "schedules" | "tasks" | "review" | "fin_home" | "fin_acct" | "fin_jobs" | "ar" | "payments" | "pl" | "time";
 
 export type Option = { value: string; label: string };
 export type SettingSpec =
@@ -81,7 +81,7 @@ export const QUICK_ACTION_KEYS = Object.keys(QUICK_ACTIONS) as QuickActionKey[];
 const DEFS: WidgetDef[] = [
   // ---- Business overview --------------------------------------------------------------------------------------
   { type: "fin_revenue", title: "Revenue (invoiced)", description: "Total of issued invoices.", group: "overview", requires: FIN_PROJECT, sources: ["fin_home"], size: { w: 1, h: 1, maxW: 2 }, settings: [] },
-  { type: "fin_cash_received", title: "Cash received", description: "Payments recorded, net of refunds.", group: "overview", requires: FIN_PROJECT, sources: ["fin_home"], size: { w: 1, h: 1, maxW: 2 }, settings: [] },
+  { type: "fin_cash_received", title: "Cash received", description: "Payments recorded, net of refunds.", group: "overview", requires: FIN_PROJECT, sources: ["fin_home", "payments"], size: { w: 1, h: 1, maxW: 2 }, settings: [] },
   { type: "fin_bank_balance", title: "Bank balance", description: "Ending balance from your latest imported bank statements (never estimated).", group: "overview", requires: FIN_COMPANY, sources: ["fin_acct"], size: { w: 1, h: 1, maxW: 2 }, settings: [] },
   { type: "fin_projected_balance", title: "Projected bank balance", description: "Bank balance plus receivables due in 30 days, minus approved bills due in 30 days.", group: "overview", requires: FIN_COMPANY, sources: ["fin_acct"], size: { w: 1, h: 1, maxW: 2 }, settings: [] },
   { type: "fin_ar", title: "Outstanding receivables", description: "Unpaid invoices, with aging. Card or table.", group: "overview", requires: FIN_PROJECT, sources: ["ar"], size: { w: 1, h: 1, maxW: 4, maxH: 2 },

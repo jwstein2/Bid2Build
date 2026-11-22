@@ -16,6 +16,7 @@ import { isStage, stageColumn, type Column } from "@/lib/pipeline/board";
 import { listSchedules, type ScheduleListRow } from "@/lib/schedule/server";
 import { loadReviewQueue, type QueueItem } from "@/lib/operations/queue-server";
 import type { ArRow } from "@/lib/financials/receivables";
+import type { VerifiedPayment } from "./previews";
 import type { ReportBasis } from "@/lib/financials/reports";
 import { loadEffectiveAccess } from "@/lib/access/server";
 import { accessFromFacts, allowed, withEffectiveAccess, type DashboardAccess } from "./access";
@@ -193,6 +194,40 @@ export function dataFor(db: Db, viewer: DashboardViewer) {
       if (error) return null;
       const d10 = (v: unknown) => String(v ?? "").slice(0, 10);
       return ((data ?? []) as ArRow[]).map((r) => ({ ...r, issue_date: d10(r.issue_date), due_date: d10(r.due_date), days_overdue: Number(r.days_overdue) }));
+    }),
+    /**
+     * The few most recently verified payments, for the Collected card's preview. Bounded (4 rows), verified and
+     * active only: recorded-by-hand payments that nobody has checked against the bank never show as collected.
+     */
+    verifiedPayments: () => once("verified_payments", async (): Promise<VerifiedPayment[] | null> => {
+      if (!ctx) return null;
+      const { data, error } = await db.from("fin_payments").select("id, number, customer_id, job_id, amount, received_on, verified_at, method, source")
+        .eq("book_id", ctx.bookId).eq("status", "active").eq("verified", true).not("verified_at", "is", null)
+        .order("verified_at", { ascending: false }).order("received_on", { ascending: false }).limit(4);
+      if (error) { if (!isMissing(error)) console.error(JSON.stringify({ level: "error", scope: "dashboard.verified_payments", code: error.code })); return null; }
+      const P = (data ?? []) as Row[];
+      if (!P.length) return [];
+      const ids = P.map((p) => String(p.id));
+      const jobIds = [...new Set(P.map((p) => p.job_id).filter(Boolean).map(String))];
+      const [bal, jobs] = await Promise.all([
+        db.from("fin_payment_balances_v").select("payment_id, refunded").in("payment_id", ids),
+        jobIds.length ? db.from("fin_jobs").select("id, estimate_id, name, customer_id").in("id", jobIds) : Promise.resolve({ data: [] as Row[] }),
+      ]);
+      const jobOf = new Map(((jobs.data ?? []) as Row[]).map((j) => [String(j.id), j]));
+      const custIds = [...new Set(P.map((p) => p.customer_id ?? jobOf.get(String(p.job_id))?.customer_id).filter(Boolean).map(String))];
+      const { data: cust } = custIds.length ? await db.from("customers").select("id, name").in("id", custIds) : { data: [] as Row[] };
+      const nameOf = new Map(((cust ?? []) as Row[]).map((c) => [String(c.id), String(c.name ?? "")]));
+      const refundOf = new Map(((bal.data ?? []) as Row[]).map((b) => [String(b.payment_id), String(b.refunded ?? "0")]));
+      return P.map((p) => {
+        const job = p.job_id ? jobOf.get(String(p.job_id)) : undefined;
+        const cid = (p.customer_id ?? job?.customer_id) as string | null | undefined;
+        return {
+          id: String(p.id), number: String(p.number), customer: (cid && nameOf.get(String(cid))) || null, job: job ? String(job.name) : null,
+          href: job ? `/financials/jobs/${job.estimate_id}#fin-payments` : null,
+          amount: String(p.amount), refunded: refundOf.get(String(p.id)) ?? "0", receivedOn: String(p.received_on).slice(0, 10),
+          verifiedAt: String(p.verified_at), method: String(p.method), source: String(p.source ?? "manual"),
+        };
+      });
     }),
     pl: (period: ChartPeriod, basis: ReportBasis) => once(`pl:${period}:${basis}`, async (): Promise<(PlResult & { range: { from: string; to: string } }) | null> => {
       if (!ctx) return null;
