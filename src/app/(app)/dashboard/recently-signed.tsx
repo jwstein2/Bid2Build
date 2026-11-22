@@ -1,5 +1,7 @@
+"use client";
 import Link from "next/link";
-import { CheckCircle2, Eye, FileJson } from "lucide-react";
+import { CheckCircle2, ChevronDown, Eye, FileJson } from "lucide-react";
+import { useSyncExternalStore } from "react";
 import { Card } from "@/components/ui/misc";
 import { formatCurrency } from "@/lib/estimate/money";
 import { LocalTime } from "@/components/esign/local-time";
@@ -10,20 +12,56 @@ export interface SignedBid {
   pdfStatus: "pending" | "ready" | "failed";
 }
 
+const OPEN_EVENT = "b2b:recently-signed-toggle";
+/** In-memory fallback so the toggle still works when storage is blocked. */
+const memory = new Map<string, boolean>();
+function subscribeOpen(cb: () => void) {
+  window.addEventListener(OPEN_EVENT, cb);
+  window.addEventListener("storage", cb);
+  return () => { window.removeEventListener(OPEN_EVENT, cb); window.removeEventListener("storage", cb); };
+}
+function readOpen(key: string): boolean {
+  try { const v = localStorage.getItem(key); if (v !== null) return v !== "0"; } catch { /* storage blocked */ }
+  return memory.get(key) ?? true;
+}
+
 /**
  * Recently Signed: accepted proposals at the top of the dashboard, newest first, with the amount of
  * the exact signed version. A signature is an acceptance, not a payment, so nothing here says "paid".
+ * The header toggles the list open or closed; it starts open and the choice is remembered per user
+ * in this browser.
  */
-export function RecentlySigned({ bids, days, max = 5 }: { bids: SignedBid[]; days: number; max?: number }) {
+export function RecentlySigned({ bids, days, max = 5, userId }: { bids: SignedBid[]; days: number; max?: number; userId?: string }) {
   const shown = bids.slice(0, max);
+  const key = `b2b.recentlySigned.open${userId ? `.${userId}` : ""}`;
+  const open = useSyncExternalStore(subscribeOpen, () => readOpen(key), () => true);
+  const toggle = () => {
+    try { localStorage.setItem(key, open ? "0" : "1"); } catch { /* storage blocked */ }
+    memory.set(key, !open);
+    window.dispatchEvent(new Event(OPEN_EVENT));
+  };
   return (
     <Card className="border-ok/40" aria-labelledby="recently-signed-h" data-testid="recently-signed">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-ok-tint/60 px-4 py-3">
-        <h2 id="recently-signed-h" className="flex items-center gap-2 font-display text-lg font-extrabold text-navy">
-          <CheckCircle2 className="h-5 w-5 text-ok" aria-hidden /> Recently Signed
-        </h2>
-        <p className="text-sm text-ink-soft">{bids.length} signed in the last {days} days</p>
-      </div>
+      <h2 className={`bg-ok-tint/60 ${open ? "border-b border-line" : ""}`}>
+        <button
+          type="button"
+          onClick={toggle}
+          aria-expanded={open}
+          aria-controls="recently-signed-list"
+          data-testid="recently-signed-toggle"
+          className="flex w-full flex-wrap items-center justify-between gap-2 px-4 py-3 text-left hover:bg-ok-tint"
+        >
+          <span id="recently-signed-h" className="flex items-center gap-2 font-display text-lg font-extrabold text-navy">
+            <CheckCircle2 className="h-5 w-5 text-ok" aria-hidden /> Recently Signed
+          </span>
+          <span className="flex items-center gap-2 text-sm font-normal text-ink-soft">
+            {bids.length} signed in the last {days} days
+            <ChevronDown className={`h-5 w-5 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
+            <span className="sr-only">{open ? "Hide list" : "Show list"}</span>
+          </span>
+        </button>
+      </h2>
+      <div id="recently-signed-list" hidden={!open}>
       <ul className="divide-y divide-line">
         {shown.map((b) => (
           <li key={b.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
@@ -46,6 +84,7 @@ export function RecentlySigned({ bids, days, max = 5 }: { bids: SignedBid[]; day
         ))}
       </ul>
       {bids.length > shown.length && <p className="border-t border-line px-4 py-2 text-sm text-muted">Showing the {shown.length} most recent. Filter Your bids by &quot;Signed&quot; to see all.</p>}
+      </div>
     </Card>
   );
 }
