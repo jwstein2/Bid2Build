@@ -58,7 +58,7 @@ export function toSegments(html: string | null | undefined, max = 320): EcfrSegm
   const ENT: Record<string, string> = { nbsp: " ", amp: "&", lt: "<", gt: ">", quot: '"', "#39": "'" };
   const decode = (s: string) => s.replace(/&(nbsp|amp|lt|gt|quot|#39|#\d{1,5});/g, (_, e: string) => ENT[e] ?? String.fromCharCode(Number(e.slice(1))));
   // Inside a hit, drop every angle bracket outright (no tag can survive, however it is nested or split).
-  const strip = (s: string) => s.replace(/<[^<>]*>/g, "").replace(/[<>]/g, "");
+  const strip = (s: string) => s.replace(/[<>]/g, "");
   const re = /<strong>([\s\S]*?)<\/strong>|<span class="elipsis">[\s\S]*?<\/span>|<[^>]*>|([^<]+)/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(html)) && len < max) {

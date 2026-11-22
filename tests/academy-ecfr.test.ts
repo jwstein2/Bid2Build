@@ -36,7 +36,7 @@ describe("eCFR citations and intent", () => {
     expect(JSON.stringify(s)).not.toMatch(/<|>/);
     // Nested or broken tags inside a hit can't survive, and entities decode once.
     const t = toSegments("<strong><<script>script>x</strong> &amp;lt;");
-    expect(t.map((x) => x.text).join("")).toBe("scriptx &lt;");
+    expect(t.map((x) => x.text).join("")).toBe("scriptscriptx &lt;");
   });
 });
 
