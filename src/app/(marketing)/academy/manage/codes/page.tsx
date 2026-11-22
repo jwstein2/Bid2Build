@@ -54,7 +54,7 @@ export default async function ManageCodes({ searchParams }: PageProps<"/academy/
       <section className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface p-4">
         <div>
           <h2 className="font-bold">Codes area is {access.enabled ? "ON for everyone" : "staff-only"}</h2>
-          <p className="text-sm text-ink-soft">{access.enabled ? "Learners see the Codes tab and code search." : "Only Academy staff can see the Codes tab while you review it."} <Link href="/academy/codes" className="text-brand hover:underline">Open code search</Link></p>
+          <p className="text-sm text-ink-soft">{access.enabled ? "Learners see the Codes tab and code search." : "Only Academy staff can see the Codes tab while you review it."} <Link href="/academy/codes" className="text-brand hover:underline">Open code search</Link> · <Link href="/academy/manage/codes/coverage" className="text-brand hover:underline" data-testid="kb-coverage-link">50-state coverage audit</Link></p>
         </div>
         {admin && (
           <form action={setKbEnabled}>

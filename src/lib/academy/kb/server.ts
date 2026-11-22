@@ -7,7 +7,7 @@ import { parseUsAddress } from "@/lib/geo/address";
 import { tradeSlugFrom } from "@/lib/news/prefs";
 import { logError } from "@/lib/http/api";
 import { academyDb, isMissing, loadMe } from "../server";
-import { isAnswered } from "./answer";
+import { categoryFor, isAnswered, type CodeCategory } from "./answer";
 import { LOCATION_COOKIE, locationFrom, parseLocationCookie } from "./location";
 import type { KbLocalInfo, KbLocation, KbResult } from "./types";
 
@@ -82,7 +82,15 @@ export async function searchKb(input: SearchInput): Promise<{ results: KbResult[
   return { results, suggestions: ((sugg ?? []) as { term: string; related: string[]; note: string | null }[]), ok: true };
 }
 
-export interface Coverage { state: string | null; note?: string | null; directory?: string | null; families: { family: string; name: string; edition: string; authority: string; effective_date: string | null; status: string; local_confirmation_required: boolean; kind: string; expiration_date: string | null }[] }
+export interface CoverageFamily {
+  family: string; name: string; edition: string; authority: string; effective_date: string | null; status: string; local_confirmation_required: boolean; kind: string; expiration_date: string | null;
+  /** Official page for this adoption (or the publication). */
+  official_url: string | null;
+  /** Verified sections with official text Built2Bid can search for this publication (0 = official reference only). */
+  searchable_sections: number;
+  category: CodeCategory;
+}
+export interface Coverage { state: string | null; note?: string | null; directory?: string | null; families: CoverageFamily[] }
 
 /** What is on file for a state (and federal): adopted code families, editions and authorities. */
 export async function coverageFor(state: string | null): Promise<Coverage> {
@@ -91,14 +99,22 @@ export async function coverageFor(state: string | null): Promise<Coverage> {
   const ids = ["US", ...(state ? [state] : [])];
   const juris = state ? db.from("academy_kb_jurisdictions").select("notes, building_dept_url").eq("id", state).maybeSingle() : null;
   const { data, error } = await db.from("academy_kb_adoptions")
-    .select("kind, authority_citation, effective_date, expiration_date, status, local_confirmation_required, jurisdiction_id, academy_kb_sources!academy_kb_adoptions_source_id_fkey(family_slug, edition, short_title, academy_kb_families(name))")
+    .select("kind, authority_citation, official_url, effective_date, expiration_date, status, local_confirmation_required, jurisdiction_id, source_id, academy_kb_sources!academy_kb_adoptions_source_id_fkey(family_slug, edition, short_title, title, official_url, academy_kb_families(name))")
     .in("jurisdiction_id", ids).in("status", ["verified", "pending_review"]).limit(200);
   if (error) { if (!isMissing(error)) logError("academy.kb.coverage", error); return { state, families: [] }; }
-  type Row = { kind: string; authority_citation: string; effective_date: string | null; expiration_date: string | null; status: string; local_confirmation_required: boolean; jurisdiction_id: string;
-    academy_kb_sources: { family_slug: string; edition: string; short_title: string; academy_kb_families: { name: string } | null } | null };
-  const families = ((data ?? []) as unknown as Row[])
-    .filter((r) => r.academy_kb_sources && (r.kind !== "replaces" || r.jurisdiction_id === state) && (r.jurisdiction_id !== "US" || r.kind === "administers"))
+  type Row = { kind: string; authority_citation: string; official_url: string | null; effective_date: string | null; expiration_date: string | null; status: string; local_confirmation_required: boolean; jurisdiction_id: string; source_id: string;
+    academy_kb_sources: { family_slug: string; edition: string; short_title: string; title: string; official_url: string | null; academy_kb_families: { name: string } | null } | null };
+  const rows = ((data ?? []) as unknown as Row[]).filter((r) => r.academy_kb_sources && (r.kind !== "replaces" || r.jurisdiction_id === state) && (r.jurisdiction_id !== "US" || r.kind === "administers"));
+  const sourceIds = [...new Set(rows.map((r) => r.source_id))];
+  const counts = new Map<string, number>();
+  if (sourceIds.length) {
+    const { data: secs } = await db.from("academy_kb_sections").select("source_id").in("source_id", sourceIds).eq("status", "verified").neq("body_kind", "title_only").limit(5000);
+    for (const x of (secs ?? []) as { source_id: string }[]) counts.set(x.source_id, (counts.get(x.source_id) ?? 0) + 1);
+  }
+  const families = rows
     .map((r) => ({
+      official_url: r.official_url ?? r.academy_kb_sources!.official_url, searchable_sections: counts.get(r.source_id) ?? 0,
+      category: r.kind === "replaces" ? ("safety" as const) : categoryFor(r.academy_kb_sources!.family_slug, r.academy_kb_sources!.title),
       family: r.academy_kb_sources!.family_slug, name: r.kind === "replaces" ? `OSHA-approved State Plan` : r.academy_kb_sources!.family_slug === "state_code" ? r.academy_kb_sources!.short_title : r.academy_kb_sources!.academy_kb_families?.name ?? r.academy_kb_sources!.short_title,
       edition: r.academy_kb_sources!.edition, authority: r.authority_citation, effective_date: r.effective_date, expiration_date: r.expiration_date, status: r.status,
       local_confirmation_required: r.local_confirmation_required, kind: r.kind,

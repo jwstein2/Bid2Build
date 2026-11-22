@@ -1,7 +1,8 @@
 /**
  * Netlify Scheduled Function: Academy code-library source monitoring, daily at 09:23 UTC.
  * Each run fingerprints up to 8 official sources that were not checked in the last 28 days (so every source is checked
- * about monthly), and on Jan 2 and Jul 2 queues the six-month review. Changes go to Manage Academy → Codes for an
+ * about monthly), on the 1st of each month runs the 50-state coverage audit, and on Jan 2 and Jul 2 queues the
+ * six-month review. Changes go to Manage Academy → Codes for an
  * admin to classify; nothing is edited automatically and no AI is used. Turn off with ACADEMY_KB_MONITOR=false.
  */
 export default async function academyKbCron(): Promise<Response> {
@@ -10,8 +11,10 @@ export default async function academyKbCron(): Promise<Response> {
   if (!secret || !base || process.env.ACADEMY_KB_MONITOR === "false") return new Response("off", { status: 200 });
   const now = new Date();
   const semiannual = now.getUTCDate() === 2 && (now.getUTCMonth() === 0 || now.getUTCMonth() === 6);
+  const monthly = now.getUTCDate() === 1;
   const results = await Promise.all([
     runCron("academy_kb_check", "/api/cron/academy-kb?phase=check", secret, base),
+    ...(monthly ? [runCron("academy_kb_coverage", "/api/cron/academy-kb?phase=coverage", secret, base)] : []),
     ...(semiannual ? [runCron("academy_kb_semiannual", "/api/cron/academy-kb?phase=semiannual", secret, base)] : []),
   ]);
   const failed = results.some((r) => !r.ok);
