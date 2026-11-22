@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { CalendarDays } from "lucide-react";
+import { calendarHref } from "@/lib/projects/calendar-link";
 import { notFound } from "next/navigation";
 import { getAccountStatus } from "@/lib/account/server";
 import { createClient } from "@/lib/supabase/server";
@@ -67,7 +70,10 @@ export default async function SchedulePage({ params, searchParams }: { params: P
   } : null;
   return (
     <div className="mx-auto max-w-7xl" data-guide-page="project.detail" data-guide-trade={data.snapshot.trades.join(" ")}>
-      <Breadcrumbs className="mb-3" items={[{ label: "Projects", href: "/projects" }, { label: data.schedule.name }]} />
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <Breadcrumbs items={[{ label: "Projects", href: "/projects" }, { label: data.schedule.name }]} />
+        <Link href={calendarHref({ project: id })} className="inline-flex min-h-9 items-center gap-1 text-sm font-semibold text-accent-ink hover:underline" data-testid="project-open-calendar"><CalendarDays className="h-4 w-4" aria-hidden /> Open in calendar</Link>
+      </div>
       {summary && <ProjectSummary {...summary} />}
       {crew && <ProjectCrew scheduleId={id} rows={crew} canEdit={data.permissions.edit} today={todayIn(data.schedule.calendar.timezone)} projectStatus={data.schedule.status} />}
       {labor && (labor.estimatedHours !== null || labor.actualHours > 0 || (labor.estimatedCost ?? 0) > 0) && <ProjectLabor labor={labor} />}

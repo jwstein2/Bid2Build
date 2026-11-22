@@ -5,6 +5,7 @@ import { CalendarRange } from "lucide-react";
 import { getBrowserClient } from "@/lib/supabase/client";
 import { isPmEnabled } from "@/lib/env";
 import { buttonClass } from "@/components/ui/button";
+import { calendarHref } from "@/lib/projects/calendar-link";
 
 /**
  * Schedule Now in the bid header: shown only for an accepted bid (Won, a job stage, or signed). If the
@@ -22,7 +23,7 @@ export function ScheduleNowButton({ estimateId }: { estimateId: string }) {
       sb.from("signatures").select("id").eq("estimate_id", estimateId).limit(1),
     ]).then(([e, s, sig]) => {
       if (!live) return;
-      if (s.data?.id) return setState({ href: `/projects/${s.data.id}`, label: "Open schedule" });
+      if (s.data?.id) return setState({ href: calendarHref({ project: s.data.id }), label: "Open schedule" });
       const accepted = ["won", "scheduled", "in_progress", "completed"].includes((e.data as { pipeline_stage?: string } | null)?.pipeline_stage ?? "") || Boolean(sig.data?.length);
       if (accepted && !s.error) setState({ href: `/projects/new?estimate=${estimateId}`, label: "Schedule Now" });
     });

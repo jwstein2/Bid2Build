@@ -80,7 +80,7 @@ export function evaluateAlerts(a: AlertInputs): CashAlert[] {
       out.push({ kind: "milestone_delayed", key: `milestone_delayed:${m.milestoneId}`, fingerprint: m.payOn, severity: "warning",
         title: `${m.jobName}: ${usd(m.amount)} payment now expected ${d} days later`,
         body: `"${m.description}" moved from ${shortDate(prev)} to ${shortDate(m.payOn)}. ${m.basis}.`,
-        details: { milestoneId: m.milestoneId, jobId: m.jobId, from: prev, to: m.payOn, days: d }, actions: [{ label: "Open the schedule", href: `/financials/jobs/${m.jobId}` }] });
+        details: { milestoneId: m.milestoneId, jobId: m.jobId, from: prev, to: m.payOn, days: d }, actions: [{ label: "Open the payment schedule", href: `/financials/jobs/${m.jobId}` }] });
     }
   }
 

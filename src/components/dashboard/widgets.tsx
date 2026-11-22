@@ -24,6 +24,7 @@ import type { WidgetInstance } from "@/lib/dashboard/schema";
 import type { DashboardData, DashboardViewer } from "@/lib/dashboard/server";
 import { ChartView } from "./charts";
 import { IndustryBriefingWidget } from "@/components/news/industry-briefing-widget";
+import { calendarHref } from "@/lib/projects/calendar-link";
 
 const fmtDay = (d: string) => { const [y, m, dd] = d.slice(0, 10).split("-").map(Number); return new Date(Date.UTC(y, m - 1, dd)).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }); };
 const show = (f: Figure) => (f.money ? formatCurrency(f.value) : f.value);
@@ -282,7 +283,7 @@ export async function WidgetBody({ inst, data, viewer }: { inst: WidgetInstance;
       if (!tasks) return <Unavailable title="Schedule preview" why="Projects turn on after the scheduling setup." />;
       const days = Array.from({ length: 14 }, (_, i) => plusDays(i));
       return (
-        <Frame title="Schedule preview · next 14 days" href="/projects" action="Open schedule" testId={tid}>
+        <Frame title="Schedule preview · next 14 days" href={calendarHref()} action="Open schedule" testId={tid}>
           <ol className="grid min-h-0 flex-1 grid-cols-2 gap-1 overflow-auto sm:grid-cols-7">
             {days.map((d) => {
               const on = tasks.filter((x) => x.start <= d && x.end >= d);
@@ -292,8 +293,8 @@ export async function WidgetBody({ inst, data, viewer }: { inst: WidgetInstance;
                   <p className="text-[11px] font-semibold text-muted">{wd} {fmtDay(d)}</p>
                   {on.length === 0 ? <p className="text-xs text-muted">—</p> : (
                     <ul className="space-y-0.5">
-                      {on.slice(0, 3).map((x) => <li key={x.id}><Link href={`/projects/${x.scheduleId}`} prefetch={false} title={`${x.project}: ${x.name}`} className="block truncate rounded bg-accent/10 px-1 text-[11px] font-semibold hover:underline">{x.name}</Link></li>)}
-                      {on.length > 3 && <li className="text-[11px] text-muted">+{on.length - 3} more</li>}
+                      {on.slice(0, 3).map((x) => <li key={x.id}><Link href={calendarHref({ project: x.scheduleId, task: x.id, date: d })} prefetch={false} title={`${x.project}: ${x.name}`} className="block truncate rounded bg-accent/10 px-1 text-[11px] font-semibold hover:underline">{x.name}</Link></li>)}
+                      {on.length > 3 && <li><Link href={calendarHref({ date: d, mode: "day" })} prefetch={false} className="text-[11px] text-muted hover:underline">+{on.length - 3} more</Link></li>}
                     </ul>
                   )}
                 </li>

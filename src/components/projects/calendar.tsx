@@ -1,5 +1,5 @@
 "use client";
-import { useState, type DragEvent } from "react";
+import { useEffect, useState, type DragEvent } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { addDays, daysBetween, formatDay, formatRange } from "@/lib/schedule/calendar";
@@ -15,14 +15,20 @@ const DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
  * named in text. Clicking opens the quick-detail drawer. Editors can drag a task to another day; the
  * drawer then shows the new dates and what else would move before anything is saved.
  */
-export function CalendarView({ projects, tasks, today, anchor, setAnchor, mode, setMode, labelOf, onOpen, onDropMove }: {
+export function CalendarView({ projects, tasks, today, anchor, setAnchor, mode, setMode, labelOf, onOpen, onDropMove, highlight = null }: {
   projects: WsProject[]; tasks: WsTask[]; today: string; anchor: string; setAnchor: (d: string) => void; mode: CalMode; setMode: (m: CalMode) => void;
   labelOf: (t: WsTask) => string | null; onOpen: (t: WsTask) => void; onDropMove: (t: WsTask, start: string) => void;
+  /** Task a link pointed at ("Open schedule" with a task): outlined and scrolled into view. */
+  highlight?: string | null;
 }) {
   const [dragId, setDragId] = useState<string | null>(null);
   const byId = new Map(projects.map((p) => [p.id, p]));
   const items = leafTasks(tasks).filter((t) => byId.has(t.scheduleId));
   const canEdit = (t: WsTask) => byId.get(t.scheduleId)?.permissions.edit === true;
+  useEffect(() => {
+    if (!highlight) return;
+    document.querySelector(`[data-task-id="${CSS.escape(highlight)}"]`)?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+  }, [highlight, mode, anchor]);
 
   const step = (dir: 1 | -1) => {
     if (mode === "month") setAnchor(monthStart(addDays(monthStart(anchor), dir === 1 ? 32 : -1)));
@@ -44,8 +50,8 @@ export function CalendarView({ projects, tasks, today, anchor, setAnchor, mode, 
     const who = labelOf(t);
     return (
       <button type="button" draggable={canEdit(t)} onDragStart={(e) => { setDragId(t.id); e.dataTransfer.setData("text/plain", t.id); }}
-        onClick={() => onOpen(t)} style={projectStyle(p.id)} data-testid="cal-event" data-guide="projects.cal-event"
-        className={cn("block w-full truncate rounded border-l-4 px-1.5 text-left text-[11px] leading-5 text-ink hover:brightness-95", canEdit(t) && "cursor-grab", t.status === "complete" && "opacity-60 line-through")}
+        onClick={() => onOpen(t)} style={projectStyle(p.id)} data-testid="cal-event" data-guide="projects.cal-event" data-task-id={t.id} data-highlight={t.id === highlight || undefined} aria-current={t.id === highlight ? "true" : undefined}
+        className={cn("block w-full truncate rounded border-l-4 px-1.5 text-left text-[11px] leading-5 text-ink hover:brightness-95", canEdit(t) && "cursor-grab", t.status === "complete" && "opacity-60 line-through", t.id === highlight && "ring-2 ring-accent-ink ring-offset-1")}
         title={`${p.name}: ${t.name} (${formatRange(t.plannedStart, t.plannedEnd)}) · ${statusLabel(t.status)} ${t.percentComplete}%${who ? ` · ${who}` : ""}`}>
         {compact ? <><span className="font-semibold">{p.name}</span> · {t.name}</> : <><span className="font-semibold">{t.name}</span> <span className="text-ink-soft">· {p.name}</span></>}
       </button>
@@ -106,7 +112,7 @@ export function CalendarView({ projects, tasks, today, anchor, setAnchor, mode, 
         </div>
       )}
 
-      {mode === "day" && <DayList day={anchor} items={tasksOn(items, anchor)} byId={byId} labelOf={labelOf} onOpen={onOpen} />}
+      {mode === "day" && <DayList day={anchor} items={tasksOn(items, anchor)} byId={byId} labelOf={labelOf} onOpen={onOpen} highlight={highlight} />}
 
       {mode === "agenda" && (
         <div className="space-y-3" data-testid="agenda">
@@ -116,7 +122,7 @@ export function CalendarView({ projects, tasks, today, anchor, setAnchor, mode, 
             return (
               <section key={d}>
                 <h3 className={cn("text-sm font-bold", d === today ? "text-accent-ink" : "text-navy")}>{formatDay(d, { weekday: "long", month: "short", day: "numeric" })}{d === today && " · Today"}</h3>
-                <DayList day={d} items={starting} byId={byId} labelOf={labelOf} onOpen={onOpen} bare />
+                <DayList day={d} items={starting} byId={byId} labelOf={labelOf} onOpen={onOpen} highlight={highlight} bare />
               </section>
             );
           })}
@@ -127,7 +133,7 @@ export function CalendarView({ projects, tasks, today, anchor, setAnchor, mode, 
   );
 }
 
-function DayList({ day, items, byId, labelOf, onOpen, bare }: { day: string; items: WsTask[]; byId: Map<string, WsProject>; labelOf: (t: WsTask) => string | null; onOpen: (t: WsTask) => void; bare?: boolean }) {
+function DayList({ day, items, byId, labelOf, onOpen, bare, highlight }: { day: string; items: WsTask[]; byId: Map<string, WsProject>; labelOf: (t: WsTask) => string | null; onOpen: (t: WsTask) => void; bare?: boolean; highlight?: string | null }) {
   if (!items.length) return bare ? null : <p className="rounded-xl border border-dashed border-line p-6 text-center text-sm text-muted">Nothing scheduled on {formatDay(day, { weekday: "long", month: "short", day: "numeric" })}.</p>;
   return (
     <ul className={cn("divide-y divide-line rounded-xl border border-line bg-surface", bare && "mt-1")}>
@@ -136,7 +142,7 @@ function DayList({ day, items, byId, labelOf, onOpen, bare }: { day: string; ite
         const who = labelOf(t);
         return (
           <li key={t.id}>
-            <button type="button" onClick={() => onOpen(t)} className="flex w-full items-start gap-3 p-3 text-left hover:bg-paper" data-testid="agenda-item" data-guide="projects.cal-event">
+            <button type="button" onClick={() => onOpen(t)} className={cn("flex w-full items-start gap-3 p-3 text-left hover:bg-paper", t.id === highlight && "bg-accent-tint/40 ring-2 ring-inset ring-accent-ink")} data-testid="agenda-item" data-guide="projects.cal-event" data-task-id={t.id} data-highlight={t.id === highlight || undefined} aria-current={t.id === highlight ? "true" : undefined}>
               <span className="mt-1 h-8 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: projectStyle(p.id).borderColor }} aria-hidden />
               <span className="min-w-0 flex-1">
                 <span className="block font-semibold text-navy">{t.name}</span>
