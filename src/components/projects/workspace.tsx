@@ -1,7 +1,8 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { CalendarDays, ChevronDown, GanttChart, LayoutDashboard, ListTodo, RotateCcw, Users } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, CalendarDays, ChevronDown, GanttChart, LayoutDashboard, ListTodo, RotateCcw, Users, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { menuKeyDown, useDismiss } from "@/components/ui/use-dismiss";
 import { addDays, formatDay, isIsoDate } from "@/lib/schedule/calendar";
@@ -9,6 +10,7 @@ import {
   DEFAULT_FILTERS, assigneeKey, cleanFilters, filterWorkspace, isDefaultFilters, isOverviewFocus, myTasks, type Filters, type OverviewFocus, type ResourceRef, type Workspace, type WsTask,
 } from "@/lib/projects/workspace";
 import { api } from "@/components/schedule/client";
+import { CONTEXT_KEYS, calendarHref, readCalendarContext, type CalendarContext } from "@/lib/projects/calendar-link";
 import { Overview } from "./overview";
 import { CalendarView, type CalMode } from "./calendar";
 import { TimelineView } from "./timeline";
@@ -52,8 +54,23 @@ export function ProjectsWorkspace({ initial, today, myName, extras = {} }: { ini
   const [ws, setWs] = useState(initial);
   const [filters, setFilters] = useState<Filters>(() => cleanFilters(null, initial));
   const view = (VIEWS.some((x) => x.v === params.get("view")) ? params.get("view") : "overview") as View;
-  const [calMode, setCalMode] = useState<CalMode>("month");
-  const [anchor, setAnchor] = useState(today);
+  // "Open schedule" links anywhere in the app land here with optional context (project, date, task,
+  // member, mode; see src/lib/projects/calendar-link.ts). Context narrows the view for this visit only:
+  // it never overwrites the filters the user saved.
+  const ctx = useMemo(() => readCalendarContext(params), [params]);
+  const ctxProject = ctx.project ? ws.projects.find((p) => p.id === ctx.project) ?? null : null;
+  const [calMode, setCalMode] = useState<CalMode>(ctx.mode ?? "month");
+  const [anchor, setAnchor] = useState(() => contextAnchor(ctx, initial, today) ?? today);
+  // A new link while already on this page (e.g. from the notification bell) moves the calendar again.
+  const ctxKey = `${ctx.project}|${ctx.task}|${ctx.date}|${ctx.mode}`;
+  const [appliedKey, setAppliedKey] = useState(ctxKey);
+  if (appliedKey !== ctxKey) {
+    setAppliedKey(ctxKey);
+    const a = contextAnchor(ctx, ws, today);
+    if (a) setAnchor(a);
+    if (ctx.mode) setCalMode(ctx.mode);
+  }
+  const initialMode = useRef(ctx.mode);
   const [open, setOpen] = useState<{ task: WsTask; start?: string; end?: string } | null>(null);
 
   // Restore saved filters (per browser) and pick a phone-friendly calendar mode.
@@ -63,7 +80,7 @@ export function ProjectsWorkspace({ initial, today, myName, extras = {} }: { ini
       // eslint-disable-next-line react-hooks/set-state-in-effect -- local storage is only readable after hydration
       if (raw) setFilters(cleanFilters(JSON.parse(raw), initial));
     } catch { /* storage unavailable */ }
-    if (window.matchMedia?.("(max-width: 640px)").matches) setCalMode("agenda");
+    if (!initialMode.current && window.matchMedia?.("(max-width: 640px)").matches) setCalMode("agenda");
   }, [initial]);
   useEffect(() => { try { localStorage.setItem(STORE, JSON.stringify(filters)); } catch { /* ignore */ } }, [filters]);
 
@@ -94,7 +111,13 @@ export function ProjectsWorkspace({ initial, today, myName, extras = {} }: { ini
   };
   const people = useMemo(() => new Map(ws.people.map((p) => [p.id, p.name])), [ws.people]);
   const nameOf = useCallback((id: string | null) => (id ? people.get(id) ?? "Former member" : "Not assigned"), [people]);
-  const { projects, tasks } = useMemo(() => filterWorkspace(ws, filters, today), [ws, filters, today]);
+  // Filters actually applied: the saved ones, narrowed by link context (a linked project shows whatever its status).
+  const effective = useMemo<Filters>(() => ({
+    ...filters,
+    ...(ctxProject ? { project: ctxProject.id, status: "all" as const } : {}),
+    ...(ctx.member ? { member: ctx.member } : {}),
+  }), [filters, ctxProject, ctx.member]);
+  const { projects, tasks } = useMemo(() => filterWorkspace(ws, effective, today), [ws, effective, today]);
   const resources = useMemo(() => extras.resources ?? [], [extras.resources]);
   const resourceLabel = useMemo(() => new Map(resources.map((r) => [r.key, r.label])), [resources]);
   const labelOf = useCallback((t: WsTask) => {
@@ -103,7 +126,7 @@ export function ProjectsWorkspace({ initial, today, myName, extras = {} }: { ini
     return resourceLabel.get(k) ?? t.assignee ?? null;
   }, [resourceLabel]);
   // Overview needs every status too; computed once per change instead of on every render.
-  const allProjects = useMemo(() => filterWorkspace(ws, { ...filters, status: "all" }, today).projects, [ws, filters, today]);
+  const allProjects = useMemo(() => filterWorkspace(ws, { ...effective, status: "all" }, today).projects, [ws, effective, today]);
   const myWorkTasks = useMemo(() => { const ids = new Set(projects.map((p) => p.id)); return ws.tasks.filter((t) => ids.has(t.scheduleId)); }, [ws.tasks, projects]);
   const trades = [...new Set(ws.projects.flatMap((p) => p.trades))].sort();
   const assignees = useMemo(() => {
@@ -112,7 +135,20 @@ export function ProjectsWorkspace({ initial, today, myName, extras = {} }: { ini
     return [...m.entries()].sort((a, b) => a[1].localeCompare(b[1]));
   }, [ws.tasks, labelOf]);
   const project = open ? ws.projects.find((p) => p.id === open.task.scheduleId) : null;
-  const set = (p: Partial<Filters>) => setFilters((f) => ({ ...f, ...p }));
+  const clearContext = useCallback((keys: readonly string[] = CONTEXT_KEYS) => {
+    const q = new URLSearchParams(params.toString());
+    for (const k of keys) q.delete(k);
+    router.replace(`${pathname}${q.size ? `?${q}` : ""}`, { scroll: false });
+  }, [params, pathname, router]);
+  const set = (p: Partial<Filters>) => {
+    // Changing a filter the link set hands it back to the user: drop that context from the URL.
+    const drop = [...(ctxProject && ("project" in p || "status" in p) ? ["project", "task"] : []), ...(ctx.member && "member" in p ? ["member"] : [])];
+    if (drop.length) {
+      if (ctxProject && !("project" in p)) p = { project: ctxProject.id, ...p };
+      clearContext(drop);
+    }
+    setFilters((f) => ({ ...f, ...p }));
+  };
   const showRep = ws.people.length > 1;
 
   const primary = VIEWS.slice(0, 2), overflow = VIEWS.slice(2);
@@ -133,28 +169,29 @@ export function ProjectsWorkspace({ initial, today, myName, extras = {} }: { ini
 
       {/* Filters */}
       <div className="flex flex-wrap items-end gap-2" role="group" aria-label="Filters" data-testid="filters" data-guide="projects.filters">
-        {showRep && <FilterSelect label="Sold by" value={filters.rep} onChange={(v) => set({ rep: v })} testid="f-rep"
+        {showRep && <FilterSelect label="Sold by" value={effective.rep} onChange={(v) => set({ rep: v })} testid="f-rep"
           options={[["all", "All salespeople"], ["mine", "My sales"], ...ws.people.map((p) => [p.id, p.name] as [string, string])]} />}
-        {showRep && <FilterSelect label="Project manager" value={filters.pm} onChange={(v) => set({ pm: v })} testid="f-pm"
+        {showRep && <FilterSelect label="Project manager" value={effective.pm} onChange={(v) => set({ pm: v })} testid="f-pm"
           options={[["all", "All project managers"], ["mine", "Managed by me"], ["none", "No PM yet"], ...ws.people.map((p) => [p.id, p.name] as [string, string])]} />}
-        <FilterSelect label="Project" value={filters.project} onChange={(v) => set({ project: v })} testid="f-project"
+        <FilterSelect label="Project" value={effective.project} onChange={(v) => set({ project: v })} testid="f-project"
           options={[["all", "All projects"], ...ws.projects.map((p) => [p.id, p.name] as [string, string])]} />
-        <FilterSelect label="Status" value={filters.status} onChange={(v) => set({ status: v as Filters["status"] })} testid="f-status"
+        <FilterSelect label="Status" value={effective.status} onChange={(v) => set({ status: v as Filters["status"] })} testid="f-status"
           options={[["active", "Active jobs"], ["scheduled", "Not started yet"], ["completed", "Completed"], ["all", "All"]]} />
-        {trades.length > 1 && <FilterSelect label="Trade" value={filters.trade} onChange={(v) => set({ trade: v })} testid="f-trade" options={[["all", "All trades"], ...trades.map((t) => [t, t.replace(/-/g, " ")] as [string, string])]} />}
-        {view !== "overview" && assignees.length > 0 && <FilterSelect label="Assigned to" value={filters.member} onChange={(v) => set({ member: v })} testid="f-member"
+        {trades.length > 1 && <FilterSelect label="Trade" value={effective.trade} onChange={(v) => set({ trade: v })} testid="f-trade" options={[["all", "All trades"], ...trades.map((t) => [t, t.replace(/-/g, " ")] as [string, string])]} />}
+        {view !== "overview" && assignees.length > 0 && <FilterSelect label="Assigned to" value={effective.member} onChange={(v) => set({ member: v })} testid="f-member"
           options={[["all", "Everyone"], ...assignees]} />}
-        {!isDefaultFilters(filters) && (
-          <button type="button" onClick={() => setFilters(DEFAULT_FILTERS)} className="inline-flex min-h-10 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-accent-ink hover:underline" data-testid="reset-filters">
+        {(!isDefaultFilters(filters) || ctxProject || ctx.member) && (
+          <button type="button" onClick={() => { setFilters(DEFAULT_FILTERS); if (ctxProject || ctx.member) clearContext(); }} className="inline-flex min-h-10 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-accent-ink hover:underline" data-testid="reset-filters">
             <RotateCcw className="h-4 w-4" aria-hidden /> Reset filters
           </button>
         )}
       </div>
 
       {view === "overview" && <Overview projects={projects} allProjects={allProjects} nameOf={nameOf} today={today} periodStart={addDays(today, -30)}
-        onCalendar={(id) => { set({ project: id }); setView("calendar"); }} focus={focus} onFocus={setFocus} />}
+        onCalendar={(id) => router.push(calendarHref({ project: id }), { scroll: false })} focus={focus} onFocus={setFocus} />}
+      {view === "calendar" && <ContextBanner ctx={ctx} project={ctxProject} memberLabel={ctx.member ? assignees.find(([k]) => k === ctx.member)?.[1] ?? null : null} onClear={() => clearContext()} />}
       {view === "calendar" && <CalendarView projects={projects} tasks={tasks} today={today} anchor={anchor} setAnchor={setAnchor} mode={calMode} setMode={setCalMode}
-        labelOf={labelOf} onOpen={(t) => setOpen({ task: t })}
+        labelOf={labelOf} onOpen={(t) => setOpen({ task: t })} highlight={ctx.task}
         onDropMove={(t, day) => { const len = Math.round((Date.parse(t.plannedEnd) - Date.parse(t.plannedStart)) / 864e5); setOpen({ task: t, start: day, end: addDays(day, len) }); }} />}
       {view === "timeline" && <TimelineView projects={projects} tasks={tasks} deps={ws.deps} today={today} labelOf={labelOf} onOpen={(t) => setOpen({ task: t })} onDragEdit={(t, s, e) => setOpen({ task: t, start: s, end: e })} />}
       {view === "workload" && <WorkloadView projects={projects} tasks={tasks} resources={resources} today={today} onOpen={(t) => setOpen({ task: t })} nameOf={nameOf} teamHref={extras.teamHref} />}
@@ -170,6 +207,39 @@ export function ProjectsWorkspace({ initial, today, myName, extras = {} }: { ini
             onSaved={() => { void refresh(); }} /> : undefined}
           onClose={() => setOpen(null)} onSaved={() => { void refresh(); }} />
       )}
+    </div>
+  );
+}
+
+/** Where a link with context should open the calendar: its date, else the task's start, else the project's. */
+function contextAnchor(ctx: CalendarContext, ws: Pick<Workspace, "projects" | "tasks">, today: string): string | null {
+  if (ctx.date) return ctx.date;
+  const t = ctx.task ? ws.tasks.find((x) => x.id === ctx.task) : null;
+  if (t) return t.plannedStart;
+  const p = ctx.project ? ws.projects.find((x) => x.id === ctx.project) : null;
+  if (p) {
+    const end = p.actualFinish ?? p.finishDate ?? p.targetEndDate ?? p.startDate;
+    return p.startDate <= today && end >= today ? today : p.startDate;
+  }
+  return null;
+}
+
+/** Says what a link narrowed the calendar to, with a way back to everything and to the project's own schedule. */
+function ContextBanner({ ctx, project, memberLabel, onClear }: { ctx: CalendarContext; project: Workspace["projects"][number] | null; memberLabel: string | null; onClear: () => void }) {
+  if (!ctx.project && !ctx.member) return null;
+  if (ctx.project && !project) {
+    return (
+      <p className="flex flex-wrap items-center gap-2 rounded-lg border border-line bg-paper px-3 py-2 text-sm text-ink-soft" role="status" data-testid="cal-context-missing">
+        That project isn&apos;t on your calendar. It may be archived, or your role may not include it. Showing all projects you can see.
+        <button type="button" onClick={onClear} className="font-semibold text-accent-ink hover:underline">Dismiss</button>
+      </p>
+    );
+  }
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-accent-ink/40 bg-accent-tint/30 px-3 py-2 text-sm" role="status" data-testid="cal-context">
+      <span className="min-w-0 flex-1">Showing <span className="font-semibold text-navy">{[project?.name, memberLabel].filter(Boolean).join(" · ") || "selected work"}</span> on the company calendar.</span>
+      {project && <Link href={`/projects/${project.id}`} className="inline-flex min-h-9 items-center gap-1 font-semibold text-accent-ink hover:underline" data-testid="cal-context-project">Project schedule &amp; Gantt <ArrowRight className="h-4 w-4" aria-hidden /></Link>}
+      <button type="button" onClick={onClear} className="inline-flex min-h-9 items-center gap-1 font-semibold text-accent-ink hover:underline" data-testid="cal-context-clear"><X className="h-4 w-4" aria-hidden /> Show everything</button>
     </div>
   );
 }

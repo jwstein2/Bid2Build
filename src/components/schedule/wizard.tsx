@@ -15,6 +15,7 @@ import { MiniTimeline, type MiniEdit } from "./mini-timeline";
 import { AssignStep, type SectionAssignment } from "./assign-step";
 import type { Team } from "@/lib/projects/team";
 import { CompanyCalendar } from "./company-calendar";
+import { calendarHref } from "@/lib/projects/calendar-link";
 
 export interface WizardSection { id: string; name: string; trade: string | null; items: { id: string; name: string }[] }
 export interface WizardProps {
@@ -409,7 +410,7 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
             {chosen.some((s) => assign[s.id]?.resourceId) && <p className="text-sm text-ink-soft">{chosen.filter((s) => assign[s.id]?.resourceId).length} section{chosen.filter((s) => assign[s.id]?.resourceId).length === 1 ? "" : "s"} will be assigned. No one is notified.</p>}
             <p className="text-ink-soft">Save this as a <strong>draft schedule</strong>. You can drag tasks, schedule individual line items and track progress next. Nothing is sent to your customer.</p>
             {!accepted && <Badge tone="warn">Provisional: bid not yet accepted</Badge>}
-            {error && <Notice tone="danger">{error} {existing && <Link className="font-semibold underline" href={`/projects/${existing}`}>Open the existing schedule</Link>}</Notice>}
+            {error && <Notice tone="danger">{error} {existing && <Link className="font-semibold underline" href={calendarHref({ project: existing })}>Open the existing schedule</Link>}</Notice>}
             {needsReview && (
               <label className="flex items-start gap-2 rounded-lg border border-warn/40 bg-warn-tint p-3 text-sm">
                 <input type="checkbox" className="mt-0.5 h-4 w-4" checked={reviewed} onChange={(e) => setReviewed(e.target.checked)} data-testid="confirm-reviewed" />
