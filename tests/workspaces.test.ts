@@ -23,8 +23,18 @@ describe("landing after sign-in (V8.9)", () => {
   it("finishes a pending invite first, whoever the person is", () => {
     for (const x of [customer, rep, NO_WORKSPACES]) expect(landingPath(x, { pendingInvite: true })).toBe("/sales/join");
   });
-  it("uses the preference, then the last workspace, for people with both", () => {
-    expect(landingPath(everything)).toBe("/dashboard");
+  it("sends a selling rep who also has a contractor account to the Sales Hub", () => {
+    const repAndContractor = w({ sales_my: true, contractor: true });
+    expect(landingPath(repAndContractor)).toBe("/sales");
+    expect(landingPath({ ...repAndContractor, last_workspace: "contractor" })).toBe("/sales");
+    expect(landingPath(everything)).toBe("/sales");
+    // Only an explicit choice in account settings keeps them on the contractor dashboard.
+    expect(landingPath({ ...repAndContractor, landing: "contractor" })).toBe("/dashboard");
+  });
+  it("uses the preference, then the last workspace, for an owner or admin with both", () => {
+    const adminAndContractor = w({ sales_admin: true, contractor: true });
+    expect(landingPath(adminAndContractor)).toBe("/dashboard");
+    expect(landingPath({ ...adminAndContractor, last_workspace: "sales" })).toBe("/sales/admin");
     expect(landingPath({ ...everything, last_workspace: "sales" })).toBe("/sales");
     expect(landingPath({ ...everything, last_workspace: "sales", sales_view: "admin" })).toBe("/sales/admin");
     expect(landingPath({ ...everything, landing: "contractor", last_workspace: "sales" })).toBe("/dashboard");
@@ -93,7 +103,7 @@ describe("workspace switching (V8.10)", () => {
   it("sends contractors to Home when it is the contractor start page", () => {
     expect(landingPath(customer, { contractorHome: "/home" })).toBe("/home");
     expect(landingPath(NO_WORKSPACES, { contractorHome: "/home" })).toBe("/home");
-    expect(landingPath(everything, { contractorHome: "/home" })).toBe("/home");
+    expect(landingPath(w({ sales_admin: true, contractor: true }), { contractorHome: "/home" })).toBe("/home");
     expect(landingPath(rep, { contractorHome: "/home" })).toBe("/sales");
     expect(landingPath(customer, { pendingInvite: true, contractorHome: "/home" })).toBe("/sales/join");
     expect(switchTarget(everything, "contractor", null, "/home").path).toBe("/home");
