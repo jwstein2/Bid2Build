@@ -1,0 +1,750 @@
+{
+ "version": "2.0.0",
+ "date": "2026-11-23",
+ "score_scale": "1 (weak) to 5 (strong) for Built2Bid; for content_cost and competitive_pressure, 5 = cheap / low pressure",
+ "channels": [
+  {
+   "id": "GOOGLE_SEARCH",
+   "name": "Google Search (paid search + organic SEO)",
+   "buy_unit": "SEARCH",
+   "paid_eligible": true,
+   "scores": {
+    "audience_quality": [
+     4,
+     "People who type \"roofing estimate template\" or \"contractor bid software\" self-select as contractors; homeowner searches (\"roof estimate cost\") must be blocked with negative keywords.",
+     [
+      "INF"
+     ]
+    ],
+    "purchase_intent": [
+     5,
+     "The query states the job to be done. Highest intent of any channel.",
+     [
+      "INF"
+     ]
+    ],
+    "expected_cac": [
+     null,
+     "Computed from the funnel model (F01-F06) against LTV.",
+     []
+    ],
+    "content_cost": [
+     4,
+     "Text ads plus the 11 existing trade landing pages; no video needed.",
+     [
+      "P1:E192"
+     ]
+    ],
+    "measurability": [
+     4,
+     "GA4 tag is live and sign_up can be imported into Google Ads as a key event (owner steps in META_GA4_SETUP.md); first-touch UTM cookie feeds /admin/marketing. Not 5: the link is not set up yet and paid subscriptions need server-side upload.",
+     [
+      "P1:S14"
+     ]
+    ],
+    "competitive_pressure": [
+     2,
+     "Established contractor-software vendors are expected to bid on generic software terms; not researched this phase [G203].",
+     [
+      "INF",
+      "G203"
+     ]
+    ],
+    "evidence_confidence": [
+     3,
+     "Cost and conversion anchors are recent, US, large-sample medians but from other advertisers [CE012] [CE013]; no contractor-software keyword data yet.",
+     [
+      "CE012",
+      "CE013"
+     ]
+    ]
+   },
+   "organic": {
+    "opportunity": [
+     5,
+     "Trade landing pages, guides and FAQ JSON-LD already exist; \"how to price a deck/estimate template\" content compounds and is free per click."
+    ],
+    "role": "Primary organic channel: SEO for trade pages and estimating guides.",
+    "repurpose_only": false,
+    "cadence_at_base_hours": "1 guide or landing-page improvement every 2 weeks; monthly Search Console query review"
+   },
+   "layers": {
+    "total_platform_adoption": "Not reported by Pew for search engines; treated as near-universal [INF].",
+    "construction_industry_adoption": "Not measured by any source found [G201].",
+    "business_owner_adoption": "Business-use proxy: in a 2025 vendor survey of 1,050 home-service owners, 20% named Google Search as a source of their own customer leads [P1:E108]. That is how they find customers, not how they buy software.",
+    "reachable_ad_audience": "Unknown until a reach estimate is pulled in the ad tool (free, no spend) [G202]. Keyword Planner monthly searches and CPC forecasts replace this (X01).",
+    "qualified_lead_generation": "Model output per budget scenario (report 03); assumption-driven.",
+    "customer_conversion_likelihood": "Model: highest of the paid channels per click (F03, F05), still unproven."
+   },
+   "profile": {
+    "intent": "Active problem or solution search.",
+    "ad_formats": "Responsive search ads; sitelinks; Performance Max (not recommended for a first test because it mixes placements) [INF].",
+    "targeting": "Keywords, match types, negative keywords, location, schedule, device. No targeting by job or company size.",
+    "audience_verification": "Search-terms report shows the actual queries; landing-page trade choice and 7-day activation confirm contractor fit.",
+    "organic_opportunities": "SEO on /bids/[trade] pages and guides; Google Business Profile is not relevant (Built2Bid is not a local service).",
+    "costs": "Median CPC $5.87 for Business Services and $8.33 for Home & Home Improvement advertisers in 2026 [CE012] [CE011].",
+    "restrictions": "Standard Google Ads policies; no special category. Must not use competitor trademarks in ad text."
+   }
+  },
+  {
+   "id": "FACEBOOK",
+   "name": "Facebook (Meta)",
+   "buy_unit": "META",
+   "paid_eligible": true,
+   "scores": {
+    "audience_quality": [
+     2,
+     "Huge general audience; interest targeting is approximate and Meta removed detailed targeting exclusions [CE030] and is consolidating more options [CE031], so \"contractors only\" cannot be bought.",
+     [
+      "CE030",
+      "CE031"
+     ]
+    ],
+    "purchase_intent": [
+     2,
+     "Interruption media: the viewer was not looking for software.",
+     [
+      "INF"
+     ]
+    ],
+    "expected_cac": [
+     null,
+     "Computed.",
+     []
+    ],
+    "content_cost": [
+     3,
+     "Needs short video; concepts A-E with required real screen recordings are already briefed in ADS.md.",
+     [
+      "P1:S14"
+     ]
+    ],
+    "measurability": [
+     4,
+     "Pixel + Conversions API with dedupe and consent banner are built (off). Optimizing on CompleteRegistration needs the test event verified first. Consent declines reduce signal.",
+     [
+      "P1:S14"
+     ]
+    ],
+    "competitive_pressure": [
+     3,
+     "Auction shared with all advertisers; no specific competitor read [G203].",
+     [
+      "G203"
+     ]
+    ],
+    "evidence_confidence": [
+     4,
+     "Pew probability survey on adult usage [P1:E141] [P1:E146] plus vendor survey of business use [P1:E107]; costs from benchmark medians [CE019].",
+     [
+      "P1:E141",
+      "P1:E107",
+      "CE019"
+     ]
+    ]
+   },
+   "organic": {
+    "opportunity": [
+     4,
+     "Business page plus participation in contractor groups (rules permitting) and reels repurposed from YouTube. Groups are covered under Communities."
+    ],
+    "role": "Secondary organic: page posts and reels from repurposed video.",
+    "repurpose_only": false,
+    "cadence_at_base_hours": "3 page posts per week reusing the video library"
+   },
+   "layers": {
+    "total_platform_adoption": "70% of U.S. adults use Facebook [P1:E141]; 78% of adults 30-49 [P1:E146].",
+    "construction_industry_adoption": "Not measured by any source found [G201].",
+    "business_owner_adoption": "Proxies only: 63% of men [P1:E148], 67% of adults with high school or less [P1:E156], 76% of rural adults [P1:E149]. Business use: 32% of surveyed home-service owners named Facebook as a lead source [P1:E107].",
+    "reachable_ad_audience": "Unknown until a reach estimate is pulled in the ad tool (free, no spend) [G202].",
+    "qualified_lead_generation": "Model output (report 03).",
+    "customer_conversion_likelihood": "Model: lower per click than search (F03, F05)."
+   },
+   "profile": {
+    "intent": "Low; discovery.",
+    "ad_formats": "Feed and Reels video/image, carousel, lead forms (not recommended: lead forms skip the product) [INF].",
+    "targeting": "Location, age, Advantage+ audience with interest signals; custom audiences from site visitors (needs consent) and lookalikes later. Detailed targeting exclusions removed [CE030].",
+    "audience_verification": "None at the platform level. Verify with onboarding trade choice, 7-day activation and finalized bids by utm_content.",
+    "organic_opportunities": "Page, reels, groups (see Communities).",
+    "costs": "Traffic-objective median CPC $0.99 for Home & Home Improvement; leads-objective $2.23 [CE019] [CE023].",
+    "restrictions": "Not a special ad category. AI-generated people must use the AI disclosure (ADS.md). Privacy policy must name Meta before the Pixel goes on."
+   }
+  },
+  {
+   "id": "INSTAGRAM",
+   "name": "Instagram (Meta)",
+   "buy_unit": "META",
+   "paid_eligible": true,
+   "scores": {
+    "audience_quality": [
+     2,
+     "Same targeting limits as Facebook; skews younger than the owner base.",
+     [
+      "CE030"
+     ]
+    ],
+    "purchase_intent": [
+     2,
+     "Discovery; visual project content.",
+     [
+      "INF"
+     ]
+    ],
+    "expected_cac": [
+     null,
+     "Computed (bought together with Facebook as Meta placements).",
+     []
+    ],
+    "content_cost": [
+     3,
+     "Vertical video shared with Facebook Reels and YouTube Shorts.",
+     [
+      "INF"
+     ]
+    ],
+    "measurability": [
+     4,
+     "Same Pixel/CAPI as Facebook.",
+     [
+      "P1:S14"
+     ]
+    ],
+    "competitive_pressure": [
+     3,
+     "Shared Meta auction.",
+     [
+      "G203"
+     ]
+    ],
+    "evidence_confidence": [
+     3,
+     "Pew usage [P1:E142] [P1:E151]; business use lower: 8% of surveyed owners named Instagram as a lead source [P1:E109].",
+     [
+      "P1:E142",
+      "P1:E109"
+     ]
+    ]
+   },
+   "organic": {
+    "opportunity": [
+     3,
+     "Reels repurposed from the shared video library; project-photo culture in exterior trades."
+    ],
+    "role": "Repurpose channel.",
+    "repurpose_only": false,
+    "cadence_at_base_hours": "2 reels per week reusing Shorts"
+   },
+   "layers": {
+    "total_platform_adoption": "51% of U.S. adults use Instagram [P1:E142]; 64% of adults 30-49 [P1:E151].",
+    "construction_industry_adoption": "Not measured by any source found [G201].",
+    "business_owner_adoption": "Business use: 8% of surveyed home-service owners named Instagram as a lead source [P1:E109].",
+    "reachable_ad_audience": "Unknown until a reach estimate is pulled in the ad tool (free, no spend) [G202].",
+    "qualified_lead_generation": "Model output, bought as part of Meta.",
+    "customer_conversion_likelihood": "Assumed equal to Facebook inside the Meta buy."
+   },
+   "profile": {
+    "intent": "Low.",
+    "ad_formats": "Reels, Stories, feed (Meta placements).",
+    "targeting": "As Facebook.",
+    "audience_verification": "As Facebook; report results by placement in Ads Manager.",
+    "organic_opportunities": "Reels, before/after estimate walkthroughs.",
+    "costs": "Bought inside Meta campaigns; no separate benchmark used.",
+    "restrictions": "As Facebook."
+   }
+  },
+  {
+   "id": "YOUTUBE",
+   "name": "YouTube (Google)",
+   "buy_unit": "YOUTUBE",
+   "paid_eligible": true,
+   "scores": {
+    "audience_quality": [
+     2,
+     "Broad audience; topic/keyword targeting is approximate. How-to viewers searching estimating topics are better than average.",
+     [
+      "INF"
+     ]
+    ],
+    "purchase_intent": [
+     3,
+     "Many trade owners use YouTube to learn; in-feed ads on estimating searches catch problem intent.",
+     [
+      "P1:E129"
+     ]
+    ],
+    "expected_cac": [
+     null,
+     "Computed.",
+     []
+    ],
+    "content_cost": [
+     2,
+     "Needs real video; long cuts (45-60s) for concept D. Highest production cost.",
+     [
+      "P1:S14"
+     ]
+    ],
+    "measurability": [
+     3,
+     "GA4 import works for clicks; view-through value is hard to attribute; skippable ads bill on views, not clicks [CE043].",
+     [
+      "CE043"
+     ]
+    ],
+    "competitive_pressure": [
+     3,
+     "Not researched [G203].",
+     [
+      "G203"
+     ]
+    ],
+    "evidence_confidence": [
+     4,
+     "Pew usage is the highest of any platform [P1:E140] [P1:E150] [P1:E157]; roofing respondents name YouTube as a high-performing channel for their own marketing [P1:E129]. No cost benchmark found.",
+     [
+      "P1:E140",
+      "P1:E129"
+     ]
+    ]
+   },
+   "organic": {
+    "opportunity": [
+     5,
+     "How-to estimating videos per trade are evergreen search content on the second-largest search surface; they feed Shorts, Reels and landing pages."
+    ],
+    "role": "Primary organic video channel.",
+    "repurpose_only": false,
+    "cadence_at_base_hours": "1 screen-recorded estimate walkthrough (5-8 min, no studio production) every 2 weeks, plus 2 Shorts cut from it"
+   },
+   "layers": {
+    "total_platform_adoption": "84% of U.S. adults use YouTube [P1:E140]; 91% of adults 30-49 [P1:E154].",
+    "construction_industry_adoption": "Not measured by any source found [G201].",
+    "business_owner_adoption": "Proxies: 85% of men [P1:E150], 77% of adults with high school or less [P1:E157]. Roofing owners name YouTube among high-performing channels [P1:E129].",
+    "reachable_ad_audience": "Unknown until a reach estimate is pulled in the ad tool (free, no spend) [G202].",
+    "qualified_lead_generation": "Model output (report 03).",
+    "customer_conversion_likelihood": "Model: below search; in-feed clicks are the only cost basis used."
+   },
+   "profile": {
+    "intent": "Medium for how-to searches; low for in-stream.",
+    "ad_formats": "Skippable in-stream (pay at 30 seconds or interaction) [CE043]; in-feed (pay on click to watch) [CE044]; Shorts; bumpers.",
+    "targeting": "Keywords, topics, placements (specific channels), custom segments from search terms, location.",
+    "audience_verification": "Placement report shows which channels/videos ran the ad; activation by utm_content.",
+    "organic_opportunities": "Trade how-to channel; walkthrough of a real estimate per trade.",
+    "costs": "No reliable public CPV/CPC benchmark found; F01 values are assumptions [G204].",
+    "restrictions": "Video must be hosted on YouTube [CE043]; AI disclosure; ads policies."
+   }
+  },
+  {
+   "id": "TIKTOK",
+   "name": "TikTok",
+   "buy_unit": "TIKTOK",
+   "paid_eligible": true,
+   "scores": {
+    "audience_quality": [
+     1,
+     "Lowest adult reach of the major platforms and younger skew; no business-owner data.",
+     [
+      "P1:E143"
+     ]
+    ],
+    "purchase_intent": [
+     1,
+     "Entertainment feed.",
+     [
+      "INF"
+     ]
+    ],
+    "expected_cac": [
+     null,
+     "Computed.",
+     []
+    ],
+    "content_cost": [
+     2,
+     "Needs native vertical video; can reuse Shorts.",
+     [
+      "INF"
+     ]
+    ],
+    "measurability": [
+     1,
+     "No TikTok pixel or events API is built in the app; only UTMs would work.",
+     [
+      "P1:S14"
+     ]
+    ],
+    "competitive_pressure": [
+     4,
+     "Fewer B2B software advertisers expected (judgment) [G203].",
+     [
+      "G203"
+     ]
+    ],
+    "evidence_confidence": [
+     2,
+     "Pew usage only [P1:E143] [P1:E155].",
+     [
+      "P1:E143"
+     ]
+    ]
+   },
+   "organic": {
+    "opportunity": [
+     2,
+     "Repost Shorts only; no unique content."
+    ],
+    "role": "Repurpose only, zero incremental production.",
+    "repurpose_only": true,
+    "cadence_at_base_hours": "Repost Shorts only"
+   },
+   "layers": {
+    "total_platform_adoption": "37% of U.S. adults use TikTok [P1:E143]; 45% of adults 30-49 [P1:E155].",
+    "construction_industry_adoption": "Not measured by any source found [G201].",
+    "business_owner_adoption": "No business-owner or trade data found [G201].",
+    "reachable_ad_audience": "Unknown until a reach estimate is pulled in the ad tool (free, no spend) [G202].",
+    "qualified_lead_generation": "Not modeled for spend (fails paid gates).",
+    "customer_conversion_likelihood": "Lowest assumed (F03, F05)."
+   },
+   "profile": {
+    "intent": "Very low.",
+    "ad_formats": "In-feed video, Spark Ads.",
+    "targeting": "Age, location, interests, behaviours.",
+    "audience_verification": "None; would rely on activation.",
+    "organic_opportunities": "Repost Shorts.",
+    "costs": "Ad group must exceed $20/day [CE029]; campaign budget, if set, must exceed $50/day [CE028]. No CPC benchmark found.",
+    "restrictions": "Minimum budgets make a small test expensive: about $608/month at the $20/day ad-group floor [CE029]."
+   }
+  },
+  {
+   "id": "LINKEDIN",
+   "name": "LinkedIn",
+   "buy_unit": "LINKEDIN",
+   "paid_eligible": true,
+   "scores": {
+    "audience_quality": [
+     2,
+     "Can target owners and small-business attributes, but trades owners are under-represented: only 13% of adults with high school or less use LinkedIn [P1:E152].",
+     [
+      "P1:E152",
+      "C05"
+     ]
+    ],
+    "purchase_intent": [
+     2,
+     "Professional feed; low for this buyer.",
+     [
+      "INF"
+     ]
+    ],
+    "expected_cac": [
+     null,
+     "Computed.",
+     []
+    ],
+    "content_cost": [
+     4,
+     "Text/image posts are cheap.",
+     [
+      "INF"
+     ]
+    ],
+    "measurability": [
+     2,
+     "No LinkedIn Insight Tag or conversions API built; UTMs only.",
+     [
+      "P1:S14"
+     ]
+    ],
+    "competitive_pressure": [
+     2,
+     "Expensive B2B auction; CPC $5-10 by third-party estimates [CE047].",
+     [
+      "CE047"
+     ]
+    ],
+    "evidence_confidence": [
+     3,
+     "Pew usage [P1:E144] [P1:E152]; official minimums [CE025]; CPC is a weak third-party estimate [CE047].",
+     [
+      "P1:E144",
+      "CE025"
+     ]
+    ]
+   },
+   "organic": {
+    "opportunity": [
+     2,
+     "Founder posts reach small commercial GCs and partners (associations, suppliers), not most trades."
+    ],
+    "role": "Partner and commercial-GC relationships; minimal.",
+    "repurpose_only": true,
+    "cadence_at_base_hours": "1 founder post per week, optional"
+   },
+   "layers": {
+    "total_platform_adoption": "31% of U.S. adults use LinkedIn [P1:E144].",
+    "construction_industry_adoption": "Not measured by any source found [G201].",
+    "business_owner_adoption": "13% of adults with high school or less use LinkedIn [P1:E152], a proxy suggesting low reach among trade owners.",
+    "reachable_ad_audience": "Unknown until a reach estimate is pulled in the ad tool (free, no spend) [G202]. Campaigns need at least 300 members [CE027].",
+    "qualified_lead_generation": "Not modeled for spend (fails paid gates).",
+    "customer_conversion_likelihood": "Model assumes good fit per click but very high CPC."
+   },
+   "profile": {
+    "intent": "Low.",
+    "ad_formats": "Sponsored content, message ads, lead gen forms.",
+    "targeting": "Job title, company, industry, seniority, interests; \"small business owners\" attribute [C05].",
+    "audience_verification": "Member-profile targeting is self-reported but job-based; best audience verification of the social platforms.",
+    "organic_opportunities": "Founder posts, partnership outreach (outreach needs owner approval).",
+    "costs": "Minimum $10/day [CE025]; $100 minimum lifetime for a new campaign [CE026]; CPC $5-10 (third-party) [CE047].",
+    "restrictions": "Minimum budget and audience size [CE027]."
+   }
+  },
+  {
+   "id": "EMAIL",
+   "name": "Email (owned list and lifecycle)",
+   "buy_unit": null,
+   "paid_eligible": false,
+   "scores": {
+    "audience_quality": [
+     5,
+     "Only people who created an account or opted in.",
+     [
+      "INF"
+     ]
+    ],
+    "purchase_intent": [
+     4,
+     "Already tried the product; lifecycle emails target activation and upgrade.",
+     [
+      "INF"
+     ]
+    ],
+    "expected_cac": [
+     5,
+     "No media cost; marginal cost is the sending service (judgment, not computed).",
+     [
+      "INF"
+     ]
+    ],
+    "content_cost": [
+     4,
+     "Five lifecycle emails already written and built (sending off).",
+     [
+      "P1:S14"
+     ]
+    ],
+    "measurability": [
+     5,
+     "email_outbox + analytics_events record each step server-side.",
+     [
+      "P1:S14"
+     ]
+    ],
+    "competitive_pressure": [
+     5,
+     "Owned channel.",
+     [
+      "INF"
+     ]
+    ],
+    "evidence_confidence": [
+     3,
+     "Generic engagement benchmarks only [CE045] [CE046]; no construction row; 0 marketing opt-ins at baseline.",
+     [
+      "CE045"
+     ]
+    ]
+   },
+   "organic": {
+    "opportunity": [
+     2,
+     "The list is tiny today (8 non-test accounts, 0 marketing opt-ins at baseline); value grows with every signup from other channels."
+    ],
+    "role": "Activation and conversion engine for every other channel.",
+    "repurpose_only": false,
+    "cadence_at_base_hours": "Lifecycle A-E automated once approved; 1 product-update email per month to opted-in users"
+   },
+   "layers": {
+    "total_platform_adoption": "Not applicable (owned list).",
+    "construction_industry_adoption": "Not applicable.",
+    "business_owner_adoption": "Built2Bid list: 8 non-test accounts and 0 marketing opt-ins at the 2026-11-16 baseline [P1:E190].",
+    "reachable_ad_audience": "Only Built2Bid account holders and opt-ins. Purchased or scraped lists are excluded: CAN-SPAM has no B2B exception [CE040] and fines up to $53,088 per email [CE041], and the standing rules forbid unsolicited messages.",
+    "qualified_lead_generation": "Converts signups from other channels; not a source of new top-of-funnel leads.",
+    "customer_conversion_likelihood": "Highest per contact; volume limited by signups."
+   },
+   "profile": {
+    "intent": "High (existing users).",
+    "ad_formats": "Not advertising.",
+    "targeting": "Account state (activation step, plan).",
+    "audience_verification": "Account data.",
+    "organic_opportunities": "Lifecycle, product updates, referral prompts.",
+    "costs": "Sending service cost only.",
+    "restrictions": "CAN-SPAM: honest headers and subject, postal address, working opt-out honored within 10 business days [CE042]; consent for marketing email; sending is off until the owner approves."
+   }
+  },
+  {
+   "id": "COMMUNITIES",
+   "name": "Contractor communities (Facebook groups, Reddit, forums)",
+   "buy_unit": null,
+   "paid_eligible": false,
+   "scores": {
+    "audience_quality": [
+     4,
+     "Groups and subreddits are made of trade owners and crews; moderators remove spam.",
+     [
+      "INF"
+     ]
+    ],
+    "purchase_intent": [
+     3,
+     "Members ask \"how do you price X\" and \"what software do you use\" questions.",
+     [
+      "INF"
+     ]
+    ],
+    "expected_cac": [
+     4,
+     "No media cost; owner time is the cost (scored under content cost).",
+     [
+      "INF"
+     ]
+    ],
+    "content_cost": [
+     2,
+     "Needs genuine, time-heavy participation by a real person; cannot be automated.",
+     [
+      "INF"
+     ]
+    ],
+    "measurability": [
+     2,
+     "UTM links when allowed; much influence is untracked word of mouth.",
+     [
+      "INF"
+     ]
+    ],
+    "competitive_pressure": [
+     3,
+     "Vendors already present in some groups (judgment).",
+     [
+      "G203"
+     ]
+    ],
+    "evidence_confidence": [
+     3,
+     "Referrals were the top customer-lead source for surveyed owners (59%) [P1:E106], which shows how much peer recommendation matters in this trade culture; community-specific data not found [G205].",
+     [
+      "P1:E106",
+      "G205"
+     ]
+    ]
+   },
+   "organic": {
+    "opportunity": [
+     4,
+     "Answer pricing and estimating questions; share free templates where rules allow."
+    ],
+    "role": "Trust and word of mouth.",
+    "repurpose_only": false,
+    "cadence_at_base_hours": "3 genuinely helpful answers per week; disclose affiliation; no promotion where rules forbid it"
+   },
+   "layers": {
+    "total_platform_adoption": "Not applicable (subsets of other platforms).",
+    "construction_industry_adoption": "Group membership counts not verified [G205].",
+    "business_owner_adoption": "Members are mostly owners and crews (judgment).",
+    "reachable_ad_audience": "Organic only; group rules usually forbid promotion. No paid option is used.",
+    "qualified_lead_generation": "Low volume, high quality (judgment).",
+    "customer_conversion_likelihood": "High if the recommendation comes from a peer (judgment)."
+   },
+   "profile": {
+    "intent": "Medium.",
+    "ad_formats": "None used.",
+    "targeting": "Choose groups by trade.",
+    "audience_verification": "Group rules and membership questions.",
+    "organic_opportunities": "Answers, templates, AMAs with moderator permission.",
+    "costs": "Owner time.",
+    "restrictions": "Each group's rules; Reddit and Facebook policies on self-promotion; disclose affiliation in every post."
+   }
+  },
+  {
+   "id": "PARTNERSHIPS",
+   "name": "Partnerships (creator partners, associations, suppliers)",
+   "buy_unit": "PARTNERS",
+   "paid_eligible": true,
+   "scores": {
+    "audience_quality": [
+     4,
+     "A trade creator or association reaches a pre-filtered contractor audience.",
+     [
+      "INF"
+     ]
+    ],
+    "purchase_intent": [
+     3,
+     "Endorsement transfers trust; intent depends on placement.",
+     [
+      "INF"
+     ]
+    ],
+    "expected_cac": [
+     null,
+     "Computed from assumed cost per click (F01).",
+     []
+    ],
+    "content_cost": [
+     3,
+     "Partner makes content; Built2Bid supplies accurate product access and talking points.",
+     [
+      "INF"
+     ]
+    ],
+    "measurability": [
+     3,
+     "Creator channel exists in /admin/marketing (utm_medium=creator); clicks without the link are lost.",
+     [
+      "P1:S14"
+     ]
+    ],
+    "competitive_pressure": [
+     3,
+     "Not researched [G203].",
+     [
+      "G203"
+     ]
+    ],
+    "evidence_confidence": [
+     2,
+     "No benchmark for creator deals in this niche; inference only [G206].",
+     [
+      "G206"
+     ]
+    ]
+   },
+   "organic": {
+    "opportunity": [
+     3,
+     "Unpaid partnerships: association resource listings, supplier counter flyers, complementary tools. Any outreach needs owner approval first."
+    ],
+    "role": "Relationship building ahead of paid deals.",
+    "repurpose_only": false,
+    "cadence_at_base_hours": "Maintain a partner shortlist and draft outreach notes for owner approval; 0 messages sent without it"
+   },
+   "layers": {
+    "total_platform_adoption": "Not applicable.",
+    "construction_industry_adoption": "Not applicable.",
+    "business_owner_adoption": "Depends on the partner; ask for audience analytics before any deal.",
+    "reachable_ad_audience": "Partner audience size from their own analytics (to be requested).",
+    "qualified_lead_generation": "Model output when funded (budgets of $2,500 and up) [M].",
+    "customer_conversion_likelihood": "Assumed equal to search per click (F03, F05) [G206]."
+   },
+   "profile": {
+    "intent": "Medium.",
+    "ad_formats": "Sponsored video segment, dedicated video, newsletter placement, association sponsorship.",
+    "targeting": "Choose partner by trade and audience.",
+    "audience_verification": "Partner shares audience demographics; results by utm_campaign = creator handle.",
+    "organic_opportunities": "Co-created templates and guides.",
+    "costs": "Per-deal fee; no benchmark (F01 assumption).",
+    "restrictions": "FTC endorsement disclosure by the creator; written agreement; owner approves every deal (purchase of services)."
+   }
+  }
+ ]
+}

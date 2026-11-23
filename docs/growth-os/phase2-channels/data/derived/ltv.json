@@ -1,0 +1,38 @@
+{
+ "optimistic": {
+  "employer_share": 0.3,
+  "arpa_usd_month": 42.87,
+  "net_revenue_usd_month": 41.33,
+  "variable_cost_pct": 10,
+  "gross_profit_usd_month": 37.2,
+  "contribution_margin_pct": 86.76,
+  "monthly_churn_pct": 3,
+  "expected_paid_months_capped": 22.2,
+  "ltv_gross_profit_usd": 825.75,
+  "max_cac_for_payback_usd": 371.98
+ },
+ "base": {
+  "employer_share": 0.2,
+  "arpa_usd_month": 24.63,
+  "net_revenue_usd_month": 23.62,
+  "variable_cost_pct": 15,
+  "gross_profit_usd_month": 20.07,
+  "contribution_margin_pct": 81.5,
+  "monthly_churn_pct": 6,
+  "expected_paid_months_capped": 14.87,
+  "ltv_gross_profit_usd": 298.49,
+  "max_cac_for_payback_usd": 200.73
+ },
+ "conservative": {
+  "employer_share": 0.1,
+  "arpa_usd_month": 16.92,
+  "net_revenue_usd_month": 16.13,
+  "variable_cost_pct": 25,
+  "gross_profit_usd_month": 12.1,
+  "contribution_margin_pct": 71.5,
+  "monthly_churn_pct": 10,
+  "expected_paid_months_capped": 9.77,
+  "ltv_gross_profit_usd": 118.25,
+  "max_cac_for_payback_usd": 120.98
+ }
+}

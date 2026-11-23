@@ -1,0 +1,238 @@
+{
+ "registry_version": "2.0.0",
+ "retrieved": "2026-11-23",
+ "note": "Phase 2 sources. Phase 1 sources (S01-S14) and evidence (E###) are reused by reference with the tag [P1:E###].",
+ "confidence_scale": {
+  "A": "Official platform documentation, regulator guidance or first-party data",
+  "B": "Probability survey or research organisation with stated n and method",
+  "C": "Vendor data or survey with stated n but non-representative frame",
+  "D": "Secondary compilation with no stated n or period",
+  "E": "Undated or unsourced estimates"
+ },
+ "sources": [
+  {
+   "id": "C01",
+   "title": "2025 Google Ads Benchmarks",
+   "publisher": "WordStream / LocaliQ",
+   "urls": [
+    "https://wordstream.com/blog/2025-google-ads-benchmarks"
+   ],
+   "release_date": "2025",
+   "retrieved": "2026-11-23",
+   "sample_definition": "16,446 US search campaigns (Google Ads and Microsoft Ads), Apr 2024-Mar 2025; at least 64 campaigns per category",
+   "methodology": "Medians of campaigns managed or analysed by the publisher",
+   "confidence": "C",
+   "limitations": "Advertisers are the publisher's clients; no contractor-software row. Home & Home Improvement advertisers sell to homeowners, not to contractors.",
+   "verification_status": "verified",
+   "how_verified": "Page read directly on 2026-11-23; figures copied from the page tables or text."
+  },
+  {
+   "id": "C02",
+   "title": "2026 Google Ads Benchmarks",
+   "publisher": "WordStream / LocaliQ",
+   "urls": [
+    "https://wordstream.com/blog/2026-google-ads-benchmarks"
+   ],
+   "release_date": "2026",
+   "retrieved": "2026-11-23",
+   "sample_definition": "13,474 US search campaigns, Apr 2025-Mar 2026; at least 52 per subcategory",
+   "methodology": "Medians",
+   "confidence": "C",
+   "limitations": "Same limits as C01.",
+   "verification_status": "verified",
+   "how_verified": "Page read directly on 2026-11-23; figures copied from the page tables or text."
+  },
+  {
+   "id": "C03",
+   "title": "Facebook Ads Benchmarks 2025",
+   "publisher": "WordStream / LocaliQ",
+   "urls": [
+    "https://www.wordstream.com/blog/facebook-ads-benchmarks-2025"
+   ],
+   "release_date": "2025",
+   "retrieved": "2026-11-23",
+   "sample_definition": "554 US traffic campaigns and 726 US leads campaigns, Apr 2024-Jun 2025; as few as 2-3 campaigns per subcategory",
+   "methodology": "Medians",
+   "confidence": "C",
+   "limitations": "Small per-row samples; leads-objective conversions are on-platform forms, not software signups; no Business Services row for leads.",
+   "verification_status": "verified",
+   "how_verified": "Page read directly on 2026-11-23; figures copied from the page tables or text."
+  },
+  {
+   "id": "C04",
+   "title": "LinkedIn Ads: campaign budgets (Minimums)",
+   "publisher": "LinkedIn",
+   "urls": [
+    "https://business.linkedin.com/advertise/ads/best-practices/maximize-your-budget"
+   ],
+   "release_date": "2026 (footer)",
+   "retrieved": "2026-11-23",
+   "sample_definition": "Platform rule",
+   "methodology": "Official documentation",
+   "confidence": "A",
+   "limitations": "No bid floors published on the page.",
+   "verification_status": "verified",
+   "how_verified": "Page read directly on 2026-11-23; figures copied from the page tables or text."
+  },
+  {
+   "id": "C05",
+   "title": "LinkedIn Ads: audience",
+   "publisher": "LinkedIn",
+   "urls": [
+    "https://business.linkedin.com/advertise/ads/audience"
+   ],
+   "release_date": "2026 (footer)",
+   "retrieved": "2026-11-23",
+   "sample_definition": "Platform rule",
+   "methodology": "Official documentation",
+   "confidence": "A",
+   "limitations": "Company-size bands and a Construction industry value were not confirmed on the pages read.",
+   "verification_status": "verified",
+   "how_verified": "Page read directly on 2026-11-23; figures copied from the page tables or text."
+  },
+  {
+   "id": "C06",
+   "title": "About budgets for ads in TikTok Ads Manager",
+   "publisher": "TikTok",
+   "urls": [
+    "https://ads.tiktok.com/help/article/budget?lang=en"
+   ],
+   "release_date": "Jul 2026",
+   "retrieved": "2026-11-23",
+   "sample_definition": "Platform rule",
+   "methodology": "Official documentation",
+   "confidence": "A",
+   "limitations": "Page does not name the currency; USD assumed for a US account.",
+   "verification_status": "verified",
+   "how_verified": "Page read directly on 2026-11-23; figures copied from the page tables or text."
+  },
+  {
+   "id": "C07",
+   "title": "Removal of Detailed Targeting Exclusions",
+   "publisher": "Meta for Developers",
+   "urls": [
+    "https://developers.facebook.com/blog/post/2025/01/21/removal-of-detailed-targeting-exclusions/"
+   ],
+   "release_date": "2025-01-21",
+   "retrieved": "2026-11-23",
+   "sample_definition": "Platform change notice",
+   "methodology": "Official announcement",
+   "confidence": "A",
+   "limitations": "Meta's performance claim in the post is Meta's own test and is not used.",
+   "verification_status": "verified",
+   "how_verified": "Page read directly on 2026-11-23; figures copied from the page tables or text."
+  },
+  {
+   "id": "C08",
+   "title": "Meta Is Consolidating More of Its Detailed Ad Targeting Options",
+   "publisher": "Social Media Today",
+   "urls": [
+    "https://www.socialmediatoday.com/news/meta-removes-more-detailed-ad-targeting-options-facebook-instagram/757856/"
+   ],
+   "release_date": "2025-08-17",
+   "retrieved": "2026-11-23",
+   "sample_definition": "News report of an Ads Manager notice",
+   "methodology": "Secondary reporting",
+   "confidence": "C",
+   "limitations": "Does not list which options were removed.",
+   "verification_status": "verified",
+   "how_verified": "Page read directly on 2026-11-23; figures copied from the page tables or text."
+  },
+  {
+   "id": "C09",
+   "title": "The SaaS Conversion Report",
+   "publisher": "ChartMogul / Kyle Poyar / ProductLed",
+   "urls": [
+    "https://chartmogul.com/reports/saas-conversion-report/"
+   ],
+   "release_date": "2026-02-04",
+   "retrieved": "2026-11-23",
+   "sample_definition": "200 B2B software products, self-reported estimates, Jan 2026",
+   "methodology": "Convenience survey",
+   "confidence": "C",
+   "limitations": "Self-reported; typical respondent ARPA $50-249/month; no construction products; no split by ARPA band.",
+   "verification_status": "verified",
+   "how_verified": "Page read directly on 2026-11-23; figures copied from the page tables or text."
+  },
+  {
+   "id": "C10",
+   "title": "B2B SaaS Trial Conversion Rate Benchmarks",
+   "publisher": "Powered by Search",
+   "urls": [
+    "https://www.poweredbysearch.com/learn/b2b-saas-trial-conversion-rate-benchmarks/"
+   ],
+   "release_date": "2026-03-16",
+   "retrieved": "2026-11-23",
+   "sample_definition": "Not stated (cites First Page Sage)",
+   "methodology": "Secondary compilation",
+   "confidence": "D",
+   "limitations": "No sample, period or method stated.",
+   "verification_status": "verified",
+   "how_verified": "Page read directly on 2026-11-23; figures copied from the page tables or text."
+  },
+  {
+   "id": "C11",
+   "title": "CAN-SPAM Act: A Compliance Guide for Business",
+   "publisher": "U.S. Federal Trade Commission",
+   "urls": [
+    "https://www.ftc.gov/business-guidance/resources/can-spam-act-compliance-guide-business"
+   ],
+   "release_date": "2023-08 (edited Jan 2024)",
+   "retrieved": "2026-11-23",
+   "sample_definition": "Law / regulator guidance",
+   "methodology": "Official guidance",
+   "confidence": "A",
+   "limitations": "Guidance, not legal advice.",
+   "verification_status": "verified",
+   "how_verified": "Page read directly on 2026-11-23; figures copied from the page tables or text."
+  },
+  {
+   "id": "C12",
+   "title": "About video ad formats",
+   "publisher": "Google Ads Help",
+   "urls": [
+    "https://support.google.com/google-ads/answer/2375464"
+   ],
+   "release_date": "2025",
+   "retrieved": "2026-11-23",
+   "sample_definition": "Platform rule",
+   "methodology": "Official documentation",
+   "confidence": "A",
+   "limitations": "No minimum budget stated; no cost benchmarks.",
+   "verification_status": "verified",
+   "how_verified": "Page read directly on 2026-11-23; figures copied from the page tables or text."
+  },
+  {
+   "id": "C13",
+   "title": "Email Marketing Benchmarks",
+   "publisher": "Mailchimp",
+   "urls": [
+    "https://mailchimp.com/resources/email-marketing-benchmarks/"
+   ],
+   "release_date": "Data as of Dec 2023",
+   "retrieved": "2026-11-23",
+   "sample_definition": "Mailchimp campaigns sent to lists of 1,000+ subscribers",
+   "methodology": "Platform aggregate",
+   "confidence": "C",
+   "limitations": "Old (Dec 2023); no construction or software row on the public page; opens inflated by Apple Mail Privacy Protection.",
+   "verification_status": "verified",
+   "how_verified": "Page read directly on 2026-11-23; figures copied from the page tables or text."
+  },
+  {
+   "id": "C14",
+   "title": "How Much Do LinkedIn Ads Cost?",
+   "publisher": "WordStream",
+   "urls": [
+    "https://www.wordstream.com/blog/linkedin-ads-cost"
+   ],
+   "release_date": "Undated",
+   "retrieved": "2026-11-23",
+   "sample_definition": "Third-party estimates relayed",
+   "methodology": "Secondary compilation",
+   "confidence": "E",
+   "limitations": "Undated; publisher states it lacks LinkedIn benchmarks.",
+   "verification_status": "verified",
+   "how_verified": "Page read directly on 2026-11-23; figures copied from the page tables or text."
+  }
+ ]
+}

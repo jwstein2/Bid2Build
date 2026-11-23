@@ -1,0 +1,10 @@
+channel_id,channel,organic_score,repurpose_only,role,cadence_at_base_hours,time_share_pct,hours_week_lean,hours_week_base,hours_week_committed
+GOOGLE_SEARCH,Google Search (paid search + organic SEO),4.4,False,Primary organic channel: SEO for trade pages and estimating guides.,1 guide or landing-page improvement every 2 weeks; monthly Search Console query review,20.4,1.0,2.0,4.1
+EMAIL,Email (owned list and lifecycle),3.65,False,Activation and conversion engine for every other channel.,Lifecycle A-E automated once approved; 1 product-update email per month to opted-in users,14.0,0.7,1.4,2.8
+YOUTUBE,YouTube (Google),3.4,False,Primary organic video channel.,"1 screen-recorded estimate walkthrough (5-8 min, no studio production) every 2 weeks, plus 2 Shorts cut from it",12.2,0.6,1.2,2.4
+FACEBOOK,Facebook (Meta),3.35,False,Secondary organic: page posts and reels from repurposed video.,3 page posts per week reusing the video library,11.8,0.6,1.2,2.4
+COMMUNITIES,"Contractor communities (Facebook groups, Reddit, forums)",3.3,False,Trust and word of mouth.,3 genuinely helpful answers per week; disclose affiliation; no promotion where rules forbid it,11.4,0.6,1.1,2.3
+PARTNERSHIPS,"Partnerships (creator partners, associations, suppliers)",3.25,False,Relationship building ahead of paid deals.,Maintain a partner shortlist and draft outreach notes for owner approval; 0 messages sent without it,11.1,0.6,1.1,2.2
+INSTAGRAM,Instagram (Meta),2.95,False,Repurpose channel.,2 reels per week reusing Shorts,9.1,0.5,0.9,1.8
+TIKTOK,TikTok,1.55,True,"Repurpose only, zero incremental production.",Repost Shorts only,5.0,0.2,0.5,1.0
+LINKEDIN,LinkedIn,2.3,True,Partner and commercial-GC relationships; minimal.,"1 founder post per week, optional",5.0,0.2,0.5,1.0
