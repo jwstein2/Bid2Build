@@ -7,6 +7,8 @@ import { getUser, createClient, createAdminClient } from "@/lib/supabase/server"
 import { isFinancialsEnabled, isPmEnabled, isSupabaseConfigured, isUnifiedHomeEnabled, serverEnv } from "@/lib/env";
 import { ATTRIBUTION_COOKIE, decodeAttribution } from "@/lib/growth/attribution";
 import { syncSignedInUser } from "@/lib/growth/leads";
+import { decodeTouches, TOUCHES_COOKIE, VISITOR_COOKIE } from "@/lib/growth/touches";
+import { syncTouches } from "@/lib/growth/touches-server";
 import { REFERRAL_COOKIE } from "@/lib/growth/referral";
 import { recordReferral } from "@/lib/growth/referral-server";
 import { decodeRepCookie, SALES_COOKIE } from "@/lib/sales/link";
@@ -80,9 +82,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     // database keeps one owner per customer either way (sales_record_attribution / affiliate_record_attribution).
     const aff = jar.get(AFFILIATE_COOKIE)?.value;
     const order = attributionOrder(decodeRepCookie(rep), decodeAffiliateCookie(aff));
+    // Growth OS Phase 3 touch history (cookies exist only when MARKETING_TOUCHES=on and tracking is permitted).
+    const visitor = jar.get(VISITOR_COOKIE)?.value;
+    const touches = decodeTouches(jar.get(TOUCHES_COOKIE)?.value);
     after(async () => {
       const admin = createAdminClient();
       await syncSignedInUser(admin, user, attribution);
+      if (touches.length) await syncTouches(admin, user.id, visitor, touches);
       if (ref) await recordReferral(admin, user.id, ref);
       for (const program of order) {
         if (program === "sales") await recordRepAttribution(admin, user.id, rep);

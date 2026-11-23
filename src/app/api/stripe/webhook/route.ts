@@ -137,6 +137,12 @@ export async function POST(req: Request) {
         const email = (obj as { customer_details?: { email?: string | null } }).customer_details?.email ?? null;
         await markCustomer(admin, res.userId, email);
       }
+      // Growth OS Phase 3: a cancellation scheduled for the period end (once per scheduled end date; a
+      // resumed-then-rescheduled subscription records again). Not churn until the subscription is deleted.
+      if (event.type === "customer.subscription.updated" && sub.cancel_at_period_end && sub.status !== "canceled") {
+        const at = sub.cancel_at ?? (sub as { current_period_end?: number }).current_period_end ?? event.created;
+        await recordEvent(admin, { userId: res.userId, event: "subscription_cancel_scheduled", eventId: `subscription_cancel_scheduled:${subscriptionId}:${at}` });
+      }
       if (event.type === "customer.subscription.deleted") {
         await markChurned(admin, res.userId);
         await recordEvent(admin, { userId: res.userId, event: "subscription_canceled", eventId: `subscription_canceled:${subscriptionId}` });

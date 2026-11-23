@@ -85,8 +85,10 @@ through the built-in browser).
 | Live data | 13 leads, all linked to accounts; **0 with any UTM tag**; 11 `direct`, 2 with Android app referrers. |
 
 Data quality bug found (verified in live data and code): Android app referrers arrive as package names
-(`com.google.android.gm` = Gmail app, `com.google.android.googlequicksearchbox` = Google app). They're
-stored as `source` and classified as generic **referral**, when they should be email and organic search.
+(`com.google.android.gm` = Gmail app, `com.google.android.googlequicksearchbox` = Google app) and are stored as
+`source` / `referrer_host`. *Correction (build phase): the first draft of this audit said they were classified as
+referral. In fact the web search rule matches `google.*`, so both were counted as **organic search**, including Gmail.
+Fixed in the Phase 3 build ([README.md](README.md)).*
 
 ### 2.4 Product funnel events (first-party)
 
