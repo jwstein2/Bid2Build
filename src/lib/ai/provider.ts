@@ -57,6 +57,13 @@ export class AiUnavailableError extends Error {
   }
 }
 
+/** "Failed to parse structured output: …\nValidation issues:\n  - questions: Too big…" → one short line. */
+function summarizeSdkError(msg: string): string {
+  const head = msg.split("\n")[0].replace(/:\s*\[$/, "");
+  const issues = msg.includes("Validation issues:") ? msg.split("Validation issues:")[1].split("\n").map((l) => l.trim()).filter(Boolean).join("; ") : "";
+  return `${head}${issues ? ` | ${issues}` : ""}`.replace(/\s+/g, " ").slice(0, 240);
+}
+
 let client: Anthropic | null = null;
 function getClient(apiKey: string) {
   if (!client) client = new Anthropic({ apiKey, timeout: 45_000, maxRetries: 1 });
@@ -90,7 +97,10 @@ export async function generateStructured<S extends z.ZodType>(opts: {
     // Log the cause (status and type only, never the key or prompt) so a revoked key, wrong model id or
     // rate limit is visible in the function logs instead of silently falling back to the rules drafts.
     const status = e instanceof Anthropic.APIError ? (e.status ?? "network") : "unknown";
-    console.error(`[ai.provider] request failed: status=${status} model=${opts.model || s.model} type=${(e as { error?: { error?: { type?: string } } })?.error?.error?.type ?? (e as Error)?.name ?? "error"}`);
+    // SDK-side errors (e.g. the reply failed schema validation) carry no status; keep the first line of
+    // the message so the cause is visible. It names schema issues, never the prompt or the key.
+    const detail = e instanceof Anthropic.APIError ? "-" : summarizeSdkError(String((e as Error)?.message ?? ""));
+    console.error(`[ai.provider] request failed: status=${status} model=${opts.model || s.model} type=${(e as { error?: { error?: { type?: string } } })?.error?.error?.type ?? (e as Error)?.name ?? "error"} detail=${detail}`);
     if (e instanceof Anthropic.APIError) throw new AiUnavailableError(`AI request failed (${status})`, "api_error");
     throw new AiUnavailableError("AI request failed", "api_error");
   }

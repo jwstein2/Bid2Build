@@ -38,7 +38,10 @@ export function salesHubPath(w: Workspaces, lastView?: string | null): string | 
  * Where a sign-in with no specific destination lands.
  *  - A pending sales invite always wins (it's accepted at /sales/join first).
  *  - Only one workspace: that one. Sales-only people never land in the contractor dashboard.
- *  - Both: the preference, else the workspace used last, else the contractor dashboard.
+ *  - Both, and a selling sales rep: the Sales Hub, unless they chose the contractor dashboard as their
+ *    landing page in account settings (James 2026-11-22: a rep who signs in lands on /sales).
+ *  - Both, not a selling rep (owner, Sales Administrator): the preference, else the workspace used last,
+ *    else the contractor dashboard.
  *  - A preference for a workspace the person no longer has falls back to one they do have.
  */
 export function landingPath(w: Workspaces, opts: { pendingInvite?: boolean; lastView?: string | null; contractorHome?: string } = {}): string {
@@ -47,7 +50,7 @@ export function landingPath(w: Workspaces, opts: { pendingInvite?: boolean; last
   const sales = salesHubPath(w, opts.lastView);
   if (!sales) return home;
   if (!w.contractor) return sales;
-  const want = w.landing !== "auto" ? w.landing : w.last_workspace ?? "contractor";
+  const want = w.landing !== "auto" ? w.landing : w.sales_my ? "sales" : w.last_workspace ?? "contractor";
   return want === "sales" ? sales : home;
 }
 
@@ -82,3 +85,6 @@ export const LANDING_LABELS: Record<Landing, string> = {
   contractor: "Contractor Dashboard",
   sales: "Sales Hub",
 };
+
+/** The label for a landing option. "auto" means the Sales Hub for a selling rep, else the last workspace. */
+export const landingLabel = (o: Landing, w: Workspaces): string => (o === "auto" && w.sales_my ? "Automatic (Sales Hub)" : LANDING_LABELS[o]);

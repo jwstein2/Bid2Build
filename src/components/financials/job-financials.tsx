@@ -91,12 +91,19 @@ export function JobFinancials({ estimateId, initialAction }: { estimateId: strin
   }, [data, actionUsed, initialAction, writable, perms.invoice, perms.pay, perms.expense, perms.bill]);
 
   // Links from the Home dashboard previews (#fin-invoices, #fin-payments) land on that list once the job has loaded.
+  // #invoice-<id> lands on Invoices and opens that invoice's preview (when it's an issued invoice on this job).
   const [hashUsed, setHashUsed] = useState(false);
   useEffect(() => {
     if (!data?.job || hashUsed) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time scroll from the URL hash
     setHashUsed(true);
-    const id = typeof window === "undefined" ? "" : window.location.hash.slice(1);
+    let id = typeof window === "undefined" ? "" : window.location.hash.slice(1);
+    const inv = /^invoice-([0-9a-f-]{36})$/i.exec(id)?.[1];
+    if (inv) {
+      id = "fin-invoices";
+      const hit = (data.invoices ?? []).find((i) => s(i.invoice_id) === inv && i.status !== "draft");
+      if (hit) setPreviewId(inv);
+    }
     if (id !== "fin-invoices" && id !== "fin-payments") return;
     setSection("billing");
     requestAnimationFrame(() => requestAnimationFrame(() => {

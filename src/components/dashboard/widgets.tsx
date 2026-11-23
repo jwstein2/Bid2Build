@@ -24,8 +24,8 @@ import type { WidgetInstance } from "@/lib/dashboard/schema";
 import type { DashboardData, DashboardViewer } from "@/lib/dashboard/server";
 import { ChartView } from "./charts";
 import { IndustryBriefingWidget } from "@/components/news/industry-briefing-widget";
-import { PreviewCard, WinLossBar, type PreviewRow } from "./preview-card";
-import { arPreview, arStatus, decidedPreview, draftPreview, isWon, paymentStatus, previewCount } from "@/lib/dashboard/previews";
+import { PreviewCard, RecordLink, RowOverlay, WinLossBar, type PreviewRow } from "./preview-card";
+import { arPreview, arStatus, customerHref, decidedPreview, draftPreview, invoiceHref, isWon, paymentStatus, previewCount } from "@/lib/dashboard/previews";
 import { calendarHref } from "@/lib/projects/calendar-link";
 
 const fmtDay = (d: string) => { const [y, m, dd] = d.slice(0, 10).split("-").map(Number); return new Date(Date.UTC(y, m - 1, dd)).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }); };
@@ -51,21 +51,38 @@ export function Frame({ title, href, action, children, badge, testId, foot }: { 
 
 const Sandbox = ({ on }: { on: boolean }) => on ? <span className="inline-flex items-center gap-1 rounded-full bg-warn/15 px-2 py-0.5 text-[11px] font-semibold text-warn" title="Practice (sandbox) books: not your real numbers"><FlaskConical className="h-3 w-3" aria-hidden />Practice data</span> : null;
 
-function Rows({ rows, empty }: { rows: { key: string; href: string; label: ReactNode; detail?: ReactNode; value?: ReactNode; tone?: "danger" | "warn" }[]; empty: string }) {
+type RowItem = { key: string; href: string; label: ReactNode; detail?: ReactNode; value?: ReactNode; tone?: "danger" | "warn";
+  /** Plain-text name for the row link when label/detail hold their own links (e.g. a customer name). */
+  title?: string };
+
+function Rows({ rows, empty }: { rows: RowItem[]; empty: string }) {
   if (!rows.length) return <p className="flex flex-1 items-center justify-center py-4 text-center text-sm text-ink-soft">{empty}</p>;
+  const cls = "flex min-h-11 items-center gap-2 rounded-md px-1.5 py-1.5";
   return (
     <ul className="-mx-1.5 min-h-0 flex-1 divide-y divide-line overflow-auto">
-      {rows.map((r) => (
-        <li key={r.key}>
-          <Link href={r.href} prefetch={false} className="flex min-h-11 items-center gap-2 rounded-md px-1.5 py-1.5 hover:bg-black/5 focus-visible:outline-2">
+      {rows.map((r) => {
+        const body = (
+          <>
             <span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold">{r.label}</span>{r.detail && <span className="block truncate text-xs text-muted">{r.detail}</span>}</span>
             {r.value != null && <span className={`shrink-0 text-sm tabular font-semibold ${r.tone === "danger" ? "text-danger" : r.tone === "warn" ? "text-warn" : ""}`}>{r.value}</span>}
-          </Link>
-        </li>
-      ))}
+          </>
+        );
+        // A row with its own inner links (title set) uses an overlay row link so links are never nested.
+        return r.title ? (
+          <li key={r.key} className="relative"><div className={cls}>{body}</div><RowOverlay href={r.href} label={r.title} /></li>
+        ) : (
+          <li key={r.key}><Link href={r.href} prefetch={false} className={cn(cls, "hover:bg-black/5 focus-visible:outline-2")}>{body}</Link></li>
+        );
+      })}
     </ul>
   );
 }
+
+/** Customer name that opens the customer record when the record is linked to one; plain text otherwise. */
+const Customer = ({ id, name }: { id: string | null | undefined; name: string }) => {
+  const href = customerHref(id);
+  return href ? <RecordLink href={href} title={`Open customer ${name}`} testId="row-customer-link">{name}</RecordLink> : <>{name}</>;
+};
 
 const Unavailable = ({ title, why }: { title: string; why: string }) => (
   <Frame title={title}><p className="flex flex-1 items-center justify-center py-4 text-center text-sm text-ink-soft">{why}</p></Frame>
@@ -106,6 +123,7 @@ export async function WidgetBody({ inst, data, viewer }: { inst: WidgetInstance;
       const shown = (pays ?? []).slice(0, previewCount(tall));
       const rows: PreviewRow[] = shown.map((p) => ({
         key: p.id, href: p.href ?? "/financials/records?view=payments", label: p.customer ?? p.job ?? `Payment ${p.number}`,
+        labelHref: p.customer ? customerHref(p.customerId) : undefined,
         detail: `Verified ${fmtDay(p.verifiedAt)} · ${p.number}${p.source === "stripe" ? " · online" : ""}`, value: formatCurrency(p.amount), status: paymentStatus(p),
       }));
       return <PreviewCard title={KPI_LABELS.collected} value={show(f)} sub={f.sub ?? f.note} href={f.href} action="View records" tone={f.tone} empty={f.empty} hint={f.note}
@@ -176,7 +194,8 @@ export async function WidgetBody({ inst, data, viewer }: { inst: WidgetInstance;
       if (s.view !== "table") {
         const n = previewCount(tall);
         const rows: PreviewRow[] = arPreview(list, n).map((r) => ({
-          key: r.invoice_id, href: `/financials/jobs/${r.estimate_id}#fin-invoices`, label: r.customer_name || r.job_name || "Customer",
+          key: r.invoice_id, href: invoiceHref(r.estimate_id, r.invoice_id), label: r.customer_name || r.job_name || "Customer",
+          labelHref: r.customer_name ? customerHref(r.customer_id) : undefined,
           detail: `${r.number ? `${r.number} · ` : ""}${r.days_overdue > 0 ? `${r.days_overdue} day${r.days_overdue === 1 ? "" : "s"} overdue` : `Due ${fmtDay(r.due_date)}`}`,
           value: formatCurrency(r.balance), status: arStatus(r, t, soon),
         }));
@@ -187,8 +206,8 @@ export async function WidgetBody({ inst, data, viewer }: { inst: WidgetInstance;
       }
       return (
         <Frame title={label} href={href} action="View invoices" badge={<Sandbox on={sandbox} />} testId={tid} foot={`${list.length} invoice${list.length === 1 ? "" : "s"} · ${formatCurrency(sum)}`}>
-          <Rows empty="No invoices in this view." rows={list.sort((a, b) => b.days_overdue - a.days_overdue).slice(0, limit).map((r) => ({ key: r.invoice_id, href: `/financials/jobs/${r.estimate_id}#billing`,
-            label: `${r.number} · ${r.customer_name ?? "Customer"}`, detail: r.days_overdue > 0 ? `${r.days_overdue} days overdue` : `Due ${fmtDay(r.due_date)}`, value: formatCurrency(r.balance), tone: r.days_overdue > 0 ? "danger" as const : undefined }))} />
+          <Rows empty="No invoices in this view." rows={list.sort((a, b) => b.days_overdue - a.days_overdue).slice(0, limit).map((r) => ({ key: r.invoice_id, href: invoiceHref(r.estimate_id, r.invoice_id),
+            title: `${r.number} · ${r.customer_name ?? "Customer"}`, label: <>{r.number} · <Customer id={r.customer_id} name={r.customer_name ?? "Customer"} /></>, detail: r.days_overdue > 0 ? `${r.days_overdue} days overdue` : `Due ${fmtDay(r.due_date)}`, value: formatCurrency(r.balance), tone: r.days_overdue > 0 ? "danger" as const : undefined }))} />
         </Frame>
       );
     }
@@ -359,7 +378,7 @@ export async function WidgetBody({ inst, data, viewer }: { inst: WidgetInstance;
       const bids = all.filter((b) => (FOCUS.draft.columns as readonly Column[]).includes(b.column));
       const value = bids.reduce((t, b) => t + (b.total ?? 0), 0);
       const rows: PreviewRow[] = draftPreview(bids, previewCount(tall)).map((b) => ({
-        key: b.id, href: `/estimates/${b.id}`, label: b.customer || b.title,
+        key: b.id, href: `/estimates/${b.id}`, label: b.customer || b.title, labelHref: b.customer ? customerHref(b.customerId) : undefined,
         detail: `${b.customer ? `${b.title} · ` : ""}Updated ${fmtDay(b.updatedAt)}`, value: b.total !== null ? formatCurrency(b.total.toFixed(2)) : undefined,
       }));
       return <PreviewCard title="Draft bids" value={bids.length} empty={!bids.length}
@@ -383,7 +402,7 @@ export async function WidgetBody({ inst, data, viewer }: { inst: WidgetInstance;
       // Preview rows come from the same decided bids the rate counts (same range), newest decision first.
       const rows: PreviewRow[] = decidedPreview(bids, previewCount(tall)).map((b) => {
         const w = isWon(b.column);
-        return { key: b.id, href: `/estimates/${b.id}`, label: b.customer || b.title, detail: `${b.customer ? `${b.title} · ` : ""}${fmtDay(b.stageAt ?? b.updatedAt)}`,
+        return { key: b.id, href: `/estimates/${b.id}`, label: b.customer || b.title, labelHref: b.customer ? customerHref(b.customerId) : undefined, detail: `${b.customer ? `${b.title} · ` : ""}${fmtDay(b.stageAt ?? b.updatedAt)}`,
           value: b.total !== null ? formatCurrency(b.total.toFixed(2)) : undefined, status: w ? { text: "Won", tone: "ok" as const } : { text: "Lost", tone: "danger" as const } };
       });
       return <PreviewCard title="Win rate" value={rate === null ? "None yet" : `${rate}%`} empty={rate === null} sub={`${won} won · ${lost} lost`} href={bidsLink("decided", String(s.range))} action="View decided bids" hint="Won out of bids that were won or lost"
@@ -400,7 +419,8 @@ export async function WidgetBody({ inst, data, viewer }: { inst: WidgetInstance;
       const bids = (await data.bids()) ?? [];
       return (
         <Frame title="Recently created estimates" href="/dashboard?view=table" action="All bids" testId={tid}>
-          <Rows empty="No bids yet. Create your first one." rows={bids.slice(0, limit).map((b) => ({ key: b.id, href: `/estimates/${b.id}`, label: b.title, detail: `${b.customer || "No customer"} · ${COLUMN_LABELS[b.column]} · ${fmtDay(b.createdAt)}`, value: b.total !== null ? formatCurrency(b.total.toFixed(2)) : undefined }))} />
+          <Rows empty="No bids yet. Create your first one." rows={bids.slice(0, limit).map((b) => ({ key: b.id, href: `/estimates/${b.id}`, label: b.title, title: `${b.title}, ${b.customer || "No customer"}`,
+            detail: <><Customer id={b.customerId} name={b.customer || "No customer"} /> · {COLUMN_LABELS[b.column]} · {fmtDay(b.createdAt)}</>, value: b.total !== null ? formatCurrency(b.total.toFixed(2)) : undefined }))} />
         </Frame>
       );
     }

@@ -18,6 +18,8 @@ export interface PreviewRow {
   href?: string;
   /** Client, customer or project name (truncates; the full text is the row's tooltip and accessible label). */
   label: string;
+  /** Opens the customer record. The name becomes its own link, layered above the row link (never nested). */
+  labelHref?: string;
   /** Second line: invoice number, dates, project. */
   detail?: string;
   /** Right-hand figure, usually an amount. */
@@ -100,10 +102,14 @@ export function PreviewCard({ title, value, sub, status, tone = "default", empty
 
 function PreviewItem({ row }: { row: PreviewRow }) {
   const label = [row.label, row.detail, row.value, row.status?.text].filter(Boolean).join(", ");
+  const name = row.labelHref
+    // The name is the only part of the row that opens the customer; the rest of the row still opens the record.
+    ? <span className="block truncate text-sm font-semibold text-ink"><RecordLink href={row.labelHref} className="inline-block max-w-full truncate align-top" title={`Open customer ${row.label}`} testId="preview-customer-link">{row.label}</RecordLink></span>
+    : <span className="block truncate text-sm font-semibold text-ink">{row.label}</span>;
   const body = (
     <>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-semibold text-ink">{row.label}</span>
+        {name}
         {row.detail && <span className="block truncate text-xs text-muted">{row.detail}</span>}
       </span>
       {(row.value || row.status) && (
@@ -115,6 +121,15 @@ function PreviewItem({ row }: { row: PreviewRow }) {
     </>
   );
   const cls = "flex min-h-11 items-center gap-2 rounded-md px-2 py-1.5";
+  if (row.href && row.labelHref) {
+    // Two destinations in one row: the row link covers the row, the customer name sits above it.
+    return (
+      <li className="relative">
+        <div className={cls}>{body}</div>
+        <RowOverlay href={row.href} label={label} />
+      </li>
+    );
+  }
   return (
     <li>
       {row.href
@@ -122,6 +137,25 @@ function PreviewItem({ row }: { row: PreviewRow }) {
             className={cn(cls, "transition-colors hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-focus active:bg-black/10")}>{body}</Link>
         : <div className={cls} title={label}>{body}</div>}
     </li>
+  );
+}
+
+/**
+ * A link that sits above a row's overlay link, e.g. the customer name inside an invoice row. Looks like the
+ * text it replaces until hovered or focused, so card layouts don't change.
+ */
+export function RecordLink({ href, children, className, title, testId }: { href: string; children: ReactNode; className?: string; title?: string; testId?: string }) {
+  return (
+    <Link href={href} prefetch={false} title={title} data-testid={testId}
+      className={cn("relative z-10 max-w-full rounded-sm underline-offset-2 hover:text-accent-ink hover:underline focus-visible:outline-2 focus-visible:outline-focus", className)}>{children}</Link>
+  );
+}
+
+/** The row's main link, stretched over the whole row (put it after the row content inside a `relative` item). */
+export function RowOverlay({ href, label }: { href: string; label: string }) {
+  return (
+    <Link href={href} prefetch={false} title={label} aria-label={label}
+      className="absolute inset-0 rounded-md transition-colors hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-focus active:bg-black/10" />
   );
 }
 

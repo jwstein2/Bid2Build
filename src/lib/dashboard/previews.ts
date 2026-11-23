@@ -45,7 +45,7 @@ export function decidedPreview<T extends BidLike>(bids: T[], n: number): T[] {
 }
 
 export interface VerifiedPayment {
-  id: string; number: string; customer: string | null; job: string | null; href: string | null;
+  id: string; number: string; customer: string | null; customerId: string | null; job: string | null; href: string | null;
   amount: string; refunded: string; receivedOn: string; verifiedAt: string; method: string; source: string;
 }
 
@@ -55,3 +55,10 @@ export function paymentStatus(p: Pick<VerifiedPayment, "amount" | "refunded">): 
   if (cmp(p.refunded, 0) > 0) return { text: "Part refunded", tone: "warn" };
   return { text: "Verified", tone: "ok" };
 }
+
+/** The customer record page (Customer Hub). Null when the record isn't linked to a customer. */
+export const customerHref = (id: string | null | undefined): string | undefined =>
+  id && /^[0-9a-f-]{36}$/i.test(id) ? `/dashboard/customers/${id}` : undefined;
+
+/** Opens one invoice: the job's billing tab scrolls to Invoices and shows that invoice's preview. */
+export const invoiceHref = (estimateId: string, invoiceId: string) => `/financials/jobs/${estimateId}#invoice-${invoiceId}`;
