@@ -89,9 +89,9 @@ check("essential alerts always shown (8 cards)", true);
   check("all 8 essential alert cards present", (await page.locator("[data-testid^=fin-card-]").filter({ has: page.locator("text=/./") }).count()) >= 8);
   check("every KPI card links to records", (await page.locator("[data-testid^=fin-kpi-][data-metric-href]").count()) === (await page.locator("[data-testid^=fin-kpi-]").count()));
   check("owner sees Contractor / Accountant mode switch", (await page.getByTestId("fin-mode").count()) === 1);
-  await page.getByTestId("fin-customize-toggle").click();
+  await page.getByTestId("dash-customize").click();
   await page.waitForTimeout(300);
-  check("essential cards can't be unchecked in Customize", (await page.locator("#fin-customize input[type=checkbox][disabled]").count()) >= 8);
+  check("Needs attention can't be removed in Customize", (await page.locator("[data-widget=fin_page_attention] [data-testid=dash-remove]").count()) === 0);
   await shot(page, `${String(n++).padStart(2, "0")}-home-customize-desktop-light`);
   await ctx.close();
 }

@@ -21,7 +21,7 @@ import type { ReportBasis } from "@/lib/financials/reports";
 import { loadEffectiveAccess } from "@/lib/access/server";
 import { accessFromFacts, allowed, withEffectiveAccess, type DashboardAccess } from "./access";
 import { chartRange, type ChartPeriod } from "./charts";
-import { widgetDef, type Source } from "./registry";
+import { widgetDef, type DashboardPage, type Source } from "./registry";
 import { LAYOUT_VERSION, parseLayout, type DashboardMode, type Layout, type WidgetInstance } from "./schema";
 import { buildTemplate, defaultTemplate, type TemplateKey } from "./templates";
 
@@ -37,10 +37,10 @@ export interface DashboardViewer {
 }
 
 /** One pass over today's permission sources. V6.7 replaces the facts with loadEffectiveAccess(). */
-export async function loadViewer(db: Db, userId: string): Promise<DashboardViewer> {
+export async function loadViewer(db: Db, userId: string, finState?: Awaited<ReturnType<typeof loadFinState>>): Promise<DashboardViewer> {
   const finOn = isFinancialsEnabled();
   const [company, fin, effective] = await Promise.all([
-    loadMyCompany(db), finOn ? loadFinState(db) : Promise.resolve(null),
+    loadMyCompany(db), finOn ? (finState ? Promise.resolve(finState) : loadFinState(db)) : Promise.resolve(null),
     loadEffectiveAccess(db).catch((e: Error) => { console.error(JSON.stringify({ level: "error", scope: "dashboard.effective_access", message: e.message })); return null; }),
   ]);
   const ctx = fin && fin.kind === "ready" ? fin.ctx : null;
@@ -71,10 +71,19 @@ export interface LoadedLayout {
   companyDefaultRole: string | null | undefined;
 }
 
-/** The person's layout for the mode, else their assigned Home, else their company's default, else the best built-in template. */
-export async function loadLayout(db: Db, viewer: DashboardViewer, mode: DashboardMode): Promise<LoadedLayout> {
-  const { data, error } = await db.rpc("dashboard_layout_get", { p_mode: mode });
-  const fallback = (): Layout => buildTemplate(defaultTemplate(viewer.access, mode), viewer.access);
+/**
+ * RPC arguments for a page. Home leaves p_page out (the database default is 'home'), so Home keeps working on a
+ * database from before page layouts existed.
+ */
+export const pageArgs = (page: DashboardPage) => (page === "home" ? {} : { p_page: page });
+
+/**
+ * The person's layout for the page and mode, else their assigned Home, else their company's default, else the
+ * best built-in template (Home) or the page's own starting layout (`start`, e.g. the Financials page).
+ */
+export async function loadLayout(db: Db, viewer: DashboardViewer, mode: DashboardMode, page: DashboardPage = "home", start?: () => Layout): Promise<LoadedLayout> {
+  const { data, error } = await db.rpc("dashboard_layout_get", { p_mode: mode, ...pageArgs(page) });
+  const fallback = (): Layout => (start ? start() : buildTemplate(defaultTemplate(viewer.access, mode), viewer.access));
   if (error) {
     if (!isMissing(error)) console.error(JSON.stringify({ level: "error", scope: "dashboard.layout_get", code: error.code }));
     return { layout: fallback(), revision: null, origin: "template", ready: !isMissing(error), isCompanyOwner: false, companyDefaultRole: undefined };
@@ -85,7 +94,7 @@ export async function loadLayout(db: Db, viewer: DashboardViewer, mode: Dashboar
     return { layout: parseLayout(d.mine as never), revision: Number(d.mine.revision), origin: "mine", ready: true, isCompanyOwner, companyDefaultRole: d.companyDefault ? (d.companyDefault.role as string | null) : undefined };
   }
   // A Home page assigned to this person (Team & Access) is more specific than the company's per-role default.
-  if (d.companyDefault && !viewer.access.home) {
+  if (d.companyDefault && (page !== "home" || !viewer.access.home)) {
     const parsed = parseLayout(d.companyDefault as never);
     // A company default applies within the person's own access: widgets they can't see are left out.
     const widgets = parsed.widgets.filter((w) => { const def = widgetDef(w.type); return def && allowed(viewer.access, def.requires); });
@@ -96,9 +105,9 @@ export async function loadLayout(db: Db, viewer: DashboardViewer, mode: Dashboar
 
 export type SaveResult = { ok: true; revision: number } | { ok: false; code: "conflict" | "not_installed" | "invalid" | "error"; message: string };
 
-export async function saveLayout(db: Db, mode: DashboardMode, layout: Layout, expectedRevision: number | null, source: "user" | "setup" | "template" | "company_default"): Promise<SaveResult> {
+export async function saveLayout(db: Db, mode: DashboardMode, layout: Layout, expectedRevision: number | null, source: "user" | "setup" | "template" | "company_default", page: DashboardPage = "home"): Promise<SaveResult> {
   const { data, error } = await db.rpc("dashboard_layout_save", {
-    p_mode: mode, p_template: layout.template, p_widgets: layout.widgets, p_schema_version: LAYOUT_VERSION, p_expected_revision: expectedRevision, p_source: source,
+    p_mode: mode, p_template: layout.template, p_widgets: layout.widgets, p_schema_version: LAYOUT_VERSION, p_expected_revision: expectedRevision, p_source: source, ...pageArgs(page),
   });
   if (!error) return { ok: true, revision: Number(data) };
   if (isMissing(error)) return { ok: false, code: "not_installed", message: "Saving layouts turns on after a short database update." };

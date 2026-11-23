@@ -103,9 +103,38 @@ d("Dashboard layouts (database)", () => {
     expect(await save(est, "contractor", ["n"], null)).toBe(1);
   });
 
+  it("Financials page layouts are separate from Home, per mode, and calls without a page stay on Home", async () => {
+    const fsave = (u: string, mode: string, ids: string[], rev: number | null) =>
+      as(u, "select public.dashboard_layout_save($1, null, $2::jsonb, 1, $3, 'user', 'financials') as r", [mode, W(ids), rev]).then((r) => r[0].r as number);
+    const fget = (u: string, mode = "contractor") => as(u, "select public.dashboard_layout_get($1, 'financials') as g", [mode]).then((r) => r[0].g as Row);
+    const homeBefore = ((await get(est)).mine.widgets as Row[]).map((w) => w.id);
+    expect((await fget(est)).mine).toBeNull();
+    expect(await fsave(est, "contractor", ["fc1", "fc2"], null)).toBe(1);
+    expect(await fsave(est, "accountant", ["fa1"], null)).toBe(1);
+    expect(((await fget(est)).mine.widgets as Row[]).map((w) => w.id)).toEqual(["fc1", "fc2"]);
+    expect(((await fget(est, "accountant")).mine.widgets as Row[]).map((w) => w.id)).toEqual(["fa1"]);
+    // Home is untouched, and a page-less call still means Home.
+    expect(((await get(est)).mine.widgets as Row[]).map((w) => w.id)).toEqual(homeBefore);
+    // Each page/mode keeps its own revision.
+    expect(await fsave(est, "contractor", ["fc2", "fc1"], 1)).toBe(2);
+    expect(await fails(est, "select public.dashboard_layout_save('contractor', null, $1::jsonb, 1, 1, 'user', 'financials')", [W(["stale"])])).toMatch(/layout_conflict/);
+    expect(await fails(est, "select public.dashboard_layout_get('contractor', 'nowhere')")).toMatch(/bad_page/);
+    // Restoring the Financials Contractor layout leaves Home and Accountant alone.
+    await as(est, "select public.dashboard_layout_reset('contractor', 'financials')");
+    expect((await fget(est)).mine).toBeNull();
+    expect((await fget(est, "accountant")).mine).not.toBeNull();
+    expect((await get(est)).mine).not.toBeNull();
+    // Company defaults are per page too.
+    await as(owner, "select public.company_dashboard_default_save(null, 'contractor', null, $1::jsonb, 1, 'financials')", [W(["fco"])]);
+    expect(((await fget(mgr)).companyDefault.widgets as Row[]).map((w) => w.id)).toEqual(["fco"]);
+    expect((await get(mgr)).companyDefault).toMatchObject({ role: null, template: "job" });
+    const list = (await as(owner, "select public.company_dashboard_defaults_list() as l"))[0].l as Row[];
+    expect(list.some((r) => r.page === "financials")).toBe(true);
+  });
+
   it("deleting a user removes their layouts; layouts reference no business data", async () => {
     const cols = await pool.query("select column_name from information_schema.columns where table_name = 'dashboard_layouts'");
-    expect(cols.rows.map((r) => r.column_name).sort()).toEqual(["created_at", "mode", "revision", "schema_version", "source", "template", "updated_at", "user_id", "widgets"]);
+    expect(cols.rows.map((r) => r.column_name).sort()).toEqual(["created_at", "mode", "page", "revision", "schema_version", "source", "template", "updated_at", "user_id", "widgets"]);
     const tmp = await createUser(pool, "tmp@dash.dev");
     await save(tmp, "contractor", ["t"], null);
     await pool.query("delete from auth.users where id = $1", [tmp]);

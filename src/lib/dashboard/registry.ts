@@ -12,10 +12,13 @@
 import { need, type CapabilityRequirement } from "./access";
 import { CATEGORIES, CATEGORY_LABELS, BASIS_LABELS, PERIOD_LABELS } from "@/lib/financials/reports";
 import { CHART_PERIODS, CHART_TYPE_LABELS, DATASETS, DATASET_INFO, chartTypesFor, isDataset, type Dataset } from "./charts";
+import { CARDS, CARD_KEYS, KPI_KEYS, QUICK_ACTIONS as FIN_QUICK_ACTIONS } from "@/lib/financials/profiles/catalog";
+import { KPI_LABELS, QUICK_ACTION_LABELS } from "@/lib/financials/ui-labels";
 
-export const GROUPS = ["overview", "projects", "sales", "accounting", "team", "growth", "actions"] as const;
+export const GROUPS = ["financials_page", "overview", "projects", "sales", "accounting", "team", "growth", "actions"] as const;
 export type Group = (typeof GROUPS)[number];
 export const GROUP_LABELS: Record<Group, string> = {
+  financials_page: "Financials page sections",
   overview: "Business overview", projects: "Projects", sales: "Sales & estimating", accounting: "Accounting",
   team: "Employees & subcontractors", growth: "Grow the business", actions: "Quick actions",
 };
@@ -46,13 +49,26 @@ export interface WidgetDef {
   settings: readonly SettingSpec[];
   /** More than one copy allowed (charts). */
   multiple?: boolean;
+  /** Pages that offer this widget (default: Home only). */
+  pages?: readonly DashboardPage[];
+  /** Only in this mode (e.g. the accountant overview). Default: both modes. */
+  modes?: readonly ("contractor" | "accountant")[];
+  /** Always on the page: it can be moved and resized but not removed (essential alerts). */
+  required?: boolean;
 }
+
+/** Pages built with the dashboard builder. Each person keeps a layout per page per mode. */
+export const PAGES = ["home", "financials"] as const;
+export type DashboardPage = (typeof PAGES)[number];
 
 const opt = (pairs: [string, string][]): Option[] => pairs.map(([value, label]) => ({ value, label }));
 const RANGE = { key: "range", label: "Date range", kind: "select", default: "all", options: opt([["30d", "Last 30 days"], ["90d", "Last 90 days"], ["year", "Last 12 months"], ["all", "All time"]]) } as const satisfies SettingSpec;
 const PERIOD = { key: "period", label: "Period", kind: "select", default: "ytd", options: CHART_PERIODS.map((p) => ({ value: p, label: PERIOD_LABELS[p] })) } as const satisfies SettingSpec;
 const BASIS = { key: "basis", label: "Basis", kind: "select", default: "cash", options: opt([["cash", BASIS_LABELS.cash], ["billed", BASIS_LABELS.billed]]) } as const satisfies SettingSpec;
 const LIMIT = { key: "limit", label: "Rows", kind: "select", default: "5", options: opt([["5", "5"], ["10", "10"]]) } as const satisfies SettingSpec;
+
+/** Financials cards a person can place on the Financials page (essential alerts live in "Needs attention"). */
+export const FIN_CARD_KEYS = CARD_KEYS.filter((k) => !CARDS[k].essential);
 
 const FIN_PROJECT: CapabilityRequirement[] = [need("fin_visibility", "project")];
 const FIN_COMPANY: CapabilityRequirement[] = [need("fin_visibility", "company")];
@@ -148,11 +164,31 @@ const DEFS: WidgetDef[] = [
   // ---- Quick actions ---------------------------------------------------------------------------------------------
   { type: "quick_actions", title: "Quick actions", description: "Buttons for the things you do most.", group: "actions", requires: [], sources: [], size: { w: 2, h: 1, maxH: 1 },
     settings: [{ key: "actions", label: "Actions", kind: "multi", max: 8, default: ["create_bid", "open_schedule", "create_invoice", "record_payment"], options: QUICK_ACTION_KEYS.map((k) => ({ value: k, label: QUICK_ACTIONS[k].label })) }] },
+
+  // ---- Financials page sections (Know Your Numbers) -----------------------------------------------------------
+  { type: "fin_page_nav", title: "Financials shortcuts", description: "Links to invoices, payments, costs, jobs and reports.", group: "financials_page", requires: FIN_PROJECT, sources: [], size: { w: 4, h: 1, minW: 2 }, settings: [], pages: ["financials"], modes: ["contractor"] },
+  { type: "fin_page_accountant", title: "Accountant overview", description: "Accountant numbers, the review queue and accountant shortcuts.", group: "financials_page", requires: FIN_COMPANY, sources: [], size: { w: 4, h: 1, minW: 2, maxH: 2 }, settings: [], pages: ["financials"], modes: ["accountant"] },
+  { type: "fin_page_kpis", title: "Headline numbers", description: "Up to 6 key numbers, each opening its records.", group: "financials_page", requires: FIN_PROJECT, sources: [], size: { w: 4, h: 1, minW: 1 },
+    settings: [{ key: "kpis", label: "Numbers", kind: "multi", max: 6, default: ["contract_value", "collected", "ar_outstanding", "projected_margin"], options: KPI_KEYS.map((k) => ({ value: k, label: KPI_LABELS[k] })) }], pages: ["financials"] },
+  { type: "fin_page_overview", title: "Overview circle charts", description: "Invoices, where the money goes, and profit at a glance.", group: "financials_page", requires: FIN_PROJECT, sources: [], size: { w: 4, h: 1, minW: 2, maxH: 2 }, settings: [], pages: ["financials"] },
+  { type: "fin_page_attention", title: "Needs attention", description: "Essential alerts. Always shown; you can move it.", group: "financials_page", requires: FIN_PROJECT, sources: [], size: { w: 4, h: 1, minW: 2, maxH: 2 }, settings: [], pages: ["financials"], required: true },
+  { type: "fin_page_alerts", title: "Alerts to act on", description: "Open financial alerts with their actions. Always shown; you can move it.", group: "financials_page", requires: FIN_PROJECT, sources: [], size: { w: 4, h: 1, minW: 2, maxH: 2 }, settings: [], pages: ["financials"], required: true },
+  { type: "fin_page_quick", title: "Financial quick actions", description: "Buttons for invoices, payments, costs and exports, in your order.", group: "financials_page", requires: FIN_PROJECT, sources: [], size: { w: 4, h: 1, minW: 1, maxH: 1 },
+    settings: [{ key: "actions", label: "Actions", kind: "multi", max: 12, default: ["create_invoice", "record_payment", "record_expense", "record_bill"], options: FIN_QUICK_ACTIONS.map((q) => ({ value: q, label: QUICK_ACTION_LABELS[q] })) }], pages: ["financials"] },
+  { type: "fin_page_card", title: "Financial card", description: "One Financials card (receivables aging, job profitability, draft invoices and more). Add as many as you like.", group: "financials_page", requires: FIN_PROJECT, sources: [], size: { w: 1, h: 1, maxW: 2 },
+    settings: [{ key: "card", label: "Card", kind: "select", default: "ar_aging", options: FIN_CARD_KEYS.map((k) => ({ value: k, label: CARDS[k].title })) }], multiple: true, pages: ["financials"] },
+  { type: "fin_page_reports", title: "Reports for your kind of work", description: "The reports that fit your trades.", group: "financials_page", requires: FIN_PROJECT, sources: [], size: { w: 4, h: 1, minW: 1, maxH: 2 }, settings: [], pages: ["financials"] },
 ];
+
+/** Home widgets that also fit the Financials page: the money widgets (cards, lists, charts). */
+const ALSO_ON_FINANCIALS = (d: WidgetDef) => !d.pages && (d.type.startsWith("fin_") || d.type === "chart" || d.type === "tax_updates" || d.type === "cash_position");
+for (const d of DEFS) if (ALSO_ON_FINANCIALS(d)) d.pages = ["home", "financials"];
 
 export const WIDGETS: Readonly<Record<string, WidgetDef>> = Object.fromEntries(DEFS.map((d) => [d.type, d]));
 export const WIDGET_TYPES = DEFS.map((d) => d.type);
 export const widgetDef = (type: string): WidgetDef | undefined => (Object.hasOwn(WIDGETS, type) ? WIDGETS[type] : undefined);
+/** Is this widget offered on the page, in the mode? */
+export const onPage = (def: WidgetDef, page: DashboardPage, mode: "contractor" | "accountant") => (def.pages ?? ["home"]).includes(page) && (!def.modes || def.modes.includes(mode));
 
 // ---- Settings ------------------------------------------------------------------------------------------------
 export const CHART_DEFAULTS = { dataset: "expenses" as Dataset, chart: "donut", period: "ytd", basis: "cash", categories: null as string[] | null, job: "", trade: "" };
@@ -203,5 +239,6 @@ export function instanceTitle(type: string, settings: Record<string, unknown>): 
   const def = widgetDef(type);
   if (!def) return "Unavailable widget";
   if (type === "chart" && isDataset(settings.dataset)) return DATASET_INFO[settings.dataset].label;
+  if (type === "fin_page_card" && typeof settings.card === "string" && Object.hasOwn(CARDS, settings.card)) return CARDS[settings.card as keyof typeof CARDS].title;
   return def.title;
 }
