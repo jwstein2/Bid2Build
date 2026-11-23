@@ -17,7 +17,7 @@ import { Notice } from "@/components/ui/misc";
 import { FinDialog } from "@/components/financials/fin-dialog";
 import { ModeToggle } from "@/components/financials/customize-dashboard";
 import { cn } from "@/lib/cn";
-import { CHART_OPTIONS, GROUPS, GROUP_LABELS, WIDGETS, instanceTitle, widgetDef, type Option, type WidgetDef } from "@/lib/dashboard/registry";
+import { CHART_OPTIONS, GROUPS, GROUP_LABELS, WIDGETS, instanceTitle, widgetDef, type DashboardPage, type Option, type WidgetDef } from "@/lib/dashboard/registry";
 import { DATASET_INFO, chartTypesFor, isDataset } from "@/lib/dashboard/charts";
 import { add as addWidget, configure, fitSize, move, newInstance, remove, resize, type DashboardMode, type WidgetInstance } from "@/lib/dashboard/schema";
 import { TEMPLATES, TEMPLATE_KEYS, INTERESTS, availableInterests, buildTemplate, suggestLayout, type InterestKey, type TemplateKey } from "@/lib/dashboard/templates";
@@ -46,6 +46,25 @@ export interface BuilderProps {
   offerSetup: boolean;
   /** Pick one of these in the setup dialog first. */
   defaultTemplate: TemplateKey;
+  /** Which page this builder lays out (each page keeps its own layout per mode). Default: Home. */
+  page?: DashboardPage;
+  /** Page heading and the line under it (Home: "Home" / "Your business at a glance."). */
+  title?: string;
+  subtitle?: string;
+  /** Small label above the heading. */
+  eyebrow?: string;
+  /** Extra header buttons (shown when not editing). */
+  headerActions?: ReactNode;
+  /** Notices shown under the header, above the grid (e.g. plan or setup notices). */
+  beforeGrid?: ReactNode;
+  /** Offer the Home templates and the "Set up my dashboard" prompt (Home only). Default true. */
+  templates?: boolean;
+  /** What the pieces are called in buttons: "widget" (Home) or "card". */
+  noun?: "widget" | "card";
+  /** Page-guide id for the Customize button. */
+  guide?: string;
+  /** Allowed choices for a setting, by "type.key" (e.g. the Financials cards and quick actions the viewer may use). */
+  optionFilter?: Record<string, string[]>;
 }
 
 type Status = { kind: "idle" } | { kind: "saving" } | { kind: "saved" } | { kind: "error"; message: string } | { kind: "conflict" } | { kind: "offline"; message: string };
@@ -54,24 +73,30 @@ type Status = { kind: "idle" } | { kind: "saving" } | { kind: "saved" } | { kind
 const PREVIEW_TYPES = new Set(["fin_ar", "fin_cash_received", "sales_drafts", "sales_win_rate"]);
 const SPAN_LG = { 1: "lg:col-span-1", 2: "lg:col-span-2", 3: "lg:col-span-3", 4: "lg:col-span-4" } as const;
 const SPAN_MD = { 1: "md:col-span-1", 2: "md:col-span-2", 3: "md:col-span-2", 4: "md:col-span-2" } as const;
-const PENDING_KEY = (m: DashboardMode) => `b2b.dashboard.pending.${m}`;
+// Home keeps its original storage keys; other pages add their name.
+const PAGE_KEY = (page: DashboardPage, m: DashboardMode) => (page === "home" ? m : `${page}.${m}`);
+const PENDING_KEY = (k: string) => `b2b.dashboard.pending.${k}`;
 const WIDTH_LABEL = { 1: "Small", 2: "Medium", 3: "Large", 4: "Full width" } as const;
 
 // "Set Up My Dashboard" nudge, dismissed on this device per mode.
-const OFFER_KEY = (m: DashboardMode) => `b2b.dashboard.setupOffer.hidden.${m}`;
+const OFFER_KEY = (k: string) => `b2b.dashboard.setupOffer.hidden.${k}`;
 const offerListeners = new Set<() => void>();
 const subscribeOffer = (cb: () => void) => { offerListeners.add(cb); return () => { offerListeners.delete(cb); }; };
-function offerDismissed(mode: DashboardMode) { try { return localStorage.getItem(OFFER_KEY(mode)) === "1"; } catch { return false; } }
+function offerDismissed(key: string) { try { return localStorage.getItem(OFFER_KEY(key)) === "1"; } catch { return false; } }
 
-function readPending(mode: DashboardMode): { widgets: WidgetInstance[]; template: string | null; base: number | null; at: number } | null {
-  try { const v = localStorage.getItem(PENDING_KEY(mode)); return v ? JSON.parse(v) : null; } catch { return null; }
+function readPending(key: string): { widgets: WidgetInstance[]; template: string | null; base: number | null; at: number } | null {
+  try { const v = localStorage.getItem(PENDING_KEY(key)); return v ? JSON.parse(v) : null; } catch { return null; }
 }
-function writePending(mode: DashboardMode, v: object | null) {
-  try { if (v) localStorage.setItem(PENDING_KEY(mode), JSON.stringify(v)); else localStorage.removeItem(PENDING_KEY(mode)); } catch { /* storage blocked: the in-memory copy still retries */ }
+function writePending(key: string, v: object | null) {
+  try { if (v) localStorage.setItem(PENDING_KEY(key), JSON.stringify(v)); else localStorage.removeItem(PENDING_KEY(key)); } catch { /* storage blocked: the in-memory copy still retries */ }
 }
 
 export function DashboardBuilder(p: BuilderProps) {
   const router = useRouter();
+  const page = p.page ?? "home";
+  const key = PAGE_KEY(page, p.mode);
+  const showTemplates = p.templates ?? true;
+  const noun = p.noun ?? "widget";
   const [editing, setEditing] = useState(false);
   const [widgets, setWidgets] = useState(p.layout.widgets);
   const [template, setTemplate] = useState(p.layout.template);
@@ -82,8 +107,8 @@ export function DashboardBuilder(p: BuilderProps) {
   const [companyOpen, setCompanyOpen] = useState(false);
   const [recovered, setRecovered] = useState<ReturnType<typeof readPending>>(null);
   const [announce, setAnnounce] = useState("");
-  const offerHidden = useSyncExternalStore(subscribeOffer, () => offerDismissed(p.mode), () => false);
-  const hideOffer = () => { try { localStorage.setItem(OFFER_KEY(p.mode), "1"); } catch { /* storage blocked: hidden for this visit only */ } offerListeners.forEach((f) => f()); };
+  const offerHidden = useSyncExternalStore(subscribeOffer, () => offerDismissed(key), () => false);
+  const hideOffer = () => { try { localStorage.setItem(OFFER_KEY(key), "1"); } catch { /* storage blocked: hidden for this visit only */ } offerListeners.forEach((f) => f()); };
   const revision = useRef(p.revision);
   const dirty = useRef(false);
   const inFlight = useRef(false);
@@ -106,13 +131,13 @@ export function DashboardBuilder(p: BuilderProps) {
 
   // Unsaved changes from an earlier visit (a save that failed): offer them back instead of losing them.
   useEffect(() => {
-    const pending = readPending(p.mode);
+    const pending = readPending(key);
     // Browser storage only exists after hydration, so this has to run in an effect.
     // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time read of this device's unsaved copy
     if (pending && pending.base === p.revision && JSON.stringify(pending.widgets) !== JSON.stringify(p.layout.widgets)) setRecovered(pending);
-    else if (pending) writePending(p.mode, null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per mode/revision
-  }, [p.mode, p.revision]);
+    else if (pending) writePending(key, null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per page/mode/revision
+  }, [key, p.revision]);
 
   const save = useCallback(async (opts: { force?: boolean; source?: "user" | "setup" | "template" } = {}) => {
     if (!p.ready) return;
@@ -120,16 +145,16 @@ export function DashboardBuilder(p: BuilderProps) {
     inFlight.current = true; dirty.current = false;
     const snap = latest.current;
     setStatus({ kind: "saving" });
-    writePending(p.mode, { widgets: snap.widgets, template: snap.template, base: revision.current, at: Date.now() });
+    writePending(key, { widgets: snap.widgets, template: snap.template, base: revision.current, at: Date.now() });
     try {
       const res = await fetch("/api/dashboard/layout", { method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ action: "save", mode: p.mode, layout: { template: snap.template, widgets: snap.widgets }, expectedRevision: revision.current, force: Boolean(opts.force), source: opts.source ?? "user" }) });
+        body: JSON.stringify({ action: "save", mode: p.mode, page, layout: { template: snap.template, widgets: snap.widgets }, expectedRevision: revision.current, force: Boolean(opts.force), source: opts.source ?? "user" }) });
       const out = await res.json().catch(() => ({}));
       if (res.status === 409) { setStatus({ kind: "conflict" }); return; }
       if (!res.ok) throw Object.assign(new Error(out?.error?.message ?? "Couldn't save."), { status: res.status });
       revision.current = out.revision;
       retry.current = 0;
-      if (!dirty.current) { writePending(p.mode, null); setUnsaved(false); }
+      if (!dirty.current) { writePending(key, null); setUnsaved(false); }
       setStatus({ kind: "saved" });
       if (needsRefresh.current && !dirty.current) { needsRefresh.current = false; router.refresh(); }
     } catch (e) {
@@ -145,7 +170,7 @@ export function DashboardBuilder(p: BuilderProps) {
       inFlight.current = false;
       if (dirty.current && retry.current === 0) void saveRef.current();
     }
-  }, [p.mode, p.ready, router]);
+  }, [p.mode, p.ready, router, key, page]);
   useEffect(() => { saveRef.current = save; }, [save]);
 
   const schedule = useCallback((refresh = false) => {
@@ -240,9 +265,18 @@ export function DashboardBuilder(p: BuilderProps) {
     const def = widgetDef(type);
     if (!def) return;
     const spec = def.settings[0];
-    const settings = type === "quick_actions" && spec?.kind === "multi" ? { actions: spec.default.filter((a) => p.allowedActions.includes(a)) } : undefined;
+    const allowedOpts = spec ? p.optionFilter?.[`${type}.${spec.key}`] : undefined;
+    let settings: Record<string, unknown> | undefined;
+    if (type === "quick_actions" && spec?.kind === "multi") settings = { actions: spec.default.filter((a) => p.allowedActions.includes(a)) };
+    else if (spec?.kind === "multi" && allowedOpts) settings = { [spec.key]: spec.default.filter((a) => allowedOpts.includes(a)) };
+    else if (spec?.kind === "select" && allowedOpts) {
+      // A card-style widget starts on the first choice that isn't on the page yet.
+      const used = new Set(widgets.filter((w) => w.type === type).map((w) => w.settings[spec.key]));
+      const first = allowedOpts.find((o) => !used.has(o)) ?? allowedOpts[0];
+      if (first) settings = { [spec.key]: first };
+    }
     const inst = newInstance(type, settings);
-    change(addWidget(widgets, inst), { refresh: true, say: `${def.title} added at the end.` });
+    change(addWidget(widgets, inst), { refresh: true, say: `${instanceTitle(inst.type, inst.settings)} added at the end.` });
     setLibrary(false);
   };
   const applyLayout = (next: WidgetInstance[], tmpl: string | null, say: string) => {
@@ -255,9 +289,9 @@ export function DashboardBuilder(p: BuilderProps) {
     if (timer.current) window.clearTimeout(timer.current);
     dirty.current = false;
     setStatus({ kind: "saving" });
-    const res = await fetch("/api/dashboard/layout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "reset", mode: p.mode }) });
+    const res = await fetch("/api/dashboard/layout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "reset", mode: p.mode, page }) });
     if (!res.ok) { setStatus({ kind: "error", message: "Couldn't restore the defaults. Try again." }); return; }
-    writePending(p.mode, null);
+    writePending(key, null);
     setUnsaved(false);
     revision.current = null;
     setStatus({ kind: "saved" });
@@ -277,18 +311,22 @@ export function DashboardBuilder(p: BuilderProps) {
           full-width row. Wide screens (xl): one row (title, mode switch, Customize). The heading is never squeezed. */}
       <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-3 xl:flex xl:items-end" data-testid="dash-header">
         <div className="min-w-0 xl:flex-1">
-          <h1 className="text-2xl font-extrabold sm:text-3xl">Home</h1>
-          <p className="text-sm text-ink-soft sm:text-base" data-testid="dash-subtitle">{editing ? "Drag the handles, resize, add or remove widgets. Changes save automatically." : "Your business at a glance."}</p>
+          {p.eyebrow && <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">{p.eyebrow}</p>}
+          <h1 className="text-2xl font-extrabold sm:text-3xl">{p.title ?? "Home"}</h1>
+          <p className="text-sm text-ink-soft sm:text-base" data-testid="dash-subtitle">{editing ? `Drag the handles, resize, add or remove ${noun}s. Changes save automatically.` : (p.subtitle ?? "Your business at a glance.")}</p>
         </div>
         {!editing ? (
-          <Button variant="secondary" onClick={() => setEditing(true)} className="min-w-11 px-3 max-[359px]:px-0 sm:px-4 xl:order-last" data-testid="dash-customize"><Settings2 className="h-4 w-4" aria-hidden /><span className="max-[359px]:sr-only">Customize<span className="max-sm:sr-only"> Dashboard</span></span></Button>
+          <Button variant="secondary" onClick={() => setEditing(true)} className="min-w-11 px-3 max-[359px]:px-0 sm:px-4 xl:order-last" data-testid="dash-customize" data-guide={p.guide}><Settings2 className="h-4 w-4" aria-hidden /><span className="max-[359px]:sr-only">Customize<span className="max-sm:sr-only"> {page === "home" ? "Dashboard" : "Page"}</span></span></Button>
         ) : (
           <Button onClick={done} className="px-3 sm:px-4 xl:order-last" data-testid="dash-done"><Check className="h-4 w-4" aria-hidden /><span>Done<span className="max-sm:sr-only"> Editing</span></span></Button>
         )}
         {p.accountantModeAllowed && !editing && <ModeToggle mode={p.mode} className="col-span-2 grid w-full grid-cols-2 sm:inline-flex sm:w-auto sm:justify-self-start xl:shrink-0" />}
       </header>
+      {/* Page buttons get their own row so the heading is never squeezed. */}
+      {p.headerActions && !editing && <div className="flex flex-wrap items-center gap-2" data-testid="dash-header-actions">{p.headerActions}</div>}
 
       <p className="sr-only" role="status" aria-live="polite">{announce}</p>
+      {p.beforeGrid}
 
       {!p.ready && editing && <Notice tone="warn" title="Saving isn't on yet">Your dashboard can be rearranged once a short database update is applied. Nothing changes until then.</Notice>}
       {recovered && (
@@ -296,30 +334,31 @@ export function DashboardBuilder(p: BuilderProps) {
           <p>A change from {new Date(recovered.at).toLocaleString()} didn&apos;t save.</p>
           <div className="mt-2 flex flex-wrap gap-2">
             <Button size="sm" onClick={() => { setRecovered(null); applyLayout(recovered.widgets, recovered.template, "Unsaved changes restored."); }}>Restore them</Button>
-            <Button size="sm" variant="ghost" onClick={() => { writePending(p.mode, null); setRecovered(null); }}>Discard</Button>
+            <Button size="sm" variant="ghost" onClick={() => { writePending(key, null); setRecovered(null); }}>Discard</Button>
           </div>
         </Notice>
       )}
       {editing && (
         <div className="sticky top-2 z-20 flex flex-wrap items-center gap-2 rounded-xl border border-line bg-surface/95 p-2 shadow-card backdrop-blur" role="toolbar" aria-label="Customize dashboard" data-testid="dash-toolbar">
-          <Button size="sm" onClick={() => setLibrary(true)} data-testid="dash-add"><Plus className="h-4 w-4" aria-hidden /> Add widget</Button>
-          <Button size="sm" variant="secondary" onClick={() => setSetup(true)}><LayoutTemplate className="h-4 w-4" aria-hidden /> Templates</Button>
+          <Button size="sm" onClick={() => setLibrary(true)} data-testid="dash-add"><Plus className="h-4 w-4" aria-hidden /> Add {noun}</Button>
+          {showTemplates && <Button size="sm" variant="secondary" onClick={() => setSetup(true)}><LayoutTemplate className="h-4 w-4" aria-hidden /> Templates</Button>}
           <Button size="sm" variant="secondary" onClick={restore} disabled={!p.ready} data-testid="dash-restore"><RotateCcw className="h-4 w-4" aria-hidden /> Restore default layout</Button>
           {p.isCompanyOwner && <Button size="sm" variant="ghost" onClick={() => setCompanyOpen(true)} data-testid="dash-company"><Users className="h-4 w-4" aria-hidden /> Company defaults</Button>}
-          <SaveStatus status={status} onRetry={() => void save()} onKeepMine={() => void save({ force: true })} onLoadLatest={() => { dirty.current = false; setUnsaved(false); writePending(p.mode, null); setStatus({ kind: "idle" }); router.refresh(); }} />
+          <SaveStatus status={status} onRetry={() => void save()} onKeepMine={() => void save({ force: true })} onLoadLatest={() => { dirty.current = false; setUnsaved(false); writePending(key, null); setStatus({ kind: "idle" }); router.refresh(); }} />
         </div>
       )}
 
       {widgets.length === 0 ? (
         <div className="rounded-xl border border-dashed border-line p-8 text-center">
-          <p className="font-semibold">Your dashboard is empty.</p>
+          <p className="font-semibold">{page === "home" ? "Your dashboard is empty." : "This page is empty."}</p>
           <div className="mt-3 flex flex-wrap justify-center gap-2">
-            <Button onClick={() => { setEditing(true); setLibrary(true); }}><Plus className="h-4 w-4" aria-hidden /> Add widget</Button>
-            <Button variant="secondary" onClick={() => setSetup(true)}>Set Up My Dashboard</Button>
+            <Button onClick={() => { setEditing(true); setLibrary(true); }}><Plus className="h-4 w-4" aria-hidden /> Add {noun}</Button>
+            {showTemplates && <Button variant="secondary" onClick={() => setSetup(true)}>Set Up My Dashboard</Button>}
+            {!showTemplates && <Button variant="secondary" onClick={restore} disabled={!p.ready}><RotateCcw className="h-4 w-4" aria-hidden /> Restore default layout</Button>}
           </div>
         </div>
       ) : (
-        <ul className="grid grid-cols-2 gap-3 md:[grid-auto-rows:minmax(9.5rem,auto)] lg:grid-cols-4" aria-label="Dashboard widgets" data-testid="dash-grid">
+        <ul className="grid grid-cols-2 gap-3 md:[grid-auto-rows:minmax(9.5rem,auto)] lg:grid-cols-4" aria-label={page === "home" ? "Dashboard widgets" : `${p.title ?? "Page"} ${noun}s`} data-testid="dash-grid">
           {shown.map((w, i) => {
             const def = widgetDef(w.type);
             const node = p.nodes[w.id];
@@ -342,7 +381,9 @@ export function DashboardBuilder(p: BuilderProps) {
                     <IconBtn label={`Move ${title} earlier`} onClick={() => { focusAfter.current = null; moveBy(w.id, -1); }} disabled={i === 0}><ArrowUp className="h-4 w-4" aria-hidden /></IconBtn>
                     <IconBtn label={`Move ${title} later`} onClick={() => moveBy(w.id, 1)} disabled={i === shown.length - 1}><ArrowDown className="h-4 w-4" aria-hidden /></IconBtn>
                     <IconBtn label={`Settings and size for ${title}`} onClick={() => setSettingsFor(w.id)} testId="dash-settings"><Settings2 className="h-4 w-4" aria-hidden /></IconBtn>
-                    <IconBtn label={`Remove ${title}`} onClick={() => change(remove(widgets, w.id), { say: `${title} removed.` })} testId="dash-remove"><Trash2 className="h-4 w-4" aria-hidden /></IconBtn>
+                    {def?.required
+                      ? <span className="grid min-h-10 min-w-10 place-items-center text-muted" title="Always shown" aria-label={`${title} is always shown`}><Lock className="h-4 w-4" aria-hidden /></span>
+                      : <IconBtn label={`Remove ${title}`} onClick={() => change(remove(widgets, w.id), { say: `${title} removed.` })} testId="dash-remove"><Trash2 className="h-4 w-4" aria-hidden /></IconBtn>}
                   </div>
                 )}
                 <div className={cn("h-full", editing && "pointer-events-none select-none pt-12 opacity-90")} inert={editing || undefined}>
@@ -371,7 +412,7 @@ export function DashboardBuilder(p: BuilderProps) {
 
       {/* The optional "make it yours" nudge sits under the widgets so the numbers come first; it can be dismissed
           on this device, and Customize Dashboard (top) and Templates stay available either way. */}
-      {!editing && p.offerSetup && widgets.length > 0 && !offerHidden && (
+      {!editing && showTemplates && p.offerSetup && widgets.length > 0 && !offerHidden && (
         <div className="flex items-center gap-2 rounded-xl border border-dashed border-line bg-surface py-2 pl-3 pr-1 text-sm" data-testid="dash-setup-offer">
           <Sparkles className="h-4 w-4 shrink-0 text-accent-ink" aria-hidden />
           <span className="min-w-0 flex-1">{p.origin === "company" ? "This is your company's starting dashboard." : "This is a starting dashboard."} Make it yours in a minute, or keep it.</span>
@@ -380,13 +421,13 @@ export function DashboardBuilder(p: BuilderProps) {
         </div>
       )}
 
-      <LibraryDialog open={library} onOpenChange={setLibrary} allowed={p.allowedTypes} counts={counts} onAdd={addType} />
-      <SettingsDialog inst={settingsInst} onClose={() => setSettingsFor(null)} options={p.options} allowedActions={p.allowedActions}
+      <LibraryDialog open={library} onOpenChange={setLibrary} allowed={p.allowedTypes} counts={counts} onAdd={addType} noun={noun} />
+      <SettingsDialog inst={settingsInst} onClose={() => setSettingsFor(null)} options={p.options} allowedActions={p.allowedActions} optionFilter={p.optionFilter}
         onSize={(w, h) => settingsInst && change(resize(widgets, settingsInst.id, w, h), { say: `${titleOf(settingsInst)} resized to ${WIDTH_LABEL[fitSize(settingsInst.type, w, h).w]}.` })}
         onChange={(patch) => settingsInst && change(configure(widgets, settingsInst.id, patch), { refresh: true })} />
-      <SetupDialog open={setup} onOpenChange={setSetup} access={p.access} current={template} defaultTemplate={p.defaultTemplate} ready={p.ready}
-        onApply={(next, tmpl, source) => { setSetup(false); setEditing(true); applyLayout(next, tmpl, "New layout applied."); void source; }} />
-      {p.isCompanyOwner && <CompanyDialog open={companyOpen} onOpenChange={setCompanyOpen} mode={p.mode} layout={{ template, widgets }} />}
+      {showTemplates && <SetupDialog open={setup} onOpenChange={setSetup} access={p.access} current={template} defaultTemplate={p.defaultTemplate} ready={p.ready}
+        onApply={(next, tmpl, source) => { setSetup(false); setEditing(true); applyLayout(next, tmpl, "New layout applied."); void source; }} />}
+      {p.isCompanyOwner && <CompanyDialog open={companyOpen} onOpenChange={setCompanyOpen} mode={p.mode} page={page} layout={{ template, widgets }} />}
     </div>
   );
 }
@@ -409,13 +450,13 @@ function SaveStatus({ status, onRetry, onKeepMine, onLoadLatest }: { status: Sta
   return <span className={cn(base, "text-muted")} data-testid="dash-status" data-status="idle">Changes save automatically</span>;
 }
 
-function LibraryDialog({ open, onOpenChange, allowed, counts, onAdd }: { open: boolean; onOpenChange: (o: boolean) => void; allowed: string[]; counts: (t: string) => number; onAdd: (t: string) => void }) {
+function LibraryDialog({ open, onOpenChange, allowed, counts, onAdd, noun }: { open: boolean; onOpenChange: (o: boolean) => void; allowed: string[]; counts: (t: string) => number; onAdd: (t: string) => void; noun: "widget" | "card" }) {
   const [q, setQ] = useState("");
   const defs = allowed.map((t) => WIDGETS[t]).filter(Boolean) as WidgetDef[];
   const match = (d: WidgetDef) => !q.trim() || `${d.title} ${d.description}`.toLowerCase().includes(q.trim().toLowerCase());
   return (
-    <FinDialog open={open} onOpenChange={onOpenChange} title="Add a widget" description="Only widgets for features you can use are listed." wide>
-      <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search widgets" aria-label="Search widgets" className="input mb-3 w-full" />
+    <FinDialog open={open} onOpenChange={onOpenChange} title={`Add a ${noun}`} description={`Only ${noun}s for features you can use are listed.`} wide>
+      <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Search ${noun}s`} aria-label={`Search ${noun}s`} className="input mb-3 w-full" />
       <div className="space-y-4" data-testid="dash-library">
         {GROUPS.map((g) => {
           const list = defs.filter((d) => d.group === g && match(d));
@@ -431,7 +472,7 @@ function LibraryDialog({ open, onOpenChange, allowed, counts, onAdd }: { open: b
                       <button type="button" disabled={added} onClick={() => onAdd(d.type)} data-testid={`dash-lib-${d.type}`}
                         className="flex min-h-14 w-full items-start gap-2 rounded-lg border border-line p-2.5 text-left hover:border-accent focus-visible:outline-2 disabled:opacity-50">
                         <Plus className="mt-0.5 h-4 w-4 shrink-0 text-accent-ink" aria-hidden />
-                        <span className="min-w-0"><span className="block text-sm font-semibold">{d.title}{added && <span className="font-normal text-muted"> · on your dashboard</span>}{d.multiple && counts(d.type) > 0 && <span className="font-normal text-muted"> · {counts(d.type)} added</span>}</span><span className="block text-xs text-muted">{d.description}</span></span>
+                        <span className="min-w-0"><span className="block text-sm font-semibold">{d.title}{added && <span className="font-normal text-muted"> · already added</span>}{d.multiple && counts(d.type) > 0 && <span className="font-normal text-muted"> · {counts(d.type)} added</span>}</span><span className="block text-xs text-muted">{d.description}</span></span>
                       </button>
                     </li>
                   );
@@ -445,10 +486,14 @@ function LibraryDialog({ open, onOpenChange, allowed, counts, onAdd }: { open: b
   );
 }
 
-function SettingsDialog({ inst, onClose, onChange, onSize, options, allowedActions }: { inst: WidgetInstance | null; onClose: () => void; onChange: (p: Record<string, unknown>) => void; onSize: (w: number, h: number) => void; options: { jobs: Option[]; trades: Option[] }; allowedActions: string[] }) {
+function SettingsDialog({ inst, onClose, onChange, onSize, options, allowedActions, optionFilter }: { inst: WidgetInstance | null; onClose: () => void; onChange: (p: Record<string, unknown>) => void; onSize: (w: number, h: number) => void; options: { jobs: Option[]; trades: Option[] }; allowedActions: string[]; optionFilter?: Record<string, string[]> }) {
   const def = inst ? widgetDef(inst.type) : undefined;
   if (!inst || !def) return null;
   const s = inst.settings;
+  const filterOpts = (key: string, opts: readonly Option[]) => {
+    const ok = optionFilter?.[`${inst.type}.${key}`];
+    return ok ? opts.filter((o) => ok.includes(o.value) || s[key] === o.value) : opts;
+  };
   const widths = ([1, 2, 3, 4] as const).filter((w) => w >= (def.size.minW ?? 1) && w <= (def.size.maxW ?? 4));
   const heights = ([1, 2] as const).filter((h) => h <= (def.size.maxH ?? def.size.h));
   const select = (key: string, label: string, opts: readonly { value: string; label: string }[], value: string) => (
@@ -471,12 +516,28 @@ function SettingsDialog({ inst, onClose, onChange, onSize, options, allowedActio
           <p className="mt-1 text-xs text-muted">Phones show one widget per row; your desktop sizes stay as set.</p>
         </fieldset>
         {def.settings.map((spec) => {
-          if (spec.kind === "select") return select(spec.key, spec.label, spec.options, String(s[spec.key] ?? spec.default));
+          if (spec.kind === "select") return select(spec.key, spec.label, filterOpts(spec.key, spec.options), String(s[spec.key] ?? spec.default));
           if (spec.kind === "multi") {
             const cur = (s[spec.key] as string[]) ?? [];
-            const opts = spec.key === "actions" ? spec.options.filter((o) => allowedActions.includes(o.value)) : spec.options;
+            const opts = inst.type === "quick_actions" ? spec.options.filter((o) => allowedActions.includes(o.value)) : filterOpts(spec.key, spec.options);
             return (
               <fieldset key={spec.key}><legend className="label">{spec.label}{spec.max ? ` (up to ${spec.max})` : ""}</legend>
+                {cur.length > 1 && (
+                  <ol className="mb-2 divide-y divide-line rounded-lg border border-line" aria-label={`${spec.label} in order`} data-testid={`dash-order-${spec.key}`}>
+                    {cur.map((v, i) => {
+                      const label = spec.options.find((o) => o.value === v)?.label ?? v;
+                      const swap = (j: number) => { const next = [...cur]; [next[i], next[j]] = [next[j], next[i]]; onChange({ [spec.key]: next }); };
+                      return (
+                        <li key={v} className="flex items-center gap-1 px-2 py-0.5 text-sm">
+                          <span className="w-5 text-xs text-muted">{i + 1}.</span>
+                          <span className="min-w-0 flex-1 truncate">{label}</span>
+                          <IconBtn label={`Move ${label} earlier`} onClick={() => swap(i - 1)} disabled={i === 0}><ArrowUp className="h-4 w-4" aria-hidden /></IconBtn>
+                          <IconBtn label={`Move ${label} later`} onClick={() => swap(i + 1)} disabled={i === cur.length - 1}><ArrowDown className="h-4 w-4" aria-hidden /></IconBtn>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                )}
                 <div className="grid gap-1 sm:grid-cols-2">
                   {opts.map((o) => {
                     const on = cur.includes(o.value);
@@ -589,19 +650,19 @@ function SetupDialog({ open, onOpenChange, access, current, defaultTemplate, rea
   );
 }
 
-function CompanyDialog({ open, onOpenChange, mode, layout }: { open: boolean; onOpenChange: (o: boolean) => void; mode: DashboardMode; layout: { template: string | null; widgets: WidgetInstance[] } }) {
+function CompanyDialog({ open, onOpenChange, mode, page, layout }: { open: boolean; onOpenChange: (o: boolean) => void; mode: DashboardMode; page: DashboardPage; layout: { template: string | null; widgets: WidgetInstance[] } }) {
   const [role, setRole] = useState<"" | "owner" | "manager" | "estimator" | "viewer">("");
   const [msg, setMsg] = useState<{ tone: "ok" | "danger"; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const send = async (clear: boolean) => {
     setBusy(true); setMsg(null);
-    const res = await fetch("/api/dashboard/layout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "company_default", mode, role: role || null, layout: clear ? null : layout }) });
+    const res = await fetch("/api/dashboard/layout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "company_default", mode, page, role: role || null, layout: clear ? null : layout }) });
     const out = await res.json().catch(() => ({}));
     setBusy(false);
     setMsg(res.ok ? { tone: "ok", text: clear ? "Company default removed." : "Saved. People without their own layout start from this one." } : { tone: "danger", text: out?.error?.message ?? "Couldn't save." });
   };
   return (
-    <FinDialog open={open} onOpenChange={onOpenChange} title="Company dashboard defaults" description={`Use your current ${mode === "accountant" ? "Accountant" : "Contractor"} Mode layout as the starting dashboard for your team. It applies only to people who haven't customized theirs, and each person sees only the widgets they're allowed to.`}>
+    <FinDialog open={open} onOpenChange={onOpenChange} title="Company dashboard defaults" description={`Use your current ${mode === "accountant" ? "Accountant" : "Contractor"} Mode layout as the starting ${page === "home" ? "Home dashboard" : "Financials page"} for your team. It applies only to people who haven't customized theirs, and each person sees only the widgets they're allowed to.`}>
       <div className="space-y-3" data-testid="dash-company-panel">
         <label className="block"><span className="label">Applies to</span>
           <select className="input w-full" value={role} onChange={(e) => setRole(e.target.value as typeof role)}>

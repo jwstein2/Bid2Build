@@ -5,7 +5,7 @@ import { createClient, getAuthUser, getUser } from "@/lib/supabase/server";
 import { isUnifiedHomeEnabled } from "@/lib/env";
 import { MyWorkCallout } from "@/components/workforce/hub/my-work-callout";
 import { allowed } from "@/lib/dashboard/access";
-import { QUICK_ACTIONS, QUICK_ACTION_KEYS, WIDGET_TYPES, widgetDef, type Option } from "@/lib/dashboard/registry";
+import { QUICK_ACTIONS, QUICK_ACTION_KEYS, WIDGET_TYPES, onPage, widgetDef, type Option } from "@/lib/dashboard/registry";
 import { DATASET_INFO, isDataset, type ChartPeriod } from "@/lib/dashboard/charts";
 import { dataFor, loadLayout, loadViewer, visibleWidgets } from "@/lib/dashboard/server";
 import { defaultTemplate } from "@/lib/dashboard/templates";
@@ -68,7 +68,7 @@ export default async function HomePage() {
         ready={loaded.ready}
         isCompanyOwner={loaded.isCompanyOwner}
         nodes={Object.fromEntries(entries)}
-        allowedTypes={WIDGET_TYPES.filter((t) => allowed(viewer.access, widgetDef(t)!.requires))}
+        allowedTypes={WIDGET_TYPES.filter((t) => onPage(widgetDef(t)!, "home", viewer.mode) && allowed(viewer.access, widgetDef(t)!.requires))}
         allowedActions={QUICK_ACTION_KEYS.filter((k) => allowed(viewer.access, QUICK_ACTIONS[k].requires) && (!("write" in QUICK_ACTIONS[k]) || viewer.access.fin?.canWrite))}
         access={viewer.access}
         options={options}
