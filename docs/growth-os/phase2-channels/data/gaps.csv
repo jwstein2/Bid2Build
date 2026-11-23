@@ -1,6 +1,6 @@
 id,area,gap,impact,severity,proposed_resolution
 G201,Audience,"No source measures platform adoption among construction business owners specifically; Pew gives adult usage and demographic proxies, and the Jobber survey gives business use as a customer-lead source.",Construction and owner layers use proxies,medium,Ask a channel question at signup (how did you hear about us) and in interviews
-G202,Audience,"Reachable ad audience sizes require logged-in ad tools (Keyword Planner, Meta and LinkedIn reach estimates).",Reachable audience layer is empty,medium,X01/X02: owner pulls free forecasts; no spend
+G202,Audience,"Reachable ad audience sizes require logged-in ad tools (Keyword Planner, Meta and LinkedIn reach estimates).",Reachable audience layer is empty,medium,X02 reach estimates; X01 Keyword Planner deferred (Google Ads requires billing to leave guided setup; owner chose benchmarks on 2026-11-23)
 G203,Competition,"Competitor ad activity (search auction insights, Meta Ad Library) was not researched.",Competitive pressure scores are judgment,low,Review Meta Ad Library and Google auction insights after the first search test
 G204,Cost,"No reliable public CPC/CPV benchmark found for YouTube, TikTok or creator deals.",F01 for these units are assumptions,medium,X06/X08 measured cost per click
 G205,Communities,Group and subreddit sizes and rules were not verified (sites blocked automated reading).,Community plan is qualitative,low,Owner lists the groups they belong to; check each group's rules

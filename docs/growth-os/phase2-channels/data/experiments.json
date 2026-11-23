@@ -33,7 +33,8 @@
    "sample": "All seed terms",
    "decision": "If forecast CPC exceeds the conservative F01 value, the $300 and $500 scenarios switch to META (rerun the model).",
    "cost_usd": 0,
-   "needs_owner": true
+   "needs_owner": true,
+   "status": "Deferred 2026-11-23 by owner decision. The Google Ads account is held in the guided campaign setup, which cannot be left without entering billing; Expert Mode was not offered. Benchmark CPC (F01) stays until the owner decides to fund a search test."
   },
   {
    "id": "X02",

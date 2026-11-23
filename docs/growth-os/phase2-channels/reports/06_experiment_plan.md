@@ -15,7 +15,6 @@ Free experiments come first. No paid experiment starts until the measurement gat
 - **Sample:** 3 test signups per channel
 - **Decision rule:** No paid test starts until this passes for that channel. [PARAM]
 - **Cost:** $0; owner action needed: yes [PARAM]
-
 ### [X01] Search demand forecast (Google Search)
 
 - **Hypothesis:** Enough monthly searches exist for tight contractor-estimating keywords to support the SEARCH cap.
@@ -24,8 +23,8 @@ Free experiments come first. No paid experiment starts until the measurement gat
 - **Replaces:** F01 SEARCH, SEARCH cap, G202
 - **Sample:** All seed terms
 - **Decision rule:** If forecast CPC exceeds the conservative F01 value, the $300 and $500 scenarios switch to META (rerun the model). [PARAM]
+- **Status:** Deferred 2026-11-23 by owner decision. The Google Ads account is held in the guided campaign setup, which cannot be left without entering billing; Expert Mode was not offered. Benchmark CPC (F01) stays until the owner decides to fund a search test. [F01]
 - **Cost:** $0; owner action needed: yes [PARAM]
-
 ### [X02] Reach estimates (Meta, YouTube, LinkedIn)
 
 - **Hypothesis:** Contractor-signal audiences are large enough for the planned spend.
@@ -35,7 +34,6 @@ Free experiments come first. No paid experiment starts until the measurement gat
 - **Sample:** n/a
 - **Decision rule:** Record in channels.json reachable_ad_audience. [PARAM]
 - **Cost:** $0; owner action needed: yes [PARAM]
-
 ### [X03] Organic landing-page baseline (Organic search, direct)
 
 - **Hypothesis:** Trade landing pages convert organic visitors at a measurable rate before paid traffic arrives.
@@ -45,7 +43,6 @@ Free experiments come first. No paid experiment starts until the measurement gat
 - **Sample:** At least 300 landing views in total
 - **Decision rule:** If below 2%, fix the landing page before any paid test (paid traffic converts worse than organic). [PARAM]
 - **Cost:** $0; owner action needed: no [PARAM]
-
 ### [X04] Lifecycle emails on (Email)
 
 - **Hypothesis:** Lifecycle emails A-E raise 7-day activation.
@@ -55,7 +52,6 @@ Free experiments come first. No paid experiment starts until the measurement gat
 - **Sample:** All new signups; directional until about 100 per arm
 - **Decision rule:** Keep on unless unsubscribes or complaints spike. [PARAM]
 - **Cost:** $0; owner action needed: yes [PARAM]
-
 ## Days 15-90
 
 ### [X05] First paid search test (Google Search)
@@ -67,7 +63,6 @@ Free experiments come first. No paid experiment starts until the measurement gat
 - **Sample:** At least 150 clicks before judging landing conversion
 - **Decision rule:** ADS.md stop rules; continue past day 90 only if cost per activated contractor is at or below the base-model value. [PARAM]
 - **Cost:** scenario budget; owner action needed: yes [PARAM]
-
 ## Days 31-60
 
 ### [X07] Activation onboarding test (Product)
@@ -79,7 +74,6 @@ Free experiments come first. No paid experiment starts until the measurement gat
 - **Sample:** Directional
 - **Decision rule:** Feed findings to Phase 8 (conversion). [PARAM]
 - **Cost:** $0; owner action needed: no [PARAM]
-
 ## Days 31-90
 
 ### [X06] Meta creative test (Meta)
@@ -91,7 +85,6 @@ Free experiments come first. No paid experiment starts until the measurement gat
 - **Sample:** About 2,000 impressions per creative before the CTR stop rule applies
 - **Decision rule:** ADS.md stop rules per ad and ad set. [PARAM]
 - **Cost:** scenario budget ($1,000 and up); owner action needed: yes [PARAM]
-
 ### [X08] Creator partner pilot (Partnerships)
 
 - **Hypothesis:** A trade creator delivers activated contractors at or below search cost.
@@ -101,7 +94,6 @@ Free experiments come first. No paid experiment starts until the measurement gat
 - **Sample:** One deal
 - **Decision rule:** Repeat only if cost per activated contractor is at or below search. [PARAM]
 - **Cost:** $500-1,000 per deal (assumption; only in the $2,500+ scenarios); owner action needed: yes [PARAM]
-
 ## Days 61-90
 
 ### [X10] Paid conversion read and scale/stop (All paid)
@@ -113,7 +105,6 @@ Free experiments come first. No paid experiment starts until the measurement gat
 - **Sample:** Paid conversion is only readable after about 30 activated contractors per channel; below that, report as directional
 - **Decision rule:** Scale only per the ADS.md scale rule; otherwise hold or cut to $0 paid. [PARAM]
 - **Cost:** $0; owner action needed: yes [PARAM]
-
 ## Days 1-90
 
 ### [X09] Organic video cadence (YouTube (organic))
@@ -125,7 +116,6 @@ Free experiments come first. No paid experiment starts until the measurement gat
 - **Sample:** 12 videos
 - **Decision rule:** Shift organic hours toward the format with the most signups per hour. [PARAM]
 - **Cost:** $0; owner action needed: no [PARAM]
-
 ## Day 90+
 
 ### [X11] Retention first read (All)
@@ -137,7 +127,6 @@ Free experiments come first. No paid experiment starts until the measurement gat
 - **Sample:** Needs 6+ months for a real estimate
 - **Decision rule:** Update LTV; no scaling decision on churn under 3 months of data. [PARAM]
 - **Cost:** $0; owner action needed: no [PARAM]
-
 ## Assumptions that require experiments
 
 | Assumption | Experiment |
@@ -156,7 +145,7 @@ Free experiments come first. No paid experiment starts until the measurement gat
 | Id | Gap | Resolution |
 |---|---|---|
 | [G201] | No source measures platform adoption among construction business owners specifically; Pew gives adult usage and demographic proxies, and the Jobber survey gives business use as a customer-lead source. | Ask a channel question at signup (how did you hear about us) and in interviews |
-| [G202] | Reachable ad audience sizes require logged-in ad tools (Keyword Planner, Meta and LinkedIn reach estimates). | X01/X02: owner pulls free forecasts; no spend |
+| [G202] | Reachable ad audience sizes require logged-in ad tools (Keyword Planner, Meta and LinkedIn reach estimates). | X02 reach estimates; X01 Keyword Planner deferred (Google Ads requires billing to leave guided setup; owner chose benchmarks on 2026-11-23) |
 | [G203] | Competitor ad activity (search auction insights, Meta Ad Library) was not researched. | Review Meta Ad Library and Google auction insights after the first search test |
 | [G204] | No reliable public CPC/CPV benchmark found for YouTube, TikTok or creator deals. | X06/X08 measured cost per click |
 | [G205] | Group and subreddit sizes and rules were not verified (sites blocked automated reading). | Owner lists the groups they belong to; check each group's rules |

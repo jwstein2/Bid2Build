@@ -247,7 +247,9 @@ def r06():
                   f"- **Replaces:** {', '.join(x['replaces'])}",
                   f"- **Sample:** {x['sample']}",
                   f"- **Decision rule:** {x['decision']} [PARAM]",
-                  f"- **Cost:** {cost}; owner action needed: {'yes' if x['needs_owner'] else 'no'} [PARAM]", '']
+                  f"- **Cost:** {cost}; owner action needed: {'yes' if x['needs_owner'] else 'no'} [PARAM]"]
+            if x.get('status'):
+                L.insert(len(L) - 1, f"- **Status:** {x['status']} [F01]")
     L += ['## Assumptions that require experiments', '', '| Assumption | Experiment |', '|---|---|']
     for a in AS.values():
         if a['requires_experiment']:
