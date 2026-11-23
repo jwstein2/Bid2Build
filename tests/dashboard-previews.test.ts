@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { arPreview, arStatus, decidedPreview, draftPreview, paymentStatus, previewCount } from "@/lib/dashboard/previews";
+import { arPreview, arStatus, customerHref, decidedPreview, draftPreview, invoiceHref, paymentStatus, previewCount } from "@/lib/dashboard/previews";
 import type { ArRow } from "@/lib/financials/receivables";
 import type { Column } from "@/lib/pipeline/board";
 
@@ -39,5 +39,17 @@ describe("Home card previews", () => {
     expect(paymentStatus({ amount: "100.00", refunded: "0" }).text).toBe("Verified");
     expect(paymentStatus({ amount: "100.00", refunded: "40.00" }).text).toBe("Part refunded");
     expect(paymentStatus({ amount: "100.00", refunded: "100.00" }).text).toBe("Refunded");
+  });
+});
+
+describe("record links on preview rows", () => {
+  it("links a customer only when the record has a real customer id", () => {
+    expect(customerHref("0b7d0c1e-1111-4a2b-9c3d-123456789abc")).toBe("/dashboard/customers/0b7d0c1e-1111-4a2b-9c3d-123456789abc");
+    expect(customerHref(null)).toBeUndefined();
+    expect(customerHref("")).toBeUndefined();
+    expect(customerHref("../admin")).toBeUndefined();
+  });
+  it("opens one invoice on its job", () => {
+    expect(invoiceHref("e1", "i9")).toBe("/financials/jobs/e1#invoice-i9");
   });
 });

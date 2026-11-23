@@ -121,7 +121,7 @@ export function visibleWidgets(layout: Layout, access: DashboardAccess): { shown
 }
 
 // ---- Data -----------------------------------------------------------------------------------------------------
-export interface BidFact { id: string; title: string; customer: string; number: string; column: Column; createdAt: string; updatedAt: string; total: number | null; stageAt: string | null }
+export interface BidFact { id: string; title: string; customer: string; customerId: string | null; number: string; column: Column; createdAt: string; updatedAt: string; total: number | null; stageAt: string | null }
 export interface TaskFact { id: string; scheduleId: string; project: string; name: string; start: string; end: string; status: string; assignee: string | null }
 export interface TimeFact { resourceId: string; name: string; clockIn: string; clockOut: string | null; breakMinutes: number; status: string; scheduleId: string | null }
 
@@ -140,7 +140,7 @@ export function dataFor(db: Db, viewer: DashboardViewer) {
   return {
     bids: () => once("bids", async (): Promise<BidFact[]> => {
       const [{ data: ests }, { data: versions }] = await Promise.all([
-        db.from("estimates").select("id, title, customer_name, estimate_number, status, pipeline_stage, stage_changed_at, created_at, updated_at").eq("user_id", uid).order("created_at", { ascending: false }).limit(2000),
+        db.from("estimates").select("id, title, customer_name, customer_id, estimate_number, status, pipeline_stage, stage_changed_at, created_at, updated_at").eq("user_id", uid).order("created_at", { ascending: false }).limit(2000),
         // Same read as My Bids (RLS decides), kept to this person's own bids below.
         db.from("estimate_versions").select("estimate_id, version_number, total").order("version_number", { ascending: false }).limit(10000),
       ]);
@@ -148,7 +148,7 @@ export function dataFor(db: Db, viewer: DashboardViewer) {
       const latest = new Map<string, number>();
       for (const v of (versions ?? []) as Row[]) if (own.has(String(v.estimate_id)) && !latest.has(String(v.estimate_id))) latest.set(String(v.estimate_id), Number(v.total));
       return ((ests ?? []) as Row[]).map((e) => ({
-        id: String(e.id), title: String(e.title || "Untitled bid"), customer: String(e.customer_name ?? ""), number: String(e.estimate_number ?? ""),
+        id: String(e.id), title: String(e.title || "Untitled bid"), customer: String(e.customer_name ?? ""), customerId: (e.customer_id as string | null) ?? null, number: String(e.estimate_number ?? ""),
         column: stageColumn(isStage(e.pipeline_stage) ? e.pipeline_stage : "draft", e.status as never), createdAt: String(e.created_at), updatedAt: String(e.updated_at),
         total: latest.get(String(e.id)) ?? null, stageAt: (e.stage_changed_at as string | null) ?? null,
       }));
@@ -222,7 +222,7 @@ export function dataFor(db: Db, viewer: DashboardViewer) {
         const job = p.job_id ? jobOf.get(String(p.job_id)) : undefined;
         const cid = (p.customer_id ?? job?.customer_id) as string | null | undefined;
         return {
-          id: String(p.id), number: String(p.number), customer: (cid && nameOf.get(String(cid))) || null, job: job ? String(job.name) : null,
+          id: String(p.id), number: String(p.number), customer: (cid && nameOf.get(String(cid))) || null, customerId: cid && nameOf.has(String(cid)) ? String(cid) : null, job: job ? String(job.name) : null,
           href: job ? `/financials/jobs/${job.estimate_id}#fin-payments` : null,
           amount: String(p.amount), refunded: refundOf.get(String(p.id)) ?? "0", receivedOn: String(p.received_on).slice(0, 10),
           verifiedAt: String(p.verified_at), method: String(p.method), source: String(p.source ?? "manual"),
