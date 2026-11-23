@@ -5,6 +5,8 @@ import type { User } from "@supabase/supabase-js";
 import { createAdminClient, createClient, getAuthUser } from "@/lib/supabase/server";
 import { applyDemoDataset } from "./apply";
 import { DEMO_SEED_VERSION, buildDemoDataset, demoNamespace } from "./dataset";
+import { decodeStash, encodeStash } from "./stash";
+import { PRACTICE_PAUSE_COOKIE } from "./scope";
 import { DEMO_HINT_COOKIE, DEMO_META_KEY, DEMO_RETURN_COOKIE, DEMO_RETURN_MAX_AGE, parseDemoClaim, type DemoClaim, type DemoSessionKind } from "./session";
 
 type Admin = ReturnType<typeof createAdminClient>;
@@ -118,16 +120,6 @@ function anchorOf(ws: Pick<DemoWorkspaceRow, "last_reset_at" | "created_at">): s
 }
 
 // ── Session switching ──────────────────────────────────────────────────────────────────────────
-interface ReturnStash { rt: string; uid: string }
-const encodeStash = (s: ReturnStash) => Buffer.from(JSON.stringify(s)).toString("base64url");
-function decodeStash(v: string | undefined): ReturnStash | null {
-  if (!v) return null;
-  try {
-    const s = JSON.parse(Buffer.from(v, "base64url").toString("utf8")) as Partial<ReturnStash>;
-    return typeof s.rt === "string" && typeof s.uid === "string" ? { rt: s.rt, uid: s.uid } : null;
-  } catch { return null; }
-}
-
 /**
  * Switch this browser to the demo login. The real session's refresh token is kept in an httpOnly cookie
  * so Exit can restore it; the real session itself is never signed out, changed or merged.
@@ -151,6 +143,7 @@ export async function switchToDemo(admin: Admin, ws: DemoWorkspaceRow, real: { i
   const { error: vErr } = await supabase.auth.verifyOtp({ type: "magiclink", token_hash: link.properties.hashed_token });
   if (vErr) throw new Error(`demo_session_failed: ${vErr.message}`);
   jar.set(DEMO_HINT_COOKIE, ws.kind, { httpOnly: false, secure: true, sameSite: "lax", path: "/", maxAge: DEMO_RETURN_MAX_AGE });
+  jar.delete(PRACTICE_PAUSE_COOKIE);   // a fresh start replaces any paused practice
 }
 
 /** Leave Demo / Practice Mode: end the demo session and restore the real one. */
@@ -160,6 +153,7 @@ export async function switchToReal(claim: DemoClaim): Promise<{ restored: boolea
   const stash = decodeStash(jar.get(DEMO_RETURN_COOKIE)?.value);
   jar.delete(DEMO_RETURN_COOKIE);
   jar.delete(DEMO_HINT_COOKIE);
+  jar.delete(PRACTICE_PAUSE_COOKIE);
   await supabase.auth.signOut({ scope: "local" });
   if (!stash || stash.uid !== claim.owner) return { restored: false };
   const { data, error } = await supabase.auth.refreshSession({ refresh_token: stash.rt });

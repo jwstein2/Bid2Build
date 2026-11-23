@@ -4,6 +4,8 @@ import { ATTRIBUTION_COOKIE, ATTRIBUTION_MAX_AGE, captureAttribution, encodeAttr
 import { normalizeReferralCode, REFERRAL_COOKIE, REFERRAL_MAX_AGE } from "@/lib/growth/referral";
 import { TWO_STEP_REQUIRED, needsStepUp, stepUpExempt } from "@/lib/auth/mfa";
 import { demoBlockedMessage, isDemoBlocked, parseDemoClaim } from "@/lib/demo/session";
+import { isSwitchableRequest, PRACTICE_PAUSE_COOKIE } from "@/lib/demo/scope";
+import { practiceSwap, type CookieOp } from "@/lib/demo/swap";
 import { SALES_JOIN_COOKIE, SALES_JOIN_MAX_AGE, inviteTokenFromPath, salesLoginRedirect } from "@/lib/sales/next";
 import { canonicalHostRedirect } from "@/lib/config/deploy";
 import { appLoginRedirect } from "@/lib/auth/app-next";
@@ -63,7 +65,24 @@ export async function proxy(request: NextRequest) {
   // With Supabase asymmetric JWT signing keys it verifies locally against the cached public key, so
   // this runs on every page and prefetch without a call to the Auth server. With the legacy shared
   // secret it falls back to the Auth server, same as getUser(). Pages still authorize with getUser().
-  const { data: claims } = await supabase.auth.getClaims();
+  let { data: claims } = await supabase.auth.getClaims();
+  // Practice Mode covers only the paid app: leaving it pauses the practice session and returns to the real
+  // account (Academy, news, admin, public site); coming back resumes it. See src/lib/demo/swap.ts.
+  const swapCookies: CookieOp[] = [];
+  const path = request.nextUrl.pathname;
+  if (claims?.claims && !path.startsWith("/api/") && !path.startsWith("/auth/") && isSwitchableRequest(request.method, request.headers)
+    && (parseDemoClaim(claims.claims.app_metadata) || request.cookies.has(PRACTICE_PAUSE_COOKIE))) {
+    try {
+      const r = await practiceSwap(supabase, path, claims.claims, (n) => request.cookies.get(n)?.value);
+      swapCookies.push(...r.cookies);
+      if (r.swapped) ({ data: claims } = await supabase.auth.getClaims());
+    } catch { /* the request carries on with the session it arrived with */ }
+  }
+  const secure = request.nextUrl.protocol === "https:";
+  const withSwap = <T extends NextResponse>(res: T): T => {
+    for (const c of swapCookies) res.cookies.set(c.name, c.value, { maxAge: c.maxAge, httpOnly: c.httpOnly, secure, sameSite: "lax", path: "/" });
+    return res;
+  };
   // Sales portal: a signed-out visit to a private /sales page goes to the sales sign-in and comes back
   // afterwards. The portal layout still authorizes; this only keeps the destination.
   if (!claims?.claims && request.method === "GET") {
@@ -95,10 +114,10 @@ export async function proxy(request: NextRequest) {
       to.search = `?next=${encodeURIComponent(request.nextUrl.pathname + request.nextUrl.search)}`;
       const redirect = NextResponse.redirect(to);
       response.cookies.getAll().forEach((c) => redirect.cookies.set(c));
-      return redirect;
+      return withSwap(redirect);
     }
   }
-  return withSalesInvite(request, withAttribution(request, response));
+  return withSwap(withSalesInvite(request, withAttribution(request, response)));
 }
 
 export const config = {

@@ -1,6 +1,6 @@
 import { ArrowLeftRight } from "lucide-react";
 import { Card } from "@/components/ui/misc";
-import { LANDING_LABELS, type Landing, type Workspaces } from "@/lib/workspaces";
+import { landingLabel, type Landing, type Workspaces } from "@/lib/workspaces";
 import { saveLanding } from "./landing-actions";
 
 /**
@@ -17,7 +17,7 @@ export function LandingPreference({ ws }: { ws: Workspaces }) {
         <label className="text-sm font-semibold">
           When I sign in, open
           <select name="landing" defaultValue={ws.landing} className="mt-1 block min-h-11 rounded-lg border border-line bg-surface px-3 text-sm font-normal">
-            {options.map((o) => <option key={o} value={o}>{LANDING_LABELS[o]}</option>)}
+            {options.map((o) => <option key={o} value={o}>{landingLabel(o, ws)}</option>)}
           </select>
         </label>
         <button type="submit" className="min-h-11 rounded-lg bg-ink px-4 text-sm font-semibold text-white transition hover:bg-ink/90 active:scale-[0.98]">Save</button>
