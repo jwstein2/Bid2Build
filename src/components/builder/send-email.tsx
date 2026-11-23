@@ -182,7 +182,7 @@ export function SendEmailDialog({ open, onOpenChange, phase, emailInput, onRetry
         <dl className="divide-y divide-line rounded-xl border border-line text-sm">
           <div className="flex items-center gap-3 px-3 py-1.5">
             <dt><label htmlFor="se-to" className="w-16 shrink-0 font-semibold text-ink-soft">To</label></dt>
-            <dd className="min-w-0 flex-1"><input id="se-to" type="email" inputMode="email" autoComplete="off" className="w-full bg-transparent py-1.5 outline-none placeholder:text-muted" value={to} onChange={(e) => setTo(e.target.value)} placeholder="Customer email" /></dd>
+            <dd className="min-w-0 flex-1"><input id="se-to" type="email" inputMode="email" autoComplete="off" className="w-full bg-transparent py-1.5 outline-none placeholder:text-placeholder" value={to} onChange={(e) => setTo(e.target.value)} placeholder="Customer email" /></dd>
           </div>
           <div className="flex items-center gap-3 px-3 py-1.5">
             <dt><label htmlFor="se-subject" className="w-16 shrink-0 font-semibold text-ink-soft">Subject</label></dt>
