@@ -1,0 +1,112 @@
+{
+  "model_version": "1.1.0",
+  "model_date": "2026-11-23",
+  "label": "SCENARIO ASSUMPTIONS. None of these values is a measured fact. Each is a planning input to be replaced when Built2Bid first-party data (pricing, conversion, customer mix) is available.",
+  "assumptions": [
+    {
+      "id": "A01",
+      "name": "solo_receipts_floor_usd",
+      "description": "Minimum annual receipts for a nonemployer to count as a viable solo operator (filters out hobby/side activity; NES includes construction nonemployers with receipts as low as $1).",
+      "low": 50000,
+      "base": 25000,
+      "high": 10000,
+      "basis": "Analyst judgment applied to published NES receipts size classes (E013-E017). 'low' scenario uses the strictest floor."
+    },
+    {
+      "id": "A02",
+      "name": "employer_proxy_rule",
+      "description": "Employer establishments with fewer than 20 paid employees (CBP classes <5, 5-9, 10-19) are the proxy for employer businesses with 1-20 total people including the owner.",
+      "value": "n_lt5 + n5_9 + n10_19",
+      "basis": "CBP paid employment excludes unincorporated owners (E006), so 19 employees + 1 owner = 20 people. Known errors: incorporated owners are already counted as employees; partnerships with several working partners near 19 employees exceed 20; establishments are locations not firms (E008)."
+    },
+    {
+      "id": "A03",
+      "name": "nes_6digit_allocation",
+      "description": "Nonemployer counts for 6-digit trades are ESTIMATED by splitting the published 4/5-digit NES count in proportion to each 6-digit trade's share of CBP establishments with <5 paid employees in the same parent group.",
+      "value": "nes_parent * (cbp_n_lt5_trade / cbp_n_lt5_parent)",
+      "basis": "NES does not publish 6-digit construction detail (E019). Assumes the smallest employers mirror the nonemployer trade mix. Confidence: low-medium."
+    },
+    {
+      "id": "A04",
+      "name": "segment_fit_weight",
+      "description": "Share of a segment's businesses whose work is estimate-driven project work that Built2Bid serves (written multi-line estimates/bids). Derived from the Trade Priority Matrix tier.",
+      "tier_values": {
+        "P1": {
+          "low": 0.6,
+          "base": 0.75,
+          "high": 0.9
+        },
+        "P2": {
+          "low": 0.35,
+          "base": 0.5,
+          "high": 0.65
+        },
+        "P3": {
+          "low": 0.1,
+          "base": 0.2,
+          "high": 0.3
+        }
+      },
+      "basis": "Analyst judgment; no source measures this."
+    },
+    {
+      "id": "A05",
+      "name": "software_propensity",
+      "description": "Share of in-fit businesses that will pay for some business software for estimating/quoting within a 3-year horizon. Explicitly prevents treating all construction businesses as software buyers.",
+      "employer": {
+        "low": 0.35,
+        "base": 0.5,
+        "high": 0.65
+      },
+      "solo": {
+        "low": 0.15,
+        "base": 0.25,
+        "high": 0.35
+      },
+      "basis": "Scenario only. Directional context (not a measurement of the population): Software Advice shoppers report ~30% manual methods (E076) and ~40% construction-specific software (E075) but are active shoppers; Jobber respondents report 52% AI use (E101) in a vendor sample. No representative source measures paid-software adoption among 1-20 person contractors (gap G03)."
+    },
+    {
+      "id": "A06",
+      "name": "obtainable_share_36mo",
+      "description": "Share of SAM Built2Bid could convert to paying accounts within 36 months.",
+      "low": 0.0025,
+      "base": 0.0075,
+      "high": 0.015,
+      "basis": "Scenario only; early-stage vertical SaaS planning range. Starting point is 0 paying accounts (E190). Replace with funnel data from Built2Bid."
+    },
+    {
+      "id": "A07",
+      "name": "arpa_usd_month",
+      "description": "Average revenue per paying account per month, computed by scripts/build.py from Built2Bid's real list prices in data/pricing.json. Only the plan mix is assumed.",
+      "solo_mix": {
+        "low": "Individual Unlimited, all annual ($199/yr)",
+        "base": "Individual Unlimited, half monthly / half annual",
+        "high": "Individual Unlimited monthly + 10% attach of Solo Financials + 10% attach of Project Command Center"
+      },
+      "employer_mix": {
+        "low": "Owner buys Individual Unlimited monthly only (1 user)",
+        "base": "Enterprise with 3 users (base price)",
+        "high": "Enterprise with 5 users"
+      },
+      "attach_rates_high": {
+        "financials_solo_monthly": 0.1,
+        "pm_standard_monthly": 0.1
+      },
+      "basis": "Prices are first-party facts (S13, E180-E186). Plan mix and attach rates are scenario assumptions; Built2Bid had 0 paying accounts at the 2026-11-16 baseline (E190), so no observed mix exists yet."
+    },
+    {
+      "id": "A08",
+      "name": "tam_scope",
+      "description": "TAM includes residential and light-commercial building trades plus exterior cleaning; excludes heavy & civil (NAICS 237) and industrial building (236210).",
+      "value": "segments with in_tam=true in segments.json",
+      "basis": "Built2Bid ships estimate templates for 42 trade slugs including decks, pressure washing and soft washing (E187), and markets 'Estimates and proposals for every trade' (E188). Heavy civil and industrial building are outside that catalog."
+    },
+    {
+      "id": "A09",
+      "name": "free_plan_excluded",
+      "description": "SOM counts paying accounts only. Free-plan users (credit-based) are not revenue and are not counted.",
+      "value": "paying accounts only",
+      "basis": "Built2Bid offers a free credit plan (E189)."
+    }
+  ]
+}

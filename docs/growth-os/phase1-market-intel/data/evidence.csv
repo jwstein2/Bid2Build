@@ -1,0 +1,133 @@
+id,source_id,metric,value,unit,base_or_population,period,locator,claim_type,confidence,note
+E001,S01,NAICS 23 employer establishments,814557,establishments,All U.S. construction establishments with paid employees,2023,cbp23us.txt naics 23---- lfo -,verified_fact,A,
+E002,S01,NAICS 23 paid employees,7659459,employees,Paid employees week incl. March 12,2023,cbp23us.txt naics 23---- emp,verified_fact,A,Workers not buyers
+E003,S01,NAICS 23 establishments <5 paid employees,536259,establishments,NAICS 23,2023,cbp23us.txt n<5,verified_fact,A,Includes estabs with 0 employees in March but payroll in year
+E004,S01,NAICS 23 establishments 5-9 paid employees,127972,establishments,NAICS 23,2023,cbp23us.txt n5_9,verified_fact,A,
+E005,S01,NAICS 23 establishments 10-19 paid employees,75854,establishments,NAICS 23,2023,cbp23us.txt n10_19,verified_fact,A,
+E006,S01,Definition of paid employment,"includes salaried officers of corporations; excludes sole proprietors and partners of unincorporated businesses",text,CBP,2023,CBP glossary 'Employment',verified_fact,A,Basis for owner-vs-worker distinction
+E007,S01,Definition of <5 size class,"includes establishments with no paid employees in mid-March pay period that paid wages at some time during year",text,CBP,2023,CBP glossary 'Employment Size Class',verified_fact,A,
+E008,S01,Establishment definition,"single physical location; not necessarily identical with a company",text,CBP,2023,CBP glossary 'Establishment',verified_fact,A,
+E010,S02,NAICS 23 nonemployer establishments,3042704,establishments,No paid employees; receipts >= $1 for construction,2024,nonemp24us.txt NAICS 23 size 001,verified_fact,A,
+E011,S02,NAICS 23 nonemployer receipts,258200417,USD thousands,NAICS 23 nonemployers,2024,nonemp24us.txt RCPTOT,verified_fact,A,= $258.2B
+E012,S02,NAICS 23 nonemployers that are sole proprietorships,2727891,establishments,NAICS 23 nonemployers,2024,nonemp24us.txt LFO S,verified_fact,A,
+E013,S02,NAICS 23 nonemployers with receipts <$5K,488864,establishments,NAICS 23 nonemployers,2024,size 111,verified_fact,A,
+E014,S02,NAICS 23 nonemployers with receipts $5K-9.9K,323394,establishments,NAICS 23 nonemployers,2024,size 118,verified_fact,A,
+E015,S02,NAICS 23 nonemployers with receipts $10K-24.9K,647009,establishments,NAICS 23 nonemployers,2024,size 119,verified_fact,A,
+E016,S02,NAICS 23 nonemployers with receipts $25K-49.9K,544803,establishments,NAICS 23 nonemployers,2024,size 121,verified_fact,A,
+E017,S02,NAICS 23 nonemployers with receipts $50K+,1038633,establishments,NAICS 23 nonemployers,2024,sum of sizes 122-141,verified_fact,A,Sum of published size classes
+E018,S02,NES coverage threshold,"no paid employees; subject to federal income tax; receipts >= $1,000 ($1 or more for Construction)",text,NES,2024,Tip sheet CB26-TPS.59,verified_fact,A,
+E019,S02,NES construction NAICS granularity,"23; 236; 2361; 2362; 237...; 238; 2381; 2382; 23821; 23822; 23829; 2383; 2389",text,NES,2024,nes_naics22.txt,verified_fact,A,No 6-digit trade detail
+E020,S02,NES caution on time series,"not recommended to analyze multiple years as a time series",text,NES,2024,NES methodology page,verified_fact,A,
+E030,S03,Share of construction payroll establishments with <20 employees,91.0,percent,Payroll establishments NAICS 23,2014-2023 average,PDF key findings,verified_fact,B,
+E031,S03,Share of payroll employees at establishments with <20 employees,36.5,percent,Payroll employees NAICS 23,2014-2023 average,PDF key findings,verified_fact,B,
+E032,S03,Workers at establishments with <20 employees,2.4,million workers,NAICS 23,2023,PDF definitions/summary,verified_fact,B,Abstract states 2.7M (inconsistent)
+E033,S03,Workers at nonemployer establishments,2.9,million,NAICS 23,2023,PDF summary,verified_fact,B,CPWR equates nonemployer establishments with workers
+E034,S03,Nonemployer establishments growth,20.8,percent,NAICS 23 nonemployers 2.4M to 2.9M,2014-2023,PDF key findings,verified_fact,B,
+E035,S03,Share of establishments <20 employees: Construction of Buildings (236),94.3,percent,NAICS 236 payroll establishments,2023,Chart 3,verified_fact,B,
+E036,S03,Share of establishments <20 employees: Specialty Trade (238),90.2,percent,NAICS 238 payroll establishments,2023,Chart 3,verified_fact,B,
+E037,S03,Share of establishments <20 employees: Heavy & Civil (237),76.9,percent,NAICS 237 payroll establishments,2023,Chart 3,verified_fact,B,
+E038,S03,Small establishment definition,"fewer than 20 employees",text,CPWR,2026,PDF p.6,verified_fact,B,
+E039,S03,Firms 1-19 employees offering train-the-trainer,58.9,percent,Dodge/CPWR survey firms 1-19,2025,Chart 12,verified_fact,B,vs 86.6% for 100+
+E040,S03,States with highest share of small establishments,"MT 95.8%; VT 95.4%; ME 94.8%",text,Payroll establishments,2023,Chart 4,verified_fact,B,
+E050,S04,Share of NAHB Builder members whose primary business is residential remodeling,21,percent,NAHB Builder members,2025,NAHB blog,verified_fact,D,
+E051,S04,Median employees of NAHB remodelers,5,employees,NAHB remodeler members,2025,NAHB blog / EOH,verified_fact,D,
+E052,S04,Median annual revenue (dollar volume) of NAHB remodelers,2.1,USD millions,NAHB remodeler members,2025,NAHB blog,verified_fact,D,Up from $1.7M in 2024
+E053,S04,NAHB remodelers with revenue under $500K,23,percent,NAHB remodeler members,2025,NAHB blog,verified_fact,D,
+E054,S04,NAHB remodelers with revenue $1.0-4.9M,52,percent,NAHB remodeler members,2025,NAHB blog,verified_fact,D,
+E055,S04,Median jobs of $10K+ completed (remodeling primary or secondary),8,jobs per year,NAHB members doing remodeling,2025,NAHB blog,verified_fact,D,Mean 19
+E056,S04,Median jobs of $10K+ completed (primary remodelers),12,jobs per year,NAHB primary remodelers,2025,NAHB blog,verified_fact,D,Mean 31
+E057,S04,Members completing 1-5 jobs of $10K+,37,percent,NAHB members doing remodeling,2025,NAHB blog,verified_fact,D,Buckets sum to 94%
+E060,S05,Remodeling Market Index,62,index,NAHB remodelers,Q3 2026,EOH Oct 8 2026,verified_fact,C,
+E061,S05,RMI small projects (<$20K) current conditions,73,index,NAHB remodelers,Q3 2026,EOH Oct 8 2026,verified_fact,C,
+E062,S05,RMI leads and inquiries,53,index,NAHB remodelers,Q3 2026,EOH Oct 8 2026,verified_fact,C,
+E070,S06,Advisor conversations analyzed,8205,conversations,SMB construction software shoppers,Jan 2025-Jan 2026,S07 methodology / S06 key takeaways,verified_fact,D,
+E071,S06,Share of conversations with businesses of 10 or fewer employees,55,percent,SA conversations,Jan 2025-Jan 2026,Key takeaways,verified_fact,D,
+E072,S06,Estimating requested,72,percent,SA conversations (base not stated),Jan 2025-Jan 2026,Body,verified_fact,D,Most requested feature
+E073,S06,Project management requested,68,percent,SA conversations,Jan 2025-Jan 2026,Body,verified_fact,D,
+E074,S06,Want estimating and PM in one platform (of those expressing preference),75,percent,SA conversations expressing preference,Jan 2025-Jan 2026,Body,verified_fact,D,
+E075,S06,Currently use construction-specific software,40,percent (approx.),SA conversations,Jan 2025-Jan 2026,Body,verified_fact,D,Categories not stated as exclusive
+E076,S06,Currently use manual methods (pen-and-paper or spreadsheets),30,percent (approx.),SA conversations,Jan 2025-Jan 2026,Body,verified_fact,D,
+E077,S06,Top switching driver: efficiency,48,percent,SA conversations,Jan 2025-Jan 2026,Table,verified_fact,D,
+E078,S06,Switching driver: affordability,7,percent,SA conversations,Jan 2025-Jan 2026,Table,verified_fact,D,
+E079,S06,Buyers spending under $165/month,39,percent,SA conversations,Jan 2025-Jan 2026,Key takeaways,verified_fact,D,
+E080,S06,Buyers spending over $495/month,30,percent,SA conversations,Jan 2025-Jan 2026,Key takeaways,verified_fact,D,
+E081,S06,Average budget per user per month,150,USD,SA conversations,Jan 2025-Jan 2026,Key takeaways,verified_fact,D,Body also says $450/month average; unreconciled
+E082,S07,Residential remodeler budget per user per month,63,USD (approx.),SA residential remodeler conversations,Jan 2025-Jan 2026,S07 body,verified_fact,D,Lowest of any segment
+E083,S07,Custom home builder budget per user per month,88,USD (approx.),SA conversations,Jan 2025-Jan 2026,S07 body,verified_fact,D,
+E084,S07,General contractor budget per user per month,150,USD (approx.),SA conversations,Jan 2025-Jan 2026,S07 body,verified_fact,D,Labeled median in one place
+E085,S07,Specialty contractor budget per user per month,150-157,USD,SA conversations,Jan 2025-Jan 2026,S07 body (table says $150-160),verified_fact,D,
+E086,S07,Residential buyers prioritizing estimating,89,percent,SA residential conversations,Jan 2025-Jan 2026,S07 body,verified_fact,D,
+E087,S07,Residential buyers relying on manual or paper methods,35,percent (nearly),SA residential conversations,Jan 2025-Jan 2026,S07 body,verified_fact,D,
+E088,S07,Residential builders requesting customer management,26,percent,SA residential conversations,Jan 2025-Jan 2026,S07 body,verified_fact,D,vs 19% all segments
+E089,S07,Conversation mix: residential segments,31,percent,SA conversations n=8205,Jan 2025-Jan 2026,S07 table,verified_fact,D,
+E100,S08,Survey respondents,1050,business owners,U.S. home service business owners,Dec 2025,Methodology section,verified_fact,C,
+E101,S08,Owners using AI,52,percent,Respondents,Dec 2025,AI Adoption section,verified_fact,C,
+E102,S08,AI adopters using AI to create estimates/quotes/contracts,54,percent,AI adopters,Dec 2025,AI Adoption section,verified_fact,C,
+E103,S08,Quoting named as a biggest time drain,37,percent,Respondents,Dec 2025,Operations section,verified_fact,C,
+E104,S08,Admin/paperwork named as a biggest time drain,31,percent,Respondents,Dec 2025,Operations section,verified_fact,C,
+E105,S08,Jobsite management named as a biggest time drain,48,percent,Respondents,Dec 2025,Operations section,verified_fact,C,
+E106,S08,Lead source: referrals,59,percent,Respondents,Dec 2025,Marketing section,verified_fact,C,
+E107,S08,Lead source: Facebook,32,percent,Respondents,Dec 2025,Marketing section,verified_fact,C,
+E108,S08,Lead source: Google Search,20,percent,Respondents,Dec 2025,Marketing section,verified_fact,C,
+E109,S08,Lead source: Instagram,8,percent,Respondents,Dec 2025,Marketing section,verified_fact,C,
+E110,S08,Win more than 70% of quotes,36,percent,Respondents,Dec 2025,Marketing section,verified_fact,C,
+E111,S08,Respond to leads within an hour,20,percent,Respondents,Dec 2025,Marketing section,verified_fact,C,
+E112,S08,Offer tiered good/better/best pricing,16,percent,Pros (Jobber data/survey),Dec 2025,Growth section,verified_fact,C,
+E113,S08,Raised prices last year,65,percent,Respondents,Dec 2025,Pricing section,verified_fact,C,
+E114,S08,Roofing: use AI,67,percent,Roofing respondents,Dec 2025,Industry spotlight,verified_fact,C,Per-trade n not stated
+E115,S08,Roofing: share earning $500K+,over half,text,Roofing respondents,Dec 2025,Industry spotlight,verified_fact,C,
+E116,S08,HVAC: use AI,81.5,percent,HVAC respondents,Dec 2025,Industry spotlight,verified_fact,C,Highest of any trade
+E117,S08,HVAC: share earning $500K+,over 60,percent,HVAC respondents,Dec 2025,Industry spotlight,verified_fact,C,
+E118,S08,Plumbing: use AI,65,percent,Plumbing respondents,Dec 2025,Industry spotlight,verified_fact,C,
+E119,S08,Electrical: use AI,64,percent,Electrical respondents,Dec 2025,Industry spotlight,verified_fact,C,
+E120,S08,General contracting: use AI,57,percent,GC respondents,Dec 2025,Industry spotlight,verified_fact,C,
+E121,S08,General contracting: pricing confidence,58,percent,GC respondents,Dec 2025,Industry spotlight,verified_fact,C,
+E122,S08,Cleaning: share earning under $50K,over 40,percent,Cleaning respondents,Dec 2025,Industry spotlight,verified_fact,C,Closest proxy for exterior cleaning
+E123,S08,Cleaning: use AI,50,percent,Cleaning respondents,Dec 2025,Industry spotlight,verified_fact,C,
+E124,S08,AI adopters among owners under 30,64,percent,Owners under 30,Dec 2025,Key findings,verified_fact,C,
+E125,S08,Digital gap: no FAQ section on site,74,percent,Respondents,Dec 2025,Marketing section,verified_fact,C,
+E126,S08,Customer satisfaction factor: clear communication,32,percent,Respondents (source of customer view not stated),Dec 2025,Key findings,verified_fact,C,Not a homeowner sample
+E130,S10,Respondents,210,respondents,Roofing industry (contractors and others),May-Sep 2024,Press release,verified_fact,E,
+E131,S10,Not experiencing a labor shortage,25,percent,Respondents,May-Sep 2024,Press release,verified_fact,E,
+E132,S10,Contractors using subcontracting crews,57,percent,Contractor respondents,May-Sep 2024,Press release,verified_fact,E,
+E133,S10,Digital advertising as greatest marketing need,nearly 50,percent,Respondents,May-Sep 2024,Press release,verified_fact,E,
+E134,S10,Top business issues,"recruitment and retention; training; material cost",text,Respondents,May-Sep 2024,Press release,verified_fact,E,
+E140,S11,U.S. adults ever using YouTube,84,percent,U.S. adults,2026,Fact sheet / topline,verified_fact,B,
+E141,S11,U.S. adults ever using Facebook,70,percent,U.S. adults,2026,Fact sheet / topline,verified_fact,B,
+E142,S11,U.S. adults ever using Instagram,51,percent,U.S. adults,2026,Fact sheet / topline,verified_fact,B,
+E143,S11,U.S. adults ever using TikTok,37,percent,U.S. adults,2026,Fact sheet / topline,verified_fact,B,
+E144,S11,U.S. adults ever using LinkedIn,31,percent,U.S. adults,2026,Fact sheet / topline,verified_fact,B,
+E145,S11,U.S. adults ever using Nextdoor,18,percent,U.S. adults,2026,Fact sheet / topline,verified_fact,B,
+E146,S11,Facebook use ages 30-49,78,percent,U.S. adults 30-49,2026,Fact sheet age table,verified_fact,B,
+E147,S11,Facebook use ages 50-64,71,percent,U.S. adults 50-64,2026,Fact sheet age table,verified_fact,B,
+E148,S11,Facebook use among men,63,percent,U.S. men,2026,Fact sheet gender table,verified_fact,B,
+E149,S11,Facebook use among rural adults,76,percent,Rural adults,2026,Fact sheet community table,verified_fact,B,
+E150,S11,YouTube use among men,85,percent,U.S. men,2026,Fact sheet gender table,verified_fact,B,
+E151,S11,Instagram use ages 30-49,64,percent,U.S. adults 30-49,2026,Fact sheet age table,verified_fact,B,
+E152,S11,LinkedIn use among high school or less,13,percent,Adults HS or less,2026,Fact sheet education table,verified_fact,B,
+E153,S11,Nextdoor use among suburban adults,23,percent,Suburban adults,2026,Fact sheet community table,verified_fact,B,
+E154,S11,YouTube use ages 30-49,91,percent,U.S. adults 30-49,2026,Fact sheet age table,verified_fact,B,
+E155,S11,TikTok use ages 30-49,45,percent,U.S. adults 30-49,2026,Fact sheet age table,verified_fact,B,
+E156,S11,Facebook use among HS or less,67,percent,Adults HS or less,2026,Fact sheet education table,verified_fact,B,
+E157,S11,YouTube use among HS or less,77,percent,Adults HS or less,2026,Fact sheet education table,verified_fact,B,
+E158,S11,Survey sample,5511,adults,NPORS 2026,Jan 30-Jun 18 2026,Topline,verified_fact,B,MOE +/-1.8
+E160,S12,Daily Facebook use ages 30-49,58,percent,U.S. adults 30-49,2025,2025 report,verified_fact,B,
+E021,S02,Nonemployer establishments NAICS 2383 (building finishing),678091,establishments,NES,2024,nonemp24us.txt 2383 size 001,verified_fact,A,
+E022,S02,Share of NAICS 56179 nonemployers with receipts under $25K,63.6,percent,NES 56179 nonemployers,2024,"(32,301+23,326+37,829)/146,860 from nonemp24us.txt",derived_fact,A,Arithmetic on published size classes
+E127,S08,Roofing: saw significant demand increases,28,percent,Roofing respondents,Dec 2025,Industry spotlight,verified_fact,C,
+E128,S08,Roofing: expect significant revenue growth next year,32,percent,Roofing respondents,Dec 2025,Industry spotlight,verified_fact,C,
+E129,S08,Roofing: high-performing channels,"YouTube; Local Services Ads; Google",text,Roofing respondents,Dec 2025,Industry spotlight,verified_fact,C,
+E170,S08,Cleaning: respond to leads within an hour,26,percent,Cleaning respondents,Dec 2025,Marketing section / spotlight,verified_fact,C,
+E180,S13,Individual Unlimited monthly list price,19.99,USD per month,Built2Bid list price,2026-11-23,src/lib/billing/plans.ts amountCents 1999,verified_fact,A,First-party
+E181,S13,Individual Unlimited annual list price,199,USD per year,Built2Bid list price,2026-11-23,src/lib/billing/plans.ts amountCents 19900,verified_fact,A,README says $149/yr (stale; G18)
+E182,S13,Enterprise base price (includes 3 users),49.99,USD per month,Built2Bid list price,2026-11-23,src/lib/enterprise/pricing.ts ENTERPRISE_BASE_CENTS 4999,verified_fact,A,
+E183,S13,Enterprise seat price users 4-5,19.99,USD per user per month,Built2Bid list price,2026-11-23,src/lib/enterprise/pricing.ts tier 1,verified_fact,A,Users 6-10 $17.99; 11+ $15.99
+E184,S13,Project Command Center add-on (Standard),4.99,USD per month,Built2Bid list price,2026-11-23,src/lib/pm/billing.ts PM_ADDON_CENTS 499,verified_fact,A,
+E185,S13,Solo Financials add-on,21.99,USD per month,Built2Bid list price,2026-11-23,src/lib/financials/billing.ts FIN_SOLO_CENTS 2199,verified_fact,A,$219.99/yr on annual plans
+E186,S13,Enterprise seat price users 6-10,17.99,USD per user per month,Built2Bid list price,2026-11-23,src/lib/enterprise/pricing.ts tier 2,verified_fact,A,
+E187,S13,Trade estimate templates shipped,42,trade slugs,Built2Bid trade catalog,2026-11-23,src/lib/trades/data.ts,verified_fact,A,Includes decks; pressure-washing; soft-washing; kitchens; bathrooms
+E188,S13,Product positioning,"Estimates and proposals for every trade",text,README,2026-11-23,README.md line 3,verified_fact,A,
+E189,S13,Free plan,"3 starter credits + 1 monthly credit from month two; one credit per new finalized bid",text,README,2026-11-23,README.md,verified_fact,A,
+E190,S14,Paying accounts at production baseline,0,accounts,Production accounts not labeled test/internal,2026-11-16,docs/growth/README.md Audit,verified_fact,B,8 non-test accounts; 3 finalized a bid
+E191,S14,Ad copy rule,"No testimonials, ratings or results that haven't happened. No speed, profit, 'win more jobs' or percentage claims.",text,Built2Bid ad rules,2026-11-16,docs/growth/ADS.md,verified_fact,B,Persona messages rewritten to comply
+E192,S14,Growth-engine priority trades,"decks, general contracting, painting, roofing, concrete, kitchens, bathrooms, flooring, electrical, siding, drywall",text,Built2Bid owner spec,2026-11-16,docs/growth/README.md PR 2,verified_fact,B,Compare with Trade Priority Matrix
