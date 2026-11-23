@@ -7,6 +7,22 @@ import { cn } from "@/lib/cn";
 import type { DemoSessionKind } from "@/lib/demo/session";
 import { useDemoSwitch } from "./use-demo-switch";
 import { DEMO_HINT_COOKIE, readDemoHint } from "@/lib/demo/session";
+import { inPracticeScope } from "@/lib/demo/scope";
+
+/**
+ * One hard reload when a client navigation crossed the paid-app boundary: the server already switched the
+ * session (src/lib/demo/swap.ts), but a shared layout (banner, menu) kept from the previous page would still
+ * show the old mode. Guarded per page for a few seconds so it can never loop.
+ */
+function reloadOnce(pathname: string) {
+  try {
+    const k = `b2b-practice-reload:${pathname}`;
+    const last = Number(sessionStorage.getItem(k) ?? 0);
+    if (Date.now() - last < 15_000) return;
+    sessionStorage.setItem(k, String(Date.now()));
+  } catch { return; }
+  window.location.reload();
+}
 
 /** Small status line under a demo button while the sample company is prepared or the session switches. */
 function SwitchStatus({ phase, progress, error }: { phase: string; progress: number; error: string | null }) {
@@ -157,14 +173,23 @@ export function DemoBannerAnywhere() {
     const t = setTimeout(() => {
       const hint = readDemoHint(document.cookie);
       const serverBar = Array.from(document.querySelectorAll("[data-testid='demo-banner']")).some((el) => !el.hasAttribute("data-anywhere"));
-      setHere(Boolean(hint) && !serverBar);
-      if (!hint || checked.current) return;
+      const scoped = inPracticeScope(pathname);
+      // Practice Mode is only for the paid app: a practice bar still showing outside it is a kept layout.
+      if (serverBar && !scoped) { reloadOnce(pathname); return; }
+      setHere(Boolean(hint) && !serverBar && scoped);
+      if (!hint || !scoped) return;
+      const inAppLayout = Boolean(document.querySelector("[data-testid='nav-help']"));
+      if (checked.current && !(inAppLayout && !serverBar)) return;
       checked.current = true;
       void fetch("/api/guide", { cache: "no-store", credentials: "same-origin" })
         .then((r) => (r.ok ? r.json() : null))
         .then((j: { workspace?: string } | null) => {
           const ws = j?.workspace;
-          if (ws === "demo" || ws === "practice") setConfirmed(ws === "practice" ? "practice" : "owner_demo");
+          if (ws === "demo" || ws === "practice") {
+            // Practice resumed on the way back into the app, but the kept menu/bar still shows the real account.
+            if (inAppLayout && !serverBar) { reloadOnce(pathname); return; }
+            setConfirmed(ws === "practice" ? "practice" : "owner_demo");
+          }
           else if (j) document.cookie = `${DEMO_HINT_COOKIE}=; path=/; max-age=0; secure; samesite=lax`;
         })
         .catch(() => {});
