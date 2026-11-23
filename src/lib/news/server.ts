@@ -4,7 +4,7 @@ import { parseUsAddress } from "@/lib/geo/address";
 import { logError } from "@/lib/http/api";
 import { sampleArticles } from "./fixtures";
 import { mergePrefs, tradeSlugFrom, type NewsPrefs, type PrefsRow } from "./prefs";
-import { pickBriefing, rankAll, type ArticleWithTerms, type RankedArticle } from "./rank";
+import { sinkRead, pickBriefing, rankAll, type ArticleWithTerms, type RankedArticle } from "./rank";
 import type { Authority, Category, GeoLevel, NewsArticle, NewsContext } from "./types";
 
 /**
@@ -148,6 +148,8 @@ export async function loadFeed(db: SupabaseClient, reader: ReaderProfile, f: Fee
     ranked = ranked.filter((a) => { const t = `${a.headline} ${a.publisher} ${a.snippet ?? ""} ${a.summary ?? ""} ${a.trades.join(" ")} ${a.states.join(" ")}`.toLowerCase(); return words.every((w) => t.includes(w)); });
   }
   if (f.sort === "newest") ranked.sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
+  // Read articles drop to the bottom of the main feed (stable: order within each group is kept).
+  if (f.view !== "saved" && f.view !== "hidden") ranked = sinkRead(ranked);
   const lastUpdated = raw.reduce<string | null>((m, a) => (!m || a.lastVerifiedAt > m ? a.lastVerifiedAt : m), null);
   return { available, sample, articles: ranked, total: ranked.length, publishers: [...new Set(raw.map((a) => a.publisher))].sort(), lastUpdated };
 }
@@ -157,5 +159,5 @@ export async function loadBriefing(db: SupabaseClient, reader: ReaderProfile, op
   const r = { ...reader, ctx: { ...reader.ctx, topics: opts.topics?.length ? opts.topics : reader.ctx.topics, geoEmphasis: opts.geo ?? reader.ctx.geoEmphasis } };
   const feed = await loadFeed(db, r, {}, { sample: opts.sample });
   const unread = feed.articles.filter((a) => !a.read);
-  return { ...feed, articles: pickBriefing(unread.length >= 3 ? unread : feed.articles, Math.min(10, Math.max(3, opts.limit ?? 4))) };
+  return { ...feed, articles: sinkRead(pickBriefing(unread.length >= 3 ? unread : feed.articles, Math.min(10, Math.max(3, opts.limit ?? 4)))) };
 }

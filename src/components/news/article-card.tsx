@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Bookmark, BookmarkCheck, ChevronDown, ChevronUp, Eye, EyeOff, ExternalLink, Landmark, MapPin, ShieldCheck, Undo2 } from "lucide-react";
+import { Archive, Bookmark, BookmarkCheck, Check, ChevronDown, ChevronUp, Eye, ExternalLink, Landmark, MapPin, ShieldCheck, Undo2 } from "lucide-react";
 import { Badge } from "@/components/ui/misc";
 import { cn } from "@/lib/cn";
 import type { CardArticle } from "@/lib/news/format";
@@ -26,10 +26,12 @@ async function send(id: string, action: string) {
  * trade/topic, summary (only when permitted), why it matters, and an obvious "Read original article" link
  * that opens the publisher in a new tab.
  */
-export function ArticleCard({ a, variant = "full", interactive = true }: { a: CardArticle; variant?: "compact" | "full"; interactive?: boolean }) {
+export function ArticleCard({ a, variant = "full", interactive = true, onReadChange, archived = false }: { a: CardArticle; variant?: "compact" | "full"; interactive?: boolean; onReadChange?: (id: string, read: boolean) => void; archived?: boolean }) {
   const [saved, setSaved] = useState(a.saved);
   const [hidden, setHidden] = useState(false);
-  const [read, setRead] = useState(a.read);
+  const [restored, setRestored] = useState(false);
+  const [read, setReadState] = useState(a.read);
+  const setRead = (v: boolean) => { setReadState(v); onReadChange?.(a.id, v); };
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const compact = variant === "compact";
@@ -44,10 +46,21 @@ export function ArticleCard({ a, variant = "full", interactive = true }: { a: Ca
     setBusy(false);
   };
 
+  if (restored) {
+    return (
+      <div className="flex items-center justify-between gap-3 rounded-xl border border-dashed border-line px-4 py-3 text-sm text-muted" data-testid="news-restored">
+        <span>Restored. It&apos;s back in your feed.</span>
+        <button type="button" className="inline-flex items-center gap-1 font-semibold text-accent-ink underline-offset-4 hover:underline" onClick={() => act("hide", () => setRestored(false), () => setRestored(true))}>
+          <Undo2 className="h-4 w-4" aria-hidden />Undo
+        </button>
+      </div>
+    );
+  }
+
   if (hidden) {
     return (
       <div className="flex items-center justify-between gap-3 rounded-xl border border-dashed border-line px-4 py-3 text-sm text-muted" data-testid="news-hidden">
-        <span>Hidden. You won&apos;t see this article again.</span>
+        <span>Archived. It&apos;s out of your feed and kept under Archived.</span>
         <button type="button" className="inline-flex items-center gap-1 font-semibold text-accent-ink underline-offset-4 hover:underline" onClick={() => act("unhide", () => setHidden(false), () => setHidden(true))}>
           <Undo2 className="h-4 w-4" aria-hidden />Undo
         </button>
@@ -68,7 +81,7 @@ export function ArticleCard({ a, variant = "full", interactive = true }: { a: Ca
   );
 
   return (
-    <article className={cn("rounded-xl border border-line bg-surface", compact ? "p-3" : "p-4 sm:p-5", read && !compact && "opacity-90")} data-testid="news-card" data-article-id={a.id} aria-labelledby={`h-${a.id}`}>
+    <article className={cn("rounded-xl border border-line bg-surface transition-opacity", compact ? "p-3" : "p-4 sm:p-5", read && "opacity-60 hover:opacity-100 focus-within:opacity-100")} data-read={read ? "true" : undefined} data-testid="news-card" data-article-id={a.id} aria-labelledby={`h-${a.id}`}>
       <div className="flex flex-wrap items-center gap-1.5 text-xs">
         {a.sample && <Badge tone="warn">SAMPLE · not real news</Badge>}
         <Badge tone={a.geoLabel.startsWith("Local") ? "accent" : a.geoLabel.startsWith("State") ? "ok" : "neutral"}><MapPin className="h-3 w-3" aria-hidden />{a.geoLabel}</Badge>
@@ -77,6 +90,7 @@ export function ArticleCard({ a, variant = "full", interactive = true }: { a: Ca
         <span title={AUTH_HELP[a.authority]}><Badge tone={AUTH_TONE[a.authority]}>{a.authority === "official" ? <Landmark className="h-3 w-3" aria-hidden /> : null}{a.authorityLabel}</Badge></span>
         {!compact && (a.typeLabel === "Proposed rule" || a.typeLabel === "Final rule" || a.typeLabel === "Disaster declaration") && <Badge tone={a.typeLabel === "Proposed rule" ? "warn" : "brand"}>{a.typeLabel}</Badge>}
         {a.important && <Badge tone="danger">Important</Badge>}
+        {read && <Badge><Check className="h-3 w-3" aria-hidden />Read</Badge>}
       </div>
       <h3 id={`h-${a.id}`} className={cn("mt-2 font-display font-extrabold leading-snug text-navy", compact ? "text-[0.95rem]" : "text-lg")}>
         {a.external ? <a href={a.url} target="_blank" rel="noopener noreferrer" className="hover:underline" onClick={() => { setRead(true); if (!a.sample) void send(a.id, "click"); }}>{a.headline}</a> : a.headline}
@@ -126,11 +140,23 @@ export function ArticleCard({ a, variant = "full", interactive = true }: { a: Ca
               onClick={() => act(read ? "unread" : "read", () => setRead(!read), () => setRead(read))}>
               <Eye className="h-4 w-4" aria-hidden />{read ? "Mark unread" : "Mark read"}
             </button>
-            <button type="button" disabled={busy} data-testid="news-hide" className="inline-flex min-h-9 items-center gap-1 text-sm text-ink-soft hover:text-ink"
-              onClick={() => act("hide", () => setHidden(true), () => setHidden(false))}>
-              <EyeOff className="h-4 w-4" aria-hidden />Hide
+            <button type="button" disabled={busy} data-testid="news-hide" title="Remove from your feed. Find it again under Archived." className="inline-flex min-h-9 items-center gap-1 text-sm text-ink-soft hover:text-ink"
+              onClick={() => (archived ? act("unhide", () => setRestored(true), () => setRestored(false)) : act("hide", () => setHidden(true), () => setHidden(false)))}>
+              {archived ? <><Undo2 className="h-4 w-4" aria-hidden />Restore to feed</> : <><Archive className="h-4 w-4" aria-hidden />Archive</>}
             </button>
           </>
+        )}
+        {interactive && compact && (
+          <span className="ml-auto flex items-center gap-3">
+            <button type="button" disabled={busy} data-testid="news-read" className="inline-flex min-h-9 items-center gap-1 text-xs font-semibold text-ink-soft hover:text-ink"
+              onClick={() => act(read ? "unread" : "read", () => setRead(!read), () => setRead(read))}>
+              <Eye className="h-3.5 w-3.5" aria-hidden />{read ? "Mark unread" : "Mark read"}
+            </button>
+            <button type="button" disabled={busy} data-testid="news-hide" title="Remove from your feed. Find it again under Archived." className="inline-flex min-h-9 items-center gap-1 text-xs font-semibold text-ink-soft hover:text-ink"
+              onClick={() => (archived ? act("unhide", () => setRestored(true), () => setRestored(false)) : act("hide", () => setHidden(true), () => setHidden(false)))}>
+              {archived ? <><Undo2 className="h-3.5 w-3.5" aria-hidden />Restore</> : <><Archive className="h-3.5 w-3.5" aria-hidden />Archive</>}
+            </button>
+          </span>
         )}
       </div>
     </article>

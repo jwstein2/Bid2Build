@@ -190,3 +190,8 @@ export const tradeGeoPreference = (slug: string | null): GeoLevel | null => {
   const g = slug ? tradeNews(slug)?.geo : null;
   return g === "local_heavy" ? "local" : g === "national" ? "national" : null;
 };
+
+/** Unread first, read last, keeping the order inside each group. */
+export function sinkRead<T extends { read: boolean }>(list: T[]): T[] {
+  return [...list.filter((a) => !a.read), ...list.filter((a) => a.read)];
+}

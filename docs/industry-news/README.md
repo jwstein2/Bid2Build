@@ -6,10 +6,10 @@ Free for every plan (Free, Unlimited, Enterprise, complimentary). Personalized f
 
 | Surface | Path |
 |---|---|
-| Full page with filters, search, sort, Saved/Hidden views and sample mode | `/industry` (`?sample=1` shows fictional samples) |
+| Full page with filters, search, sort, Saved/Archived views and sample mode. Read articles are dimmed and drop to the bottom; Archive removes an article (Undo, or Restore from the Archived view) | `/industry` (`?sample=1` shows fictional samples) |
 | Preferences (trades, service counties, topics, sources, hidden publishers, opt-in alerts) | `/industry/preferences` |
 | Public source list, credibility labels, associations per trade, unavailable sources | `/industry/sources` |
-| Dashboard widget "Your Industry Briefing" | `src/components/news/industry-briefing-widget.tsx` (gets registered in the V6.6 dashboard registry once PR #122 merges) |
+| Dashboard widget "Your Industry Briefing" (each card has Mark read and Archive) | `src/components/news/industry-briefing-widget.tsx` (gets registered in the V6.6 dashboard registry once PR #122 merges) |
 | Owner Source Health (run, disable, exclude, overrides, failures, cost and engagement) | `/admin/news` |
 | Universal Search | "Industry News · public articles" section, kept apart from company records |
 

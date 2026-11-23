@@ -10,7 +10,7 @@ import { AUTHORITY_LABEL } from "@/lib/news/sources";
 import { AUTHORITIES, CATEGORIES, type Authority, type Category } from "@/lib/news/types";
 import { tradeName, trades } from "@/lib/trades/catalog";
 import { FollowTopic } from "@/components/news/follow-topic";
-import { ArticleCard } from "@/components/news/article-card";
+import { ArticleList } from "@/components/news/article-list";
 import { ButtonLink, buttonClass } from "@/components/ui/button";
 import { Notice } from "@/components/ui/misc";
 import { cn } from "@/lib/cn";
@@ -21,7 +21,7 @@ const PAGE = 20;
 const GEOS = [{ v: "all", l: "All News" }, { v: "local", l: "Local" }, { v: "state", l: "State" }, { v: "national", l: "National" }] as const;
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
 
-/** Full Industry Intelligence page (V6.8 §11): filters, search, sort, save/hide/read, original links. Free for every plan. */
+/** Full Industry Intelligence page (V6.8 §11): filters, search, sort, save/archive/read, original links. Free for every plan. */
 export default async function IndustryPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const sp = await searchParams;
   const user = await getUser();
@@ -32,7 +32,7 @@ export default async function IndustryPage({ searchParams }: { searchParams: Pro
   const topic = (CATEGORIES as readonly string[]).includes(one(sp.topic)) ? (one(sp.topic) as Category) : null;
   const source = (AUTHORITIES as readonly string[]).includes(one(sp.source)) ? (one(sp.source) as Authority) : null;
   const trade = trades.some((t) => t.slug === one(sp.trade)) ? one(sp.trade) : null;
-  const view = one(sp.view) === "saved" ? "saved" : one(sp.view) === "hidden" ? "hidden" : "all";
+  const view = one(sp.view) === "saved" ? "saved" : one(sp.view) === "hidden" || one(sp.view) === "archived" ? "hidden" : "all";
   const days = [7, 30, 60, 180].includes(Number(one(sp.days))) ? Number(one(sp.days)) : 60;
   const q = one(sp.q).slice(0, 100);
   const publisher = one(sp.publisher).slice(0, 200) || null;
@@ -43,7 +43,7 @@ export default async function IndustryPage({ searchParams }: { searchParams: Pro
   const shown = feed.articles.slice(0, page * PAGE);
   const qs = (patch: Record<string, string | null>) => {
     const p = new URLSearchParams();
-    const cur: Record<string, string | null> = { geo: geo === "all" ? null : geo ?? null, topic, source, trade, view: view === "all" ? null : view, days: days === 60 ? null : String(days), q: q || null, publisher, sort: sort === "relevance" ? null : sort, sample: sample ? "1" : null, ...patch };
+    const cur: Record<string, string | null> = { geo: geo === "all" ? null : geo ?? null, topic, source, trade, view: view === "all" ? null : view === "hidden" ? "archived" : view, days: days === 60 ? null : String(days), q: q || null, publisher, sort: sort === "relevance" ? null : sort, sample: sample ? "1" : null, ...patch };
     for (const [k, v] of Object.entries(cur)) if (v) p.set(k, v);
     const s = p.toString();
     return s ? `/industry?${s}` : "/industry";
@@ -78,7 +78,7 @@ export default async function IndustryPage({ searchParams }: { searchParams: Pro
         ))}
         <span className="mx-1 hidden w-px bg-line sm:block" aria-hidden />
         <Link href={qs({ view: view === "saved" ? null : "saved" })} aria-current={view === "saved" ? "page" : undefined} className={cn("rounded-full border px-3 py-1.5 text-sm font-semibold", view === "saved" ? "border-navy bg-navy text-white" : "border-line bg-surface text-ink-soft")}>Saved</Link>
-        <Link href={qs({ view: view === "hidden" ? null : "hidden" })} aria-current={view === "hidden" ? "page" : undefined} className={cn("rounded-full border px-3 py-1.5 text-sm font-semibold", view === "hidden" ? "border-navy bg-navy text-white" : "border-line bg-surface text-ink-soft")}>Hidden</Link>
+        <Link href={qs({ view: view === "hidden" ? null : "archived" })} aria-current={view === "hidden" ? "page" : undefined} className={cn("rounded-full border px-3 py-1.5 text-sm font-semibold", view === "hidden" ? "border-navy bg-navy text-white" : "border-line bg-surface text-ink-soft")}>Archived</Link>
       </nav>
 
       <form action="/industry" method="get" className="grid gap-2 rounded-xl border border-line bg-surface p-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="Filter news">
@@ -138,12 +138,12 @@ export default async function IndustryPage({ searchParams }: { searchParams: Pro
       ) : shown.length === 0 ? (
         <div className="rounded-xl border border-dashed border-line p-6 text-center text-sm text-ink-soft" data-testid="news-empty">
           {view === "saved" ? <p>You haven&apos;t saved any articles yet. Use <span className="font-semibold">Save</span> on any story to keep it here.</p>
-            : view === "hidden" ? <p>No hidden articles.</p>
+            : view === "hidden" ? <p>No archived articles. Use <span className="font-semibold">Archive</span> on any story to clear it from your feed. It will wait here, and you can bring it back any time.</p>
             : q || topic || trade || publisher || source || geo !== "all" ? <p>No articles match these filters. <Link href={sample ? "/industry?sample=1" : "/industry"} className="font-semibold text-accent-ink underline">Clear filters</Link></p>
             : <><p className="font-semibold text-ink">No stories for you yet.</p><p className="mt-1">New items arrive each morning from official agencies and trade publications. Check back tomorrow, widen your <Link href="/industry/preferences" className="font-semibold text-accent-ink underline">preferences</Link>, or <Link href="/industry?sample=1" className="font-semibold text-accent-ink underline">preview with sample stories</Link>.</p></>}
         </div>
       ) : (
-        <ul className="space-y-3">{shown.map((a) => <li key={a.id}><ArticleCard a={toCard(a)} /></li>)}</ul>
+        <ArticleList key={`${view}-${page}-${shown.length}`} articles={shown.map((a) => toCard(a))} sinkOnRead={view === "all"} archived={view === "hidden"} />
       )}
       {feed.articles.length > shown.length && (
         <div className="text-center"><Link href={qs({ page: String(page + 1) })} scroll={false} className={buttonClass("secondary", "md")}>Show more</Link></div>
