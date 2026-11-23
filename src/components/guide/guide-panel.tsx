@@ -88,7 +88,7 @@ export function GuidePanel({ onClose, onStartTour, onMinimize }: { onClose: () =
           <span className="sr-only">Search help</span>
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
           <input data-autofocus value={q} onChange={(e) => { setQ(e.target.value); if (ask.phase !== "asking") setAsk({ phase: "idle" }); }} placeholder="Search help, e.g. add a customer"
-            className="min-h-11 w-full rounded-lg border border-line bg-paper pl-9 pr-3 text-sm text-ink placeholder:text-muted focus-visible:outline-2 focus-visible:outline-accent" data-testid="guide-search" maxLength={300} />
+            className="min-h-11 w-full rounded-lg border border-line bg-paper pl-9 pr-3 text-sm text-ink placeholder:text-placeholder focus-visible:outline-2 focus-visible:outline-accent" data-testid="guide-search" maxLength={300} />
         </label>
 
         {q.trim().length >= 2 && (

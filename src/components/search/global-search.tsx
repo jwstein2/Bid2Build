@@ -41,7 +41,7 @@ export function SearchField({ className }: { className?: string }) {
     <button type="button" onClick={() => openSearch()} data-testid="global-search-field" aria-haspopup="dialog" aria-keyshortcuts="Control+K Meta+K"
       className={cn("group flex min-h-10 w-full items-center gap-2 rounded-lg border border-line bg-surface px-3 text-left text-sm text-muted shadow-sm transition-colors hover:border-line-strong hover:text-ink-soft", className)}>
       <Search className="h-4 w-4 shrink-0 text-cool-gray" aria-hidden />
-      <span className="min-w-0 flex-1 truncate">Search customers, projects, invoices…</span>
+      <span className="min-w-0 flex-1 truncate text-placeholder">Search customers, projects, invoices…</span>
       <kbd className="hidden shrink-0 rounded border border-line bg-paper px-1.5 py-0.5 font-sans text-[11px] font-semibold text-muted lg:inline">{mac ? "⌘" : "Ctrl"} K</kbd>
       <span className="sr-only">Search everything (shortcut {mac ? "Command" : "Control"} K)</span>
     </button>
@@ -226,7 +226,7 @@ export function GlobalSearchHost() {
               role="combobox" aria-expanded={options.length > 0} aria-controls={`${uid}-list`} aria-activedescendant={options.length ? optId(idx) : undefined}
               aria-autocomplete="list" aria-label="Search everything" placeholder="Search customers, projects, invoices, or type a command…" autoComplete="off" autoCorrect="off" spellCheck={false}
               enterKeyHint="search" maxLength={100} data-testid="global-search-input"
-              className="min-h-11 min-w-0 flex-1 bg-transparent text-base text-ink placeholder:text-muted focus:outline-none" />
+              className="min-h-11 min-w-0 flex-1 bg-transparent text-base text-ink placeholder:text-placeholder focus:outline-none" />
             {loading && <LoaderCircle className="h-5 w-5 shrink-0 animate-spin text-cool-gray" aria-hidden />}
             {q && <button type="button" onClick={() => { setQ(""); inputRef.current?.focus(); }} className="hidden min-h-11 shrink-0 rounded-md px-2 text-sm font-semibold text-muted hover:text-ink sm:block">Clear</button>}
             <Dialog.Close className="grid min-h-11 min-w-11 shrink-0 place-items-center rounded-lg text-muted hover:bg-black/5" aria-label="Close search"><X className="h-5 w-5" aria-hidden /></Dialog.Close>

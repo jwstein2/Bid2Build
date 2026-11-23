@@ -44,7 +44,7 @@ export function StageSearchInput({ col, value, onChange, placeholder, inputRef, 
         }}
         data-testid={testId ?? `column-${col}-search`}
         className={cn(
-          "w-full rounded-lg border border-line bg-paper pl-8 pr-8 text-ink placeholder:text-muted focus:border-accent focus:bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 [&::-webkit-search-cancel-button]:hidden",
+          "w-full rounded-lg border border-line bg-paper pl-8 pr-8 text-ink placeholder:text-placeholder focus:border-accent focus:bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 [&::-webkit-search-cancel-button]:hidden",
           // 16px text on phones so iOS doesn't zoom the page on focus.
           size === "sm" ? "h-9 text-base sm:h-8 sm:text-[13px]" : "h-11 text-base",
         )}
