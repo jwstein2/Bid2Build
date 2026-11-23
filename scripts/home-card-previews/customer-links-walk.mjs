@@ -1,0 +1,42 @@
+// Customer + invoice links on Home preview cards (TEST DATA ONLY, same local setup as walk.mjs). Usage: node scripts/home-card-previews/customer-links-walk.mjs <screenshotDir>
+import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
+const { chromium } = require("playwright");
+const dir = process.argv[2];
+const ME = "00000000-0000-4000-8000-000000000001";
+const user = { id: ME, aud: "authenticated", role: "authenticated", email: "ux-test@built2bid.test", email_confirmed_at: new Date().toISOString() };
+const b64u = (s) => Buffer.from(s).toString("base64url");
+const jwt = `${b64u('{"alg":"HS256","typ":"JWT"}')}.${b64u(JSON.stringify({ sub: ME, exp: 4102444800, role: "authenticated", aud: "authenticated" }))}.sig`;
+const session = { access_token: jwt, refresh_token: "mock", token_type: "bearer", expires_in: 3600, expires_at: 4102444800, user };
+const A = "http://localhost:3000";
+const out = []; const check = (n, c, x = "") => out.push(`${c ? "✓" : "✗"} ${n}${x ? ` (${x})` : ""}`);
+const browser = await chromium.launch();
+const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 });
+await ctx.addCookies([{ name: "sb-localhost-auth-token", value: `base64-${b64u(JSON.stringify(session))}`, domain: "localhost", path: "/" }]);
+await ctx.addInitScript(() => { try { localStorage.setItem("b2b:welcome-seen", "1"); } catch {} });
+const page = await ctx.newPage();
+const home = async () => { await page.goto(`${A}/home`, { waitUntil: "load" }); await page.getByTestId("dashboard-builder").waitFor({ timeout: 30000 }); await page.waitForTimeout(500); };
+await home();
+const ar = page.getByTestId("widget-fin_ar-rows");
+const cust = ar.getByTestId("preview-customer-link").first();
+check("AR customer link", /^\/dashboard\/customers\/[0-9a-f-]{36}$/.test(await cust.getAttribute("href") ?? ""), await cust.getAttribute("href"));
+const rowLink = ar.locator("li > a").first();
+check("AR row opens invoice", /#invoice-[0-9a-f-]{36}$/.test(await rowLink.getAttribute("href") ?? ""), await rowLink.getAttribute("href"));
+const nested = await page.$$eval("a a", (x) => x.length); check("no nested links", nested === 0, String(nested));
+const small = await page.$$eval('[data-preview-card] li', (ls) => ls.filter((l) => l.getBoundingClientRect().height < 44).length); check("rows ≥44px", small === 0);
+await cust.hover(); await page.getByTestId("widget-fin_ar").screenshot({ path: `${dir}/ar-hover-customer.png` });
+for (const id of ["widget-sales_drafts", "widget-sales_win_rate", "widget-fin_cash_received"]) {
+  const l = page.getByTestId(id).getByTestId("preview-customer-link");
+  check(`${id} customer links`, (await l.count()) > 0, String(await l.count()));
+  await page.getByTestId(id).screenshot({ path: `${dir}/${id}.png` });
+}
+await cust.click(); await page.waitForURL(/dashboard\/customers\//, { timeout: 30000 }); await page.waitForTimeout(800);
+check("customer page opens", (await page.locator("body").innerText()).includes("Morgan Lee"));
+await page.screenshot({ path: `${dir}/customer-page.png` });
+await home();
+await page.getByTestId("widget-fin_ar-rows").locator("li > a").first().click();
+await page.waitForURL(/financials\/jobs/, { timeout: 30000 });
+const dlg = page.getByRole("dialog"); await dlg.waitFor({ timeout: 20000 }).catch(() => {});
+check("invoice preview opens", await dlg.isVisible().catch(() => false));
+await page.screenshot({ path: `${dir}/invoice-opened.png` });
+console.log(out.join("\n")); await browser.close();
