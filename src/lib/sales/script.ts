@@ -27,7 +27,9 @@ Return:
 - "next_step": 1 sentence asking for a small next step, with permission to say no.
 Keep the whole thing under 170 words.`;
 
-const Schema = z.object({ opener: z.string(), reason: z.string(), questions: z.array(z.string()).min(1).max(4), value: z.string(), next_step: z.string() });
+// Keep the schema loose: structured outputs drop maxItems, so a strict .max() here made a reply with a
+// fifth question fail validation and the whole draft vanish. Trim to 3 questions in scriptText instead.
+const Schema = z.object({ opener: z.string(), reason: z.string(), questions: z.array(z.string()), value: z.string(), next_step: z.string() });
 export type StarterScript = z.infer<typeof Schema>;
 
 export const scriptsEnabled = () => process.env.SALES_SCRIPT_AI !== "off" && isAiConfigured();
@@ -42,13 +44,17 @@ export function scriptPrompt(l: ScriptLead, repFirstName: string, kind: ScriptKi
 }
 
 export function scriptText(s: StarterScript): string {
-  return [s.opener, "", s.reason, "", ...s.questions.map((q) => `• ${q}`), "", s.value, "", s.next_step].join("\n").trim();
+  return [s.opener, "", s.reason, "", ...s.questions.map((q) => q.trim()).filter(Boolean).slice(0, 3).map((q) => `• ${q}`), "", s.value, "", s.next_step].join("\n").trim();
 }
 
 export async function writeStarterScript(l: ScriptLead, repFirstName: string, kind: ScriptKind): Promise<string | null> {
-  try {
-    const r = await generateStructured({ system: SYSTEM, user: scriptPrompt(l, repFirstName, kind), schema: Schema, maxTokens: 700, model: BRIEF_MODEL });
-    const t = scriptText(r.data);
-    return t ? t.slice(0, 2000) : null;
-  } catch { return null; }
+  // One quiet retry: a single malformed reply shouldn't cost the rep a click (Haiku, so the retry is cheap).
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const r = await generateStructured({ system: SYSTEM, user: scriptPrompt(l, repFirstName, kind), schema: Schema, maxTokens: 1500, model: BRIEF_MODEL });
+      const t = scriptText(r.data);
+      if (t) return t.slice(0, 2000);
+    } catch { /* logged by the provider */ }
+  }
+  return null;
 }
