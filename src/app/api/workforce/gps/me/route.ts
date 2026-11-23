@@ -3,6 +3,7 @@ import { fail, json } from "@/lib/http/api";
 import { mapEntry } from "@/lib/team/records";
 import { dbFail, guardRead, guardWrite } from "@/lib/team/route-helpers";
 import { mapCorrections, mapMyStatus } from "@/lib/workforce/gps/model";
+import { mapWorkerProfiles } from "@/lib/workforce/hub/profile";
 
 export const runtime = "nodejs";
 
@@ -37,6 +38,11 @@ const ops = z.discriminatedUnion("action", [
     reason: z.string().trim().min(1).max(500) }),
   z.object({ action: z.literal("withdraw"), id: z.string().uuid() }),
   z.object({ action: z.literal("signoff"), resourceId: z.string().uuid(), week: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }),
+  // My profile: only the worker's own contact details; "" clears a field.
+  z.object({ action: z.literal("profile"), resourceId: z.string().uuid(), fields: z.object({
+    preferredName: z.string().trim().max(100), personalPhone: z.string().trim().max(40), personalEmail: z.string().trim().max(320),
+    emergencyName: z.string().trim().max(200), emergencyRelation: z.string().trim().max(60), emergencyPhone: z.string().trim().max(40),
+  }).partial().strict() }),
 ]);
 
 export async function POST(req: Request) {
@@ -58,10 +64,12 @@ export async function POST(req: Request) {
     case "correction": { const { action: _a, ...rest } = o; void _a; r = await rpc("pm_time_correction_request", { p: rest }); break; }
     case "withdraw": r = await rpc("pm_time_correction_withdraw", { p_id: o.id }); break;
     case "signoff": r = await rpc("pm_timesheet_signoff", { p_resource_id: o.resourceId, p_week: o.week }); break;
+    case "profile": r = await rpc("pm_worker_profile_save", { p_resource_id: o.resourceId, p: o.fields }); break;
   }
   if (r.error) return dbFail(`gps.me.${o.action}`, r.error);
   const d = r.data as Record<string, unknown> | null;
   if ((o.action === "resolve" || o.action === "clock_in" || o.action === "clock_out") && d) return json({ ok: true, entry: mapEntry(d) });
+  if (o.action === "profile") return json({ ok: true, profiles: mapWorkerProfiles(d) });
   if (o.action === "event" && d) return json({ ok: true, ...d, entry: d.entry ? mapEntry(d.entry as Record<string, unknown>) : null });
   return json({ ok: true, data: d });
 }

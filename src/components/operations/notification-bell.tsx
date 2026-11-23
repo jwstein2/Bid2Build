@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { cn } from "@/lib/cn";
 import { useDismiss } from "@/components/ui/use-dismiss";
+import { ISSUE_LABEL } from "@/lib/workforce/hub/model";
 
 interface Notice {
   id: string; kind: string; scheduleId: string; taskId: string; reason: "end_date" | "progress_100" | "both"; title: string; status: string;
@@ -12,6 +13,9 @@ interface Notice {
     // V4.6 customer communications notices
     messageId?: string; scheduledFor?: string; timezone?: string; mode?: "review" | "automatic"; subject?: string; classification?: string;
     sections?: { name: string; status: string; progress: number | null; plannedEnd: string }[];
+    // Clock-in review requests (managers) and their decisions (the worker)
+    correctionId?: string; employeeName?: string; issue?: string | null; requestKind?: "fix" | "missing"; clockIn?: string; clockOut?: string; reason?: string;
+    decision?: "approved" | "denied"; note?: string | null;
   };
   canConfirm: boolean; readAt: string | null; createdAt: string;
 }
@@ -56,7 +60,7 @@ export function NotificationBell({ only, tone = "light" }: {
   const bell = useRef<HTMLButtonElement>(null);
   useDismiss(open, () => setOpen(false), { inside: [ref], returnFocus: bell });
   if (items === null || !active) return null;
-  const act = async (n: Notice, action: "confirm" | "later" | "read") => {
+  const act = async (n: Notice, action: "confirm" | "later" | "read" | "dismiss") => {
     setBusy(n.id); setErr(null);
     try {
       const r = await fetch(`/api/notifications/${n.id}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action }) });
@@ -80,6 +84,7 @@ export function NotificationBell({ only, tone = "light" }: {
           {items.length === 0 && <p className="px-2 py-3 text-sm text-muted">You&apos;re all caught up. When a task you manage reaches its finish date or 100%, it shows up here for you to confirm.</p>}
           <ul className="max-h-[60vh] space-y-2 overflow-y-auto">
             {items.map((n) => (
+              n.kind === "time_correction" || n.kind === "time_correction_decided" ? <TimeNotice key={n.id} n={n} busy={busy === n.id} onDismiss={() => void act(n, "dismiss")} onClose={() => setOpen(false)} /> :
               n.kind !== "task_review" ? <CommNotice key={n.id} n={n} busy={busy === n.id} onLater={() => void act(n, "later")} onClose={() => setOpen(false)} /> : (
               <li key={n.id} className="rounded-lg border border-line p-2.5 text-sm" onMouseEnter={() => !n.readAt && void act(n, "read").then(() => setItems((xs) => (xs ?? []).map((x) => (x.id === n.id ? { ...x, readAt: new Date().toISOString() } : x))))}>
                 <p className="font-semibold">{n.data.taskName ?? n.title}</p>
@@ -126,6 +131,28 @@ function CommNotice({ n, busy, onLater, onClose }: { n: Notice; busy: boolean; o
           <Link className={link} href="/dashboard/customers/communications?tab=scheduled&type=project_update" onClick={onClose}>Skip or keep scheduled</Link>
         </>}
         <button className="inline-flex min-h-8 items-center gap-1 rounded-md px-2 text-xs font-semibold text-ink-soft hover:bg-black/5" disabled={busy} onClick={onLater}><Clock className="h-3.5 w-3.5" aria-hidden /> Later</button>
+      </div>
+    </li>
+  );
+}
+
+/** Clock-in review requests for the owner / time supervisors, and the decision for the worker (in-app only). */
+function TimeNotice({ n, busy, onDismiss, onClose }: { n: Notice; busy: boolean; onDismiss: () => void; onClose: () => void }) {
+  const fmt = (iso?: string) => (iso ? new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: n.data.timezone || undefined }).format(new Date(iso)) : "");
+  const end = (iso?: string) => (iso ? new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: n.data.timezone || undefined }).format(new Date(iso)) : "");
+  const decided = n.kind === "time_correction_decided";
+  const link = "inline-flex min-h-8 items-center gap-1 rounded-md border border-line px-2 text-xs font-semibold";
+  return (
+    <li className="rounded-lg border border-line p-2.5 text-sm" data-testid={`notice-${n.kind}`}>
+      <p className="font-semibold">{n.title}</p>
+      <p className="text-xs text-ink-soft">{fmt(n.data.clockIn)} – {end(n.data.clockOut)}{!decided && n.data.issue && ISSUE_LABEL[n.data.issue] ? ` · ${ISSUE_LABEL[n.data.issue]}` : ""}</p>
+      {!decided && n.data.reason && <p className="mt-0.5 text-xs text-muted">“{n.data.reason}”</p>}
+      {decided && n.data.note && <p className="mt-0.5 text-xs text-muted">Manager&apos;s note: “{n.data.note}”</p>}
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        <Link className={link} href={decided ? "/clock#time-clock" : "/projects/workforce/time-tracking?tab=corrections"} onClick={onClose}>
+          <Clock className="h-3.5 w-3.5" aria-hidden /> {decided ? "See my hours" : "Review request"}</Link>
+        <button className="inline-flex min-h-8 items-center gap-1 rounded-md px-2 text-xs font-semibold text-ink-soft hover:bg-black/5" disabled={busy} onClick={onDismiss}>
+          <CheckCircle2 className="h-3.5 w-3.5" aria-hidden /> {decided ? "Got it" : "Dismiss"}</button>
       </div>
     </li>
   );
