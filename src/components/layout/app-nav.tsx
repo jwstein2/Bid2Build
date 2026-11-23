@@ -14,6 +14,7 @@ import type { ThemePref } from "@/lib/theme";
 import { ThemeToggle } from "../theme/theme-toggle";
 import { SearchIconButton } from "../search/global-search";
 import { DemoNavItem, PracticeNavToggle } from "../demo/demo-controls";
+import { inPracticeScope } from "@/lib/demo/scope";
 import type { DemoSessionKind } from "@/lib/demo/session";
 
 type NavItem = { href: string; label: string; icon: typeof Library; exact?: boolean; premium?: boolean; feature?: FeatureId };
@@ -245,7 +246,7 @@ export function AppSidebar({ essentials = false, isAdmin, email, company, access
           className={cn(item, "w-full text-left text-[#C9D6E3] hover:bg-white/5 hover:text-white")}>
           <LifeBuoy className="h-4 w-4 shrink-0" aria-hidden /> Help &amp; guides
         </button>
-        {(practice || demo) && <PracticeNavToggle active={demo} className={cn(item, "w-full text-left text-[#C9D6E3] hover:bg-white/5 hover:text-white")} />}
+        {(practice || demo) && inPracticeScope(path) && <PracticeNavToggle active={demo} className={cn(item, "w-full text-left text-[#C9D6E3] hover:bg-white/5 hover:text-white")} />}
         {isAdmin && !demo && <DemoNavItem className={cn(item, "w-full text-left text-[#C9D6E3] hover:bg-white/5 hover:text-white")} />}
         {isAdmin && (
           <Link href="/admin" className={cn(item, "text-[#C9D6E3] hover:bg-white/5 hover:text-white")}><Shield className="h-4 w-4" aria-hidden /> Admin</Link>
