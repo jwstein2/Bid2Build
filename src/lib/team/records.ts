@@ -451,6 +451,8 @@ export function recordsDbError(e: { message?: string; code?: string } | null): {
   if (m.includes("bad_range")) return { status: 400, code: "bad_range", message: "Pick a shorter date range." };
   if (m.includes("bad_rates") || m.includes("bad_differentials")) return { status: 400, code: "bad_rates", message: "Rates must be numbers of zero or more." };
   if (m.includes("bad_issue")) return { status: 400, code: "bad_issue", message: "Pick what went wrong." };
+  if (m.includes("bad_personal_email")) return { status: 400, code: "bad_email", message: "Check the email address." };
+  if (m.includes("field_length")) return { status: 400, code: "field_length", message: "One of those entries is too long. Shorten it and try again." };
   if (m.includes("w2_required")) return { status: 400, code: "w2_required", message: "Confirm this person is a W-2 employee whose hours you track before turning on GPS time tracking for them." };
   if (m.includes("staff_only")) return { status: 400, code: "staff_only", message: "GPS time tracking is only for your own employees, not subcontractors, vendors or crews." };
   if (m.includes("bad_radius")) return { status: 400, code: "bad_radius", message: "Pick a radius between 30 m and 0.2 miles (322 m)." };

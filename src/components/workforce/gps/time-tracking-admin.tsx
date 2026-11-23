@@ -15,7 +15,7 @@ import {
   EVENT_KIND_LABEL, LOCATION_KIND_LABEL, OUTCOME_LABEL, PERMISSION_LABEL, setupSteps, WEEKDAYS,
   type Correction, type Exceptions, type GeoEventRow, type GpsAdmin, type GpsSettings, type LocationKind, type WorkLocation,
 } from "@/lib/workforce/gps/model";
-import { CLASSIFICATION_LABEL, type Classification } from "@/lib/workforce/hub/model";
+import { CLASSIFICATION_LABEL, ISSUE_LABEL, type Classification } from "@/lib/workforce/hub/model";
 import { LaborReportPanel, PayPanel, SchedulesPanel } from "@/components/workforce/hub/admin-panels";
 import { WorkerInviteButton } from "@/components/workforce/hub/worker-invite";
 
@@ -427,9 +427,10 @@ function Corrections({ list, names, locNames, projects, tz, post }: { list: Corr
           {k.current && <p className="text-ink-soft">Now: {fmtTime(k.current.clockIn, tz)} – {fmtTime(k.current.clockOut, tz)}{k.current.breakMinutes ? ` · ${k.current.breakMinutes} min unpaid break` : ""}</p>}
           <p>Asked for: <strong>{fmtTime(k.clockIn, tz)} – {fmtTime(k.clockOut, tz)}</strong>{k.breakMinutes ? ` · ${k.breakMinutes} min unpaid break` : ""}{k.paidBreakMinutes ? ` · ${k.paidBreakMinutes} min paid break` : ""} · {WORK_TYPE_LABEL[k.workType]}
             {k.locationId && locNames[k.locationId] ? ` · ${locNames[k.locationId]}` : ""}{k.scheduleId && projects[k.scheduleId] ? ` · ${projects[k.scheduleId]}` : ""}</p>
+          {k.issue && ISSUE_LABEL[k.issue] && <p className="mt-1"><Badge tone="warn">{ISSUE_LABEL[k.issue]}</Badge></p>}
           <p className="mt-1 rounded bg-paper px-2 py-1">“{k.reason}”</p>
           <div className="mt-2 flex flex-wrap items-end gap-2">
-            <label className="min-w-[14rem] flex-1"><span className="label">Note (needed to deny)</span><input className="field" maxLength={300} value={notes[k.id] ?? ""} onChange={(e) => setNotes({ ...notes, [k.id]: e.target.value })} /></label>
+            <label className="w-full min-w-0 sm:w-auto sm:min-w-[14rem] sm:flex-1"><span className="label">Note (needed to deny)</span><input className="field" maxLength={300} value={notes[k.id] ?? ""} onChange={(e) => setNotes({ ...notes, [k.id]: e.target.value })} /></label>
             <Button size="sm" onClick={() => post({ action: "decide_correction", id: k.id, approve: true, note: notes[k.id] || null }, "Correction approved. The entry was updated and its original time kept in the history.")}><Check className="h-4 w-4" aria-hidden />Approve hours</Button>
             <Button size="sm" variant="secondary" disabled={!(notes[k.id] ?? "").trim()} onClick={() => post({ action: "decide_correction", id: k.id, approve: false, note: notes[k.id] }, "Correction denied. The employee can see your note.")}>Deny</Button>
           </div>
