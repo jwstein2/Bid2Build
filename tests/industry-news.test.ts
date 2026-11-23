@@ -7,7 +7,7 @@ import { canonicalUrl, dedupe, fingerprint, parseDate, verifyItem } from "@/lib/
 import { classifyItem, matchTrades } from "@/lib/news/classify";
 import { statesInText, stateName } from "@/lib/news/geo";
 import { guardSummary, summaryEligibility, MIN_SOURCE_CHARS } from "@/lib/news/summarize";
-import { pickBriefing, rankAll, readerGeo, type ArticleWithTerms } from "@/lib/news/rank";
+import { pickBriefing, rankAll, readerGeo, sinkRead, type ArticleWithTerms } from "@/lib/news/rank";
 import { buildRows, runIngest, runSummaries, type ArticleRow, type FetchLike, type NewsStore, type RunRecord, type SourceState, type SummaryWriter } from "@/lib/news/ingest";
 import { sampleArticles } from "@/lib/news/fixtures";
 import { mergePrefs, prefsSchema, prefsToRow, tradeSlugFrom } from "@/lib/news/prefs";
@@ -453,5 +453,12 @@ describe("sandbox fixtures and cards", () => {
   it("keeps the dashboard summary to two or three sentences", () => {
     const t = "One. Two two. Three three three. Four four four four. Five.";
     expect(shortSummary(t)).toBe("One. Two two. Three three three.");
+  });
+});
+
+describe("read articles sink to the bottom", () => {
+  it("puts read items last and keeps order within each group", () => {
+    const list = [{ id: "a", read: true }, { id: "b", read: false }, { id: "c", read: true }, { id: "d", read: false }];
+    expect(sinkRead(list).map((x) => x.id)).toEqual(["b", "d", "a", "c"]);
   });
 });

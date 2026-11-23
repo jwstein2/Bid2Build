@@ -5,7 +5,7 @@ import { loadBriefing, loadReader } from "@/lib/news/server";
 import { toCard } from "@/lib/news/format";
 import { logError } from "@/lib/http/api";
 import { CATEGORIES, type Category } from "@/lib/news/types";
-import { ArticleCard } from "./article-card";
+import { ArticleList } from "./article-list";
 
 export interface BriefingSettings { topics?: string[]; geo?: string; limit?: string | number }
 
@@ -41,7 +41,7 @@ export async function IndustryBriefingWidget({ settings = {} }: { settings?: Bri
       </div>
     );
   } else {
-    content = <ul className="space-y-2">{loaded.feed.articles.map((a) => <li key={a.id}><ArticleCard a={toCard(a)} variant="compact" /></li>)}</ul>;
+    content = <ArticleList articles={loaded.feed.articles.map((a) => toCard(a))} variant="compact" />;
   }
   return (
     <section className="flex h-full flex-col rounded-xl border border-line bg-surface p-4" aria-labelledby="industry-briefing-title" data-testid="industry-briefing">
