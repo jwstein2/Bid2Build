@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Dev-only CommonJS screenshot script.
     "scripts/ux-screenshots.cjs",
+    // Growth OS Edge Function entry point (Deno: npm: imports, Deno globals). Its logic lives in core.ts, which is linted.
+    "growth-os/worker/index.ts",
   ]),
 ]);
 
