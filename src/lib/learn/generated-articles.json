@@ -261,5 +261,146 @@
         "url": "https://www.advantage-construction.com/partial-roof-and-siding-replacement-storm-claims"
       }
     ]
+  },
+  {
+    "slug": "how-to-calculate-your-labor-rate",
+    "title": "How to Calculate Your Labor Rate as a Contractor",
+    "description": "Learn how to build a billable hourly labor rate from wage, labor burden and non-billable time, with a worked example for residential contractors.",
+    "updated": "2026-11-23",
+    "published": "2026-11-23",
+    "blocks": [
+      {
+        "p": [
+          "Your labor rate is the number that turns hours into a price. If you charge the same hourly figure you pay a worker, the work is underpriced before you have covered the costs that sit around that worker.",
+          "This guide shows how to build a billable hourly labor rate from the wage you pay, the labor burden on top of it and the time you cannot bill. It uses one simplified example, and you should replace every figure with your own costs."
+        ]
+      },
+      {
+        "h": "Why the rate you pay is not the rate you charge",
+        "p": [
+          "The wage on a pay stub is only part of what it costs to have a crew member on a job. Payroll taxes, insurance, benefits and paid time off are added on top. There are also paid hours that produce nothing you can invoice, such as travel to supply houses, callbacks, shop time and waiting for an inspection to be scheduled.",
+          "Your billing rate has to recover all of that and still leave a profit. If you charge only the wage, you pay for the non-billable hours out of your margin."
+        ]
+      },
+      {
+        "h": "Start with the wage you actually pay",
+        "p": [
+          "Begin with the hourly wage you pay each worker in the role you are pricing. If you are a sole operator, use the pay you take from the business as your wage, not zero.",
+          "Use your own payroll records and recent pay stubs as the source. Do not copy a wage from another contractor or from a general table."
+        ]
+      },
+      {
+        "h": "Add labor burden to the wage",
+        "p": [
+          "Labor burden is the extra cost of employing someone beyond their wage. Your tax professional can confirm which payroll taxes apply in your state and how to treat each item, since requirements vary. Gather these items from your own records and invoices:"
+        ],
+        "list": [
+          "Employer payroll taxes that apply to wages",
+          "Workers' compensation and any other insurance tied to payroll",
+          "Health, retirement or other benefits you contribute to",
+          "Paid holidays, vacation and sick time, which are paid but not worked",
+          "Required licensing or certification costs for the crew, if you carry them as labor costs"
+        ],
+        "formula": [
+          "Burdened cost per paid hour = Wage × (1 + Burden rate)",
+          "Burden rate = Annual burden costs ÷ Annual wages"
+        ]
+      },
+      {
+        "h": "Count the hours you can bill",
+        "p": [
+          "Paid hours are not the same as billable hours. A worker paid for 40 hours in a week may spend several of those hours on work you cannot invoice. Check your records over a full period, not one good week.",
+          "IRC Section R105, Permits, covers which work needs a permit. Chapter 1 is often amended locally, so ask your building department which work needs a permit and which inspections may apply, since local editions and amendments vary. Time spent on that paperwork is non-billable and belongs in your count. Common non-billable time in residential trades includes:"
+        ],
+        "list": [
+          "Travel between shops, supply houses and job sites",
+          "Estimating, site visits and proposal work",
+          "Callbacks and warranty fixes you do not charge for",
+          "Permit applications, inspection scheduling and paperwork",
+          "Training, toolbox meetings and vehicle or tool maintenance",
+          "Waiting on other trades, materials or inspections"
+        ],
+        "formula": [
+          "Non-billable share = Non-billable hours ÷ Paid hours",
+          "Billable hours = Paid hours − Non-billable hours"
+        ]
+      },
+      {
+        "h": "Calculate the cost per billable hour",
+        "p": [
+          "Spread the full cost of each paid hour across the hours you can actually bill. The result is the cost you need to recover for every billable hour.",
+          "Use your own annual figures where you have them, taken from payroll records, invoices and time logs."
+        ],
+        "formula": [
+          "Cost per billable hour = Burdened cost per paid hour ÷ (1 − Non-billable share)"
+        ]
+      },
+      {
+        "h": "Add margin or markup to reach your billing rate",
+        "p": [
+          "The cost per billable hour is what the labor costs you. It is not yet a profitable rate. Choose a target gross margin or a markup and apply it to that cost. The same price can be written either way.",
+          "A 25 percent markup on cost and a 20 percent gross margin produce the same price, because they describe the same relationship in different ways. Use one method consistently so your bids can be compared."
+        ],
+        "formula": [
+          "Price = Cost × (1 + Markup)",
+          "Price = Cost ÷ (1 − Margin)"
+        ]
+      },
+      {
+        "h": "Simplified example: labor rate for one worker",
+        "p": [
+          "This simplified example covers only the wage, burden, billable hours and billing rate lines below. A real estimate includes every section above. All figures are for illustration only and are not a benchmark for your area or trade.",
+          "Recalculate with your own figures. The example rate applies to one worker under these assumptions only."
+        ],
+        "formula": [
+          "Example: $30 × (1 + 0.20) = $36 burdened cost per paid hour",
+          "Example: 2,000 paid hours × $36 = $72,000 burdened labor cost per year",
+          "Example: 2,000 paid hours × 25% = 500 non-billable hours",
+          "Example: 2,000 − 500 = 1,500 billable hours",
+          "Example: $72,000 ÷ 1,500 billable hours = $48 cost per billable hour",
+          "Example: $48 × (1 + 0.25) = $60 billing rate with a 25% markup",
+          "Example: $48 ÷ (1 − 0.20) = $60 billing rate with a 20% margin"
+        ]
+      },
+      {
+        "h": "What is changing for contractors and how to reflect it in a bid",
+        "p": [
+          "Several cost pressures are affecting how small contractors price work. Check how each one applies in your area and your trade before changing your numbers.",
+          "Lead times for some long-lead materials, such as structural steel and custom components, are being built into schedules more often. Order earlier where needed, tie purchase timing to the bid, and confirm lead times with suppliers before you commit to a start date.",
+          "Insurance is becoming a larger cost line for many small contractors, and some absorb premium increases rather than pricing them in. Build expected increases into the burden in your labor rate and into the overhead recovery in each bid, and review the figures with your insurance agent.",
+          "Material prices are moving unevenly by category. For jobs that start well after the estimate date, some contractors add escalation clauses to the bid. Set a price validity date on each proposal, and ask an attorney whether an escalation clause fits your contracts and your state."
+        ]
+      },
+      {
+        "h": "Use your own numbers",
+        "p": [
+          "For licensing requirements and contract terms, confirm with your state licensing board, a tax professional or an attorney, because requirements vary. Keep a record of each figure and where it came from so you can show the basis for your bids."
+        ],
+        "list": [
+          "Wages and burden from payroll records and tax filings",
+          "Insurance costs from your current policy and renewal notices",
+          "Billable hours from a time log kept for at least one full period",
+          "Permit fees from the local building department",
+          "Supplier quotes and recent invoices for materials and subcontracted work"
+        ]
+      },
+      {
+        "h": "Putting it together",
+        "p": [
+          "Start with the wage you pay, add labor burden, remove non-billable time from the paid hours, and divide the cost by the billable hours that remain. Then apply a markup or margin to reach the rate you charge. Recalculate when wages, insurance or your non-billable share change.",
+          "In Built2Bid, labor can be entered as line items with a cost type of labor, alongside materials, equipment, subcontractor and other costs. The quantity calculators can help estimate labor hours, and each section can control what the customer sees on the proposal. Follow manufacturer installation instructions for any product you price."
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "title": "Are Tariffs Making Your Contractor Insurance Outdated? - donegan",
+        "url": "https://donegan.com/blog/are-tariffs-making-your-contractor-insurance-outdated/"
+      },
+      {
+        "title": "America’s Construction Material Shortage Is Forcing a Supply Chain Reckoning",
+        "url": "https://usabusinesstimes.com/americas-construction-material-shortage-is-forcing-a-supply-chain-reckoning/"
+      }
+    ]
   }
 ]
