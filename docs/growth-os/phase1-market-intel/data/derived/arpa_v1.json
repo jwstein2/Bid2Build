@@ -1,0 +1,15 @@
+{
+  "source": "data/pricing.json (S13) + plan mix A07",
+  "arpa_usd_month": {
+    "solo": {
+      "low": 16.58,
+      "base": 18.29,
+      "high": 22.69
+    },
+    "employer": {
+      "low": 19.99,
+      "base": 49.99,
+      "high": 89.97
+    }
+  }
+}

@@ -1,0 +1,140 @@
+{
+  "source_id": "S13",
+  "repo": "jwstein2/Bid2Build",
+  "commit": "39104b51a3aacf9e928d89b29556d6bfc81fc87d",
+  "commit_date": "2026-11-23",
+  "read_only": true,
+  "note": "First-party list prices copied from app source code. The code is authoritative because the checkout server checks Stripe prices against these constants. Annual Individual Unlimited is $199/year: confirmed by the owner on 2026-11-23 and matching the active live Stripe price; the repo README's older '$149/year' was stale (gap G18, resolved). The team plan is called 'Team' in the app and in these files; code paths and constants still use the older internal name 'enterprise'.",
+  "currency": "usd",
+  "plans": {
+    "free": {
+      "name": "Free (credits)",
+      "price_cents_month": 0,
+      "rule": "3 one-time starter credits per verified account, plus 1 monthly credit per signup-anniversary cycle from month two (no rollover). One credit per new finalized bid; updates and re-downloads are free.",
+      "file": "README.md"
+    },
+    "individual_monthly": {
+      "name": "Individual Unlimited Monthly",
+      "amount_cents": 1999,
+      "interval": "month",
+      "users": 1,
+      "file": "src/lib/billing/plans.ts"
+    },
+    "individual_annual": {
+      "name": "Individual Unlimited Annual",
+      "amount_cents": 19900,
+      "interval": "year",
+      "users": 1,
+      "file": "src/lib/billing/plans.ts"
+    },
+    "enterprise": {
+      "name": "Team",
+      "base_cents_month": 4999,
+      "included_users": 3,
+      "seat_tiers": [
+        {
+          "first_user": 4,
+          "last_user": 5,
+          "unit_cents": 1999
+        },
+        {
+          "first_user": 6,
+          "last_user": 10,
+          "unit_cents": 1799
+        },
+        {
+          "first_user": 11,
+          "last_user": null,
+          "unit_cents": 1599
+        }
+      ],
+      "file": "src/lib/enterprise/pricing.ts"
+    }
+  },
+  "add_ons": {
+    "pm_standard_monthly": {
+      "name": "Project Command Center add-on (Standard)",
+      "amount_cents": 499,
+      "interval": "month",
+      "file": "src/lib/pm/billing.ts"
+    },
+    "pm_standard_annual": {
+      "name": "Project Command Center add-on (Standard, annual)",
+      "amount_cents": 4999,
+      "interval": "year",
+      "file": "src/lib/pm/billing.ts"
+    },
+    "pm_enterprise_extra_editor": {
+      "name": "Team extra schedule editor",
+      "amount_cents": 199,
+      "interval": "month",
+      "file": "src/lib/pm/billing.ts"
+    },
+    "financials_solo_monthly": {
+      "name": "Solo Financials add-on",
+      "amount_cents": 2199,
+      "interval": "month",
+      "file": "src/lib/financials/billing.ts"
+    },
+    "financials_solo_annual": {
+      "name": "Solo Financials add-on (annual)",
+      "amount_cents": 21999,
+      "interval": "year",
+      "file": "src/lib/financials/billing.ts"
+    }
+  },
+  "trial": {
+    "days": 7,
+    "plan": "Built2Bid Individual Unlimited",
+    "status": "Facebook comment-to-trial funnel, off unless FB_TRIAL_ENABLED=true",
+    "file": "src/lib/trial/config.ts"
+  },
+  "trade_templates": {
+    "count": 42,
+    "file": "src/lib/trades/data.ts",
+    "slugs": [
+      "roofing",
+      "siding",
+      "decks",
+      "concrete",
+      "kitchens",
+      "bathrooms",
+      "interior-remodeling",
+      "exterior-remodeling",
+      "drywall",
+      "painting",
+      "electrical",
+      "plumbing",
+      "hvac",
+      "flooring",
+      "tile",
+      "framing",
+      "finish-carpentry",
+      "cabinets-countertops",
+      "windows-doors",
+      "insulation",
+      "gutters",
+      "fencing",
+      "landscaping",
+      "tree-removal",
+      "tree-trimming",
+      "pressure-washing",
+      "soft-washing",
+      "cleaning",
+      "pest-control",
+      "excavation",
+      "foundations",
+      "masonry",
+      "asphalt-paving",
+      "demolition",
+      "basements",
+      "additions",
+      "garages",
+      "pole-barns",
+      "commercial-remodeling",
+      "general-contracting",
+      "handyman",
+      "other"
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "cbp_6digit_children_sum_to_naics23_est": true,
+  "nes_subsectors_sum_to_23": true,
+  "nes_238_groups_sum": true,
+  "nes_23_size_classes_sum_within_0.01pct": true,
+  "state_nes_sum_to_us": true,
+  "state_cbp_sum_to_us_est": true
+}

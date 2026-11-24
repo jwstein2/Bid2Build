@@ -1,0 +1,48 @@
+{
+  "model_version": "1.1.0",
+  "model_date": "2026-11-23",
+  "unit": "business units (owner-level decision makers), not workers",
+  "label": "SCENARIO MODEL. TAM unit counts are Census-derived (with A02/A03 estimation rules). SAM, SOM and all dollar values depend on scenario assumptions A04-A07 and are not facts. ARPA uses real Built2Bid list prices (data/pricing.json); only the plan mix is assumed.",
+  "assumptions_file": "data/assumptions.json",
+  "totals": {
+    "low": {
+      "tam_units": 1727630,
+      "tam_employer_units": 703643,
+      "tam_solo_units": 1023987,
+      "tam_annual_value_usd_at_arpa": 372522336,
+      "sam_units": 158662,
+      "sam_employer_units": 97303,
+      "sam_solo_units": 61359,
+      "sam_annual_value_usd": 35549036,
+      "som_accounts": 397,
+      "som_arr_usd": 88873,
+      "sam_pct_of_tam": 9.2
+    },
+    "base": {
+      "tam_units": 2275900,
+      "tam_employer_units": 703643,
+      "tam_solo_units": 1572257,
+      "tam_annual_value_usd_at_arpa": 767180329,
+      "sam_units": 401305,
+      "sam_employer_units": 188900,
+      "sam_solo_units": 212404,
+      "sam_annual_value_usd": 159936101,
+      "som_accounts": 3010,
+      "som_arr_usd": 1199521,
+      "sam_pct_of_tam": 17.6
+    },
+    "high": {
+      "tam_units": 2937313,
+      "tam_employer_units": 703643,
+      "tam_solo_units": 2233670,
+      "tam_annual_value_usd_at_arpa": 1367864796,
+      "sam_units": 843604,
+      "sam_employer_units": 310436,
+      "sam_solo_units": 533168,
+      "sam_annual_value_usd": 480329804,
+      "som_accounts": 12654,
+      "som_arr_usd": 7204947,
+      "sam_pct_of_tam": 28.7
+    }
+  }
+}

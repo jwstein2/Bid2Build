@@ -1,0 +1,277 @@
+{
+  "registry_version": "1.0.0",
+  "retrieved": "2026-11-23",
+  "confidence_scale": {
+    "A": "High: official administrative or census data with published methodology; near-complete coverage",
+    "B": "Medium-high: research organization or probability survey with stated n, dates and method",
+    "C": "Medium: vendor or member survey with stated n and method but self-selected or non-representative frame",
+    "D": "Low-medium: vendor operational data or member census with no stated n, or unreconciled internal inconsistencies",
+    "E": "Low: self-selected small survey, key content gated or unverified"
+  },
+  "sources": [
+    {
+      "id": "S01",
+      "requested_name": "U.S. Census 2023 County Business Patterns, NAICS 23",
+      "verification_status": "verified",
+      "title": "2023 County Business Patterns (CBP)",
+      "publisher": "U.S. Census Bureau",
+      "release_date": "2025-06-26",
+      "release_note": "Tip sheet CB24-TPS.46 '2023 County Business Patterns Now Available', Thu June 26, 2025",
+      "urls": [
+        "https://www2.census.gov/programs-surveys/cbp/datasets/2023/cbp23us.zip",
+        "https://www2.census.gov/programs-surveys/cbp/datasets/2023/cbp23st.zip",
+        "https://www.census.gov/newsroom/press-releases/2025/2023-county-business-patterns.html",
+        "https://www.census.gov/programs-surveys/cbp/about/glossary.html",
+        "https://www.census.gov/programs-surveys/cbp/technical-documentation/methodology.html"
+      ],
+      "data_period": "Employment in pay period including March 12, 2023; establishments with paid employees any time in 2023",
+      "sample_definition": "Universe of U.S. establishments with paid employees (Business Register); excludes self-employed individuals and businesses with an EIN but no employees. 2017 NAICS.",
+      "methodology": "Administrative records (payroll tax filings) plus Census surveys; noise infusion for disclosure avoidance. Size classes by mid-March paid employment. 'Paid employment' includes salaried officers of corporations; excludes sole proprietors and partners of unincorporated businesses (glossary). The '<5' class includes establishments with no paid employees in mid-March that paid wages at some time in the year.",
+      "unit_of_count": "Establishment (single physical location), not firm",
+      "how_verified": "Bulk file cbp23us.zip and cbp23st.zip downloaded in-browser from www2.census.gov and parsed; glossary read directly. Census API was not usable (now requires a key).",
+      "confidence": "A",
+      "limitations": "Establishment, not firm; employee count excludes unincorporated owners but includes incorporated owner-officers; data are 2023."
+    },
+    {
+      "id": "S02",
+      "requested_name": "U.S. Census 2024 Nonemployer Statistics",
+      "verification_status": "verified",
+      "title": "2024 Nonemployer Statistics (NES)",
+      "publisher": "U.S. Census Bureau",
+      "release_date": "2026-09-29",
+      "release_note": "Tip sheet CB26-TPS.59 'Census Bureau Releases 2024 Nonemployer Statistics', Tue Sept 29, 2026 (no news release or headline numbers)",
+      "urls": [
+        "https://www2.census.gov/programs-surveys/nonemployer-statistics/datasets/2024/historical-datasets/nonemp24us.zip",
+        "https://www2.census.gov/programs-surveys/nonemployer-statistics/datasets/2024/historical-datasets/nonemp24st.zip",
+        "https://www.census.gov/newsroom/press-releases/2026/2024-nonemployer-statistics.html",
+        "https://www.census.gov/programs-surveys/nonemployer-statistics/technical-documentation/methodology.html",
+        "https://www2.census.gov/programs-surveys/nonemployer-statistics/technical-documentation/code-lists/nes_naics22.txt"
+      ],
+      "data_period": "Tax year 2024",
+      "sample_definition": "Businesses with no paid employees, subject to federal income tax, receipts of $1,000 or more ($1 or more for Construction). 2022 NAICS.",
+      "methodology": "IRS administrative records (business income tax returns). Excludes government and nonprofits. Primary nonsampling error is improper inclusion of employer establishments. Census advises against time-series use. Geography by mailing address.",
+      "unit_of_count": "Nonemployer establishment (generally one business tax return)",
+      "how_verified": "Bulk files downloaded in-browser from www2.census.gov and parsed; tip sheet, methodology and NAICS code list read.",
+      "confidence": "A",
+      "limitations": "Includes side and part-time businesses (construction threshold is $1); construction detail stops at 4- or 5-digit NAICS, so no individual counts for roofing, painting, siding, concrete, drywall."
+    },
+    {
+      "id": "S03",
+      "requested_name": "CPWR April 2026 Small Establishments in Construction report",
+      "verification_status": "verified_with_internal_inconsistencies",
+      "title": "Data Bulletin: Small Establishments in Construction: Employment, Injuries, and Training",
+      "authors": "Amber B. Trueblood, Derek Dufoe, Raina D. Brooks, William Harris",
+      "publisher": "CPWR - The Center for Construction Research and Training (NIOSH cooperative agreement OH 012761)",
+      "release_date": "2026-04",
+      "urls": [
+        "https://stacks.cdc.gov/view/cdc/260010",
+        "https://stacks.cdc.gov/view/cdc/260010/cdc_260010_DS1.pdf"
+      ],
+      "data_period": "CBP 2014-2023, NES 2014-2023, CFOI 2011-2022, SOII 2024, QCEW 2024, Dodge/CPWR survey 2025",
+      "sample_definition": "Small establishment = fewer than 20 employees (CPWR's construction convention; NIOSH uses 50).",
+      "methodology": "Secondary analysis of federal datasets plus a 2025 Dodge/CPWR contractor survey.",
+      "how_verified": "CDC Stacks record and 7-page PDF read via web fetch.",
+      "confidence": "B",
+      "limitations": "Abstract figures (2.7M workers; ~57% of fatalities; 78.1% nonemployer share in 2021) do not match body text (2.5M avg / 2.4M in 2023; ~50.5%); one payroll chart has conflicting labels. Use body figures only."
+    },
+    {
+      "id": "S04",
+      "requested_name": "NAHB September 2026 residential remodeler findings",
+      "verification_status": "verified",
+      "title": "Median Revenue of NAHB Remodelers Grows 24% (NAHB blog) and NAHB Remodelers: What the Data Says (Eye On Housing, Eric Lynch)",
+      "publisher": "National Association of Home Builders",
+      "release_date": "2026-09-28",
+      "urls": [
+        "https://www.nahb.org/blog/2026/09/residential-remodelers-nahb-census-data",
+        "https://eyeonhousing.org/2026/09/nahb-remodelers-what-the-data-says/"
+      ],
+      "data_period": "2025 (NAHB 2025 Member Census)",
+      "sample_definition": "NAHB Builder members; 21% list residential remodeling as primary business. Sample size and fielding dates not published.",
+      "methodology": "Member census (self-reported).",
+      "how_verified": "Both pages fetched; figures agree.",
+      "confidence": "D",
+      "limitations": "NAHB members are larger and more formal than the typical remodeler (median $2.1M revenue vs. Census nonemployer reality); n not stated; job-count buckets sum to 94%."
+    },
+    {
+      "id": "S05",
+      "requested_name": "(supplementary) NAHB Remodeling Market Index Q3 2026",
+      "verification_status": "verified",
+      "title": "Remodeling Market Sentiment Remains Stable in Third Quarter Despite Headwinds",
+      "publisher": "NAHB / Eye On Housing (Eric Lynch)",
+      "release_date": "2026-10-08",
+      "urls": [
+        "https://eyeonhousing.org/2026/10/remodeling-market-sentiment-remains-stable-in-third-quarter-despite-headwinds/"
+      ],
+      "data_period": "Q3 2026",
+      "sample_definition": "NAHB remodeler members rating conditions good/fair/poor",
+      "methodology": "Diffusion index 0-100; >50 means more 'good' than 'poor'.",
+      "how_verified": "Page fetched; components reconcile.",
+      "confidence": "C",
+      "limitations": "Sentiment only; members only."
+    },
+    {
+      "id": "S06",
+      "requested_name": "Software Advice 2026 construction software buyer research (part 1)",
+      "verification_status": "verified",
+      "title": "How Small Construction Businesses Choose Software: Insights From 8,000+ Buyers",
+      "authors": "Amita Jain",
+      "publisher": "Software Advice (Gartner Digital Markets)",
+      "release_date": "2026-03-16",
+      "urls": [
+        "https://www.softwareadvice.com/resources/construction-software-buyer-insights/"
+      ],
+      "data_period": "Jan 1, 2025 - Jan 1, 2026 (per companion article S07)",
+      "sample_definition": "8,205 advisor phone conversations with small and midsize construction businesses actively shopping for software; 55% had 10 or fewer employees.",
+      "methodology": "Analysis of Software Advice advisor call records. Not a survey. Denominators for most percentages not stated. Publisher says findings may not be representative.",
+      "how_verified": "Page fetched in full.",
+      "confidence": "D",
+      "limitations": "Active-shopper frame overstates software intent; two unreconciled budget figures ($150/user/month vs. $450/month)."
+    },
+    {
+      "id": "S07",
+      "requested_name": "Software Advice 2026 construction software buyer research (part 2)",
+      "verification_status": "verified",
+      "title": "Residential vs. Commercial Construction Software (2026 Guide)",
+      "authors": "Amita Jain",
+      "publisher": "Software Advice",
+      "release_date": "2026-04-02",
+      "urls": [
+        "https://www.softwareadvice.com/resources/residential-vs-commercial-construction-software/"
+      ],
+      "data_period": "Jan 1, 2025 - Jan 1, 2026",
+      "sample_definition": "n = 8,205 advisor conversations (same dataset as S06)",
+      "methodology": "Advisor call records; rounded; may not be representative.",
+      "how_verified": "Page fetched in full.",
+      "confidence": "D",
+      "limitations": "Same as S06; some figures labeled inconsistently (median vs. average)."
+    },
+    {
+      "id": "S08",
+      "requested_name": "Jobber 2026 Home Service Trends Report",
+      "verification_status": "verified",
+      "title": "Blue Collar Strong: The 2026 Home Service Trends Report",
+      "publisher": "Jobber",
+      "release_date": "2026 (no date on page; page modified 2026-03-25)",
+      "urls": [
+        "https://www.getjobber.com/home-service-trends-report/"
+      ],
+      "data_period": "Survey fielded December 2025",
+      "sample_definition": "1,050 U.S. home service business owners (cleaning, HVAC, roofing, plumbing, electrical, lawn care, tree care, general contracting); solo operators through established businesses. Whether respondents are Jobber customers is not stated.",
+      "methodology": "Online survey via Conjointly; margin of error +/-3 points at 90% confidence; some benchmarks from anonymized Jobber platform data. Homeowners were not surveyed.",
+      "how_verified": "Page fetched; methodology section and industry spotlights read directly in browser.",
+      "confidence": "C",
+      "limitations": "Vendor survey; owner-reported; customer-expectation figures have no homeowner sample; HVAC lead-response figure differs between body (11%) and spotlight (17%); per-trade n not given."
+    },
+    {
+      "id": "S09",
+      "requested_name": "(supplementary) Jobber Home Service Economic Report 2026 Q2",
+      "verification_status": "verified",
+      "title": "Jobber Home Service Economic Report: 2026 Q2",
+      "publisher": "Jobber",
+      "release_date": "2026-08",
+      "urls": [
+        "https://www.getjobber.com/home-service-reports/august-2026/"
+      ],
+      "data_period": "Q2 2026",
+      "sample_definition": "Jobber platform data (400,000+ professionals); YoY cohort of businesses on Jobber since Jan 2023",
+      "methodology": "Platform transaction data plus cited macro sources",
+      "how_verified": "Page fetched (page is marked noindex).",
+      "confidence": "D",
+      "limitations": "Jobber customers only; cohort size not given."
+    },
+    {
+      "id": "S10",
+      "requested_name": "RoofersCoffeeShop 2024 survey of 210 roofing-industry respondents",
+      "verification_status": "partially_verified",
+      "title": "RoofersCoffeeShop Releases 2024 Roofing Industry Trends Report (press release and podcast transcript)",
+      "publisher": "RoofersCoffeeShop (sponsor: Beacon Building Products)",
+      "release_date": "2024-11-18 (EIN Presswire; RCS post dated 2024-12-09)",
+      "urls": [
+        "https://www.rooferscoffeeshop.com/post/rooferscoffeeshop-releases-2024-roofing-industry-trends-report",
+        "https://www.einpresswire.com/article/761619171/rooferscoffeeshop-releases-2024-roofing-industry-trends-report",
+        "https://www.rooferscoffeeshop.com/post/whats-next-in-roofing-2024-trends-uncovered-podcast-transcript"
+      ],
+      "data_period": "Fielded May - September 2024",
+      "sample_definition": "210 respondents, roofing contractors and other industry members; mix not published; more owners than prior year's 50/50; about 24% under 10 employees (spoken in podcast).",
+      "methodology": "Self-selected online survey; no weighting or questionnaire published.",
+      "how_verified": "Press release and transcript fetched; full report is behind a lead form and was NOT read (no form submitted, per no-outreach rule).",
+      "confidence": "E",
+      "limitations": "Gated full report; no software/estimating-tool adoption figures were verifiable."
+    },
+    {
+      "id": "S11",
+      "requested_name": "Pew Research Center 2026 social media demographic survey",
+      "verification_status": "verified",
+      "title": "Americans' Use of Social Media in 2026 (fact sheet) and 2026 NPORS topline",
+      "publisher": "Pew Research Center",
+      "release_date": "2026-10-19",
+      "urls": [
+        "https://www.pewresearch.org/internet/fact-sheet/social-media/",
+        "https://www.pewresearch.org/wp-content/uploads/sites/20/2026/10/PI_2026.10.19_NPORS-Internet-Fact-Sheets_TOPLINE.pdf"
+      ],
+      "data_period": "Jan 30 - June 18, 2026",
+      "sample_definition": "National Public Opinion Reference Survey (NPORS), N = 5,511 U.S. adults; margin of error +/-1.8 points",
+      "methodology": "Address-based probability sample; web, mail and phone. 'Ever use' each platform.",
+      "how_verified": "Fact sheet demographic tables read directly in browser; topline read via fetch.",
+      "confidence": "B",
+      "limitations": "General adult population, not contractors; Pinterest not asked in 2026."
+    },
+    {
+      "id": "S12",
+      "requested_name": "(supplementary) Pew Americans' Social Media Use 2025",
+      "verification_status": "verified",
+      "title": "Americans' Social Media Use 2025",
+      "publisher": "Pew Research Center (Jeffrey Gottfried, Eugenie Park)",
+      "release_date": "2025-11-20",
+      "urls": [
+        "https://www.pewresearch.org/internet/2025/11/20/americans-social-media-use-2025/"
+      ],
+      "data_period": "Feb 5 - June 18, 2025",
+      "sample_definition": "NPORS 2025, n = 5,022 U.S. adults",
+      "methodology": "Address-based; web, mail, phone",
+      "how_verified": "Fetched.",
+      "confidence": "B",
+      "limitations": "Prior-year; used only for daily-use figures."
+    },
+    {
+      "id": "S13",
+      "requested_name": "(first-party) Built2Bid app repository: plans, prices, trade templates",
+      "verification_status": "verified",
+      "title": "Built2Bid application source code (jwstein2/Bid2Build)",
+      "publisher": "Built2Bid (first-party)",
+      "release_date": "commit 39104b5, 2026-11-23",
+      "urls": [
+        "https://github.com/jwstein2/Bid2Build/blob/39104b51a3aacf9e928d89b29556d6bfc81fc87d/src/lib/billing/plans.ts",
+        "https://github.com/jwstein2/Bid2Build/blob/39104b51a3aacf9e928d89b29556d6bfc81fc87d/src/lib/enterprise/pricing.ts",
+        "https://github.com/jwstein2/Bid2Build/blob/39104b51a3aacf9e928d89b29556d6bfc81fc87d/src/lib/pm/billing.ts",
+        "https://github.com/jwstein2/Bid2Build/blob/39104b51a3aacf9e928d89b29556d6bfc81fc87d/src/lib/financials/billing.ts",
+        "https://github.com/jwstein2/Bid2Build/blob/39104b51a3aacf9e928d89b29556d6bfc81fc87d/src/lib/trades/data.ts",
+        "https://github.com/jwstein2/Bid2Build/blob/39104b51a3aacf9e928d89b29556d6bfc81fc87d/README.md"
+      ],
+      "data_period": "As of 2026-11-23",
+      "sample_definition": "Price constants that the checkout server validates against Stripe; trade template catalog",
+      "methodology": "Read-only inspection of source files; values copied into data/pricing.json",
+      "how_verified": "Repository cloned read-only; constants read directly from the files listed",
+      "confidence": "A",
+      "limitations": "List prices only; actual plan mix, discounts and complimentary grants unknown. README annual price ($149) disagrees with code ($199)."
+    },
+    {
+      "id": "S14",
+      "requested_name": "(first-party) Built2Bid growth-engine docs: baseline and ad-copy rules",
+      "verification_status": "verified",
+      "title": "docs/growth/README.md and docs/growth/ADS.md",
+      "publisher": "Built2Bid (first-party)",
+      "release_date": "2026-11-16 audit (commit 39104b5)",
+      "urls": [
+        "https://github.com/jwstein2/Bid2Build/blob/39104b51a3aacf9e928d89b29556d6bfc81fc87d/docs/growth/README.md",
+        "https://github.com/jwstein2/Bid2Build/blob/39104b51a3aacf9e928d89b29556d6bfc81fc87d/docs/growth/ADS.md"
+      ],
+      "data_period": "Production baseline read 2026-11-16",
+      "sample_definition": "Built2Bid production accounts not labeled test/internal",
+      "methodology": "Owner-run read-only production audit recorded in repo docs",
+      "how_verified": "Files read directly",
+      "confidence": "B",
+      "limitations": "Point-in-time snapshot; tiny base."
+    }
+  ]
+}

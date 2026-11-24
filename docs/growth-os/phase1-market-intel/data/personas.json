@@ -1,0 +1,613 @@
+{
+  "version": "1.0.0",
+  "date": "2026-11-23",
+  "notes": [
+    "Personas are composites for planning. They are not interviews with real people. Every 'evidence' item cites an id in data/evidence.csv or data/derived/*. Everything under 'inference' is analyst judgment and should be validated with customer interviews in a later phase (gap G08).",
+    "Team size is always stated as TOTAL PEOPLE INCLUDING THE OWNER. Census employee counts exclude unincorporated owners (E006).",
+    "Product tiers are Built2Bid's real plans from the app repository (S13): Free (credits), Individual Unlimited ($19.99/month or $199/year) [E180] [E181], and Team ($49.99/month including 3 users, then graduated seats) [E182] [E183]. Add-ons: Project Command Center $4.99/month [E184] and Solo Financials $21.99/month [E185].",
+    "Marketing messages follow Built2Bid's own ad rules (docs/growth/ADS.md): no testimonials, no speed, profit, 'win more jobs' or percentage claims [E191]. They describe what the product does, not outcomes. Nothing has been launched."
+  ],
+  "personas": [
+    {
+      "id": "P01",
+      "name": "Solo Remodeler / Handyman-to-Remodeler",
+      "segments": [
+        "REMODEL",
+        "FINISH_CARP",
+        "OTHER_SPEC"
+      ],
+      "audience_size_reference": {
+        "metric": "REMODEL solo_viable_base",
+        "value": 311728,
+        "source": "data/derived/segment_sizing.csv",
+        "label": "ESTIMATE (A01 base floor, A03 allocation)"
+      },
+      "company_characteristics": {
+        "total_people_incl_owner": "1 (owner only; may use 1099 helpers)",
+        "census_frame": "Nonemployer (NES 2024, NAICS 2361 allocated to 236118)",
+        "revenue_band": "$25K-$250K receipts (NES size classes 121-123) (persona design band) [INF]",
+        "legal_form": "Mostly sole proprietor (89.7% of NAICS 23 nonemployers, D008)",
+        "evidence": [
+          "E010",
+          "E012",
+          "E016",
+          "D008"
+        ]
+      },
+      "primary_business_problems": {
+        "evidence": [
+          "E103 quoting is a top time drain for 37% of home service owners",
+          "E104 admin/paperwork 31%",
+          "E087 nearly 35% of residential software shoppers still use manual/paper methods"
+        ],
+        "inference": [
+          "Estimates written at night after site work",
+          "Underpricing and scope creep because estimates are not itemized",
+          "Slow follow-up loses jobs"
+        ]
+      },
+      "likely_software_objections": {
+        "evidence": [
+          "E082 remodelers have the lowest software budget (~$63/user/month)",
+          "E078 affordability is a switching driver for 7%"
+        ],
+        "inference": [
+          "'I can do it in a spreadsheet or on paper'",
+          "'I don't have time to set it up'",
+          "Distrust of monthly subscriptions"
+        ]
+      },
+      "best_built2bid_use_cases": [
+        "Trade templates for remodeling, handyman and finish carpentry (src/lib/trades/data.ts)",
+        "Markup or margin pricing with a branded PDF proposal (README)",
+        "Saved Items & Pricing to reuse line items (Unlimited feature)",
+        "Change orders (free feature) and e-signature (src/lib/esign)"
+      ],
+      "purchase_motivations": {
+        "evidence": [
+          "E077 efficiency is the top switching driver (48%)",
+          "E112 only 16% offer tiered good/better/best pricing (upsell headroom)"
+        ],
+        "inference": [
+          "Look more professional than competitors",
+          "Win more of the jobs already quoted"
+        ]
+      },
+      "expected_buyer_journey": [
+        "Trigger: lost a job to a faster or more professional quote",
+        "Searches YouTube or Facebook groups for estimate templates",
+        "Tries a free trial on phone",
+        "Converts if first real estimate is sent in one sitting",
+        "Decision maker = owner alone; purchase in days, not months"
+      ],
+      "preferred_marketing_messages": [
+        "Build an itemized estimate from a remodeling template and send a branded proposal",
+        "Show the customer good, better and best options in one proposal",
+        "Price a change order and get it signed"
+      ],
+      "channels": {
+        "evidence": [
+          "E141 Facebook 70% of adults",
+          "E150 YouTube 85% of men",
+          "E157 YouTube 77% of adults with HS or less"
+        ],
+        "inference": [
+          "Facebook trade groups",
+          "YouTube how-to",
+          "Supply-house counter"
+        ]
+      },
+      "appropriate_product_tier": "Free to start, then Individual Unlimited",
+      "confidence": "medium (sizing high/low-medium; behavior mostly inference)"
+    },
+    {
+      "id": "P02",
+      "name": "Small Remodeling Firm Owner",
+      "segments": [
+        "REMODEL",
+        "GC_RES"
+      ],
+      "audience_size_reference": {
+        "metric": "REMODEL employer_estab_lt20",
+        "value": 132114,
+        "source": "data/derived/segment_sizing.csv",
+        "label": "Census-derived (A02 proxy)"
+      },
+      "company_characteristics": {
+        "total_people_incl_owner": "3-12 (owner + office manager/estimator + 1-2 crews; subs for trades)",
+        "census_frame": "CBP 2023 employer establishments, 236118, <20 paid employees (97.6% of remodeler establishments) [T:REMODEL.pct_employer_lt20]",
+        "revenue_band": "NAHB member remodelers: median $2.1M; 23% under $500K (members skew larger than typical) [E052] [E053]",
+        "jobs_per_year": "NAHB primary remodelers: median 12 jobs of $10K+ (mean 31) [E056]",
+        "evidence": [
+          "E051",
+          "E052",
+          "E053",
+          "E056",
+          "segment_sizing.csv:REMODEL"
+        ]
+      },
+      "primary_business_problems": {
+        "evidence": [
+          "E086 89% of residential shoppers prioritize estimating",
+          "E074 75% want estimating and PM in one platform",
+          "E088 26% of residential builders request customer management",
+          "E062 RMI leads/inquiries index 53 in Q3 2026 (positive, but the weakest RMI component)"
+        ],
+        "inference": [
+          "Owner is the bottleneck for every estimate",
+          "Change orders not priced or signed",
+          "Estimates don't flow into job budgets"
+        ]
+      },
+      "likely_software_objections": {
+        "evidence": [
+          "E082 low per-user budget (~$63)"
+        ],
+        "inference": [
+          "'We already pay for a big suite we barely use'",
+          "Migration of price book/templates",
+          "Crew won't adopt it"
+        ]
+      },
+      "best_built2bid_use_cases": [
+        "Shared Saved Items & Pricing across estimators (Unlimited/Team)",
+        "Subcontractor quotes rolled into the estimate (free feature)",
+        "Change orders with e-signature",
+        "Internal Estimate Report for margin review (Unlimited)",
+        "Project Command Center add-on for scheduling after the sale"
+      ],
+      "purchase_motivations": {
+        "evidence": [
+          "E077 efficiency 48%",
+          "E073 project management requested by 68%"
+        ],
+        "inference": [
+          "Get the owner out of nightly estimating",
+          "Protect margin on change orders"
+        ]
+      },
+      "expected_buyer_journey": [
+        "Trigger: hiring an estimator or a margin miss on a big job",
+        "Compares 2-3 tools (review sites, peer groups, NAHB/NARI chapters)",
+        "Demo + trial with real past job",
+        "Owner decides, office manager influences",
+        "Weeks to decide"
+      ],
+      "preferred_marketing_messages": [
+        "Everyone on your team estimates from the same saved prices",
+        "Roll sub quotes and change orders into one proposal",
+        "See your margin on the internal report before the customer sees the price"
+      ],
+      "channels": {
+        "evidence": [
+          "E146 Facebook 78% of adults 30-49",
+          "E151 Instagram 64% of 30-49",
+          "E144 LinkedIn 31% of adults"
+        ],
+        "inference": [
+          "Remodeler associations",
+          "Peer groups",
+          "Search"
+        ]
+      },
+      "appropriate_product_tier": "Team (3 users included); Individual Unlimited if only the owner estimates",
+      "confidence": "medium"
+    },
+    {
+      "id": "P03",
+      "name": "Growth-Stage Roofing Contractor",
+      "segments": [
+        "ROOF",
+        "SIDING"
+      ],
+      "audience_size_reference": {
+        "metric": "ROOF employer_estab_lt20",
+        "value": 23053,
+        "source": "data/derived/segment_sizing.csv",
+        "label": "Census-derived (A02 proxy)"
+      },
+      "company_characteristics": {
+        "total_people_incl_owner": "5-20 (owner, sales/estimator, office, crews often subcontracted)",
+        "census_frame": "CBP 2023, 238160, <20 paid employees (90.3% of roofing establishments) [T:ROOF.pct_employer_lt20]",
+        "revenue_band": "Jobber roofing respondents: over half earn $500K+ [E115]",
+        "labor_model": "57% of roofing contractors in RCS survey use subcontracted crews [E132]",
+        "evidence": [
+          "E115",
+          "E132",
+          "E130",
+          "segment_sizing.csv:ROOF"
+        ]
+      },
+      "primary_business_problems": {
+        "evidence": [
+          "E134 top issues: recruitment & retention, training, material cost",
+          "E133 nearly 50% say digital advertising is their greatest marketing need",
+          "E127 28% of Jobber roofing respondents saw significant demand increases"
+        ],
+        "inference": [
+          "Material price swings make old quotes unprofitable",
+          "High quote volume after storms",
+          "Insurance-scope reconciliation"
+        ]
+      },
+      "likely_software_objections": {
+        "evidence": [],
+        "inference": [
+          "'We already use a roofing CRM and a measurement service'",
+          "Needs integration with aerial measurements and supplier pricing",
+          "Sales reps resist new tools"
+        ]
+      },
+      "best_built2bid_use_cases": [
+        "Roofing template with trade measurements (src/lib/market/trade-models.ts)",
+        "Good/better/best shingle options in one proposal",
+        "Sales pipeline to track open bids (free feature)",
+        "Company proposal style so every rep's proposal looks the same"
+      ],
+      "purchase_motivations": {
+        "evidence": [
+          "E114 67% already use AI (tech-forward)",
+          "E128 32% of Jobber roofing respondents expect significant revenue growth"
+        ],
+        "inference": [
+          "Close more same-visit",
+          "Scale sales without owner on every appointment"
+        ]
+      },
+      "expected_buyer_journey": [
+        "Trigger: adding a sales rep or a storm season",
+        "Researches via YouTube, roofing communities (RCS), peers",
+        "Demo focused on speed and integrations",
+        "Owner decides; sales manager influences",
+        "Trial during slower season"
+      ],
+      "preferred_marketing_messages": [
+        "Measure, price and present from one roofing template",
+        "Every rep sends the same branded proposal",
+        "Track every open roofing bid in one pipeline"
+      ],
+      "channels": {
+        "evidence": [
+          "E129 Jobber roofing spotlight: YouTube, Local Services Ads and Google are high-performing channels",
+          "E150 YouTube 85% of men"
+        ],
+        "inference": [
+          "Roofing trade media and podcasts",
+          "Supplier events"
+        ]
+      },
+      "appropriate_product_tier": "Team (sales reps as licensed users); Individual Unlimited for owner-only roofers",
+      "confidence": "medium-low (RCS sample small and partly gated)"
+    },
+    {
+      "id": "P04",
+      "name": "Owner-Operator Trade Service Contractor (Electrical / Plumbing / HVAC)",
+      "segments": [
+        "ELEC",
+        "PLUMB",
+        "HVAC"
+      ],
+      "audience_size_reference": {
+        "metric": "ELEC + PLUMB(HVAC shared) units_1to20_base",
+        "value": 348114,
+        "source": "data/derived/segment_sizing.csv (150,388 + 197,726)",
+        "label": "Derived from Census; solo portion direct NES"
+      },
+      "company_characteristics": {
+        "total_people_incl_owner": "1-8 (licensed owner, 1-5 techs/apprentices, part-time office)",
+        "census_frame": "CBP 238210/238220 <20 paid employees (88.1% / 88.7%); NES 23821/23822 direct [T:ELEC.pct_employer_lt20] [T:PLUMB.pct_employer_lt20]",
+        "revenue_band": "Jobber HVAC respondents: over 60% earn $500K+ [E117]",
+        "evidence": [
+          "E116",
+          "E117",
+          "E118",
+          "E119",
+          "segment_sizing.csv:ELEC,PLUMB"
+        ]
+      },
+      "primary_business_problems": {
+        "evidence": [
+          "E085 specialty contractor budget ~$150-157/user",
+          "E111 only 20% of home service businesses respond to leads within an hour"
+        ],
+        "inference": [
+          "Mix of quick service tickets and larger project bids (panel upgrades, repipes, system replacements)",
+          "Project bids done on paper outside the field-service tool"
+        ]
+      },
+      "likely_software_objections": {
+        "evidence": [],
+        "inference": [
+          "'My field-service app already does quotes'",
+          "Price book maintenance burden",
+          "Another login for techs"
+        ]
+      },
+      "best_built2bid_use_cases": [
+        "Electrical, plumbing and HVAC templates for project and replacement bids",
+        "Option pricing for upgrades",
+        "QuickBooks connection (src/lib/quickbooks)",
+        "Use alongside an existing field-service app for project work (fit unvalidated)"
+      ],
+      "purchase_motivations": {
+        "evidence": [
+          "E116 HVAC 81.5% AI use; E119 electrical 64%",
+          "E113 65% raised prices last year"
+        ],
+        "inference": [
+          "Win larger project jobs, not just service calls",
+          "Present options professionally"
+        ]
+      },
+      "expected_buyer_journey": [
+        "Trigger: losing project bids or moving into replacements",
+        "Evaluates whether current FSM tool is enough",
+        "Trial only if it complements, not replaces, FSM",
+        "Owner decides quickly"
+      ],
+      "preferred_marketing_messages": [
+        "Quote the project jobs, not just the service calls, from trade templates",
+        "Put equipment options side by side in one proposal",
+        "Send a branded proposal with e-signature"
+      ],
+      "channels": {
+        "evidence": [
+          "E106 referrals 59%",
+          "E108 Google Search 20%"
+        ],
+        "inference": [
+          "Supply houses",
+          "Trade associations",
+          "YouTube"
+        ]
+      },
+      "appropriate_product_tier": "Individual Unlimited; Team for shops with 3+ estimators",
+      "confidence": "low-medium (crowded category; product fit unvalidated)"
+    },
+    {
+      "id": "P05",
+      "name": "Exterior Specialty Crew Owner (Siding / Decks / Concrete / Fencing)",
+      "segments": [
+        "SIDING",
+        "DECKS",
+        "CONCRETE",
+        "OTHER_SPEC",
+        "MASONRY"
+      ],
+      "audience_size_reference": {
+        "metric": "SIDING+CONCRETE+OTHER_SPEC+MASONRY units_1to20_base",
+        "value": 329774,
+        "source": "data/derived/segment_sizing.csv (25,905 + 54,808 + 201,010 + 48,051); decks not countable",
+        "label": "Derived; solo portion ESTIMATED (A03)"
+      },
+      "company_characteristics": {
+        "total_people_incl_owner": "2-8 (owner selling and working, 1-2 crews)",
+        "census_frame": "CBP 238170/238110/238990/238140 <20 paid employees; NES 2381/2389 allocated",
+        "revenue_band": "Not measured by any verified source (gap)",
+        "evidence": [
+          "segment_sizing.csv:SIDING,CONCRETE,OTHER_SPEC,MASONRY"
+        ]
+      },
+      "primary_business_problems": {
+        "evidence": [
+          "E103 quoting 37% top time drain",
+          "E112 16% offer tiered options"
+        ],
+        "inference": [
+          "Material take-offs by hand",
+          "Seasonal rush of estimate requests",
+          "Design options (composite vs. wood, stamped vs. broom finish) hard to price consistently"
+        ]
+      },
+      "likely_software_objections": {
+        "evidence": [],
+        "inference": [
+          "'Every job is different'",
+          "Cost",
+          "Learning curve in peak season"
+        ]
+      },
+      "best_built2bid_use_cases": [
+        "Deck, siding, concrete, fencing and masonry templates with per-foot units",
+        "Trade calculators (src/lib/calculators)",
+        "Option sets (composite vs. wood, stamped vs. broom finish)",
+        "Sales pipeline for the spring backlog"
+      ],
+      "purchase_motivations": {
+        "evidence": [
+          "E077 efficiency is the top switching driver (48%)"
+        ],
+        "inference": [
+          "Respond faster than competitors in peak season",
+          "Higher close rate on options"
+        ]
+      },
+      "expected_buyer_journey": [
+        "Trigger: estimate backlog in spring",
+        "Facebook group / YouTube discovery",
+        "Self-serve trial",
+        "Owner decides within a week"
+      ],
+      "preferred_marketing_messages": [
+        "Turn a site measure into an itemized proposal from a deck, siding or concrete template",
+        "Lay out material options side by side for the customer",
+        "Keep every open estimate in one pipeline"
+      ],
+      "channels": {
+        "evidence": [
+          "E141 Facebook 70%",
+          "E151 Instagram 64% of 30-49",
+          "E149 Facebook 76% of rural adults"
+        ],
+        "inference": [
+          "Facebook trade groups",
+          "Instagram project photos",
+          "Lumber/supply yards"
+        ]
+      },
+      "appropriate_product_tier": "Individual Unlimited; Team with 3+ users",
+      "confidence": "low-medium"
+    },
+    {
+      "id": "P06",
+      "name": "Painting / Finishing Contractor",
+      "segments": [
+        "PAINT",
+        "DRYWALL",
+        "FLOORING",
+        "TILE"
+      ],
+      "audience_size_reference": {
+        "metric": "PAINT+DRYWALL+FLOORING+TILE units_1to20_base",
+        "value": 329967,
+        "source": "data/derived/segment_sizing.csv (150,044 + 67,829 + 71,770 + 40,324)",
+        "label": "Derived; solo portion ESTIMATED (A03)"
+      },
+      "company_characteristics": {
+        "total_people_incl_owner": "1-10 (owner-painter plus helpers; many solo)",
+        "census_frame": "NES 2383 (building finishing) is the largest construction nonemployer group in this frame, 678,091 [E021]; CBP 238320 has 95.4% of establishments under 20 paid employees [T:PAINT.pct_employer_lt20]",
+        "revenue_band": "Not measured by a verified trade source (gap)",
+        "evidence": [
+          "E021",
+          "segment_sizing.csv:PAINT"
+        ]
+      },
+      "primary_business_problems": {
+        "evidence": [
+          "E103 quoting 37%"
+        ],
+        "inference": [
+          "High quote volume with low win rate",
+          "Price shopping by homeowners",
+          "Measuring rooms/surfaces"
+        ]
+      },
+      "likely_software_objections": {
+        "evidence": [],
+        "inference": [
+          "Very price-sensitive",
+          "'I quote by eye'"
+        ]
+      },
+      "best_built2bid_use_cases": [
+        "Painting, drywall, flooring and tile templates",
+        "Saved Items & Pricing for production-rate line items",
+        "Choose what the customer sees per section (README)",
+        "E-signature"
+      ],
+      "purchase_motivations": {
+        "evidence": [
+          "E110 36% win >70% of quotes (top performers)"
+        ],
+        "inference": [
+          "Quote more jobs per week",
+          "Consistent pricing across estimators"
+        ]
+      },
+      "expected_buyer_journey": [
+        "Facebook/YouTube discovery",
+        "Free plan or trial",
+        "Upgrade when adding an estimator or crew"
+      ],
+      "preferred_marketing_messages": [
+        "Price every room from your own saved rates",
+        "Choose exactly which details the customer sees",
+        "Send a branded proposal they can sign"
+      ],
+      "channels": {
+        "evidence": [
+          "E153 Nextdoor 23% of suburban adults",
+          "E141 Facebook 70%"
+        ],
+        "inference": [
+          "Facebook groups",
+          "Paint-store counters"
+        ]
+      },
+      "appropriate_product_tier": "Free to start, then Individual Unlimited",
+      "confidence": "low-medium"
+    },
+    {
+      "id": "P07",
+      "name": "Exterior Cleaning Operator (Pressure / Soft Washing)",
+      "segments": [
+        "PRESSURE_WASH",
+        "SOFT_WASH"
+      ],
+      "audience_size_reference": {
+        "metric": "PRESSURE_WASH units_1to20_base",
+        "value": 70696,
+        "source": "data/derived/segment_sizing.csv (NAICS 561790, includes other building services; overstates washing)",
+        "label": "Census-derived; overstated"
+      },
+      "company_characteristics": {
+        "total_people_incl_owner": "1-4",
+        "census_frame": "NAICS 561790 (outside construction); NES 56179 direct",
+        "revenue_band": "Proxy: over 40% of Jobber cleaning respondents earn under $50K [E122]; 63.6% of NES 56179 nonemployers have receipts under $25K [E022]",
+        "evidence": [
+          "E122",
+          "E123",
+          "E022"
+        ]
+      },
+      "primary_business_problems": {
+        "evidence": [
+          "E111 only 20% of home service owners respond to leads within an hour",
+          "E170 cleaning businesses are the fastest responders at 26% within an hour"
+        ],
+        "inference": [
+          "Many small quotes by text",
+          "Seasonality",
+          "Upselling roof/gutter add-ons"
+        ]
+      },
+      "likely_software_objections": {
+        "evidence": [
+          "E123 cleaning AI adoption 50%, lower than trades"
+        ],
+        "inference": [
+          "Already use a general field-service app",
+          "Low ticket size limits spend"
+        ]
+      },
+      "best_built2bid_use_cases": [
+        "Pressure-washing and soft-washing templates (src/lib/trades/data.ts)",
+        "Add-on line items (roof soft wash, gutters, concrete)",
+        "Branded proposal and e-signature"
+      ],
+      "purchase_motivations": {
+        "evidence": [],
+        "inference": [
+          "Speed to quote",
+          "Upsell add-ons"
+        ]
+      },
+      "expected_buyer_journey": [
+        "Facebook groups and YouTube",
+        "Self-serve, price-driven",
+        "Churn risk high"
+      ],
+      "preferred_marketing_messages": [
+        "Pressure- and soft-washing templates ready to price",
+        "Offer add-ons as separate line items the customer can see",
+        "Send a branded quote they can sign"
+      ],
+      "channels": {
+        "evidence": [
+          "E107 Facebook a lead source for 32%"
+        ],
+        "inference": [
+          "Facebook trade groups"
+        ]
+      },
+      "appropriate_product_tier": "Free credits; Individual Unlimited for higher volume",
+      "confidence": "low (category fit weakest; outside NAICS 23)"
+    }
+  ],
+  "plans_real": {
+    "Free": "Credit-based: 3 starter credits plus 1 monthly credit from month two; one credit per new finalized bid [E189]",
+    "Individual Unlimited": "$19.99/month or $199/year, one user [E180] [E181]",
+    "Team": "$49.99/month including 3 users; users 4-5 at $19.99 each, 6-10 at $17.99 each, 11+ at $15.99 each [E182] [E183] [E186]",
+    "Add-ons": "Project Command Center $4.99/month (Standard) [E184]; Solo Financials $21.99/month [E185]"
+  }
+}
