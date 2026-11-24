@@ -10,6 +10,7 @@ import {
   acceptedValues, columnsFor, IMPORT_CHUNK, MAX_IMPORT_PEOPLE, parseRecord, sheetToRecords, templateCsv,
   type Column, type ImportKind, type ImportResult, type ParsedRow,
 } from "@/lib/team/import";
+import { FileDrop } from "@/components/ui/file-drop";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 type Rec = { line: number; raw: Record<string, string> };
@@ -126,13 +127,15 @@ export function ImportWizard({ canHr, canSubs }: { canHr: boolean; canSubs: bool
 
       <section className="space-y-3 rounded-xl border border-line bg-surface p-4">
         <h2 className="text-xl font-extrabold text-navy">2. Upload it</h2>
+        <FileDrop className="rounded-xl" label="Drop the file to read it">
         <label className="flex min-h-24 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-line p-4 text-center hover:bg-paper">
           <FileSpreadsheet className="h-6 w-6 text-accent-ink" aria-hidden />
-          <span className="font-semibold text-navy">{file ?? "Choose a CSV or Excel file"}</span>
+          <span className="font-semibold text-navy">{file ?? "Choose or drag in a CSV or Excel file"}</span>
           <span className="text-xs text-muted">Up to {MAX_IMPORT_PEOPLE.toLocaleString()} rows, 5 MB. Nothing is saved until you press Import.</span>
           <input type="file" accept=".csv,.tsv,.txt,.xlsx,.xlsm,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="sr-only" data-testid="import-file"
             onChange={(e) => { void onFile(e.target.files?.[0]); e.target.value = ""; }} />
         </label>
+        </FileDrop>
         {error && <Notice tone="danger">{error}</Notice>}
         {ignored.length > 0 && <p className="text-xs text-muted" data-testid="import-ignored">Columns we don&apos;t use (skipped): {ignored.join(", ")}</p>}
       </section>

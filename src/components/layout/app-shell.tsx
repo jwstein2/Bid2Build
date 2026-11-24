@@ -5,6 +5,7 @@ import { isFinancialsEnabled, isPmEnabled, isUnifiedHomeEnabled } from "@/lib/en
 import { NO_WORKSPACES, switchLinks } from "@/lib/workspaces";
 import { loadWorkspaces } from "@/lib/workspaces-server";
 import { AppSidebar } from "@/components/layout/app-nav";
+import { signedInLabel } from "@/lib/signed-in";
 import { FeatureHost } from "@/components/features/feature-host";
 import { formatPhone } from "@/lib/auth/phone";
 import { loadLearningNav } from "@/lib/creator/nav";
@@ -33,7 +34,7 @@ import { GuideHost } from "@/components/guide/guide-host";
  */
 export async function AppShell({ user, bare = false, children }: { user: SessionUser; bare?: boolean; children: React.ReactNode }) {
   const supabase = await createClient();
-  const [{ data: isAdmin }, company, premium, learning, access, workspaces, clockRes, wonRes] = await Promise.all([
+  const [{ data: isAdmin }, company, premium, learning, access, workspaces, clockRes, wonRes, bizRes] = await Promise.all([
     supabase.rpc("is_admin", { p_user_id: user.id }), loadMyCompany(supabase), hasPremiumAccess(supabase), loadLearningNav(supabase),
     // V6.7: which workspace links this person sees (company members only; solo accounts and owners see everything).
     loadEffectiveAccess(supabase).catch(() => null),
@@ -43,14 +44,17 @@ export async function AppShell({ user, bare = false, children }: { user: Session
     isPmEnabled() ? supabase.from("pm_resources").select("id").eq("linked_user_id", user.id).eq("kind", "staff").eq("status", "active").limit(1) : Promise.resolve({ data: [] }),
     // 2026-11-22 simpler menu: has this account won a job yet? (One indexed head count.)
     supabase.from("estimates").select("id", { count: "exact", head: true }).eq("user_id", user.id).in("pipeline_stage", ["won", "scheduled", "in_progress", "completed"]),
+    // 2026-11-24 "Logged in as": the company name from the Company profile (solo accounts and non-Enterprise plans).
+    supabase.from("business_profiles").select("company_name").eq("user_id", user.id).maybeSingle(),
   ]);
+  const signedInAs = signedInLabel(company?.name, (bizRes.data as { company_name?: string | null } | null)?.company_name);
   const clock = ((clockRes.data as unknown[] | null) ?? []).length > 0;
   // New solo accounts start with the essentials (bids, customers, prices, templates); Projects, Workforce,
   // Financials and Industry News sit under "More tools" until the first won job. Companies, admins,
   // practice logins and anyone who already won a job see the full menu.
   const essentials = !company && !isAdmin && !user.demo && !clock && !wonRes.error && (wonRes.count ?? 0) === 0;
   const sidebar = (
-    <AppSidebar essentials={essentials} isAdmin={Boolean(isAdmin)} projects={isPmEnabled()} clock={clock} financials={isFinancialsEnabled()} home={isUnifiedHomeEnabled()} company={companyNav(company)} access={sidebarAccess(access)} learning={learning} switches={switchLinks(workspaces, "contractor")} email={user.email ?? (user.phone ? formatPhone(user.phone) : null)} theme={user.theme ?? null} practice={isPracticeEnabled()} demo={user.demo?.kind ?? null} bell={isPmEnabled() ? <NotificationBell only="phone" tone="dark" /> : null} />
+    <AppSidebar essentials={essentials} isAdmin={Boolean(isAdmin)} projects={isPmEnabled()} clock={clock} financials={isFinancialsEnabled()} home={isUnifiedHomeEnabled()} company={companyNav(company)} access={sidebarAccess(access)} learning={learning} switches={switchLinks(workspaces, "contractor")} signedInAs={signedInAs} email={user.email ?? (user.phone ? formatPhone(user.phone) : null)} theme={user.theme ?? null} practice={isPracticeEnabled()} demo={user.demo?.kind ?? null} bell={isPmEnabled() ? <NotificationBell only="phone" tone="dark" /> : null} />
   );
   return (
     <PremiumAccessProvider unlocked={premium}>

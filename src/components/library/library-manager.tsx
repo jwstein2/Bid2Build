@@ -12,6 +12,7 @@ import { Button } from "../ui/button";
 import { Card } from "../ui/misc";
 import { LibraryLocked } from "./premium-lock";
 import { SavedItemForm, blankSavedItem } from "./saved-item-form";
+import { CategoryMerge } from "./category-merge";
 
 const fmtDay = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 const typeLabel = (t: string) => COST_TYPES.find((c) => c.value === t)?.label ?? t;
@@ -80,6 +81,8 @@ export function LibraryManager() {
           <p className="mt-1 text-ink-soft">{FREE_ITEMS_KEPT_NOTE} Individual Unlimited adds Saved Stacks, favorites, supplier price lists and no item limit. <Link href="/pricing#plans" className="font-semibold text-navy underline">See Individual Unlimited</Link></p>
         </Card>
       )}
+
+      <CategoryMerge items={lib.items} onUpdate={lib.updateItem} onDone={say} />
 
       {editing === "new" && (
         <Card className="p-4 sm:p-5">

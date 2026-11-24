@@ -8,6 +8,7 @@ import { api } from "@/components/schedule/client";
 import { DIVERSITY_CERTS, docTypeLabel, expiryState, maskTin, SUB_DOC_TYPES, TAX_CLASSIFICATIONS, type DiversityCert, type SubDocType, type SubDocument, type SubRecord, type TaxClassification } from "@/lib/team/records";
 import { ACCOUNT_TYPES, routingOk } from "@/lib/team/hr";
 import { BankAccountCard } from "@/components/team/bank-account";
+import { FileDrop } from "@/components/ui/file-drop";
 
 const fmtDay = (d: string | null) => (d ? new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) : "");
 const money = (n: number | null) => (n === null ? "" : n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }));
@@ -131,8 +132,8 @@ function DocForm({ resourceId, docType, onCancel, onSaved }: { resourceId: strin
         {meta.expires && <label className="block"><span className="label">Effective date</span><input type="date" className="field" value={f.effectiveOn} onChange={set("effectiveOn")} /></label>}
         {meta.expires && <label className="block"><span className="label">Expiration date</span><input type="date" className="field" value={f.expiresOn} onChange={set("expiresOn")} data-testid="doc-expires" /></label>}
         {(docType === "w9" || meta.group === "agreement") && <label className="block"><span className="label">Signed on</span><input type="date" className="field" value={f.signedOn} onChange={set("signedOn")} /></label>}
-        <label className="block sm:col-span-2"><span className="label">File (PDF or photo, up to 15 MB, optional)</span>
-          <input type="file" accept="application/pdf,image/jpeg,image/png,image/webp" className="field py-2" onChange={(e) => setFile(e.target.files?.[0] ?? null)} data-testid="doc-file" /></label>
+        <FileDrop className="sm:col-span-2 rounded-lg"><label className="block"><span className="label">File (PDF or photo, up to 15 MB, optional)</span>
+          <input type="file" accept="application/pdf,image/jpeg,image/png,image/webp" className="field py-2" onChange={(e) => setFile(e.target.files?.[0] ?? null)} data-testid="doc-file" /></label></FileDrop>
         <label className="block sm:col-span-2"><span className="label">Note (optional)</span><input className="field" value={f.note} maxLength={1000} onChange={set("note")} /></label>
       </div>
       {(docType === "w9" || insurance) && <p className="text-xs text-muted">Recording a new {meta.label.toLowerCase()} keeps the old one as an older version.</p>}

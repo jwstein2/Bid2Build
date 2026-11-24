@@ -9,6 +9,7 @@ import { listTrades, requireAcademyStaff, signedMediaUrls } from "@/lib/academy/
 import { PILLARS, type CoverTheme, type Pillar } from "@/lib/academy/types";
 import { addModule, deleteCourse, saveCourse, saveLesson, setCourseResources } from "../../actions";
 import { releaseLabel } from "@/lib/academy/release-plan";
+import { FileDrop } from "@/components/ui/file-drop";
 
 type CourseRow = {
   id: string; slug: string; title: string; summary: string; description: string | null; trade_slug: string | null; pillar: Pillar; level: string; access: string; status: string;
@@ -80,7 +81,7 @@ export default async function CourseEditor({ params, searchParams }: PageProps<"
             <label className={label}>SEO title (max 70)<input name="seo_title" maxLength={70} defaultValue={c?.seo_title ?? ""} className={field} /></label>
             <label className={label}>SEO description (max 170)<input name="seo_description" maxLength={170} defaultValue={c?.seo_description ?? ""} className={field} /></label>
           </div>
-          <label className={label}>Cover image (JPG/PNG/WebP, cropped to 16:9)<input type="file" name="cover" accept="image/jpeg,image/png,image/webp" className="mt-1 block text-sm" /></label>
+          <FileDrop className="rounded-lg"><label className={label}>Cover image (JPG/PNG/WebP, cropped to 16:9)<input type="file" name="cover" accept="image/jpeg,image/png,image/webp" className="mt-1 block text-sm" /></label></FileDrop>
           {c?.cover_path && <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="remove_cover" /> Remove uploaded cover (use the themed cover)</label>}
           {!admin && <p className="text-xs text-muted">Instructors can save drafts and send a course to review. An Academy admin publishes it.</p>}
           <div className="flex justify-end"><Submit>Save course</Submit></div>

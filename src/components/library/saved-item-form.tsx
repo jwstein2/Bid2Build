@@ -3,6 +3,8 @@ import { Loader2 } from "lucide-react";
 import { useId, useState } from "react";
 import { COST_TYPES, UNITS, trades } from "@/lib/trades/catalog";
 import { categoryOptions, savedItemSchema, type SavedItem } from "@/lib/library/saved-items";
+import { categoryKey, resolveCategory } from "@/lib/library/categories";
+import { CategoryCombobox } from "./category-combobox";
 import type { LibraryResult } from "../builder/library";
 import { Button } from "../ui/button";
 
@@ -30,10 +32,12 @@ export function SavedItemForm({ initial, items, onSave, onCancel, submitLabel = 
   const set = (patch: Partial<SavedItem>) => setV((x) => ({ ...x, ...patch }));
   const customUnit = !(UNITS as readonly string[]).includes(v.unit);
   const cats = categoryOptions(v.trade, items);
+  // Same-trade categories first, then ones used under other trades, so a near-duplicate is caught anywhere.
+  const allCats = [...cats, ...categoryOptions(null, items.map((i) => ({ ...i, trade: null })))].filter((c, k, a) => a.findIndex((x) => categoryKey(x) === categoryKey(c)) === k);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    const clean = { ...v, unitCost: v.unitCost.replace(/[$,\s]/g, ""), quantity: (v.quantity ?? "").replace(/[,\s]/g, "") };
+    const clean = { ...v, category: resolveCategory(v.category ?? "", allCats), unitCost: v.unitCost.replace(/[$,\s]/g, ""), quantity: (v.quantity ?? "").replace(/[,\s]/g, "") };
     const parsed = savedItemSchema.safeParse(clean);
     if (!parsed.success) {
       const errs = Object.fromEntries(parsed.error.issues.map((i) => [String(i.path[0]), i.message]));
@@ -70,8 +74,7 @@ export function SavedItemForm({ initial, items, onSave, onCancel, submitLabel = 
       </div>
       <div>
         <label className="label" htmlFor={f("category")}>Category</label>
-        <input id={f("category")} className="field" list={f("cats")} value={v.category ?? ""} maxLength={120} onChange={(e) => set({ category: e.target.value })} placeholder={cats[0] ? `e.g. ${cats[0]}` : "e.g. Labor"} autoComplete="off" />
-        <datalist id={f("cats")}>{cats.map((c) => <option key={c} value={c} />)}</datalist>
+        <CategoryCombobox id={f("category")} value={v.category ?? ""} options={allCats} onChange={(category) => set({ category })} placeholder="Pick or type a new one" />
       </div>
       <div>
         <label className="label" htmlFor={f("type")}>Type</label>
