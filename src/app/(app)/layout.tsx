@@ -18,6 +18,7 @@ import { recordRepAttribution } from "@/lib/sales/billing-server";
 import { recordAffiliateAttribution } from "@/lib/affiliates/billing-server";
 import { AFFILIATE_COOKIE, attributionOrder, decodeAffiliateCookie } from "@/lib/affiliates/link";
 import { AppSidebar } from "@/components/layout/app-nav";
+import { signedInLabel } from "@/lib/signed-in";
 import { FeatureHost } from "@/components/features/feature-host";
 import { formatPhone } from "@/lib/auth/phone";
 import { loadLearningNav } from "@/lib/creator/nav";
@@ -51,7 +52,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // app's own onboarding can take over. /sales/join forgets the invite once it's used or no longer open.
   if (isInviteToken((await cookies()).get(SALES_JOIN_COOKIE)?.value ?? "")) redirect("/sales/join");
   const supabase = await createClient();
-  const [{ data: isAdmin }, company, premium, learning, access, workspaces, clockRes, wonRes] = await Promise.all([
+  const [{ data: isAdmin }, company, premium, learning, access, workspaces, clockRes, wonRes, bizRes] = await Promise.all([
     supabase.rpc("is_admin", { p_user_id: user.id }), loadMyCompany(supabase), hasPremiumAccess(supabase), loadLearningNav(supabase),
     // V6.7: which workspace links this person sees (company members only; solo accounts and owners see everything).
     loadEffectiveAccess(supabase).catch(() => null),
@@ -61,7 +62,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     isPmEnabled() ? supabase.from("pm_resources").select("id").eq("linked_user_id", user.id).eq("kind", "staff").eq("status", "active").limit(1) : Promise.resolve({ data: [] }),
     // 2026-11-22 simpler menu: has this account won a job yet? (One indexed head count.)
     supabase.from("estimates").select("id", { count: "exact", head: true }).eq("user_id", user.id).in("pipeline_stage", ["won", "scheduled", "in_progress", "completed"]),
+    // 2026-11-24 "Logged in as": the company name from the Company profile (solo accounts and non-Enterprise plans).
+    supabase.from("business_profiles").select("company_name").eq("user_id", user.id).maybeSingle(),
   ]);
+  const signedInAs = signedInLabel(company?.name, (bizRes.data as { company_name?: string | null } | null)?.company_name);
   const clock = ((clockRes.data as unknown[] | null) ?? []).length > 0;
   // New solo accounts start with the essentials (bids, customers, prices, templates); Projects, Workforce,
   // Financials and Industry News sit under "More tools" until the first won job. Companies, admins,
@@ -100,7 +104,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       {/* Phones: the navy top bar (logo, New bid, search, bell, Menu) stays pinned under the Practice/Demo bar
           while scrolling; an open Menu scrolls inside it. Desktop: the sidebar fills the height left under that bar. */}
       <StickyBar as="aside" cssVar="--app-topbar-h" media="(max-width: 767.98px)" className="on-dark sticky top-[var(--b2b-banner-h)] z-30 max-h-[calc(100dvh-var(--b2b-banner-h))] overflow-y-auto overscroll-contain bg-navy text-white md:flex md:h-[calc(100vh-var(--b2b-banner-h))] md:max-h-none md:w-64 md:shrink-0 md:flex-col no-print">
-        <AppSidebar essentials={essentials} isAdmin={Boolean(isAdmin)} projects={isPmEnabled()} clock={clock} financials={isFinancialsEnabled()} home={isUnifiedHomeEnabled()} company={companyNav(company)} access={sidebarAccess(access)} learning={learning} switches={switchLinks(workspaces, "contractor")} email={user.email ?? (user.phone ? formatPhone(user.phone) : null)} theme={user.theme ?? null} practice={isPracticeEnabled()} demo={user.demo?.kind ?? null} bell={isPmEnabled() ? <NotificationBell only="phone" tone="dark" /> : null} />
+        <AppSidebar essentials={essentials} isAdmin={Boolean(isAdmin)} projects={isPmEnabled()} clock={clock} financials={isFinancialsEnabled()} home={isUnifiedHomeEnabled()} company={companyNav(company)} access={sidebarAccess(access)} learning={learning} switches={switchLinks(workspaces, "contractor")} signedInAs={signedInAs} email={user.email ?? (user.phone ? formatPhone(user.phone) : null)} theme={user.theme ?? null} practice={isPracticeEnabled()} demo={user.demo?.kind ?? null} bell={isPmEnabled() ? <NotificationBell only="phone" tone="dark" /> : null} />
       </StickyBar>
       {/* Bottom padding keeps the last controls on every page clear of the fixed Guide button (bottom left). */}
       <main id="main" className="min-w-0 flex-1 px-4 pb-24 pt-4 sm:px-8 md:pt-0">
