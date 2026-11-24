@@ -8,6 +8,7 @@ Phase 1 sign-off, and nothing may be built.
 |---|---|
 | [01_codebase_audit.md](01_codebase_audit.md) | Existing CRM, lead assignment, automations, campaign and content tools, email, analytics overlap, admin permissions, reusable patterns, risks |
 | [02_architecture_proposal.md](02_architecture_proposal.md) | Minimal Growth OS design: schema, internal API, queue, scheduler, task registry, prompts, logs, approvals, budgets, stop/rollback, secrets, environments, test plan |
+| [03_phase4_build_report.md](03_phase4_build_report.md) | Build report: what was built, tests (26/26 local, 23/23 staging), changes, credentials needed, risks, cost, acceptance pass/fail, sign-ins list and automated executables |
 
 ## Phase report (audit stage)
 
