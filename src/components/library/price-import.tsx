@@ -13,6 +13,7 @@ import { Button } from "../ui/button";
 import { Badge, Card, Notice } from "../ui/misc";
 import { LibraryLocked } from "./premium-lock";
 import { cn } from "@/lib/cn";
+import { FileDrop } from "@/components/ui/file-drop";
 
 type ImportRecord = {
   id: string; supplierName: string; fileName: string | null; effectiveOn: string; createdAt: string;
@@ -156,12 +157,14 @@ export function PriceImport() {
 
       <Card className="space-y-4 p-4 md:p-5">
         <h2 className="font-display text-lg font-bold">1. Choose the price list</h2>
+        <FileDrop className="rounded-xl" label="Drop the price list to read it" disabled={busy}>
         <label className={cn("flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-line-strong p-6 text-center hover:bg-brand-tint", busy && "pointer-events-none opacity-60")}>
           <Upload className="h-6 w-6 text-brand" aria-hidden />
-          <span className="font-semibold">{fileName && table ? fileName : "Upload a CSV or Excel file"}</span>
+          <span className="font-semibold">{fileName && table ? fileName : "Upload or drag in a CSV or Excel file"}</span>
           <span className="text-xs text-muted">From your supplier’s account portal or rep. Up to {MAX_IMPORT_ROWS.toLocaleString()} rows. Nothing changes until you review and import.</span>
           <input type="file" accept=".csv,.tsv,.txt,.xlsx,.xlsm,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="sr-only" data-testid="price-import-file" onChange={(e) => { void onFile(e.target.files?.[0]); e.target.value = ""; }} />
         </label>
+        </FileDrop>
         <div className="grid gap-3 sm:grid-cols-3">
           <div>
             <label htmlFor="pi-supplier" className="label">Supplier</label>

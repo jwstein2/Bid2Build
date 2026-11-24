@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { CheckCircle2, Loader2, Lock } from "lucide-react";
 import { REQUEST_LABEL, type SubRequestKind } from "@/lib/team/sub-requests";
+import { FileDrop } from "@/components/ui/file-drop";
 
 const CLASSES: [string, string][] = [
   ["individual", "Individual / sole proprietor / single-member LLC"], ["c_corp", "C corporation"], ["s_corp", "S corporation"],
@@ -94,8 +95,8 @@ export function SubDocsForm({ token, contractor, subName, kinds, w9Available }: 
       {docKinds.map((k) => (
         <section key={k} className="space-y-3 rounded-2xl border border-line bg-surface p-4 sm:p-6" aria-labelledby={`sd-${k}`}>
           <h2 id={`sd-${k}`} className="font-display text-lg font-extrabold text-navy">{REQUEST_LABEL[k]}</h2>
-          <label className="label" htmlFor={`sd-${k}-file`}>File (PDF, JPG, PNG or WebP, up to 15 MB)
-            <input id={`sd-${k}-file`} type="file" accept="application/pdf,image/jpeg,image/png,image/webp" className="field mt-1" onChange={(e) => setD(k, { file: e.target.files?.[0] ?? null })} {...bad(k)} /></label>
+          <FileDrop className="rounded-lg"><label className="label" htmlFor={`sd-${k}-file`}>File (PDF, JPG, PNG or WebP, up to 15 MB)
+            <input id={`sd-${k}-file`} type="file" accept="application/pdf,image/jpeg,image/png,image/webp" className="field mt-1" onChange={(e) => setD(k, { file: e.target.files?.[0] ?? null })} {...bad(k)} /></label></FileDrop>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="label" htmlFor={`sd-${k}-iss`}>{k === "license" ? "Issued by" : "Insurance company"} (optional)<input id={`sd-${k}-iss`} className="field mt-1" value={docs[k].issuer} onChange={(e) => setD(k, { issuer: e.target.value })} /></label>
             <label className="label" htmlFor={`sd-${k}-num`}>{k === "license" ? "License number" : "Policy number"} (optional)<input id={`sd-${k}-num`} className="field mt-1" value={docs[k].policyNumber} onChange={(e) => setD(k, { policyNumber: e.target.value })} /></label>

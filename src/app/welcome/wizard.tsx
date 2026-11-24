@@ -7,6 +7,7 @@ import { Button, ButtonLink } from "@/components/ui/button";
 import { Notice } from "@/components/ui/misc";
 import { cn } from "@/lib/cn";
 import { colorCheck, FIELD_LABELS, isDefaultColor, TRADE_OPTIONS, type BrandField } from "@/lib/onboarding/brand-review";
+import { FileDrop } from "@/components/ui/file-drop";
 
 export type ExistingBrand = null | Partial<Record<Exclude<BrandField, "logo">, string | null>> & { logoUrl: string | null };
 type FieldKey = "companyName" | "tagline" | "trade" | "email" | "phone" | "address" | "licenseNumber" | "services" | "primaryColor" | "secondaryColor";
@@ -299,11 +300,12 @@ function LogoRow({ logo, setLogo, existingLogo, manual }: { logo: { dataUrl: str
     r.readAsDataURL(f);
   };
   return (
+    <FileDrop className="rounded-xl" label="Drop your logo here" testId="logo-drop">
     <div className="flex flex-col gap-4 rounded-xl border border-line p-4 sm:flex-row sm:items-center">
       <div className="grid h-24 w-full place-items-center rounded-lg bg-paper sm:w-48">
         {logo?.on ? <PreviewImg src={logo.dataUrl} alt="Logo preview" className="max-h-20 max-w-[90%] object-contain" />
           : existingLogo ? <PreviewImg src={existingLogo} alt="Current logo" className="max-h-20 max-w-[90%] object-contain" />
-          : <span className="text-sm text-muted">No logo</span>}
+          : <span className="px-2 text-center text-sm text-muted">No logo<span className="hidden sm:block text-xs">Drag a logo here</span></span>}
       </div>
       <div className="flex-1 space-y-2 text-sm">
         <p className="font-semibold">Logo</p>
@@ -320,9 +322,11 @@ function LogoRow({ logo, setLogo, existingLogo, manual }: { logo: { dataUrl: str
             <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={(e) => pick(e.target.files?.[0])} /></label>
           {logo && <button type="button" onClick={() => setLogo({ ...logo, on: !logo.on })} className="min-h-11 rounded-md px-3 font-medium text-ink-soft hover:bg-black/5">{logo.on ? "Remove" : "Use logo"}</button>}
         </div>
+        <p className="text-xs text-muted">PNG, JPG or WebP up to 2 MB. Click Upload or drag the file onto this box.</p>
         {err && <p className="text-danger">{err}</p>}
       </div>
     </div>
+    </FileDrop>
   );
 }
 

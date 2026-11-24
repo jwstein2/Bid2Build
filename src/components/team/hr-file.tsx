@@ -12,6 +12,7 @@ import {
   type HrDocType, type HrField, type HrFile,
 } from "@/lib/team/hr";
 import { BankAccountCard } from "@/components/team/bank-account";
+import { FileDrop } from "@/components/ui/file-drop";
 
 const fmt = (d: string | null) => (d ? new Date(`${d.slice(0, 10)}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) : "");
 const hrs = (n: number) => `${Number.isInteger(n) ? n : n.toFixed(1)} h`;
@@ -257,7 +258,7 @@ function Documents({ file, today, onDone, onError }: { file: HrFile; today: stri
           <label className="block"><span className="label">Title (optional)</span><input className="field" maxLength={200} value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} /></label>
           <label className="block"><span className="label">Signed / dated</span><input type="date" className="field" value={f.signedOn} onChange={(e) => setF({ ...f, signedOn: e.target.value })} /></label>
           <label className="block"><span className="label">Expires (if it does)</span><input type="date" className="field" value={f.expiresOn} onChange={(e) => setF({ ...f, expiresOn: e.target.value })} /></label>
-          <label className="block"><span className="label">File (PDF or photo, up to 15 MB)</span><input type="file" accept="application/pdf,image/jpeg,image/png,image/webp" className="field py-2" onChange={(e) => setUpload(e.target.files?.[0] ?? null)} /></label>
+          <FileDrop className="rounded-lg"><label className="block"><span className="label">File (PDF or photo, up to 15 MB)</span><input type="file" accept="application/pdf,image/jpeg,image/png,image/webp" className="field py-2" onChange={(e) => setUpload(e.target.files?.[0] ?? null)} /></label></FileDrop>
           <label className="block sm:col-span-2"><span className="label">Note (optional)</span><input className="field" maxLength={1000} value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} /></label>
           <div className="flex gap-2"><Button size="sm" onClick={save} disabled={busy}><FileUp className="h-4 w-4" aria-hidden /> {busy ? "Saving…" : "Save"}</Button><Button size="sm" variant="secondary" onClick={() => setType("")}>Cancel</Button></div>
         </div>

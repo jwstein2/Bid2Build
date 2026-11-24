@@ -10,6 +10,7 @@ import { kbAccess } from "@/lib/academy/kb/server";
 import { FEEDBACK_REASONS } from "@/lib/academy/kb/types";
 import { field, label, MetricTile } from "../ui";
 import { recordCheck, registerDocument, resolveFeedback, resolveQueue, setKbEnabled } from "./actions";
+import { FileDrop } from "@/components/ui/file-drop";
 
 type Health = {
   states_verified: string[]; jurisdictions: { total: number; awaiting: number; partial: number; verified: number };
@@ -177,7 +178,7 @@ export default async function ManageCodes({ searchParams }: PageProps<"/academy/
           <form action={registerDocument} className="mt-2 grid max-w-3xl gap-3 rounded-xl border border-line bg-surface p-4 sm:grid-cols-2">
             <label className={`${label} sm:col-span-2`}>Title<input name="title" required minLength={3} maxLength={200} className={field} /></label>
             <label className={label}>Official link (https)<input name="url" type="url" className={field} /></label>
-            <label className={label}>Or a PDF (up to 100 MB)<input name="file" type="file" accept="application/pdf" className={field} /></label>
+            <FileDrop className="rounded-lg"><label className={label}>Or a PDF (up to 100 MB)<input name="file" type="file" accept="application/pdf" className={field} /></label></FileDrop>
             <label className={`${label} sm:col-span-2`}>Publication (optional)<select name="source_id" className={field} defaultValue=""><option value="">Not linked yet</option>{src.map((x) => <option key={x.id} value={x.id}>{x.short_title} · {x.edition}</option>)}</select></label>
             <label className={`${label} sm:col-span-2`}>Why we may hold it<textarea name="rights_basis" required minLength={10} maxLength={1000} rows={2} className={field} placeholder="e.g. U.S. Government work (17 U.S.C. 105), or state statute text, or licence #..." /></label>
             <label className={`${label} sm:col-span-2`}>Notes<input name="notes" maxLength={2000} className={field} /></label>

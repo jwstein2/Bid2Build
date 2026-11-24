@@ -7,6 +7,7 @@ import { createLead, importMyLeads } from "./actions";
 import { AttentionCard, type Attention } from "./attention";
 import { EmailStatusBadge } from "@/components/sales/email-status";
 import { isBadEmail } from "@/lib/sales/crm";
+import { FileDrop } from "@/components/ui/file-drop";
 
 export const metadata = { title: "Leads" };
 const overdue = (iso: string) => new Date(iso).getTime() < Date.now();
@@ -124,7 +125,7 @@ export default async function SalesLeads({ searchParams }: { searchParams: Promi
           <summary className="cursor-pointer text-lg font-bold">Import your own list</summary>
           <p className="mt-2 text-sm text-ink-soft">Upload a CSV with a header row (company, contact, email, phone, website, city, state, zip, trades), up to 500 rows. New businesses become your leads. Anything already on file stays with whoever has it, and existing Built2Bid customers go to an admin to review.</p>
           <form action={importMyLeads} className="mt-3 grid gap-3">
-            <label className="text-sm">CSV file<input type="file" name="file" accept=".csv,text/csv,text/plain" className={`${input} py-2`} /></label>
+            <FileDrop className="rounded-lg"><label className="text-sm">CSV file<input type="file" name="file" accept=".csv,text/csv,text/plain" className={`${input} py-2`} /></label></FileDrop>
             <label className="text-sm">Or paste rows<textarea name="rows" rows={3} className={`${input} py-2 font-mono`} placeholder="Summit Roofing, Dana Lee, dana@summitroofing.com, 612-555-0100, summitroofing.com, Minneapolis, MN, 55401, roofing" /></label>
             <div><button className="min-h-11 rounded-lg bg-ink px-4 text-sm font-semibold text-white">Import</button></div>
           </form>

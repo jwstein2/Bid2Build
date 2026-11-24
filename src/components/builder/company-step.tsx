@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import type { BusinessProfile } from "@/lib/proposal/types";
 import { Button } from "../ui/button";
 import { Field, Notice } from "../ui/misc";
+import { FileDrop } from "@/components/ui/file-drop";
 
 type Biz = BusinessProfile & { logoPath?: string | null };
 
@@ -162,7 +163,8 @@ export function CompanyStep({ business, onChange, signedIn, onDone, missing, asP
 
       <section className="rounded-xl border border-line bg-surface p-5" data-guide="company.branding">
         <h3 className="font-bold">Logo and colors</h3>
-        <div className="mt-4 flex flex-wrap items-center gap-4">
+        <FileDrop className="mt-4 rounded-lg" label="Drop your logo here" disabled={uploading} testId="logo-drop">
+        <div className="flex flex-wrap items-center gap-4">
           <div className="grid h-20 w-44 place-items-center rounded-lg border border-dashed border-line-strong bg-paper">
             {business.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -177,10 +179,11 @@ export function CompanyStep({ business, onChange, signedIn, onDone, missing, asP
               <Button size="sm" variant="secondary" onClick={() => fileRef.current?.click()} disabled={uploading}>{uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />} {business.logoUrl ? "Replace logo" : "Upload logo"}</Button>
               {business.logoUrl && <Button size="sm" variant="ghost" onClick={() => set({ logoUrl: null, logoPath: null })}><X className="h-4 w-4" /> Remove</Button>}
             </div>
-            <p className="text-xs text-muted">JPG, PNG, WebP, or SVG up to 2 MB. Images are converted to PNG for your PDF.</p>
+            <p className="text-xs text-muted">JPG, PNG, WebP, or SVG up to 2 MB, or drag the file here. Images are converted to PNG for your PDF.</p>
             {uploadError && <p className="text-xs text-danger" role="alert">{uploadError}</p>}
           </div>
         </div>
+        </FileDrop>
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
           <ColorField label="Primary brand color" value={business.primaryColor} onChange={(v) => set({ primaryColor: v })} />
           <ColorField label="Secondary brand color" value={business.secondaryColor} onChange={(v) => set({ secondaryColor: v })} />
