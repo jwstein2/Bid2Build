@@ -8,7 +8,7 @@ import { rememberNewBidCustomer, type NewBidCustomer } from "@/lib/customers/new
 export function NewBidForCustomer({ customer, guide }: { customer: NewBidCustomer; guide?: string }) {
   const router = useRouter();
   return (
-    <Button variant="accent" onClick={() => { rememberNewBidCustomer(customer); router.push("/bids"); }} data-testid="new-bid-for-customer" data-guide={guide}>
+    <Button variant="accent" onClick={() => { rememberNewBidCustomer(customer); router.push("/new-bid"); }} data-testid="new-bid-for-customer" data-guide={guide}>
       <FileText className="h-4 w-4" aria-hidden /> New bid for this customer
     </Button>
   );

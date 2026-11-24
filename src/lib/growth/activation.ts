@@ -68,11 +68,11 @@ export interface ChecklistFacts {
 export interface ChecklistStep { key: ChecklistKey; label: string; hint: string; done: boolean; href: string; cta: string }
 
 export function checklistSteps(f: ChecklistFacts): ChecklistStep[] {
-  const bid = f.latestEstimateId ? `/estimates/${f.latestEstimateId}` : "/bids";
+  const bid = f.latestEstimateId ? `/estimates/${f.latestEstimateId}` : "/new-bid";
   const delivered = f.delivered;
   return [
     { key: "company", label: "Add your company name", hint: "It goes on every proposal. Logo and contact details can come later.", done: f.companyName, href: "/settings/company", cta: "Add company" },
-    { key: "project", label: "Start your first project", hint: "Pick your trade and the estimate opens with the usual sections in place.", done: f.estimates > 0, href: "/bids", cta: "Pick a trade" },
+    { key: "project", label: "Start your first project", hint: "Pick your trade and the estimate opens with the usual sections in place.", done: f.estimates > 0, href: "/new-bid", cta: "Pick a trade" },
     { key: "items", label: `Price at least ${MEANINGFUL_ITEMS} line items`, hint: "Enter quantities and your own costs. The calculators can work out quantities.", done: f.meaningfulEstimates > 0 || delivered, href: bid, cta: "Continue estimate" },
     { key: "preview", label: "Preview the customer proposal", hint: "See exactly what your customer will see. Your costs and markup stay hidden.", done: f.previewed || delivered, href: f.latestEstimateId ? `/estimates/${f.latestEstimateId}?step=proposal` : bid, cta: "Preview" },
     { key: "deliver", label: "Download or send your first bid", hint: "Download a branded PDF or send it for e-signature.", done: delivered, href: f.latestEstimateId ? `/estimates/${f.latestEstimateId}?step=proposal` : bid, cta: "Finish bid" },

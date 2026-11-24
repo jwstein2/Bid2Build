@@ -149,7 +149,7 @@ export function AppSidebar({ essentials = false, isAdmin, email, company, access
       <div className="flex items-center justify-between gap-1 px-3 py-3 max-[359px]:px-2 sm:gap-2 sm:px-4 md:py-4">
         <Logo tone="dark" href={home ? "/home" : "/dashboard"} />
         <div className="flex items-center gap-1 max-[380px]:gap-0 md:hidden">
-          <ButtonLink href="/bids" variant="accent" size="sm" className="min-h-11 max-[380px]:px-2.5 max-[359px]:min-w-11 max-[359px]:px-0" data-guide="bids.new-bid" aria-label="New bid">
+          <ButtonLink href="/new-bid" variant="accent" size="sm" className="min-h-11 max-[380px]:px-2.5 max-[359px]:min-w-11 max-[359px]:px-0" data-guide="bids.new-bid" aria-label="New bid">
             <FileText className="h-4 w-4 max-[440px]:hidden max-[359px]:block" aria-hidden /><span className="max-[359px]:sr-only">New bid</span>
           </ButtonLink>
           <SearchIconButton tone="dark" />
@@ -169,7 +169,7 @@ export function AppSidebar({ essentials = false, isAdmin, email, company, access
           </button>
         </div>
       </div>
-      <div className="hidden px-3 md:block"><ButtonLink href="/bids" variant="accent" className="w-full"><FileText className="h-4 w-4" aria-hidden /> Create New Bid</ButtonLink></div>
+      <div className="hidden px-3 md:block"><ButtonLink href="/new-bid" variant="accent" className="w-full"><FileText className="h-4 w-4" aria-hidden /> Create New Bid</ButtonLink></div>
       {/* Phone "you are here" label; Home's own heading already says it, so it is left out there. */}
       {!open && current && current.href !== "/home" && <p className="flex items-center gap-1.5 px-4 pb-2 text-xs text-[#B8C6D4] md:hidden" data-testid="nav-current">{current.label}{"premium" in current && current.premium && <PremiumDiamond tone="dark" />}</p>}
       <nav id="account-nav" aria-label="Account" className={cn("flex-col gap-1 px-2 pb-3 md:mt-4 md:flex", open ? "flex max-md:motion-drop-in" : "hidden")}>

@@ -218,8 +218,8 @@ function BulkBar({ count, hasOverride, onClear, onApply, onRemoveOverride, onDup
       aria-label={`Edit ${count} selected ${count === 1 ? "item" : "items"}`}
       className={cn(
         "z-40 border-brand/30 bg-brand-tint text-sm",
-        "max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:border-t max-lg:px-3 max-lg:pt-2 max-lg:pb-[max(0.5rem,env(safe-area-inset-bottom))] max-lg:shadow-[0_-4px_14px_rgb(0_0_0/0.12)]",
-        "lg:sticky lg:top-[calc(var(--builder-header-h,7.5rem)+0.5rem)] lg:rounded-lg lg:border lg:px-3 lg:py-2 lg:shadow-sm",
+        "max-lg:fixed max-lg:inset-x-0 md:max-lg:left-[var(--app-sidebar-w,0px)] max-lg:bottom-0 max-lg:border-t max-lg:px-3 max-lg:pt-2 max-lg:pb-[max(0.5rem,env(safe-area-inset-bottom))] max-lg:shadow-[0_-4px_14px_rgb(0_0_0/0.12)]",
+        "lg:sticky lg:top-[calc(var(--builder-header-h,7.5rem)+var(--b2b-banner-h)+0.5rem)] lg:rounded-lg lg:border lg:px-3 lg:py-2 lg:shadow-sm",
       )}
       style={vv && vv.inset > 0 ? { bottom: vv.inset } : undefined}
     >

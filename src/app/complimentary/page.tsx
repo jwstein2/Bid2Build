@@ -55,7 +55,7 @@ export default async function ClaimComplimentary({ searchParams }: { searchParam
             </ul>
             <p className="mt-4 text-sm text-muted">When it ends your bids and customers stay right where they are. You can subscribe any time from Subscription settings to keep these features.</p>
             <div className="mt-6 flex flex-wrap gap-2">
-              <ButtonLink href="/bids">Create a bid</ButtonLink>
+              <ButtonLink href="/new-bid">Create a bid</ButtonLink>
               <ButtonLink href="/dashboard" variant="secondary">Go to dashboard</ButtonLink>
             </div>
           </>

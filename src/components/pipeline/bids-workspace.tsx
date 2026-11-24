@@ -241,7 +241,7 @@ export function BidsWorkspace({ bids, history, esign, table, pay, paySaved, migr
               <p className="mt-1 text-sm text-muted">{range === "all" ? "Try another card, or show every stage." : `Nothing in ${rangeLabel}. Try a wider date range.`}</p>
               <div className="mt-3 flex flex-wrap justify-center gap-2">
                 <button type="button" onClick={() => setFocus(null)} className="inline-flex min-h-10 items-center rounded-lg border border-line-strong px-3 text-sm font-semibold hover:bg-paper">Show all stages</button>
-                {(focus === "draft" || focus === "open") && <ButtonLink href="/bids" variant="accent" size="sm">Create New Bid</ButtonLink>}
+                {(focus === "draft" || focus === "open") && <ButtonLink href="/new-bid" variant="accent" size="sm">Create New Bid</ButtonLink>}
               </div>
             </Card>
           ) : <PipelineBoard bids={shown} allBids={bids} capped={bids.length >= BOARD_LOAD_LIMIT} esign={esign} focus={focusCols ?? undefined} expanded={stage} onExpand={setStage} initialQueries={stageQueries} />}

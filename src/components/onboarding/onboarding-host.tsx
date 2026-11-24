@@ -153,7 +153,7 @@ export function OnboardingHost() {
 
   const onCreateBid = useCallback(() => {
     // The real New Bid flow: trade chooser first, then company or customer & project routing.
-    router.push("/bids");
+    router.push("/new-bid");
   }, [router]);
 
   if (session === 0) return null;

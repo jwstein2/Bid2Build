@@ -59,7 +59,7 @@ export function StageView({ col, bids, total, allBids, capped, esign, onMove, in
             </p>
             <p className="text-xs text-muted">{COLUMN_HINTS[col]}</p>
           </div>
-          {col === "draft" && <ButtonLink href="/bids" variant="accent" size="sm">Create New Bid</ButtonLink>}
+          {col === "draft" && <ButtonLink href="/new-bid" variant="accent" size="sm">Create New Bid</ButtonLink>}
         </div>
         <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
           <StageSearchInput

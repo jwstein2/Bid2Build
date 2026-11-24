@@ -212,7 +212,7 @@ export function WelcomeWizard({ existing, giftUntil }: { existing: ExistingBrand
               <h1 ref={heading} tabIndex={-1} className="font-display text-3xl font-extrabold text-navy">Welcome, {saved.name}.</h1>
               <p className="text-lg text-ink-soft">Your proposals will now carry your branding. Let&apos;s build your first professional bid.</p>
               <div className="flex flex-col justify-center gap-3 sm:flex-row">
-                <ButtonLink href="/bids" variant="accent" size="lg">Create your first bid</ButtonLink>
+                <ButtonLink href="/new-bid" variant="accent" size="lg">Create your first bid</ButtonLink>
                 <ButtonLink href="/dashboard" variant="secondary" size="lg">Go to my dashboard</ButtonLink>
               </div>
               <p className="text-sm text-muted">You can update any of this later in Company profile.</p>
