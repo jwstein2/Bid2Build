@@ -4,7 +4,7 @@
   "notes": [
     "Personas are composites for planning. They are not interviews with real people. Every 'evidence' item cites an id in data/evidence.csv or data/derived/*. Everything under 'inference' is analyst judgment and should be validated with customer interviews in a later phase (gap G08).",
     "Team size is always stated as TOTAL PEOPLE INCLUDING THE OWNER. Census employee counts exclude unincorporated owners (E006).",
-    "Product tiers are Built2Bid's real plans from the app repository (S13): Free (credits), Individual Unlimited ($19.99/month or $199/year) [E180] [E181], and Enterprise ($49.99/month including 3 users, then graduated seats) [E182] [E183]. Add-ons: Project Command Center $4.99/month [E184] and Solo Financials $21.99/month [E185].",
+    "Product tiers are Built2Bid's real plans from the app repository (S13): Free (credits), Individual Unlimited ($19.99/month or $199/year) [E180] [E181], and Team ($49.99/month including 3 users, then graduated seats) [E182] [E183]. Add-ons: Project Command Center $4.99/month [E184] and Solo Financials $21.99/month [E185].",
     "Marketing messages follow Built2Bid's own ad rules (docs/growth/ADS.md): no testimonials, no speed, profit, 'win more jobs' or percentage claims [E191]. They describe what the product does, not outcomes. Nothing has been launched."
   ],
   "personas": [
@@ -150,7 +150,7 @@
         ]
       },
       "best_built2bid_use_cases": [
-        "Shared Saved Items & Pricing across estimators (Unlimited/Enterprise)",
+        "Shared Saved Items & Pricing across estimators (Unlimited/Team)",
         "Subcontractor quotes rolled into the estimate (free feature)",
         "Change orders with e-signature",
         "Internal Estimate Report for margin review (Unlimited)",
@@ -190,7 +190,7 @@
           "Search"
         ]
       },
-      "appropriate_product_tier": "Enterprise (3 users included); Individual Unlimited if only the owner estimates",
+      "appropriate_product_tier": "Team (3 users included); Individual Unlimited if only the owner estimates",
       "confidence": "medium"
     },
     {
@@ -276,7 +276,7 @@
           "Supplier events"
         ]
       },
-      "appropriate_product_tier": "Enterprise (sales reps as licensed users); Individual Unlimited for owner-only roofers",
+      "appropriate_product_tier": "Team (sales reps as licensed users); Individual Unlimited for owner-only roofers",
       "confidence": "medium-low (RCS sample small and partly gated)"
     },
     {
@@ -361,7 +361,7 @@
           "YouTube"
         ]
       },
-      "appropriate_product_tier": "Individual Unlimited; Enterprise for shops with 3+ estimators",
+      "appropriate_product_tier": "Individual Unlimited; Team for shops with 3+ estimators",
       "confidence": "low-medium (crowded category; product fit unvalidated)"
     },
     {
@@ -445,7 +445,7 @@
           "Lumber/supply yards"
         ]
       },
-      "appropriate_product_tier": "Individual Unlimited; Enterprise with 3+ users",
+      "appropriate_product_tier": "Individual Unlimited; Team with 3+ users",
       "confidence": "low-medium"
     },
     {
@@ -607,7 +607,7 @@
   "plans_real": {
     "Free": "Credit-based: 3 starter credits plus 1 monthly credit from month two; one credit per new finalized bid [E189]",
     "Individual Unlimited": "$19.99/month or $199/year, one user [E180] [E181]",
-    "Enterprise": "$49.99/month including 3 users; users 4-5 at $19.99 each, 6-10 at $17.99 each, 11+ at $15.99 each [E182] [E183] [E186]",
+    "Team": "$49.99/month including 3 users; users 4-5 at $19.99 each, 6-10 at $17.99 each, 11+ at $15.99 each [E182] [E183] [E186]",
     "Add-ons": "Project Command Center $4.99/month (Standard) [E184]; Solo Financials $21.99/month [E185]"
   }
 }

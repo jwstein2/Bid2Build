@@ -333,11 +333,11 @@ Generated from `data/sources.json` and `data/evidence.csv`. Every statistic used
 | E170 | S08 | Cleaning: respond to leads within an hour | 26 [E170] | percent | Cleaning respondents | Dec 2025 | C |  |
 | E180 | S13 | Individual Unlimited monthly list price | 19.99 [E180] | USD per month | Built2Bid list price | 2026-11-23 | A | First-party |
 | E181 | S13 | Individual Unlimited annual list price | 199 [E181] | USD per year | Built2Bid list price | 2026-11-23 | A | README says $149/yr (stale; G18) |
-| E182 | S13 | Enterprise base price (includes 3 users) | 49.99 [E182] | USD per month | Built2Bid list price | 2026-11-23 | A |  |
-| E183 | S13 | Enterprise seat price users 4-5 | 19.99 [E183] | USD per user per month | Built2Bid list price | 2026-11-23 | A | Users 6-10 $17.99; 11+ $15.99 |
+| E182 | S13 | Team base price (includes 3 users) | 49.99 [E182] | USD per month | Built2Bid list price | 2026-11-23 | A |  |
+| E183 | S13 | Team seat price users 4-5 | 19.99 [E183] | USD per user per month | Built2Bid list price | 2026-11-23 | A | Users 6-10 $17.99; 11+ $15.99 |
 | E184 | S13 | Project Command Center add-on (Standard) | 4.99 [E184] | USD per month | Built2Bid list price | 2026-11-23 | A |  |
 | E185 | S13 | Solo Financials add-on | 21.99 [E185] | USD per month | Built2Bid list price | 2026-11-23 | A | $219.99/yr on annual plans |
-| E186 | S13 | Enterprise seat price users 6-10 | 17.99 [E186] | USD per user per month | Built2Bid list price | 2026-11-23 | A |  |
+| E186 | S13 | Team seat price users 6-10 | 17.99 [E186] | USD per user per month | Built2Bid list price | 2026-11-23 | A |  |
 | E187 | S13 | Trade estimate templates shipped | 42 [E187] | trade slugs | Built2Bid trade catalog | 2026-11-23 | A | Includes decks; pressure-washing; soft-washing; kitchens; bathrooms |
 | E188 | S13 | Product positioning | Estimates and proposals for every trade [E188] | text | README | 2026-11-23 | A |  |
 | E189 | S13 | Free plan | 3 starter credits + 1 monthly credit from month two; one credit per new finalized bid [E189] | text | README | 2026-11-23 | A |  |

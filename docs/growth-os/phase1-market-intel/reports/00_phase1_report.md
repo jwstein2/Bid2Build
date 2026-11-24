@@ -20,7 +20,8 @@ Built2Bid Growth OS · Version 1.1.0 (2026-11-23) · Status: **complete, awaitin
 - **State geography table** (`data/derived/geography_by_state.csv`).
 - **Gaps register** with 17 entries (`data/gaps.csv`) [PARAM: count of rows].
 - **Six readable reports** (01-06) plus this phase report. Reports 02-06 are generated from the data, so their numbers are never hand-typed.
-- **v1.1.0 update: real pricing.** Built2Bid's plans and list prices were read (read-only) from the app code into `data/pricing.json` [S13]: Free credits [E189], Individual Unlimited $19.99/month [E180] or $199/year [E181], Enterprise $49.99/month with 3 users included [E182], and add-ons: Project Command Center $4.99/month [E184] and Solo Financials $21.99/month [E185]. These replace the v1.0.0 placeholders in the model and personas. ARPA is now computed from these prices, and only the plan mix is assumed [A07].
+- **Owner confirmations (2026-11-23).** Annual Individual Unlimited is $199/year [E181], which matches the active live Stripe price (the README's older figure was stale, [G18] resolved). The team plan is named Team, matching the app; code paths still use the internal name `enterprise`.
+- **v1.1.0 update: real pricing.** Built2Bid's plans and list prices were read (read-only) from the app code into `data/pricing.json` [S13]: Free credits [E189], Individual Unlimited $19.99/month [E180] or $199/year [E181], Team $49.99/month with 3 users included [E182], and add-ons: Project Command Center $4.99/month [E184] and Solo Financials $21.99/month [E185]. These replace the v1.0.0 placeholders in the model and personas. ARPA is now computed from these prices, and only the plan mix is assumed [A07].
 - **Existing implementations reviewed before adding anything** (standing rule): `docs/growth/` (growth engine, activation, ad rules), `docs/MARKET-INTELLIGENCE.md` (admin pricing benchmarks from opted-in bids) and `src/lib/trades/data.ts` (42 trade templates [E187]). This research does not duplicate them. Persona messages were rewritten to follow the existing ad rules [E191] [G19].
 - **A deterministic rebuild pipeline** (`scripts/build.py`, `scripts/render_reports.py`). It makes no network or AI calls.
 
@@ -64,7 +65,6 @@ Command: `python3 -m pytest tests -q`, run in the phase folder with Python 3.13 
 
 | Need | Why | Priority |
 |---|---|---|
-| Confirm the annual Unlimited price ($199 in code vs $149 in README) | Annual ARPA and public copy [G18] | Medium |
 | Customer and trial data once there are paying accounts (0 at the 2026-11-16 baseline [E190]) | Calibrates plan mix [A07], fit [A04], propensity [A05] and obtainable share [A06] | High |
 | Authorization (later phase) for customer interviews | Validates personas [G08] | Medium |
 | Optional: the owner downloads the RoofersCoffeeShop 2024 report | Closes [G11] without Claude submitting a form | Low |
@@ -76,7 +76,7 @@ Command: `python3 -m pytest tests -q`, run in the phase folder with Python 3.13 
 - **Solo counts by trade are allocated estimates.** This applies to most individual trades [G02].
 - **Five of seven matrix dimensions are judgment.** Rankings are sensitive to the estimate-intensity weight [G07] and to competitive scores that weren't researched [G09].
 - **Personas aren't validated with real customers** [G08].
-- **Plan mix is unobserved.** Prices are real, but with no paying accounts yet the split between Individual and Enterprise, and add-on attach rates, are assumptions [A07] [G01].
+- **Plan mix is unobserved.** Prices are real, but with no paying accounts yet the split between Individual and Team, and add-on attach rates, are assumptions [A07] [G01].
 - **Census vintages differ.** CBP is 2023 and NES is 2024, a small mismatch [G15].
 
 ## 6. Operating cost implications

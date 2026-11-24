@@ -4,7 +4,7 @@
   "commit": "39104b51a3aacf9e928d89b29556d6bfc81fc87d",
   "commit_date": "2026-11-23",
   "read_only": true,
-  "note": "First-party list prices copied from app source code. The code is authoritative because the checkout server checks Stripe prices against these constants. The repo README says '$149/year' for annual, but src/lib/billing/plans.ts charges $199/year (gap G18).",
+  "note": "First-party list prices copied from app source code. The code is authoritative because the checkout server checks Stripe prices against these constants. Annual Individual Unlimited is $199/year: confirmed by the owner on 2026-11-23 and matching the active live Stripe price; the repo README's older '$149/year' was stale (gap G18, resolved). The team plan is called 'Team' in the app and in these files; code paths and constants still use the older internal name 'enterprise'.",
   "currency": "usd",
   "plans": {
     "free": {
@@ -28,7 +28,7 @@
       "file": "src/lib/billing/plans.ts"
     },
     "enterprise": {
-      "name": "Enterprise (team)",
+      "name": "Team",
       "base_cents_month": 4999,
       "included_users": 3,
       "seat_tiers": [
@@ -65,7 +65,7 @@
       "file": "src/lib/pm/billing.ts"
     },
     "pm_enterprise_extra_editor": {
-      "name": "Enterprise extra schedule editor",
+      "name": "Team extra schedule editor",
       "amount_cents": 199,
       "interval": "month",
       "file": "src/lib/pm/billing.ts"

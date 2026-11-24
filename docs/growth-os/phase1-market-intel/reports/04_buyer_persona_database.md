@@ -4,14 +4,14 @@ Generated from `data/personas.json`.
 
 > Personas are composites for planning. They are not interviews with real people. Every 'evidence' item cites an id in data/evidence.csv or data/derived/*. Everything under 'inference' is analyst judgment and should be validated with customer interviews in a later phase (gap G08).
 > Team size is always stated as TOTAL PEOPLE INCLUDING THE OWNER. Census employee counts exclude unincorporated owners (E006).
-> Product tiers are Built2Bid's real plans from the app repository (S13): Free (credits), Individual Unlimited ($19.99/month or $199/year) [E180] [E181], and Enterprise ($49.99/month including 3 users, then graduated seats) [E182] [E183]. Add-ons: Project Command Center $4.99/month [E184] and Solo Financials $21.99/month [E185].
+> Product tiers are Built2Bid's real plans from the app repository (S13): Free (credits), Individual Unlimited ($19.99/month or $199/year) [E180] [E181], and Team ($49.99/month including 3 users, then graduated seats) [E182] [E183]. Add-ons: Project Command Center $4.99/month [E184] and Solo Financials $21.99/month [E185].
 > Marketing messages follow Built2Bid's own ad rules (docs/growth/ADS.md): no testimonials, no speed, profit, 'win more jobs' or percentage claims [E191]. They describe what the product does, not outcomes. Nothing has been launched.
 
 ## Built2Bid plans (real list prices from the app repository)
 
 - **Free**: Credit-based: 3 starter credits plus 1 monthly credit from month two; one credit per new finalized bid [E189]
 - **Individual Unlimited**: $19.99/month or $199/year, one user [E180] [E181]
-- **Enterprise**: $49.99/month including 3 users; users 4-5 at $19.99 each, 6-10 at $17.99 each, 11+ at $15.99 each [E182] [E183] [E186]
+- **Team**: $49.99/month including 3 users; users 4-5 at $19.99 each, 6-10 at $17.99 each, 11+ at $15.99 each [E182] [E183] [E186]
 - **Add-ons**: Project Command Center $4.99/month (Standard) [E184]; Solo Financials $21.99/month [E185]
 
 ## P01 Solo Remodeler / Handyman-to-Remodeler
@@ -87,7 +87,7 @@ Generated from `data/personas.json`.
 
 - Segments: REMODEL, GC_RES
 - Audience reference: 132,114 business units (REMODEL employer_estab_lt20; Census-derived (A02 proxy); data/derived/segment_sizing.csv) [T:persona.P02]
-- Product tier: **Enterprise (3 users included); Individual Unlimited if only the owner estimates**
+- Product tier: **Team (3 users included); Individual Unlimited if only the owner estimates**
 - Confidence: medium
 
 **Company characteristics**
@@ -133,7 +133,7 @@ Generated from `data/personas.json`.
 
 **Best Built2Bid use cases (inference)**
 
-- Shared Saved Items & Pricing across estimators (Unlimited/Enterprise) [INF]
+- Shared Saved Items & Pricing across estimators (Unlimited/Team) [INF]
 - Subcontractor quotes rolled into the estimate (free feature) [INF]
 - Change orders with e-signature [INF]
 - Internal Estimate Report for margin review (Unlimited) [INF]
@@ -157,7 +157,7 @@ Generated from `data/personas.json`.
 
 - Segments: ROOF, SIDING
 - Audience reference: 23,053 business units (ROOF employer_estab_lt20; Census-derived (A02 proxy); data/derived/segment_sizing.csv) [T:persona.P03]
-- Product tier: **Enterprise (sales reps as licensed users); Individual Unlimited for owner-only roofers**
+- Product tier: **Team (sales reps as licensed users); Individual Unlimited for owner-only roofers**
 - Confidence: medium-low (RCS sample small and partly gated)
 
 **Company characteristics**
@@ -222,7 +222,7 @@ Generated from `data/personas.json`.
 
 - Segments: ELEC, PLUMB, HVAC
 - Audience reference: 348,114 business units (ELEC + PLUMB(HVAC shared) units_1to20_base; Derived from Census; solo portion direct NES; data/derived/segment_sizing.csv (150,388 + 197,726)) [T:persona.P04]
-- Product tier: **Individual Unlimited; Enterprise for shops with 3+ estimators**
+- Product tier: **Individual Unlimited; Team for shops with 3+ estimators**
 - Confidence: low-medium (crowded category; product fit unvalidated)
 
 **Company characteristics**
@@ -284,7 +284,7 @@ Generated from `data/personas.json`.
 
 - Segments: SIDING, DECKS, CONCRETE, OTHER_SPEC, MASONRY
 - Audience reference: 329,774 business units (SIDING+CONCRETE+OTHER_SPEC+MASONRY units_1to20_base; Derived; solo portion ESTIMATED (A03); data/derived/segment_sizing.csv (25,905 + 54,808 + 201,010 + 48,051); decks not countable) [T:persona.P05]
-- Product tier: **Individual Unlimited; Enterprise with 3+ users**
+- Product tier: **Individual Unlimited; Team with 3+ users**
 - Confidence: low-medium
 
 **Company characteristics**
