@@ -77,7 +77,7 @@ Command: `python3 -m pytest tests -q` in the phase folder (Python 3, pytest). **
 - **Measurement is not live.** Google Ads conversion import and Meta CAPI are built or documented but not switched on [G208].
 - **Meta targeting keeps narrowing** [CE030] [CE031]; contractor-only audiences cannot be bought, so the landing page and activation metric must do the filtering.
 - **Judgment scores.** Audience quality, intent and competitive pressure are judgment; competitor ad activity was not researched [G203].
-- **Open from Phase 1:** annual price in the README ($149) differs from the code ($199) [P1:E181].
+- **Resolved from Phase 1:** the owner confirmed the annual price is $199/year [P1:E181] and the team plan is called Team (internal code name enterprise).
 
 ## 6. Operating cost implications
 

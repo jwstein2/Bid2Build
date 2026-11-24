@@ -211,7 +211,7 @@ def r05():
     for s in SC:
         x = LTV[s]
         L.append(f"| {s} | ${x['arpa_usd_month']} | ${x['net_revenue_usd_month']} | {x['contribution_margin_pct']}% | ${x['gross_profit_usd_month']} | {x['monthly_churn_pct']}% | {x['expected_paid_months_capped']} | {money(x['ltv_gross_profit_usd'])} | {money(x['max_cac_for_payback_usd'])} | [F07] [F08] [F09] [F10] [F11] [M]")
-    L += ['', 'ARPA blends the Phase 1 solo and employer ARPA, which come from real list prices ($19.99/month, $199/year, Enterprise $49.99/month) and an assumed plan mix [P1:E180] [P1:E181] [P1:E182], weighted by the employer share [F08].', '',
+    L += ['', 'ARPA blends the Phase 1 solo and employer ARPA, which come from real list prices ($19.99/month, $199/year, Team $49.99/month for 3 users) and an assumed plan mix [P1:E180] [P1:E181] [P1:E182], weighted by the employer share [F08].', '',
           '## CAC by channel [M]', '',
           '| Buy unit | Scenario | CPC | Landing conv. | 7-day activation | Activated to paid | Click to paid | Cost per signup | Cost per activated | CAC |', '|---|---|---|---|---|---|---|---|---|---|']
     for (u, s), r in sorted(UE.items()):
@@ -223,7 +223,7 @@ def r05():
     for r in BE:
         L.append(f"| {r['unit']} | ${float(r['base_cpc_usd']):.2f} | {money(r['max_cac_usd_10mo_payback'])} | {r['required_click_to_paid_pct']}% | {r['base_click_to_paid_pct']}% | {r['improvement_multiple_needed']}x | [F01] [F06] [M]")
     L += ['', '## What this means', '',
-          '- At $19.99/month, paid acquisition only works if the funnel performs far better than the base case, or if more accounts buy annual, Enterprise or add-ons [M] [F08].',
+          '- At $19.99/month, paid acquisition only works if the funnel performs far better than the base case, or if more accounts buy annual, Team or add-ons [M] [F08].',
           '- The cheapest lever is not ad spend. Activation [F04] and activated-to-paid [F06] multiply every channel at once, so onboarding and lifecycle work (Phase 8) moves CAC more than channel choice [INF].',
           '- Meta and partner channels need a smaller improvement multiple than search because their clicks are cheaper; search needs fewer clicks per customer. Only the experiments can settle which wins [X05] [X06] [X08].', '']
     w('05_cac_ltv_model.md', L)

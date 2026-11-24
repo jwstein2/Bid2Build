@@ -61,7 +61,7 @@ Basis for each assumption (benchmarks are anchors from other businesses, not con
 | base | $24.63 | $23.62 | 81.5% | $20.07 | 6% | 14.87 | $298 | $201 | [F07] [F08] [F09] [F10] [F11] [M]
 | conservative | $16.92 | $16.13 | 71.5% | $12.1 | 10% | 9.77 | $118 | $121 | [F07] [F08] [F09] [F10] [F11] [M]
 
-ARPA blends the Phase 1 solo and employer ARPA, which come from real list prices ($19.99/month, $199/year, Enterprise $49.99/month) and an assumed plan mix [P1:E180] [P1:E181] [P1:E182], weighted by the employer share [F08].
+ARPA blends the Phase 1 solo and employer ARPA, which come from real list prices ($19.99/month, $199/year, Team $49.99/month for 3 users) and an assumed plan mix [P1:E180] [P1:E181] [P1:E182], weighted by the employer share [F08].
 
 ## CAC by channel [M]
 
@@ -103,6 +103,6 @@ The maximum CAC for a 10-month gross-profit payback (the ADS.md threshold) is se
 
 ## What this means
 
-- At $19.99/month, paid acquisition only works if the funnel performs far better than the base case, or if more accounts buy annual, Enterprise or add-ons [M] [F08].
+- At $19.99/month, paid acquisition only works if the funnel performs far better than the base case, or if more accounts buy annual, Team or add-ons [M] [F08].
 - The cheapest lever is not ad spend. Activation [F04] and activated-to-paid [F06] multiply every channel at once, so onboarding and lifecycle work (Phase 8) moves CAC more than channel choice [INF].
 - Meta and partner channels need a smaller improvement multiple than search because their clicks are cheaper; search needs fewer clicks per customer. Only the experiments can settle which wins [X05] [X06] [X08].
