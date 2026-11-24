@@ -12,14 +12,15 @@ through `growth_api.crm_apply` after a human approval.
 | `supabase/rollback/..._down.sql` | Removes every Growth OS object. Leaves app tables untouched. |
 | `supabase/staging/00_app_tables_standin.sql` | Staging project only: minimal copies of the app tables Growth OS reads. |
 | `supabase/staging/01_synthetic_seed.sql` | Staging project only: synthetic accounts and events on `.test` domains. |
-| `supabase/staging/02_staging_wiring.sql` | Staging project only: env, worker login, Vault secrets, tick schedule. |
+| `supabase/staging/02_staging_wiring.sql` | Staging project only: env, worker login and Vault secrets (generated in the database). |
+| `supabase/staging/03_schedule_tick.sql` | Staging project only: the every-minute pg_cron tick. |
 | `worker/core.ts` | The tick: ingest, dispatch, schedules, claim and run jobs. Runtime-agnostic and unit tested. |
 | `worker/index.ts` | Supabase Edge Function entry (Deno), deployed as `growth-worker` with `verify_jwt = false`. |
 
 ## Environments
 
 - **test**: local Postgres, `npm run test:db` style (`npx vitest run tests/db/growth-os.test.ts` with `scripts/test-db.sh start`). Applies the real app migrations, then Growth OS.
-- **staging**: separate Supabase project `built2bid-growth-staging`. No customer data. Apply in order: `00`, the foundation migration, `01`, `02`; deploy `worker/` as `growth-worker` with Edge Function secrets `GROWTH_ENV=staging` and `GROWTH_DB_PASSWORD`.
+- **staging**: separate Supabase project `built2bid-growth-staging`. No customer data. Apply in order: `00`, the foundation migration, `01`, `02`; deploy `worker/` as `growth-worker` (verify_jwt off) with Edge Function secrets `GROWTH_ENV=staging` and `GROWTH_DB_PASSWORD` (copied from Vault by a person); then `03`.
 - **production**: not deployed. Needs explicit approval, and the migration then moves into `supabase/migrations/`.
 
 `GROWTH_ENV` must equal `growth.control.env` or every tick does nothing, so a staging deploy can never act on production.

@@ -1,17 +1,14 @@
 -- STAGING ONLY. Run after 00_app_tables_standin.sql, the foundation migration and 01_synthetic_seed.sql.
--- Replace the three :placeholders in a SQL editor session; never commit the real values.
---   :worker_password  password for the growth_worker role (also set as Edge Function secret GROWTH_DB_PASSWORD)
---   :cron_secret      random string, 32+ chars (only lives in Vault)
---   :worker_url       https://<project-ref>.supabase.co/functions/v1/growth-worker
+-- Secrets are generated inside the database and stored only in Vault; nothing secret is typed or committed.
+-- Afterwards copy growth_worker_db_password from Vault into the Edge Function secret GROWTH_DB_PASSWORD
+-- (a person does this in the dashboard), and set GROWTH_ENV=staging. Then run 03_schedule_tick.sql.
 update growth.control set env = 'staging';
-alter role growth_worker login password ':worker_password';
-
-select vault.create_secret(':cron_secret', 'growth_cron_secret', 'Growth OS: pg_cron -> growth-worker shared secret');
-select vault.create_secret(':worker_url', 'growth_worker_url', 'Growth OS: growth-worker Edge Function base URL');
-
-create extension if not exists pg_cron;
 create extension if not exists pg_net;
-select cron.schedule('growth-tick', '* * * * *', 'select growth.cron_tick()');
-
--- The system starts stopped (growth.control.global_stop = true). Resume as an operator once the function is deployed:
---   select growth_api.resume('staging wiring verified');
+create extension if not exists pg_cron;
+do $w$ declare pw text := encode(extensions.gen_random_bytes(24), 'hex'); begin
+  execute format('alter role growth_worker login password %L', pw);
+  perform vault.create_secret(pw, 'growth_worker_db_password', 'Growth OS: growth_worker DB password (copy into Edge Function secret GROWTH_DB_PASSWORD)');
+  perform vault.create_secret(encode(extensions.gen_random_bytes(32), 'hex'), 'growth_cron_secret', 'Growth OS: pg_cron -> growth-worker shared secret');
+  -- Replace <project-ref> with the staging project's ref.
+  perform vault.create_secret('https://<project-ref>.supabase.co/functions/v1/growth-worker', 'growth_worker_url', 'Growth OS: worker base URL');
+end $w$;
