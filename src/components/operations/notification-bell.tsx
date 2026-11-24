@@ -78,7 +78,7 @@ export function NotificationBell({ only, tone = "light" }: {
         {items.length > 0 && <span className={cn("absolute grid h-4 min-w-4 place-items-center rounded-full px-1 text-[10px] font-bold", tone === "dark" ? "right-1 top-1" : "-right-0.5 -top-0.5", unread ? "bg-danger text-white" : tone === "dark" ? "bg-white/20 text-white" : "bg-black/10 text-ink")}>{items.length}</span>}
       </button>
       {open && (
-        <div role="dialog" aria-label="Task review notices" className={cn("z-50 rounded-xl border border-line bg-surface p-2 text-ink shadow-xl", only === "phone" ? "fixed inset-x-2 top-16" : "absolute right-0 mt-2 w-[min(92vw,24rem)]")}>
+        <div role="dialog" aria-label="Task review notices" className={cn("z-50 rounded-xl border border-line bg-surface p-2 text-ink shadow-xl", only === "phone" ? "fixed inset-x-2 top-[calc(var(--app-sticky-top)+4px)]" : "absolute right-0 mt-2 w-[min(92vw,24rem)]")}>
           <p className="px-2 py-1 text-sm font-bold">Notices</p>
           {err && <p className="px-2 text-xs text-danger" role="alert">{err}</p>}
           {items.length === 0 && <p className="px-2 py-3 text-sm text-muted">You&apos;re all caught up. When a task you manage reaches its finish date or 100%, it shows up here for you to confirm.</p>}

@@ -440,7 +440,7 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
           // Phones: full screen over the wizard (the wizard stays mounted underneath, so nothing is lost).
           "max-md:fixed max-md:inset-0 max-md:z-50 max-md:bg-paper max-md:p-2",
           // Tablets: a panel under the wizard. Desktop: sticky beside it, scrolling inside when tall.
-          "md:mt-5 xl:sticky xl:top-4 xl:mt-0 xl:h-[calc(100vh-2rem)] xl:max-h-[56rem]",
+          "md:mt-5 xl:sticky xl:top-[calc(var(--app-sticky-top)+1rem)] xl:mt-0 xl:h-[calc(100vh-var(--app-sticky-top)-2rem)] xl:max-h-[56rem]",
           calExpanded && "md:fixed md:inset-4 md:z-50 md:mt-0 md:block md:h-auto md:max-h-none xl:fixed xl:inset-6 xl:h-auto xl:max-h-none",
         )}>
         <CompanyCalendar

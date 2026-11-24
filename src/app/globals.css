@@ -97,6 +97,12 @@
   line-gap-override: 0%;
 }
 
+/* Sticky stack in the signed-in app: the Practice/Demo bar (--b2b-banner-h) sits on top, the search bar
+   (--app-topbar-h) right under it. Both heights are measured live (components/layout/sticky-height.tsx).
+   Page-level sticky toolbars use top-[var(--app-sticky-top)] so they stop under both; in-page anchor
+   jumps leave the same room. Outside the app both are 0. */
+:root { --b2b-banner-h: 0px; --app-topbar-h: 0px; --app-sticky-top: calc(var(--b2b-banner-h) + var(--app-topbar-h)); }
+html { scroll-padding-top: calc(var(--app-sticky-top) + 8px); }
 html { background: var(--color-paper); color-scheme: light; }
 body { background: var(--color-paper); color: var(--color-ink); font-family: var(--font-sans); }
 h1, h2, h3, .font-display { font-family: var(--font-display); letter-spacing: -0.02em; }
