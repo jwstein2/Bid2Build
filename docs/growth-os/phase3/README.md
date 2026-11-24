@@ -4,7 +4,7 @@ Status (2026-11-24): **built, tested on synthetic data, and passed on the stagin
 James approved the build in the project thread ("Continue with recommended") after the read-only audit
 ([MEASUREMENT_AUDIT.md](MEASUREMENT_AUDIT.md)). This is a documented exception to phase order: Phases 1 and 2 are still in review.
 
-Related: [ATTRIBUTION_RULES.md](ATTRIBUTION_RULES.md) (how marketing, sales rep, affiliate and referral credit coexist),
+Go-live checklist (sign-ins, variables, automated jobs): [GO_LIVE.md](GO_LIVE.md). Related: [ATTRIBUTION_RULES.md](ATTRIBUTION_RULES.md) (how marketing, sales rep, affiliate and referral credit coexist),
 [UTM_CONVENTION.md](UTM_CONVENTION.md), rollback [rollback_20270228001000.sql](rollback_20270228001000.sql).
 
 ## 1. Implemented
@@ -80,7 +80,7 @@ Schema boundary agreed with the Phase 4 thread: these objects live in `public`, 
 
 ## 5. Risks and unresolved items
 
-- **Live GA4 firing is still unverified** (from the audit). A one-minute browser check is needed.
+- Live GA4 firing: **verified 2026-11-24** (G-2KJ9K3FX07 loads and sends `g/collect` on built2bid.org).
 - **Tiny real data** (13 accounts, 0 with tags). Every rate is a small sample until traffic grows; the dashboard says so.
 - Touches only exist after the switch is turned on. Older accounts fall back to the lead record's first touch.
 - A shared browser credits touches to the first account that signed in on it. This is deliberate and conservative.
