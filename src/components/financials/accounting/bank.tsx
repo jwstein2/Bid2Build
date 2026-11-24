@@ -6,6 +6,7 @@ import { usd } from "@/components/financials/fin-client";
 import { add, cmp, sub } from "@/lib/financials/money";
 import { parseStatement, parseBankAmount, type ParsedStatement } from "@/lib/financials/accounting";
 import { Status, useAct, type Opt } from "./controls";
+import { FileDrop } from "@/components/ui/file-drop";
 
 const KIND_LABELS = { checking: "Checking", savings: "Savings", credit_card: "Credit card", other: "Other" } as const;
 const EXCLUDE = { transfer: "Transfer between your own accounts", duplicate: "Duplicate line from the bank", owner: "Owner draw or contribution", not_business: "Not a business transaction", other: "Other (explain in the note)" } as const;
@@ -59,7 +60,7 @@ export function ImportStatement({ accounts, accountId }: { accounts: Opt[]; acco
       <p className="text-sm text-ink-soft">Download the statement from your bank as CSV, OFX or QFX. Lines are stored exactly as the bank reported them and never edited. Importing the same file again skips lines already here.</p>
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="label" htmlFor="imp-acct">Account<select id="imp-acct" className="field mt-1" value={acct} onChange={(e) => setAcct(e.target.value)}>{accounts.map((a) => <option key={a.id} value={a.id}>{a.label}</option>)}</select></label>
-        <label className="label" htmlFor="imp-file">Statement file
+        <FileDrop className="rounded-lg"><label className="label" htmlFor="imp-file">Statement file
           <input key={inputKey} id="imp-file" type="file" accept=".csv,.ofx,.qfx,text/csv" className="field mt-1" data-testid="fin-bank-file"
             onChange={async (e) => {
               setMsg(null);
@@ -71,7 +72,7 @@ export function ImportStatement({ accounts, accountId }: { accounts: Opt[]; acco
               setFile({ name: f.name.slice(0, 200), hash: await sha256(text), parsed });
               setEndBal(parsed.endingBalance ?? "");
             }} />
-        </label>
+        </label></FileDrop>
       </div>
       {file && (
         <div className="space-y-3 rounded-lg border border-line p-3" data-testid="fin-bank-preview">

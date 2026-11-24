@@ -9,6 +9,7 @@ import { BasisBadge } from "./basis";
 import { FinDialog } from "./fin-dialog";
 import { finAction, fmtDate, newKey, today, usd } from "./fin-client";
 import type { Perms, R, VoidTarget } from "./job-billing";
+import { FileDrop } from "@/components/ui/file-drop";
 
 const s = (v: unknown) => (v === null || v === undefined ? "" : String(v));
 const MONEY = /^\d{1,12}(\.\d{1,2})?$/;
@@ -155,9 +156,9 @@ export function ExpenseDialog({ open, onOpenChange, jobId, codes, vendors, onDon
             </select>
           </Field>
         </div>
-        <Field label="Receipt" optional htmlFor="ex-file" hint="PDF, JPG, PNG or WebP up to 20 MB. Stored privately; never sent to an AI service.">
+        <FileDrop className="rounded-lg"><Field label="Receipt" optional htmlFor="ex-file" hint="PDF, JPG, PNG or WebP up to 20 MB. Stored privately; never sent to an AI service.">
           <input id="ex-file" type="file" accept="application/pdf,image/jpeg,image/png,image/webp" capture="environment" className="block w-full text-sm" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-        </Field>
+        </Field></FileDrop>
         {err && <Notice tone="danger">{err}</Notice>}
         <Button type="submit" disabled={busy} data-testid="fin-expense-save">{busy ? "Saving…" : "Save expense"}</Button>
       </form>
@@ -216,7 +217,7 @@ export function BillDialog({ open, onOpenChange, jobId, codes, vendors, commitme
         <Field label="Description" optional htmlFor="bl-desc"><input id="bl-desc" className="field" value={desc} onChange={(e) => setDesc(e.target.value)} maxLength={500} /></Field>
         <ComplianceNotice vendor={vendors.find((v) => s(v.id) === vendor)} />
         {!commitment && <Field label="Cost code" optional htmlFor="bl-code"><CostCodeSelect id="bl-code" codes={codes} value={code} onChange={setCode} /></Field>}
-        <Field label="Bill file" optional htmlFor="bl-file"><input id="bl-file" type="file" accept="application/pdf,image/jpeg,image/png,image/webp" className="block w-full text-sm" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></Field>
+        <FileDrop className="rounded-lg"><Field label="Bill file" optional htmlFor="bl-file"><input id="bl-file" type="file" accept="application/pdf,image/jpeg,image/png,image/webp" className="block w-full text-sm" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></Field></FileDrop>
         {err && <Notice tone="danger">{err}</Notice>}
         <Button type="submit" disabled={busy}>{busy ? "Saving…" : "Save bill"}</Button>
       </form>

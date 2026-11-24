@@ -5,6 +5,7 @@ import { Loader2, Plus, Repeat } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { finAction, newKey, today, usd } from "./fin-client";
 import { OVERHEAD_CATEGORIES, RECURRENCE_LABEL, type OverheadCategory, type Recurrence } from "@/lib/financials/overhead";
+import { FileDrop } from "@/components/ui/file-drop";
 
 const MONEY = /^\d{1,12}(\.\d{1,2})?$/;
 const toMoney = (v: string) => (MONEY.test(v.trim()) ? v.trim() : "");
@@ -110,9 +111,9 @@ export function OverheadForm({ vendors, prefill, canPlan, onCancel }: { vendors:
             </select>
           </label>
         )}
-        <label className="label sm:col-span-2" htmlFor="oh-file">Bill or receipt <span className="font-normal text-muted">(optional photo or PDF)</span>
+        <FileDrop className="sm:col-span-2 rounded-lg"><label className="label" htmlFor="oh-file">Bill or receipt <span className="font-normal text-muted">(optional photo or PDF)</span>
           <input id="oh-file" type="file" accept="image/*,application/pdf" className="field mt-1" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-        </label>
+        </label></FileDrop>
       </div>
       {f.recurrence !== "none" && !prefill?.recurringEventId && (
         <p className="flex items-start gap-1.5 text-xs text-muted"><Repeat className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />

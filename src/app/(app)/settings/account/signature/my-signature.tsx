@@ -8,6 +8,7 @@ import { SignaturePad } from "@/components/esign/signature-pad";
 import { getBrowserClient } from "@/lib/supabase/client";
 import { ADOPTION_VERSION, adoptionText, autoApplyText } from "@/lib/esign/contractor/config";
 import type { SigningSettings } from "@/lib/esign/contractor/settings";
+import { FileDrop } from "@/components/ui/file-drop";
 
 type Method = "drawn" | "typed" | "uploaded";
 interface Credential { id: string; version: number; legal_name: string; title: string | null; method: Method; signature_text: string | null; signature_image: string | null; auto_apply_authorized: boolean; auto_apply_revoked_at: string | null; created_at: string }
@@ -177,7 +178,7 @@ function SignatureForm({ data, onSaved, onCancel, onReauthed }: { data: Data; on
           {method === "drawn" && <div className="mt-3"><SignaturePad id="ms-signatureImage" onChange={setDrawn} invalid={Boolean(errors.signatureImage)} />{err("signatureImage")}</div>}
           {method === "uploaded" && (
             <div className="mt-3">
-              <input id="ms-signatureImage" type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => onFile(e.target.files?.[0])} className="block w-full text-sm file:mr-3 file:min-h-10 file:rounded-md file:border-0 file:bg-navy file:px-4 file:font-semibold file:text-white" />
+              <FileDrop className="rounded-lg" label="Drop your signature image"><input id="ms-signatureImage" type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => onFile(e.target.files?.[0])} className="block w-full text-sm file:mr-3 file:min-h-10 file:rounded-md file:border-0 file:bg-navy file:px-4 file:font-semibold file:text-white" /></FileDrop>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               {upload && <div className="theme-light mt-2 flex min-h-20 items-center justify-center rounded-lg border border-line bg-white p-2"><img src={upload} alt="Uploaded signature preview" className="max-h-24 max-w-full object-contain" /></div>}
               <p className="mt-1 text-xs text-muted">A clear scan or photo of your signature on white paper. We trim and re-save it; the original file isn&apos;t kept.</p>
