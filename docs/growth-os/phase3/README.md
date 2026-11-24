@@ -1,6 +1,6 @@
 # Growth OS Phase 3: marketing measurement infrastructure
 
-Status (2026-11-23): **built and tested on synthetic data on the PR branch. Not deployed, and no migration applied anywhere.**
+Status (2026-11-24): **built, tested on synthetic data, and passed on the staging Supabase project. Not on production.**
 James approved the build in the project thread ("Continue with recommended") after the read-only audit
 ([MEASUREMENT_AUDIT.md](MEASUREMENT_AUDIT.md)). This is a documented exception to phase order: Phases 1 and 2 are still in review.
 
@@ -39,6 +39,7 @@ webhook, `billing_invoice_facts`, the Sales Hub and Affiliate Hub ledgers). Noth
 | Related DB suites (growth, growth-activation, ad-conversions, referrals, commission-reconciliation, sales-portal, affiliate-hub, lifecycle-emails, sales-v84-recognition, demo-mode, enterprise-billing) | 93 / 93 pass |
 | Full unit suite (`vitest run`, excluding DB) | 2,447 / 2,448 pass. The one failure, `tests/theme.test.ts` (placeholder colour token), also fails on `main` and is unrelated. |
 | `tsc --noEmit`, eslint on changed files | Clean |
+| Staging Supabase (`staging/run_on_staging.sql` in the SQL editor of built2bid-growth-staging): migration applied, re-run, rolled back, re-applied; touch dedupe, visitor linking (first account wins), revenue view (live paid only, refunds pro rata, lost dispute = $0, net $34.98), new event name and dedupe, service-role-only grants, RLS, synthetic rows removed | 13 / 13 pass |
 | `next build` + browser walk of `/admin/marketing/journey?synthetic=1` (desktop 1440 and phone 390, against the local mock Supabase) | 14 / 14 checks pass, no page errors, no horizontal scroll |
 
 The DB suite (full list in `tests/db/`) wasn't run end to end; the suites touching these tables were.
@@ -70,7 +71,7 @@ Schema boundary agreed with the Phase 4 thread: these objects live in `public`, 
 
 ## 4. Permissions and credentials still needed (owner steps, in order)
 
-1. **Staging:** apply the migration to the staging Supabase project once it exists (James offered to set one up), and run the walk there.
+1. **Staging: done 2026-11-24.** `staging/run_on_staging.sql` (stand-ins + migration, re-run, rollback, re-apply + 13 checks) passed on built2bid-growth-staging in the SQL editor. The migration stays applied there.
 2. **Privacy text: drafted on this branch.** The Privacy Policy ("Visit measurement" item, GPC sentence) and Cookie Policy (`b2b_vid` 13 months, `b2b_touch` 90 days, a "Your choices" paragraph) carry a November 24, 2026 revision in `src/lib/legal/registry.ts`. Merging publishes it, so merge with step 4 and change the date if that day differs. Pages sync to Google Drive after deploy. Attorney review is recommended.
 3. **Production SQL:** run `20270228001000_marketing_measurement.sql` in the Supabase SQL editor. It's safe to re-run, and the rollback script is in this folder.
 4. **Netlify env:** set `MARKETING_TOUCHES=on` (production) and redeploy. Until then, first touch comes from the lead record and everything else works.
@@ -108,5 +109,5 @@ $0 new. A few small tables and one view in the existing Supabase project (about 
 | 10 | Data quality monitoring | **Pass** (11 checks, tested for green and red) |
 | 11 | Sales rep / affiliate attribution untouched; no double-counted commissions or revenue | **Pass** (read-only; commissions are costs) |
 | 12 | Dashboard tested with synthetic data before production use | **Pass** (browser walk, desktop and phone) |
-| 13 | Staging test against a real Supabase project | **Not run**: no staging project yet (owner step 1) |
+| 13 | Staging test against a real Supabase project | **Pass** (database layer, 2026-11-24, built2bid-growth-staging): migration applied, re-run, rolled back and re-applied; 13/13 checks on synthetic rows, which were then removed. Staging has stand-ins for the app tables, and no staging website, so the app code paths were tested locally (row 1). |
 | 14 | Live in production | **Not done, by design**: waits for owner steps 2–4 |
