@@ -6,7 +6,8 @@ import { familyTint, TradeIcon } from "../trade-icon";
 
 export interface PickerTrade { slug: string; name: string; icon: string; family: string; featured?: boolean; blurb: string }
 
-export function TradePicker({ trades }: { trades: PickerTrade[] }) {
+/** `guides={false}` (the in-app Create New Bid page) hides the links to the public trade guide pages. */
+export function TradePicker({ trades, guides = true }: { trades: PickerTrade[]; guides?: boolean }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const searchId = useId();
@@ -75,7 +76,7 @@ export function TradePicker({ trades }: { trades: PickerTrade[] }) {
                       <Link href={`/start/${t.slug}`} className="flex items-center gap-2 text-sm font-medium text-ink hover:text-brand">
                         <TradeIcon name={t.icon} className="h-4 w-4 text-muted" /> {t.name}
                       </Link>
-                      <Link href={`/bids/${t.slug}`} className="text-xs text-muted hover:text-brand">Guide</Link>
+                      {guides && <Link href={`/bids/${t.slug}`} className="text-xs text-muted hover:text-brand">Guide</Link>}
                     </li>
                   ))}
                 </ul>

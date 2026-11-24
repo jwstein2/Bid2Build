@@ -205,7 +205,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         </div>
         <div className="flex items-center gap-2">
           {showHeaderUpgrade(credits) && <UpgradeLink compact />}
-          <ButtonLink href="/bids" variant="accent" className="hidden md:inline-flex" data-guide="bids.new-bid">Create New Bid</ButtonLink>
+          <ButtonLink href="/new-bid" variant="accent" className="hidden md:inline-flex" data-guide="bids.new-bid">Create New Bid</ButtonLink>
         </div>
       </div>
       {gift && (

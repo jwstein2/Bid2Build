@@ -52,7 +52,7 @@ const fin = (c: SearchCaps, perm: string) => c.flags.financials && Boolean(c.fin
 const finView = (c: SearchCaps) => c.flags.financials && Boolean(c.fin && (c.fin.perms.includes("view_company_financials") || c.fin.perms.includes("view_project_financials")));
 
 export const ACTIONS: CommandAction[] = [
-  { id: "new-bid", label: "Create New Bid", hint: "Start an estimate", href: "/bids", section: "create", keywords: ["new bid", "create bid", "new estimate", "create estimate", "new quote", "start bid", "start estimate"], allowed: (c) => anyCo(c, "create_estimates") },
+  { id: "new-bid", label: "Create New Bid", hint: "Start an estimate", href: "/new-bid", section: "create", keywords: ["new bid", "create bid", "new estimate", "create estimate", "new quote", "start bid", "start estimate"], allowed: (c) => anyCo(c, "create_estimates") },
   { id: "add-customer", label: "Add Customer", hint: "Customers", href: "/dashboard/customers/new", section: "create", keywords: ["add customer", "new customer", "create customer", "new client", "add client"], allowed: (c) => anyCo(c, "create_estimates", "view_company_bids") },
   { id: "schedule-project", label: "Schedule a Project", hint: "Projects", href: "/projects/new", section: "create", keywords: ["schedule project", "new project", "create project", "schedule job", "new schedule"], allowed: (c) => c.flags.pm && co(c, "create_schedules") },
   { id: "create-invoice", label: "Create Invoice", hint: "Pick a job, then review the invoice", href: "/financials/records?view=jobs&do=invoice", section: "finance", reviewForm: true, keywords: ["new invoice", "create invoice", "invoice customer", "bill customer", "send invoice"], allowed: (c) => fin(c, "create_invoices") },

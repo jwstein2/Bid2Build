@@ -57,7 +57,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
           <div className="flex flex-wrap gap-2" data-guide="customers.new">
             <ButtonLink href="/dashboard/customers/new" variant="secondary"><UserPlus className="h-4 w-4" aria-hidden /> New customer</ButtonLink>
             <ButtonLink href="/dashboard/customers/import" variant="secondary" data-testid="customers-import-link"><FileUp className="h-4 w-4" aria-hidden /> Import from QuickBooks / CSV</ButtonLink>
-            <ButtonLink href="/bids" variant="accent">Create New Bid</ButtonLink>
+            <ButtonLink href="/new-bid" variant="accent">Create New Bid</ButtonLink>
           </div>
         )}
       </div>
@@ -77,7 +77,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
             <div className="mt-5 flex flex-wrap justify-center gap-3">
               <ButtonLink href="/dashboard/customers/new" variant="secondary"><UserPlus className="h-4 w-4" aria-hidden /> Create Your First Customer</ButtonLink>
               <ButtonLink href="/dashboard/customers/import" variant="secondary" data-testid="customers-import-empty"><FileUp className="h-4 w-4" aria-hidden /> Import from QuickBooks / CSV</ButtonLink>
-              <ButtonLink href="/bids" variant="accent">Create a New Bid</ButtonLink>
+              <ButtonLink href="/new-bid" variant="accent">Create a New Bid</ButtonLink>
             </div>
           </Card>
         )

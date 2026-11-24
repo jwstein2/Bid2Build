@@ -40,7 +40,7 @@ describe("first bid checklist", () => {
   it("starts empty and points a new account at picking a trade", () => {
     const s = checklistSteps(base);
     expect(s.map((x) => x.done)).toEqual([false, false, false, false, false]);
-    expect(s[1].href).toBe("/bids");
+    expect(s[1].href).toBe("/new-bid");
     expect(showChecklist(s, false)).toBe(true);
   });
   it("delivering a bid completes the bid steps and links to the latest bid", () => {

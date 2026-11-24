@@ -52,7 +52,7 @@ export const CTA_LABELS = {
 } as const;
 
 export interface CtaOptions {
-  /** Where "create" goes (trade pages open that trade directly). Default /bids. */
+  /** Where "create" goes (trade pages open that trade directly). Default /bids signed out, /new-bid (in the app) signed in. */
   createHref?: string;
   /** Where "See How It Works" goes. Default /#how-it-works. */
   howHref?: string;
@@ -62,7 +62,7 @@ export interface CtaOptions {
 
 /** Primary and secondary call to action for this visitor. */
 export function accountCtas(s: AccountStatus, opts: CtaOptions = {}): { primary: Cta; secondary: Cta } {
-  const create = opts.createHref ?? "/bids";
+  const create = opts.createHref ?? (s.kind === "signed_out" ? "/bids" : "/new-bid");
   const bids: Cta = { action: "bids", label: CTA_LABELS.bids, href: "/dashboard" };
   switch (s.kind) {
     case "signed_out":

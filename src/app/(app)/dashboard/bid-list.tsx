@@ -67,7 +67,7 @@ export function BidList({ rows }: { rows: BidRow[] }) {
         <div className="p-10 text-center">
           <p className="font-semibold">{!rows.length ? "No bids yet." : sign === "signed" ? "No signed bids here yet." : sign === "awaiting" ? "No bids are waiting for a signature." : "No bids match."}</p>
           {rows.length > 0 && sign !== "all" && <p className="mt-1 text-sm text-muted">{sign === "signed" ? "When a customer signs a proposal you sent with Create Signing Link, it shows up here." : "Open a bid and choose Create Signing Link on the Proposal step to send it for signature."}{filter !== "active" ? "" : " Archived bids are under the Archived filter."}</p>}
-          {!rows.length && <><p className="mt-1 text-sm text-muted">Pick a trade and you&apos;ll have a draft in seconds.</p><Link href="/bids" className="mt-4 inline-flex min-h-11 items-center rounded-lg bg-accent px-4 font-semibold text-navy hover:bg-accent-hover">Create your first bid</Link></>}
+          {!rows.length && <><p className="mt-1 text-sm text-muted">Pick a trade and you&apos;ll have a draft in seconds.</p><Link href="/new-bid" className="mt-4 inline-flex min-h-11 items-center rounded-lg bg-accent px-4 font-semibold text-navy hover:bg-accent-hover">Create your first bid</Link></>}
         </div>
       ) : (
         <ul className="divide-y divide-line">{list.map((r, i) => <Row key={r.id} r={r} first={i === 0} />)}</ul>

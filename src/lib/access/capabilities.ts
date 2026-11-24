@@ -73,7 +73,7 @@ const o = (key: string, label: string, perms: readonly Permission[] = [], licens
 
 export const FEATURES = [
   // ---- Win the Job ------------------------------------------------------------------------------------------
-  { id: "bids", section: "win", label: "Bids & estimates", description: "Bids pipeline, estimate builder, trade calculators and proposals.", routes: ["/dashboard", "/bids"],
+  { id: "bids", section: "win", label: "Bids & estimates", description: "Bids pipeline, estimate builder, trade calculators and proposals.", routes: ["/dashboard", "/bids", "/new-bid"],
     options: [o("view", "View own bids", ["view_own_bids"]), o("create", "Create", ["create_estimates"]), o("edit", "Edit team bids", ["edit_team_estimates"]), o("approve", "Approve", ["approve_bids"])],
     scopeNote: "People always see bids they created. Which other bids they see is set by Bid visibility." },
   { id: "bid_visibility", requires: { feature: "bids" }, section: "win", label: "Bid visibility", description: "Whose bids and customers they can see.", routes: ["/company/pipeline"], noneLabel: "Own bids only",
