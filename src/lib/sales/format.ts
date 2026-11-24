@@ -30,7 +30,7 @@ export const COMMISSION_STATUS: Record<string, { label: string; tone: Tone; help
   canceled: { label: "Canceled", tone: "neutral", help: "Canceled by the owner." },
   reversed: { label: "Reversed", tone: "danger", help: "The payment was refunded." },
 };
-export const TIER_LABEL: Record<string, string> = { free: "Free", trial: "Trial", standard: "Individual Unlimited", enterprise: "Team (Enterprise)", complimentary: "Complimentary" };
+export const TIER_LABEL: Record<string, string> = { free: "Free", trial: "Trial", standard: "Individual Unlimited", enterprise: "Team", complimentary: "Complimentary" };
 export const REASON_LABEL: Record<string, string> = {
   no_paid_invoice_in_anniversary_month: "No payment in the anniversary month",
   invoice_refunded: "Payment refunded",
