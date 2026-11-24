@@ -29,6 +29,7 @@ import { NotificationBell } from "@/components/operations/notification-bell";
 import { Suspense } from "react";
 import { GlobalSearchHost, SearchField } from "@/components/search/global-search";
 import { SearchFocus } from "@/components/search/search-focus";
+import { StickyBar } from "@/components/layout/sticky-height";
 import { loadEffectiveAccess } from "@/lib/access/server";
 import { sidebarAccess } from "@/lib/access/nav";
 import { DemoBanner } from "@/components/demo/demo-controls";
@@ -96,18 +97,21 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     {/* app-theme: marks a customer app screen, so the Dark Mode tokens (globals.css) apply. */}
     {user.demo && <DemoBanner kind={user.demo.kind} company={company?.name ?? null} />}
     <div className="app-theme flex min-h-screen flex-col md:flex-row">
-      <aside className="on-dark bg-navy text-white md:sticky md:top-0 md:flex md:h-screen md:w-64 md:shrink-0 md:flex-col md:overflow-y-auto md:overscroll-contain no-print">
+      {/* Phones: the navy top bar (logo, New bid, search, bell, Menu) stays pinned under the Practice/Demo bar
+          while scrolling; an open Menu scrolls inside it. Desktop: the sidebar fills the height left under that bar. */}
+      <StickyBar as="aside" cssVar="--app-topbar-h" media="(max-width: 767.98px)" className="on-dark sticky top-[var(--b2b-banner-h)] z-30 max-h-[calc(100dvh-var(--b2b-banner-h))] overflow-y-auto overscroll-contain bg-navy text-white md:flex md:h-[calc(100vh-var(--b2b-banner-h))] md:max-h-none md:w-64 md:shrink-0 md:flex-col no-print">
         <AppSidebar essentials={essentials} isAdmin={Boolean(isAdmin)} projects={isPmEnabled()} clock={clock} financials={isFinancialsEnabled()} home={isUnifiedHomeEnabled()} company={companyNav(company)} access={sidebarAccess(access)} learning={learning} switches={switchLinks(workspaces, "contractor")} email={user.email ?? (user.phone ? formatPhone(user.phone) : null)} theme={user.theme ?? null} practice={isPracticeEnabled()} demo={user.demo?.kind ?? null} bell={isPmEnabled() ? <NotificationBell only="phone" tone="dark" /> : null} />
-      </aside>
+      </StickyBar>
       {/* Bottom padding keeps the last controls on every page clear of the fixed Guide button (bottom left). */}
-      <main id="main" className="min-w-0 flex-1 px-4 pb-24 pt-4 sm:px-8 md:pt-2">
+      <main id="main" className="min-w-0 flex-1 px-4 pb-24 pt-4 sm:px-8 md:pt-0">
         {/* Desktop header row: search field, task review notices (V4.3) and the Light/Dark switch, top right. */}
         {/* On phones all three live in the top bar (search icon, bell, theme in the Menu), so this row is desktop only. */}
-        <div className="mb-1 hidden items-center justify-end gap-1 no-print md:flex">
+        {/* Sticky: it stays at the top (under the Practice/Demo bar) while the page scrolls, on a paper backdrop. */}
+        <StickyBar cssVar="--app-topbar-h" media="(min-width: 768px)" className="sticky top-[var(--b2b-banner-h)] z-30 -mx-4 mb-1 hidden items-center justify-end gap-1 border-b border-transparent bg-paper/95 px-4 py-2 backdrop-blur no-print sm:-mx-8 sm:px-8 md:flex" data-testid="app-topbar">
           <div className="mr-auto w-full max-w-md"><SearchField /></div>
           {isPmEnabled() && <NotificationBell only="desktop" />}
           <span className="hidden md:inline-flex"><ThemeToggle signedIn account={user.theme ?? null} /></span>
-        </div>
+        </StickyBar>
         {children}
       </main>
       <FeatureHost />
