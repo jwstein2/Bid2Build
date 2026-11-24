@@ -17,7 +17,11 @@ Vetted 2026-11-24. Full review with the per-agent mapping: owner's project files
 | Supabase agent skills (`supabase`, `supabase-postgres-best-practices`) | Official, Supabase (MIT), reviewed @ `c9be0e931b79` | `npx skills add supabase/agent-skills` | Schema, RLS, SQL functions, Edge Functions, query performance |
 | `/code-review`, `/security-review` | Built into Claude Code | none | Every Growth OS PR |
 
-## Optional community marketing skills (vetted, pin a commit)
+## Community marketing skills (vetted, pinned)
+
+The 18 skills the owner approved are vendored, instruction files only, in `growth-os/skills/vendor/` with a
+hash manifest and a test (`tests/growth-os-vendored-skills.test.ts`). They don't auto-load; Phase 6 copies what
+it needs into the prompt registry. The table below is the vetting summary.
 
 | Repo | Licence | What's useful | Cautions |
 |---|---|---|---|
