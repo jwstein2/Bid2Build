@@ -49,11 +49,12 @@ const at = (days: number) => new Date(T0 + days * DAY);
 const sec = (days: number) => Math.floor(at(days).getTime() / 1000);
 
 /** One request through the real proxy at a given time, carrying the browser's cookies; returns the new cookie jar. */
-async function visit(jar: Map<string, string>, url: string, days: number, referer?: string): Promise<Map<string, string>> {
+async function visit(jar: Map<string, string>, url: string, days: number, referer?: string, extra: Record<string, string> = {}): Promise<Map<string, string>> {
   vi.setSystemTime(at(days));
   const { proxy } = await import("@/proxy");
   const headers: Record<string, string> = { host: "localhost:3000", "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Mobile" };
   if (referer) headers.referer = referer;
+  Object.assign(headers, extra);
   if (jar.size) headers.cookie = [...jar].map(([k, v]) => `${k}=${v}`).join("; ");
   const res = await proxy(new NextRequest(url, { headers }));
   const out = new Map(jar);
@@ -222,6 +223,21 @@ d("Phase 3 acceptance: visitor → signup → bid → subscription → cancellat
     for (const e of events) expect(await send(e)).toBe("duplicate");
     const again = await read();
     expect(revenueByOwner(again.input, again.js, 0, at(100).getTime())).toEqual(r);
+  });
+
+  it("opting out later (analytics opt-out or GPC) clears the touch cookies and records nothing new", async () => {
+    let jar = await visit(new Map(), "http://localhost:3000/?utm_source=facebook&utm_medium=paid_social&utm_campaign=b2b-meta-signup-202611", 20);
+    expect(jar.get("b2b_vid")).toBeTruthy();
+    expect(jar.get("b2b_touch")).toBeTruthy();
+    const optedOut = await visit(new Map([...jar, ["b2b_ga_optout", "1"]]), "http://localhost:3000/?utm_source=google&utm_medium=cpc&utm_campaign=b2b-google-signup-202611", 21);
+    expect(optedOut.get("b2b_vid")).toBe("");
+    expect(optedOut.get("b2b_touch")).toBe("");
+    const gpc = await visit(jar, "http://localhost:3000/?utm_source=google&utm_medium=cpc&utm_campaign=b2b-google-signup-202611", 21, undefined, { "sec-gpc": "1" });
+    expect(gpc.get("b2b_vid")).toBe("");
+    expect(gpc.get("b2b_touch")).toBe("");
+    jar = await visit(new Map(), "http://localhost:3000/?utm_source=google&utm_medium=cpc&utm_campaign=b2b-google-signup-202611", 22, undefined, { "sec-gpc": "1" });
+    expect(jar.has("b2b_vid")).toBe(false);
+    expect(jar.has("b2b_touch")).toBe(false);
   });
 
   it("migration is re-runnable and the rollback script removes it cleanly", async () => {

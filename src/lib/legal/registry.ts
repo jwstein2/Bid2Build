@@ -106,6 +106,8 @@ export interface LegalDocument {
 /** Date every public policy page changed on in the 2026-11-19 legal update (PR #175). */
 const LEGAL_UPDATE_2026_11_19 = "2026-11-19";
 const LEGAL_UPDATE_2026_11_21 = "2026-11-21";
+/** First-party visit measurement (b2b_vid / b2b_touch) added to the Privacy and Cookie policies (Growth OS Phase 3). */
+const LEGAL_UPDATE_2026_11_24 = "2026-11-24";
 
 export const LEGAL_DOCUMENTS: LegalDocument[] = [
   {
@@ -121,21 +123,25 @@ export const LEGAL_DOCUMENTS: LegalDocument[] = [
   },
   {
     key: "privacy", name: "Privacy Policy", category: "core", href: "/privacy", public: true,
-    version: "November 19, 2026", effectiveDate: null, originalPublication: null,
+    version: "November 24, 2026", effectiveDate: null, originalPublication: null,
     originalPublicationNote: "An earlier, undated version was live at launch (November 13, 2026).",
-    lastRevised: LEGAL_UPDATE_2026_11_19, publishedOn: LEGAL_UPDATE_2026_11_19, defaultStatus: "published_pending", risk: "high",
+    lastRevised: LEGAL_UPDATE_2026_11_24, publishedOn: LEGAL_UPDATE_2026_11_24, defaultStatus: "published_pending", risk: "high",
     acceptance: "Accepted with the Terms at sign-in; no per-user acceptance record or version is stored.",
     history: [
-      { version: "November 19, 2026", summary: "Rewritten to match the product: providers, e-signature, HR and tax data, prospect data, ad measurement, account emails.", publishedOn: LEGAL_UPDATE_2026_11_19, supersededOn: null },
+      { version: "November 24, 2026", summary: "Added first-party visit measurement (campaign tags linked to your account at sign-in); Global Privacy Control also turns it off.", publishedOn: LEGAL_UPDATE_2026_11_24, supersededOn: null },
+      { version: "November 19, 2026", summary: "Rewritten to match the product: providers, e-signature, HR and tax data, prospect data, ad measurement, account emails.", publishedOn: LEGAL_UPDATE_2026_11_19, supersededOn: LEGAL_UPDATE_2026_11_24 },
       { version: "Launch version (undated)", summary: "Original privacy policy.", publishedOn: null, supersededOn: LEGAL_UPDATE_2026_11_19 },
     ],
   },
   {
     key: "cookies", name: "Cookie Policy", category: "core", href: "/cookies", public: true,
-    version: "November 19, 2026", effectiveDate: null, originalPublication: LEGAL_UPDATE_2026_11_19,
-    lastRevised: LEGAL_UPDATE_2026_11_19, publishedOn: LEGAL_UPDATE_2026_11_19, defaultStatus: "published_pending", risk: "medium",
+    version: "November 24, 2026", effectiveDate: null, originalPublication: LEGAL_UPDATE_2026_11_19,
+    lastRevised: LEGAL_UPDATE_2026_11_24, publishedOn: LEGAL_UPDATE_2026_11_24, defaultStatus: "published_pending", risk: "medium",
     acceptance: "Ad-measurement (Meta pixel) choice is recorded in the visitor's browser only.",
-    history: [{ version: "November 19, 2026", summary: "First published.", publishedOn: LEGAL_UPDATE_2026_11_19, supersededOn: null }],
+    history: [
+      { version: "November 24, 2026", summary: "Added the b2b_vid and b2b_touch first-party measurement cookies.", publishedOn: LEGAL_UPDATE_2026_11_24, supersededOn: null },
+      { version: "November 19, 2026", summary: "First published.", publishedOn: LEGAL_UPDATE_2026_11_19, supersededOn: LEGAL_UPDATE_2026_11_24 },
+    ],
   },
   {
     key: "subprocessors", name: "Service Providers (Subprocessors)", category: "core", href: "/subprocessors", public: true,

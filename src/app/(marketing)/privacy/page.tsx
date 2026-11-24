@@ -2,7 +2,7 @@ import { isFinancialsEnabled } from "@/lib/env";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AnalyticsOptOut } from "@/components/analytics/analytics-opt-out";
-import { LegalPage, H2, UL, LEGAL_UPDATED } from "@/components/legal/legal-page";
+import { LegalPage, H2, UL } from "@/components/legal/legal-page";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Privacy Policy", alternates: { canonical: "/privacy" } };
@@ -11,11 +11,13 @@ export const metadata: Metadata = { title: "Privacy Policy", alternates: { canon
  * Privacy Policy. The 2026-11-19 revision (legal review) brings it in line with what the product does:
  * every service provider, e-signature records, team/HR records, sales prospects, the Academy, market data
  * sharing, ad measurement and account emails. Published 2026-11-19 (PR #175); independent legal review pending.
+ * 2026-11-24: first-party visit measurement (b2b_vid / b2b_touch, Growth OS Phase 3) added. Publish this together with
+ * turning MARKETING_TOUCHES on, not before; update the date here and in the registry if that day differs.
  * Review status is shown by LegalPage from src/lib/legal/registry.ts; don't add status wording here.
  */
 export default function Privacy() {
   return (
-    <LegalPage title="Privacy Policy" updated={LEGAL_UPDATED} docKey="privacy">
+    <LegalPage title="Privacy Policy" updated="November 24, 2026" docKey="privacy">
       <p>This policy explains what Built2Bid L.L.C. (&quot;{site.name}&quot;, &quot;we&quot;) collects, why, who we share it with and the choices you have. It covers built2bid.org, the {site.name} apps, signing and update links, and the Contractor Academy.</p>
 
       <H2>What we collect</H2>
@@ -26,6 +28,7 @@ export default function Privacy() {
         <li>Billing: handled by Stripe. We store your subscription status, not your card number.</li>
         <li>Product analytics: page and feature events (for example, &quot;trade selected&quot;). We do not put bid contents, prices, or customer details in analytics.</li>
         <li id="analytics" className="scroll-mt-24">Website analytics: we use Google Analytics to understand how visitors find and use our website (pages viewed, approximate location, device and browser, and how you arrived). Google Analytics sets cookies to do this. It is not loaded on proposal signing links or sign-in links. You can turn it off for this browser here, or use Google&apos;s <a className="underline" href="https://tools.google.com/dlpage/gaoptout" rel="noopener noreferrer" target="_blank">browser add-on</a>, or block cookies.<AnalyticsOptOut /></li>
+        <li id="visit-measurement" className="scroll-mt-24">Visit measurement (first party): when you arrive from one of our tagged links, we note the campaign tags, the site you came from (its domain only), the page you landed on and your device type, in our own cookies (b2b_vid and b2b_touch). When you sign in, these visits are linked to your account so we can see which campaigns lead to sign-ups and subscriptions and avoid counting the same sale twice. We don&apos;t store ad click ids, your IP address or your email in this record, and we don&apos;t share it with ad platforms. It is not set if your browser sends Global Privacy Control or if you turned Google Analytics off. See the <Link className="underline" href="/cookies">cookie policy</Link>.</li>
         <li>Ad measurement: only if you say yes in our ad banner, the Meta pixel measures which of our ads brought you to us. See the <Link className="underline" href="/cookies">cookie policy</Link>.</li>
         <li>Support and security: messages you send us, and logs of requests and errors (IP address, browser, time) that we use to keep the service working and secure.</li>
       </UL>
@@ -71,7 +74,7 @@ export default function Privacy() {
       <p>Account data is deleted when you delete your account, unless a legal hold applies. Bookkeeping records (invoices, payments and reconciled bank lines) are kept for 7 years for tax and audit needs, then deleted. Time-clock locations are cleared after 90 days. Contributed market data is removed after 10 years or when you stop sharing. Sales prospect records are reviewed and removed when no longer useful, except the do-not-contact list. Backups roll off on our database provider&apos;s schedule. We review these rules against privacy laws at least once a year.</p>
 
       <H2>Your privacy rights</H2>
-      <p>Depending on where you live (for example California, Minnesota and other states with privacy laws), you may have the right to know what personal information we have, get a copy, correct it, delete it, and opt out of targeted advertising or &quot;sharing&quot;. We honor Global Privacy Control signals as an opt-out of ad measurement. We won&apos;t treat you differently for using these rights. To make a request, email <a className="underline" href="mailto:privacy@built2bid.org">privacy@built2bid.org</a>; we may need to confirm your identity, and an authorized agent may ask for you. We complete requests within 30 days, or tell you if we need more time as the law allows. If we deny a request, you can appeal by replying to our answer. If your information is in a contractor&apos;s account (for example as their customer or employee), we will pass your request to that contractor.</p>
+      <p>Depending on where you live (for example California, Minnesota and other states with privacy laws), you may have the right to know what personal information we have, get a copy, correct it, delete it, and opt out of targeted advertising or &quot;sharing&quot;. We honor Global Privacy Control signals as an opt-out of ad measurement and of first-party visit measurement. We won&apos;t treat you differently for using these rights. To make a request, email <a className="underline" href="mailto:privacy@built2bid.org">privacy@built2bid.org</a>; we may need to confirm your identity, and an authorized agent may ask for you. We complete requests within 30 days, or tell you if we need more time as the law allows. If we deny a request, you can appeal by replying to our answer. If your information is in a contractor&apos;s account (for example as their customer or employee), we will pass your request to that contractor.</p>
 
       <H2>Service providers</H2>
       <p>These companies process data on our behalf, under contracts that limit how they can use it:</p>

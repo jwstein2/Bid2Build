@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { AnalyticsOptOut } from "@/components/analytics/analytics-opt-out";
-import { LegalPage, H2, A, LEGAL_UPDATED } from "@/components/legal/legal-page";
+import { LegalPage, H2, A } from "@/components/legal/legal-page";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Cookie Policy", alternates: { canonical: "/cookies" } };
@@ -11,6 +11,8 @@ const ROWS: [string, string, string, string][] = [
   ["b2b_rep", "Necessary for the program", "Remembers the sales representative link you arrived from", "90 days"],
   ["b2b_aff", "Necessary for the program", "Remembers the affiliate (creator partner) link you arrived from", "90 days"],
   ["b2b_attr", "Measurement (first party)", "Remembers which campaign link brought you here, so we can count sign-ups by source", "90 days"],
+  ["b2b_vid", "Measurement (first party)", "A random visitor id. When you sign in, it links your earlier visits on this browser to your account, so we can see which campaigns lead to sign-ups and subscriptions. It contains no name or email", "13 months"],
+  ["b2b_touch", "Measurement (first party)", "Your first and latest few visits from tagged links: campaign tags, the site you came from (its domain only), the landing page and the device type. Click ids are noted as present, never stored", "90 days"],
   ["b2b_ad_consent", "Necessary", "Remembers your ad measurement choice", "1 year"],
   ["b2b_ga_optout", "Necessary", "Remembers that you turned Google Analytics off", "1 year"],
   ["b2b_profile_reminder, b2b-demo-hint, b2b-demo-return, sales_view", "Functional", "Remember small display choices (a dismissed reminder, demo mode, which hub you last opened)", "Up to 1 year"],
@@ -20,7 +22,7 @@ const ROWS: [string, string, string, string][] = [
 
 export default function CookiePolicy() {
   return (
-    <LegalPage title="Cookie Policy" updated={LEGAL_UPDATED} docKey="cookies">
+    <LegalPage title="Cookie Policy" updated="November 24, 2026" docKey="cookies">
       <p>Cookies are small files a website stores in your browser. {site.name} uses a few, plus similar browser storage for things like unsaved drafts and display preferences. This page lists them and how to control them. See also our <A href="/privacy">Privacy Policy</A>.</p>
       <H2>Cookies we use</H2>
       <div className="overflow-x-auto">
@@ -33,6 +35,7 @@ export default function CookiePolicy() {
       <p><strong>Ad measurement</strong> (Meta pixel) loads only if you choose Allow in our banner. If your browser sends a Global Privacy Control signal, we treat it as No and never show the banner. To change your choice, clear this site&apos;s cookies and the banner will ask again.</p>
       <p><strong>Google Analytics</strong> can be turned off for this browser here:</p>
       <AnalyticsOptOut />
+      <p><strong>First-party visit measurement</strong> (b2b_vid and b2b_touch) is never set if your browser sends a Global Privacy Control signal or if you turned Google Analytics off above. Turning it off stops new visits being recorded; you can clear existing ones by deleting this site&apos;s cookies.</p>
       <p>You can also block or delete cookies in your browser settings. Blocking necessary cookies will stop sign-in from working. Analytics and ad cookies are never loaded on proposal signing links or sign-in links.</p>
       <H2>Questions</H2>
       <p><A href="mailto:privacy@built2bid.org">privacy@built2bid.org</A></p>

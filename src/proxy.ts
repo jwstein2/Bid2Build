@@ -21,7 +21,10 @@ function withAttribution(request: NextRequest, response: NextResponse): NextResp
     response.cookies.set(REFERRAL_COOKIE, ref, { maxAge: REFERRAL_MAX_AGE, httpOnly: true, sameSite: "lax", secure: request.nextUrl.protocol === "https:", path: "/" });
   }
   const hasFirst = request.cookies.has(ATTRIBUTION_COOKIE);
-  const touches = touchesEnabled() && trackingPermitted(request.headers, (n) => request.cookies.get(n)?.value);
+  const permitted = trackingPermitted(request.headers, (n) => request.cookies.get(n)?.value);
+  // Opted out (GPC or the analytics opt-out) after visits were recorded: clear the touch cookies, as the cookie policy says.
+  if (!permitted) for (const name of [VISITOR_COOKIE, TOUCHES_COOKIE]) if (request.cookies.has(name)) response.cookies.delete(name);
+  const touches = touchesEnabled() && permitted;
   if (hasFirst && !touches) return response;
   const a = captureAttribution(request.nextUrl, request.headers.get("referer"), request.headers.get("user-agent"));
   if (!a) return response;

@@ -25,7 +25,7 @@ webhook, `billing_invoice_facts`, the Sales Hub and Affiliate Hub ledgers). Noth
 | Cohort retention | `cohortRetention()`: by first paid month, % still paying at the end of each month |
 | CAC, contribution LTV, payback | `unitEconomics()`: CAC includes year-1 commissions and referral rewards. Contribution is net of Stripe fees (estimate) and later commissions. LTV is gated at 20+ paying customers and an observed churn. |
 | Data quality monitoring | `dataQuality()`: 11 checks (duplicate invoices, paid without event, unmatched revenue, ended without cancel event, unattributed signups, events without id, two commission owners, commission without revenue, no recent touches, unknown-channel touches, UTM violations) |
-| Consent and privacy | Switch off by default. GPC and the analytics opt-out are honoured. No email, IP or click-id value is stored. Service-role-only tables with RLS on. Admin-only page. |
+| Consent and privacy | Switch off by default. GPC and the analytics opt-out are honoured: the cookies are never set, existing ones are deleted on the next visit, and sign-in won't link them. No email, IP or click-id value is stored. Service-role-only tables with RLS on. Admin-only page. Privacy and cookie policy text drafted (November 24, 2026 revision). |
 | Preserve sales rep / affiliate attribution, no double counting | Read-only use of the hub tables. One revenue owner per account (partner first). First/last-touch views carry no revenue. Commissions and rewards are costs. See [ATTRIBUTION_RULES.md](ATTRIBUTION_RULES.md). |
 | Dashboard, tested with synthetic data | `/admin/marketing/journey` (Marketing → "Customer journey →", and Tools menu). `?synthetic=1` shows 8 made-up accounts that cover every case. |
 | Fix found in audit | Android app referrers: `com.google.android.gm` (Gmail app) was being read as Google **organic search** because the web search rule matched `google.*`. It's now classified as referral (as in GA4). The Google app counts as organic search and social apps as social. |
@@ -35,7 +35,7 @@ webhook, `billing_invoice_facts`, the Sales Hub and Affiliate Hub ledgers). Noth
 | Suite | Result |
 |---|---|
 | `tests/growth-journey.test.ts` (new, unit: cookies, consent gates, UTM rules, Android referrers, journey, breakdowns, revenue once, cohorts, CAC/LTV, data quality) | 16 / 16 pass |
-| `tests/db/marketing-journey.test.ts` (new, **acceptance**, real Postgres with every migration applied; real proxy, sign-in sync, event recorder and Stripe webhook route with a fake Stripe client) | 6 / 6 pass |
+| `tests/db/marketing-journey.test.ts` (new, **acceptance**, real Postgres with every migration applied; real proxy, sign-in sync, event recorder and Stripe webhook route with a fake Stripe client) | 7 / 7 pass (incl. opting out later clears the cookies) |
 | Related DB suites (growth, growth-activation, ad-conversions, referrals, commission-reconciliation, sales-portal, affiliate-hub, lifecycle-emails, sales-v84-recognition, demo-mode, enterprise-billing) | 93 / 93 pass |
 | Full unit suite (`vitest run`, excluding DB) | 2,447 / 2,448 pass. The one failure, `tests/theme.test.ts` (placeholder colour token), also fails on `main` and is unrelated. |
 | `tsc --noEmit`, eslint on changed files | Clean |
@@ -60,9 +60,10 @@ Repo only (branch `claude/project-thread-7onr0b`, PR #265). **No production data
 
 - `supabase/migrations/20270228001000_marketing_measurement.sql` (new), `docs/growth-os/phase3/rollback_20270228001000.sql`
 - `src/lib/growth/touches.ts`, `touches-server.ts`, `journey.ts`, `journey-server.ts`, `journey-synthetic.ts`, `utm-convention.ts` (new)
-- `src/proxy.ts` (touch cookies; first-touch behaviour unchanged), `src/app/(app)/layout.tsx` (sync touches after the page is sent)
+- `src/proxy.ts` (touch cookies, cleared on opt-out; first-touch behaviour unchanged), `src/app/(app)/layout.tsx` (sync touches after the page is sent)
 - `src/app/api/stripe/webhook/route.ts` (scheduled-cancellation event), `src/lib/growth/events.ts` (event name)
 - `src/lib/admin/channels.ts` (Android referrers), `src/app/admin/marketing/journey/page.tsx` (new), links in `src/app/admin/marketing/page.tsx` and `src/components/admin/nav.ts`
+- Legal: `src/app/(marketing)/privacy/page.tsx`, `src/app/(marketing)/cookies/page.tsx`, `src/lib/legal/registry.ts` (November 24, 2026 revision)
 - Tests: `tests/growth-journey.test.ts`, `tests/db/marketing-journey.test.ts`. Docs in this folder.
 
 Schema boundary agreed with the Phase 4 thread: these objects live in `public`, with no `growth*` names. Growth OS reads them through its own views.
@@ -70,7 +71,7 @@ Schema boundary agreed with the Phase 4 thread: these objects live in `public`, 
 ## 4. Permissions and credentials still needed (owner steps, in order)
 
 1. **Staging:** apply the migration to the staging Supabase project once it exists (James offered to set one up), and run the walk there.
-2. **Privacy text** (before step 4): add the first-party visitor id and touch history to the privacy and cookie pages (cookies `b2b_vid`, 13 months, and `b2b_touch`, 90 days; tags and referrer host only; honours GPC and the analytics opt-out). Legal pages also sync to Google Drive (`docs/legal/GOOGLE_DRIVE_SYNC.md`). Attorney review is recommended.
+2. **Privacy text: drafted on this branch.** The Privacy Policy ("Visit measurement" item, GPC sentence) and Cookie Policy (`b2b_vid` 13 months, `b2b_touch` 90 days, a "Your choices" paragraph) carry a November 24, 2026 revision in `src/lib/legal/registry.ts`. Merging publishes it, so merge with step 4 and change the date if that day differs. Pages sync to Google Drive after deploy. Attorney review is recommended.
 3. **Production SQL:** run `20270228001000_marketing_measurement.sql` in the Supabase SQL editor. It's safe to re-run, and the rollback script is in this folder.
 4. **Netlify env:** set `MARKETING_TOUCHES=on` (production) and redeploy. Until then, first touch comes from the lead record and everything else works.
 5. Optional: add `invoice.voided` and `invoice.marked_uncollectible` to the Stripe webhook endpoint (the code already handles them).

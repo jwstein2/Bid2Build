@@ -1,13 +1,13 @@
 import { companyNav, loadMyCompany } from "@/lib/enterprise/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { after } from "next/server";
 import { getUser, createClient, createAdminClient } from "@/lib/supabase/server";
 import { isFinancialsEnabled, isPmEnabled, isSupabaseConfigured, isUnifiedHomeEnabled, serverEnv } from "@/lib/env";
 import { ATTRIBUTION_COOKIE, decodeAttribution } from "@/lib/growth/attribution";
 import { syncSignedInUser } from "@/lib/growth/leads";
-import { decodeTouches, TOUCHES_COOKIE, VISITOR_COOKIE } from "@/lib/growth/touches";
+import { decodeTouches, touchesEnabled, trackingPermitted, TOUCHES_COOKIE, VISITOR_COOKIE } from "@/lib/growth/touches";
 import { syncTouches } from "@/lib/growth/touches-server";
 import { REFERRAL_COOKIE } from "@/lib/growth/referral";
 import { recordReferral } from "@/lib/growth/referral-server";
@@ -84,7 +84,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     const order = attributionOrder(decodeRepCookie(rep), decodeAffiliateCookie(aff));
     // Growth OS Phase 3 touch history (cookies exist only when MARKETING_TOUCHES=on and tracking is permitted).
     const visitor = jar.get(VISITOR_COOKIE)?.value;
-    const touches = decodeTouches(jar.get(TOUCHES_COOKIE)?.value);
+    // Checked again here so an opt-out (or the switch going off) after the visits stops them being linked to the account.
+    const touchesAllowed = touchesEnabled() && trackingPermitted(await headers(), (n) => jar.get(n)?.value);
+    const touches = touchesAllowed ? decodeTouches(jar.get(TOUCHES_COOKIE)?.value) : [];
     after(async () => {
       const admin = createAdminClient();
       await syncSignedInUser(admin, user, attribution);
