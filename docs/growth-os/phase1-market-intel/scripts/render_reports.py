@@ -150,7 +150,7 @@ for a in A['assumptions']:
         L.append(f"| [{a['id']}] | {a['name']} | rule | {a['value']} | rule | {a['basis']} |")
 arpa = json.load(open(P('data/derived/arpa_v1.json')))['arpa_usd_month']
 L += ["", "## ARPA used (USD per paying account per month)", "",
-      "Computed from Built2Bid's real list prices in `data/pricing.json` [S13]: Individual Unlimited $19.99/month [E180] or $199/year [E181]; Enterprise $49.99/month with 3 users included [E182], users 4-5 at $19.99 [E183]. Only the plan mix is a scenario [A07].", "",
+      "Computed from Built2Bid's real list prices in `data/pricing.json` [S13]: Individual Unlimited $19.99/month [E180] or $199/year [E181]; Team $49.99/month with 3 users included [E182], users 4-5 at $19.99 [E183]. Only the plan mix is a scenario [A07].", "",
       "| Account type | Low | Base | High |", "|---|---|---|---|"]
 for k, lbl in (('solo', 'Solo operator'), ('employer', 'Employer business (<20 paid employees)')):
     L.append(f"| {lbl} | " + " | ".join(f"{arpa[k][s]} [T:arpa.{k}.{s}]" for s in ('low', 'base', 'high')) + " |")

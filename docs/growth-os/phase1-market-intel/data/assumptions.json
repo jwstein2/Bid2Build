@@ -85,8 +85,8 @@
       },
       "employer_mix": {
         "low": "Owner buys Individual Unlimited monthly only (1 user)",
-        "base": "Enterprise with 3 users (base price)",
-        "high": "Enterprise with 5 users"
+        "base": "Team with 3 users (base price)",
+        "high": "Team with 5 users"
       },
       "attach_rates_high": {
         "financials_solo_monthly": 0.1,

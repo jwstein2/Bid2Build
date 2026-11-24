@@ -39,13 +39,13 @@ Note: TAM employer units are identical across scenarios because they are a Censu
 | [A04] | segment_fit_weight | P1:0.6, P2:0.35, P3:0.1 | P1:0.75, P2:0.5, P3:0.2 | P1:0.9, P2:0.65, P3:0.3 | Analyst judgment; no source measures this. |
 | [A05] | software_propensity | employer 0.35, solo 0.15 | employer 0.5, solo 0.25 | employer 0.65, solo 0.35 | Scenario only. Directional context (not a measurement of the population): Software Advice shoppers report ~30% manual methods (E076) and ~40% construction-specific software (E075) but are active shoppers; Jobber respondents report 52% AI use (E101) in a vendor sample. No representative source measures paid-software adoption among 1-20 person contractors (gap G03). |
 | [A06] | obtainable_share_36mo | 0.0025 | 0.0075 | 0.015 | Scenario only; early-stage vertical SaaS planning range. Starting point is 0 paying accounts (E190). Replace with funnel data from Built2Bid. |
-| [A07] | arpa_usd_month | solo: Individual Unlimited, all annual ($199/yr); employer: Owner buys Individual Unlimited monthly only (1 user) | solo: Individual Unlimited, half monthly / half annual; employer: Enterprise with 3 users (base price) | solo: Individual Unlimited monthly + 10% attach of Solo Financials + 10% attach of Project Command Center; employer: Enterprise with 5 users | Prices are first-party facts (S13, E180-E186). Plan mix and attach rates are scenario assumptions; Built2Bid had 0 paying accounts at the 2026-11-16 baseline (E190), so no observed mix exists yet. |
+| [A07] | arpa_usd_month | solo: Individual Unlimited, all annual ($199/yr); employer: Owner buys Individual Unlimited monthly only (1 user) | solo: Individual Unlimited, half monthly / half annual; employer: Team with 3 users (base price) | solo: Individual Unlimited monthly + 10% attach of Solo Financials + 10% attach of Project Command Center; employer: Team with 5 users | Prices are first-party facts (S13, E180-E186). Plan mix and attach rates are scenario assumptions; Built2Bid had 0 paying accounts at the 2026-11-16 baseline (E190), so no observed mix exists yet. |
 | [A08] | tam_scope | rule | segments with in_tam=true in segments.json | rule | Built2Bid ships estimate templates for 42 trade slugs including decks, pressure washing and soft washing (E187), and markets 'Estimates and proposals for every trade' (E188). Heavy civil and industrial building are outside that catalog. |
 | [A09] | free_plan_excluded | rule | paying accounts only | rule | Built2Bid offers a free credit plan (E189). |
 
 ## ARPA used (USD per paying account per month)
 
-Computed from Built2Bid's real list prices in `data/pricing.json` [S13]: Individual Unlimited $19.99/month [E180] or $199/year [E181]; Enterprise $49.99/month with 3 users included [E182], users 4-5 at $19.99 [E183]. Only the plan mix is a scenario [A07].
+Computed from Built2Bid's real list prices in `data/pricing.json` [S13]: Individual Unlimited $19.99/month [E180] or $199/year [E181]; Team $49.99/month with 3 users included [E182], users 4-5 at $19.99 [E183]. Only the plan mix is a scenario [A07].
 
 | Account type | Low | Base | High |
 |---|---|---|---|

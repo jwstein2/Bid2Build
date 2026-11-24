@@ -15,7 +15,7 @@ Built2Bid Growth OS, Phase 1. Version 1.1.0 (2026-11-23).
 3. **Nearly every employer contractor is owner-run at this size.** 90.9% of construction employer establishments have fewer than 20 paid employees [D002], which matches CPWR's 2014-2023 average of 91.0% [E030]. In these firms the owner is effectively the buyer.
 4. **Estimating is the main need software shoppers name.** Estimating is the most requested feature, at 72% of Software Advice construction buyer conversations [E072]. Among residential buyers it reaches 89% [E086]. Quoting is a top time drain for 37% of home service owners in Jobber's survey [E103].
 5. **Top trades for Built2Bid (v1 matrix):** residential remodelers, residential GCs/custom builders and painters score P1. HVAC, electrical, decks, other specialty trades, small commercial GCs and roofing lead P2. Ignore audience size and roofing, siding and decks rise near the top. They are smaller trades where each account fits well (`02_trade_priority_matrix.md`).
-6. **The market model is a scenario, not a forecast.** Base case: 2,275,900 TAM units [M:base.tam_units], 401,305 SAM units [M:base.sam_units] and 3,010 SOM accounts over 36 months [M:base.som_accounts]. SAM and SOM rest on assumptions A04-A07. Base-case ARR is $1,199,521 [M:base.som_arr_usd]: SOM accounts priced at Built2Bid's real list prices, Individual Unlimited $19.99/month [E180] and Enterprise $49.99/month for 3 users [E182], with an assumed plan mix [A07].
+6. **The market model is a scenario, not a forecast.** Base case: 2,275,900 TAM units [M:base.tam_units], 401,305 SAM units [M:base.sam_units] and 3,010 SOM accounts over 36 months [M:base.som_accounts]. SAM and SOM rest on assumptions A04-A07. Base-case ARR is $1,199,521 [M:base.som_arr_usd]: SOM accounts priced at Built2Bid's real list prices, Individual Unlimited $19.99/month [E180] and Team $49.99/month for 3 users [E182], with an assumed plan mix [A07].
 7. **Product fit is broad, and the owner's growth plan aligns.** Built2Bid already ships estimate templates for 42 trades [E187], including decks, pressure washing and soft washing. The owner's growth-engine priority trades (decks, general contracting, painting, roofing, concrete, kitchens, bathrooms, flooring, electrical, siding, drywall) [E192] overlap the matrix's P1 and P2 trades. Kitchens and bathrooms are remodeling (NAICS 236118), the top-ranked segment. The matrix ranks HVAC and electrical higher than the plan does, and concrete and drywall lower. Built2Bid had 0 paying accounts at its 2026-11-16 baseline [E190], so every SOM number starts from zero.
 
 ## 2. Owner-versus-worker audience definition
@@ -117,7 +117,7 @@ Among home service owners, Facebook is a lead source for 32% [E107], Google Sear
 
 ## 5. Personas
 
-There are seven evidence-informed personas in `04_buyer_persona_database.md` and `data/personas.json`: Solo Remodeler (P01), Small Remodeling Firm Owner (P02), Growth-Stage Roofer (P03), Trade Service Contractor (P04), Exterior Specialty Crew Owner (P05), Painting/Finishing Contractor (P06) and Exterior Cleaning Operator (P07). Each persona keeps cited evidence separate from inference and maps to a real Built2Bid plan: Free credits, Individual Unlimited, or Enterprise [S13]. Messages are hypotheses to test, follow Built2Bid's ad rules (no speed, profit, 'win more jobs' or percentage claims) [E191], and have not been launched.
+There are seven evidence-informed personas in `04_buyer_persona_database.md` and `data/personas.json`: Solo Remodeler (P01), Small Remodeling Firm Owner (P02), Growth-Stage Roofer (P03), Trade Service Contractor (P04), Exterior Specialty Crew Owner (P05), Painting/Finishing Contractor (P06) and Exterior Cleaning Operator (P07). Each persona keeps cited evidence separate from inference and maps to a real Built2Bid plan: Free credits, Individual Unlimited, or Team [S13]. Messages are hypotheses to test, follow Built2Bid's ad rules (no speed, profit, 'win more jobs' or percentage claims) [E191], and have not been launched.
 
 ## 6. Market sizing
 
@@ -125,7 +125,7 @@ See `05_addressable_market_scenario_model.md`. The base-case funnel runs from 2,
 
 ## 7. Recommendations for Phase 2 (not started)
 
-1. Once there are paying accounts, replace the assumed plan mix and obtainable share with observed data and re-run the model [G01]. Resolve the annual-price mismatch between the README and the checkout code [G18].
+1. Once there are paying accounts, replace the assumed plan mix and obtainable share with observed data and re-run the model [G01]. The annual price is confirmed at $199/year [E181]; the stale README figure is being corrected [G18].
 2. Validate the P1 personas with customer interviews once outreach is authorized [G08].
 3. Replace allocated solo counts with IRS Schedule C principal-business-code counts or a Census custom tabulation [G02].
 4. Do a competitive teardown for the P1 and P2 trades to replace judgment scores for competitive whitespace (D7) [G09].
