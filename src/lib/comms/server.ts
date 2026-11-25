@@ -88,9 +88,14 @@ export async function accountBranding(admin: Db, accountId: string) {
 
 /** Estimates (and their schedules) that belong to the account. Never another company's rows. */
 export async function loadEstimateFacts(admin: Db, accountId: string, kind: "company" | "user"): Promise<EstimateFact[]> {
-  let q = admin.from("estimates").select("id, customer_id, customer_email, customer_name, title, trades, estimate_date, updated_at, pipeline_stage, stage_changed_at").limit(5000);
-  q = kind === "company" ? q.eq("company_id", accountId) : q.eq("user_id", accountId).is("company_id", null);
-  const { data: est } = await q;
+  const base = () => {
+    const q = admin.from("estimates").select("id, customer_id, customer_email, customer_name, title, trades, estimate_date, updated_at, pipeline_stage, stage_changed_at").limit(5000);
+    return kind === "company" ? q.eq("company_id", accountId) : q.eq("user_id", accountId).is("company_id", null);
+  };
+  // Deleted bids are kept for the audit trail but never trigger customer messages. Before the soft-delete
+  // migration runs the column doesn't exist yet: read without the filter then.
+  const first = await base().is("deleted_at", null);
+  const est = first.error ? (await base()).data : first.data;
   const rows = (est ?? []) as Row[];
   const ids = rows.map((r) => String(r.id));
   const sched = new Map<string, Row>();

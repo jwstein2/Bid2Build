@@ -22,6 +22,11 @@ const MESSAGES: Record<string, [number, string]> = {
   use_set_estimate_stage: [409, "Change the stage from Team bids."],
   bid_signed: [409, "This bid was e-signed, so it stays Won or later. Move it to Lost / Declined if the job was cancelled."],
   not_won: [409, "Mark the bid Approved / Won before scheduling the job."],
+  // Deleting bids (delete_estimate): records that must stay visible.
+  delete_signed: [409, "This bid was e-signed, so it stays on record. Move it to Lost / Declined, or archive it from the Table view."],
+  delete_won: [409, "Won bids and jobs stay on record. Move it to Lost / Declined if the job was cancelled."],
+  delete_has_project: [409, "This bid has a project or change orders, so it stays on record. Move it to Lost / Declined if the job was cancelled."],
+  delete_has_invoices: [409, "This bid has invoices or payments in Financials, so it stays on record. Move it to Lost / Declined, or archive it."],
   invalid_date: [400, "Choose a date that isn't in the future."],
   no_verified_email: [409, "This person has no verified email address on their account."],
   // V6.7 workspace access
