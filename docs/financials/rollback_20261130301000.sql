@@ -9,6 +9,8 @@ drop function if exists public.assemblies_company_guard();
 
 drop policy if exists assembly_items_company_select on public.assembly_items;
 drop policy if exists assembly_items_company_update on public.assembly_items;
+drop policy if exists assembly_items_company_insert on public.assembly_items;  -- added by 20270229001000
+drop policy if exists assembly_items_company_delete on public.assembly_items;  -- added by 20270229001000
 drop policy if exists assemblies_company_select on public.assemblies;
 drop policy if exists assemblies_company_update on public.assemblies;
 drop policy if exists assemblies_company_delete on public.assemblies;

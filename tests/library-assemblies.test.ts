@@ -67,3 +67,30 @@ describe("scaling assemblies", () => {
     expect(libraryOpSchema.safeParse({ kind: "item", action: "favorite", payload: { id, on: true } }).success).toBe(true);
   });
 });
+
+describe("stacks built on Saved Items & Pricing", () => {
+  const item = { id: "11111111-1111-4111-8111-111111111111", name: "Dumpster", trade: "roofing", category: "Tear-Off", costType: "other" as const, treatment: "pass_through" as const, unit: "each", unitCost: "450", taxable: false, quantity: "", pricingOverride: { mode: "markup" as const, percent: "10" } };
+
+  it("copies a saved item into a stack row with quantity 1 by default and no markup on billed-at-cost items", async () => {
+    const { stackRowFromSaved } = await import("@/lib/library/saved-items");
+    const r = stackRowFromSaved(item, "22222222-2222-4222-8222-222222222222");
+    expect(r).toMatchObject({ id: "22222222-2222-4222-8222-222222222222", name: "Dumpster", unit: "each", unitCost: "450", quantity: "1", pricingOverride: null });
+    expect(stackRowFromSaved({ ...item, quantity: " 2 " }).quantity).toBe("2");
+  });
+
+  it("lists what stops a stack from saving", async () => {
+    const { stackDraftProblems } = await import("@/lib/library/saved-items");
+    expect(stackDraftProblems({ name: "", items: [] })).toEqual(["Give the stack a name.", "Add at least one saved item."]);
+    expect(stackDraftProblems({ name: "Demo", items: [{ quantity: "2" }] })).toEqual([]);
+    expect(stackDraftProblems({ name: "Demo", items: [{ quantity: "0" }] })).toContain("Quantities must be numbers above 0.");
+    expect(stackDraftProblems({ name: "Demo", items: [{ quantity: "1", per: "x" }], scale: { unit: "square", label: "Roof" } }).length).toBe(1);
+    expect(stackDraftProblems({ name: "Demo", items: [{ quantity: "1", per: "3", wastePct: "10" }], scale: { unit: "square", label: "Roof" } })).toEqual([]);
+  });
+
+  it("accepts a stack update and never lets it change sharing", () => {
+    const payload = { id: "33333333-3333-4333-8333-333333333333", name: "Demo", trade: null, scale: null, items: [{ ...item, quantity: "1" }], company: true };
+    const parsed = libraryOpSchema.parse({ kind: "stack", action: "update", payload });
+    expect(parsed.action).toBe("update");
+    expect("company" in parsed.payload).toBe(false);
+  });
+});
