@@ -122,7 +122,7 @@ describe("company-managed bids (Team) and Single project total", () => {
   });
 
   it("a company price display setting is respected when members can't customize", () => {
-    const p = policy({ style: { displayMode: "by_group" } });
+    const p = policy({ style: { displayMode: "by_group" }, canOverride: false });
     const r = resolveProposalStyle({ policy: p, estimate: withMode(base, "project_total"), business, config });
     expect(r.estimate.displayMode).toBe("by_group");
     expect(canEditStyleKey(p, "displayMode")).toBe(false);

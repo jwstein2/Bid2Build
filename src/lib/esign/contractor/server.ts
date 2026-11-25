@@ -40,7 +40,22 @@ export async function signingTenant(admin: SupabaseClient, userId: string): Prom
     admin.from("companies").select("name, owner_user_id").eq("id", m.company_id).maybeSingle(),
     admin.rpc("contractor_can_manage_signing", { p_actor: userId, p_company: m.company_id }),
   ]);
-  return { companyId: m.company_id, companyName: c?.name ?? null, role: m.role, isOwner: c?.owner_user_id === userId, canManage: Boolean(can) };
+  let companyName = (c?.name as string | null | undefined)?.trim() || null;
+  if (isPlaceholderCompanyName(companyName) && c?.owner_user_id) {
+    // Workspaces created before the owner filled in their business profile got the placeholder name
+    // "My company". Never put that in signature wording: use the owner's business name, or none at all
+    // (the wording then falls back to neutral text such as "the company").
+    const { data: bp } = await admin.from("business_profiles").select("company_name").eq("user_id", c.owner_user_id).maybeSingle();
+    const real = (bp?.company_name as string | null | undefined)?.trim() || null;
+    companyName = real && !isPlaceholderCompanyName(real) ? real : null;
+  }
+  return { companyId: m.company_id, companyName, role: m.role, isOwner: c?.owner_user_id === userId, canManage: Boolean(can) };
+}
+
+/** True for the default names given to a company workspace before the owner set a real one. */
+export function isPlaceholderCompanyName(name: string | null | undefined): boolean {
+  const n = name?.trim().toLowerCase();
+  return n === "my company";
 }
 
 /**
