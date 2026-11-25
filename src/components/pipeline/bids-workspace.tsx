@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import type { FeatureId } from "@/lib/features/registry";
 import { REVEAL_FEATURE_EVENT } from "@/lib/features/state";
 import { FeatureHelp } from "@/components/features/feature-help";
@@ -232,6 +233,7 @@ export function BidsWorkspace({ bids, history, esign, table, pay, paySaved, migr
           <p className="text-xs text-muted">
             Showing each bid&apos;s current stage{range === "all" ? "" : `, filtered by ${field === "created" ? "created date" : "last activity"}: ${rangeLabel}`}. {shown.length} bid{shown.length === 1 ? "" : "s"}.
             <span className="hidden md:inline"> Drag cards between stages, or use ⋮ to move. Click a stage name to see all of its bids.</span><span className="md:hidden"> Swipe sideways for more stages. Use ⋮ on a card to move it.</span>
+            {" "}<Link href="/dashboard/deleted" className="font-semibold text-brand hover:underline" data-testid="recently-deleted-link">Recently deleted</Link>
           </p>
           {bids.length === 0 ? (
             <Card className="p-10 text-center"><p className="font-semibold">No bids yet.</p><p className="mt-1 text-sm text-muted">Create a bid and it shows up here as a Draft.</p></Card>

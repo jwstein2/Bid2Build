@@ -5,6 +5,7 @@ import { z } from "zod";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { loadEstimate } from "@/lib/data/server";
 import { estimateOptionsToStore, worksheetToStore } from "@/lib/data/mappers";
+import { companyRpcError } from "@/lib/enterprise/errors";
 
 const id = z.string().uuid();
 
@@ -29,11 +30,20 @@ export async function setArchived(estimateId: string, archived: boolean) {
   revalidatePath("/dashboard");
 }
 
-export async function deleteEstimate(estimateId: string) {
+/**
+ * Deletes (hides) a bid. Nothing is erased: delete_estimate keeps the row with who, when and why in the audit
+ * trail, so it can be restored from Recently deleted. Returns a plain-language error, or null when it worked.
+ */
+export async function deleteEstimate(estimateId: string, reason?: string): Promise<string | null> {
   const { supabase } = await ctx();
-  if (!id.safeParse(estimateId).success) return;
-  await supabase.from("estimates").delete().eq("id", estimateId);
+  if (!id.safeParse(estimateId).success) return "That bid isn't available to you.";
+  const { error } = await supabase.rpc("delete_estimate", { p_estimate_id: estimateId, p_reason: reason?.trim().slice(0, 500) || null });
+  if (error) {
+    if (/function .*delete_estimate|could not find the function/i.test(error.message ?? "")) return "Deleting bids needs a quick database update. Please try again later.";
+    return companyRpcError(error).message;
+  }
   revalidatePath("/dashboard");
+  return null;
 }
 
 export async function duplicateEstimate(estimateId: string) {
