@@ -204,7 +204,7 @@ export function DraftReview({ id, reused = false }: { id: string; reused?: boole
       )}
 
       {!archived && items.length > 0 && (
-        <div className="sticky top-0 z-10 -mx-4 space-y-2 border-b border-line bg-paper/95 px-4 py-2 backdrop-blur sm:mx-0 sm:rounded-lg sm:border" data-guide="generate.toolbar">
+        <div className="sticky top-[var(--app-sticky-top)] z-10 -mx-4 space-y-2 border-b border-line bg-paper/95 px-4 py-2 backdrop-blur sm:mx-0 sm:rounded-lg sm:border" data-guide="generate.toolbar">
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative min-w-0 basis-full sm:basis-auto sm:flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />

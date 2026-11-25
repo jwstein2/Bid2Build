@@ -25,7 +25,7 @@ export function FirstBidStart({ companyName }: { companyName: string | null }) {
             </Link>
           </li>
         ))}
-        <li><Link href="/bids" className="inline-flex min-h-11 items-center rounded-full px-3 py-1.5 text-sm font-semibold text-accent-ink underline">All trades</Link></li>
+        <li><Link href="/new-bid" className="inline-flex min-h-11 items-center rounded-full px-3 py-1.5 text-sm font-semibold text-accent-ink underline">All trades</Link></li>
       </ul>
       <p className="mt-3 text-sm text-muted">Then: add your customer and project, price the estimate, preview the proposal, and download or send it.</p>
     </section>

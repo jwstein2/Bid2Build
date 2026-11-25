@@ -78,7 +78,7 @@ export type WorkspaceSwitch = { href: string; label: string };
 export const ESSENTIAL_HREFS = new Set(["/home", "/clock", "/dashboard", "/dashboard/customers", "/dashboard/items", "/dashboard/templates"]);
 const MORE_KEY = "b2b:nav-more-open";
 
-export function AppSidebar({ essentials = false, isAdmin, email, company, access = null, projects = false, clock = false, financials = false, home = false, theme = null, learning, switches = [], bell = null, practice = false, demo = null }: { /** New solo account: show the essentials and fold the rest under "More tools". */ essentials?: boolean; isAdmin: boolean; /** Practice Mode switch in the Help section (on for everyone unless PRACTICE_MODE=off). */ practice?: boolean; /** Active demo / practice session, if any. */ demo?: DemoSessionKind | null; email: string | null; company?: CompanyNav | null; access?: SidebarAccess | null; projects?: boolean; clock?: boolean; financials?: boolean; home?: boolean; theme?: ThemePref | null; learning?: LearningNav | null; switches?: WorkspaceSwitch[]; /** Phone top bar notifications (the desktop copy sits in the page header). */ bell?: ReactNode }) {
+export function AppSidebar({ essentials = false, isAdmin, email, company, access = null, projects = false, clock = false, financials = false, home = false, theme = null, learning, switches = [], signedInAs = null, bell = null, practice = false, demo = null }: { /** "Logged in as" company name (Enterprise company, else Company profile); null shows the email. */ signedInAs?: string | null; /** New solo account: show the essentials and fold the rest under "More tools". */ essentials?: boolean; isAdmin: boolean; /** Practice Mode switch in the Help section (on for everyone unless PRACTICE_MODE=off). */ practice?: boolean; /** Active demo / practice session, if any. */ demo?: DemoSessionKind | null; email: string | null; company?: CompanyNav | null; access?: SidebarAccess | null; projects?: boolean; clock?: boolean; financials?: boolean; home?: boolean; theme?: ThemePref | null; learning?: LearningNav | null; switches?: WorkspaceSwitch[]; /** Phone top bar notifications (the desktop copy sits in the page header). */ bell?: ReactNode }) {
   // In a company, say whose bids and whose subscription each link is ("Team bids" is in the Company section).
   const own = (n: NavItem): NavItem => (!company ? n : n.href === "/dashboard" ? { ...n, label: "My bids" } : n.href === "/settings/billing" ? { ...n, label: "My subscription" } : n);
   const shown = (href: string) => !access?.hidden.includes(href);
@@ -149,7 +149,7 @@ export function AppSidebar({ essentials = false, isAdmin, email, company, access
       <div className="flex items-center justify-between gap-1 px-3 py-3 max-[359px]:px-2 sm:gap-2 sm:px-4 md:py-4">
         <Logo tone="dark" href={home ? "/home" : "/dashboard"} />
         <div className="flex items-center gap-1 max-[380px]:gap-0 md:hidden">
-          <ButtonLink href="/bids" variant="accent" size="sm" className="min-h-11 max-[380px]:px-2.5 max-[359px]:min-w-11 max-[359px]:px-0" data-guide="bids.new-bid" aria-label="New bid">
+          <ButtonLink href="/new-bid" variant="accent" size="sm" className="min-h-11 max-[380px]:px-2.5 max-[359px]:min-w-11 max-[359px]:px-0" data-guide="bids.new-bid" aria-label="New bid">
             <FileText className="h-4 w-4 max-[440px]:hidden max-[359px]:block" aria-hidden /><span className="max-[359px]:sr-only">New bid</span>
           </ButtonLink>
           <SearchIconButton tone="dark" />
@@ -169,9 +169,14 @@ export function AppSidebar({ essentials = false, isAdmin, email, company, access
           </button>
         </div>
       </div>
-      <div className="hidden px-3 md:block"><ButtonLink href="/bids" variant="accent" className="w-full"><FileText className="h-4 w-4" aria-hidden /> Create New Bid</ButtonLink></div>
-      {/* Phone "you are here" label; Home's own heading already says it, so it is left out there. */}
-      {!open && current && current.href !== "/home" && <p className="flex items-center gap-1.5 px-4 pb-2 text-xs text-[#B8C6D4] md:hidden" data-testid="nav-current">{current.label}{"premium" in current && current.premium && <PremiumDiamond tone="dark" />}</p>}
+      <div className="-mt-2 hidden px-5 pb-3 md:block"><SignedInAs name={signedInAs} email={email} /></div>
+      <div className="hidden px-3 md:block"><ButtonLink href="/new-bid" variant="accent" className="w-full"><FileText className="h-4 w-4" aria-hidden /> Create New Bid</ButtonLink></div>
+      {/* Phones: one line under the bar, "Logged in as <company>" on the left and the "you are here" page on the
+          right (Home's own heading already says where you are, so the page is left out there). */}
+      <div className="flex items-center gap-3 px-4 pb-2 text-xs text-[#B8C6D4] md:hidden">
+        <SignedInAs name={signedInAs} email={email} inline />
+        {!open && current && current.href !== "/home" && <p className="ml-auto flex shrink-0 items-center gap-1.5" data-testid="nav-current">{current.label}{"premium" in current && current.premium && <PremiumDiamond tone="dark" />}</p>}
+      </div>
       <nav id="account-nav" aria-label="Account" className={cn("flex-col gap-1 px-2 pb-3 md:mt-4 md:flex", open ? "flex max-md:motion-drop-in" : "hidden")}>
         {bell && <ThemeToggle signedIn account={theme} tone="dark" label className={cn(item, "w-full justify-start text-[#C9D6E3] hover:text-white md:hidden")} />}
         {primary.map((n) => link(n))}
@@ -259,5 +264,21 @@ export function AppSidebar({ essentials = false, isAdmin, email, company, access
       {/* md:pb-20 reserves room under the email for the fixed Guide button, so it never covers Sign out. */}
       <p className="mt-auto hidden truncate border-t border-white/10 px-5 pb-20 pt-4 text-xs text-[#B8C6D4] md:block">{email}</p>
     </>
+  );
+}
+
+/**
+ * Always-visible "Logged in as / <company>" (2026-11-24). Links to the Company profile, where the name is set.
+ * When multi-company switching arrives, this is the spot for the company picker.
+ */
+function SignedInAs({ name, email, inline = false }: { name: string | null; email: string | null; inline?: boolean }) {
+  const shown = name ?? email;
+  if (!shown) return null;
+  return (
+    <Link href="/settings/company" title={`Logged in as ${shown}${name && email ? ` (${email})` : ""}`} data-testid="signed-in-as"
+      className={cn("group block min-w-0 rounded-md text-[#B8C6D4] hover:text-white focus-visible:outline-2 focus-visible:outline-cyan", inline ? "truncate" : "leading-tight")}>
+      <span className={cn(inline ? "" : "block text-[11px] uppercase tracking-[0.14em]")}>Logged in as</span>{inline ? " " : null}
+      <span className={cn("font-semibold text-white", inline ? "" : "block truncate text-sm")} data-testid="signed-in-as-name">{shown}</span>
+    </Link>
   );
 }

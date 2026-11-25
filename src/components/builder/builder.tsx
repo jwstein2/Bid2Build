@@ -473,12 +473,12 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
       {/* Universal search (V6.4): Ctrl/Cmd+K and the header icon, for signed-in builders. */}
       {user && <GlobalSearchHost />}
       {/* Project header */}
-      <header ref={headerRef} className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur no-print">
+      <header ref={headerRef} className="sticky top-[var(--b2b-banner-h)] z-30 border-b border-line bg-surface/95 backdrop-blur no-print">
         <div className="mx-auto flex max-w-[1400px] flex-wrap items-center gap-x-4 gap-y-2 px-3 py-2 sm:px-5">
           <div className="flex shrink-0 items-center gap-2">
             <Link href={user ? "/dashboard" : "/"} className="inline-flex h-9 items-center gap-1.5 rounded-md px-2 text-sm font-semibold text-accent-ink hover:bg-black/5" aria-label={user ? "Dashboard" : "Home"} data-testid="builder-home"><Home className="h-4 w-4" aria-hidden /><span className="hidden 2xl:inline">{user ? "Dashboard" : "Home"}</span></Link>
             {user && <SearchIconButton className="h-9 min-h-9 min-w-9" />}
-            <span className="hidden lg:block"><Logo className="text-base" /></span>
+            {!user && <span className="hidden lg:block"><Logo className="text-base" /></span>}
           </div>
           <div className="min-w-0 flex-1">
             <label htmlFor="est-title" className="sr-only">Project title</label>
@@ -582,7 +582,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
         )}
         {user && !(user.verified ?? user.emailVerified) && <Notice tone="warn" className="mb-4" title="Verify your email">Check your inbox for the verification link to unlock PDF downloads.</Notice>}
         {lastTrash && (
-          <div className="on-dark fixed bottom-20 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-full bg-ink px-4 py-2 text-sm text-white shadow-lg lg:bottom-6" role="status">
+          <div className="on-dark fixed bottom-20 left-1/2 md:left-[calc(50%+var(--app-sidebar-w,0px)/2)] z-40 flex -translate-x-1/2 items-center gap-3 rounded-full bg-ink px-4 py-2 text-sm text-white shadow-lg lg:bottom-6" role="status">
             {lastTrash.kind === "trade" ? `Removed ${lastTrash.label} and its sections` : `Deleted ${lastTrash.label}`}
             <button onClick={() => dispatch({ type: "undo" })} className="inline-flex items-center gap-1 font-semibold text-accent underline"><Undo2 className="h-4 w-4" /> Undo</button>
           </div>
@@ -633,7 +633,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
       </main>
 
       {/* Mobile persistent total */}
-      <div className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 border-t border-line bg-surface px-4 py-3 shadow-[0_-4px_12px_rgb(0_0_0/0.06)] lg:hidden no-print">
+      <div className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 md:left-[var(--app-sidebar-w,0px)] border-t border-line bg-surface px-4 py-3 shadow-[0_-4px_12px_rgb(0_0_0/0.06)] lg:hidden no-print">
         <div>
           <p className="text-xs text-muted">Proposal total</p>
           <p className="tabular font-display text-lg font-extrabold text-navy">{formatCurrency(totals.total)}</p>

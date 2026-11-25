@@ -14,6 +14,7 @@ import { POST_KINDS, US_STATES } from "@/lib/academy/types";
 import { openGraphFor } from "@/lib/seo/open-graph";
 import { site } from "@/lib/site";
 import { createPost } from "./actions";
+import { FileDrop } from "@/components/ui/file-drop";
 
 const title = "Contractor Academy Community";
 const description = "A professional community where contractors learn selling, estimating, project management, hiring and financials together, organized by trade.";
@@ -133,9 +134,9 @@ async function MemberFeed({ s, me, userId, trades, tradeName }: { s: (k: string)
               </label>
               <label className="text-sm font-semibold">Link (optional)<input name="link_url" type="url" maxLength={500} placeholder="https://" className={`${input} mt-1`} /></label>
             </div>
-            <label className="text-sm font-semibold">Image (optional, JPG/PNG/WebP up to 5 MB)
+            <FileDrop className="rounded-lg"><label className="text-sm font-semibold">Image (optional, JPG/PNG/WebP up to 5 MB)
               <input name="image" type="file" accept="image/jpeg,image/png,image/webp" className="mt-1 block w-full text-sm" />
-            </label>
+            </label></FileDrop>
             <div className="flex justify-end"><Submit pending="Posting…">Post</Submit></div>
           </form>
         </details>
