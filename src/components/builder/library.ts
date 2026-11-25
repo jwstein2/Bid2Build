@@ -117,11 +117,16 @@ export function useLibrary(signedIn: boolean) {
         items: x.items.map((i) => { const u = items.find((y) => y.id === i.id); return u ? { ...i, per: scale ? u.per : undefined, wastePct: scale ? u.wastePct : undefined, roundUp: scale ? u.roundUp : undefined } : i; }),
       })),
     }, { kind: "stack", action: "scale", payload: { id, scale, items } });
+  /** Replaces a stack's name, trade, scaling and rows (built on Saved Items & Pricing). */
+  const updateStack = (stack: SavedStack) => {
+    const payload = { id: stack.id, name: stack.name, trade: stack.trade ?? null, scale: stack.scale ?? null, items: stack.items };
+    return run({ ...libRef.current, stacks: libRef.current.stacks.map((x) => (x.id === stack.id ? { ...x, ...payload } : x)) }, { kind: "stack", action: "update", payload });
+  };
   const renameStack = (id: string, name: string) =>
     run({ ...libRef.current, stacks: libRef.current.stacks.map((x) => (x.id === id ? { ...x, name } : x)) }, { kind: "stack", action: "rename", payload: { id, name } });
   const removeStack = (id: string) => run({ ...libRef.current, stacks: libRef.current.stacks.filter((x) => x.id !== id) }, { kind: "stack", action: "remove", payload: { id } });
 
-  return { ...lib, signedIn, loaded, reload, addItem, updateItem, removeItem, saveLine, saveStack, addStack, renameStack, removeStack, toggleFavorite, shareStack, setStackScale };
+  return { ...lib, signedIn, loaded, reload, addItem, updateItem, removeItem, saveLine, saveStack, addStack, updateStack, renameStack, removeStack, toggleFavorite, shareStack, setStackScale };
 }
 
 export type Library = ReturnType<typeof useLibrary>;

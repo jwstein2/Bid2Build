@@ -189,6 +189,47 @@ export async function POST(req: Request) {
       // Don't leave an empty stack behind if its rows were refused.
       if (error) await supabase.from("assemblies").delete().eq("id", s.id);
     }
+  } else if (o.kind === "stack" && o.action === "update") {
+    // Built on Saved Items & Pricing: name, trade, scaling and rows in one go. RLS and the company-template
+    // guards decide who may change it (own stack, or a company template with company pricing permission).
+    const s = o.payload;
+    const head = await supabase.from("assemblies").update({
+      name: s.name, trade: s.trade || null,
+      scale_unit: s.scale?.unit ?? null, scale_label: s.scale ? s.scale.label : null, scale_calc: s.scale?.calc ?? null,
+    }).eq("id", s.id).select("id");
+    error = head.error; affected = head.data?.length ?? 0;
+    if (!error && affected) {
+      const { data: have, error: readErr } = await supabase.from("assembly_items").select("id").eq("assembly_id", s.id).limit(1000);
+      error = readErr;
+      const existing = new Set((have ?? []).map((r: any) => r.id as string));
+      const rowFor = (i: (typeof s.items)[number], k: number) => ({
+        ...stackItemRow(i), quantity: i.quantity || "1", sort_order: k,
+        qty_per: s.scale && i.per ? i.per : null, waste_pct: (s.scale && i.wastePct) || 0, round_up: Boolean(s.scale && i.roundUp),
+      });
+      // Kept rows are updated in place; new rows are inserted before removed rows are deleted, so a refusal
+      // part-way never leaves the stack with fewer rows than it had.
+      for (const [k, i] of s.items.entries()) {
+        if (error || !existing.has(i.id)) continue;
+        const row = rowFor(i, k);
+        let r = await supabase.from("assembly_items").update(row).eq("id", i.id).eq("assembly_id", s.id);
+        if (missingOverrideColumn(r.error)) r = await supabase.from("assembly_items").update(dropOverride(row)).eq("id", i.id).eq("assembly_id", s.id);
+        error = r.error;
+      }
+      const fresh = s.items.map((i, k) => ({ i, k })).filter(({ i }) => !existing.has(i.id))
+        .map(({ i, k }) => ({ id: i.id, ...rowFor(i, k), assembly_id: s.id, user_id: user.id }));
+      if (!error && fresh.length) {
+        ({ error } = await supabase.from("assembly_items").insert(fresh));
+        if (missingOverrideColumn(error)) ({ error } = await supabase.from("assembly_items").insert(fresh.map(dropOverride)));
+      }
+      const keep = new Set(s.items.map((i) => i.id));
+      const gone = [...existing].filter((id) => !keep.has(id));
+      if (!error && gone.length) {
+        const d = await supabase.from("assembly_items").delete().in("id", gone).eq("assembly_id", s.id).select("id");
+        error = d.error;
+        // Before SQL 20270229001000, only a company template's creator may remove its rows.
+        if (!error && (d.data?.length ?? 0) < gone.length) return fail(403, "company_rows_locked", "Some rows of this company template couldn't be removed. Ask your account owner to finish the Saved Stacks update, or remove them from the stack's creator account.");
+      }
+    }
   } else if (o.kind === "stack" && o.action === "rename") {
     const r = await supabase.from("assemblies").update({ name: o.payload.name }).eq("id", o.payload.id).select("id");
     error = r.error; affected = r.data?.length ?? 0;
@@ -198,6 +239,10 @@ export async function POST(req: Request) {
   if (error) {
     if (/free_item_limit/i.test(error.message)) return fail(402, "free_item_limit", FREE_LIMIT_MESSAGE);
     if (/company_template_locked/i.test(error.message)) return fail(403, "company_template_locked", "Only people who manage company pricing can change company templates.");
+    // Adding rows to someone else's company template needs SQL 20270229001000; anything else refused by RLS is the plan.
+    if (o.kind === "stack" && o.action === "update" && /row-level security/i.test(error.message) && (await hasAccess(supabase))) {
+      return fail(403, "company_rows_locked", "New rows couldn't be added to this company template yet. Ask your account owner to finish the Saved Stacks update, or edit it from the stack's creator account.");
+    }
     if (/row-level security/i.test(error.message)) return fail(402, "premium_required", "Saved Items are part of Individual Unlimited. Upgrade to save and reuse your pricing.");
     return fail(500, "save_failed", "Could not update your Saved Items. Please try again.");
   }

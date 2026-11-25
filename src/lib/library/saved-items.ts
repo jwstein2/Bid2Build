@@ -142,6 +142,8 @@ export const libraryOpSchema = z.union([
   z.object({ kind: z.literal("item"), action: z.enum(["add", "update"]), payload: savedItemSchema }),
   z.object({ kind: z.literal("item"), action: z.literal("remove"), payload: z.object({ id: z.string().uuid() }) }),
   z.object({ kind: z.literal("stack"), action: z.literal("add"), payload: savedStackSchema }),
+  /** Replace a stack's name, trade, scaling and rows (built on Saved Items & Pricing). Sharing stays its own action. */
+  z.object({ kind: z.literal("stack"), action: z.literal("update"), payload: savedStackSchema.omit({ company: true, starterKey: true }) }),
   z.object({ kind: z.literal("stack"), action: z.literal("rename"), payload: z.object({ id: z.string().uuid(), name: z.string().trim().min(1).max(200) }) }),
   z.object({ kind: z.literal("stack"), action: z.literal("remove"), payload: z.object({ id: z.string().uuid() }) }),
   z.object({ kind: z.enum(["item", "stack"]), action: z.literal("favorite"), payload: z.object({ id: z.string().uuid(), on: z.boolean() }) }),
@@ -187,6 +189,31 @@ export function savedOverride(item: Pick<LineItem, "treatment" | "pricingOverrid
 export function overrideLabel(s: Pick<SavedItem, "treatment" | "pricingOverride">): string | null {
   const o = savedOverride({ treatment: s.treatment, pricingOverride: s.pricingOverride ?? null });
   return o ? `${Number(o.percent)}% ${o.mode}` : null;
+}
+
+/**
+ * A stack row copied from a Saved Item (built on Saved Items & Pricing, no estimate needed). Values are
+ * copied like everywhere else: editing the saved item later doesn't change the stack.
+ */
+export function stackRowFromSaved(s: SavedItem, id: string = crypto.randomUUID()): StackItem {
+  return {
+    id, name: s.name, description: s.description, trade: s.trade ?? null, category: s.category,
+    costType: s.costType, treatment: s.treatment, unit: s.unit, unitCost: s.unitCost, taxable: s.taxable,
+    pricingOverride: savedOverride({ treatment: s.treatment, pricingOverride: s.pricingOverride ?? null }),
+    quantity: s.quantity && s.quantity.trim() ? s.quantity.trim() : "1",
+  };
+}
+
+/** Problems that stop a stack built on the library page from saving, or [] when it can be saved. */
+export function stackDraftProblems(d: { name: string; items: Pick<StackItem, "quantity" | "per" | "wastePct">[]; scale?: StackScale | null }): string[] {
+  const out: string[] = [];
+  if (!d.name.trim()) out.push("Give the stack a name.");
+  if (!d.items.length) out.push("Add at least one saved item.");
+  if (d.items.length > 200) out.push("A stack can hold up to 200 items.");
+  if (d.scale && !d.scale.label.trim()) out.push("Name the measurement the stack scales by.");
+  if (d.items.some((i) => !/^\d*(\.\d*)?$/.test(i.quantity.trim()) || (i.quantity.trim() !== "" && Number(i.quantity) <= 0))) out.push("Quantities must be numbers above 0.");
+  if (d.scale && d.items.some((i) => (i.per && !/^\d*(\.\d{0,6})?$/.test(i.per)) || (i.wastePct && !/^(\d{1,2}(\.\d{1,2})?|100)$/.test(i.wastePct)))) out.push("Use numbers only for amount per unit and waste (waste 0 to 100).");
+  return out;
 }
 
 /** Trade and section of an estimate row, for filing it in the library. */
