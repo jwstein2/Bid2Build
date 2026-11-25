@@ -12,7 +12,8 @@
 import { z } from "zod";
 import { lineItemSchema } from "../estimate/schema";
 import type { CostType, EstimateGroup, LineItem, Estimate, PricingRule } from "../estimate/types";
-import { getTrade, tradeName } from "../trades/catalog";
+import { COST_TYPES, getTrade, tradeName } from "../trades/catalog";
+import { categoryKey, categoryPath, childCategory } from "./categories";
 import { sectionTrade } from "../estimate/trades";
 
 export interface SavedItem {
@@ -231,6 +232,31 @@ export function categoryOptions(trade: string | null | undefined, items: SavedIt
   return out;
 }
 
+/** Display label for a Type ("labor_material" → "Labor / Material"). */
+export const typeLabel = (t: string) => COST_TYPES.find((c) => c.value === t)?.label ?? t;
+
+/** The item's place in the combined Type › Category list, e.g. "Labor : Contractor". */
+export const itemPath = (i: Pick<SavedItem, "costType" | "category">) => categoryPath(typeLabel(i.costType), i.category);
+
+/**
+ * Choices for the combined Type › Category list, grouped under each Type: paths already used in this trade,
+ * the trade's estimate sections under the Types they use, then paths from other trades (so a near-duplicate
+ * is caught anywhere).
+ */
+export function pathOptions(trade: string | null | undefined, items: Pick<SavedItem, "costType" | "category" | "trade">[] = []): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  const push = (p: string) => { const k = categoryKey(p); if (k && !seen.has(k)) { seen.add(k); out.push(p); } };
+  const mine = (i: Pick<SavedItem, "trade">) => (i.trade ?? "") === (trade ?? "");
+  for (const i of items) if (mine(i)) push(itemPath(i));
+  if (trade) for (const g of getTrade(trade)?.template.groups ?? []) for (const t of new Set(g.items.map((x) => x.costType))) push(categoryPath(typeLabel(t), g.name));
+  for (const i of items) if (!mine(i)) push(itemPath(i));
+  for (const c of COST_TYPES) push(c.label);
+  // Read as a tree: each Type, then the categories under it (this trade's first, as pushed above).
+  const rootOf = (p: string) => { const k = COST_TYPES.findIndex((c) => p === c.label || p.startsWith(`${c.label} : `)); return k < 0 ? COST_TYPES.length : k; };
+  return out.map((p, k) => ({ p, k })).sort((a, b) => rootOf(a.p) - rootOf(b.p) || Number(a.p.includes(" : ")) - Number(b.p.includes(" : ")) || a.k - b.k).map((x) => x.p);
+}
+
 export interface LibraryCategory { name: string; items: SavedItem[] }
 export interface LibraryTrade { trade: string | null; name: string; categories: LibraryCategory[]; count: number }
 
@@ -252,21 +278,21 @@ export function organizeLibrary(items: SavedItem[], preferTrades: string[] = [])
     .sort(([a], [b]) => tradeOrder(a).localeCompare(tradeOrder(b)))
     .map(([t, list]) => {
       const sections = (t ? getTrade(t)?.template.groups ?? [] : []).map((g) => key(g.name));
-      const byCat = new Map<string, LibraryCategory>();
+      // Grouped by place in the combined list ("Material : Shingles"); trade sections keep template order.
+      const byCat = new Map<string, LibraryCategory & { child: string }>();
       for (const i of list) {
-        const name = clean(i.category) ?? "Uncategorized";
+        const name = itemPath(i);
         const k = key(name);
-        if (!byCat.has(k)) byCat.set(k, { name, items: [] });
+        if (!byCat.has(k)) byCat.set(k, { name, child: childCategory(i.category, typeLabel(i.costType)), items: [] });
         byCat.get(k)!.items.push(i);
       }
-      const catOrder = (c: LibraryCategory) => {
-        const k = key(c.name);
-        const p = sections.indexOf(k);
-        return p >= 0 ? `0${String(p).padStart(3, "0")}` : k === "uncategorized" ? "2" : `1${k}`;
+      const catOrder = (c: LibraryCategory & { child: string }) => {
+        const p = sections.indexOf(key(c.child));
+        return p >= 0 ? `0${String(p).padStart(3, "0")}${key(c.name)}` : `1${key(c.name)}`;
       };
       const categories = [...byCat.values()]
         .sort((a, b) => catOrder(a).localeCompare(catOrder(b)))
-        .map((c) => ({ ...c, items: [...c.items].sort(byUse) }));
+        .map((c) => ({ name: c.name, items: [...c.items].sort(byUse) }));
       return { trade: t || null, name: t ? tradeName(t) : "General", categories, count: list.length };
     });
 }
@@ -286,8 +312,8 @@ export function usageCounts(rowNames: (string | null | undefined)[]): Map<string
 export const usesFor = (counts: Map<string, number>, name: string) => counts.get(key(name)) ?? 0;
 
 /** Matches a search box against name, category, trade and description. */
-export function matchesQuery(i: Pick<SavedItem, "name" | "category" | "trade" | "description">, q: string): boolean {
+export function matchesQuery(i: Pick<SavedItem, "name" | "category" | "trade" | "description"> & { costType?: SavedItem["costType"] }, q: string): boolean {
   const s = key(q);
   if (!s) return true;
-  return [i.name, i.category, i.trade ? tradeName(i.trade) : "", i.description].some((v) => key(v).includes(s));
+  return [i.name, i.category, i.trade ? tradeName(i.trade) : "", i.description, i.costType ? typeLabel(i.costType) : ""].some((v) => key(v).includes(s));
 }

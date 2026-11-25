@@ -147,7 +147,9 @@ describe("Saved Items library helpers", () => {
     expect(org.map((t) => t.name)).toEqual(["Roofing", "Decks", "General"].map((n) => org.find((t) => t.name.startsWith(n.slice(0, 4)))!.name));
     expect(org[0].trade).toBe("roofing");
     expect(org.at(-1)!.name).toBe("General");
-    expect(org.at(-1)!.categories[0].name).toBe("Uncategorized");
+    // No category: grouped under its Type, the top of the combined list.
+    expect(org.at(-1)!.categories[0].name).toBe("Labor");
+    expect(org[0].categories.map((c) => c.name)).toContain("Labor : Shingles");
   });
 
   it("category suggestions reuse the trade's existing sections", () => {

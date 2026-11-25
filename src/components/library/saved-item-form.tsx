@@ -2,8 +2,8 @@
 import { Loader2 } from "lucide-react";
 import { useId, useState } from "react";
 import { COST_TYPES, UNITS, trades } from "@/lib/trades/catalog";
-import { categoryOptions, savedItemSchema, type SavedItem } from "@/lib/library/saved-items";
-import { categoryKey, resolveCategory } from "@/lib/library/categories";
+import { itemPath, pathOptions, savedItemSchema, typeLabel, type SavedItem } from "@/lib/library/saved-items";
+import { categoryPath, exactCategory, parseCategoryPath } from "@/lib/library/categories";
 import { CategoryCombobox } from "./category-combobox";
 import type { LibraryResult } from "../builder/library";
 import { Button } from "../ui/button";
@@ -31,13 +31,16 @@ export function SavedItemForm({ initial, items, onSave, onCancel, submitLabel = 
   const [err, setErr] = useState<string | null>(null);
   const set = (patch: Partial<SavedItem>) => setV((x) => ({ ...x, ...patch }));
   const customUnit = !(UNITS as readonly string[]).includes(v.unit);
-  const cats = categoryOptions(v.trade, items);
-  // Same-trade categories first, then ones used under other trades, so a near-duplicate is caught anywhere.
-  const allCats = [...cats, ...categoryOptions(null, items.map((i) => ({ ...i, trade: null })))].filter((c, k, a) => a.findIndex((x) => categoryKey(x) === categoryKey(c)) === k);
+  // Type and Category are one list: "Labor : Contractor" is Type Labor, category Contractor.
+  const [path, setPath] = useState(() => itemPath({ costType: initial.costType, category: initial.category ?? "" }));
+  const options = pathOptions(v.trade, items);
+  const parse = (text: string) => parseCategoryPath(text, COST_TYPES, v.costType);
+  const resolvePath = (text: string) => { const p = parse(text); return categoryPath(typeLabel(p.type), p.category); };
+  const picked = parse(exactCategory(resolvePath(path), options) ?? path);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    const clean = { ...v, category: resolveCategory(v.category ?? "", allCats), unitCost: v.unitCost.replace(/[$,\s]/g, ""), quantity: (v.quantity ?? "").replace(/[,\s]/g, "") };
+    const clean = { ...v, costType: picked.type, category: picked.category, unitCost: v.unitCost.replace(/[$,\s]/g, ""), quantity: (v.quantity ?? "").replace(/[,\s]/g, "") };
     const parsed = savedItemSchema.safeParse(clean);
     if (!parsed.success) {
       const errs = Object.fromEntries(parsed.error.issues.map((i) => [String(i.path[0]), i.message]));
@@ -74,13 +77,8 @@ export function SavedItemForm({ initial, items, onSave, onCancel, submitLabel = 
       </div>
       <div>
         <label className="label" htmlFor={f("category")}>Category</label>
-        <CategoryCombobox id={f("category")} value={v.category ?? ""} options={allCats} onChange={(category) => set({ category })} placeholder="Pick or type a new one" />
-      </div>
-      <div>
-        <label className="label" htmlFor={f("type")}>Type</label>
-        <select id={f("type")} className="field" value={v.costType} onChange={(e) => set({ costType: e.target.value as SavedItem["costType"] })}>
-          {COST_TYPES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-        </select>
+        <CategoryCombobox id={f("category")} value={path} options={options} onChange={setPath} resolve={resolvePath} describedBy={f("cathint")} placeholder="e.g. Labor : Contractor" />
+        <p id={f("cathint")} className="mt-1 text-xs text-muted" data-testid="category-type">Type: <b className="font-semibold text-ink-soft">{typeLabel(picked.type)}</b>. The first level is the type (Labor, Material, Equipment…). Add levels with a colon.</p>
       </div>
       <div>
         <label className="label" htmlFor={f("qty")}>Quantity <span className="font-normal text-muted">(default, optional)</span></label>

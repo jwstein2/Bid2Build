@@ -76,6 +76,8 @@ export function filterCategories(input: string, options: string[]): string[] {
 
 export interface CategoryDupGroup {
   trade: string | null;
+  /** The Type these spellings sit under ("" when the items carry none). */
+  costType: string;
   /** Spellings in this group, most-used first, with how many items use each. */
   names: { name: string; count: number }[];
   /** The spelling to merge into: the most used one (ties go to the one starting with a capital). */
@@ -83,15 +85,15 @@ export interface CategoryDupGroup {
 }
 
 /**
- * Near-duplicate category spellings within each trade (e.g. Roofing has "Labor" ×3, "labor" ×1, "Labour" ×1).
- * Categories are per trade, so the same name under two trades is not a duplicate.
+ * Near-duplicate category spellings within each trade and Type (e.g. Roofing › Labor has "Contractor" ×3,
+ * "contractor" ×1, "Contracter" ×1). The same name under another trade or Type is not a duplicate.
  */
-export function categoryDuplicates(items: { trade?: string | null; category?: string | null }[]): CategoryDupGroup[] {
+export function categoryDuplicates(items: { trade?: string | null; category?: string | null; costType?: string }[], rootLabel: (costType: string) => string = (c) => c): CategoryDupGroup[] {
   const byTrade = new Map<string, Map<string, number>>();
   for (const i of items) {
-    const name = tidyCategory(i.category);
+    const name = i.costType ? childCategory(i.category, rootLabel(i.costType)) : tidyCategory(i.category);
     if (!name) continue;
-    const t = i.trade ?? "";
+    const t = `${i.trade ?? ""}\u0000${i.costType ?? ""}`;
     const counts = byTrade.get(t) ?? new Map<string, number>();
     counts.set(name, (counts.get(name) ?? 0) + 1);
     byTrade.set(t, counts);
@@ -106,8 +108,50 @@ export function categoryDuplicates(items: { trade?: string | null; category?: st
       if (used.has(n.name)) continue;
       const group = names.filter((m) => !used.has(m.name) && (m.name === n.name || similarCategories(m.name, n.name)));
       group.forEach((m) => used.add(m.name));
-      if (group.length > 1) out.push({ trade: t || null, names: group, target: group[0].name });
+      const [trade, costType] = t.split("\u0000");
+      if (group.length > 1) out.push({ trade: trade || null, costType, names: group, target: group[0].name });
     }
   }
   return out;
+}
+
+/* ── One combined list: Type is the top level, categories nest under it ("Labor : Contractor"). ── */
+
+/** Separator between levels, as shown and as typed ("Labor : Contractor : Framing"). */
+export const PATH_SEP = " : ";
+
+/** Splits "Labor:Contractor : Framing" into tidy levels, dropping empties. */
+export const pathParts = (s?: string | null) => (s ?? "").split(":").map(tidyCategory).filter(Boolean);
+
+/** The top level of an item's category is its Type. Matches a typed root by label, value or a close spelling ("Labour", "Materials"). */
+export function matchRoot<T extends string>(input: string, roots: { value: T; label: string }[]): T | undefined {
+  const k = categoryKey(input);
+  if (!k) return undefined;
+  return (roots.find((r) => categoryKey(r.label) === k || r.value === k.replace(/[\s/]+/g, "_"))
+    ?? roots.find((r) => similarCategories(r.label, input)))?.value;
+}
+
+/** The item's category below its Type. A category that just repeats the Type ("Labor" on a labor item) counts as none. */
+export function childCategory(category: string | null | undefined, rootLabel: string): string {
+  const parts = pathParts(category);
+  if (parts.length && similarCategories(parts[0], rootLabel)) parts.shift();
+  return parts.join(PATH_SEP);
+}
+
+/** "Labor : Contractor" for a labor item in category Contractor; just "Labor" with no category. */
+export function categoryPath(rootLabel: string, category?: string | null): string {
+  const child = childCategory(category, rootLabel);
+  return child ? `${rootLabel}${PATH_SEP}${child}` : rootLabel;
+}
+
+/**
+ * Reads what was typed into the combined list. "Material : Shingles" → Material, "Shingles". Text that doesn't
+ * start with a Type stays under `fallback` (the Type picked so far), so "Contractor" → fallback, "Contractor".
+ */
+export function parseCategoryPath<T extends string>(input: string, roots: { value: T; label: string }[], fallback: T): { type: T; category: string; rootTyped: boolean } {
+  const parts = pathParts(input);
+  if (!parts.length) return { type: fallback, category: "", rootTyped: false };
+  const root = matchRoot(parts[0], roots);
+  if (root) return { type: root, category: parts.slice(1).join(PATH_SEP), rootTyped: true };
+  return { type: fallback, category: parts.join(PATH_SEP), rootTyped: false };
 }

@@ -190,7 +190,7 @@ describe("V4.3 amendment helpers", async () => {
       { id: "3", name: "Anchors", costType: "material", treatment: "marked_up", unit: "each", unitCost: "1", taxable: true, uses: 2 },
     ] as const;
     expect(frequentItems([...items]).map((i) => i.name)).toEqual(["Framing", "Anchors"]);
-    const lib = organizeLibrary([...items].map((i) => ({ ...i, category: "General" })));
+    const lib = organizeLibrary([...items].map((i) => ({ ...i, costType: "material" as const, category: "General" })));
     expect(lib[0].categories[0].items.map((i) => i.name)).toEqual(["Framing", "Anchors", "Drywall"]);
   });
 
