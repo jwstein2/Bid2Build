@@ -39,6 +39,7 @@ export function MySignature() {
   const c = data.credential;
   const t = data.settings.tenant;
   const auth = data.settings.myAuthorization;
+  const coName = t.companyName ?? "your company";
   const autoOn = Boolean(c?.auto_apply_authorized && !c.auto_apply_revoked_at);
 
   return (
@@ -48,11 +49,11 @@ export function MySignature() {
         {!t.companyId ? (
           <p className="mt-1 text-sm text-ink-soft">You sign for your own business. Your signing rules are in <Link className="font-semibold text-accent-ink underline" href="/settings/company/signing">Company profile → Proposal signing</Link>.</p>
         ) : t.isOwner ? (
-          <p className="mt-1 text-sm text-ink-soft">As the owner of <b>{t.companyName}</b>, you can sign contracts for the company. You decide who else can in <Link className="font-semibold text-accent-ink underline" href="/settings/company/signing">Company profile → Proposal signing</Link>.</p>
+          <p className="mt-1 text-sm text-ink-soft">As the owner of <b>{coName}</b>, you can sign contracts for the company. You decide who else can in <Link className="font-semibold text-accent-ink underline" href="/settings/company/signing">Company profile → Proposal signing</Link>.</p>
         ) : auth ? (
-          <p className="mt-1 text-sm text-ink-soft">The owner of <b>{t.companyName}</b> authorized you to sign {auth.scope === "company_bids" ? "any company contract" : "contracts for bids assigned to you"}{auth.title ? <> as <b>{auth.title}</b></> : null}, since {fmt(auth.grantedAt)}. Automatic application: <b>{auth.autoApplyAllowed ? "allowed by the company" : "not allowed by the company"}</b>.</p>
+          <p className="mt-1 text-sm text-ink-soft">The owner of <b>{coName}</b> authorized you to sign {auth.scope === "company_bids" ? "any company contract" : "contracts for bids assigned to you"}{auth.title ? <> as <b>{auth.title}</b></> : null}, since {fmt(auth.grantedAt)}. Automatic application: <b>{auth.autoApplyAllowed ? "allowed by the company" : "not allowed by the company"}</b>.</p>
         ) : (
-          <p className="mt-1 text-sm text-ink-soft">You aren&apos;t authorized to sign contracts for <b>{t.companyName}</b>. You can still set up your signature; only the company owner can authorize you to use it for the company.</p>
+          <p className="mt-1 text-sm text-ink-soft">You aren&apos;t authorized to sign contracts for <b>{coName}</b>. You can still set up your signature; only the company owner can authorize you to use it for the company.</p>
         )}
       </Card>
 
@@ -215,7 +216,7 @@ function SignatureForm({ data, onSaved, onCancel, onReauthed }: { data: Data; on
             <input id="ms-auto" type="checkbox" className="mt-1 h-5 w-5 shrink-0" checked={auto} onChange={(e) => setAuto(e.target.checked)} data-testid="auto-apply-consent" />
             <span className="text-sm text-ink-soft"><span className="font-semibold text-ink">Optional: automatic application. </span>{autoApplyText(wording)}</span>
           </label>
-          <p className="text-xs text-muted">Leave it unchecked to approve every contract yourself. Your company can also require that, whatever you choose here.</p>
+          <p className="pl-8 text-xs text-muted">Leave it unchecked to approve every contract yourself. Your company can also require that, whatever you choose here.</p>
         </div>
 
         {errors.form && <Notice tone="danger">{errors.form}</Notice>}
