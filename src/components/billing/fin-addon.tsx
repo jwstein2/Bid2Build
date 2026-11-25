@@ -1,5 +1,5 @@
 "use client";
-import { Landmark, Loader2 } from "lucide-react";
+import { Landmark } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { Button } from "../ui/button";
@@ -70,7 +70,7 @@ export function FinAddonCard({ active, periodEnd, annual, purchasable, hasPlan }
               <li>After that your books stay readable and exportable. Nothing is deleted.</li>
             </ul>
             <div className="mt-3 flex flex-wrap gap-2">
-              <Button variant="danger" onClick={() => call("remove")} disabled={busy !== null}>{busy === "remove" && <Loader2 className="h-4 w-4 animate-spin" />}Remove add-on</Button>
+              <Button loading={busy === "remove"} variant="danger" onClick={() => call("remove")} disabled={busy !== null}>Remove add-on</Button>
               <Button variant="secondary" onClick={() => setConfirmRemove(false)} disabled={busy !== null}>Keep it</Button>
             </div>
           </div>
@@ -78,7 +78,7 @@ export function FinAddonCard({ active, periodEnd, annual, purchasable, hasPlan }
         {!active && !preview && (
           !purchasable ? <p className="text-sm text-ink-soft">Coming soon. You&apos;ll be able to add Financials here shortly.</p>
           : !hasPlan ? <p className="text-sm text-ink-soft">Financials is added to the Individual Unlimited plan. <a href="/pricing" className="font-semibold underline">See plans</a></p>
-          : <Button onClick={() => call("preview")} disabled={busy !== null}>{busy === "preview" && <Loader2 className="h-4 w-4 animate-spin" />}Add Financials, {price}</Button>
+          : <Button loading={busy === "preview"} onClick={() => call("preview")} disabled={busy !== null}>Add Financials, {price}</Button>
         )}
         {preview && (
           <div role="dialog" aria-labelledby={`${id}-pv`} className="rounded-xl border border-line bg-paper p-4" data-testid="fin-preview">
@@ -91,7 +91,7 @@ export function FinAddonCard({ active, periodEnd, annual, purchasable, hasPlan }
             </dl>
             <p className="mt-2 text-xs text-ink-soft">Your card on file is charged now. If it&apos;s declined, nothing is added. No long-term contract: remove it any time; paid periods aren&apos;t refunded.</p>
             <div className="mt-3 flex flex-wrap gap-2">
-              <Button onClick={() => call("add")} disabled={busy !== null}>{busy === "add" && <Loader2 className="h-4 w-4 animate-spin" />}Confirm and pay {formatCents(preview.dueNowCents)}</Button>
+              <Button loading={busy === "add"} onClick={() => call("add")} disabled={busy !== null}>Confirm and pay {formatCents(preview.dueNowCents)}</Button>
               <Button variant="secondary" onClick={() => setPreview(null)} disabled={busy !== null}>Cancel</Button>
             </div>
           </div>

@@ -80,8 +80,8 @@ export function PhotosPanel({ estimateId, customerId, sections }: { estimateId?:
           <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_10rem_auto]">
             <input aria-label="Caption for these photos" className="field field-sm" placeholder="Caption (optional)" value={caption} onChange={(e) => setCaption(e.target.value)} maxLength={500} />
             <input aria-label="Date taken" type="date" className="field field-sm" value={takenOn} onChange={(e) => setTakenOn(e.target.value)} />
-            <Button size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
-              {uploading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Upload className="h-4 w-4" aria-hidden />} {uploading ? "Uploading…" : "Choose photos"}
+            <Button loading={uploading} size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
+              {!uploading && <Upload className="h-4 w-4" aria-hidden />} {uploading ? "Uploading…" : "Choose photos"}
             </Button>
           </div>
           <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/*" multiple hidden onChange={(e) => void upload(e.target.files)} data-testid="photo-input" />

@@ -184,7 +184,7 @@ export function UpdateComposer({ data, lastVersion, customerEmail, contactName, 
                 <span className="text-sm"><span className="font-semibold">I reviewed this preview.</span> Publishing saves this exact version as update {(lastVersion ?? 0) + 1}. It doesn&apos;t send anything: you choose how to share it next.</span>
               </label>
               <div className="flex justify-end">
-                <Button onClick={publish} disabled={!confirmed || !preview || loading || publishing} data-testid="publish-update">{publishing ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Send className="h-4 w-4" aria-hidden />} Publish update</Button>
+                <Button loading={publishing} onClick={publish} disabled={!confirmed || !preview || loading || publishing} data-testid="publish-update">{!publishing && <Send className="h-4 w-4" aria-hidden />} Publish update</Button>
               </div>
             </section>
           )}

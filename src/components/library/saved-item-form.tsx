@@ -1,5 +1,5 @@
 "use client";
-import { Loader2 } from "lucide-react";
+import {  } from "lucide-react";
 import { useId, useState } from "react";
 import { COST_TYPES, UNITS, trades } from "@/lib/trades/catalog";
 import { categoryOptions, savedItemSchema, type SavedItem } from "@/lib/library/saved-items";
@@ -134,7 +134,7 @@ export function SavedItemForm({ initial, items, onSave, onCancel, submitLabel = 
       {err && <p role="alert" className="text-sm text-danger sm:col-span-2">{err}</p>}
       <div className="flex flex-wrap justify-end gap-2 sm:col-span-2">
         <Button variant="ghost" onClick={onCancel} disabled={busy}>Cancel</Button>
-        <Button type="submit" disabled={busy}>{busy && <Loader2 className="h-4 w-4 animate-spin" />}{submitLabel}</Button>
+        <Button loading={busy} type="submit" disabled={busy}>{submitLabel}</Button>
       </div>
     </form>
   );

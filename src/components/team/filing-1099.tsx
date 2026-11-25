@@ -57,7 +57,7 @@ export function Filing1099({ year, count }: { year: number; count: number }) {
           <label className="block"><span className="label">Your EIN</span><input className="field" inputMode="numeric" autoComplete="off" maxLength={10} placeholder="12-3456789" value={f.ein} onChange={(e) => setF({ ...f, ein: e.target.value })} /></label>
           <label className="block"><span className="label">Address</span><input className="field" value={f.address} maxLength={500} onChange={(e) => setF({ ...f, address: e.target.value })} /></label>
           <label className="block"><span className="label">Phone</span><input className="field" value={f.phone} maxLength={40} onChange={(e) => setF({ ...f, phone: e.target.value })} /></label>
-          <div className="flex gap-2 sm:col-span-2"><Button size="sm" onClick={save} disabled={busy || !f.legalName.trim()}>{busy ? "Saving…" : "Save payer details"}</Button>{payer && <Button size="sm" variant="secondary" onClick={() => setEditing(false)}>Cancel</Button>}</div>
+          <div className="flex gap-2 sm:col-span-2"><Button loading={busy} size="sm" onClick={save} disabled={busy || !f.legalName.trim()}>{busy ? "Saving…" : "Save payer details"}</Button>{payer && <Button size="sm" variant="secondary" onClick={() => setEditing(false)}>Cancel</Button>}</div>
         </div>
       ) : (
         <p className="text-sm text-ink-soft">Payer: <b>{payer?.legalName}</b> · EIN {payer?.ein ?? "not set"} <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>Edit</Button></p>

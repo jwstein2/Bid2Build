@@ -83,7 +83,7 @@ export function ReminderSettings({ rules, canEdit, sendingOn, recent }: { rules:
           })}
           <p className="text-xs text-muted">Reminders go out after 9 AM in your time zone, at most one every two days per invoice. Replies go to your email. Change the wording from any invoice&apos;s email preview.</p>
           <div className="flex gap-2">
-            <Button type="button" disabled={busy} onClick={save} data-testid="reminders-save">{busy ? "Saving…" : "Save reminders"}</Button>
+            <Button loading={busy} type="button" disabled={busy} onClick={save} data-testid="reminders-save">{busy ? "Saving…" : "Save reminders"}</Button>
             <Button type="button" variant="secondary" disabled={busy} onClick={() => { setR(rules); setOpen(false); }}>Cancel</Button>
           </div>
         </div>

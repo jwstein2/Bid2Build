@@ -1,7 +1,5 @@
 "use client";
-import {
-  AlertTriangle, ArrowDown, ArrowUp, Check, ChevronDown, Heading, History, List, ListOrdered, Loader2, Maximize2, Minimize2, Plus, RefreshCw, RotateCcw, Sparkles, Trash2, Undo2, X,
-} from "lucide-react";
+import { AlertTriangle, ArrowDown, ArrowUp, Check, ChevronDown, Heading, History, List, ListOrdered, Maximize2, Minimize2, Plus, RefreshCw, RotateCcw, Sparkles, Trash2, Undo2, X } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import type { Estimate } from "@/lib/estimate/types";
 import type { ProposalConfig } from "@/lib/proposal/types";
@@ -196,8 +194,8 @@ function ScopeEditor({ estimate, signedIn, estimateId, fingerprint, canGenerate,
       />
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <Button size="sm" variant={hasText ? "secondary" : "accent"} onClick={generate} disabled={busy || !canGenerate} title={canGenerate ? undefined : "Add line items to your estimate first"}>
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : hasText ? <RefreshCw className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
+        <Button loading={busy} size="sm" variant={hasText ? "secondary" : "accent"} onClick={generate} disabled={busy || !canGenerate} title={canGenerate ? undefined : "Add line items to your estimate first"}>
+          {!busy && hasText ? <RefreshCw className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
           {hasText ? "Regenerate" : "Generate Scope from Bid"}
         </Button>
         {lastRevision && (
@@ -364,8 +362,8 @@ export function ExclusionsEditor({ estimate, signedIn, estimateId, fingerprint, 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <Button size="sm" variant="secondary" onClick={add}><Plus className="h-4 w-4" /> Add exclusion</Button>
         {!manualOnly && (
-          <Button size="sm" variant={approved.length || suggested.length ? "secondary" : "accent"} onClick={generate} disabled={busy || !canGenerate} title={canGenerate ? undefined : "Add line items to your estimate first"}>
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : value.generatedAt ? <RefreshCw className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
+          <Button loading={busy} size="sm" variant={approved.length || suggested.length ? "secondary" : "accent"} onClick={generate} disabled={busy || !canGenerate} title={canGenerate ? undefined : "Add line items to your estimate first"}>
+            {!busy && value.generatedAt ? <RefreshCw className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
             {value.generatedAt ? "Regenerate suggestions" : "Generate Exclusions from Bid"}
           </Button>
         )}

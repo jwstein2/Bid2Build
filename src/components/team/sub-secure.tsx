@@ -68,7 +68,7 @@ export function RequestDocsCard({ resourceId, requests, defaultEmail, now }: { r
           <label className="block"><span className="label">Their email (leave blank to just copy the link)</span><input type="email" className="field" value={email} maxLength={320} onChange={(e) => setEmail(e.target.value)} /></label>
           <label className="block"><span className="label">Note (optional)</span><input className="field" value={note} maxLength={1000} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Please list us as additional insured" /></label>
           <div className="flex gap-2">
-            <Button size="sm" onClick={create} disabled={busy || kinds.length === 0}>{busy ? "Creating…" : email.trim() ? "Send request" : "Create link"}</Button>
+            <Button loading={busy} size="sm" onClick={create} disabled={busy || kinds.length === 0}>{busy ? "Creating…" : email.trim() ? "Send request" : "Create link"}</Button>
             <Button size="sm" variant="secondary" onClick={() => setOpen(false)}>Cancel</Button>
           </div>
         </div>
@@ -135,7 +135,7 @@ export function FullTinCard({ resourceId, status, ready, tinType }: { resourceId
             <div className="grid gap-2 sm:grid-cols-[auto_1fr_auto]">
               <label className="block"><span className="label">Type</span><select className="field" value={type} onChange={(e) => setType(e.target.value as "ssn" | "ein")}><option value="ein">EIN</option><option value="ssn">SSN</option></select></label>
               <label className="block"><span className="label">9-digit number</span><input className="field" inputMode="numeric" autoComplete="off" maxLength={11} value={tin} onChange={(e) => setTin(e.target.value.replace(/[^\d-]/g, ""))} /></label>
-              <div className="flex items-end gap-2"><Button size="sm" onClick={save} disabled={busy}>{busy ? "Saving…" : "Save"}</Button><Button size="sm" variant="secondary" onClick={() => setEditing(false)}>Cancel</Button></div>
+              <div className="flex items-end gap-2"><Button loading={busy} size="sm" onClick={save} disabled={busy}>{busy ? "Saving…" : "Save"}</Button><Button size="sm" variant="secondary" onClick={() => setEditing(false)}>Cancel</Button></div>
             </div>
           ) : <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>{status.onFile ? "Replace" : "Enter full tax ID"}</Button>}
           <p className="text-xs text-muted">Encrypted before it&apos;s stored. Showing it hides again after 30 seconds, and every save and view is recorded with who did it.</p>

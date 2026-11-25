@@ -251,14 +251,15 @@ function StackRow({ stack: s, lib, say, onEdit, onRemoved }: { stack: SavedStack
   const canEdit = s.canEdit !== false;
   const [name, setName] = useState(s.name);
   const [err, setErr] = useState<string | null>(null);
+  const [renameBusy, setRenameBusy] = useState(false);
   return (
     <li className="px-4 py-2 text-sm" data-search-id={s.id}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         {renaming ? (
-          <form className="flex min-w-0 flex-1 flex-wrap items-center gap-2" onSubmit={async (e) => { e.preventDefault(); if (!name.trim()) return; const r = await lib.renameStack(s.id, name.trim()); if (r.ok) setRenaming(false); else setErr(r.message); }}>
+          <form className="flex min-w-0 flex-1 flex-wrap items-center gap-2" onSubmit={async (e) => { e.preventDefault(); if (!name.trim() || renameBusy) return; setRenameBusy(true); const r = await lib.renameStack(s.id, name.trim()).finally(() => setRenameBusy(false)); if (r.ok) setRenaming(false); else setErr(r.message); }}>
             <input className="field field-sm min-w-0 flex-1" value={name} maxLength={200} onChange={(e) => setName(e.target.value)} aria-label="Stack name" autoFocus />
-            <Button size="sm" type="submit">Save</Button>
-            <Button size="sm" variant="ghost" onClick={() => { setRenaming(false); setName(s.name); }}>Cancel</Button>
+            <Button size="sm" type="submit" loading={renameBusy}>{renameBusy ? "Saving…" : "Save"}</Button>
+            <Button size="sm" variant="ghost" onClick={() => { setRenaming(false); setName(s.name); }} disabled={renameBusy}>Cancel</Button>
           </form>
         ) : (
           <details className="group min-w-0 basis-full">
@@ -308,8 +309,14 @@ function ScaleEditor({ stack, onSave, onCancel }: { stack: SavedStack; onSave: (
   const set = (id: string, patch: Partial<RowScale>) => setRows((r) => r.map((x) => (x.id === id ? { ...x, ...patch } : x)));
   const bad = rows.some((r) => (r.per && !/^\d*(\.\d{0,6})?$/.test(r.per)) || (r.wastePct && !/^(\d{1,2}(\.\d{1,2})?|100)$/.test(r.wastePct)));
   const u = scale ? UNIT_ABBR[scale.unit] ?? scale.unit : "";
+  const [busy, setBusy] = useState(false);
   return (
-    <form className="mt-2 rounded-lg border border-line bg-paper p-3" data-testid="scale-editor" onSubmit={(e) => { e.preventDefault(); if (!bad && (!scale || scale.label.trim())) void onSave(scale, rows.map((r) => ({ ...r, per: r.per || undefined, wastePct: r.wastePct || undefined }))); }}>
+    <form className="mt-2 rounded-lg border border-line bg-paper p-3" data-testid="scale-editor" onSubmit={(e) => {
+      e.preventDefault();
+      if (busy || bad || (scale && !scale.label.trim())) return;
+      setBusy(true);
+      void onSave(scale, rows.map((r) => ({ ...r, per: r.per || undefined, wastePct: r.wastePct || undefined }))).finally(() => setBusy(false));
+    }}>
       <ScaleFields value={scale} onChange={setScale} />
       {scale && (
         <div className="mt-3 space-y-2">
@@ -329,7 +336,7 @@ function ScaleEditor({ stack, onSave, onCancel }: { stack: SavedStack; onSave: (
       {bad && <p role="alert" className="mt-2 text-xs text-danger">Use numbers only (waste 0 to 100).</p>}
       <div className="mt-3 flex justify-end gap-2">
         <Button size="sm" variant="ghost" onClick={onCancel}>Cancel</Button>
-        <Button size="sm" type="submit" disabled={bad} data-testid="scale-save">Save scaling</Button>
+        <Button size="sm" type="submit" loading={busy} disabled={bad} data-testid="scale-save">{busy ? "Saving…" : "Save scaling"}</Button>
       </div>
     </form>
   );
@@ -361,7 +368,7 @@ function TargetMargin({ initial, onSaved }: { initial: string; onSaved: (v: stri
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted">%</span>
             </div>
           </div>
-          <Button size="sm" variant="secondary" onClick={save} disabled={!valid || state === "saving"}>{state === "saving" ? "Saving…" : "Save"}</Button>
+          <Button loading={state === "saving"} size="sm" variant="secondary" onClick={save} disabled={!valid || state === "saving"}>{state === "saving" ? "Saving…" : "Save"}</Button>
         </div>
         <p className="text-xs text-muted">Margin is profit as a percent of the price. A 25% margin takes a 33.3% markup on cost.{state === "error" ? " Couldn't save. Try again." : ""}</p>
       </Card>

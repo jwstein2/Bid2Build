@@ -1,5 +1,5 @@
 "use client";
-import { Building2, History, Lock, LockOpen, Loader2 } from "lucide-react";
+import { Building2, History, Lock, LockOpen } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { buildProposal } from "@/lib/proposal/build";
@@ -137,7 +137,7 @@ export function ProposalStyleEditor({ initial, ownerBusiness, people }: { initia
         {!canStyle && <p className="text-xs text-muted">You can view the company style. Changing it needs &quot;Manage company proposal template&quot;.</p>}
 
         {msg && <p role={msg.tone === "danger" ? "alert" : "status"} className={cn("text-sm", msg.tone === "danger" ? "text-danger" : "text-ok")}>{msg.text}</p>}
-        {(canStyle || canPolicy) && <Button onClick={() => void save()} disabled={busy} data-testid="save-style">{busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />} Save company style</Button>}
+        {(canStyle || canPolicy) && <Button loading={busy} onClick={() => void save()} disabled={busy} data-testid="save-style"> Save company style</Button>}
         <p className="text-xs text-muted">Style never changes prices, and never alters a proposal that was already sent, approved or signed.</p>
 
         {initial.history.length > 0 && (

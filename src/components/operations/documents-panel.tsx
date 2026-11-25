@@ -229,7 +229,7 @@ function ChangeOrderEditor({ estimateId, co, onDone, onCancel }: { estimateId: s
       {err && <p className="text-sm text-danger" role="alert">{err}</p>}
       <div className="flex justify-end gap-2">
         <Button variant="ghost" onClick={onCancel} disabled={busy}>Cancel</Button>
-        <Button onClick={() => void save()} disabled={busy || !lines.some((l) => l.description.trim())}>{busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />} Save draft</Button>
+        <Button loading={busy} onClick={() => void save()} disabled={busy || !lines.some((l) => l.description.trim())}> Save draft</Button>
       </div>
       <p className="text-[11px] text-muted">Nothing is sent to the customer until you choose Send for signature or Mark sent.</p>
     </div>

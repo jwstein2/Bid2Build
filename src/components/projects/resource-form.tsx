@@ -122,7 +122,7 @@ export function ResourceForm({ initial, resources, people, me, companyMode, onCa
 
       {err && <Notice tone="danger">{err}</Notice>}
       <div className="flex gap-2">
-        <Button size="sm" onClick={save} disabled={busy || !name.trim()} data-testid="res-save">{busy ? "Saving…" : initial ? "Save changes" : "Add"}</Button>
+        <Button loading={busy} size="sm" onClick={save} disabled={busy || !name.trim()} data-testid="res-save">{busy ? "Saving…" : initial ? "Save changes" : "Add"}</Button>
         <Button size="sm" variant="secondary" onClick={onCancel}>Cancel</Button>
       </div>
     </div>

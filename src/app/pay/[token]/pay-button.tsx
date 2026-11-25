@@ -20,7 +20,7 @@ export function PayButton({ token, amount, label, method = "any", state, variant
   }
   return (
     <div>
-      <Button size="lg" variant={variant} className="w-full sm:w-auto" onClick={go} disabled={busy} data-testid={testId}>{busy ? "Opening secure payment…" : label ?? `Pay ${amount}`}</Button>
+      <Button loading={busy} size="lg" variant={variant} className="w-full sm:w-auto" onClick={go} disabled={busy} data-testid={testId}>{busy ? "Opening secure payment…" : label ?? `Pay ${amount}`}</Button>
       {error && <p role="alert" className="mt-2 text-sm text-danger">{error}</p>}
     </div>
   );

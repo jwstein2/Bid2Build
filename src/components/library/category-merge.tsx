@@ -1,5 +1,5 @@
 "use client";
-import { Loader2 } from "lucide-react";
+import {  } from "lucide-react";
 import { useState } from "react";
 import { categoryDuplicates, type CategoryDupGroup } from "@/lib/library/categories";
 import type { SavedItem } from "@/lib/library/saved-items";
@@ -60,7 +60,7 @@ function MergeRow({ group, items, onUpdate, onDone }: {
       <select id={`merge-${group.trade ?? "general"}-${group.target}`} className="field w-auto" value={target} onChange={(e) => setTarget(e.target.value)} disabled={busy}>
         {names.map((n) => <option key={n} value={n}>{n}</option>)}
       </select>
-      <Button size="sm" variant="secondary" onClick={merge} disabled={busy} data-testid="category-merge-btn">{busy && <Loader2 className="h-4 w-4 animate-spin" />}Merge into {target}</Button>
+      <Button loading={busy} size="sm" variant="secondary" onClick={merge} disabled={busy} data-testid="category-merge-btn">Merge into {target}</Button>
       {err && <p role="alert" className="w-full text-xs text-danger">{err}</p>}
     </li>
   );

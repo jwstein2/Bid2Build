@@ -1,5 +1,5 @@
 "use client";
-import { Check, Loader2, Plus, Search, UserPlus, X } from "lucide-react";
+import { Check, Plus, Search, UserPlus, X } from "lucide-react";
 import { useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { cn } from "@/lib/cn";
 import { tradeLabel } from "@/lib/projects/team";
@@ -265,8 +265,8 @@ function NewSubForm({ initialName, trade, resources, onUseExisting, onCreated, o
       ) : (
         <div className="mt-3 flex justify-end gap-2">
           <Button size="sm" variant="ghost" onClick={cancel} disabled={busy}>Cancel</Button>
-          <Button size="sm" onClick={() => void save()} disabled={busy || !name.trim() || !!exact} data-testid="new-sub-save">
-            {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />} Add &amp; assign
+          <Button loading={busy} size="sm" onClick={() => void save()} disabled={busy || !name.trim() || !!exact} data-testid="new-sub-save">
+             Add &amp; assign
           </Button>
         </div>
       )}

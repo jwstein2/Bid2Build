@@ -48,8 +48,8 @@ export function PaymentsSetup({ canManage, state, hasAccount, settings, surcharg
       {state === "not_started" && <p className="text-sm text-ink-soft">Connect takes about 10 minutes on Stripe&apos;s secure site. Have your business details, EIN or SSN, and the bank account for deposits ready. If you already use Stripe, you can sign in to it.</p>}
       {state !== "ready" && state !== "not_started" && <p className="text-sm text-ink-soft">Stripe needs a bit more before customers can pay you online. Continue setup to see what&apos;s missing.</p>}
       <div className="flex flex-wrap gap-2">
-        {state !== "ready" && <Button onClick={onboard} disabled={busy !== null} data-testid="connect-stripe">{busy === "onboard" ? "Opening Stripe…" : hasAccount ? "Continue Stripe setup" : "Connect Stripe"}</Button>}
-        {hasAccount && <Button variant="secondary" onClick={refresh} disabled={busy !== null}>{busy === "refresh" ? "Checking…" : "Check status"}</Button>}
+        {state !== "ready" && <Button loading={busy === "onboard"} onClick={onboard} disabled={busy !== null} data-testid="connect-stripe">{busy === "onboard" ? "Opening Stripe…" : hasAccount ? "Continue Stripe setup" : "Connect Stripe"}</Button>}
+        {hasAccount && <Button loading={busy === "refresh"} variant="secondary" onClick={refresh} disabled={busy !== null}>{busy === "refresh" ? "Checking…" : "Check status"}</Button>}
         {hasAccount && <a className="inline-flex min-h-11 items-center text-sm font-semibold text-accent-ink underline" href="https://dashboard.stripe.com" target="_blank" rel="noreferrer">Open your Stripe Dashboard</a>}
       </div>
       {s && (
@@ -90,7 +90,7 @@ export function PaymentsSetup({ canManage, state, hasAccount, settings, surcharg
                     <input type="checkbox" className="mt-0.5" checked={draft.attest} onChange={(e) => setDraft({ ...draft, attest: e.target.checked })} />
                     <span>I confirm the rate doesn&apos;t exceed what I pay to accept credit cards, I gave Stripe notice on the date above, I&apos;ll surcharge Visa, Mastercard, Discover and American Express credit cards the same way, and I&apos;m responsible for following card network rules and the law where I and my customers are.</span>
                   </label>
-                  <Button variant="secondary" disabled={busy !== null} data-testid="save-surcharge" onClick={() => save({
+                  <Button loading={busy === "settings"} variant="secondary" disabled={busy !== null} data-testid="save-surcharge" onClick={() => save({
                     surchargePct: Math.round(Number(draft.pct) * 100) / 100, cardCostPct: Math.round(Number(draft.costPct) * 100) / 100,
                     cardCostFixedCents: Math.round(Number(draft.costFixed)), surchargeNoticeDate: draft.notice, surchargeAttest: draft.attest,
                   })}>{busy === "settings" ? "Saving…" : "Save surcharge setup"}</Button>

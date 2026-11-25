@@ -243,7 +243,7 @@ function ProfileForm({ employee, onCancel, onSaved }: { employee: Employee; onCa
       </div>
       <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={f.clockEnabled} onChange={(e) => setF({ ...f, clockEnabled: e.target.checked })} /> Uses the time clock</label>
       {err && <Notice tone="danger">{err}</Notice>}
-      <div className="flex gap-2"><Button size="sm" onClick={save} disabled={busy} data-testid="profile-save">{busy ? "Saving…" : "Save"}</Button><Button size="sm" variant="secondary" onClick={onCancel}>Cancel</Button></div>
+      <div className="flex gap-2"><Button loading={busy} size="sm" onClick={save} disabled={busy} data-testid="profile-save">{busy ? "Saving…" : "Save"}</Button><Button size="sm" variant="secondary" onClick={onCancel}>Cancel</Button></div>
     </div>
   );
 }
@@ -396,7 +396,7 @@ function EntryForm({ entry, employees, projects, onCancel, onSaved }: { entry: T
         <input className="field" value={reason} maxLength={300} onChange={(e) => setReason(e.target.value)} placeholder={entry ? "e.g. Forgot to clock out" : "e.g. Paper timesheet"} data-testid="entry-reason" /></label>
       {err && <Notice tone="danger">{err}</Notice>}
       <div className="flex gap-2">
-        <Button size="sm" onClick={save} disabled={busy || !inAt || !outAt || (!entry && !who) || (!!entry && !reason.trim())} data-testid="entry-save">{busy ? "Saving…" : entry ? "Save fix" : "Add time"}</Button>
+        <Button loading={busy} size="sm" onClick={save} disabled={busy || !inAt || !outAt || (!entry && !who) || (!!entry && !reason.trim())} data-testid="entry-save">{busy ? "Saving…" : entry ? "Save fix" : "Add time"}</Button>
         <Button size="sm" variant="secondary" onClick={onCancel}>Cancel</Button>
       </div>
     </div>

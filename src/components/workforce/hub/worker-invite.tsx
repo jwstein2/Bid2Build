@@ -102,7 +102,7 @@ function WorkerInviteDialog({ resourceId, name, email, phone, companyName, onClo
             {st.pending && <p className="text-sm"><Badge>Invite already sent</Badge> to {st.pending.email}, works until {fmt(st.pending.expiresAt)}. A new link replaces it.</p>}
             <label className="block text-sm font-semibold">Their email<input type="email" className={`${input} mt-1`} value={to} onChange={(e) => setTo(e.target.value)} autoComplete="off" data-testid="worker-invite-email" /></label>
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={send} onChange={(e) => setSend(e.target.checked)} data-testid="worker-invite-send" /> Email the link to them from Built2Bid</label>
-            <Button onClick={create} disabled={busy || !to.trim()} className="w-full" data-testid="worker-invite-create"><Send className="h-4 w-4" aria-hidden /> {busy ? "Creating…" : "Create invite link"}</Button>
+            <Button loading={busy} onClick={create} disabled={busy || !to.trim()} className="w-full" data-testid="worker-invite-create"><Send className="h-4 w-4" aria-hidden /> {busy ? "Creating…" : "Create invite link"}</Button>
           </div>
         )}
         {res?.status === "linked" && <Notice tone="ok" className="mt-3">That email already belongs to a member of your company, so their login is now linked to {name}. They can open My work right away.</Notice>}

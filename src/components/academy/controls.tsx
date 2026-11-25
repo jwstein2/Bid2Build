@@ -3,7 +3,7 @@ import { useOptimistic, useRef, useState, useTransition, type ReactNode } from "
 import { useFormStatus } from "react-dom";
 import { Bookmark, Flag, ThumbsUp } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { buttonClass } from "@/components/ui/button";
+import { buttonClass, Spinner } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import { REPORT_REASONS } from "@/lib/academy/types";
 import { reportContent, toggleBookmark, toggleReaction } from "@/app/(marketing)/academy/actions";
@@ -11,7 +11,7 @@ import { reportContent, toggleBookmark, toggleReaction } from "@/app/(marketing)
 /** Submit button that shows a pending state while its form's server action runs. */
 export function Submit({ children, pending: pendingLabel = "Saving…", variant = "primary", size = "md", className }: { children: ReactNode; pending?: string; variant?: "primary" | "accent" | "secondary" | "ghost" | "danger"; size?: "sm" | "md"; className?: string }) {
   const { pending } = useFormStatus();
-  return <button type="submit" disabled={pending} aria-busy={pending} className={buttonClass(variant, size, className)}>{pending ? pendingLabel : children}</button>;
+  return <button type="submit" disabled={pending} aria-busy={pending || undefined} className={buttonClass(variant, size, className)}>{pending && <Spinner />}{pending ? pendingLabel : children}</button>;
 }
 
 export function ReactButton({ type, id, count, reacted, disabled, label = "Like" }: { type: "post" | "comment"; id: string; count: number; reacted: boolean; disabled?: boolean; label?: string }) {

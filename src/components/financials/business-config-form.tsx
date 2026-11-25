@@ -143,7 +143,7 @@ export function BusinessConfigForm({ trades, initial, canEdit }: { trades: Picke
           </Field>
         </fieldset>
         {msg && <Notice tone={msg.tone}>{msg.text}</Notice>}
-        {canEdit ? <Button type="submit" disabled={busy} data-testid="fin-config-save">{busy ? "Saving…" : "Save configuration"}</Button>
+        {canEdit ? <Button loading={busy} type="submit" disabled={busy} data-testid="fin-config-save">{busy ? "Saving…" : "Save configuration"}</Button>
           : <p className="text-sm text-muted">Only people who can manage financial settings can change this.</p>}
         <p className="text-xs text-muted">This only changes what Financials shows first. It never changes recorded amounts, history or anyone&apos;s access. Each project can override it.</p>
       </form>

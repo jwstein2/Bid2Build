@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { CheckCircle2, Clock, FileSignature, Hourglass, Link2, Loader2, XCircle } from "lucide-react";
+import { CheckCircle2, Clock, FileSignature, Hourglass, Link2, XCircle } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { bidSigning, SIGNING_LABELS, type RequestRow, type SignatureRow } from "@/lib/esign/status";
 import { Button } from "../ui/button";
@@ -47,8 +47,8 @@ export function SigningPanel({ estimateId, onCreate, creating, refreshKey, onRev
           <h2 id="signing-h" className="flex items-center gap-2 font-display text-lg font-extrabold text-navy"><FileSignature className="h-5 w-5" aria-hidden /> Get it signed online</h2>
           <p className="text-sm text-ink-soft">Your customer reviews this exact version and signs on their phone or computer. No account or payment needed.</p>
         </div>
-        <Button variant="accent" onClick={onCreate} disabled={creating} data-testid="create-signing-link">
-          {creating ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Link2 className="h-4 w-4" aria-hidden />} Create Signing Link
+        <Button loading={creating} variant="accent" onClick={onCreate} disabled={creating} data-testid="create-signing-link">
+          {!creating && <Link2 className="h-4 w-4" aria-hidden />} Create Signing Link
         </Button>
       </div>
       {s && s.state !== "none" && (

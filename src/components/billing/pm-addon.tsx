@@ -1,5 +1,5 @@
 "use client";
-import { CalendarRange, Loader2 } from "lucide-react";
+import { CalendarRange } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { Button } from "../ui/button";
@@ -80,7 +80,7 @@ export function PmAddonCard({ state, periodEnd, annual, yearly = false, purchasa
               <li>After that your schedules stay saved and you can still view them. Nothing is deleted.</li>
             </ul>
             <div className="mt-3 flex flex-wrap gap-2">
-              <Button variant="danger" onClick={() => call("remove")} disabled={busy !== null}>{busy === "remove" && <Loader2 className="h-4 w-4 animate-spin" />}Remove add-on</Button>
+              <Button loading={busy === "remove"} variant="danger" onClick={() => call("remove")} disabled={busy !== null}>Remove add-on</Button>
               <Button variant="secondary" onClick={() => setConfirmRemove(false)} disabled={busy !== null}>Keep it</Button>
             </div>
           </div>
@@ -92,7 +92,7 @@ export function PmAddonCard({ state, periodEnd, annual, yearly = false, purchasa
               ? <p className="text-sm text-ink-soft" data-testid="pm-addon-soon">Coming soon. You&apos;ll be able to add Project Command Center here shortly.</p>
               : annual
               ? <p className="text-sm text-ink-soft">Available on monthly plans now; annual plans are coming soon.</p>
-              : <Button onClick={() => call("preview")} disabled={busy !== null}>{busy === "preview" && <Loader2 className="h-4 w-4 animate-spin" />}{ending ? "Turn it back on" : "Unlock Project Command Center"}</Button>}
+              : <Button loading={busy === "preview"} onClick={() => call("preview")} disabled={busy !== null}>{ending ? "Turn it back on" : "Unlock Project Command Center"}</Button>}
           </div>
         )}
         {preview && (
@@ -107,7 +107,7 @@ export function PmAddonCard({ state, periodEnd, annual, yearly = false, purchasa
             </dl>
             <p className="mt-2 text-xs text-ink-soft">Your card on file is charged now. If it&apos;s declined, nothing is added. You can remove the add-on any time; editing stays on until the end of the period you paid for.</p>
             <div className="mt-3 flex flex-wrap gap-2">
-              <Button onClick={() => call("add")} disabled={busy !== null}>{busy === "add" && <Loader2 className="h-4 w-4 animate-spin" />}Confirm and pay {formatCents(preview.dueNowCents)}</Button>
+              <Button loading={busy === "add"} onClick={() => call("add")} disabled={busy !== null}>Confirm and pay {formatCents(preview.dueNowCents)}</Button>
               <Button variant="secondary" onClick={() => setPreview(null)} disabled={busy !== null}>Cancel</Button>
             </div>
           </div>

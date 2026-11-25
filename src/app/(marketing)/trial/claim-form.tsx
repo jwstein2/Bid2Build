@@ -43,7 +43,7 @@ export function ClaimForm() {
         <span>Also send me two short emails during my trial: a quick walkthrough on day 2 and a reminder before it ends. (Optional)</span>
       </label>
       {error && <p role="alert" className="text-sm text-danger">{error}</p>}
-      <Button type="submit" variant="accent" disabled={state === "sending" || !email}>{state === "sending" ? "Sending…" : "Send my invite"}</Button>
+      <Button loading={state === "sending"} type="submit" variant="accent" disabled={state === "sending" || !email}>{state === "sending" ? "Sending…" : "Send my invite"}</Button>
       <p className="text-xs text-muted">We&apos;ll only use your email for your Built2Bid account and this invite. See our <a href="/privacy" className="underline">Privacy Policy</a>.</p>
     </form>
   );

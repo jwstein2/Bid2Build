@@ -206,7 +206,7 @@ export function AssignDialog({ wf, initial, open, onOpenChange, onDone, presetPr
           )}
           <div className="flex justify-end gap-2">
             <Button variant="secondary" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button variant="accent" disabled={busy || problems.length > 0 || !!timeErr || !!hoursErr || (replacing.length > 0 && !replaceOk)} onClick={review} data-testid="wf-assign-review">{busy ? "Checking…" : "Review"}</Button>
+            <Button loading={busy} variant="accent" disabled={busy || problems.length > 0 || !!timeErr || !!hoursErr || (replacing.length > 0 && !replaceOk)} onClick={review} data-testid="wf-assign-review">{busy ? "Checking…" : "Review"}</Button>
           </div>
         </section>
       )}
@@ -241,7 +241,7 @@ export function AssignDialog({ wf, initial, open, onOpenChange, onDone, presetPr
           <p className="text-xs text-muted">Nothing is moved or rescheduled, and nobody is notified. Confirming updates the project in PM Hub right away.</p>
           <div className="flex justify-end gap-2">
             <Button variant="secondary" onClick={() => setStep("scope")}><ChevronLeft className="h-4 w-4" aria-hidden /> Back</Button>
-            <Button variant="accent" data-testid="wf-assign-confirm"
+            <Button loading={busy} variant="accent" data-testid="wf-assign-confirm"
               disabled={busy || (anyOverride && (!canOverride || reason.trim().length < 3)) || (anySame && !sameOk)} onClick={confirm}>
               {busy ? "Saving…" : anyOverride ? "Override and assign" : "Confirm assignment"}</Button>
           </div>
