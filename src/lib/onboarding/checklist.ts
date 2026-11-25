@@ -17,6 +17,11 @@ export interface ChecklistFacts {
   sentBids: number;
   /** Bids won (won, scheduled, in progress or completed). */
   wonBids: number;
+  /** Customer signing links created (any status). A link going out counts as sending the proposal,
+   *  even on accounts where the bid's pipeline stage was never moved. Optional for older callers. */
+  signingLinks?: number;
+  /** Customer signatures. A signed bid is both sent and won, whatever its pipeline stage says. */
+  signedBids?: number;
   /** Saved Items & Pricing rows. */
   savedItems: number;
   /** Most recently updated bid, so "Send a proposal" continues where they left off. */
@@ -67,13 +72,13 @@ export function checklistSteps(f: ChecklistFacts): ChecklistStep[] {
       href: "/dashboard/items", action: "Open Saved Items",
     },
     {
-      id: "send", done: f.sentBids > 0,
+      id: "send", done: f.sentBids > 0 || (f.signingLinks ?? 0) > 0 || (f.signedBids ?? 0) > 0,
       title: "Send a proposal",
       why: "Preview it, then email it from your own address with a secure signing link.",
       href: f.latestBidId ? `/estimates/${f.latestBidId}?step=proposal` : "/bids", action: f.latestBidId ? "Finish my latest bid" : "Create a bid first",
     },
     {
-      id: "win", done: f.wonBids > 0,
+      id: "win", done: f.wonBids > 0 || (f.signedBids ?? 0) > 0,
       title: "Win your first job",
       why: "When the customer signs, the bid moves to Won and you can schedule and invoice it.",
       href: "/dashboard", action: "See my pipeline",
