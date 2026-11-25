@@ -51,6 +51,7 @@ import { track } from "@/lib/analytics/track";
 import { claimOffer } from "@/lib/offers/client";
 import { CreditsLowNote, ProposalReadyNote } from "../offers/offer-note";
 import { SAVE_DRAFT_COPY, SaveDraftNote, saveDraftDismissed } from "../offers/save-draft-note";
+import { useAutoDismiss } from "../ui/use-auto-dismiss";
 
 type Biz = BusinessProfile & { logoPath?: string | null };
 type Step = BuilderStep;
@@ -455,6 +456,16 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
   const goTo = (s: Step) => { setStep(s); setCustomerView(false); window.scrollTo({ top: 0, behavior: "smooth" }); };
 
   const lastTrash = state.trash[state.trash.length - 1];
+  // The "Removed … · Undo" toast shows for each new removal and times out (paused on hover/focus).
+  // Hiding it doesn't forget the removal; it just stops the toast lingering for the rest of the session.
+  // After an Undo the toast stays hidden rather than resurfacing for the previous removal.
+  const [seenTrash, setSeenTrash] = useState<{ last: typeof lastTrash | undefined; len: number }>({ last: lastTrash, len: state.trash.length });
+  const [trashToast, setTrashToast] = useState<typeof lastTrash | undefined>(undefined);
+  if (seenTrash.last !== lastTrash) {
+    setSeenTrash({ last: lastTrash, len: state.trash.length });
+    setTrashToast(lastTrash && state.trash.length >= seenTrash.len ? lastTrash : undefined);
+  }
+  const trashToastProps = useAutoDismiss(trashToast, () => setTrashToast(undefined));
   // Customer price display as the customer will see it. On a company-managed bid the contractor's own
   // choice is recorded as a bid override so "Single project total" is honored wherever it's allowed.
   const priceDisplay: PriceDisplay = {
@@ -582,10 +593,10 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
           </Notice>
         )}
         {user && !(user.verified ?? user.emailVerified) && <Notice tone="warn" className="mb-4" title="Verify your email">Check your inbox for the verification link to unlock PDF downloads.</Notice>}
-        {lastTrash && (
-          <div className="on-dark fixed bottom-20 left-1/2 md:left-[calc(50%+var(--app-sidebar-w,0px)/2)] z-40 flex -translate-x-1/2 items-center gap-3 rounded-full bg-ink px-4 py-2 text-sm text-white shadow-lg lg:bottom-6" role="status">
-            {lastTrash.kind === "trade" ? `Removed ${lastTrash.label} and its sections` : `Deleted ${lastTrash.label}`}
-            <button onClick={() => dispatch({ type: "undo" })} className="inline-flex items-center gap-1 font-semibold text-accent underline"><Undo2 className="h-4 w-4" /> Undo</button>
+        {trashToast && (
+          <div {...trashToastProps} className="on-dark fixed bottom-20 left-1/2 md:left-[calc(50%+var(--app-sidebar-w,0px)/2)] z-40 flex -translate-x-1/2 items-center gap-3 rounded-full bg-ink px-4 py-2 text-sm text-white shadow-lg lg:bottom-6" role="status">
+            {trashToast.kind === "trade" ? `Removed ${trashToast.label} and its sections` : `Deleted ${trashToast.label}`}
+            <button type="button" onClick={() => { setTrashToast(undefined); dispatch({ type: "undo" }); }} className="inline-flex items-center gap-1 font-semibold text-accent underline"><Undo2 className="h-4 w-4" /> Undo</button>
           </div>
         )}
 

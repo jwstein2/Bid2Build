@@ -1,6 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { UNDO_TOAST_MS, useAutoDismiss } from "@/components/ui/use-auto-dismiss";
 import { ArrowRight, ChevronsDown, Maximize2 } from "lucide-react";
 import {
   COLUMN_HINTS, COLUMN_LABELS, COLUMNS, JOB_COLUMNS, SALES_COLUMNS, checkMove, columnOf, columnTotals, lastActivity,
@@ -44,11 +45,11 @@ export function PipelineBoard({ bids, allBids, esign, focus, capped = false, exp
   const [hidden, setHidden] = useState<Set<string>>(() => new Set());
   const [dragId, setDragId] = useState<string | null>(null);
   const [overCol, setOverCol] = useState<Column | null>(null);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // The ref is read by drag handlers that fire before React re-renders with dragId.
   const dragRef = useRef<string | null>(null);
 
-  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+  // Undo toasts get longer to reach the button; either kind pauses while hovered or focused.
+  const toastProps = useAutoDismiss(toast, () => setToast(null), toast?.undo ? UNDO_TOAST_MS : 6000);
 
   // Each stage's mini search keeps its own text here, so opening a stage view and coming back keeps it.
   const [queries, setQueries] = useState<ColumnQueries>(() => initialQueries ?? {});
@@ -78,8 +79,6 @@ export function PipelineBoard({ bids, allBids, esign, focus, capped = false, exp
 
   function show(t: Toast) {
     setToast(t);
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => setToast(null), t?.undo ? 9000 : 6000);
   }
 
   async function post(id: string, stage: Stage, extras: MoveExtras = {}) {
@@ -183,7 +182,7 @@ export function PipelineBoard({ bids, allBids, esign, focus, capped = false, exp
       )}
       <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-4 z-40 flex justify-center px-4">
         {toast && (
-          <div role={toast.tone === "danger" ? "alert" : "status"} data-testid="pipeline-toast"
+          <div {...toastProps} role={toast.tone === "danger" ? "alert" : "status"} data-testid="pipeline-toast"
             className={cn("pointer-events-auto flex max-w-xl items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium shadow-2xl", toast.tone === "ok" ? "bg-navy text-white" : "bg-danger text-white")}>
             <span>{toast.text}</span>
             {toast.undo && <button type="button" onClick={() => { const u = toast.undo!; setToast(null); u(); }} className="rounded-md bg-white/15 px-2 py-1 font-bold hover:bg-white/25">Undo</button>}
