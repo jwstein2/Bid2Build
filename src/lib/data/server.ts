@@ -1,6 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { applySectionTrades, proposalConfigFrom, roundLinesFrom, roundTotalFrom, rowToBusiness, rowToProjectProfile, rowsToEstimate, worksheetFrom } from "./mappers";
+import { applySectionTrades, applyTradeDetails, proposalConfigFrom, roundLinesFrom, roundTotalFrom, rowToBusiness, rowToProjectProfile, rowsToEstimate, worksheetFrom } from "./mappers";
 
 export async function loadEstimate(supabase: SupabaseClient, id: string) {
   const [{ data: e, error }, { data: groups }, { data: items }, { data: profile }] = await Promise.all([
@@ -12,8 +12,9 @@ export async function loadEstimate(supabase: SupabaseClient, id: string) {
   ]);
   if (error || !e) return null;
   // Section trades are stored in proposal_config.worksheet (no schema change) and restored onto the sections.
-  const estimate = applySectionTrades(rowsToEstimate(e, groups ?? [], items ?? []), worksheetFrom(e.proposal_config));
-  estimate.projectProfile = rowToProjectProfile(profile);
+  const ws = worksheetFrom(e.proposal_config);
+  const estimate = applySectionTrades(rowsToEstimate(e, groups ?? [], items ?? []), ws);
+  estimate.projectProfile = applyTradeDetails(rowToProjectProfile(profile), ws?.tradeDetails, estimate.trades);
   if (roundTotalFrom(e.proposal_config)) estimate.roundTotal = true;
   if (roundLinesFrom(e.proposal_config)) estimate.roundLines = true;
   return { estimate, proposalConfig: proposalConfigFrom(e.proposal_config), customerId: e.customer_id as string | null };

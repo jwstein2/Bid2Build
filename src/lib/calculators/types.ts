@@ -1,3 +1,4 @@
+import type { TradeDetail } from "../market/trade-models";
 /**
  * Shared types for the optional quantity calculators.
  *
@@ -133,6 +134,11 @@ export interface EstimateWorksheet {
    * In the editor the trade lives on EstimateGroup.trade.
    */
   sectionTrades?: Record<string, string>;
+  /**
+   * Storage only: trade slug → that trade's private project details (Estimate.projectProfile.trades).
+   * estimate_project_profiles holds one trade, so the other trades ride here (no migration).
+   */
+  tradeDetails?: Record<string, TradeDetail>;
 }
 
 /** A calculator offered for a particular line item, with trade-aware defaults. */

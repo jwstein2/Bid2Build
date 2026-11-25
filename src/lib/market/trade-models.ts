@@ -11,12 +11,22 @@ export type WorkType = "new_construction" | "remodel" | "addition" | "replacemen
 export type Outcome = "quoted" | "accepted" | "declined" | "completed";
 export type Complexity = "standard" | "complex";
 
-export interface ProjectProfile {
-  sector?: Sector;
+/** Facts that belong to one trade in the project (a roof's squares, a slab's thickness). */
+export interface TradeDetail {
   workType?: WorkType;
   projectType?: string;
   measurements?: Record<string, number | string | boolean>;
+}
+
+export interface ProjectProfile extends TradeDetail {
+  sector?: Sector;
   outcome?: Outcome;
+  /**
+   * Per-trade details, keyed by trade slug. The top-level workType/projectType/measurements are the
+   * original single-trade shape (always the first trade); they are still read as a fallback for the
+   * first trade so details saved before multi-trade support keep working.
+   */
+  trades?: Record<string, TradeDetail>;
 }
 
 export interface Option { value: string; label: string }
@@ -367,4 +377,45 @@ export function sanitizeMeasurements(trade: string | null | undefined, raw: Reco
     else if (f.options?.some((op) => op.value === v)) out[f.key] = String(v);
   }
   return out;
+}
+
+/**
+ * The details for one trade. `isFirst` lets details saved before per-trade support (stored on the
+ * top level of the profile) show up under the project's first trade.
+ */
+export function tradeDetail(profile: ProjectProfile | null | undefined, trade: string | null | undefined, isFirst: boolean): TradeDetail {
+  if (!profile) return {};
+  if (trade && profile.trades?.[trade]) return profile.trades[trade];
+  // Once per-trade details exist, the top-level fields are only a stale copy of the first trade.
+  if (!isFirst || (profile.trades && Object.keys(profile.trades).length)) return {};
+  const { workType, projectType, measurements } = profile;
+  return { workType, projectType, measurements };
+}
+
+/**
+ * The profile flattened to the original single-trade shape for the project's first trade. Used for
+ * the estimate_project_profiles row, benchmarking and the tax estimate, which all describe one trade.
+ */
+export function primaryProfile(profile: ProjectProfile | null | undefined, trades: string[]): ProjectProfile | null {
+  if (!profile) return null;
+  const d = tradeDetail(profile, trades[0], true);
+  return { sector: profile.sector, outcome: profile.outcome, workType: d.workType, projectType: d.projectType, measurements: d.measurements };
+}
+
+/** Per-trade details to store, for the trades still in the project, with unknown measurement keys dropped. */
+export function tradeDetailsToStore(profile: ProjectProfile | null | undefined, trades: string[]): Record<string, TradeDetail> | null {
+  if (!profile) return null;
+  const out: Record<string, TradeDetail> = {};
+  trades.forEach((t, i) => {
+    const d = tradeDetail(profile, t, i === 0);
+    const model = tradeModel(t);
+    const measurements = sanitizeMeasurements(t, d.measurements);
+    const projectType = d.projectType && model.projectTypes.some((p) => p.value === d.projectType) ? d.projectType : undefined;
+    const entry: TradeDetail = {};
+    if (d.workType) entry.workType = d.workType;
+    if (projectType) entry.projectType = projectType;
+    if (Object.keys(measurements).length) entry.measurements = measurements;
+    if (Object.keys(entry).length) out[t] = entry;
+  });
+  return Object.keys(out).length ? out : null;
 }
