@@ -15,7 +15,7 @@ export function mapInviteStatus(x: unknown): InviteStatus {
 }
 
 const ERRORS: [string, number, string][] = [
-  ["company_required", 400, "Inviting workers needs a company account (Enterprise). Workers get their own login inside your company."],
+  ["company_required", 400, "Inviting workers needs a Team (company) account. Workers get their own login inside your company."],
   ["already_linked", 409, "This person already has a login. They can open My work now."],
   ["login_in_use", 409, "That person's login is already linked to another staff record."],
   ["staff_only", 400, "Only staff (employees) get the worker app. Subcontractors use their own document links."],

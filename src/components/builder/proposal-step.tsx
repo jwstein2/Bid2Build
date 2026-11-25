@@ -1,5 +1,6 @@
 "use client";
 import { Building2, Lock, Plus, RotateCcw, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { useMemo, type ReactNode } from "react";
 import { buildProposal } from "@/lib/proposal/build";
 import { TEMPLATES } from "@/lib/proposal/templates";
@@ -11,7 +12,12 @@ import { ProposalView } from "../proposal/proposal-view";
 import { Button } from "../ui/button";
 import { canEditStyleKey, resolveProposalStyle, type StylePolicy } from "@/lib/operations/proposal-style";
 
-export const MANAGED_STYLE_NOTICE = "Your company manages proposal formatting. Contact your company administrator to request changes.";
+export const COMPANY_STYLE_HREF = "/company/proposal-style";
+export const STYLE_ADMIN = "your company owner or an admin with proposal template access";
+export const MANAGED_STYLE_NOTICE = `Your company manages proposal formatting for team bids. Ask ${STYLE_ADMIN} to change it, or to turn on "Allow Team Members to Customize Bid Style" in Company → Proposal & Bid Style.`;
+export const MEMBER_CUSTOMIZE_NOTICE = `Your company sets the default proposal style. You can change it for this bid, except items with a lock. Ask ${STYLE_ADMIN} to change locked items.`;
+export const ADMIN_STYLE_NOTICE = "This bid starts from your company proposal style. Changes here apply to this bid only.";
+export const ADMIN_LOCKED_NOTE = "Items with a lock are locked for every bid. Unlock them in Company → Proposal & Bid Style.";
 
 const SHOW_LABELS: [keyof ProposalConfig["show"], string][] = [
   ["phone", "Business phone"], ["email", "Business email"], ["address", "Business address"], ["website", "Website"], ["license", "License number"],
@@ -36,6 +42,8 @@ export function ProposalStep({ estimate, business, config, onConfig, textExtra, 
   const set = (patch: Partial<ProposalConfig>) => onConfig({ ...config, ...patch });
   const managed = Boolean(stylePolicy?.managed);
   const canTemplate = canEditStyleKey(stylePolicy, "template");
+  const isStyleAdmin = managed && Boolean(stylePolicy?.canOverride);
+  const hasLocks = managed && (stylePolicy?.locked?.length ?? 0) > 0;
   const shown = styled.config;
   const withOverride = (key: string) => (managed ? [...new Set([...(config.styleOverrides ?? []), key])] : config.styleOverrides);
   const pctSum = config.paymentSchedule.reduce((s, p) => s.plus(toDec(p.percent).value), toDec("0").value);
@@ -47,8 +55,9 @@ export function ProposalStep({ estimate, business, config, onConfig, textExtra, 
           <h2 className="font-bold">Proposal style</h2>
           {managed && (
             <div className="mt-2 rounded-lg bg-brand-tint px-3 py-2 text-xs text-ink-soft" role="note">
-              <p className="flex items-start gap-1.5"><Building2 className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-                {styled.bidChoicesApply ? "Your company sets the default proposal style. Locked elements can't be changed on this bid." : MANAGED_STYLE_NOTICE}</p>
+              <p className="flex items-start gap-1.5" data-testid="proposal-style-notice"><Building2 className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+                <span>{isStyleAdmin ? `${ADMIN_STYLE_NOTICE}${hasLocks ? ` ${ADMIN_LOCKED_NOTE}` : ""}` : styled.bidChoicesApply ? MEMBER_CUSTOMIZE_NOTICE : MANAGED_STYLE_NOTICE}</span></p>
+              {isStyleAdmin && <Link href={COMPANY_STYLE_HREF} className="mt-1 inline-block font-semibold text-brand underline-offset-2 hover:underline">Edit Company Proposal & Bid Style</Link>}
               {onResetStyle && <Button size="sm" variant="secondary" className="mt-2" onClick={onResetStyle} disabled={resetting}><RotateCcw className="h-3.5 w-3.5" aria-hidden /> Reset to Company Default</Button>}
             </div>
           )}
@@ -68,6 +77,7 @@ export function ProposalStep({ estimate, business, config, onConfig, textExtra, 
               </button>
             ))}
           </div>
+          {managed && !canTemplate && <p className="mt-2 flex items-center gap-1.5 text-xs text-muted"><Lock className="h-3 w-3" aria-hidden /> Template is set by your company{isStyleAdmin ? " (locked in Company → Proposal & Bid Style)" : ""}.</p>}
         </section>
 
         <section className="rounded-xl border border-line bg-surface p-4">
