@@ -94,7 +94,7 @@ function WorkerInviteDialog({ resourceId, name, email, phone, companyName, onClo
         {!st && !err && <p className="mt-3 text-sm text-muted">Loading…</p>}
         {err && <Notice tone="danger" className="mt-3">{err}</Notice>}
         {st && st.linked && !res && <Notice tone="ok" className="mt-3">{name} already has a login. They open My work at built2bid.org/clock.</Notice>}
-        {st && !st.linked && !st.company && <Notice className="mt-3">Inviting workers needs a company account (Enterprise), so each worker gets their own login inside your company.</Notice>}
+        {st && !st.linked && !st.company && <Notice className="mt-3">Inviting workers needs a Team (company) account, so each worker gets their own login inside your company.</Notice>}
         {st && !st.linked && st.company && !st.canInvite && <Notice className="mt-3">Only people who can manage users (like the company owner) can send invites. Ask them to invite {name}.</Notice>}
         {st && !st.linked && st.canInvite && !res && (
           <div className="mt-3 space-y-3">
