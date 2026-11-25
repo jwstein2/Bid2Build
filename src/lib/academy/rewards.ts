@@ -115,7 +115,7 @@ export function challengeError(message: string | undefined | null): string {
 
 export const REVIEW_REASONS: Record<string, string> = {
   suspicious_activity: "Very fast course or quiz: check before applying",
-  enterprise_member: "Enterprise account: no Enterprise discount or seats",
+  enterprise_member: "Team account: no Team discount or seats",
   billing_issue: "Past-due or unpaid subscription",
   annual_subscriber: "Annual plan: no automatic annual extension",
   monthly_credit_needs_approval: "Monthly subscriber: Stripe credit switch is off",

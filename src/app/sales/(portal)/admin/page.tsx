@@ -58,7 +58,7 @@ const POLICY = {
     hold_30_no_clawback: "Hold 30 days after payment; refunds inside the window void it, later refunds never affect the rep",
     never_reverse: "Pay on payment, never reverse",
   },
-  value_scope: { plan_seats: "Plan + Enterprise seats (add-ons excluded)", all_items: "Everything on the subscription", base_plan: "Base plan only" },
+  value_scope: { plan_seats: "Plan + Team seats (add-ons excluded)", all_items: "Everything on the subscription", base_plan: "Base plan only" },
 } as const;
 
 function policyLine(p: Record<string, string | number | boolean>): string {
