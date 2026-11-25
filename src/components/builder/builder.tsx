@@ -473,7 +473,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
       {/* Universal search (V6.4): Ctrl/Cmd+K and the header icon, for signed-in builders. */}
       {user && <GlobalSearchHost />}
       {/* Project header */}
-      <header ref={headerRef} className="sticky top-[var(--b2b-banner-h)] z-30 border-b border-line bg-surface/95 backdrop-blur no-print">
+      <header ref={headerRef} className="sticky top-[var(--app-sticky-top)] z-30 border-b border-line bg-surface/95 backdrop-blur no-print">
         <div className="mx-auto flex max-w-[1400px] flex-wrap items-center gap-x-4 gap-y-2 px-3 py-2 sm:px-5">
           <div className="flex shrink-0 items-center gap-2">
             <Link href={user ? "/dashboard" : "/"} className="inline-flex h-9 items-center gap-1.5 rounded-md px-2 text-sm font-semibold text-accent-ink hover:bg-black/5" aria-label={user ? "Dashboard" : "Home"} data-testid="builder-home"><Home className="h-4 w-4" aria-hidden /><span className="hidden 2xl:inline">{user ? "Dashboard" : "Home"}</span></Link>
@@ -483,8 +483,9 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
           <div className="min-w-0 flex-1">
             <label htmlFor="est-title" className="sr-only">Project title</label>
             <input id="est-title" value={estimate.title} onChange={(e) => dispatch({ type: "patch", patch: { title: e.target.value } })}
-              // Starter title ("Decks & Porches Project"): select it on focus so typing replaces it.
-              onFocus={(ev) => { if (isDefaultTitle(estimate)) { const el = ev.currentTarget; requestAnimationFrame(() => el.select()); } }} className="cell w-full max-w-md truncate font-display text-lg font-bold" placeholder="Project title" />
+              // Starter or automatic title ("Jane Smith – 11/24/2026"): select it on focus so typing replaces it.
+              // Large and first in the header, above the steps, so it's always clear which bid is open.
+              onFocus={(ev) => { if (isDefaultTitle(estimate)) { const el = ev.currentTarget; requestAnimationFrame(() => el.select()); } }} title={estimate.title} data-testid="builder-project-title" className="cell w-full max-w-2xl truncate font-display text-xl font-bold sm:text-2xl" placeholder="Project title" />
             <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 px-1.5 text-xs text-muted [&>*]:whitespace-nowrap">
               <span>{estimate.customer.name || <button className="underline" onClick={() => setStep("project")}>Add customer</button>}</span>
               <span className="hidden max-w-[16rem] truncate sm:inline">{estimate.trades.map(tradeName).join(" + ")}</span>

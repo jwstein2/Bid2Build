@@ -127,7 +127,7 @@ export function ProposalStep({ estimate, business, config, onConfig, textExtra, 
       </div>
 
       <div className="min-w-0">
-        <div tabIndex={0} role="region" aria-label="Proposal preview (scrollable)" className="sticky top-[calc(7.5rem+var(--b2b-banner-h))] max-h-[calc(100vh-9rem-var(--b2b-banner-h))] overflow-y-auto rounded-xl bg-stage p-3 sm:p-6">
+        <div tabIndex={0} role="region" aria-label="Proposal preview (scrollable)" className="sticky top-[calc(var(--builder-header-h,7.5rem)+var(--app-sticky-top))] max-h-[calc(100vh-var(--builder-header-h,7.5rem)-1.5rem-var(--app-sticky-top))] overflow-y-auto rounded-xl bg-stage p-3 sm:p-6">
           <p className="mb-3 text-center text-xs font-semibold uppercase tracking-wider text-muted">Live preview: exactly what your customer will see</p>
           <ProposalView doc={doc} />
         </div>
