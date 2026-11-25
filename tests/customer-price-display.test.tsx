@@ -59,10 +59,17 @@ describe("customer price display modes", () => {
     noLeak(html);
   });
 
-  it("a discount folds into the single total instead of showing as its own line", () => {
+  it("a discount shows as its own line under the single total (2026-11-25: contractors want customers to see it)", () => {
     const doc = buildProposal({ ...withMode(base, "project_total"), fixedAdjustment: "-25" }, business, config);
-    expect(doc.pricing.adjustment).toBeUndefined();
+    expect(doc.pricing.projectAmount).toBe("$625.00");
+    expect(doc.pricing.adjustment).toEqual({ label: "Discount", amount: "-$25.00" });
     expect(doc.pricing.subtotal).toBe("$600.00");
+  });
+
+  it("a positive adjustment still folds into the single total", () => {
+    const doc = buildProposal({ ...withMode(base, "project_total"), fixedAdjustment: "25" }, business, config);
+    expect(doc.pricing.adjustment).toBeUndefined();
+    expect(doc.pricing.projectAmount).toBe("$650.00");
   });
 
   it("itemized, section totals and names only show exactly what they promise", () => {

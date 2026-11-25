@@ -112,6 +112,8 @@ export interface ProposalLine {
   unitPrice?: string;
   amount?: string;
   notes?: string;
+  /** A discount line: its (negative) amount is always shown, in every section display mode. */
+  discount?: boolean;
 }
 
 export interface ProposalSection {
@@ -147,12 +149,20 @@ export interface ProposalDocument {
     displayMode: "by_group" | "project_total";
     sections: ProposalSection[];
     projectLabel: string;
+    /** project_total mode: the price on the project row (before discounts). Missing = subtotal. */
+    projectAmount?: string;
+    /** Line-item total before the project-level discount, shown above the discount rows. */
+    beforeDiscount?: { label: string; amount: string };
+    /** Customer discounts, as negative amounts, listed before the subtotal. */
+    discounts?: { label: string; amount: string }[];
     adjustment?: { label: string; amount: string };
     subtotal: string;
     tax?: { label: string; amount: string };
     /** Present only when the contractor rounds the final bid and the rounding is not zero. */
     rounding?: { label: string; amount: string };
     total: string;
+    /** Total of every discount on this proposal (positive), when there is one. Not added again: it is already in the total. */
+    savings?: string;
   };
   exclusions?: string;
   allowances?: string;

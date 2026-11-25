@@ -1,4 +1,4 @@
-import type { Estimate, EstimateGroup, LineItem, PricingRule } from "../estimate/types";
+import type { Estimate, EstimateGroup, LineItem, PricingRule, ProjectDiscount } from "../estimate/types";
 import type { EstimateWorksheet } from "../calculators/types";
 import { worksheetSchema } from "../estimate/schema";
 import type { ProjectProfile } from "../market/trade-models";
@@ -67,8 +67,8 @@ export function proposalConfigFrom(raw: unknown): ProposalConfig {
   const d = defaultProposalConfig();
   if (!raw || typeof raw !== "object") return d;
   // The worksheet and roundTotal are stored alongside the proposal settings but belong to the estimate.
-  const { worksheet: _w, roundTotal: _rt, roundLines: _rl, ...r } = raw as Partial<ProposalConfig> & { worksheet?: unknown; roundTotal?: unknown; roundLines?: unknown };
-  void _w; void _rt; void _rl;
+  const { worksheet: _w, roundTotal: _rt, roundLines: _rl, projectDiscount: _pd, ...r } = raw as Partial<ProposalConfig> & { worksheet?: unknown; roundTotal?: unknown; roundLines?: unknown; projectDiscount?: unknown };
+  void _w; void _rt; void _rl; void _pd;
   const exclusionList = normalizeExclusions(r.exclusionList, typeof r.exclusions === "string" ? r.exclusions : "");
   return {
     ...d, ...r,
@@ -134,9 +134,22 @@ export function roundLinesFrom(rawConfig: unknown): boolean {
   return Boolean(rawConfig && typeof rawConfig === "object" && (rawConfig as { roundLines?: unknown }).roundLines === true);
 }
 
+/** Whole-project discount stored in proposal_config (absent = none). */
+export function projectDiscountFrom(rawConfig: unknown): ProjectDiscount | null {
+  if (!rawConfig || typeof rawConfig !== "object") return null;
+  const pd = (rawConfig as { projectDiscount?: unknown }).projectDiscount as Partial<ProjectDiscount> | null | undefined;
+  if (!pd || typeof pd !== "object" || (pd.kind !== "amount" && pd.kind !== "percent") || typeof pd.value !== "string" || !pd.value.trim()) return null;
+  return { kind: pd.kind, value: pd.value, ...(typeof pd.label === "string" && pd.label.trim() ? { label: pd.label.slice(0, 100) } : {}) };
+}
+
 /** Estimate-level options persisted inside proposal_config (estimates has no column for them). */
-export function estimateOptionsToStore(estimate: Pick<Estimate, "roundTotal" | "roundLines">): { roundTotal?: true; roundLines?: true } {
-  return { ...(estimate.roundTotal ? { roundTotal: true as const } : {}), ...(estimate.roundLines ? { roundLines: true as const } : {}) };
+export function estimateOptionsToStore(estimate: Pick<Estimate, "roundTotal" | "roundLines" | "projectDiscount">): { roundTotal?: true; roundLines?: true; projectDiscount?: ProjectDiscount } {
+  const pd = estimate.projectDiscount;
+  return {
+    ...(estimate.roundTotal ? { roundTotal: true as const } : {}),
+    ...(estimate.roundLines ? { roundLines: true as const } : {}),
+    ...(pd && pd.value.trim() ? { projectDiscount: pd } : {}),
+  };
 }
 
 /** Read the estimate worksheet (calculator inputs, minimum charge) back out of a stored proposal_config. */

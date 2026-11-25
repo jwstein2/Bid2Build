@@ -80,7 +80,7 @@ export default async function BidReviewPage({ params }: PageProps<"/company/bids
               <ul className="mt-1 space-y-0.5 text-sm">{(byGroup.get(g.id) ?? []).map((it) => (
                 <li key={it.id} className="flex justify-between gap-3">
                   <span className="min-w-0 break-words">{it.name || "Item"} <span className="text-ink-soft">· {Number(it.quantity)} {it.unit}</span></span>
-                  {r.canSeeCosts && <span className="shrink-0 tabular-nums text-ink-soft">{money(Number(it.quantity) * Number(it.unit_cost))}</span>}
+                  {r.canSeeCosts && it.cost_type !== "discount" && <span className="shrink-0 tabular-nums text-ink-soft">{money(Number(it.quantity) * Number(it.unit_cost))}</span>}
                 </li>
               ))}</ul>
             </div>

@@ -1,6 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { applySectionTrades, proposalConfigFrom, roundLinesFrom, roundTotalFrom, rowToBusiness, rowToProjectProfile, rowsToEstimate, worksheetFrom } from "./mappers";
+import { applySectionTrades, projectDiscountFrom, proposalConfigFrom, roundLinesFrom, roundTotalFrom, rowToBusiness, rowToProjectProfile, rowsToEstimate, worksheetFrom } from "./mappers";
 
 export async function loadEstimate(supabase: SupabaseClient, id: string) {
   const [{ data: e, error }, { data: groups }, { data: items }, { data: profile }] = await Promise.all([
@@ -16,6 +16,8 @@ export async function loadEstimate(supabase: SupabaseClient, id: string) {
   estimate.projectProfile = rowToProjectProfile(profile);
   if (roundTotalFrom(e.proposal_config)) estimate.roundTotal = true;
   if (roundLinesFrom(e.proposal_config)) estimate.roundLines = true;
+  const projectDiscount = projectDiscountFrom(e.proposal_config);
+  if (projectDiscount) estimate.projectDiscount = projectDiscount;
   return { estimate, proposalConfig: proposalConfigFrom(e.proposal_config), customerId: e.customer_id as string | null };
 }
 

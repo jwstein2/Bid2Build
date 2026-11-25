@@ -125,7 +125,8 @@ export function buildObservation(estimate: Estimate, totals: EstimateTotals, pro
 
   const lines: ObservationLine[] = [];
   for (const item of estimate.items) {
-    if (item.isExample) continue;
+    // Discount lines are not prices for work: they are reflected in the section and project totals.
+    if (item.isExample || item.costType === "discount") continue;
     const t = totals.items[item.id];
     if (!t || !t.valid) continue;
     const qty = t.quantity.toNumber();
@@ -222,7 +223,7 @@ export function buildObservation(estimate: Estimate, totals: EstimateTotals, pro
     tax_amount: r2(totals.tax.toNumber()),
     price_total: r2(totals.total.toNumber()),
     tax_rate: r4(totals.taxRate.toNumber()),
-    adjustment: r2(totals.adjustment.toNumber()),
+    adjustment: r2(totals.adjustment.minus(totals.projectDiscount).toNumber()),
     costs_shared: shareCosts,
     size_value: sizeValue,
     size_unit: sizeValue ? model.primary!.unit : null,
