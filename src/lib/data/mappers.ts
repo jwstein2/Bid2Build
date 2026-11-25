@@ -1,7 +1,7 @@
 import type { Estimate, EstimateGroup, LineItem, PricingRule } from "../estimate/types";
 import type { EstimateWorksheet } from "../calculators/types";
 import { worksheetSchema } from "../estimate/schema";
-import type { ProjectProfile } from "../market/trade-models";
+import { tradeDetail, tradeDetailsToStore, type ProjectProfile, type TradeDetail } from "../market/trade-models";
 import { normalizeExclusions, normalizeScope } from "../proposal/text-sections";
 import { defaultBusinessProfile, defaultProposalConfig, type BusinessProfile, type ProposalConfig } from "../proposal/types";
 
@@ -150,7 +150,7 @@ export function worksheetFrom(rawConfig: unknown): EstimateWorksheet | null {
  * The worksheet to persist: calculations only for line items that still exist, plus each section's
  * trade (estimate_groups has no trade column); null when empty.
  */
-export function worksheetToStore(estimate: Pick<Estimate, "items" | "worksheet"> & { groups?: EstimateGroup[] }): EstimateWorksheet | null {
+export function worksheetToStore(estimate: Pick<Estimate, "items" | "worksheet"> & { groups?: EstimateGroup[]; trades?: string[]; projectProfile?: ProjectProfile | null }): EstimateWorksheet | null {
   const w = estimate.worksheet ?? {};
   const ids = new Set(estimate.items.filter((i) => !i.isExample).map((i) => i.id));
   const calcs = Object.fromEntries(Object.entries(w.calcs ?? {}).filter(([id]) => ids.has(id)));
@@ -159,6 +159,8 @@ export function worksheetToStore(estimate: Pick<Estimate, "items" | "worksheet">
   if (Object.keys(calcs).length) out.calcs = calcs;
   if (w.minimumCharge && w.minimumCharge.trim()) out.minimumCharge = w.minimumCharge.trim();
   if (Object.keys(sectionTrades).length) out.sectionTrades = sectionTrades;
+  const tradeDetails = tradeDetailsToStore(estimate.projectProfile, estimate.trades ?? []);
+  if (tradeDetails) out.tradeDetails = tradeDetails;
   return Object.keys(out).length ? out : null;
 }
 
@@ -168,8 +170,26 @@ export function worksheetToStore(estimate: Pick<Estimate, "items" | "worksheet">
  */
 export function applySectionTrades(estimate: Estimate, worksheet: EstimateWorksheet | null): Estimate {
   const map = worksheet?.sectionTrades ?? {};
-  const { sectionTrades: _st, ...rest } = worksheet ?? {};
-  void _st;
+  // tradeDetails is read separately (applyTradeDetails) and lives on projectProfile in the editor.
+  const { sectionTrades: _st, tradeDetails: _td, ...rest } = worksheet ?? {};
+  void _st; void _td;
   const groups = estimate.groups.map((g) => (map[g.id] ? { ...g, trade: map[g.id] } : g));
   return { ...estimate, groups, worksheet: worksheet && Object.keys(rest).length ? rest : null };
+}
+
+/**
+ * Puts stored per-trade project details on the profile. Details saved before per-trade support live
+ * only on the profile's top level; they are kept as the first trade's details so reordering trades
+ * later doesn't move them to another trade.
+ */
+export function applyTradeDetails(profile: ProjectProfile | null, stored: Record<string, TradeDetail> | undefined, trades: string[]): ProjectProfile | null {
+  if (!profile && !stored) return null;
+  const p: ProjectProfile = profile ?? {};
+  const map: Record<string, TradeDetail> = { ...(stored ?? {}) };
+  const first = trades[0];
+  if (first && !map[first]) {
+    const legacy = tradeDetail(p, first, true);
+    if (legacy.workType || legacy.projectType || (legacy.measurements && Object.keys(legacy.measurements).length)) map[first] = legacy;
+  }
+  return Object.keys(map).length ? { ...p, trades: map } : p;
 }
