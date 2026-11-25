@@ -174,7 +174,7 @@ export function DraftReview({ id, reused = false }: { id: string; reused?: boole
       )}
       {draft.status === "failed" && !items.length && (
         <Notice tone="warn" title="This catalog didn't finish">
-          Nothing was added to your Saved Items. <Button size="sm" variant="secondary" className="ml-2" disabled={Boolean(busyGen)} onClick={() => more("catalog")}>{busyGen ? "Trying again…" : "Try again"}</Button>
+          Nothing was added to your Saved Items. <Button loading={Boolean(busyGen)} size="sm" variant="secondary" className="ml-2" disabled={Boolean(busyGen)} onClick={() => more("catalog")}>{busyGen ? "Trying again…" : "Try again"}</Button>
         </Notice>
       )}
 
@@ -227,8 +227,8 @@ export function DraftReview({ id, reused = false }: { id: string; reused?: boole
       {!archived && items.length > 0 && (
         <div className="-mx-4 flex gap-1 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0" data-guide="generate.more">
           {(["more", "labor", "equipment", "materials", "alternatives", "assemblies"] as GenerateFocus[]).map((f) => (
-            <Button key={f} size="sm" variant="ghost" className="shrink-0" disabled={Boolean(busyGen) || generating} onClick={() => more(f)}>
-              {busyGen === `${f}::false` ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : f === "assemblies" ? <Layers className="h-4 w-4" aria-hidden /> : <Plus className="h-4 w-4" aria-hidden />} {FOCUS_LABEL[f]}
+            <Button loading={busyGen === `${f}::false`} key={f} size="sm" variant="ghost" className="shrink-0" disabled={Boolean(busyGen) || generating} onClick={() => more(f)}>
+              {!(busyGen === `${f}::false`) && f === "assemblies" ? <Layers className="h-4 w-4" aria-hidden /> : <Plus className="h-4 w-4" aria-hidden />} {FOCUS_LABEL[f]}
             </Button>
           ))}
         </div>
@@ -252,8 +252,8 @@ export function DraftReview({ id, reused = false }: { id: string; reused?: boole
                   <span className="font-bold">{g.name}</span>
                   <span className="text-sm text-muted">({g.items.length}{readyHere.length ? ` · ${readyHere.length} ready` : ""})</span>
                   <span className="ml-auto flex flex-wrap gap-1" onClick={(e) => e.preventDefault()}>
-                    {!archived && <Button size="sm" variant="ghost" disabled={Boolean(busyGen)} onClick={() => more("more", g.name)} aria-label={`More items in ${g.name}`}>{busyGen === `more:${g.name}:false` ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Plus className="h-4 w-4" aria-hidden />} More</Button>}
-                    {!archived && <Button size="sm" variant="ghost" disabled={Boolean(busyGen)} onClick={() => more("more", g.name, true)} aria-label={`Regenerate ${g.name}`}>{busyGen === `more:${g.name}:true` ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <RefreshCw className="h-4 w-4" aria-hidden />} Regenerate</Button>}
+                    {!archived && <Button loading={busyGen === `more:${g.name}:false`} size="sm" variant="ghost" disabled={Boolean(busyGen)} onClick={() => more("more", g.name)} aria-label={`More items in ${g.name}`}>{!(busyGen === `more:${g.name}:false`) && <Plus className="h-4 w-4" aria-hidden />} More</Button>}
+                    {!archived && <Button loading={busyGen === `more:${g.name}:true`} size="sm" variant="ghost" disabled={Boolean(busyGen)} onClick={() => more("more", g.name, true)} aria-label={`Regenerate ${g.name}`}>{!(busyGen === `more:${g.name}:true`) && <RefreshCw className="h-4 w-4" aria-hidden />} Regenerate</Button>}
                     {readyHere.length > 0 && !archived && <Button size="sm" variant="secondary" onClick={() => openApprove(readyHere, [], `Approve ${g.name}`)}>Approve category</Button>}
                   </span>
                 </summary>
@@ -523,8 +523,8 @@ function ApproveBody({ st, canShare, onTemplates, onShare, onConfirm, onCancel }
       {st.error && <Notice tone="warn">{st.error}</Notice>}
       <div className="flex flex-wrap justify-end gap-2">
         <Button variant="ghost" onClick={onCancel} disabled={st.busy}>Cancel</Button>
-        <Button onClick={onConfirm} disabled={st.busy || nothing || p.conflicts.length > 0} data-testid="approve-confirm">
-          {st.busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <CheckCircle2 className="h-4 w-4" aria-hidden />} Confirm and save
+        <Button loading={st.busy} onClick={onConfirm} disabled={st.busy || nothing || p.conflicts.length > 0} data-testid="approve-confirm">
+          {!st.busy && <CheckCircle2 className="h-4 w-4" aria-hidden />} Confirm and save
         </Button>
       </div>
     </div>

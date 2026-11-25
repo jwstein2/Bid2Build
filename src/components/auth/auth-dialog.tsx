@@ -1,6 +1,6 @@
 "use client";
 import { isNewAccount, track } from "@/lib/analytics/track";
-import { Inbox, Loader2, Mail, MessageSquareText } from "lucide-react";
+import { Inbox, Mail, MessageSquareText } from "lucide-react";
 import Link from "next/link";
 import { LegalStatusCompact } from "@/components/legal/legal-status";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
@@ -354,8 +354,8 @@ export function AuthDialog({ open, onOpenChange, next, onVerified, title, copy, 
           {marketingBox}
           <Captcha onToken={setCaptchaToken} resetKey={captchaReset} />
           {err && <Err>{err}</Err>}
-          <Button type="submit" className="w-full" size="lg" disabled={busy || phoneInput.replace(/\D/g, "").length < 6 || captchaMissing}>
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageSquareText className="h-4 w-4" />} Text me a code
+          <Button loading={busy} type="submit" className="w-full" size="lg" disabled={busy || phoneInput.replace(/\D/g, "").length < 6 || captchaMissing}>
+            {!busy && <MessageSquareText className="h-4 w-4" />} Text me a code
           </Button>
           <button type="button" className="min-h-11 w-full text-center text-sm text-brand underline" onClick={() => { setLinkPhone(null); go("email"); }}>Use email instead</button>
           {smsTerms}
@@ -366,7 +366,7 @@ export function AuthDialog({ open, onOpenChange, next, onVerified, title, copy, 
         <form onSubmit={(ev) => { ev.preventDefault(); void verifyPhone(); }} className="space-y-3">
           <p className="text-sm text-ink-soft">Keep this {copy ? "window" : "tab"} open. Codes expire after 10 minutes.</p>
           {codeField("auth-code")}
-          <Button type="submit" className="w-full" size="lg" disabled={busy || code.length !== codeLen}>{busy && <Loader2 className="h-4 w-4 animate-spin" />} {copy?.submitLabel ?? "Verify and continue"}</Button>
+          <Button loading={busy} type="submit" className="w-full" size="lg" disabled={busy || code.length !== codeLen}> {copy?.submitLabel ?? "Verify and continue"}</Button>
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm">
             {resendButton(() => void sendPhone({ create: false, resend: true }))}
             <button type="button" className="min-h-11 text-brand underline" onClick={() => go("phone")}>Use a different number</button>
@@ -379,8 +379,8 @@ export function AuthDialog({ open, onOpenChange, next, onVerified, title, copy, 
         <div className="space-y-3">
           <Captcha onToken={setCaptchaToken} resetKey={captchaReset} />
           {err && <Err>{err}</Err>}
-          <Button className="w-full whitespace-normal px-4 text-center" size="lg" disabled={busy || captchaMissing} onClick={() => void sendPhone({ create: true })}>
-            {busy ? <Loader2 className="h-4 w-4 shrink-0 animate-spin" /> : <MessageSquareText className="h-4 w-4 shrink-0" />} I&apos;m new here
+          <Button loading={busy} className="w-full whitespace-normal px-4 text-center" size="lg" disabled={busy || captchaMissing} onClick={() => void sendPhone({ create: true })}>
+            {!busy && <MessageSquareText className="h-4 w-4 shrink-0" />} I&apos;m new here
           </Button>
           <Button variant="secondary" className="w-full whitespace-normal px-4 text-center" size="lg" disabled={busy} onClick={() => { setLinkPhone(phone); go("email"); }}>
             <Mail className="h-4 w-4 shrink-0" /> I signed up with email before
@@ -399,8 +399,8 @@ export function AuthDialog({ open, onOpenChange, next, onVerified, title, copy, 
           {!linkPhone && marketingBox}
           <Captcha onToken={setCaptchaToken} resetKey={captchaReset} />
           {err && <Err>{err}</Err>}
-          <Button type="submit" className="w-full" size="lg" disabled={busy || !email.includes("@") || captchaMissing}>
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />} Email me a verification code
+          <Button loading={busy} type="submit" className="w-full" size="lg" disabled={busy || !email.includes("@") || captchaMissing}>
+            {!busy && <Mail className="h-4 w-4" />} Email me a verification code
           </Button>
           {sms && <button type="button" className="min-h-11 w-full text-center text-sm text-brand underline" onClick={() => { setLinkPhone(null); go("phone"); }}>{linkPhone ? "Back" : "Use my phone instead"}</button>}
           {emailTerms}
@@ -421,7 +421,7 @@ export function AuthDialog({ open, onOpenChange, next, onVerified, title, copy, 
             </ul>
           </div>
           <Captcha onToken={setCaptchaToken} resetKey={captchaReset} />
-          <Button type="submit" className="w-full" size="lg" disabled={busy || code.length !== codeLen}>{busy && <Loader2 className="h-4 w-4 animate-spin" />} {copy?.submitLabel ?? "Verify and continue"}</Button>
+          <Button loading={busy} type="submit" className="w-full" size="lg" disabled={busy || code.length !== codeLen}> {copy?.submitLabel ?? "Verify and continue"}</Button>
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm">
             {resendButton(() => void sendEmail(true))}
             <button type="button" className="min-h-11 text-brand underline" onClick={() => go("email")}>Use a different email</button>
@@ -431,7 +431,7 @@ export function AuthDialog({ open, onOpenChange, next, onVerified, title, copy, 
 
       {stage === "link-code" && linkFailed && (
         <div className="space-y-3">
-          <Button type="button" className="w-full" size="lg" disabled={busy} onClick={() => { setBusy(true); void finish(); }}>{busy && <Loader2 className="h-4 w-4 animate-spin" />} Continue</Button>
+          <Button loading={busy} type="button" className="w-full" size="lg" disabled={busy} onClick={() => { setBusy(true); void finish(); }}> Continue</Button>
           <button type="button" className="min-h-11 w-full text-center text-sm text-brand underline" disabled={busy} onClick={() => void resendLink()}>Try texting again</button>
         </div>
       )}
@@ -439,7 +439,7 @@ export function AuthDialog({ open, onOpenChange, next, onVerified, title, copy, 
       {stage === "link-code" && !linkFailed && (
         <form onSubmit={(ev) => { ev.preventDefault(); void verifyLink(); }} className="space-y-3">
           {codeField("auth-link-code")}
-          <Button type="submit" className="w-full" size="lg" disabled={busy || code.length !== codeLen}>{busy && <Loader2 className="h-4 w-4 animate-spin" />} Add phone and continue</Button>
+          <Button loading={busy} type="submit" className="w-full" size="lg" disabled={busy || code.length !== codeLen}> Add phone and continue</Button>
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm">
             {resendButton(() => void resendLink())}
             <button type="button" className="min-h-11 text-brand underline" disabled={busy} onClick={() => { setBusy(true); void finish(); }}>Skip for now</button>

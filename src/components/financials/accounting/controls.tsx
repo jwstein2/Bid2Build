@@ -3,7 +3,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { Printer, Search } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Button, Spinner } from "@/components/ui/button";
 import { finAction } from "@/components/financials/fin-client";
 
 export interface Opt { id: string; label: string }
@@ -26,7 +26,7 @@ export function useAct() {
 }
 
 export function Status({ msg, busy }: { msg: { tone: "ok" | "danger"; text: string } | null; busy?: boolean }) {
-  return <span role="status" aria-live="polite" className={`text-sm ${msg?.tone === "danger" ? "text-danger" : "text-muted"}`}>{busy ? "Saving…" : msg?.text}</span>;
+  return <span role="status" aria-live="polite" className={`inline-flex items-center gap-1.5 text-sm ${msg?.tone === "danger" ? "text-danger" : "text-muted"}`}>{busy ? <><Spinner className="h-3.5 w-3.5" />Saving…</> : msg?.text}</span>;
 }
 
 /**

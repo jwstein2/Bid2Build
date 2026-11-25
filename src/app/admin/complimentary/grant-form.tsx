@@ -130,7 +130,7 @@ export function GrantForm({ defaultEmail = "" }: { defaultEmail?: string }) {
         </dl>
         <div className="mt-5 flex flex-wrap justify-end gap-2">
           <Button variant="ghost" onClick={() => setConfirming(false)}>Cancel</Button>
-          <Button onClick={submit} disabled={pending}>{pending ? "Granting…" : "Grant access"}</Button>
+          <Button loading={pending} onClick={submit} disabled={pending}>{pending ? "Granting…" : "Grant access"}</Button>
         </div>
       </Modal>
     </Card>

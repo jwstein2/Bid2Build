@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { AlertTriangle, CheckCircle2, Download, Hourglass, Loader2, PenLine } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Download, Hourglass, PenLine } from "lucide-react";
 import { useState } from "react";
 import { Button } from "../ui/button";
 import { LocalTime } from "./local-time";
@@ -103,7 +103,7 @@ function Countersign({ estimateId, versionId, state, historical, designated, onC
             <span className="text-ink-soft">{statement}</span>
           </label>
           <div className="mt-2 flex gap-2">
-            <Button size="sm" variant="accent" onClick={() => void sign()} disabled={!ok || busy} data-testid="countersign-submit">{busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <PenLine className="h-4 w-4" aria-hidden />} Sign for the company</Button>
+            <Button loading={busy} size="sm" variant="accent" onClick={() => void sign()} disabled={!ok || busy} data-testid="countersign-submit">{!busy && <PenLine className="h-4 w-4" aria-hidden />} Sign for the company</Button>
             <Button size="sm" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
           </div>
           <p className="mt-2 text-xs text-muted" data-testid="countersign-intent">{CONTRACTOR_SIGN_INTENT_NOTICE}</p>
@@ -127,7 +127,7 @@ export function ExecutedPdfButton({ signatureId, compact = true }: { signatureId
   }
   return (
     <span className="inline-flex flex-col">
-      <Button size={compact ? "sm" : "md"} variant={compact ? "ghost" : "accent"} onClick={() => void go()} disabled={busy} data-testid="executed-pdf">{busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Download className="h-4 w-4" aria-hidden />} Download Executed PDF</Button>
+      <Button loading={busy} size={compact ? "sm" : "md"} variant={compact ? "ghost" : "accent"} onClick={() => void go()} disabled={busy} data-testid="executed-pdf">{!busy && <Download className="h-4 w-4" aria-hidden />} Download Executed PDF</Button>
       {err && <span className="text-xs text-danger" role="alert">{err}</span>}
     </span>
   );

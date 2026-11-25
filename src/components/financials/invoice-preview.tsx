@@ -126,7 +126,7 @@ export function DeleteInvoiceDialog({ target, onOpenChange, onDone, onVoidInstea
         <Field label="Reason" htmlFor="del-reason"><input id="del-reason" className="field" value={reason} onChange={(e) => setReason(e.target.value)} required maxLength={500} placeholder="e.g. Issued for the wrong job" /></Field>
         {err && <Notice tone="danger">{err}</Notice>}
         <div className="flex flex-wrap gap-2">
-          <Button type="submit" variant="danger" disabled={!reason.trim() || busy} data-testid="fin-delete-invoice-confirm">{busy ? "Deleting…" : "Delete invoice"}</Button>
+          <Button loading={busy} type="submit" variant="danger" disabled={!reason.trim() || busy} data-testid="fin-delete-invoice-confirm">{busy ? "Deleting…" : "Delete invoice"}</Button>
           {err && <Button type="button" variant="secondary" onClick={() => { setErr(null); onOpenChange(false); onVoidInstead(); }}>Void instead</Button>}
         </div>
       </form>

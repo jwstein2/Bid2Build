@@ -418,7 +418,7 @@ export function ScheduleWizard({ estimate, accepted, signed, sections, timezone,
               </label>
             )}
             <div className="flex flex-wrap gap-2">
-              <Button type="button" variant={accepted ? "secondary" : "accent"} onClick={() => void save(false)} disabled={saving || (needsReview && !reviewed)} data-testid="save-schedule">{saving ? "Saving…" : needsReview ? "Mark reviewed & save draft" : "Save draft schedule"}</Button>
+              <Button loading={saving} type="button" variant={accepted ? "secondary" : "accent"} onClick={() => void save(false)} disabled={saving || (needsReview && !reviewed)} data-testid="save-schedule">{saving ? "Saving…" : needsReview ? "Mark reviewed & save draft" : "Save draft schedule"}</Button>
               {accepted && <Button type="button" variant="accent" onClick={() => void save(true)} disabled={saving || (needsReview && !reviewed)} data-testid="save-publish-schedule">{needsReview ? "Mark reviewed & publish" : "Save & publish as active"}</Button>}
             </div>
             {accepted && <p className="text-xs text-muted">Publishing makes it the active schedule and moves the project to Scheduled. A draft stays a draft until you publish it.</p>}

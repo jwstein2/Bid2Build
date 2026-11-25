@@ -124,7 +124,7 @@ function ReviewDrawer({ item, canSchedule, onClose }: { item: QueueItem; canSche
                 <label className="label block">Review note <span className="font-normal text-muted">(optional, internal)</span><textarea rows={2} className="field mt-1 text-sm" value={note} onChange={(e) => setNote(e.target.value)} maxLength={1000} /></label>
                 <div className="mt-3 flex flex-wrap justify-end gap-2">
                   <Button variant="secondary" onClick={() => void markReviewed(false)} disabled={busy}>Mark reviewed</Button>
-                  {canSchedule && <Button variant="accent" onClick={() => void markReviewed(true)} disabled={busy} data-testid="mark-reviewed-schedule">{busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <CheckCircle2 className="h-4 w-4" aria-hidden />} Mark Reviewed &amp; Schedule</Button>}
+                  {canSchedule && <Button loading={busy} variant="accent" onClick={() => void markReviewed(true)} disabled={busy} data-testid="mark-reviewed-schedule">{!busy && <CheckCircle2 className="h-4 w-4" aria-hidden />} Mark Reviewed &amp; Schedule</Button>}
                 </div>
                 <p className="mt-2 text-xs text-muted">Mark reviewed records you as the reviewer and moves the job to Ready to schedule. It shows as Scheduled only after you publish an active schedule. The customer isn&apos;t notified.</p>
               </section>

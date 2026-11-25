@@ -125,8 +125,8 @@ function SendInternal({ base, title, businessEmail, onBack }: { base: string; ti
       )}
       <div className="grid gap-2 sm:grid-cols-3">
         {(["gmail", "outlook", "other"] as const).map((a) => (
-          <Button key={a} variant="secondary" disabled={busy || !valid || (outside && !ack)} onClick={() => void go(a)}>
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : a === "other" ? <Share2 className="h-4 w-4" aria-hidden /> : <Mail className="h-4 w-4" aria-hidden />}
+          <Button loading={busy} key={a} variant="secondary" disabled={busy || !valid || (outside && !ack)} onClick={() => void go(a)}>
+            {!busy && a === "other" ? <Share2 className="h-4 w-4" aria-hidden /> : <Mail className="h-4 w-4" aria-hidden />}
             {a === "gmail" ? "Gmail" : a === "outlook" ? "Outlook" : "Other email app"}
           </Button>
         ))}

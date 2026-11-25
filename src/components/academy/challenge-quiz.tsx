@@ -114,7 +114,7 @@ export function ChallengeQuiz({ topics, resume, signedIn, trainingsDone }: {
         </ol>
         {error && <Notice tone="danger">{error}</Notice>}
         <div className="flex flex-wrap items-center gap-3">
-          <Button onClick={submit} disabled={pending} data-testid="challenge-submit">{pending ? "Grading…" : "Submit quiz"}</Button>
+          <Button loading={pending} onClick={submit} disabled={pending} data-testid="challenge-submit">{pending ? "Grading…" : "Submit quiz"}</Button>
           {answered < attempt.questions.length && <span className="text-sm text-muted">{attempt.questions.length - answered} unanswered (they count as wrong)</span>}
         </div>
       </div>
@@ -130,7 +130,7 @@ export function ChallengeQuiz({ topics, resume, signedIn, trainingsDone }: {
               {ready.map((t) => <option key={t.slug} value={t.slug}>{t.title}</option>)}
             </select>
           </label>
-          <Button onClick={() => begin(topic)} disabled={pending || !topic} data-testid="challenge-start">{pending ? "Loading…" : `Start ${CHALLENGE_QUESTIONS}-question quiz`}</Button>
+          <Button loading={pending} onClick={() => begin(topic)} disabled={pending || !topic} data-testid="challenge-start">{pending ? "Loading…" : `Start ${CHALLENGE_QUESTIONS}-question quiz`}</Button>
         </div>
       )}
       {error && <Notice tone="danger">{error}</Notice>}

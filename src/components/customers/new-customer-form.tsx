@@ -37,7 +37,7 @@ export function NewCustomerForm() {
       </div>
       {err && v.name.trim() && <p role="alert" className="text-sm text-danger">{err}</p>}
       <div className="flex flex-wrap gap-2">
-        <Button type="submit" disabled={busy} data-testid="new-customer-save">{busy ? "Saving…" : "Save customer"}</Button>
+        <Button loading={busy} type="submit" disabled={busy} data-testid="new-customer-save">{busy ? "Saving…" : "Save customer"}</Button>
         <ButtonLink href="/dashboard/customers" variant="ghost">Cancel</ButtonLink>
       </div>
     </form>

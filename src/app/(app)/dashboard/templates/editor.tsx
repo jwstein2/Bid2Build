@@ -19,7 +19,7 @@ export function DefaultsEditor({ business, initial, unlimited }: { business: Bus
     <div className="space-y-4">
       {!unlimited && <PremiumUpgrade feature="templates" signedIn note="You can try styles and wording below. Saving them as your defaults for every new bid needs Individual Unlimited." notNowHref="/dashboard" />}
       <div className="flex flex-wrap items-center gap-3">
-        <Button disabled={!unlimited || pending} onClick={() => start(async () => setResult(await saveProposalDefaults(config)))}>{pending ? "Saving…" : "Save as my defaults"}</Button>
+        <Button loading={pending} disabled={!unlimited || pending} onClick={() => start(async () => setResult(await saveProposalDefaults(config)))}>{pending ? "Saving…" : "Save as my defaults"}</Button>
         {result?.ok && <span role="status" className="text-sm text-ok">Saved. New bids will use these settings.</span>}
         {result && !result.ok && <span role="alert" className="text-sm text-danger">{result.message}</span>}
       </div>

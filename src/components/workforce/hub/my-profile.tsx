@@ -93,7 +93,7 @@ export function MyProfile({ initial }: { initial: WorkerProfile }) {
                 {field("emergencyName", "Emergency contact name", "text", 200)}
                 {field("emergencyRelation", "Relationship", "text", 60, "e.g. Spouse, parent")}
                 {field("emergencyPhone", "Emergency contact phone", "tel", 40)}
-                <div className="flex gap-2 pt-1"><Button size="sm" onClick={save} disabled={busy}>{busy ? "Saving…" : "Save"}</Button><Button size="sm" variant="ghost" onClick={() => setEdit(null)} disabled={busy}>Cancel</Button></div>
+                <div className="flex gap-2 pt-1"><Button loading={busy} size="sm" onClick={save} disabled={busy}>{busy ? "Saving…" : "Save"}</Button><Button size="sm" variant="ghost" onClick={() => setEdit(null)} disabled={busy}>Cancel</Button></div>
               </div>
             )}
           </div>

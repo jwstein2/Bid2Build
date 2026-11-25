@@ -98,7 +98,7 @@ export function MarkupToolForm({ tool, trades, from }: { tool: MarkupTool; trade
             {trades.map((t) => <option key={t.slug} value={t.slug}>{t.name}</option>)}
           </select>
         </div>
-        <Button variant="accent" size="lg" onClick={start} disabled={!pctClean || going} data-cta="tool_bid" data-testid="tool-send" className="w-full sm:w-auto">
+        <Button loading={going} variant="accent" size="lg" onClick={start} disabled={!pctClean || going} data-cta="tool_bid" data-testid="tool-send" className="w-full sm:w-auto">
           {going ? "Opening your bid…" : <>Start a bid with this pricing <ArrowRight className="h-4 w-4" aria-hidden /></>}
         </Button>
       </div>

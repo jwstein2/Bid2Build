@@ -511,8 +511,8 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
             </div>
             <Button size="sm" variant="secondary" onClick={() => setPreviewOpen(true)} data-guide="builder.preview" className="max-sm:order-first max-sm:min-h-11"><Eye className="h-4 w-4" /> <span className="hidden sm:inline">Preview customer proposal</span><span className="sm:hidden">Preview</span></Button>
             <div className="flex flex-col items-end">
-              <Button size="sm" variant="accent" onClick={doExport} disabled={exporting} aria-label="Download PDF">
-                {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} <span><span className="max-[360px]:hidden">Download </span>PDF</span>
+              <Button loading={exporting} size="sm" variant="accent" onClick={doExport} disabled={exporting} aria-label="Download PDF">
+                {!exporting && <Download className="h-4 w-4" />} <span><span className="max-[360px]:hidden">Download </span>PDF</span>
               </Button>
               {credits && <span className="mt-0.5"><CreditSummary credits={credits} /></span>}
               {/* Holds the credit line's space while balances load, so the header doesn't grow and push

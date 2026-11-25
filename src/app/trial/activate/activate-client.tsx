@@ -100,7 +100,7 @@ export function ActivateTrial({ signedInAs }: { signedInAs: string | null | unde
           )}
           <div className="mt-6 flex flex-wrap items-center gap-3">
             {!(result && !result.ok && ["already_has_access", "already_used", "invalid", "invite_expired"].includes(result.reason)) && (
-              <Button type="button" variant="accent" onClick={activate} disabled={busy}>{busy ? "Activating…" : "Activate my 7 days"}</Button>
+              <Button loading={busy} type="button" variant="accent" onClick={activate} disabled={busy}>{busy ? "Activating…" : "Activate my 7 days"}</Button>
             )}
             <form action="/auth/signout" method="post" className="text-sm text-ink-soft"><button type="submit" className="underline">Use a different account</button></form>
           </div>

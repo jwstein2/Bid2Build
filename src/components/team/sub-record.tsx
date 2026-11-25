@@ -139,7 +139,7 @@ function DocForm({ resourceId, docType, onCancel, onSaved }: { resourceId: strin
       {(docType === "w9" || insurance) && <p className="text-xs text-muted">Recording a new {meta.label.toLowerCase()} keeps the old one as an older version.</p>}
       {err && <Notice tone="danger">{err}</Notice>}
       <div className="flex gap-2">
-        <Button size="sm" onClick={save} disabled={busy} data-testid="doc-save"><FileUp className="h-4 w-4" aria-hidden /> {busy ? "Saving…" : "Save"}</Button>
+        <Button loading={busy} size="sm" onClick={save} disabled={busy} data-testid="doc-save"><FileUp className="h-4 w-4" aria-hidden /> {busy ? "Saving…" : "Save"}</Button>
         <Button size="sm" variant="secondary" onClick={onCancel}>Cancel</Button>
       </div>
     </div>
@@ -185,7 +185,7 @@ function TaxForm({ record, onSaved, onError }: { record: SubRecord; onSaved: () 
             <option value="auto">Automatic ({corp ? "no: corporations usually don't get a 1099-NEC" : "yes"})</option><option value="yes">Yes, always</option><option value="no">No</option></select></label>
       </div>
       <p className="text-xs text-muted">For security we keep only the last 4 digits of the SSN or EIN. The full number stays on the W-9 file you upload below, which only people allowed to manage subcontractor compliance can open.</p>
-      <Button size="sm" onClick={save} disabled={busy} data-testid="tax-save">{busy ? "Saving…" : "Save W-9 details"}</Button>
+      <Button loading={busy} size="sm" onClick={save} disabled={busy} data-testid="tax-save">{busy ? "Saving…" : "Save W-9 details"}</Button>
     </section>
   );
 }
@@ -236,7 +236,7 @@ function ProfileForm({ record, onSaved, onError }: { record: SubRecord; onSaved:
       </fieldset>
       <label className="flex min-h-9 items-center gap-2 text-sm"><input type="checkbox" checked={backup} onChange={(e) => setBackup(e.target.checked)} data-testid="sub-backup" />Backup withholding applies (no valid TIN, or the IRS sent a B-notice)</label>
       <p className="text-xs text-muted">EMR is the experience modification rate from their workers&apos; comp insurer; 1.0 is average and lower is safer. The ACH account number is saved separately, encrypted.</p>
-      <Button size="sm" onClick={save} disabled={busy} data-testid="sub-profile-save">{busy ? "Saving…" : "Save business details"}</Button>
+      <Button loading={busy} size="sm" onClick={save} disabled={busy} data-testid="sub-profile-save">{busy ? "Saving…" : "Save business details"}</Button>
     </section>
   );
 }

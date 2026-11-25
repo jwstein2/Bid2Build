@@ -8,7 +8,7 @@ import { FREE_ITEMS_KEPT_NOTE, frequentItems, lineContext, lineFromSaved, matche
 import { startersFor, starterStack } from "@/lib/library/assemblies";
 import { cn } from "@/lib/cn";
 import { useDismiss } from "@/components/ui/use-dismiss";
-import { Button } from "../ui/button";
+import { Button, Spinner } from "../ui/button";
 import { Modal } from "./dialogs";
 import type { Action } from "./state";
 import type { Library } from "./library";
@@ -35,12 +35,20 @@ export function useSavedItemsUi(lib: Library, estimate: Estimate) {
   const [stackShare, setStackShare] = useState(false);
   const [scaling, setScaling] = useState<{ stack: SavedStack; starter: boolean; apply: (rows: (StackItem & { quantity: string })[]) => void } | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  // A pending notice ("Saving “Shingles”…") shows the moment Save Item is chosen and stays, with a
+  // spinner, until the result replaces it (James 2026-11-25: instant feedback however long it takes).
+  const [pending, setPending] = useState(false);
+  const [stackBusy, setStackBusy] = useState(false);
   const timer = useRef<number | undefined>(undefined);
 
   const say = (m: string) => {
-    setNotice(m);
+    setNotice(m); setPending(false);
     window.clearTimeout(timer.current);
     timer.current = window.setTimeout(() => setNotice(null), 3500);
+  };
+  const working = (m: string) => {
+    window.clearTimeout(timer.current);
+    setNotice(m); setPending(true);
   };
   useEffect(() => () => window.clearTimeout(timer.current), []);
 
@@ -49,14 +57,17 @@ export function useSavedItemsUi(lib: Library, estimate: Estimate) {
   const saveItem = async (it: LineItem) => {
     if (!lib.access && !lib.itemsAccess) { setUpgradeOpen(true); return; }
     if (!it.name.trim()) { say("Give the item a name before saving it."); return; }
-    const r = await lib.saveLine(it, lineContext(estimate, groupOf(it)));
+    working(`Saving “${it.name.trim()}” to Saved Items…`);
+    let r: Awaited<ReturnType<typeof lib.saveLine>>;
+    try { r = await lib.saveLine(it, lineContext(estimate, groupOf(it))); }
+    catch { say("Couldn't save the item. Check your connection and try again."); return; }
     // Free plan: say once per save that the item comes along on an upgrade (James, V8 batch 5).
     const kept = lib.access ? "" : ` ${FREE_ITEMS_KEPT_NOTE}`;
     // Will meeting 2026-11-21: say when the row's own markup/margin was kept with it (e.g. 0% on a dumpster).
     const own = overrideLabel({ treatment: it.treatment, pricingOverride: savedOverride(it) });
     const withMarkup = own ? ` Its ${own} is saved with it.` : "";
     if (r.ok) say(r.updated ? `Updated “${it.name.trim()}” in Saved Items.${withMarkup}${kept}` : `Saved “${it.name.trim()}” to Saved Items.${withMarkup}${kept}`);
-    else if (r.code === "premium_required") setUpgradeOpen(true);
+    else if (r.code === "premium_required") { setNotice(null); setPending(false); setUpgradeOpen(true); }
     else say(r.message);
   };
 
@@ -72,7 +83,10 @@ export function useSavedItemsUi(lib: Library, estimate: Estimate) {
     if (!stackRows || !stackName.trim()) return;
     const tradesUsed = [...new Set(stackRows.map((r) => { const g = groupOf(r); return g ? sectionTrade(estimate, g) : estimate.trades[0]; }))];
     if (stackScale && (!stackScale.label.trim() || !isValidMeasure(stackMeasure))) { setStackErr("Enter what these quantities were measured for, or turn scaling off."); return; }
-    const r = await lib.saveStack(stackName, stackRows, tradesUsed.length === 1 ? tradesUsed[0] || null : null, { scale: stackScale, measure: stackMeasure, company: stackShare });
+    if (stackBusy) return;
+    setStackBusy(true);
+    const r = await lib.saveStack(stackName, stackRows, tradesUsed.length === 1 ? tradesUsed[0] || null : null, { scale: stackScale, measure: stackMeasure, company: stackShare })
+      .finally(() => setStackBusy(false));
     if (r.ok) { say(`Saved stack “${stackName.trim()}” (${stackRows.length} items).`); setStackRows(null); }
     else if (r.code === "premium_required") { setStackRows(null); setUpgradeOpen(true); }
     else setStackErr(r.message);
@@ -92,8 +106,8 @@ export function useSavedItemsUi(lib: Library, estimate: Estimate) {
     <>
       <p aria-live="polite" className="sr-only">{notice}</p>
       {notice && (
-        <div className="fixed inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] max-lg:bottom-[calc(6rem+env(safe-area-inset-bottom))] z-50 mx-auto max-w-md rounded-lg bg-navy px-4 py-3 text-sm font-medium text-white shadow-xl" role="status">
-          {notice}
+        <div className="fixed inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] max-lg:bottom-[calc(6rem+env(safe-area-inset-bottom))] z-50 mx-auto flex max-w-md items-center gap-2 rounded-lg bg-navy px-4 py-3 text-sm font-medium text-white shadow-xl" role="status" aria-busy={pending || undefined} data-testid="saved-items-notice">
+          {pending && <Spinner />}{notice}
         </div>
       )}
       <LibraryUpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} signedIn={lib.signedIn} lockedCount={lib.lockedCount} itemsFree={Boolean(lib.itemsAccess) && !lib.access} />
@@ -111,7 +125,7 @@ export function useSavedItemsUi(lib: Library, estimate: Estimate) {
           {stackErr && <p role="alert" className="mt-2 text-sm text-danger">{stackErr}</p>}
           <div className="mt-4 flex justify-end gap-2">
             <Button variant="ghost" onClick={() => setStackRows(null)}>Cancel</Button>
-            <Button type="submit" disabled={!stackName.trim()}>Save Stack</Button>
+            <Button type="submit" loading={stackBusy} disabled={!stackName.trim()}>{stackBusy ? "Saving…" : "Save Stack"}</Button>
           </div>
         </form>
       </Modal>

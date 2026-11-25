@@ -118,7 +118,7 @@ export function UpdateDelivery({ scheduleId, publication, customerEmail, contact
           </p>
         )}
         <div className="mt-2 flex flex-wrap gap-2">
-          <Button size="sm" variant={url ? "secondary" : "accent"} onClick={createLink} disabled={busy !== null} data-testid="update-create-link">{busy === "link" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Link2 className="h-4 w-4" aria-hidden />}{linkActive || url ? "Create a new link" : "Create secure link"}</Button>
+          <Button loading={busy === "link"} size="sm" variant={url ? "secondary" : "accent"} onClick={createLink} disabled={busy !== null} data-testid="update-create-link">{!(busy === "link") && <Link2 className="h-4 w-4" aria-hidden />}{linkActive || url ? "Create a new link" : "Create secure link"}</Button>
           {linkActive && <Button size="sm" variant="secondary" onClick={revoke} disabled={busy !== null} data-testid="update-revoke"><Unlink className="h-4 w-4" aria-hidden /> Turn off link</Button>}
         </div>
         <p className="mt-2 text-xs text-muted">Anyone with the link can view this update, so send it only to your customer.</p>

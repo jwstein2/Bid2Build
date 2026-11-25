@@ -160,7 +160,7 @@ export function ExpenseDialog({ open, onOpenChange, jobId, codes, vendors, onDon
           <input id="ex-file" type="file" accept="application/pdf,image/jpeg,image/png,image/webp" capture="environment" className="block w-full text-sm" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
         </Field></FileDrop>
         {err && <Notice tone="danger">{err}</Notice>}
-        <Button type="submit" disabled={busy} data-testid="fin-expense-save">{busy ? "Saving…" : "Save expense"}</Button>
+        <Button loading={busy} type="submit" disabled={busy} data-testid="fin-expense-save">{busy ? "Saving…" : "Save expense"}</Button>
       </form>
     </FinDialog>
   );
@@ -219,7 +219,7 @@ export function BillDialog({ open, onOpenChange, jobId, codes, vendors, commitme
         {!commitment && <Field label="Cost code" optional htmlFor="bl-code"><CostCodeSelect id="bl-code" codes={codes} value={code} onChange={setCode} /></Field>}
         <FileDrop className="rounded-lg"><Field label="Bill file" optional htmlFor="bl-file"><input id="bl-file" type="file" accept="application/pdf,image/jpeg,image/png,image/webp" className="block w-full text-sm" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></Field></FileDrop>
         {err && <Notice tone="danger">{err}</Notice>}
-        <Button type="submit" disabled={busy}>{busy ? "Saving…" : "Save bill"}</Button>
+        <Button loading={busy} type="submit" disabled={busy}>{busy ? "Saving…" : "Save bill"}</Button>
       </form>
     </FinDialog>
   );
@@ -333,7 +333,7 @@ export function BillPaymentDialog({ open, onOpenChange, bill, vendors = [], onDo
         </div>
         <ComplianceNotice vendor={vendors.find((v) => v.id === bill.vendor_id)} />
         {err && <Notice tone="danger">{err}</Notice>}
-        <Button type="submit" disabled={busy}>{busy ? "Saving…" : "Record payment"}</Button>
+        <Button loading={busy} type="submit" disabled={busy}>{busy ? "Saving…" : "Record payment"}</Button>
       </form>
     </FinDialog>
   );

@@ -1,7 +1,7 @@
 "use client";
 import { useId, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import {  } from "lucide-react";
 import { Button } from "../ui/button";
 import { STAGES, STAGE_LABELS, type Stage } from "@/lib/enterprise/pipeline";
 
@@ -35,7 +35,7 @@ export function StageControl({ estimateId, stage, title }: { estimateId: string;
           className="h-10 min-w-0 max-w-full rounded-lg border border-line bg-surface px-2 text-sm">
           {STAGES.map((s) => <option key={s} value={s}>{STAGE_LABELS[s]}</option>)}
         </select>
-        {changed && <Button size="sm" onClick={save} disabled={busy}>{busy && <Loader2 className="h-4 w-4 animate-spin" />}Save</Button>}
+        {changed && <Button loading={busy} size="sm" onClick={save} disabled={busy}>Save</Button>}
       </div>
       {changed && (
         <div className="mt-2">

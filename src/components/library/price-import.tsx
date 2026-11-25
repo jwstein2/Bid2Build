@@ -255,7 +255,7 @@ export function PriceImport() {
             {shown.length > 500 && <p className="px-2 py-2 text-xs text-muted">Showing the first 500 of {shown.length} rows. All ticked rows are imported.</p>}
           </div>
           <div className="flex flex-wrap items-center gap-3 border-t border-line pt-3">
-            <Button onClick={apply} disabled={busy || !picked.length || !supplier.trim() || !ready} data-testid="price-import-apply">
+            <Button loading={busy} onClick={apply} disabled={busy || !picked.length || !supplier.trim() || !ready} data-testid="price-import-apply">
               <FileSpreadsheet className="h-4 w-4" aria-hidden /> {busy ? "Importing…" : `Import ${picked.length} price${picked.length === 1 ? "" : "s"}`}
             </Button>
             <span className="text-xs text-muted">Updates your Saved Items only. Bids you already sent, approved or signed keep their prices. You can undo this import.</span>
