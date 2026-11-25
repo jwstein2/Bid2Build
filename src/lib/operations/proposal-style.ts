@@ -141,7 +141,7 @@ export function resolveProposalStyle(input: {
   const policy = input.policy?.managed ? input.policy : null;
   const company = sanitizeCompanyStyle(policy?.style);
   const locks = new Set(sanitizeLocks(policy?.locked));
-  const bidChoicesApply = !policy || Boolean(policy.allowCustomization && (policy.canCustomize || policy.canOverride));
+  const bidChoicesApply = !policy || bidChoicesAllowed(policy);
   const branded = Boolean(policy && company.companyBranding === true && input.ownerBusiness);
   const base: BusinessProfile = branded ? { ...input.ownerBusiness! } : { ...input.business };
 
@@ -200,5 +200,14 @@ export function canEditStyleKey(policy: StylePolicy | null | undefined, k: Style
   if (!policy?.managed) return true;
   if (sanitizeLocks(policy.locked).includes(k)) return false;
   if (BID_DECIDES_KEYS.has(k) && read({ style: sanitizeCompanyStyle(policy.style) }, k) === undefined) return true;
-  return Boolean(policy.allowCustomization && (policy.canCustomize || policy.canOverride));
+  return bidChoicesAllowed(policy);
+}
+
+/**
+ * Whether this caller's own bid choices count on unlocked keys. Owners and template managers
+ * (canOverride) always may; other members only when the company turned on
+ * "Allow Team Members to Customize Bid Style". Company locks still apply to everyone.
+ */
+export function bidChoicesAllowed(policy: StylePolicy): boolean {
+  return Boolean(policy.canOverride || (policy.allowCustomization && policy.canCustomize));
 }
