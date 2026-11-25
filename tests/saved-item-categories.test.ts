@@ -48,3 +48,65 @@ describe("saved item categories", () => {
     expect(g.find((x) => x.trade === null)!.target).toBe("Materials");
   });
 });
+
+import { categoryPath, childCategory, matchRoot, parseCategoryPath } from "@/lib/library/categories";
+import { COST_TYPES } from "@/lib/trades/catalog";
+import { itemPath, organizeLibrary, pathOptions, type SavedItem } from "@/lib/library/saved-items";
+
+describe("Type › Category combined list", () => {
+  it("shows existing items as Type : Category without changing stored data", () => {
+    expect(itemPath({ costType: "labor", category: "Contractor" })).toBe("Labor : Contractor");
+    expect(itemPath({ costType: "material", category: "" })).toBe("Material");
+    // A category that just repeats the Type collapses into it (old "Labor"/"Materials" categories).
+    expect(itemPath({ costType: "labor", category: "Labor" })).toBe("Labor");
+    expect(itemPath({ costType: "material", category: "Materials" })).toBe("Material");
+    expect(itemPath({ costType: "labor_material", category: "Tear Off" })).toBe("Labor / Material : Tear Off");
+    expect(childCategory("Labor : Contractor : Framing", "Labor")).toBe("Contractor : Framing");
+    expect(categoryPath("Labor", "  contractor  ")).toBe("Labor : contractor");
+  });
+
+  it("reads typed text: the first level sets the Type, the rest is the category", () => {
+    expect(parseCategoryPath("Material : Shingles", COST_TYPES, "labor")).toEqual({ type: "material", category: "Shingles", rootTyped: true });
+    expect(parseCategoryPath("labour:overhead", COST_TYPES, "material")).toEqual({ type: "labor", category: "overhead", rootTyped: true });
+    expect(parseCategoryPath("Subcontractor", COST_TYPES, "labor")).toEqual({ type: "subcontractor", category: "", rootTyped: true });
+    expect(parseCategoryPath("Contractor", COST_TYPES, "labor")).toEqual({ type: "labor", category: "Contractor", rootTyped: false });
+    expect(parseCategoryPath("Labor : Contractor : Framing", COST_TYPES, "material").category).toBe("Contractor : Framing");
+    expect(parseCategoryPath("", COST_TYPES, "equipment")).toEqual({ type: "equipment", category: "", rootTyped: false });
+    expect(matchRoot("Materials", COST_TYPES)).toBe("material");
+    expect(matchRoot("labor_material", COST_TYPES)).toBe("labor_material");
+    expect(matchRoot("Permit / fee", COST_TYPES)).toBe("permit");
+    expect(matchRoot("Contractor", COST_TYPES)).toBeUndefined();
+  });
+
+  it("offers this trade's paths first, then the trade's sections, other trades, and every Type", () => {
+    const items = [
+      { costType: "labor" as const, category: "Contractor", trade: "roofing" },
+      { costType: "labor" as const, category: "Overhead", trade: null },
+    ];
+    const opts = pathOptions("roofing", items);
+    expect(opts[0]).toBe("Material");
+    expect(opts.indexOf("Labor : Contractor")).toBe(opts.indexOf("Labor") + 1);
+    expect(opts).toContain("Labor : Overhead");
+    expect(opts).toContain("Material");
+    expect(opts).toContain("Subcontractor");
+    expect(opts.some((o) => o.startsWith("Material : "))).toBe(true); // roofing sections under their Types
+    expect(new Set(opts.map((o) => o.toLowerCase())).size).toBe(opts.length);
+  });
+
+  it("near-duplicates are found per trade and Type", () => {
+    const g = categoryDuplicates([
+      { trade: null, costType: "labor", category: "Contractor" }, { trade: null, costType: "labor", category: "Contractor" },
+      { trade: null, costType: "labor", category: "contracter" },
+      { trade: null, costType: "material", category: "contractor" }, // other Type: separate
+    ], (t) => (t === "labor" ? "Labor" : "Material"));
+    expect(g).toHaveLength(1);
+    expect(g[0]).toMatchObject({ costType: "labor", target: "Contractor" });
+  });
+
+  it("library groups follow the combined list", () => {
+    const s = (p: Partial<SavedItem>): SavedItem => ({ id: crypto.randomUUID(), name: "x", costType: "labor", treatment: "marked_up", unit: "each", unitCost: "", taxable: false, ...p });
+    const org = organizeLibrary([s({ category: "Contractor" }), s({ category: "contractor " }), s({ costType: "equipment" })]);
+    expect(org[0].categories.map((c) => c.name)).toEqual(["Equipment", "Labor : Contractor"]);
+    expect(org[0].categories[1].items).toHaveLength(2);
+  });
+});

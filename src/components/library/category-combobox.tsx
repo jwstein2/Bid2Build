@@ -1,38 +1,46 @@
 "use client";
 import { Check, ChevronDown, Plus } from "lucide-react";
 import { useId, useMemo, useRef, useState } from "react";
-import { closeCategory, exactCategory, filterCategories, resolveCategory, tidyCategory } from "@/lib/library/categories";
+import { closeCategory, exactCategory, filterCategories, tidyCategory } from "@/lib/library/categories";
 
 /**
  * Category picker: a dropdown of existing categories that filters as you type. Typing a name that isn't in
  * the list adds it as a new category; a case-only match ("labor") snaps to the existing "Labor", and a
  * likely duplicate ("Labour") gets a one-tap "Use Labor" suggestion.
  */
-export function CategoryCombobox({ id, value, options, onChange, placeholder }: {
+export function CategoryCombobox({ id, value, options, onChange, placeholder, resolve = tidyCategory, describedBy }: {
   id: string;
   value: string;
   options: string[];
   onChange: (v: string) => void;
   placeholder?: string;
+  /** Turns typed text into the name it would be saved as (e.g. "contractor" → "Labor : contractor"). */
+  resolve?: (typed: string) => string;
+  describedBy?: string;
 }) {
   const listId = useId();
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
+  // Opening the list shows every choice; it narrows once you start typing.
+  const [filtering, setFiltering] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const typed = tidyCategory(value);
-  const exact = exactCategory(typed, options);
-  const close = closeCategory(typed, options);
-  const shown = useMemo(() => filterCategories(typed, options), [typed, options]);
+  const resolved = typed ? resolve(typed) : "";
+  const exact = exactCategory(resolved, options) ?? exactCategory(typed, options);
+  const close = exact ? undefined : closeCategory(resolved, options);
+  // "labor:con" filters as "Labor : con"; plain text ("con") matches anywhere in the list.
+  const query = !filtering ? "" : typed.includes(":") ? resolved : typed;
+  const shown = useMemo(() => filterCategories(query, options), [query, options]);
   const canAdd = Boolean(typed) && !exact;
   // Rows: the matching categories, then "Add “…”" when the text is new.
   const rows: { kind: "option" | "add"; label: string }[] = [
     ...shown.map((label) => ({ kind: "option" as const, label })),
-    ...(canAdd ? [{ kind: "add" as const, label: typed }] : []),
+    ...(canAdd ? [{ kind: "add" as const, label: resolved }] : []),
   ];
 
-  const choose = (label: string) => { onChange(label); setOpen(false); setActive(-1); };
-  const commit = () => { if (value !== resolveCategory(value, options)) onChange(resolveCategory(value, options)); };
+  const choose = (label: string) => { onChange(label); setOpen(false); setActive(-1); setFiltering(false); };
+  const commit = () => { const next = typed ? exact ?? resolved : ""; if (value !== next) onChange(next); };
 
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === "ArrowDown" || e.key === "ArrowUp") {
@@ -62,16 +70,17 @@ export function CategoryCombobox({ id, value, options, onChange, placeholder }: 
           aria-expanded={open}
           aria-controls={listId}
           aria-autocomplete="list"
+          aria-describedby={describedBy}
           aria-activedescendant={open && active >= 0 ? optionId(active) : undefined}
           value={value}
           maxLength={120}
           placeholder={placeholder}
           autoComplete="off"
           data-testid="category-combobox"
-          onChange={(e) => { onChange(e.target.value); setOpen(true); setActive(-1); }}
+          onChange={(e) => { onChange(e.target.value); setOpen(true); setActive(-1); setFiltering(true); }}
           onFocus={() => setOpen(true)}
           onClick={() => setOpen(true)}
-          onBlur={() => { commit(); setOpen(false); setActive(-1); }}
+          onBlur={() => { commit(); setOpen(false); setActive(-1); setFiltering(false); }}
           onKeyDown={onKeyDown}
         />
         <button
@@ -104,7 +113,7 @@ export function CategoryCombobox({ id, value, options, onChange, placeholder }: 
                   <><Plus className="h-4 w-4 shrink-0" aria-hidden /> Add “{r.label}” as a new category</>
                 ) : (
                   <>
-                    <span className="min-w-0 flex-1 truncate">{r.label}</span>
+                    <span className="min-w-0 flex-1 truncate">{r.label.includes(" : ") ? <><span className="text-muted">{r.label.slice(0, r.label.lastIndexOf(" : ") + 3)}</span>{r.label.slice(r.label.lastIndexOf(" : ") + 3)}</> : <span className="font-semibold">{r.label}</span>}</span>
                     {r.label === close && <span className="shrink-0 text-xs text-muted">similar</span>}
                     {selected && <Check className="h-4 w-4 shrink-0 text-ok" aria-hidden />}
                   </>
@@ -118,7 +127,7 @@ export function CategoryCombobox({ id, value, options, onChange, placeholder }: 
         <p className="mt-1 flex flex-wrap items-center gap-1 text-xs text-warn" data-testid="category-similar" aria-live="polite">
           You already have “{close}”.
           <button type="button" className="font-semibold text-navy underline" onMouseDown={(e) => e.preventDefault()} onClick={() => choose(close)}>Use {close}</button>
-          <span className="text-muted">or keep “{typed}” as a new category.</span>
+          <span className="text-muted">or keep “{resolved}” as a new category.</span>
         </p>
       )}
     </div>
