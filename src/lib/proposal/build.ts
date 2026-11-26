@@ -1,11 +1,11 @@
-import { computeEstimate, effectiveVisibility, itemsForGroup } from "../estimate/engine";
+import { computeEstimate, effectiveVisibility, isDiscountItem, itemsForGroup } from "../estimate/engine";
 import { tradeBlocks } from "../estimate/trades";
 import { D, formatCurrency, round2, toDec } from "../estimate/money";
 import type { Estimate } from "../estimate/types";
 import { tradeName, UNIT_ABBR } from "../trades/catalog";
 import { customerText, displayPhone } from "./customer-text";
 import { customerExclusions, customerScope, normalizeExclusions, normalizeScope } from "./text-sections";
-import type { BusinessProfile, ProposalConfig, ProposalDocument, ProposalSection } from "./types";
+import type { BusinessProfile, ProposalConfig, ProposalDocument, ProposalLine, ProposalSection } from "./types";
 
 const clean = (s?: string | null) => (s && s.trim() ? s.trim() : undefined);
 
@@ -57,8 +57,23 @@ export function buildProposal(estimate: Estimate, business: BusinessProfile, con
           amount: show.groupPrices || mode === "group_total" ? formatCurrency(gt.price) : undefined,
           lines: [],
         };
-        if (mode !== "group_total") {
+        // Discount lines always show their amount (it reveals nothing internal), even in a total-only section.
+        const discountLine = (i: (typeof visibleItems)[number]): ProposalLine => {
+          const t = totals.items[i.id];
+          const pct = t.discount?.percent;
+          return {
+            name: `${i.name.trim() || "Discount"}${pct ? ` (${pct.toString()}%)` : ""}`,
+            description: show.itemDescriptions ? clean(i.description) : undefined,
+            notes: show.notes ? clean(i.notes) : undefined,
+            amount: formatCurrency(t.extendedPrice),
+            discount: true,
+          };
+        };
+        if (mode === "group_total") {
+          section.lines = visibleItems.filter((i) => isDiscountItem(i) && !totals.items[i.id].extendedPrice.isZero()).map(discountLine);
+        } else {
           section.lines = visibleItems.map((i) => {
+            if (isDiscountItem(i)) return discountLine(i);
             const t = totals.items[i.id];
             return {
               name: i.name.trim() || "Item",
@@ -86,6 +101,17 @@ export function buildProposal(estimate: Estimate, business: BusinessProfile, con
   }
 
   const adjLabel = clean(estimate.adjustmentLabel) ?? (totals.adjustment.isNegative() ? "Discount" : "Adjustment");
+  const byGroup = estimate.displayMode === "by_group";
+  const pd = estimate.projectDiscount;
+  const pdLabel = `${clean(pd?.label) ?? "Discount"}${pd?.kind === "percent" ? ` (${toDec(pd.value).value.toString()}%)` : ""}`;
+  // In a single-total proposal a positive adjustment stays inside the project price (as before); discounts are always shown.
+  const showAdjustment = !totals.adjustment.isZero() && (byGroup || totals.adjustment.isNegative());
+  const discounts: { label: string; amount: string }[] = [];
+  if (!byGroup && totals.lineDiscounts.gt(0)) discounts.push({ label: "Discount", amount: formatCurrency(totals.lineDiscounts.negated()) });
+  if (totals.projectDiscount.gt(0)) discounts.push({ label: pdLabel, amount: formatCurrency(totals.projectDiscount.negated()) });
+  const anyDiscount = discounts.length > 0 || totals.adjustment.isNegative();
+  const projectAmount = totals.itemsPrice.plus(totals.lineDiscounts).plus(totals.adjustment.gt(0) ? totals.adjustment : 0);
+  const savings = totals.lineDiscounts.plus(totals.projectDiscount).plus(totals.adjustment.isNegative() ? totals.adjustment.negated() : 0);
   const total = totals.total;
   const milestones = config.paymentSchedule.filter((m) => clean(m.label) || toDec(m.percent).value.gt(0));
   let allocated = new D(0);
@@ -131,14 +157,15 @@ export function buildProposal(estimate: Estimate, business: BusinessProfile, con
       displayMode: estimate.displayMode,
       sections,
       projectLabel: estimate.title.trim() || "Entire Project",
-      adjustment:
-        !totals.adjustment.isZero() && estimate.displayMode === "by_group"
-          ? { label: adjLabel, amount: formatCurrency(totals.adjustment) }
-          : undefined,
+      projectAmount: byGroup ? undefined : formatCurrency(projectAmount),
+      beforeDiscount: byGroup && anyDiscount ? { label: totals.lineDiscounts.gt(0) ? "Sections total" : "Price before discount", amount: formatCurrency(totals.itemsPrice) } : undefined,
+      discounts: discounts.length ? discounts : undefined,
+      adjustment: showAdjustment ? { label: adjLabel, amount: formatCurrency(totals.adjustment) } : undefined,
       subtotal: formatCurrency(totals.subtotal),
       tax: totals.tax.isZero() ? undefined : { label: `Sales tax (${totals.taxRate.toString()}%)`, amount: formatCurrency(totals.tax) },
       rounding: totals.rounding.isZero() ? undefined : { label: "Rounding", amount: formatCurrency(totals.rounding) },
       total: formatCurrency(total),
+      savings: savings.gt(0) ? formatCurrency(savings) : undefined,
     },
     exclusions: customerExclusions(config.exclusionList ?? normalizeExclusions(null, config.exclusions)),
     allowances: customerText(config.allowances),

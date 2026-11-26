@@ -21,6 +21,7 @@ import type { QuoteComparison } from "@/lib/operations/sub-quotes";
 export const COST_TYPE_LABELS: Record<CostType, string> = {
   material: "Materials", labor: "Labor", labor_material: "Labor & materials", equipment: "Equipment", subcontractor: "Subcontractors",
   overhead: "Overhead", contingency: "Contingency", permit: "Permits & fees", delivery: "Delivery", labor_burden: "Labor burden", other: "Other direct costs",
+  discount: "Discounts",
 };
 
 export interface ReportLine {
@@ -39,7 +40,7 @@ export interface InternalReport {
   sections: ReportSection[];
   costBreakdown: { costType: CostType; label: string; cost: string; share: string }[];
   totals: {
-    directCost: string; itemsPrice: string; adjustment: string; adjustmentLabel: string | null; sellingPrice: string;
+    directCost: string; itemsPrice: string; projectDiscount: string; projectDiscountLabel: string | null; adjustment: string; adjustmentLabel: string | null; sellingPrice: string;
     tax: string; taxRate: string; rounding: string; customerTotal: string;
     grossProfit: string; markupPct: string | null; marginPct: string | null;
   };
@@ -70,7 +71,7 @@ export function buildInternalReport(e: Estimate, opts: { version?: { number: num
       const x = t.items[it.id];
       if (!x) continue;
       if (it.treatment === "pass_through") passThrough++;
-      breakdown.set(it.costType, (breakdown.get(it.costType) ?? ZERO).plus(x.extendedCost));
+      if (it.costType !== "discount") breakdown.set(it.costType, (breakdown.get(it.costType) ?? ZERO).plus(x.extendedCost));
       lines.push({
         name: it.name || "Untitled item", costType: it.costType, costTypeLabel: COST_TYPE_LABELS[it.costType] ?? it.costType, passThrough: it.treatment === "pass_through",
         quantity: x.quantity.toString(), unit: it.unit, unitCost: money(x.unitCost), extendedCost: money(x.extendedCost),
@@ -88,6 +89,8 @@ export function buildInternalReport(e: Estimate, opts: { version?: { number: num
   const notes: string[] = [];
   if (passThrough) notes.push(`${passThrough} line item${passThrough === 1 ? " is" : "s are"} billed at cost (pass-through): no markup or profit.`);
   if (breakdown.has("contingency")) notes.push("Contingency is included as a direct cost line, as entered in the estimate.");
+  if (t.lineDiscounts.gt(0)) notes.push(`Discount lines take $${money(t.lineDiscounts)} off section prices. They change selling price and profit, not cost.`);
+  if (t.projectDiscount.gt(0)) notes.push(`A project discount of $${money(t.projectDiscount)} changes selling price and profit, not cost.`);
   if (!t.adjustment.isZero()) notes.push(`A project ${t.adjustment.isNegative() ? "discount" : "adjustment"} of $${money(t.adjustment.abs())} changes selling price and profit, not cost.`);
   if (!t.rounding.isZero()) notes.push(`The customer total is rounded to the whole dollar (${t.rounding.isNegative() ? "−" : "+"}$${money(t.rounding.abs())}).`);
   const totalCost = t.totalCost;
@@ -99,7 +102,8 @@ export function buildInternalReport(e: Estimate, opts: { version?: { number: num
     costBreakdown: [...breakdown.entries()].filter(([, v]) => !v.isZero()).sort((a, b) => b[1].cmp(a[1]))
       .map(([k, v]) => ({ costType: k, label: COST_TYPE_LABELS[k] ?? k, cost: money(v), share: pct(ratio(v, totalCost)) ?? "0.0" })),
     totals: {
-      directCost: money(totalCost), itemsPrice: money(t.itemsPrice), adjustment: money(t.adjustment), adjustmentLabel: e.adjustmentLabel || null,
+      directCost: money(totalCost), itemsPrice: money(t.itemsPrice),
+      projectDiscount: money(t.projectDiscount.negated()), projectDiscountLabel: e.projectDiscount?.label?.trim() || null, adjustment: money(t.adjustment), adjustmentLabel: e.adjustmentLabel || null,
       sellingPrice: money(t.subtotal), tax: money(t.tax), taxRate: t.taxRate.toString(), rounding: money(t.rounding), customerTotal: money(t.total),
       grossProfit: money(t.grossProfit), markupPct: pct(t.effectiveMarkup), marginPct: pct(t.grossMargin),
     },

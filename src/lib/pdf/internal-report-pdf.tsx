@@ -92,6 +92,7 @@ export function InternalReportPdf({ r, company, logo }: { r: InternalReport; com
             {([
               ["Total estimated direct cost", $(t.directCost)],
               ["Line items at selling price", $(t.itemsPrice)],
+              ...(Number(t.projectDiscount ?? 0) !== 0 ? [[t.projectDiscountLabel || "Project discount", $(t.projectDiscount)]] : []),
               ...(Number(t.adjustment) !== 0 ? [[t.adjustmentLabel || "Project adjustment", $(t.adjustment)]] : []),
               ["Selling price (before tax)", $(t.sellingPrice)],
               ["Estimated gross profit", $(t.grossProfit)],

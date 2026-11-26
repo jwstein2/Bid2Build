@@ -94,20 +94,23 @@ export function ProposalView({ doc, customerSignature, contractorSignature }: {
           <div className="mt-2 space-y-3">
             {doc.pricing.displayMode === "project_total" ? (
               <div className="flex justify-between border-b py-2 font-semibold" style={{ borderColor: "#e4e0d8" }}>
-                <span>{doc.pricing.projectLabel}</span><span className="tabular">{doc.pricing.subtotal}</span>
+                <span>{doc.pricing.projectLabel}</span><span className="tabular">{doc.pricing.projectAmount ?? doc.pricing.subtotal}</span>
               </div>
             ) : (
               doc.pricing.sections.map((s, i) => <Section key={i} s={s} striped={st.tableStriped} bar={st.showSectionTotalsBar} brand={brand} px={px} base={st.baseSize} />)
             )}
           </div>
           <dl className="ml-auto mt-4 w-full max-w-xs space-y-1">
-            {doc.pricing.adjustment && <Row k={doc.pricing.adjustment.label} v={doc.pricing.adjustment.amount} />}
-            {(doc.pricing.tax || doc.pricing.adjustment || doc.pricing.rounding) && <Row k="Subtotal" v={doc.pricing.subtotal} />}
+            {doc.pricing.beforeDiscount && <Row k={doc.pricing.beforeDiscount.label} v={doc.pricing.beforeDiscount.amount} />}
+            {(doc.pricing.discounts ?? []).map((d, i) => <Row key={i} k={d.label} v={d.amount} discount />)}
+            {doc.pricing.adjustment && <Row k={doc.pricing.adjustment.label} v={doc.pricing.adjustment.amount} discount={doc.pricing.adjustment.amount.startsWith("-")} />}
+            {(doc.pricing.tax || doc.pricing.adjustment || doc.pricing.rounding || doc.pricing.discounts?.length) && <Row k="Subtotal" v={doc.pricing.subtotal} />}
             {doc.pricing.tax && <Row k={doc.pricing.tax.label} v={doc.pricing.tax.amount} />}
             {doc.pricing.rounding && <Row k={doc.pricing.rounding.label} v={doc.pricing.rounding.amount} />}
             <div className="flex justify-between rounded px-3 py-2 font-extrabold" style={{ background: brand, color: onColor(brand), fontSize: px(st.baseSize * 1.25) }}>
               <dt>Total</dt><dd className="tabular">{doc.pricing.total}</dd>
             </div>
+            {doc.pricing.savings && <p className="px-3 pt-1 text-right font-semibold" style={{ color: DISCOUNT_COLOR }} data-testid="proposal-savings">You save {doc.pricing.savings}</p>}
           </dl>
         </section>
 
@@ -174,8 +177,14 @@ function SigCol({ heading, sig, lines, fs, testId }: { heading: string; sig?: Vi
   );
 }
 
-function Row({ k, v }: { k: string; v: string }) {
-  return <div className="flex justify-between px-3"><dt className="text-[#3b4656]">{k}</dt><dd className="tabular font-semibold">{v}</dd></div>;
+const DISCOUNT_COLOR = "#1d6b45";
+
+function Row({ k, v, discount }: { k: string; v: string; discount?: boolean }) {
+  return (
+    <div className="flex justify-between px-3" style={discount ? { color: DISCOUNT_COLOR } : undefined}>
+      <dt style={{ color: discount ? DISCOUNT_COLOR : "#3b4656" }}>{k}</dt><dd className="tabular font-semibold">{v}</dd>
+    </div>
+  );
 }
 
 function Prose({ title, body, gap, color, small }: { title: string | null; body: string; gap: number; color?: string; small?: boolean }) {
@@ -191,7 +200,8 @@ function Section({ s, striped, bar, brand, px, base }: { s: ProposalSection; str
   const itemized = s.mode === "itemized";
   const hasQty = itemized && s.lines.some((l) => l.quantity);
   const hasUnit = itemized && s.lines.some((l) => l.unitPrice);
-  const hasAmt = itemized && s.lines.some((l) => l.amount);
+  // Discount lines carry an amount in every mode; other lines only when itemized.
+  const hasAmt = s.lines.some((l) => l.amount);
   return (
     <div className="break-inside-avoid">
       {s.tradeHeading && (
@@ -230,7 +240,7 @@ function Section({ s, striped, bar, brand, px, base }: { s: ProposalSection; str
                 </td>
                 {hasQty && <td className="tabular whitespace-nowrap px-2 py-1 text-right">{l.quantity} {l.unit}</td>}
                 {hasUnit && <td className="tabular whitespace-nowrap px-2 py-1 text-right">{l.unitPrice}</td>}
-                {hasAmt && <td className="tabular whitespace-nowrap px-2 py-1 text-right">{l.amount}</td>}
+                {hasAmt && <td className={`tabular whitespace-nowrap px-2 py-1 text-right ${l.discount ? "font-semibold" : ""}`} style={l.discount ? { color: DISCOUNT_COLOR } : undefined}>{l.amount}</td>}
               </tr>
             ))}
           </tbody>

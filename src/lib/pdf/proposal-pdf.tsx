@@ -126,21 +126,24 @@ export function ProposalPdf({ doc, logo, acceptance, contractor, appendix }: {
             {doc.pricing.displayMode === "project_total" ? (
               <View style={{ flexDirection: "row", justifyContent: "space-between", borderBottomWidth: 0.75, borderBottomColor: "#e4e0d8", paddingVertical: 5 }} wrap={false}>
                 <Text style={{ fontFamily: "Helvetica-Bold" }}>{T(doc.pricing.projectLabel)}</Text>
-                <Text style={{ fontFamily: "Helvetica-Bold" }}>{T(doc.pricing.subtotal)}</Text>
+                <Text style={{ fontFamily: "Helvetica-Bold" }}>{T(doc.pricing.projectAmount ?? doc.pricing.subtotal)}</Text>
               </View>
             ) : (
               doc.pricing.sections.map((sec, i) => <PdfSection key={i} s={sec} fs={fs} brand={brand} striped={st.tableStriped} bar={st.showSectionTotalsBar} />)
             )}
 
             <View style={{ marginTop: 8, marginLeft: "auto", width: 220 }} wrap={false}>
-              {doc.pricing.adjustment ? <Total k={doc.pricing.adjustment.label} v={doc.pricing.adjustment.amount} /> : null}
-              {doc.pricing.tax || doc.pricing.adjustment || doc.pricing.rounding ? <Total k="Subtotal" v={doc.pricing.subtotal} /> : null}
+              {doc.pricing.beforeDiscount ? <Total k={doc.pricing.beforeDiscount.label} v={doc.pricing.beforeDiscount.amount} /> : null}
+              {(doc.pricing.discounts ?? []).map((d, i) => <Total key={i} k={d.label} v={d.amount} discount />)}
+              {doc.pricing.adjustment ? <Total k={doc.pricing.adjustment.label} v={doc.pricing.adjustment.amount} discount={doc.pricing.adjustment.amount.startsWith("-")} /> : null}
+              {doc.pricing.tax || doc.pricing.adjustment || doc.pricing.rounding || doc.pricing.discounts?.length ? <Total k="Subtotal" v={doc.pricing.subtotal} /> : null}
               {doc.pricing.tax ? <Total k={doc.pricing.tax.label} v={doc.pricing.tax.amount} /> : null}
               {doc.pricing.rounding ? <Total k={doc.pricing.rounding.label} v={doc.pricing.rounding.amount} /> : null}
               <View style={{ flexDirection: "row", justifyContent: "space-between", backgroundColor: brand, color: onColor(brand), paddingVertical: 5, paddingHorizontal: 8, marginTop: 3, borderRadius: 2 }}>
                 <Text style={{ fontFamily: "Helvetica-Bold", fontSize: fs * 1.2 }}>Total</Text>
                 <Text style={{ fontFamily: "Helvetica-Bold", fontSize: fs * 1.2 }}>{T(doc.pricing.total)}</Text>
               </View>
+              {doc.pricing.savings ? <Text style={{ textAlign: "right", color: DISCOUNT_COLOR, fontFamily: "Helvetica-Bold", fontSize: fs * 0.9, marginTop: 3, paddingHorizontal: 8 }}>{`You save ${T(doc.pricing.savings)}`}</Text> : null}
             </View>
           </View>
 
@@ -235,11 +238,13 @@ function KV({ k, v }: { k: string; v: string }) {
   );
 }
 
-function Total({ k, v }: { k: string; v: string }) {
+const DISCOUNT_COLOR = "#1d6b45";
+
+function Total({ k, v, discount }: { k: string; v: string; discount?: boolean }) {
   return (
     <View style={{ flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 8, paddingVertical: 1.5 }}>
-      <Text style={{ color: "#3b4656" }}>{T(k)}</Text>
-      <Text style={{ fontFamily: "Helvetica-Bold" }}>{T(v)}</Text>
+      <Text style={{ color: discount ? DISCOUNT_COLOR : "#3b4656" }}>{T(k)}</Text>
+      <Text style={{ fontFamily: "Helvetica-Bold", color: discount ? DISCOUNT_COLOR : undefined }}>{T(v)}</Text>
     </View>
   );
 }
@@ -257,7 +262,8 @@ function PdfSection({ s, fs, brand, striped, bar }: { s: ProposalSection; fs: nu
   const itemized = s.mode === "itemized";
   const hasQty = itemized && s.lines.some((l) => l.quantity);
   const hasUnit = itemized && s.lines.some((l) => l.unitPrice);
-  const hasAmt = itemized && s.lines.some((l) => l.amount);
+  // Discount lines carry an amount in every mode; other lines only when itemized.
+  const hasAmt = s.lines.some((l) => l.amount);
   return (
     <View style={{ marginTop: 7 }}>
       {s.tradeHeading ? (
@@ -295,7 +301,7 @@ function PdfSection({ s, fs, brand, striped, bar }: { s: ProposalSection; fs: nu
           </View>
           {hasQty && <Text style={{ width: 70, textAlign: "right" }}>{l.quantity ? `${T(l.quantity)} ${T(l.unit)}` : ""}</Text>}
           {hasUnit && <Text style={{ width: 70, textAlign: "right" }}>{T(l.unitPrice)}</Text>}
-          {hasAmt && <Text style={{ width: 75, textAlign: "right" }}>{T(l.amount)}</Text>}
+          {hasAmt && <Text style={{ width: 75, textAlign: "right", ...(l.discount ? { color: DISCOUNT_COLOR, fontFamily: "Helvetica-Bold" } : {}) }}>{T(l.amount)}</Text>}
         </View>
       ))}
     </View>

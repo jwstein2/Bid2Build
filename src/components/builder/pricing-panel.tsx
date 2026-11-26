@@ -90,7 +90,8 @@ export function PricingPanel({ estimate: e, totals: t, dispatch, lib }: { estima
           <p className="mt-1">Markup is profit as a percent of <b>cost</b>: price = cost × (1 + markup). Margin is profit as a percent of <b>price</b>: price = cost ÷ (1 − margin). Use one or the other, never both.</p>
         </details>
 
-        <div className="mt-4 grid grid-cols-2 gap-3">
+        <ProjectDiscountField estimate={e} totals={t} dispatch={dispatch} />
+        <div className="mt-3 grid grid-cols-2 gap-3">
           <div>
             <label htmlFor="adj" className="label">Adjustment $</label>
             <input id="adj" inputMode="decimal" value={e.fixedAdjustment} onChange={(ev) => dispatch({ type: "patch", patch: { fixedAdjustment: ev.target.value } })} className="field tabular" aria-describedby="adj-help" />
@@ -100,7 +101,7 @@ export function PricingPanel({ estimate: e, totals: t, dispatch, lib }: { estima
             <input id="tax" inputMode="decimal" value={e.taxRate} onChange={(ev) => dispatch({ type: "patch", patch: { taxRate: ev.target.value } })} className="field tabular" aria-invalid={taxInvalid} />
           </div>
         </div>
-        <p id="adj-help" className="mt-1 text-xs text-muted">Use a negative amount for a discount. Applied before tax.</p>
+        <p id="adj-help" className="mt-1 text-xs text-muted">Any other change to the price, before tax. A negative amount lowers it. For discounts by section, use Add discount in that section.</p>
         <TaxDetails estimateId={/^[0-9a-f-]{36}$/.test(e.id) ? e.id : null} onUseRate={(rate) => dispatch({ type: "patch", patch: { taxRate: rate } })} />
         {toDec(e.fixedAdjustment).value.isZero() ? null : (
           <div className="mt-2">
@@ -125,6 +126,8 @@ export function PricingPanel({ estimate: e, totals: t, dispatch, lib }: { estima
           <Metric k="Expected gross profit" v={formatCurrency(t.grossProfit)} tone={negProfit ? "danger" : "ok"} />
           <Metric k="Expected gross margin" v={t.grossMargin ? formatPercent(t.grossMargin) : "—"} tone={negProfit ? "danger" : undefined} />
           <Metric k="Markup on cost" v={t.effectiveMarkup ? formatPercent(t.effectiveMarkup) : "—"} />
+          {t.lineDiscounts.gt(0) && <Metric k="Section discounts" v={formatCurrency(t.lineDiscounts.negated())} hint="Included in bid price" />}
+          {t.projectDiscount.gt(0) && <Metric k={e.projectDiscount?.label?.trim() || "Project discount"} v={formatCurrency(t.projectDiscount.negated())} hint="Included in bid price" />}
           {!t.adjustment.isZero() && <Metric k={e.adjustmentLabel || (t.adjustment.isNegative() ? "Discount" : "Adjustment")} v={formatCurrency(t.adjustment)} />}
           <Metric k={`Sales tax collected${t.taxRate.isZero() ? "" : ` (${t.taxRate.toString()}%)`}`} v={formatCurrency(t.tax)} hint="Not revenue" />
         </dl>
@@ -252,6 +255,52 @@ function RefreshCosts({ estimate: e, lib, dispatch }: { estimate: Estimate; lib:
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+/** Whole-project discount: dollars or a percent of the line items. Shown to the customer as its own row. */
+function ProjectDiscountField({ estimate: e, totals: t, dispatch }: { estimate: Estimate; totals: EstimateTotals; dispatch: Dispatch<Action> }) {
+  const pd = e.projectDiscount ?? null;
+  const kind = pd?.kind ?? "amount";
+  const set = (patch: Partial<NonNullable<Estimate["projectDiscount"]>>) => {
+    const next = { kind, value: pd?.value ?? "", ...(pd?.label ? { label: pd.label } : {}), ...patch };
+    dispatch({ type: "patch", patch: { projectDiscount: next.value.trim() || next.label ? next : null } });
+  };
+  const invalid = t.issues.some((i) => i.field === "projectDiscount");
+  return (
+    <div className="mt-4" data-testid="project-discount">
+      <div className="flex items-end justify-between gap-2">
+        <label htmlFor="project-discount" className="label mb-0">Discount</label>
+        <div role="radiogroup" aria-label="Discount type" className="grid grid-cols-2 rounded-lg border border-line-strong p-0.5 text-xs font-semibold">
+          {(["amount", "percent"] as const).map((k) => (
+            <button key={k} type="button" role="radio" aria-checked={kind === k} onClick={() => set({ kind: k })}
+              className={cn("rounded-md px-2 py-1", kind === k ? "bg-brand text-white" : "text-ink-soft hover:bg-black/5")}>
+              {k === "amount" ? "$" : "%"}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="relative mt-1">
+        {kind === "amount" && <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">$</span>}
+        <input id="project-discount" inputMode="decimal" value={pd?.value ?? ""} placeholder={kind === "amount" ? "0.00" : "0"}
+          onChange={(ev) => set({ value: ev.target.value })}
+          className={cn("field tabular", kind === "amount" ? "pl-7" : "pr-8")} aria-invalid={invalid} aria-describedby="project-discount-help" />
+        {kind === "percent" && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted">%</span>}
+      </div>
+      <p id="project-discount-help" className={cn("mt-1 text-xs", invalid ? "text-danger" : "text-muted")}>
+        {invalid
+          ? t.issues.find((i) => i.field === "projectDiscount")?.message
+          : t.projectDiscount.gt(0)
+            ? `Customer sees ${formatCurrency(t.itemsPrice)} less ${formatCurrency(t.projectDiscount)} before tax. Tax is figured on the discounted price.`
+            : "Off the whole job, before tax. Shown to your customer as its own line."}
+      </p>
+      {pd?.value.trim() ? (
+        <div className="mt-2">
+          <label htmlFor="project-discount-label" className="label">Discount label</label>
+          <input id="project-discount-label" value={pd.label ?? ""} placeholder="Discount" maxLength={100} onChange={(ev) => set({ label: ev.target.value })} className="field field-sm" />
+        </div>
+      ) : null}
     </div>
   );
 }

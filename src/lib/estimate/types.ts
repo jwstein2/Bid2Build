@@ -16,7 +16,14 @@ export type CostType =
   | "permit"
   | "delivery"
   | "labor_burden"
-  | "other";
+  | "other"
+  /**
+   * A customer discount line. It is never marked up and carries no cost. Its unit cost is the
+   * discount amount per unit (entered as a positive number), or, when its unit is DISCOUNT_PERCENT_UNIT,
+   * a percent of the other lines in its section. It lowers the section price (and the section's taxable
+   * amount in proportion), and always shows its amount on the proposal.
+   */
+  | "discount";
 
 /**
  * marked_up: an estimated direct cost; the pricing method (markup or margin) is applied.
@@ -29,6 +36,18 @@ export type GroupVisibility = "group_total" | "names_only" | "itemized";
 
 /** Estimate-wide presentation. "by_group" lets each group choose its own visibility. */
 export type EstimateDisplayMode = "by_group" | "project_total";
+
+/** Unit value that makes a discount line a percent of its section (stored in estimate_items.unit). */
+export const DISCOUNT_PERCENT_UNIT = "percent";
+
+/** Whole-project discount, applied to the line-item total before tax. */
+export interface ProjectDiscount {
+  kind: "amount" | "percent";
+  /** Positive decimal string: dollars, or percent of the line-item total. */
+  value: string;
+  /** Customer-facing label. Defaults to "Discount". */
+  label?: string;
+}
 
 export interface PricingRule {
   mode: PricingMode;
@@ -100,6 +119,12 @@ export interface Estimate {
   /** Signed decimal string. Negative = discount. Applied to pre-tax price. */
   fixedAdjustment: string;
   adjustmentLabel?: string;
+  /**
+   * Whole-project discount shown on the proposal as its own row (amount or percent). Applied to the
+   * line-item total before the adjustment and tax. Persisted in estimates.proposal_config.projectDiscount
+   * (no column). Missing/null = none.
+   */
+  projectDiscount?: ProjectDiscount | null;
   /** Sales tax percentage applied to taxable items. */
   taxRate: string;
   /**
