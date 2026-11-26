@@ -1,12 +1,13 @@
 "use client";
 import { Building2, ChevronRight, Layers, Pencil, Plus, Ruler, Search, Sparkles, Star, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { formatCurrency } from "@/lib/estimate/money";
 import { COST_TYPES, UNIT_ABBR, tradeName } from "@/lib/trades/catalog";
 import Link from "next/link";
 import { FREE_ITEMS_KEPT_NOTE, FREE_SAVED_ITEMS_LIMIT, frequentItems, matchesQuery, organizeLibrary, overrideLabel, type SavedItem, type SavedStack, type StackScale } from "@/lib/library/saved-items";
 import { STARTER_ASSEMBLIES, perLabel, starterStack } from "@/lib/library/assemblies";
 import { ScaleFields } from "./scale-stack";
+import { StackEditor } from "./stack-editor";
+import { rateLabel } from "./rate-label";
 import { useLibrary, type Library } from "../builder/library";
 import { Button } from "../ui/button";
 import { Card } from "../ui/misc";
@@ -16,8 +17,7 @@ import { CategoryMerge } from "./category-merge";
 
 const fmtDay = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 const typeLabel = (t: string) => COST_TYPES.find((c) => c.value === t)?.label ?? t;
-export const rateLabel = (s: Pick<SavedItem, "unitCost" | "unit">) =>
-  s.unitCost ? `${formatCurrency(s.unitCost)} / ${UNIT_ABBR[s.unit] ?? s.unit}` : `${UNIT_ABBR[s.unit] ?? s.unit} · no rate`;
+export { rateLabel };
 
 /** Star toggle: favorites lead the builder's picker for quick add. */
 export function FavoriteStar({ on, name, onToggle }: { on: boolean; name: string; onToggle: () => void }) {
@@ -54,6 +54,7 @@ export function LibraryManager() {
   const [q, setQ] = useState("");
   const [editing, setEditing] = useState<SavedItem | "new" | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [stackEditing, setStackEditing] = useState<string | "new" | null>(null);
 
   if (!lib.loaded) return <Card className="p-6 text-center text-muted">Loading your Saved Items…</Card>;
   if (!lib.access && !lib.itemsAccess) return <div data-guide="items.locked"><LibraryLocked signedIn lockedCount={lib.lockedCount} /></div>;
@@ -158,14 +159,38 @@ export function LibraryManager() {
 
       {!full ? <LibraryLocked signedIn itemsFree lockedCount={lib.lockedCount} /> : <>
       <section aria-labelledby="saved-stacks-h">
-        <h2 id="saved-stacks-h" className="mb-1 font-display text-xl font-bold text-navy">Saved Stacks</h2>
-        <p className="mb-2 text-sm text-ink-soft">A stack is a group of rows you add together. In an estimate, select rows with their checkboxes and choose <b>Save Stack</b>. Turn on scaling and its quantities follow a measurement, like roof squares or wall area.</p>
+        <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+          <h2 id="saved-stacks-h" className="font-display text-xl font-bold text-navy">Saved Stacks</h2>
+          {stackEditing !== "new" && <Button size="sm" variant="secondary" onClick={() => setStackEditing("new")} data-testid="stack-new"><Plus className="h-4 w-4" aria-hidden /> New Saved Stack</Button>}
+        </div>
+        <p className="mb-2 text-sm text-ink-soft">A stack is a group of items you add to a bid together. Build one here from your saved items with <b>New Saved Stack</b>, or in an estimate select rows with their checkboxes and choose <b>Save Stack</b>. Turn on scaling and its quantities follow a measurement, like roof squares or wall area.</p>
+        {stackEditing === "new" && (
+          <Card className="mb-3 p-4 sm:p-5">
+            <h3 className="mb-3 font-display text-lg font-bold">New Saved Stack</h3>
+            <StackEditor
+              items={lib.items}
+              canShare={lib.canShare}
+              onCancel={() => setStackEditing(null)}
+              onSave={async (st) => { const r = await lib.addStack(st); if (r.ok) { setStackEditing(null); say(`Created stack “${st.name}”.`); } return r; }}
+            />
+          </Card>
+        )}
         {!lib.stacks.length ? (
           <Card className="p-6 text-center text-sm text-muted">No saved stacks yet.</Card>
         ) : !stacks.length ? (
           <Card className="p-6 text-center text-sm text-muted">No stacks match “{q}”.</Card>
         ) : (
-          <Card><ul className="divide-y divide-line">{stacks.map((s) => <StackRow key={s.id} stack={s} lib={lib} say={say} onRemoved={() => say(`Deleted stack “${s.name}”.`)} />)}</ul></Card>
+          <Card><ul className="divide-y divide-line">{stacks.map((s) => stackEditing === s.id ? (
+            <li key={s.id} className="p-4" data-search-id={s.id}>
+              <h3 className="mb-3 font-display text-lg font-bold">Edit “{s.name}”</h3>
+              <StackEditor
+                initial={s}
+                items={lib.items}
+                onCancel={() => setStackEditing(null)}
+                onSave={async (st) => { const r = await lib.updateStack(st); if (r.ok) { setStackEditing(null); say(`Saved stack “${st.name}”.`); } return r; }}
+              />
+            </li>
+          ) : <StackRow key={s.id} stack={s} lib={lib} say={say} onEdit={() => setStackEditing(s.id)} onRemoved={() => say(`Deleted stack “${s.name}”.`)} />)}</ul></Card>
         )}
       </section>
 
@@ -220,20 +245,21 @@ function ItemRow({ item: i, lib, onEdit, onRemoved }: { item: SavedItem; lib: Li
   );
 }
 
-function StackRow({ stack: s, lib, say, onRemoved }: { stack: SavedStack; lib: Library; say: (m: string) => void; onRemoved: () => void }) {
+function StackRow({ stack: s, lib, say, onEdit, onRemoved }: { stack: SavedStack; lib: Library; say: (m: string) => void; onEdit: () => void; onRemoved: () => void }) {
   const [renaming, setRenaming] = useState(false);
   const [scaling, setScaling] = useState(false);
   const canEdit = s.canEdit !== false;
   const [name, setName] = useState(s.name);
   const [err, setErr] = useState<string | null>(null);
+  const [renameBusy, setRenameBusy] = useState(false);
   return (
     <li className="px-4 py-2 text-sm" data-search-id={s.id}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         {renaming ? (
-          <form className="flex min-w-0 flex-1 flex-wrap items-center gap-2" onSubmit={async (e) => { e.preventDefault(); if (!name.trim()) return; const r = await lib.renameStack(s.id, name.trim()); if (r.ok) setRenaming(false); else setErr(r.message); }}>
+          <form className="flex min-w-0 flex-1 flex-wrap items-center gap-2" onSubmit={async (e) => { e.preventDefault(); if (!name.trim() || renameBusy) return; setRenameBusy(true); const r = await lib.renameStack(s.id, name.trim()).finally(() => setRenameBusy(false)); if (r.ok) setRenaming(false); else setErr(r.message); }}>
             <input className="field field-sm min-w-0 flex-1" value={name} maxLength={200} onChange={(e) => setName(e.target.value)} aria-label="Stack name" autoFocus />
-            <Button size="sm" type="submit">Save</Button>
-            <Button size="sm" variant="ghost" onClick={() => { setRenaming(false); setName(s.name); }}>Cancel</Button>
+            <Button size="sm" type="submit" loading={renameBusy}>{renameBusy ? "Saving…" : "Save"}</Button>
+            <Button size="sm" variant="ghost" onClick={() => { setRenaming(false); setName(s.name); }} disabled={renameBusy}>Cancel</Button>
           </form>
         ) : (
           <details className="group min-w-0 basis-full">
@@ -262,6 +288,7 @@ function StackRow({ stack: s, lib, say, onRemoved }: { stack: SavedStack; lib: L
         )}
         {!renaming && canEdit && (
           <span className="flex items-center">
+            <button type="button" onClick={onEdit} className="inline-flex min-h-11 items-center gap-1 rounded px-2 text-sm text-brand hover:bg-brand-tint md:min-h-9" aria-label={`Edit items in ${s.name}`} data-testid="stack-edit"><Layers className="h-4 w-4" aria-hidden />Edit items</button>
             <button type="button" onClick={() => setRenaming(true)} className="inline-flex min-h-11 items-center gap-1 rounded px-2 text-sm text-brand hover:bg-brand-tint md:min-h-9" aria-label={`Rename ${s.name}`}><Pencil className="h-4 w-4" aria-hidden />Rename</button>
             <ConfirmRemove name={s.name} onConfirm={async () => { const r = await lib.removeStack(s.id); if (r.ok) onRemoved(); }} />
           </span>
@@ -282,8 +309,14 @@ function ScaleEditor({ stack, onSave, onCancel }: { stack: SavedStack; onSave: (
   const set = (id: string, patch: Partial<RowScale>) => setRows((r) => r.map((x) => (x.id === id ? { ...x, ...patch } : x)));
   const bad = rows.some((r) => (r.per && !/^\d*(\.\d{0,6})?$/.test(r.per)) || (r.wastePct && !/^(\d{1,2}(\.\d{1,2})?|100)$/.test(r.wastePct)));
   const u = scale ? UNIT_ABBR[scale.unit] ?? scale.unit : "";
+  const [busy, setBusy] = useState(false);
   return (
-    <form className="mt-2 rounded-lg border border-line bg-paper p-3" data-testid="scale-editor" onSubmit={(e) => { e.preventDefault(); if (!bad && (!scale || scale.label.trim())) void onSave(scale, rows.map((r) => ({ ...r, per: r.per || undefined, wastePct: r.wastePct || undefined }))); }}>
+    <form className="mt-2 rounded-lg border border-line bg-paper p-3" data-testid="scale-editor" onSubmit={(e) => {
+      e.preventDefault();
+      if (busy || bad || (scale && !scale.label.trim())) return;
+      setBusy(true);
+      void onSave(scale, rows.map((r) => ({ ...r, per: r.per || undefined, wastePct: r.wastePct || undefined }))).finally(() => setBusy(false));
+    }}>
       <ScaleFields value={scale} onChange={setScale} />
       {scale && (
         <div className="mt-3 space-y-2">
@@ -303,7 +336,7 @@ function ScaleEditor({ stack, onSave, onCancel }: { stack: SavedStack; onSave: (
       {bad && <p role="alert" className="mt-2 text-xs text-danger">Use numbers only (waste 0 to 100).</p>}
       <div className="mt-3 flex justify-end gap-2">
         <Button size="sm" variant="ghost" onClick={onCancel}>Cancel</Button>
-        <Button size="sm" type="submit" disabled={bad} data-testid="scale-save">Save scaling</Button>
+        <Button size="sm" type="submit" loading={busy} disabled={bad} data-testid="scale-save">{busy ? "Saving…" : "Save scaling"}</Button>
       </div>
     </form>
   );
@@ -335,7 +368,7 @@ function TargetMargin({ initial, onSaved }: { initial: string; onSaved: (v: stri
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted">%</span>
             </div>
           </div>
-          <Button size="sm" variant="secondary" onClick={save} disabled={!valid || state === "saving"}>{state === "saving" ? "Saving…" : "Save"}</Button>
+          <Button loading={state === "saving"} size="sm" variant="secondary" onClick={save} disabled={!valid || state === "saving"}>{state === "saving" ? "Saving…" : "Save"}</Button>
         </div>
         <p className="text-xs text-muted">Margin is profit as a percent of the price. A 25% margin takes a 33.3% markup on cost.{state === "error" ? " Couldn't save. Try again." : ""}</p>
       </Card>

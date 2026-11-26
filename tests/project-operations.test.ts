@@ -59,6 +59,19 @@ describe("proposal style resolver (V4.4)", () => {
     expect(canEditStyleKey(p, "template")).toBe(false);
   });
 
+  it("owners and template managers can change unlocked style on a bid even with member customization off", () => {
+    // New companies get a style row with customization off; the owner was wrongly locked out (Nov 2026).
+    const p = policy({ style: { template: "modern" }, locked: ["show.itemPrices"], allowCustomization: false, canOverride: true });
+    expect(canEditStyleKey(p, "template")).toBe(true);
+    expect(canEditStyleKey(p, "show.itemPrices")).toBe(false);
+    const r = resolveProposalStyle({ policy: p, estimate, business, config: { ...defaultProposalConfig(), template: "premium", styleOverrides: ["template"] } });
+    expect(r.bidChoicesApply).toBe(true);
+    expect(r.config.template).toBe("premium");
+    expect(r.sources.template).toBe("bid");
+    const member = policy({ style: { template: "modern" }, allowCustomization: false, canCustomize: false });
+    expect(canEditStyleKey(member, "template")).toBe(false);
+  });
+
   it("company branding uses the owner's profile", () => {
     const r = resolveProposalStyle({ policy: policy({ style: { companyBranding: true } }), estimate, business, config: bidConfig, ownerBusiness: owner });
     expect(r.business.companyName).toBe("Owner Builders LLC");
@@ -190,7 +203,7 @@ describe("V4.3 amendment helpers", async () => {
       { id: "3", name: "Anchors", costType: "material", treatment: "marked_up", unit: "each", unitCost: "1", taxable: true, uses: 2 },
     ] as const;
     expect(frequentItems([...items]).map((i) => i.name)).toEqual(["Framing", "Anchors"]);
-    const lib = organizeLibrary([...items].map((i) => ({ ...i, category: "General" })));
+    const lib = organizeLibrary([...items].map((i) => ({ ...i, costType: "material" as const, category: "General" })));
     expect(lib[0].categories[0].items.map((i) => i.name)).toEqual(["Framing", "Anchors", "Drywall"]);
   });
 

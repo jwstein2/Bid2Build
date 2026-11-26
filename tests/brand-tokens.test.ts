@@ -48,7 +48,7 @@ describe("brand tokens", () => {
 
   it("never pairs white text with cyan (fails AA)", () => {
     expect(ratio(token("surface"), token("accent"))).toBeLessThan(4.5);
-    const button = readFileSync(join(__dirname, "../src/components/ui/button.tsx"), "utf8");
+    const button = readFileSync(join(__dirname, "../src/components/ui/button-styles.tsx"), "utf8");
     expect(button).toMatch(/accent: "bg-accent text-navy/);
   });
 });

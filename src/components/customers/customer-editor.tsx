@@ -83,7 +83,7 @@ export function CustomerEditor({ customer, canEdit, canDelete }: { customer: Edi
       <p className="text-xs text-muted">Changes apply to future bids. Bids and signed proposals you already created keep their original details.</p>
       {msg && <p role="alert" className="text-sm text-danger">{msg}</p>}
       <div className="flex gap-2">
-        <Button type="submit" size="sm" disabled={busy} data-testid="customer-save">{busy ? "Saving…" : "Save"}</Button>
+        <Button loading={busy} type="submit" size="sm" disabled={busy} data-testid="customer-save">{busy ? "Saving…" : "Save"}</Button>
         <Button size="sm" variant="ghost" onClick={() => { setEditing(false); setMsg(null); }}>Cancel</Button>
       </div>
     </form>

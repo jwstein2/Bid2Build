@@ -12,7 +12,7 @@ export function AcceptGift({ token, signedInAs, emailHint }: { token: string; si
   return (
     <div className="space-y-3">
       {error && <Notice tone="warn">{error}</Notice>}
-      <Button variant="accent" size="lg" className="w-full" disabled={pending} onClick={() => start(async () => {
+      <Button loading={pending} variant="accent" size="lg" className="w-full" disabled={pending} onClick={() => start(async () => {
         setError(null);
         const r = await acceptGift(token);
         if (r.ok) router.push("/welcome"); else setError(r.message);

@@ -4,13 +4,14 @@ import type { EstimateTotals } from "../estimate/engine";
 import type { Estimate } from "../estimate/types";
 import { logError } from "../http/api";
 import { buildObservation } from "./capture";
-import { sanitizeMeasurements } from "./trade-models";
+import { primaryProfile, sanitizeMeasurements } from "./trade-models";
 
 export const CONSENT_POLICY_VERSION = "2026-11-draft";
 
 /** Persist the benchmarking profile next to the estimate (RLS client: the user can only write their own). */
 export async function saveProjectProfile(supabase: SupabaseClient, userId: string, estimate: Estimate) {
-  const p = estimate.projectProfile;
+  // This row describes the first trade; the other trades' details are saved in the worksheet.
+  const p = primaryProfile(estimate.projectProfile, estimate.trades);
   if (!p) return;
   const { error } = await supabase.from("estimate_project_profiles").upsert({
     estimate_id: estimate.id,
@@ -33,7 +34,7 @@ export async function captureObservation(admin: SupabaseClient, userId: string, 
   try {
     const { data: consent } = await admin.from("market_consent").select("share_prices, share_costs").eq("user_id", userId).maybeSingle();
     if (!consent?.share_prices) return "no_consent";
-    const payload = buildObservation(estimate, totals, estimate.projectProfile, { sharePrices: true, shareCosts: Boolean(consent.share_costs) });
+    const payload = buildObservation(estimate, totals, primaryProfile(estimate.projectProfile, estimate.trades), { sharePrices: true, shareCosts: Boolean(consent.share_costs) });
     const { data, error } = await admin.rpc("market_capture", { p_user_id: userId, p_version_id: versionId, p_payload: payload });
     if (error) throw error;
     return String(data);

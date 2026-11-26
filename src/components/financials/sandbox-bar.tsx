@@ -40,7 +40,7 @@ export function SandboxBar({ sandbox, canManage, compact }: { sandbox: boolean; 
           </ul>
           {err && <div className="mt-3"><Notice tone="danger">{err}</Notice></div>}
           <div className="mt-4 flex flex-wrap gap-2">
-            <Button onClick={() => void run("sandbox_enter")} disabled={busy} data-testid="fin-sandbox-enter-confirm">{busy ? "Switching…" : "Switch to the sandbox"}</Button>
+            <Button loading={busy} onClick={() => void run("sandbox_enter")} disabled={busy} data-testid="fin-sandbox-enter-confirm">{busy ? "Switching…" : "Switch to the sandbox"}</Button>
             <Button variant="ghost" onClick={() => setConfirm(null)}>Stay in real books</Button>
           </div>
         </FinDialog>
@@ -58,7 +58,7 @@ export function SandboxBar({ sandbox, canManage, compact }: { sandbox: boolean; 
         description="You get fresh practice books with new copies of your open jobs. The old sandbox is archived (kept, read-only) and everyone in it goes back to the real books.">
         {err && <div className="mb-3"><Notice tone="danger">{err}</Notice></div>}
         <div className="flex flex-wrap gap-2">
-          <Button onClick={() => void run("sandbox_reset")} disabled={busy} data-testid="fin-sandbox-reset-confirm">{busy ? "Starting over…" : "Start over"}</Button>
+          <Button loading={busy} onClick={() => void run("sandbox_reset")} disabled={busy} data-testid="fin-sandbox-reset-confirm">{busy ? "Starting over…" : "Start over"}</Button>
           <Button variant="ghost" onClick={() => setConfirm(null)}>Keep this sandbox</Button>
         </div>
       </FinDialog>

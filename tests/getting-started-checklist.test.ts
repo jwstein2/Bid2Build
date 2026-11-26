@@ -28,6 +28,18 @@ describe("getting started checklist", () => {
     expect(checklistSteps(empty).find((x) => x.id === "tour")?.opensTour).toBe(true);
   });
 
+  it("a signed bid counts as sent and won even when its pipeline stage is still draft", () => {
+    const s = checklistSteps({ ...empty, bids: 1, signingLinks: 1, signedBids: 1 });
+    expect(s.find((x) => x.id === "send")?.done).toBe(true);
+    expect(s.find((x) => x.id === "win")?.done).toBe(true);
+  });
+
+  it("a signing link alone finishes Send but not Win", () => {
+    const s = checklistSteps({ ...empty, bids: 1, signingLinks: 1 });
+    expect(s.find((x) => x.id === "send")?.done).toBe(true);
+    expect(s.find((x) => x.id === "win")?.done).toBe(false);
+  });
+
   it("everything done leaves no next step", () => {
     const s = checklistSteps({ companyName: true, logo: true, tourDone: true, bids: 2, sentBids: 1, wonBids: 1, savedItems: 5 });
     expect(nextStep(s)).toBeNull();

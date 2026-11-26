@@ -51,6 +51,7 @@ import { track } from "@/lib/analytics/track";
 import { claimOffer } from "@/lib/offers/client";
 import { CreditsLowNote, ProposalReadyNote } from "../offers/offer-note";
 import { SAVE_DRAFT_COPY, SaveDraftNote, saveDraftDismissed } from "../offers/save-draft-note";
+import { useAutoDismiss } from "../ui/use-auto-dismiss";
 
 type Biz = BusinessProfile & { logoPath?: string | null };
 type Step = BuilderStep;
@@ -455,6 +456,16 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
   const goTo = (s: Step) => { setStep(s); setCustomerView(false); window.scrollTo({ top: 0, behavior: "smooth" }); };
 
   const lastTrash = state.trash[state.trash.length - 1];
+  // The "Removed … · Undo" toast shows for each new removal and times out (paused on hover/focus).
+  // Hiding it doesn't forget the removal; it just stops the toast lingering for the rest of the session.
+  // After an Undo the toast stays hidden rather than resurfacing for the previous removal.
+  const [seenTrash, setSeenTrash] = useState<{ last: typeof lastTrash | undefined; len: number }>({ last: lastTrash, len: state.trash.length });
+  const [trashToast, setTrashToast] = useState<typeof lastTrash | undefined>(undefined);
+  if (seenTrash.last !== lastTrash) {
+    setSeenTrash({ last: lastTrash, len: state.trash.length });
+    setTrashToast(lastTrash && state.trash.length >= seenTrash.len ? lastTrash : undefined);
+  }
+  const trashToastProps = useAutoDismiss(trashToast, () => setTrashToast(undefined));
   // Customer price display as the customer will see it. On a company-managed bid the contractor's own
   // choice is recorded as a bid override so "Single project total" is honored wherever it's allowed.
   const priceDisplay: PriceDisplay = {
@@ -473,7 +484,7 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
       {/* Universal search (V6.4): Ctrl/Cmd+K and the header icon, for signed-in builders. */}
       {user && <GlobalSearchHost />}
       {/* Project header */}
-      <header ref={headerRef} className="sticky top-[var(--b2b-banner-h)] z-30 border-b border-line bg-surface/95 backdrop-blur no-print">
+      <header ref={headerRef} className="sticky top-[var(--app-sticky-top)] z-30 border-b border-line bg-surface/95 backdrop-blur no-print">
         <div className="mx-auto flex max-w-[1400px] flex-wrap items-center gap-x-4 gap-y-2 px-3 py-2 sm:px-5">
           <div className="flex shrink-0 items-center gap-2">
             <Link href={user ? "/dashboard" : "/"} className="inline-flex h-9 items-center gap-1.5 rounded-md px-2 text-sm font-semibold text-accent-ink hover:bg-black/5" aria-label={user ? "Dashboard" : "Home"} data-testid="builder-home"><Home className="h-4 w-4" aria-hidden /><span className="hidden 2xl:inline">{user ? "Dashboard" : "Home"}</span></Link>
@@ -483,8 +494,9 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
           <div className="min-w-0 flex-1">
             <label htmlFor="est-title" className="sr-only">Project title</label>
             <input id="est-title" value={estimate.title} onChange={(e) => dispatch({ type: "patch", patch: { title: e.target.value } })}
-              // Starter title ("Decks & Porches Project"): select it on focus so typing replaces it.
-              onFocus={(ev) => { if (isDefaultTitle(estimate)) { const el = ev.currentTarget; requestAnimationFrame(() => el.select()); } }} className="cell w-full max-w-md truncate font-display text-lg font-bold" placeholder="Project title" />
+              // Starter or automatic title ("Jane Smith – 11/24/2026"): select it on focus so typing replaces it.
+              // Large and first in the header, above the steps, so it's always clear which bid is open.
+              onFocus={(ev) => { if (isDefaultTitle(estimate)) { const el = ev.currentTarget; requestAnimationFrame(() => el.select()); } }} title={estimate.title} data-testid="builder-project-title" className="cell w-full max-w-2xl truncate font-display text-xl font-bold sm:text-2xl" placeholder="Project title" />
             <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 px-1.5 text-xs text-muted [&>*]:whitespace-nowrap">
               <span>{estimate.customer.name || <button className="underline" onClick={() => setStep("project")}>Add customer</button>}</span>
               <span className="hidden max-w-[16rem] truncate sm:inline">{estimate.trades.map(tradeName).join(" + ")}</span>
@@ -511,8 +523,8 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
             </div>
             <Button size="sm" variant="secondary" onClick={() => setPreviewOpen(true)} data-guide="builder.preview" className="max-sm:order-first max-sm:min-h-11"><Eye className="h-4 w-4" /> <span className="hidden sm:inline">Preview customer proposal</span><span className="sm:hidden">Preview</span></Button>
             <div className="flex flex-col items-end">
-              <Button size="sm" variant="accent" onClick={doExport} disabled={exporting} aria-label="Download PDF">
-                {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} <span><span className="max-[360px]:hidden">Download </span>PDF</span>
+              <Button loading={exporting} size="sm" variant="accent" onClick={doExport} disabled={exporting} aria-label="Download PDF">
+                {!exporting && <Download className="h-4 w-4" />} <span><span className="max-[360px]:hidden">Download </span>PDF</span>
               </Button>
               {credits && <span className="mt-0.5"><CreditSummary credits={credits} /></span>}
               {/* Holds the credit line's space while balances load, so the header doesn't grow and push
@@ -581,10 +593,10 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
           </Notice>
         )}
         {user && !(user.verified ?? user.emailVerified) && <Notice tone="warn" className="mb-4" title="Verify your email">Check your inbox for the verification link to unlock PDF downloads.</Notice>}
-        {lastTrash && (
-          <div className="on-dark fixed bottom-20 left-1/2 md:left-[calc(50%+var(--app-sidebar-w,0px)/2)] z-40 flex -translate-x-1/2 items-center gap-3 rounded-full bg-ink px-4 py-2 text-sm text-white shadow-lg lg:bottom-6" role="status">
-            {lastTrash.kind === "trade" ? `Removed ${lastTrash.label} and its sections` : `Deleted ${lastTrash.label}`}
-            <button onClick={() => dispatch({ type: "undo" })} className="inline-flex items-center gap-1 font-semibold text-accent underline"><Undo2 className="h-4 w-4" /> Undo</button>
+        {trashToast && (
+          <div {...trashToastProps} className="on-dark fixed bottom-20 left-1/2 md:left-[calc(50%+var(--app-sidebar-w,0px)/2)] z-40 flex -translate-x-1/2 items-center gap-3 rounded-full bg-ink px-4 py-2 text-sm text-white shadow-lg lg:bottom-6" role="status">
+            {trashToast.kind === "trade" ? `Removed ${trashToast.label} and its sections` : `Deleted ${trashToast.label}`}
+            <button type="button" onClick={() => { setTrashToast(undefined); dispatch({ type: "undo" }); }} className="inline-flex items-center gap-1 font-semibold text-accent underline"><Undo2 className="h-4 w-4" /> Undo</button>
           </div>
         )}
 

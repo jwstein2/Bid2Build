@@ -39,6 +39,7 @@ export function MySignature() {
   const c = data.credential;
   const t = data.settings.tenant;
   const auth = data.settings.myAuthorization;
+  const coName = t.companyName ?? "your company";
   const autoOn = Boolean(c?.auto_apply_authorized && !c.auto_apply_revoked_at);
 
   return (
@@ -48,11 +49,11 @@ export function MySignature() {
         {!t.companyId ? (
           <p className="mt-1 text-sm text-ink-soft">You sign for your own business. Your signing rules are in <Link className="font-semibold text-accent-ink underline" href="/settings/company/signing">Company profile → Proposal signing</Link>.</p>
         ) : t.isOwner ? (
-          <p className="mt-1 text-sm text-ink-soft">As the owner of <b>{t.companyName}</b>, you can sign contracts for the company. You decide who else can in <Link className="font-semibold text-accent-ink underline" href="/settings/company/signing">Company profile → Proposal signing</Link>.</p>
+          <p className="mt-1 text-sm text-ink-soft">As the owner of <b>{coName}</b>, you can sign contracts for the company. You decide who else can in <Link className="font-semibold text-accent-ink underline" href="/settings/company/signing">Company profile → Proposal signing</Link>.</p>
         ) : auth ? (
-          <p className="mt-1 text-sm text-ink-soft">The owner of <b>{t.companyName}</b> authorized you to sign {auth.scope === "company_bids" ? "any company contract" : "contracts for bids assigned to you"}{auth.title ? <> as <b>{auth.title}</b></> : null}, since {fmt(auth.grantedAt)}. Automatic application: <b>{auth.autoApplyAllowed ? "allowed by the company" : "not allowed by the company"}</b>.</p>
+          <p className="mt-1 text-sm text-ink-soft">The owner of <b>{coName}</b> authorized you to sign {auth.scope === "company_bids" ? "any company contract" : "contracts for bids assigned to you"}{auth.title ? <> as <b>{auth.title}</b></> : null}, since {fmt(auth.grantedAt)}. Automatic application: <b>{auth.autoApplyAllowed ? "allowed by the company" : "not allowed by the company"}</b>.</p>
         ) : (
-          <p className="mt-1 text-sm text-ink-soft">You aren&apos;t authorized to sign contracts for <b>{t.companyName}</b>. You can still set up your signature; only the company owner can authorize you to use it for the company.</p>
+          <p className="mt-1 text-sm text-ink-soft">You aren&apos;t authorized to sign contracts for <b>{coName}</b>. You can still set up your signature; only the company owner can authorize you to use it for the company.</p>
         )}
       </Card>
 
@@ -77,8 +78,8 @@ export function MySignature() {
           <p className="mt-3 text-xs text-muted">Changing or revoking your signature never changes contracts already signed. Each one keeps the exact signature it was signed with.</p>
           <div className="mt-4 flex flex-wrap gap-2">
             <Button variant="secondary" onClick={() => setEditing(true)}>Update signature</Button>
-            {autoOn && <Button variant="ghost" onClick={() => void revoke("auto_apply")} disabled={busy !== null} data-testid="stop-auto">{busy === "auto_apply" && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />} Stop automatic use</Button>}
-            <Button variant="ghost" className="text-danger" onClick={() => void revoke("all")} disabled={busy !== null} data-testid="revoke-signature">{busy === "all" && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />} Revoke signature</Button>
+            {autoOn && <Button loading={busy === "auto_apply"} variant="ghost" onClick={() => void revoke("auto_apply")} disabled={busy !== null} data-testid="stop-auto"> Stop automatic use</Button>}
+            <Button loading={busy === "all"} variant="ghost" className="text-danger" onClick={() => void revoke("all")} disabled={busy !== null} data-testid="revoke-signature"> Revoke signature</Button>
           </div>
           {err && <p className="mt-2 text-sm text-danger" role="alert">{err}</p>}
         </Card>
@@ -215,12 +216,12 @@ function SignatureForm({ data, onSaved, onCancel, onReauthed }: { data: Data; on
             <input id="ms-auto" type="checkbox" className="mt-1 h-5 w-5 shrink-0" checked={auto} onChange={(e) => setAuto(e.target.checked)} data-testid="auto-apply-consent" />
             <span className="text-sm text-ink-soft"><span className="font-semibold text-ink">Optional: automatic application. </span>{autoApplyText(wording)}</span>
           </label>
-          <p className="text-xs text-muted">Leave it unchecked to approve every contract yourself. Your company can also require that, whatever you choose here.</p>
+          <p className="pl-8 text-xs text-muted">Leave it unchecked to approve every contract yourself. Your company can also require that, whatever you choose here.</p>
         </div>
 
         {errors.form && <Notice tone="danger">{errors.form}</Notice>}
         <div className="flex flex-wrap gap-2">
-          <Button type="submit" variant="accent" disabled={busy || !data.recentAuth.ok} data-testid="save-signature">{busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />} Save signature</Button>
+          <Button loading={busy} type="submit" variant="accent" disabled={busy || !data.recentAuth.ok} data-testid="save-signature"> Save signature</Button>
           {onCancel && <Button variant="ghost" onClick={onCancel}>Cancel</Button>}
         </div>
       </form>
@@ -256,11 +257,11 @@ function ConfirmIdentity({ email, onDone }: { email: string | null; onDone: () =
       <p className="flex items-center gap-2 font-semibold text-navy"><Mail className="h-4 w-4" aria-hidden /> First, confirm it&apos;s you</p>
       <p className="mt-1 text-sm text-ink-soft">Before we store a signature, we send a one-time code to <b>{email ?? "your email"}</b>. This proves the signature is being set up by you.</p>
       {!sent ? (
-        <Button className="mt-3" variant="primary" onClick={() => void send()} disabled={busy}>{busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />} Email me a code</Button>
+        <Button loading={busy} className="mt-3" variant="primary" onClick={() => void send()} disabled={busy}> Email me a code</Button>
       ) : (
         <div className="mt-3 flex flex-wrap items-end gap-2">
           <div><label htmlFor="ms-code" className="mb-1 block text-sm font-semibold">Code from the email</label><input id="ms-code" className="field w-40" inputMode="numeric" autoComplete="one-time-code" value={code} onChange={(e) => setCode(e.target.value)} maxLength={10} /></div>
-          <Button variant="primary" onClick={() => void verify()} disabled={busy || code.trim().length < 6}>{busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />} Confirm</Button>
+          <Button loading={busy} variant="primary" onClick={() => void verify()} disabled={busy || code.trim().length < 6}> Confirm</Button>
         </div>
       )}
       {err && <p className="mt-2 text-sm text-danger" role="alert">{err}</p>}

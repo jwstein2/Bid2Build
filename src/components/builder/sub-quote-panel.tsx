@@ -1,5 +1,5 @@
 "use client";
-import { FileText, HardHat, Loader2, Paperclip } from "lucide-react";
+import { FileText, HardHat, Paperclip } from "lucide-react";
 import { useMemo, useState } from "react";
 import { formatCurrency } from "@/lib/estimate/money";
 import { latestRevision, originalRevision, SUB_QUOTE_STATUS_LABELS, type SubQuote } from "@/lib/operations/sub-quotes";
@@ -126,8 +126,8 @@ function QuoteForm({ estimateId, itemId, quoteId, resources, trade, onResourceCr
       ) : (
       <div className="flex justify-end gap-2 sm:col-span-2">
         <Button size="sm" variant="ghost" onClick={cancel} disabled={busy}>Cancel</Button>
-        <Button size="sm" onClick={() => void submit()} disabled={busy || (!quoteId && !resourceId && !vendorName.trim()) || (revise && !amount.trim())} data-testid="quote-save">
-          {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />} {revise ? "Record revision" : "Save quote"}
+        <Button loading={busy} size="sm" onClick={() => void submit()} disabled={busy || (!quoteId && !resourceId && !vendorName.trim()) || (revise && !amount.trim())} data-testid="quote-save">
+           {revise ? "Record revision" : "Save quote"}
         </Button>
       </div>
       )}

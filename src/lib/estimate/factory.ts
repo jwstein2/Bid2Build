@@ -46,9 +46,37 @@ export function defaultTitleFor(tradeSlug: string | undefined): string {
  * a suggestion (placeholder / select-all) so typing a name replaces it instead of appending to it.
  * Derived from the title itself, so nothing is stored and saved titles are never rewritten.
  */
-export function isDefaultTitle(e: Pick<Estimate, "title" | "trades">): boolean {
+export function isDefaultTitle(e: Pick<Estimate, "title" | "trades"> & Partial<Pick<Estimate, "customer" | "estimateDate">>): boolean {
   const t = e.title.trim();
-  return t === "New Project" || t === defaultTitleFor(e.trades[0]);
+  if (t === "New Project" || t === defaultTitleFor(e.trades[0])) return true;
+  return Boolean(e.customer?.name?.trim()) && t === autoTitleFor({ trades: e.trades, customer: e.customer!, estimateDate: e.estimateDate ?? "" });
+}
+
+/** "2026-11-24" → "11/24/2026" (as typed, no time zone shift). Empty when the date isn't an ISO date. */
+export function titleDate(iso: string | undefined): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso ?? "");
+  return m ? `${m[2]}/${m[3]}/${m[1]}` : "";
+}
+
+/**
+ * The automatic title: customer name + estimate date ("Jane Smith – 11/24/2026"), so the open bid is
+ * recognizable at a glance. Before a customer is named it is the trade's starter title.
+ */
+export function autoTitleFor(e: Pick<Estimate, "trades" | "customer" | "estimateDate">): string {
+  const name = e.customer?.name?.trim();
+  if (!name) return defaultTitleFor(e.trades[0]);
+  const date = titleDate(e.estimateDate);
+  return date ? `${name} – ${date}` : name;
+}
+
+/**
+ * Keeps an automatic title in step with the customer name, estimate date and first trade. A title
+ * the contractor typed (anything that isn't a starter or automatic title) is never changed.
+ */
+export function withAutoTitle(prev: Estimate, next: Estimate): Estimate {
+  if (next.title !== prev.title || !isDefaultTitle(prev)) return next;
+  const title = autoTitleFor(next);
+  return title === next.title ? next : { ...next, title };
 }
 
 /**

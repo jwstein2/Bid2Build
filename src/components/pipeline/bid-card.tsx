@@ -1,8 +1,8 @@
 "use client";
 import Link from "next/link";
 import * as Menu from "@radix-ui/react-dropdown-menu";
-import { ArrowRight, CheckCircle2, Clock, Hourglass, MoreVertical, UserCheck } from "lucide-react";
-import { COLUMNS, COLUMN_LABELS, approvalOf, checkMove, columnOf, lastActivity, nextAction, valueOf, type BoardBid, type Column } from "@/lib/pipeline/board";
+import { ArrowRight, CheckCircle2, Clock, Hourglass, MoreVertical, Trash2, UserCheck } from "lucide-react";
+import { COLUMNS, COLUMN_LABELS, approvalOf, checkMove, columnOf, deleteBlock, lastActivity, nextAction, valueOf, type BoardBid, type Column } from "@/lib/pipeline/board";
 import { isPmEnabled } from "@/lib/env";
 import { money, relDay } from "./format";
 
@@ -10,8 +10,10 @@ import { money, relDay } from "./format";
  * One bid on the pipeline (board column or expanded stage grid). Hierarchy: customer, project, value and last
  * activity, then one primary action. Moves and the other links live in the ⋮ menu.
  */
-export function BidCard({ b, esign, onMove, onDragStart, onDragEnd }: {
+export function BidCard({ b, esign, onMove, onDelete, onDragStart, onDragEnd }: {
   b: BoardBid; esign: boolean; onMove: (b: BoardBid, to: Column) => void;
+  /** Shows Delete bid in the ⋮ menu (asks for confirmation first). */
+  onDelete?: (b: BoardBid) => void;
   /** Omit both to make the card non-draggable (expanded stage view). */
   onDragStart?: (id: string) => void; onDragEnd?: () => void;
 }) {
@@ -38,7 +40,7 @@ export function BidCard({ b, esign, onMove, onDragStart, onDragEnd }: {
             className="line-clamp-1 break-words text-xs font-medium leading-snug text-ink-soft group-hover:text-brand after:absolute after:inset-0 after:rounded-lg after:content-['']"
           >{b.title}</Link>
         </div>
-        <MoveMenu b={b} col={col} onMove={onMove} />
+        <MoveMenu b={b} col={col} onMove={onMove} onDelete={onDelete} />
       </div>
       <div className="mt-1.5 flex items-baseline justify-between gap-2">
         <span className="tabular truncate text-sm font-extrabold text-navy">{value === null ? <span className="text-xs font-semibold text-muted">Not priced yet</span> : money(value, true)}</span>
@@ -76,8 +78,9 @@ function SignBadge({ b }: { b: BoardBid }) {
   return <span className="inline-flex items-center gap-1 rounded-full bg-black/5 px-2 py-0.5 font-bold text-ink-soft"><Clock className="h-3 w-3" aria-hidden />Link {s.state}</span>;
 }
 
-function MoveMenu({ b, col, onMove }: { b: BoardBid; col: Column; onMove: (b: BoardBid, to: Column) => void }) {
+function MoveMenu({ b, col, onMove, onDelete }: { b: BoardBid; col: Column; onMove: (b: BoardBid, to: Column) => void; onDelete?: (b: BoardBid) => void }) {
   const action = nextAction(b, false, isPmEnabled());
+  const blocked = deleteBlock(b);
   return (
     <Menu.Root>
       <Menu.Trigger aria-label={`Move ${b.title}`} className="relative z-10 -mr-1 -mt-1 grid h-9 w-9 shrink-0 place-items-center rounded-md text-muted hover:bg-black/5 hover:text-navy" data-testid="move-menu" data-guide="bids.card-menu">
@@ -100,6 +103,17 @@ function MoveMenu({ b, col, onMove }: { b: BoardBid; col: Column; onMove: (b: Bo
           {b.signing?.signed && <Menu.Item asChild><Link href={`/signed/${b.signing.signed.id}`} className="flex min-h-10 items-center rounded-md px-2 text-sm outline-none data-[highlighted]:bg-brand-tint">View signed proposal</Link></Menu.Item>}
           {/* Job cards whose primary action opens the schedule keep a one-click link to the project too. */}
           {b.scheduleId && isPmEnabled() && action?.href !== `/projects/${b.scheduleId}` && <Menu.Item asChild><Link href={`/projects/${b.scheduleId}`} className="flex min-h-10 items-center rounded-md px-2 text-sm outline-none data-[highlighted]:bg-brand-tint">Open project</Link></Menu.Item>}
+          {onDelete && (
+            <>
+              <Menu.Separator className="my-1 h-px bg-line" />
+              {/* Blocked bids keep the item (disabled, with the reason) so people learn why instead of hunting for it. */}
+              <Menu.Item disabled={Boolean(blocked)} onSelect={() => onDelete(b)} title={blocked ?? "Hide this bid. It stays in the audit log and can be restored."} data-testid="delete-bid"
+                className="flex min-h-10 cursor-pointer items-center gap-2 rounded-md px-2 text-sm text-danger outline-none data-[disabled]:cursor-not-allowed data-[disabled]:text-muted data-[highlighted]:bg-danger-tint">
+                <Trash2 className="h-4 w-4" aria-hidden />Delete bid
+              </Menu.Item>
+              {blocked && <p className="max-w-64 px-2 pb-1 text-xs text-muted" data-testid="delete-blocked">{blocked}</p>}
+            </>
+          )}
         </Menu.Content>
       </Menu.Portal>
     </Menu.Root>

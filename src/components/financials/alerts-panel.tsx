@@ -52,7 +52,7 @@ export function AlertsPanel({ alerts, canAct, onChanged, showRefresh = true }: {
         <h2 id="fin-alerts-h" className="font-display text-lg font-extrabold">Alerts</h2>
         <span className="text-xs text-muted">Alerts never block your work.</span>
         {showRefresh && canAct && (
-          <Button variant="ghost" size="sm" className="ml-auto" disabled={busy === "refresh"} onClick={() => act({ action: "refresh_alerts" }, "refresh")}>
+          <Button loading={busy === "refresh"} variant="ghost" size="sm" className="ml-auto" disabled={busy === "refresh"} onClick={() => act({ action: "refresh_alerts" }, "refresh")}>
             <RefreshCw className="h-4 w-4" aria-hidden /> {busy === "refresh" ? "Checking…" : "Check again"}
           </Button>
         )}

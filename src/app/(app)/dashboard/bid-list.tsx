@@ -72,6 +72,9 @@ export function BidList({ rows }: { rows: BidRow[] }) {
       ) : (
         <ul className="divide-y divide-line">{list.map((r, i) => <Row key={r.id} r={r} first={i === 0} />)}</ul>
       )}
+      <p className="border-t border-line px-4 py-2 text-right text-xs text-muted">
+        <Link href="/dashboard/deleted" className="font-semibold text-brand hover:underline" data-testid="recently-deleted-link">Recently deleted bids</Link>
+      </p>
     </Card>
   );
 }
@@ -79,6 +82,7 @@ export function BidList({ rows }: { rows: BidRow[] }) {
 function Row({ r, first }: { r: BidRow; first: boolean }) {
   const [pending, start] = useTransition();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [delErr, setDelErr] = useState<string | null>(null);
   const [renaming, setRenaming] = useState(false);
   const [title, setTitle] = useState(r.title);
   const [dl, setDl] = useState(false);
@@ -140,7 +144,8 @@ function Row({ r, first }: { r: BidRow; first: boolean }) {
           <span className="sr-only">Signed bids can be archived but not deleted.</span>
         ) : confirmDelete ? (
           <span className="flex items-center gap-1 text-sm">
-            <Button size="sm" variant="danger" onClick={() => start(() => deleteEstimate(r.id))} disabled={pending}>Delete forever</Button>
+            <Button size="sm" variant="danger" disabled={pending} title="Hides the bid. It stays in the audit log and can be restored from Recently deleted."
+              onClick={() => start(async () => { const err = await deleteEstimate(r.id); setDelErr(err); if (err) setConfirmDelete(false); })}>Delete bid</Button>
             <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(false)}>Cancel</Button>
           </span>
         ) : (
@@ -148,6 +153,7 @@ function Row({ r, first }: { r: BidRow; first: boolean }) {
         )}
       </div>
       {dlErr && <p role="alert" className="basis-full text-sm text-danger">{dlErr}</p>}
+      {delErr && <p role="alert" className="basis-full text-sm text-danger" data-testid="delete-error">{delErr}</p>}
     </li>
   );
 }

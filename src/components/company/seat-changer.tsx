@@ -1,5 +1,5 @@
 "use client";
-import { Loader2, Minus, Plus } from "lucide-react";
+import { Minus, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { Button } from "../ui/button";
@@ -43,8 +43,8 @@ export function SeatChanger({ current, seatsInUse }: { current: number; seatsInU
         <input id={`${id}-n`} type="number" inputMode="numeric" min={min} value={target} onChange={(e) => set(Number(e.target.value))}
           className="h-10 w-20 rounded-lg border border-line bg-surface px-3 text-center text-base font-semibold" />
         <Button type="button" variant="secondary" aria-label="More users" onClick={() => set(target + 1)}><Plus className="h-4 w-4" /></Button>
-        <Button type="button" onClick={() => call("preview")} disabled={busy !== null || target === current}>
-          {busy === "preview" && <Loader2 className="h-4 w-4 animate-spin" />}Preview change
+        <Button loading={busy === "preview"} type="button" onClick={() => call("preview")} disabled={busy !== null || target === current}>
+          Preview change
         </Button>
       </div>
       <p className="mt-1 text-xs text-ink-soft">{seatsInUse} in use (active users and pending invitations). You can&apos;t go below that or below the {ENTERPRISE_INCLUDED_USERS} included users.</p>
@@ -64,7 +64,7 @@ export function SeatChanger({ current, seatsInUse }: { current: number; seatsInU
             ? "Your card on file is charged now. If it's declined, no licenses are added."
             : "The unused licenses are removed now. The current period is already paid and isn't refunded or credited; your next invoice is at the new price. Deactivated users keep all their bids in the company."}</p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <Button onClick={() => call("confirm")} disabled={busy !== null}>{busy === "confirm" && <Loader2 className="h-4 w-4 animate-spin" />}{adding ? `Confirm and pay ${formatCents(preview.dueNowCents)}` : "Confirm removal"}</Button>
+            <Button loading={busy === "confirm"} onClick={() => call("confirm")} disabled={busy !== null}>{adding ? `Confirm and pay ${formatCents(preview.dueNowCents)}` : "Confirm removal"}</Button>
             <Button variant="secondary" onClick={() => setPreview(null)} disabled={busy !== null}>Cancel</Button>
           </div>
         </div>

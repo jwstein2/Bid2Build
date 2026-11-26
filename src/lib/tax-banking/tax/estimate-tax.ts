@@ -11,6 +11,7 @@ import { computeEstimate } from "@/lib/estimate/engine";
 import { calculateTax, explainDifference, type StoredRate } from "./engine";
 import { resolveTaxProvider } from "./providers";
 import type { CustomerExemption, LineClass, TaxResult } from "./types";
+import { primaryProfile } from "@/lib/market/trade-models";
 
 type Db = SupabaseClient;
 type Row = Record<string, unknown>;
@@ -84,7 +85,8 @@ export async function estimateTax(db: Db, estimateId: string, opts: { work?: Wor
   if (!loaded) return null;
   const { estimate, customerId } = loaded;
   const totals = computeEstimate(estimate);
-  const work: WorkKind = opts.work ?? (estimate.projectProfile?.workType === "new_construction" || estimate.projectProfile?.workType === "addition" ? "new_construction" : "repair");
+  const workType = primaryProfile(estimate.projectProfile, estimate.trades)?.workType;
+  const work: WorkKind = opts.work ?? (workType === "new_construction" || workType === "addition" ? "new_construction" : "repair");
   const address = addressFrom(estimate);
   const lines = estimate.items.filter((i) => totals.items[i.id]?.valid !== false).map((i) => ({
     ref: i.id, amount: totals.items[i.id]?.extendedPrice.toFixed(2) ?? "0.00", classification: classify(i.costType, work), taxableHint: i.taxable,

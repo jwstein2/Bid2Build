@@ -171,7 +171,7 @@ export function WorkforceForm({ wf, initial, people, open, onOpenChange, onSaved
       <p className="text-xs text-muted">Subcontractors and their workers don&apos;t need a Built2Bid account and never get one from this page. No seat is added.</p>
       <div className="flex justify-end gap-2">
         <Button variant="secondary" onClick={() => onOpenChange(false)}>Cancel</Button>
-        <Button variant="accent" disabled={busy || !name.trim()} onClick={save} data-testid="wf-f-save">{busy ? "Saving…" : "Save"}</Button>
+        <Button loading={busy} variant="accent" disabled={busy || !name.trim()} onClick={save} data-testid="wf-f-save">{busy ? "Saving…" : "Save"}</Button>
       </div>
     </Drawer>
   );

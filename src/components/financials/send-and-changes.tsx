@@ -71,7 +71,7 @@ export function MarkSentDialog({ target, onOpenChange, onDone }: { target: { id:
           <Field label="Note (optional)" htmlFor="ms-note"><input id="ms-note" className="field" value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} placeholder="e.g. Emailed to pat@example.com" /></Field>
         </>}
         {err && <Notice tone="danger">{err}</Notice>}
-        <Button type="submit" disabled={busy || (undo && !reason.trim())} data-testid="fin-mark-sent-confirm">{busy ? "Saving…" : undo ? "Undo sent mark" : "Mark as sent"}</Button>
+        <Button loading={busy} type="submit" disabled={busy || (undo && !reason.trim())} data-testid="fin-mark-sent-confirm">{busy ? "Saving…" : undo ? "Undo sent mark" : "Mark as sent"}</Button>
       </form>
     </FinDialog>
   );
@@ -196,7 +196,7 @@ function CoActionDialog({ act, jobId, invoices, canApprove, onOpenChange, onDone
           <Field label="Payment name (optional)" htmlFor="co-desc"><input id="co-desc" className="field" value={desc} onChange={(e) => setDesc(e.target.value)} maxLength={300} placeholder={co.label} /></Field>
         )}
         {err && <Notice tone="danger">{err}</Notice>}
-        <Button type="submit" disabled={busy} data-testid="fin-co-confirm">{busy ? "Saving…" : act.kind === "credit" ? "Issue credit" : act.kind === "amend" ? (canApprove ? "Reduce payment" : "Send for approval") : "Add payment"}</Button>
+        <Button loading={busy} type="submit" disabled={busy} data-testid="fin-co-confirm">{busy ? "Saving…" : act.kind === "credit" ? "Issue credit" : act.kind === "amend" ? (canApprove ? "Reduce payment" : "Send for approval") : "Add payment"}</Button>
       </form>
     </FinDialog>
   );

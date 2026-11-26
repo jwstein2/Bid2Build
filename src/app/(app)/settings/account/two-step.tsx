@@ -121,12 +121,12 @@ export function TwoStepSignIn() {
               <input className="field w-36 tracking-widest" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code}
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} onKeyDown={(e) => { if (e.key === "Enter") void confirm(); }} data-testid="two-step-code" />
             </label>
-            <Button disabled={busy || !codeOk(code)} onClick={() => void confirm()}>{busy ? "Checking…" : "Turn on"}</Button>
+            <Button loading={busy} disabled={busy || !codeOk(code)} onClick={() => void confirm()}>{busy ? "Checking…" : "Turn on"}</Button>
             <Button variant="ghost" disabled={busy} onClick={() => { setEnrolling(null); void load(); }}>Cancel</Button>
           </div>
         </div>
       ) : (
-        <div className="mt-3"><Button disabled={busy} onClick={() => void start()} data-testid="two-step-start">{busy ? "Starting…" : "Set up two-step sign-in"}</Button></div>
+        <div className="mt-3"><Button loading={busy} disabled={busy} onClick={() => void start()} data-testid="two-step-start">{busy ? "Starting…" : "Set up two-step sign-in"}</Button></div>
       )}
       {msg && <Notice tone={msg.tone} className="mt-3">{msg.text}</Notice>}
     </Card>

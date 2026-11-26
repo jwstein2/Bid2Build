@@ -372,7 +372,7 @@ function MessageList({ list, empty, open, setOpen, busy, run, perms }: { list: M
                     <Button size="sm" variant="ghost" disabled={busy !== null} onClick={() => act("refresh", "Preview updated from the latest schedule.")}><RefreshCw className="h-4 w-4" aria-hidden /> Refresh</Button>
                   </>}
                   {m.status !== "approved" && m.status !== "scheduled" && <Button size="sm" disabled={busy !== null} onClick={() => act("approve", "Approved. It will send at the planned time.")} data-testid="approve"><CheckCircle2 className="h-4 w-4" aria-hidden /> Approve scheduled send</Button>}
-                  <Button size="sm" variant="accent" disabled={busy !== null} onClick={() => act("send_now", "Sent.")} data-testid="send-now">{busy === `${m.id}:send_now` ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Send className="h-4 w-4" aria-hidden />} Send now</Button>
+                  <Button loading={busy === `${m.id}:send_now`} size="sm" variant="accent" disabled={busy !== null} onClick={() => act("send_now", "Sent.")} data-testid="send-now">{!(busy === `${m.id}:send_now`) && <Send className="h-4 w-4" aria-hidden />} Send now</Button>
                   <Button size="sm" variant="ghost" disabled={busy !== null} onClick={() => act("skip", "Skipped. Nothing was sent.")} data-testid="skip"><SkipForward className="h-4 w-4" aria-hidden /> Skip</Button>
                 </div>
               )}

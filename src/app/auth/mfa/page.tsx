@@ -56,7 +56,7 @@ export default function TwoStepChallenge() {
             <input className="field w-full text-center text-2xl tracking-[0.4em]" inputMode="numeric" autoComplete="one-time-code" autoFocus maxLength={6} aria-label="6-digit code"
               value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} onKeyDown={(e) => { if (e.key === "Enter") void submit(); }} data-testid="mfa-code" />
             {err && <Notice tone="danger">{err}</Notice>}
-            <Button className="w-full" disabled={busy || code.length !== 6} onClick={() => void submit()}>{busy ? "Checking…" : "Continue"}</Button>
+            <Button loading={busy} className="w-full" disabled={busy || code.length !== 6} onClick={() => void submit()}>{busy ? "Checking…" : "Continue"}</Button>
             <div className="text-xs text-muted">Lost your phone? Email support from the address on your account. <form action="/auth/signout" method="post" className="inline"><button type="submit" className="underline">Sign out</button></form></div>
           </>
         )}

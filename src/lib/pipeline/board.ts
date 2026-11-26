@@ -128,6 +128,26 @@ export function checkMove(b: BoardBid, to: Column): MoveCheck {
   return { ok: true, confirm: null };
 }
 
+/**
+ * Why a bid can't be deleted (null = it can). Deleting hides the bid but keeps it on record with an audit
+ * trail; records customers or the books rely on stay visible instead. The database (delete_estimate)
+ * applies the same rules plus who may delete, and also refuses bids with invoices or change orders.
+ */
+export function deleteBlock(b: BoardBid): string | null {
+  if (b.signing?.signed) return "This bid was e-signed, so it stays on record. Move it to Lost / Declined, or archive it from the Table view.";
+  if (isWonColumn(columnOf(b))) return "Won bids and jobs stay on record. Move it to Lost / Declined if the job was cancelled.";
+  if (b.scheduleId) return "This bid has a project. Move it to Lost / Declined if the job was cancelled.";
+  return null;
+}
+
+/** Extra warning before deleting a bid the customer may already have. */
+export function deleteWarning(b: BoardBid): string | null {
+  if (b.signing?.state === "awaiting") return "A signing link is out. Deleting the bid cancels it, so the customer can no longer sign.";
+  const col = columnOf(b);
+  if (col === "sent" || col === "awaiting") return "The customer may already have this proposal. If they declined, Lost / Declined keeps your win rate accurate.";
+  return null;
+}
+
 export type NextAction = { label: string; href?: string; move?: Column } | null;
 
 /**

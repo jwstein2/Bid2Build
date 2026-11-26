@@ -117,7 +117,7 @@ export function QuantityToolForm({ tool, tradeName, from }: { tool: QuantityTool
       <ResultBlock result={result} errors={shownErrors} pending={hidden > 0} id="tool-result" />
 
       <div className="mt-5 flex flex-col gap-3 border-t border-line pt-4 sm:flex-row sm:items-center">
-        <Button variant="accent" size="lg" onClick={send} disabled={going} data-cta="tool_bid" data-testid="tool-send" aria-describedby="tool-send-note" className="w-full sm:w-auto">
+        <Button loading={going} variant="accent" size="lg" onClick={send} disabled={going} data-cta="tool_bid" data-testid="tool-send" aria-describedby="tool-send-note" className="w-full sm:w-auto">
           {going ? "Opening your bid…" : <>Send this as a bid <ArrowRight className="h-4 w-4" aria-hidden /></>}
         </Button>
         <p id="tool-send-note" className={cn("text-sm text-muted")}>

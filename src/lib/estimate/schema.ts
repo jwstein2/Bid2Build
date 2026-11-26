@@ -58,10 +58,20 @@ export const calcRecordSchema = z.object({
   appliedAt: z.string().max(40),
   previous: z.object({ quantity: dec(), unit: z.string().min(1).max(40) }).optional(),
 });
+const workTypeSchema = z.enum(["new_construction", "remodel", "addition", "replacement", "repair"]);
+const measurementsSchema = z.record(z.string().max(40), z.union([z.number(), z.string().max(40), z.boolean()]));
+const tradeDetailSchema = z.object({
+  workType: workTypeSchema.optional(),
+  projectType: z.string().max(60).optional(),
+  measurements: measurementsSchema.optional(),
+});
+const tradeDetailsSchema = z.record(z.string().max(60), tradeDetailSchema).refine((r) => Object.keys(r).length <= 40, "too many trades");
+
 export const worksheetSchema = z.object({
   calcs: z.record(uuid, calcRecordSchema).optional(),
   minimumCharge: dec().optional(),
   sectionTrades: z.record(uuid, z.string().max(60)).optional(),
+  tradeDetails: tradeDetailsSchema.optional(),
 }).nullable().optional();
 
 export const estimateSchema = z.object({
@@ -95,10 +105,11 @@ export const estimateSchema = z.object({
   customerId: uuid.nullable().optional(),
   projectProfile: z.object({
     sector: z.enum(["residential", "commercial"]).optional(),
-    workType: z.enum(["new_construction", "remodel", "addition", "replacement", "repair"]).optional(),
+    workType: workTypeSchema.optional(),
     projectType: z.string().max(60).optional(),
-    measurements: z.record(z.string().max(40), z.union([z.number(), z.string().max(40), z.boolean()])).optional(),
+    measurements: measurementsSchema.optional(),
     outcome: z.enum(["quoted", "accepted", "declined", "completed"]).optional(),
+    trades: tradeDetailsSchema.optional(),
   }).nullable().optional(),
   worksheet: worksheetSchema,
 }).superRefine((e, ctx) => {

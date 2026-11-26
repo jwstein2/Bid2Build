@@ -236,8 +236,8 @@ function NewContactForm({ initialName, trade, resources, onUseExisting, onCreate
       {err && <p className="mt-2 text-xs text-danger" role="alert">{err}</p>}
       <div className="mt-3 flex justify-end gap-2">
         <Button size="sm" variant="ghost" onClick={onCancel} disabled={busy}>Cancel</Button>
-        <Button size="sm" onClick={() => void save()} disabled={busy || !name.trim() || !!exact} data-testid="new-contact-save">
-          {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />} Add &amp; assign
+        <Button loading={busy} size="sm" onClick={() => void save()} disabled={busy || !name.trim() || !!exact} data-testid="new-contact-save">
+           Add &amp; assign
         </Button>
       </div>
     </div>

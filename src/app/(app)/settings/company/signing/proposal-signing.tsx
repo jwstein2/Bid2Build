@@ -104,7 +104,7 @@ export function ProposalSigning() {
         )}
         {can && (
           <div className="mt-4 flex flex-wrap items-center gap-3">
-            <Button variant="accent" onClick={() => void save()} disabled={status === "saving"} data-testid="save-policy">{status === "saving" && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />} Save signing policy</Button>
+            <Button loading={status === "saving"} variant="accent" onClick={() => void save()} disabled={status === "saving"} data-testid="save-policy"> Save signing policy</Button>
             <span role="status" className="text-sm text-muted">{status === "saved" ? `Saved (revision ${s.policy.revision}). Applies to signing links created from now on.` : status === "error" ? "" : s.policy.revision ? `Revision ${s.policy.revision}${s.policy.updatedAt ? `, saved ${fmt(s.policy.updatedAt)}` : ""}` : ""}</span>
           </div>
         )}
