@@ -2,10 +2,11 @@ import Link from "next/link";
 import { PageHead, Panel, Chip, Empty, Mini, Segmented, Table } from "@/components/admin/cc";
 import { requireStaffCap, hasTwoStep, TWO_STEP_FINANCE } from "@/lib/staff/server";
 import { PayoutLedger, type PayoutRow } from "@/components/payouts/ledger";
-import { CLASSIFICATION, FEE_REASON, HOLD_REASON, feeLine, money, type FeePolicy } from "@/lib/payouts/labels";
+import { FEE_REASON, HOLD_REASON, feeLine, money, type FeePolicy } from "@/lib/payouts/labels";
 import { QuickBooksTab } from "./quickbooks-tab";
 import { ReconciliationTab } from "./reconciliation-tab";
-import { activateLive, approveFeePolicy, approveFunding, approvePayout, cancelPayout, pause, reconcile, runNow, saveLimits, saveMode, saveThreshold, simulate } from "./actions";
+import { TaxSeasonTab } from "./tax-season-tab";
+import { activateLive, approveFeePolicy, approveFunding, approvePayout, cancelPayout, pause, reconcile, runNow, saveLimits, saveMode, simulate } from "./actions";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Payments & Payouts" };
@@ -20,13 +21,16 @@ type Overview = { settings: Settings; fee_policies: Fee[]; payouts: PayoutRow[];
 const OK: Record<string, string> = { mode: "Mode saved.", limits: "Limits saved.", paused: "All payouts paused.", resumed: "Payouts resumed.", fees: "Fee schedule approved. Recipient-paid fees apply only to people who accepted this disclosure.",
   funding: "Funding account approved. Live activation (if any) was cleared and needs to be done again.", live: "Live payouts activated.", approved: "Payout approved.", canceled: "Payout canceled; its statements can be paid again.",
   qb_connected: "QuickBooks connected.", qb_account: "Expense account saved.", qb_sent: "QuickBooks:", qb_checked: "QuickBooks:", qb_disconnected: "QuickBooks disconnected.", sim_posted: "Simulated: settled.", sim_failed: "Simulated: failed.", sim_returned: "Simulated: returned by bank.", ran: "Run finished.", reconciled: "Saved.", threshold: "Threshold saved.",
-  recon_ran: "Reconciliation finished.", recon_settings: "Standing authorization saved.", recon_ack: "Exception acknowledged." };
+  recon_ran: "Reconciliation finished.", recon_settings: "Standing authorization saved.", recon_ack: "Exception acknowledged.",
+  tax_settings: "Tax settings saved. Unsent payouts were recalculated.", state_saved: "State rules saved. Unsent payouts were recalculated.", payee_saved: "Payee tax status saved.", filing: "Filing recorded.", deposit: "Deposit recorded." };
 const ERR: Record<string, string> = { two_step: TWO_STEP_FINANCE, env_live: "PAYOUTS_ALLOW_LIVE isn't 'true' on the server. Set it in Netlify (Production) and redeploy first.", confirm: "Tick the confirmation box.",
   provider_is_mock: "Switch the provider to Stripe Global Payouts first.", funding_not_approved: "Approve the funding account first.", fee_policy_not_approved: "Approve the fee schedule first.",
   use_activation: "Use the live activation checklist.", owner_only: "Owner only.", invalid: "Please check the form.",
   qb_unavailable: "QuickBooks keys aren't set on the server yet.", qb_busy: "Too many tries. Wait a few minutes.", qb_declined: "QuickBooks sign-in was cancelled.", qb_failed: "QuickBooks didn't respond as expected. Try again.",
   qb_not_connected: "Connect QuickBooks first.", qb_none_selected: "Select at least one item.",
-  recon_busy: "A reconciliation is already running. Try again in a minute.", recon_failed: "Reconciliation couldn't run. Try again.", recon_not_installed: "Run migration 20270223001000 first.", note_required: "Add a short note (what you checked)." };
+  recon_busy: "A reconciliation is already running. Try again in a minute.", recon_failed: "Reconciliation couldn't run. Try again.", recon_not_installed: "Run migration 20270223001000 first.", note_required: "Add a short note (what you checked).",
+  rate_not_verified: "Confirm the backup withholding rate with your CPA (tick the box) before turning withholding on.", reason_required: "Pick the IRS notice that started backup withholding.",
+  state_rule_verified: "To mark a state verified, add a source (who confirmed it and when).", payer_ein: "The EIN must be 9 digits.", unknown_state: "Unknown state." };
 const btn = "cc-mono rounded-md border border-[var(--cc-line)] px-3 py-1.5 text-xs text-white hover:border-[var(--cc-blue)]";
 const CHECKLIST: [string, string][] = [
   ["provider_approved", "Stripe approved Built2Bid for Global Payouts (paying our own US contractors) on the live account"],
@@ -40,7 +44,7 @@ const CHECKLIST: [string, string][] = [
   ["test_run_passed", "A full test-mode run (connect bank, schedule, send, settle, fail, return) worked as expected"],
 ];
 
-export default async function PayoutsPage({ searchParams }: { searchParams: Promise<{ tab?: string; ok?: string; err?: string; summary?: string; status?: string; year?: string; month?: string; q?: string; program?: string; from?: string; to?: string }> }) {
+export default async function PayoutsPage({ searchParams }: { searchParams: Promise<{ tab?: string; ok?: string; err?: string; summary?: string; status?: string; year?: string; state?: string; month?: string; q?: string; program?: string; from?: string; to?: string }> }) {
   const sp = await searchParams;
   const tab = sp.tab ?? "overview";
   const { user, db, owner } = await requireStaffCap("payouts.view");
@@ -195,7 +199,7 @@ export default async function PayoutsPage({ searchParams }: { searchParams: Prom
         </div>
       )}
 
-      {tab === "tax" && <TaxTab db={db} caller={user.id} year={Number(sp.year) || new Date().getFullYear()} owner={owner} />}
+      {tab === "tax" && <TaxSeasonTab db={db} caller={user.id} year={Number(sp.year) || new Date().getFullYear()} owner={owner} state={sp.state} />}
       {tab === "costs" && <CostTab db={db} caller={user.id} month={sp.month ?? new Date().toISOString().slice(0, 7)} />}
     </div>
   );
@@ -214,41 +218,6 @@ function ReconForm({ id }: { id: string }) {
 }
 
 type Db = Awaited<ReturnType<typeof requireStaffCap>>["db"];
-async function TaxTab({ db, caller, year, owner }: { db: Db; caller: string; year: number; owner: boolean }) {
-  const { data } = await db.rpc("admin_payout_tax_year", { p_caller: caller, p_year: year });
-  const t = data as { threshold: { threshold_cents: number; verified: boolean; source_note: string } | null; people: { staff_id: string; name: string; classification: string; gross_paid_cents: number; fees_recipient_cents: number; net_paid_cents: number;
-    w9_status: string; tin_on_file: boolean; likely_exempt: boolean; over_threshold: boolean; missing: string[] }[]; employees: { staff_id: string; name: string }[] } | null;
-  if (!t) return <Empty>Not available.</Empty>;
-  return (
-    <div className="space-y-6">
-      <Panel title={`1099-NEC readiness, ${year}`} action={<Segmented active={String(year)} options={[year - 1, year, year + 1].map((y) => ({ value: String(y), label: String(y), href: `/admin/payouts?tab=tax&year=${y}` }))} />}>
-        <p className="mb-3 text-xs text-ink-soft">Threshold for {year}: {t.threshold ? `${money(t.threshold.threshold_cents)} ${t.threshold.verified ? "(verified)" : "(NOT verified)"} · ${t.threshold.source_note}` : "not set: enter it below"}. Amounts are GROSS compensation actually paid in live mode (fees deducted from a payout don&apos;t reduce it; confirm the treatment with your accountant). ACH you send is reported by Built2Bid on 1099-NEC, not by the payment processor on 1099-K. Nothing is filed automatically.</p>
-        {t.people.length === 0 ? <Empty>No contractors.</Empty> : (
-          <Table head={["Payee", "Gross paid", "Fees (recipient)", "Net", "W-9 / TIN", "Status"]}>
-            {t.people.map((p) => (
-              <tr key={p.staff_id}><td className="text-white">{p.name}<div className="text-[11px] text-ink-soft">{CLASSIFICATION[p.classification]}</div></td><td className="text-white">{money(p.gross_paid_cents)}</td><td>{money(p.fees_recipient_cents)}</td><td>{money(p.net_paid_cents)}</td>
-                <td className="text-xs">{p.w9_status}{p.tin_on_file ? " · TIN on file" : ""}</td>
-                <td className="text-xs">{p.likely_exempt ? <Chip tone="muted">Corporation: likely exempt</Chip> : p.over_threshold ? <Chip tone="amber">Over threshold: 1099-NEC</Chip> : <Chip tone="muted">Under threshold</Chip>}
-                  {p.missing.length > 0 && <div className="text-[11px] text-[var(--cc-red)]">Missing: {p.missing.join(", ")}</div>}</td></tr>))}
-          </Table>
-        )}
-      </Panel>
-      {owner && (
-        <Panel title="Set the threshold for a tax year">
-          <form action={saveThreshold} className="flex flex-wrap items-end gap-2 text-xs">
-            <label><span className="cc-kicker mb-1 block">Year</span><input name="year" defaultValue={year} className="field field-sm w-24" /></label>
-            <label><span className="cc-kicker mb-1 block">Threshold ($)</span><input name="threshold" defaultValue={t.threshold ? t.threshold.threshold_cents / 100 : ""} className="field field-sm w-28" /></label>
-            <label className="flex-1"><span className="cc-kicker mb-1 block">Source</span><input name="note" defaultValue={t.threshold?.source_note ?? ""} className="field field-sm w-full" /></label>
-            <label className="flex items-center gap-1 text-white"><input type="checkbox" name="verified" defaultChecked={t.threshold?.verified} /> Verified</label>
-            <button className={btn}>Save (needs two-step)</button>
-          </form>
-        </Panel>
-      )}
-      <Panel title="W-2 employees"><p className="text-xs text-ink-soft">{t.employees.length} employee(s). W-2 forms come from the payroll provider once connected (Payroll Integration Required).</p></Panel>
-    </div>
-  );
-}
-
 async function CostTab({ db, caller, month }: { db: Db; caller: string; month: string }) {
   const { data } = await db.rpc("admin_payout_cost_report", { p_caller: caller, p_month: `${month}-01` });
   const c = data as { recipients: number; transfers: number; gross_cents: number; provider_fees_cents: number; recipient_fees_cents: number; company_fees_cents: number; unrecoverable: Record<string, number>;

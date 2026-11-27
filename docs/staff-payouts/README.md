@@ -73,11 +73,11 @@ paid service was turned on. Commission rules and pricing are unchanged.
 |---|---|
 | Sales Hub commissions | Integrated. Reads approved statements and writes `sales_payouts` on live settlement only. |
 | Practice provider | Works now in test mode: connect a practice bank, plan, send, then simulate settle, fail or return. |
-| Stripe Global Payouts | Code complete, **not active**. Needs Stripe approval, a key and a webhook (see section 6). |
+| Stripe Global Payouts | Code complete. **Enabled on the live Stripe account (2026-11-27)** with a financial account at a $0 balance, so nothing can be sent until it is funded. Still needs the key, webhook and owner activation (section 6). |
 | Plaid bank feed | Reuses the existing read-only feed. The owner designates which book holds the business accounts. |
 | Stripe read-only (banking) | Uses the existing `STRIPE_SECRET_KEY`. |
 | W-2 payroll | **Payroll Integration Required.** Approved W-2 amounts show as exceptions, are never paid by ACH here, and no wages are shown as paid. |
-| 1099 e-filing | Readiness only (who is over the threshold, W-9 and TIN on file). Filing is done by an accountant or a filing service. |
+| 1099 e-filing | V8.4 (`docs/payout-taxes/`): 1099 summary, e-file CSV, Copy B PDFs, backup withholding, state-by-state rules and tax-season downloads. Filing itself is done by an accountant or a filing service. |
 
 ## 4. Cost analysis (public US pricing checked 2026-11-20; confirm on the live account before activating)
 
@@ -123,7 +123,7 @@ paid service was turned on. Commission rules and pricing are unchanged.
    - Connect the practice bank, approve a statement, click **Run now**, then simulate settle, fail and return.
 3. **Review classifications:** every rep starts as "Pending review" in Team & Staff.
 4. **Counsel review:** the 7 agreement templates are labeled drafts (contractor, commission, payment terms, fee disclosure, employee acknowledgement, MN wage notice, vendor terms). Have counsel confirm whether fee recovery is allowed in each state your reps work in, and add any blocked states in Settings.
-5. **Apply for Stripe Global Payouts** on the live account (Dashboard → Global Payouts), described as paying Built2Bid's own US 1099 sales contractors. Stripe reviews this.
+5. ~~**Apply for Stripe Global Payouts**~~ Done: enabled on the live account 2026-11-27. **Apply for Stripe Global Payouts** on the live account (Dashboard → Global Payouts), described as paying Built2Bid's own US 1099 sales contractors. Stripe reviews this.
 6. **Once approved,** set these in Netlify Production (never paste them in chat):
    - `PAYOUTS_PROVIDER_KEY` (a restricted live key with Global Payouts permissions)
    - `STRIPE_PAYOUTS_WEBHOOK_SECRET`, from an event destination for `v2.money_management.outbound_payment.*` pointed at `https://built2bid.org/api/payouts/webhook`
