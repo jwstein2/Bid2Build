@@ -32,11 +32,12 @@ describe("product facts (V11.0)", () => {
       for (const re of PROHIBITED) expect(t, String(re)).not.toMatch(re);
     }
   });
-  it("states the limits plainly: no payroll, no paying subs, no online invoice payments, no iPhone app", () => {
+  it("states the limits plainly: no payroll, no paying subs, no invoice emails, no iPhone app", () => {
     const l = productFacts(ON).limitations.join(" ");
     expect(l).toMatch(/No built-in payroll/);
     expect(l).toMatch(/Does not pay subcontractors/);
-    expect(l).toMatch(/cannot pay invoices online/);
+    expect(l).toMatch(/not emailed from Built2Bid/);
+    expect(l).not.toMatch(/cannot pay invoices online/);
     expect(l).toMatch(/No native iPhone app/);
     // Payroll only ever appears in the negative.
     for (const s of allText(productFacts(ON)).split(/(?<=[.!?])\s/)) if (/payroll/i.test(s)) expect(s).toMatch(/no built-in payroll|payroll runs there|run payroll|where you run payroll|Does .* run payroll/i);

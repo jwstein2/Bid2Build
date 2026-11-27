@@ -27,11 +27,11 @@ describe("comparison pages (V11.0)", () => {
       expect(JSON.stringify(c)).not.toMatch(/enterprise/i);
     }
   });
-  it("makes no prohibited claims and admits what Built2Bid can't do", () => {
+  it("makes no prohibited claims and admits what Built2Bid can't do (invoice emails)", () => {
     for (const c of COMPARISONS) {
       const ours = [c.summary, ...c.rows.map((r) => r.built2bid), ...c.chooseUs].join(" ");
       for (const re of PROHIBITED) expect(ours, `${c.slug} ${re}`).not.toMatch(re);
-      expect(c.rows.some((r) => /can't pay invoices online/.test(r.built2bid))).toBe(true);
+      expect(c.rows.some((r) => /aren't emailed from Built2Bid/.test(r.built2bid))).toBe(true);
     }
   });
   it("lists /compare and every comparison in the sitemap and footer", () => {

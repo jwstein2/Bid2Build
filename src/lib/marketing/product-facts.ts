@@ -6,7 +6,7 @@
  * Rules (tests/product-facts.test.ts):
  * - Prices come from the billing modules (via PRICES / plans), never typed here.
  * - Features come from the marketing catalog and are listed only when live on this deploy.
- * - Limitations are stated plainly. Built-in payroll, paying subs/vendors, online invoice payments,
+ * - Limitations are stated plainly. Built-in payroll, paying subs/vendors, emailing invoices from Built2Bid,
  *   live supplier price feeds and a native iPhone app are NOT available today.
  * - Nothing on the claims register's prohibited list (no stats, counts, ratings, awards, guarantees).
  * - Change VERIFIED_ON whenever a person re-checks this page against the live app.
@@ -97,6 +97,7 @@ export function productFacts(env: Record<string, string | undefined> = process.e
   const integrations = [
     ...(esign ? [{ name: "E-signatures", status: "Built in. Customers sign proposals and change orders online; the signed PDF and audit trail are saved with the bid." }] : []),
     { name: "Email", status: "Send proposals from your own email address." },
+    { name: "Online invoice payments (Stripe)", status: "Connect your own Stripe account and your customers can pay invoices by card or ACH through a secure pay link. Stripe's processing fees apply; Built2Bid adds no fee. Payments go to your Stripe account." },
     ...(qb ? [{ name: "QuickBooks Online", status: "Approved crew hours are sent to QuickBooks Online, where you run payroll. Invoices and payments are not synced." }] : []),
     { name: "Imports", status: "Bring in customers (including QuickBooks customer exports), employees, subcontractors and supplier price lists from CSV or Excel." },
     { name: "Optional AI drafting", status: "Describe a job and get suggested line items to review. Prices come from your own saved pricing first; anything else is labelled as a guess to verify." },
@@ -105,7 +106,7 @@ export function productFacts(env: Record<string, string | undefined> = process.e
   const limitations = [
     qb ? "No built-in payroll. Approved hours can be exported or sent to QuickBooks Online, and payroll runs there." : "No built-in payroll. Approved hours can be exported for the payroll provider you already use.",
     "Does not pay subcontractors, vendors or workers. Bills are recorded only.",
-    "Your customers cannot pay invoices online through Built2Bid yet.",
+    "Invoices are not emailed from Built2Bid yet. You share the pay link or PDF yourself.",
     "No live supplier or retail price feeds. You enter your own costs or upload your supplier's price list.",
     "Not a replacement for an accountant or for full accounting software.",
     "No native iPhone app. It runs in any modern browser and can be installed on a phone's home screen.",

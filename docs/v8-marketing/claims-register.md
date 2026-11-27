@@ -16,6 +16,7 @@ Categories: **1** product fact · **2** customer outcome (Built2Bid's own custom
 | Product fact page `/what-is-built2bid` and `/llms.txt`: every feature, price, integration and limit | 1 | Built from `src/lib/marketing/product-facts.ts`: prices from billing modules, features from the catalog (live + flag on), e-sign/QuickBooks/PCC lines gated by their flags; tests/ai-search-visibility.test.ts | Fact page, llms.txt, JSON-LD (V11.0, 2026-11-27) |
 | "Built for owner-operators and small contracting companies of roughly 1 to 20 people" | 1 (positioning, not a customer count) | Owner's target market in the V11.0 brief (1–20 employees) | Fact page |
 | "Launched November 2026" | 1 | built2bid.org live with Stripe since 2026-11-13 | Fact page |
+| "Customers can pay invoices by card or ACH through a pay link (Stripe fees apply, no Built2Bid fee)" | 1 | Stripe Connect invoice payments live 2026-11-27 (PR #210, live connected account enabled); invoice email Send button still off, so "not emailed from Built2Bid yet" is stated alongside | Fact page, comparison pages, ChatGPT agent |
 
 ## Third-party statistics reviewed
 

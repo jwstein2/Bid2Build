@@ -29,6 +29,7 @@ export interface Comparison {
 }
 
 const B2B_PRICE = `Free (${plans.starterCredits} bids, then ${plans.monthlyCredits} a month). Individual Unlimited ${PRICES.unlimitedMonthly}/month or ${PRICES.unlimitedAnnual}/year. Team ${PRICES.enterpriseBase}/month for ${PRICES.enterpriseIncludedUsers} users.`;
+const B2B_PAYMENTS = "Customers can pay invoices by card or ACH through a pay link once you connect your own Stripe account (Stripe fees apply, no Built2Bid fee). Invoices aren't emailed from Built2Bid yet; you share the link or PDF.";
 const B2B_SCHEDULING = pmMarketedLive()
   ? `${PM_PRODUCT_NAME} add-on (${PRICES.pmMonthly}/month): schedule built from the won estimate, Gantt timeline, company calendar, crew and sub assignments.`
   : "Not offered.";
@@ -47,7 +48,7 @@ export const COMPARISONS: readonly Comparison[] = [
       { topic: "Estimate building", built2bid: `${TRADE_COUNT} trade-specific estimate builders with ready sections, quantity calculators in each line, materials, labor and sub lines, markup or target margin with live profit.`, them: "Line-item estimates, project templates and AI help writing estimates." },
       { topic: "Change orders", built2bid: "Signable change orders on approved bids, with a running contract total. Included free.", them: "Elite plan and up." },
       { topic: "Customer signatures", built2bid: "Secure signing link; signed PDF and audit trail saved with the bid. Included free.", them: "In-app digital signatures." },
-      { topic: "Invoices and online payments", built2bid: "Your customers can't pay invoices online through Built2Bid yet.", them: "Invoices, online card payments, Tap to Pay, deposits and milestone payments." },
+      { topic: "Invoices and online payments", built2bid: B2B_PAYMENTS, them: "Invoices, online card payments, Tap to Pay, deposits and milestone payments." },
       { topic: "Scheduling", built2bid: B2B_SCHEDULING, them: "Job organization and visit scheduling on the Run plan." },
       { topic: "Homeowner financing", built2bid: "Not offered.", them: "Offered." },
       { topic: "QuickBooks", built2bid: "Approved crew hours sync to QuickBooks Online.", them: "QuickBooks sync." },
@@ -70,11 +71,11 @@ export const COMPARISONS: readonly Comparison[] = [
       { topic: "Estimate building", built2bid: "Trade-specific sections, quantity calculators, materials, labor and sub lines, markup or target margin with live profit.", them: "Quotes from line items; optional line items and visual quotes on Grow." },
       { topic: "Job costing", built2bid: "Live cost, markup, margin and profit while you price; private Internal Estimate Report on Unlimited.", them: "Job costing on the Grow plan." },
       { topic: "Scheduling and dispatch", built2bid: B2B_SCHEDULING, them: "Online booking and job scheduling on every plan; automated client reminders on Connect and up." },
-      { topic: "Invoices and online payments", built2bid: "Your customers can't pay invoices online through Built2Bid yet.", them: "Invoicing and online payments on every plan." },
+      { topic: "Invoices and online payments", built2bid: B2B_PAYMENTS, them: "Invoicing and online payments on every plan." },
       { topic: "Customer texting", built2bid: "Not offered.", them: "Two-way SMS on Grow." },
       { topic: "QuickBooks", built2bid: "Approved crew hours sync to QuickBooks Online.", them: "QuickBooks Online sync on Connect and up." },
     ],
-    chooseThem: ["Most of your work is recurring service visits that need booking, routing and reminders.", "You want customers to pay invoices online today.", "You want two-way texting with customers built in."],
+    chooseThem: ["Most of your work is recurring service visits that need booking, routing and reminders.", "You want invoices emailed, reminded and paid from one app today.", "You want two-way texting with customers built in."],
     chooseUs: ["Your work is quoted project by project and the estimate is where you win or lose money.", "You want a free plan, or one paid plan for unlimited bids at a lower price.", "You want signable proposals and change orders without add-ons."],
   },
   {
@@ -91,7 +92,7 @@ export const COMPARISONS: readonly Comparison[] = [
       { topic: "Change orders and signatures", built2bid: "Signable change orders and e-signatures included free.", them: "Change orders, sub-contracts and bid management." },
       { topic: "Project management", built2bid: B2B_SCHEDULING, them: "Projects, scheduling, daily logs, punch lists, work orders, permits, inspections, submittals, client portal." },
       { topic: "Time and crew", built2bid: "Crew time entries and approvals; approved hours sync to QuickBooks Online for payroll there. No built-in payroll.", them: "Time cards and crew schedules; Gusto payroll integration listed." },
-      { topic: "Financials", built2bid: "Your customers can't pay invoices online through Built2Bid yet.", them: "Invoices, online payments, purchase orders; QuickBooks and Xero integrations listed." },
+      { topic: "Financials", built2bid: B2B_PAYMENTS, them: "Invoices, online payments, purchase orders; QuickBooks and Xero integrations listed." },
       { topic: "Learning curve", built2bid: "Fewer screens: estimate, proposal, pipeline, then schedule.", them: "Many modules; implementation help and training sessions are offered." },
     ],
     chooseThem: ["You want one system for the whole job: daily logs, punch lists, submittals, purchase orders and time cards.", "You need online payments, Xero or a payroll integration today.", "You have a larger crew and want training and implementation help."],
