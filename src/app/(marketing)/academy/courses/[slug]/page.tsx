@@ -15,6 +15,8 @@ import { site } from "@/lib/site";
 import { createClient } from "@/lib/supabase/server";
 import { StateRequirementsPanel } from "@/components/academy/startup/state-panel";
 import { resolveLocation } from "@/lib/academy/kb/server";
+import { advancedState } from "@/lib/academy/advanced/server";
+import { AdvancedOffer } from "@/components/academy/advanced/offer";
 
 export async function generateMetadata({ params }: PageProps<"/academy/courses/[slug]">): Promise<Metadata> {
   const { slug } = await params;
@@ -36,6 +38,7 @@ export default async function CoursePage({ params, searchParams }: PageProps<"/a
   const data = await getCourse(slug);
   if (!data) notFound();
   const { course, outline, resources, trade } = data;
+  if (course.adv_subject && !(await advancedState()).visible) notFound();
   const { me, user } = await loadMe();
   const live = course.status === "published";
   const done = outline.filter((o) => o.completed).length;
@@ -58,13 +61,13 @@ export default async function CoursePage({ params, searchParams }: PageProps<"/a
   return (
     <Container className="py-8">
       {jsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />}
-      <Link href={trade ? `/academy/classroom/${trade.slug}` : "/academy/classroom"} className="inline-flex items-center gap-1 text-sm font-semibold text-accent-ink hover:underline">
-        <ArrowLeft className="h-4 w-4" aria-hidden /> {trade ? `${trade.name} Classroom` : "Classroom"}
+      <Link href={course.adv_subject ? `/academy/advanced/${course.adv_subject}` : trade ? `/academy/classroom/${trade.slug}` : "/academy/classroom"} className="inline-flex items-center gap-1 text-sm font-semibold text-accent-ink hover:underline">
+        <ArrowLeft className="h-4 w-4" aria-hidden /> {course.adv_subject ? "Advanced Learning" : trade ? `${trade.name} Classroom` : "Classroom"}
       </Link>
       <div className="mt-3"><Flash msg={typeof sp.msg === "string" ? sp.msg : undefined} err={typeof sp.err === "string" ? sp.err : undefined} /></div>
       <div className="mt-4 grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="min-w-0">
-          <p className="text-xs font-bold tracking-wide text-accent-ink uppercase">{pillarMeta(course.pillar).label}{trade ? ` · ${trade.name}` : " · Every trade"}</p>
+          <p className="text-xs font-bold tracking-wide text-accent-ink uppercase">{course.adv_subject ? "Advanced Learning" : pillarMeta(course.pillar).label}{trade ? ` · ${trade.name}` : " · Every trade"}</p>
           <h1 className="mt-1 font-display text-3xl font-extrabold">{course.title}</h1>
           <p className="mt-2 text-lg text-ink-soft">{course.summary}</p>
           <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
@@ -92,7 +95,8 @@ export default async function CoursePage({ params, searchParams }: PageProps<"/a
                             {o.summary && <span className="block text-sm text-ink-soft">{o.summary}</span>}
                           </span>
                           <span className="flex shrink-0 items-center gap-2 text-xs text-muted">
-                            {o.locked && <span className="rounded bg-black/5 px-1.5 py-0.5">{o.access === "premium" ? "Premium" : "Members"}</span>}
+                            {o.locked && <span className="rounded bg-black/5 px-1.5 py-0.5">{o.access === "advanced" ? "Advanced" : o.access === "premium" ? "Premium" : "Members"}</span>}
+                            {!o.locked && course.adv_subject && o.access !== "advanced" && <span className="rounded bg-brand-tint px-1.5 py-0.5 font-bold text-navy">Free preview</span>}
                             {o.estimated_minutes ? <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" aria-hidden />{o.estimated_minutes}m</span> : null}
                           </span>
                         </Link>
@@ -101,6 +105,7 @@ export default async function CoursePage({ params, searchParams }: PageProps<"/a
                   </ol>
                 </div>
               ))}
+              {course.adv_subject && outline.some((o) => o.locked) && <div className="mt-6"><AdvancedOffer subject={course.adv_subject} /></div>}
             </section>
           ) : (
             <section className="mt-8" aria-labelledby="planned-h">
@@ -128,7 +133,7 @@ export default async function CoursePage({ params, searchParams }: PageProps<"/a
                 <>
                   {me.member && <p className="text-sm text-muted">{done} of {outline.length} lessons complete</p>}
                   <Link href={`/academy/courses/${slug}/${next.slug}`} className={buttonClass("accent", "lg", "mt-2 w-full")} data-cta="course-start">{done > 0 ? "Continue" : "Start course"}</Link>
-                  {!me.member && outline.some((o) => o.locked) && <p className="mt-3 text-xs text-muted">The first lessons are open to everyone. <Link href={me.signed_in ? "/academy/join" : "/login?next=/academy/join"} className="font-semibold text-accent-ink underline">Join free</Link> to unlock the rest and save your progress.</p>}
+                  {!me.member && !course.adv_subject && outline.some((o) => o.locked) && <p className="mt-3 text-xs text-muted">The first lessons are open to everyone. <Link href={me.signed_in ? "/academy/join" : "/login?next=/academy/join"} className="font-semibold text-accent-ink underline">Join free</Link> to unlock the rest and save your progress.</p>}
                 </>
               ) : (
                 <p className="text-sm text-ink-soft">{comingLabel(course.release_on)}. {me.member ? "Save it to find it again." : ""}</p>

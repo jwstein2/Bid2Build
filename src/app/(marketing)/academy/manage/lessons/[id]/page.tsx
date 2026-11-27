@@ -70,7 +70,7 @@ export default async function LessonEditor({ params, searchParams }: PageProps<"
           <label className={label}>Quiz (JSON array of {"{ q, options, answer, explain }"}, optional)<textarea name="quiz" rows={5} defaultValue={l.quiz ? JSON.stringify(l.quiz, null, 2) : ""} className={`${field} font-mono text-xs`} /></label>
           <div className="grid gap-4 sm:grid-cols-4">
             <label className={label}>Status<select name="status" defaultValue={l.status} className={field}><option value="draft">draft</option>{(admin || l.status === "published") && <option value="published">published</option>}<option value="archived">archived</option></select></label>
-            <label className={label}>Access<select name="access" defaultValue={l.access} className={field}><option value="public">Public</option><option value="members">Members</option><option value="premium">Premium</option></select></label>
+            <label className={label}>Access<select name="access" defaultValue={l.access} className={field}><option value="public">Public</option><option value="members">Members</option><option value="premium">Premium</option><option value="advanced">Advanced (subscribers to this subject)</option></select></label>
             <label className={label}>Minutes<input name="estimated_minutes" type="number" min={1} max={600} defaultValue={l.estimated_minutes ?? ""} className={field} /></label>
             <label className={label}>Order<input name="sort_order" type="number" defaultValue={l.sort_order} className={field} /></label>
           </div>

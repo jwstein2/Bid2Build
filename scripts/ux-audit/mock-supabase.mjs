@@ -350,6 +350,8 @@ const rpcs = {
 // Academy monthly challenge screenshots (scripts/academy/challenge-shots.mjs): /__challenge?state=...
 const challenge = installChallenge({ rpcs, tables, iso, USER });
 challenge.init();
+// Academy Advanced screenshots (scripts/academy/advanced/shots.mjs): MOCK_ADVANCED=1, start with `npx tsx`. /__advanced?state=...
+const advanced = process.env.MOCK_ADVANCED === "1" ? (await import("../academy/advanced/mock-advanced.mjs")).installAdvanced({ rpcs, tables, iso, USER }) : null;
 
 // Admin command center screenshots: synthetic platform-wide data (scripts/admin-cc/seed.mjs).
 let authAdminUsers = null;
@@ -806,6 +808,7 @@ http.createServer((req, res) => {
       if (u.searchParams.get("nobilling")) { tables.billing_customers = []; tables.analytics_events = []; }
       return send(res, 200, { ok: true, offers: tables.upgrade_offers ?? [] });
     }
+    if (u.pathname === "/__advanced" && advanced) { advanced.set(u.searchParams.get("state") ?? "free"); return send(res, 200, { ok: true, state: advanced.state }); }
     if (u.pathname === "/__ws") { if (u.searchParams.get("seed")) seedWorkspace(); return send(res, 200, { ok: true, count: sched.list.size }); }
     if (u.pathname === "/__wf") { if (u.searchParams.get("seed")) workforce.seed(); if (u.searchParams.has("manage")) team.canManage = u.searchParams.get("manage") === "1"; return send(res, 200, { ok: true, count: team.list.length }); }
     if (u.pathname === "/__team") {
@@ -831,6 +834,8 @@ http.createServer((req, res) => {
     const matches = (r) => [...u.searchParams].every(([k, v]) => {
       if (v.startsWith("in.") && r[k] !== undefined) return v.slice(4, -1).split(",").map((x) => x.replace(/^"|"$/g, "")).includes(String(r[k]));
       if (v.startsWith("neq.") && r[k] !== undefined) return String(r[k]) !== v.slice(4);
+      if (v === "is.null" && r[k] !== undefined) return r[k] === null;
+      if (v === "not.is.null" && r[k] !== undefined) return r[k] !== null;
       return !v.startsWith("eq.") || r[k] === undefined || String(r[k]) === v.slice(3);
     });
     // Library tables keep writes in memory so saved items can be created, edited and deleted in browser walks.

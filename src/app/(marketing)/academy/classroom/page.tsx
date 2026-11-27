@@ -10,6 +10,7 @@ import { site } from "@/lib/site";
 import { ChallengeCard } from "@/components/academy/challenge-card";
 import { loadChallenge } from "@/lib/academy/rewards-server";
 import { centralToday, releaseLabel } from "@/lib/academy/release-plan";
+import { AdvancedSection } from "@/components/academy/advanced/section";
 
 const title = "Contractor Classroom: Free Business Courses by Trade";
 const description = "Free business courses for contractors, organized by trade: sales, estimating, project management, financials, hiring, recurring revenue and safety.";
@@ -75,6 +76,7 @@ export default async function ClassroomPage({ searchParams }: PageProps<"/academ
             <h2 id="featured-h" className="text-lg font-bold">For every trade</h2>
             <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{general.map((c) => <CourseCard key={c.id} course={c} progress={progress.get(c.id)} />)}</ul>
           </section>
+          <AdvancedSection />
           {mine.length > 0 && (
             <section className="mt-10" aria-labelledby="mine-h">
               <h2 id="mine-h" className="text-lg font-bold">Your trades</h2>

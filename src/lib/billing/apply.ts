@@ -6,6 +6,7 @@ import { enterpriseSeats, subscriptionToUpdate, type PriceIds, type Subscription
 import { pmFromItems, type PmItem } from "../pm/billing";
 import { finFromItems, type FinItem } from "../financials/billing";
 import { logError } from "../http/api";
+import { applyAcademySubscription, isAcademySubscription } from "../academy/advanced/billing";
 
 export const prices = (): PriceIds => {
   const e = serverEnv();
@@ -24,8 +25,11 @@ export async function resolveUserId(admin: SupabaseClient, sub: SubscriptionLike
   return data?.user_id ?? null;
 }
 
-export async function applySubscription(admin: SupabaseClient, sub: Stripe.Subscription | SubscriptionLike, eventCreatedSec: number): Promise<{ applied: boolean; userId: string | null; plan?: string | null; companyId?: string | null }> {
+export async function applySubscription(admin: SupabaseClient, sub: Stripe.Subscription | SubscriptionLike, eventCreatedSec: number): Promise<{ applied: boolean; userId: string | null; plan?: string | null; companyId?: string | null; academy?: boolean }> {
   const s = sub as unknown as SubscriptionLike;
+  // Academy Advanced packages live in academy_adv_memberships only. Without this, a monthly Academy price would be
+  // read as an Individual Unlimited "monthly" plan by planForPrice() and grant the software to every subject buyer.
+  if (await isAcademySubscription(admin, s)) return applyAcademySubscription(admin, sub as never, eventCreatedSec);
   const userId = await resolveUserId(admin, s);
   if (!userId) return { applied: false, userId: null };
   const p = prices();
