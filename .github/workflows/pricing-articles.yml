@@ -68,3 +68,9 @@ jobs:
           git commit -m "Publish pricing guide: ${TITLE}"
           for i in 1 2 3; do git pull --rebase origin main && git push origin HEAD:main && exit 0; sleep $((i * 10)); done
           exit 1
+      - name: Tell Bing about the new guide (IndexNow)
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.dry_run) && steps.write.outputs.slug != '' }}
+        continue-on-error: true
+        env:
+          SLUG: ${{ steps.write.outputs.slug }}
+        run: node scripts/seo/indexnow.mjs "https://built2bid.org/learn/${SLUG}" "https://built2bid.org/learn"

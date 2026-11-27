@@ -25,6 +25,7 @@ export async function Footer() {
           <li><Link href="/bids" className="inline-block py-1 hover:text-white hover:underline">All trades</Link></li>
           <li><Link href="/#how-it-works" className="inline-block py-1 hover:text-white hover:underline">How it works</Link></li>
           <li><Link href="/pricing" className="inline-block py-1 hover:text-white hover:underline">Pricing</Link></li>
+          <li><Link href="/what-is-built2bid" className="inline-block py-1 hover:text-white hover:underline">What is {site.name}?</Link></li>
           <li><Link href="/learn" className="inline-block py-1 hover:text-white hover:underline">Contractor guides</Link></li>
           <li><Link href="/tools" className="inline-block py-1 hover:text-white hover:underline">Free calculators</Link></li>
           <li><Link href="/academy/classroom" className="inline-block py-1 hover:text-white hover:underline">Contractor Academy</Link></li>

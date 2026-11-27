@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { site } from "@/lib/site";
+import { FACTS_PATH, VERIFIED_ON } from "@/lib/marketing/product-facts";
 import { trades } from "@/lib/trades/catalog";
 import { articles } from "@/lib/learn/articles";
 import { TOOLS } from "@/lib/marketing/tools";
@@ -11,6 +12,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: u("/"), changeFrequency: "weekly", priority: 1 },
     { url: u("/bids"), changeFrequency: "weekly", priority: 0.9 },
     { url: u("/pricing"), changeFrequency: "monthly", priority: 0.8 },
+    { url: u(FACTS_PATH), lastModified: VERIFIED_ON, changeFrequency: "monthly", priority: 0.7 },
     { url: u("/learn"), changeFrequency: "monthly", priority: 0.6 },
     { url: u("/tools"), changeFrequency: "monthly", priority: 0.7 },
     ...TOOLS.map((t) => ({ url: u(`/tools/${t.slug}`), changeFrequency: "monthly" as const, priority: 0.7 })),

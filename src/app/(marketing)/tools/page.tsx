@@ -1,3 +1,4 @@
+import { breadcrumbLd, ldJson } from "@/lib/seo/structured-data";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Calculator } from "lucide-react";
@@ -20,6 +21,7 @@ export const metadata: Metadata = {
 export default function ToolsIndex() {
   return (
     <Container className="py-12">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(breadcrumbLd([{ name: "Free calculators", path: "/tools" }])) }} />
       <LearnTabs current="/tools" />
       <h1 className="text-4xl font-extrabold">Free contractor calculators</h1>
       <p className="mt-2 max-w-2xl text-ink-soft">The same calculators that are built into the Built2Bid estimate builder. Work out the quantity, then send it straight into a bid. No account needed.</p>
