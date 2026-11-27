@@ -97,7 +97,7 @@ export function InstallDesktopCard({ dismissible = false, className, id }: { dis
               ) : view.browser === "edge" ? (
                 <p>Click the <b>App available</b> icon at the right end of the address bar. Don&apos;t see it? Open the <b>⋯</b> menu, choose <b>Apps</b>, then <b>Install Built2Bid</b>.</p>
               ) : view.browser === "safari" && view.addToDock ? (
-                <p>In Safari&apos;s menu bar, choose <b>File</b>, then <b>Add to Dock</b>, then <b>Add</b>.</p>
+                <p>In Safari&apos;s menu bar, choose <b>File</b>, then <b>Add to Dock</b>, then <b>Add</b>. The Dock app keeps its own sign-in, so you&apos;ll sign in once inside it.</p>
               ) : (
                 <>
                   <p>{view.browser === "safari"
@@ -108,7 +108,7 @@ export function InstallDesktopCard({ dismissible = false, className, id }: { dis
                   </button>
                 </>
               )}
-              <p className="mt-2 text-xs text-muted">Built2Bid then opens from {where(view.platform)} in its own window. Same sign-in and subscription, nothing extra to buy, and it updates by itself.</p>
+              <p className="mt-2 text-xs text-muted">Built2Bid then opens from {where(view.platform)} in its own window. Same sign-in and subscription, nothing extra to buy, and it updates by itself. Your bids, customers, projects and dashboard layouts are saved to your account, so they match the website on any device.</p>
             </div>
           )}
         </div>
