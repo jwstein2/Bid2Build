@@ -79,6 +79,24 @@ No new prices, plans or seats.
 **Security:** no new permissions, no file-system access, no native code. The worker caches no auth, customer, financial
 or billing data. CSP, HSTS and frame-blocking unchanged. `/api/version` exposes only an opaque deploy id.
 
+## 5a. Same access and same view as the website (double-check, 2026-11-27)
+
+- **Access is decided on the server, never by the app.** Nothing in this PR touches plans, seats, roles, Stripe or
+  database rules. The app is the same address (built2bid.org), so every page and API call goes through the same
+  sign-in check (`src/proxy.ts`, `getUser`), plan/seat checks and Supabase row-level security as the website. No code
+  anywhere grants or hides features based on "installed app" (`display-mode` is only used to label a crew clock-in as
+  "pwa" for the record). Access, plan, seat, Sales Hub and dashboard tests: 392/392 pass.
+- **Same sign-in.** Chrome and Edge install the app into the same browser profile, so the app and the website on that
+  computer share one sign-in: sign in or out in one and the other follows. Safari's Dock app keeps its own sign-in.
+- **Saved on the account (same on every device and in the app):** Home and Financials dashboard layouts per mode, plus
+  company/role default layouts (`/api/dashboard/layout` → `dashboard_layout_*` database functions; the server also
+  drops any widget the person's plan doesn't allow), theme (also saved to the account), landing page choice, bids,
+  customers, projects, and Sales pay settings once saved.
+- **Kept in the browser only (same in the app and website on one computer, not shared across devices):** "More tools"
+  open/closed in the menu, Projects calendar filters, dismissed tips, and Academy Study session/missed-question/history.
+  The Academy study history is the one item worth moving to the account later (Academy is being changed in another
+  thread, so it was not touched here).
+
 ### Still to test (needed before "READY FOR PRODUCTION")
 
 Headless Chromium can't run as an installed app, so these need a real computer (deploy preview or production):
