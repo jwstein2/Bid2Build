@@ -56,6 +56,7 @@ jobs:
         if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
         run: npx vitest run tests/learn-articles.test.ts
       - name: Commit to main
+        id: commit
         if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
         env:
           TITLE: ${{ steps.write.outputs.title }}
@@ -66,5 +67,12 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/lib/learn/generated-articles.json
           git commit -m "Publish pricing guide: ${TITLE}"
-          for i in 1 2 3; do git pull --rebase origin main && git push origin HEAD:main && exit 0; sleep $((i * 10)); done
+          for i in 1 2 3; do git pull --rebase origin main && git push origin HEAD:main && echo "published=true" >> "$GITHUB_OUTPUT" && exit 0; sleep $((i * 10)); done
           exit 1
+      - name: Tell Bing about the new guide (IndexNow)
+        if: ${{ steps.commit.outputs.published == 'true' && steps.write.outputs.slug != '' }}
+        continue-on-error: true
+        timeout-minutes: 8
+        env:
+          SLUG: ${{ steps.write.outputs.slug }}
+        run: node scripts/seo/indexnow.mjs "https://built2bid.org/learn/${SLUG}" "https://built2bid.org/learn"

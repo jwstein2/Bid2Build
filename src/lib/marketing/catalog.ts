@@ -126,7 +126,7 @@ export const MARKETING_FEATURES: readonly MarketingFeature[] = [
 
   // Communications
   { id: "customer_updates", name: "Customer progress updates", description: "Preview and publish a progress report from your schedule, then share it as a secure link and PDF from your own email.", pillar: "grow", group: "communications", tier: "pm", release: "live", gate: "pm", destination: "/projects", upgrade: pmUpgrade, home: true, hint: "Built only from progress you've recorded. You review every update before it's shared." },
-  { id: "scheduled_updates", name: "Scheduled weekly and milestone update emails", description: "Weekly or section-completion progress emails, with review-before-send or approved automatic sending.", pillar: "grow", group: "communications", tier: "pm", release: "live", gate: "pm", destination: "/projects", upgrade: pmUpgrade, home: true },
+  { id: "scheduled_updates", name: "Scheduled weekly and milestone update emails", description: "Weekly or section-completion progress emails, drafted from your schedule and sent only after you review them.", pillar: "grow", group: "communications", tier: "pm", release: "live", gate: "pm", destination: "/projects", upgrade: pmUpgrade, home: true },
   { id: "nurture", name: "Customer follow-ups", description: "Optional six-month check-ins with past customers, reviewed by you before sending and stopped when they opt out.", pillar: "grow", group: "communications", tier: "pm", release: "live", gate: "pm", destination: "/dashboard/customers", upgrade: pmUpgrade, home: true },
 
   // Team & Enterprise

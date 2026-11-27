@@ -4,7 +4,7 @@
  * its own never assigns a channel: only the landing request's campaign tags, ad click id type or
  * outside referrer host do.
  */
-export type Channel = "google_ads" | "meta_ads" | "youtube" | "creator" | "organic_search" | "email_outreach" | "social" | "referral" | "direct" | "unknown";
+export type Channel = "google_ads" | "meta_ads" | "youtube" | "creator" | "organic_search" | "ai_search" | "email_outreach" | "social" | "referral" | "direct" | "unknown";
 
 export const CHANNELS: { key: Channel; label: string; rule: string }[] = [
   { key: "google_ads", label: "Google Ads", rule: "Google click id (gclid/gbraid/wbraid), or utm_source google with a paid utm_medium (cpc, ppc, paid…)" },
@@ -12,6 +12,7 @@ export const CHANNELS: { key: Channel; label: string; rule: string }[] = [
   { key: "youtube", label: "YouTube", rule: "utm_source youtube, or referred by youtube.com" },
   { key: "creator", label: "Creator Partners", rule: "utm_medium creator/partner/influencer or utm_source creator; utm_campaign names the creator (see docs/growth/ADS.md)" },
   { key: "organic_search", label: "Organic Search", rule: "Referred by a search engine (google, bing, duckduckgo, yahoo, ecosia…) with no paid tags" },
+  { key: "ai_search", label: "AI Search", rule: "Referred by an AI assistant or answer engine (chatgpt.com, perplexity.ai, claude.ai, gemini.google.com, copilot.microsoft.com, grok.com…) or utm_source naming one (ChatGPT adds utm_source=chatgpt.com). Only clicks that pass a referrer or tag are counted" },
   { key: "email_outreach", label: "Email Outreach", rule: "utm_medium email, utm_source instantly, an Instantly campaign id (?ic=), or a lead first contacted by outreach" },
   { key: "social", label: "Organic Social", rule: "utm_medium social (e.g. Facebook posts, group chats), utm_source facebook/instagram without paid tags, a social referring site, or a Facebook click id without paid tags" },
   { key: "referral", label: "Referral", rule: "Any other outside referring site, a ?ref= code, or other utm_source" },
@@ -30,6 +31,9 @@ export interface LeadAttribution {
 const PAID = /^(cpc|ppc|paid|paidsearch|paid_search|paid-search|paidsocial|paid_social|paid-social|cpm|display|ads?)$/i;
 const SEARCH = /(^|\.)(google\.[a-z.]+|bing\.com|duckduckgo\.com|search\.yahoo\.com|yahoo\.com|ecosia\.org|search\.brave\.com|yandex\.[a-z]+|baidu\.com)$/;
 const SOCIAL = /(^|\.)(facebook\.com|fb\.com|instagram\.com|linkedin\.com|lnkd\.in|t\.co|x\.com|twitter\.com|reddit\.com|tiktok\.com|pinterest\.com|nextdoor\.com|threads\.net)$/;
+/** AI assistants and answer engines that send visitors (host of the referrer, or the utm_source they add). */
+export const AI_SEARCH = /(^|\.)(chatgpt\.com|chat\.openai\.com|openai\.com|perplexity\.ai|claude\.ai|gemini\.google\.com|bard\.google\.com|copilot\.microsoft\.com|copilot\.com|grok\.com|x\.ai|you\.com|phind\.com|meta\.ai|deepseek\.com|chat\.mistral\.ai)$/;
+const AI_SRC = /^(chatgpt(\.com)?|openai|perplexity(\.ai)?|claude(\.ai)?|gemini|copilot(\.com)?|bing_copilot|grok(\.com)?|you\.com|phind|meta\.ai|deepseek)$/i;
 const YT = /(^|\.)(youtube\.com|youtu\.be)$/;
 const META_SRC = /^(facebook|fb|instagram|ig|meta)$/i;
 const CREATOR_MED = /^(creator|creators|partner|partners|influencer|affiliate)$/i;
@@ -47,6 +51,8 @@ export function classifyChannel(l: LeadAttribution | null | undefined): Channel 
   if (CREATOR_MED.test(med) || src === "creator") return "creator";
   if (src === "youtube" || (!src && YT.test(ref))) return "youtube";
   if (med === "email" || src === "instantly" || l.first_campaign_id) return "email_outreach";
+  // AI assistants after outreach, before search: gemini.google.com would otherwise read as Google organic search.
+  if ((src && AI_SRC.test(src) && !PAID.test(med)) || (!src && ref && AI_SEARCH.test(ref))) return "ai_search";
   // Organic posts tagged by hand (Facebook groups, group chats, other social sites): utm_medium social.
   if (SOCIAL_MED.test(med)) return "social";
   if (src) return META_SRC.test(src) ? "social" : src === "google" || src === "bing" ? "organic_search" : "referral";
