@@ -14,6 +14,8 @@ import { Badge, Card, Notice } from "@/components/ui/misc";
 import { MetricCard } from "@/components/ui/metric-card";
 import { ButtonLink } from "@/components/ui/button";
 
+import { InstallDesktopCard } from "@/components/pwa/install-desktop-card";
+
 export const metadata: Metadata = { title: "Billing & Licenses", robots: { index: false } };
 
 type InvoiceRow = { id: string; created: number; total: number; status: string | null; url: string | null; number: string | null };
@@ -86,6 +88,7 @@ export default async function CompanyBillingPage({ searchParams }: PageProps<"/c
         <p className="text-ink-soft">{company.name}</p>
       </div>
       {sp.checkout === "success" && company.entitlement.active && <Notice tone="ok" title="Team plan is active">Payment confirmed by Stripe. Your company has {licensed} licensed users. Invite your team from Team & Access.</Notice>}
+      {sp.checkout === "success" && company.entitlement.active && <InstallDesktopCard dismissible />}
       {row?.status === "past_due" && <Notice tone="danger" title="Payment failed">Your last Team payment didn&apos;t go through. Stripe retries automatically and your team keeps access meanwhile. Update your payment method to avoid losing access.</Notice>}
       {!company.entitlement.active && <Notice tone="warn" title="Team plan isn't active">Your team&apos;s bids and customers are safe, but licensed access is paused until the subscription is active again.</Notice>}
 

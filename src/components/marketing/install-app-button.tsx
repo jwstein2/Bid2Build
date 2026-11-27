@@ -3,6 +3,7 @@ import { useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { Check, Copy, Download, Ellipsis, ExternalLink, Share, SquarePlus, X } from "lucide-react";
 import { useDismiss } from "@/components/ui/use-dismiss";
 import { cn } from "@/lib/cn";
+import { installEvent, isStandalone, promptInstall, seenInstalled, subscribeInstall as subscribe } from "@/lib/pwa/install-prompt";
 
 /**
  * "Install Built2Bid" for the public homepage. It works on its own, not only when the browser
@@ -16,30 +17,6 @@ import { cn } from "@/lib/cn";
  * - Already running as the installed app: hidden. Installed on this device (we saw it install):
  *   becomes "Open App", which opens the app's start page.
  */
-
-interface InstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
-}
-
-const INSTALLED_KEY = "b2b:pwa-installed";
-let deferred: InstallPromptEvent | null = null;
-const listeners = new Set<() => void>();
-const emit = () => listeners.forEach((l) => l());
-
-// Registered when this chunk loads, so an early browser event is not missed.
-if (typeof window !== "undefined") {
-  window.addEventListener("beforeinstallprompt", (e) => {
-    e.preventDefault();
-    deferred = e as InstallPromptEvent;
-    emit();
-  });
-  window.addEventListener("appinstalled", () => {
-    deferred = null;
-    try { localStorage.setItem(INSTALLED_KEY, "1"); } catch { /* storage blocked: fine */ }
-    emit();
-  });
-}
 
 type Mode = "hidden" | "native" | "ios" | "manual" | "open";
 
@@ -61,20 +38,12 @@ export function iosBrowser(ua: string): IosBrowser {
 }
 
 function currentMode(): Mode {
-  const standalone = window.matchMedia?.("(display-mode: standalone)").matches || (navigator as Navigator & { standalone?: boolean }).standalone === true;
-  if (standalone) return "hidden";
-  let installed = false;
-  try { installed = localStorage.getItem(INSTALLED_KEY) === "1"; } catch { /* ignore */ }
-  if (deferred) return "native"; // the browser says it isn't installed (any more)
-  if (installed) return "open";
+  if (isStandalone()) return "hidden";
+  if (installEvent()) return "native"; // the browser says it isn't installed (any more)
+  if (seenInstalled()) return "open";
   const ua = navigator.userAgent;
   const ios = /iPad|iPhone|iPod/.test(ua) || (ua.includes("Macintosh") && navigator.maxTouchPoints > 1);
   return ios ? "ios" : "manual";
-}
-
-function subscribe(l: () => void) {
-  listeners.add(l);
-  return () => { listeners.delete(l); };
 }
 
 export function InstallAppButton({ className, tone = "dark" }: { className?: string; tone?: "dark" | "light" }) {
@@ -103,15 +72,8 @@ export function InstallAppButton({ className, tone = "dark" }: { className?: str
   }
 
   const onClick = async () => {
-    if (mode === "native" && deferred) {
-      const ev = deferred;
-      await ev.prompt();
-      const choice = await ev.userChoice.catch(() => null);
-      if (choice?.outcome === "accepted") {
-        deferred = null;
-        try { localStorage.setItem(INSTALLED_KEY, "1"); } catch { /* ignore */ }
-        emit();
-      }
+    if (mode === "native" && installEvent()) {
+      await promptInstall();
       return;
     }
     setOpen((o) => !o);

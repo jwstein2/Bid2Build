@@ -29,6 +29,12 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_DEPLOY_CONTEXT: deployContext,
     // Netlify commit SHA, used as the Sentry release.
     NEXT_PUBLIC_COMMIT_REF: process.env.COMMIT_REF ?? "",
+    // V10.1 desktop app: this build's id (Netlify deploy id, else commit). Open windows compare it with /api/version
+    // to offer "Built2Bid has been updated. Refresh to use the latest version." Empty locally (no update checks).
+    NEXT_PUBLIC_BUILD_ID: process.env.DEPLOY_ID || process.env.COMMIT_REF || "",
+    // V10.1: install invitations (menu item, account and after-purchase cards). "off" hides them; the site and any
+    // already-installed app keep working. See src/lib/pwa/version.ts.
+    NEXT_PUBLIC_DESKTOP_INSTALL: process.env.BUILT2BID_DESKTOP_INSTALL_ENABLED ?? "",
   },
   serverExternalPackages: ["@react-pdf/renderer"],
   turbopack: {
@@ -54,6 +60,10 @@ const nextConfig: NextConfig = {
       { source: "/:path*", headers: securityHeaders },
       { source: "/sign/:path*", headers: signingHeaders },
       { source: "/api/sign/:path*", headers: signingHeaders },
+      // V10.1: the offline-page service worker and its page are re-checked on every launch, so a fix or a rollback
+      // reaches installed apps right away.
+      { source: "/sw.js", headers: [{ key: "Cache-Control", value: "no-cache, max-age=0, must-revalidate" }] },
+      { source: "/offline.html", headers: [{ key: "Cache-Control", value: "no-cache, max-age=0, must-revalidate" }, { key: "X-Robots-Tag", value: "noindex" }] },
     ];
   },
 };
