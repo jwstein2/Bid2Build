@@ -12,6 +12,7 @@ Categories: **1** product fact · **2** customer outcome (Built2Bid's own custom
 | "Your costs stay private" | 1 | Customer views built only from customer prices | Hero, About, trust block |
 | "Export anytime", "No long-term contracts", paid periods non-refundable | 1 | Terms, account export (PR #89) | About, trust block |
 | "Built2Bid L.L.C., a Minnesota company" | 1 (owner to confirm) | `/security` page; Stripe Tax head office | About, trust block |
+| "Does Built2Bid run payroll? Not yet." Approved hours go to QuickBooks Online (or export) where the contractor runs payroll and pays subs | 1 | QuickBooks hours sync `src/lib/quickbooks/` (flag `NEXT_PUBLIC_QUICKBOOKS`; answer falls back to export wording when off); in-app notices "Built2Bid doesn't run payroll" | Homepage FAQ (owner approved 2026-11-27) |
 
 ## Third-party statistics reviewed
 
