@@ -354,7 +354,7 @@ export function AuthDialog({ open, onOpenChange, next, onVerified, title, copy, 
               aria-describedby="auth-phone-hint" aria-invalid={Boolean(err) || undefined} />
           </div>
           <p id="auth-phone-hint" className="text-xs text-muted">We&apos;ll text you a 6-digit code. Enter it here, even if your phone and computer are different devices.</p>
-          {marketingBox}
+          {!existingOnly && marketingBox}
           <Captcha onToken={setCaptchaToken} resetKey={captchaReset} />
           {err && <Err>{err}</Err>}
           <Button loading={busy} type="submit" className="w-full" size="lg" disabled={busy || phoneInput.replace(/\D/g, "").length < 6 || captchaMissing}>
@@ -396,10 +396,11 @@ export function AuthDialog({ open, onOpenChange, next, onVerified, title, copy, 
 
       {stage === "email" && (
         <form onSubmit={(ev) => { ev.preventDefault(); void sendEmail(); }} className="space-y-3">
-          <label htmlFor="auth-email" className="label">{linkPhone ? "Email on your account" : "Business email"}</label>
+          <label htmlFor="auth-email" className="label">{linkPhone || existingOnly ? "Email on your account" : "Business email"}</label>
           <input id="auth-email" type="email" required autoFocus autoComplete="email" inputMode="email" autoCapitalize="none" spellCheck={false} className="field" value={email} onChange={(ev) => setEmail(ev.target.value)} />
-          {!linkPhone && <p className="text-xs text-muted">We&apos;ll email you a {emailLen}-digit code. Enter it here to sign in or create your account. We also use your email for receipts.</p>}
-          {!linkPhone && marketingBox}
+          {!linkPhone && !existingOnly && <p className="text-xs text-muted">We&apos;ll email you a {emailLen}-digit code. Enter it here to sign in or create your account. We also use your email for receipts.</p>}
+          {existingOnly && <p className="text-xs text-muted">We&apos;ll email you a {emailLen}-digit code to enter here.</p>}
+          {!linkPhone && !existingOnly && marketingBox}
           <Captcha onToken={setCaptchaToken} resetKey={captchaReset} />
           {err && <Err>{err}</Err>}
           <Button loading={busy} type="submit" className="w-full" size="lg" disabled={busy || !email.includes("@") || captchaMissing}>
