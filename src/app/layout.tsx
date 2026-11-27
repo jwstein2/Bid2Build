@@ -12,6 +12,7 @@ import { MetaPixel } from "@/components/analytics/meta-pixel";
 import { pixelId } from "@/lib/growth/consent";
 import { OG_IMAGE } from "@/lib/seo/open-graph";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme";
+import { AppRuntime } from "@/components/pwa/app-runtime";
 
 // Public ids, inlined at build time. Analytics runs only on the indexable production deploy.
 const gaId = deploy.allowIndexing ? gaMeasurementId(process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID) : null;
@@ -52,6 +53,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <DemoBannerAnywhere />
         {children}
         <OnboardingHost />
+        {/* V10.1: offline notice, "Built2Bid has been updated" refresh prompt, offline-page service worker. */}
+        <AppRuntime />
         {gaId && <><GoogleAnalytics measurementId={gaId} /><FunnelTracker /></>}
         {metaPixelId && <MetaPixel pixelId={metaPixelId} />}
       </body>
