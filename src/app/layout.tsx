@@ -31,7 +31,8 @@ export const metadata: Metadata = {
   // Optional: Search Console "HTML tag" verification. Not needed when the domain is verified by DNS.
   ...(googleVerification ? { verification: { google: googleVerification } } : {}),
   // impact.com publisher site verification (Home Depot affiliate application). Public, not a secret.
-  other: { "impact-site-verification": "7d246bfc-cc5e-4068-8536-071c794657f8" },
+  // Bing Webmaster Tools site verification for https://built2bid.org/ (public, not a secret; no DNS change).
+  other: { "impact-site-verification": "7d246bfc-cc5e-4068-8536-071c794657f8", "msvalidate.01": "6FD9B4E391B37E30EE8555E5F917FFE6" },
   // Belt and braces with robots.txt and the X-Robots-Tag header: non-production deploys are noindex.
   ...(deploy.allowIndexing ? {} : { robots: { index: false, follow: false } }),
 };
