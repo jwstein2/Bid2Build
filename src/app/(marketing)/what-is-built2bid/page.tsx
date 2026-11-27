@@ -91,7 +91,7 @@ export default function WhatIsBuilt2BidPage() {
               </ul>
             </div>
           ))}
-          <p className="mt-4 text-sm"><Link href="/pricing#compare" className="font-semibold text-accent-ink underline">Compare every feature by plan</Link></p>
+          <p className="mt-4 text-sm"><Link href="/pricing#compare" className="font-semibold text-accent-ink underline">Compare every feature by plan</Link>{" · "}<Link href="/compare" className="font-semibold text-accent-ink underline">Compare with other contractor software</Link></p>
         </Section>
 
         <Section id="trades" title="Trades with their own estimate builder">
