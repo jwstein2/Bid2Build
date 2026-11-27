@@ -19,6 +19,7 @@ import { InstallAppButton } from "@/components/marketing/install-app-button";
 import { getAccountStatus } from "@/lib/account/server";
 import { COMPANY, PROMISES } from "@/lib/marketing/about";
 import { accountCtas, creditBadge, MEMBER_TAGLINE, type AccountStatus } from "@/lib/account/status";
+import { isQuickBooksEnabled } from "@/lib/quickbooks/config";
 
 const faqs: { q: string; a: string; visitorOnly?: boolean; freePlanOnly?: boolean; pmOnly?: boolean }[] = [
   { visitorOnly: true, q: "Is it really free?", a: `Yes. Every verified account gets ${plans.starterCredits} free bids to start, plus ${plans.monthlyCredits} free bid every month from your second month on. Drafts and previews are unlimited, with every trade and your branding. No credit card required.` },
@@ -28,6 +29,10 @@ const faqs: { q: string; a: string; visitorOnly?: boolean; freePlanOnly?: boolea
   { q: "Where is my draft saved?", a: "Before you sign in, drafts are saved in this browser on this device. After you sign in, they autosave to your account so you can pick them up on any device." },
   { q: `What is ${PM_PRODUCT_NAME}?`, a: `An add-on for Individual Unlimited that turns won bids into job schedules: a Gantt timeline built from your estimate, a company calendar, staff and subcontractor assignments, progress tracking, and customer progress updates you review and share. It's ${PRICES.pmMonthly}/month (${PRICES.pmAnnual}/year on annual plans). Team includes ${PRICES.pmIncludedEnterpriseEditors} schedule editor, and extra editors are ${PRICES.pmEditor}/month each.`, pmOnly: true },
   { q: "Does Built2Bid work for a team?", a: `Yes. The Team plan is ${PRICES.enterpriseBase}/month for ${PRICES.enterpriseIncludedUsers} licensed users, each with their own login and unlimited bidding, plus roles and permissions, a company dashboard, and one proposal style for the whole company. More users are added at volume pricing.` },
+  // Honest scope: Built2Bid tracks hours and labor; payroll and paying subs stay with the contractor's own tools.
+  { q: "Does Built2Bid run payroll?", a: isQuickBooksEnabled()
+    ? "Not yet. Built2Bid tracks hours and labor costs and sends approved hours to QuickBooks Online, where you run payroll and pay your subs. Built-in payroll is on our roadmap."
+    : "Not yet. Built2Bid tracks hours and labor costs, and you can export approved hours for the payroll provider you already use. Built-in payroll is on our roadmap." },
   { freePlanOnly: true, q: "What counts as one of my free bids?", a: "A credit is used when you finalize a new bid. Editing, re-finalizing, or re-downloading a bid you already finalized is free, and drafts never use a credit. Your monthly bid is used first, then starter credits." },
 ];
 
