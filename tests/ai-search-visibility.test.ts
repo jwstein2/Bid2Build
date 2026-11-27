@@ -10,7 +10,7 @@ import sitemap from "@/app/sitemap";
 import { INDEXNOW_KEY, validUrls } from "../scripts/seo/indexnow.mjs";
 
 const ON = { NEXT_PUBLIC_PROJECT_SCHEDULING: "on", NEXT_PUBLIC_ESIGNATURES: "on", NEXT_PUBLIC_QUICKBOOKS: "on" };
-const OFF = { NEXT_PUBLIC_PROJECT_SCHEDULING: "off", NEXT_PUBLIC_ESIGNATURES: "on" };
+const OFF = { NEXT_PUBLIC_PROJECT_SCHEDULING: "off", NEXT_PUBLIC_ESIGNATURES: "off" };
 const PROHIBITED = [/win \d+% more/i, /increase revenue by/i, /reduce estimating time by/i, /save \d+ hours/i, /guaranteed/i, /pays? for itself/i, /trusted by (thousands|\d)/i, /(over|more than|join|trusted by) \d[\d,]*\+? (contractors|users|customers)\b/i, /\d[\d,]{2,}\+ (contractors|users|customers)\b/i, /5[- ]star/i, /award/i, /#1|number one|best[- ]in[- ]class/i, /AI-powered/i, /end-to-end/i];
 
 // Visible text only (tier keys like "enterprise" are internal ids, never shown).
@@ -49,7 +49,12 @@ describe("product facts (V11.0)", () => {
   });
   it("mentions QuickBooks only when the integration is on", () => {
     expect(productFacts(ON).integrations.some((i) => i.name === "QuickBooks Online")).toBe(true);
-    expect(productFacts(OFF).integrations.some((i) => i.name === "QuickBooks Online")).toBe(false);
+    expect(allText(productFacts(OFF))).not.toMatch(/QuickBooks Online/);
+  });
+  it("never mentions online signing when e-signatures are off", () => {
+    const t = allText(productFacts(OFF));
+    expect(t).not.toMatch(/sign (proposals )?online|signing link|E-signatures/i);
+    expect(allText(productFacts(ON))).toMatch(/sign online/);
   });
   it("has a valid verified date and is in the sitemap", () => {
     expect(VERIFIED_ON).toMatch(/^\d{4}-\d{2}-\d{2}$/);
@@ -99,6 +104,7 @@ describe("AI search referrals", () => {
     expect(classifyChannel({ referrer_host: "bing.com" })).toBe("organic_search");
     expect(classifyChannel({ referrer_host: "facebook.com" })).toBe("social");
     expect(classifyChannel({ utm_source: "google", utm_medium: "cpc" })).toBe("google_ads");
+    expect(classifyChannel({ referrer_host: "chatgpt.com", first_campaign_id: "c1" })).toBe("email_outreach");
   });
 });
 

@@ -13,6 +13,9 @@ Categories: **1** product fact · **2** customer outcome (Built2Bid's own custom
 | "Export anytime", "No long-term contracts", paid periods non-refundable | 1 | Terms, account export (PR #89) | About, trust block |
 | "Built2Bid L.L.C., a Minnesota company" | 1 (owner to confirm) | `/security` page; Stripe Tax head office | About, trust block |
 | "Does Built2Bid run payroll? Not yet." Approved hours go to QuickBooks Online (or export) where the contractor runs payroll and pays subs | 1 | QuickBooks hours sync `src/lib/quickbooks/` (flag `NEXT_PUBLIC_QUICKBOOKS`; answer falls back to export wording when off); in-app notices "Built2Bid doesn't run payroll" | Homepage FAQ (owner approved 2026-11-27) |
+| Product fact page `/what-is-built2bid` and `/llms.txt`: every feature, price, integration and limit | 1 | Built from `src/lib/marketing/product-facts.ts`: prices from billing modules, features from the catalog (live + flag on), e-sign/QuickBooks/PCC lines gated by their flags; tests/ai-search-visibility.test.ts | Fact page, llms.txt, JSON-LD (V11.0, 2026-11-27) |
+| "Built for owner-operators and small contracting companies of roughly 1 to 20 people" | 1 (positioning, not a customer count) | Owner's target market in the V11.0 brief (1–20 employees) | Fact page |
+| "Launched November 2026" | 1 | built2bid.org live with Stripe since 2026-11-13 | Fact page |
 
 ## Third-party statistics reviewed
 

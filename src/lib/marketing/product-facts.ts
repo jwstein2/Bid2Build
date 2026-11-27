@@ -15,7 +15,7 @@ import { ENTERPRISE_SEAT_TIERS } from "@/lib/enterprise/pricing";
 import { formatUsd } from "@/lib/billing/plans";
 import { FREE_SAVED_ITEMS_LIMIT } from "@/lib/library/saved-items";
 import { COMPANY } from "@/lib/marketing/about";
-import { featureStatus, featuresFor, PILLARS, PM_PRODUCT_NAME, PRICES, pmMarketedLive, type Pillar } from "@/lib/marketing/catalog";
+import { featureStatus, featuresFor, gateOpen, PILLARS, PM_PRODUCT_NAME, PRICES, pmMarketedLive, type Pillar } from "@/lib/marketing/catalog";
 import { plans, site } from "@/lib/site";
 import { trades } from "@/lib/trades/catalog";
 
@@ -31,16 +31,17 @@ export interface FactPlan { name: string; price: string; summary: string; points
 export function productFacts(env: Record<string, string | undefined> = process.env) {
   const pm = pmMarketedLive(env);
   const qb = env.NEXT_PUBLIC_QUICKBOOKS === "on";
+  const esign = gateOpen("esign", env);
   const live = (p: Pillar) => featuresFor(p).filter((f) => featureStatus(f, env) === "live");
   const seatTiers = ENTERPRISE_SEAT_TIERS.map((t, i) => {
     const next = ENTERPRISE_SEAT_TIERS[i + 1];
     return `users ${t.firstUser}${next ? `-${next.firstUser - 1}` : "+"}: ${formatUsd(t.unitCents)} each`;
   }).join(", ");
 
-  const summary = `${site.name} is web-based estimating and proposal software for contractors. You build an estimate for your trade, price materials and labor with markup or margin, send a branded proposal your customer can sign online, and track every bid from draft to won.${pm ? ` With the ${PM_PRODUCT_NAME} add-on, a won bid becomes a job schedule with crew assignments, progress tracking and customer updates.` : ""}`;
+  const summary = `${site.name} is web-based estimating and proposal software for contractors. You build an estimate for your trade, price materials and labor with markup or margin, ${esign ? "send a branded proposal your customer can sign online" : "send a branded PDF proposal"}, and track every bid from draft to won.${pm ? ` With the ${PM_PRODUCT_NAME} add-on, a won bid becomes a job schedule with crew assignments, progress tracking and customer updates.` : ""}`;
 
   const audience = [
-    "Owner-operators and small contracting companies, mostly 1 to 20 people.",
+    "Built for owner-operators and small contracting companies of roughly 1 to 20 people.",
     "General contractors, remodelers and subcontractors.",
     `Specialty trades: ${tradeList.length} trade-specific estimate builders, plus a custom estimate for anything else.`,
     "Contractors moving off spreadsheets, Word templates or paper estimates.",
@@ -49,12 +50,12 @@ export function productFacts(env: Record<string, string | undefined> = process.e
   const problems = [
     { title: "Estimates take too long and look homemade", body: "Start from sections made for your trade, use quantity calculators inside each line, and send a clean branded PDF." },
     { title: "Not sure you are making money on a job", body: "See cost, markup, margin and profit update as you price. Your costs and margins never appear on the customer's copy." },
-    { title: "Bids get lost after you send them", body: "Every bid sits in a pipeline from Draft to Won, with signing links and status in one place." },
+    { title: "Bids get lost after you send them", body: `Every bid sits in a pipeline from Draft to Won${esign ? ", with signing links and" : ", with"} status in one place.` },
     ...(pm ? [{ title: "Won jobs live in your head or a whiteboard", body: `${PM_PRODUCT_NAME} turns the estimate's sections into a schedule, a company calendar and crew assignments.` }] : []),
   ];
 
   const workflows = (["win", "run", "grow"] as const)
-    .map((p) => ({ pillar: p, title: PILLARS[p].title, lead: PILLARS[p].lead, features: live(p).map((f) => ({ name: f.name, description: f.description, tier: f.tier })) }))
+    .map((p) => ({ pillar: p, title: PILLARS[p].title, lead: esign ? PILLARS[p].lead : PILLARS[p].lead.replace(" your customer can sign online", ""), features: live(p).map((f) => ({ name: f.name, description: f.description, tier: f.tier })) }))
     .filter((w) => w.features.length > 0);
 
   const planList: FactPlan[] = [
@@ -94,7 +95,7 @@ export function productFacts(env: Record<string, string | undefined> = process.e
   ];
 
   const integrations = [
-    { name: "E-signatures", status: "Built in. Customers sign proposals and change orders online; the signed PDF and audit trail are saved with the bid." },
+    ...(esign ? [{ name: "E-signatures", status: "Built in. Customers sign proposals and change orders online; the signed PDF and audit trail are saved with the bid." }] : []),
     { name: "Email", status: "Send proposals from your own email address." },
     ...(qb ? [{ name: "QuickBooks Online", status: "Approved crew hours are sent to QuickBooks Online, where you run payroll. Invoices and payments are not synced." }] : []),
     { name: "Imports", status: "Bring in customers (including QuickBooks customer exports), employees, subcontractors and supplier price lists from CSV or Excel." },
@@ -102,7 +103,7 @@ export function productFacts(env: Record<string, string | undefined> = process.e
   ];
 
   const limitations = [
-    "No built-in payroll. Hours can be exported or sent to QuickBooks Online and payroll runs there.",
+    qb ? "No built-in payroll. Approved hours can be exported or sent to QuickBooks Online, and payroll runs there." : "No built-in payroll. Approved hours can be exported for the payroll provider you already use.",
     "Does not pay subcontractors, vendors or workers. Bills are recorded only.",
     "Your customers cannot pay invoices online through Built2Bid yet.",
     "No live supplier or retail price feeds. You enter your own costs or upload your supplier's price list.",
@@ -121,11 +122,11 @@ export function productFacts(env: Record<string, string | undefined> = process.e
 
   const faqs = [
     { q: `What is ${site.name}?`, a: summary },
-    { q: `Who is ${site.name} for?`, a: `Small contracting businesses, from one-person shops to crews of about 20: general contractors, remodelers, subcontractors and specialty trades such as roofing, decks, concrete, painting, electrical, plumbing and HVAC. There are ${tradeList.length} trade-specific estimate builders plus a custom option.` },
+    { q: `Who is ${site.name} for?`, a: `It is built for small contracting businesses, from one-person shops to crews of roughly 20: general contractors, remodelers, subcontractors and specialty trades such as roofing, decks, concrete, painting, electrical, plumbing and HVAC. There are ${tradeList.length} trade-specific estimate builders plus a custom option.` },
     { q: `How much does ${site.name} cost?`, a: `Free to start with ${plans.starterCredits} free bids and ${plans.monthlyCredits} free bid a month. Individual Unlimited is ${PRICES.unlimitedMonthly}/month or ${PRICES.unlimitedAnnual}/year. Team is ${PRICES.enterpriseBase}/month for ${PRICES.enterpriseIncludedUsers} users.${pm ? ` ${PM_PRODUCT_NAME} scheduling is an add-on at ${PRICES.pmMonthly}/month.` : ""} No long-term contracts; paid periods are non-refundable.` },
     { q: "Do I need to sign up to try it?", a: "No. You can pick a trade, build an estimate and preview the proposal first. A free account is needed to download, email or save to the cloud." },
-    { q: "Can customers sign proposals online?", a: "Yes. You send a secure signing link; the signed PDF and audit trail are saved with the bid, and the bid moves to Won." },
-    { q: `Does ${site.name} run payroll?`, a: limitations[0] },
+    ...(esign ? [{ q: "Can customers sign proposals online?", a: "Yes. You send a secure signing link; the signed PDF and audit trail are saved with the bid, and the bid moves to Won." }] : []),
+    { q: `Does ${site.name} run payroll?`, a: limitations[0].replace("No built-in payroll.", "Not yet. There is no built-in payroll.") },
     { q: "Does it work on a phone?", a: "Yes. It runs in any modern browser on a phone, tablet or computer, and can be installed on a phone's home screen. There is no native iPhone app." },
     { q: "Will my customer see my costs or markup?", a: "No. Customer proposals are built only from customer prices. Costs, margins and internal notes stay private." },
   ];

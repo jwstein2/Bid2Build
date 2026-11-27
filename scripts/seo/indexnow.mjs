@@ -8,7 +8,7 @@
  * Rules (docs/seo/AI_SEARCH.md):
  * - Only send URLs that really changed (a new or edited public page). Never resend unchanged pages.
  * - Only built2bid.org URLs on the public sitemap; never app, account, signing or API paths.
- * - Waits until each URL returns 200 (Netlify deploys a few minutes after a commit), then submits once.
+ * - Waits up to 6 minutes for each URL to return 200 (Netlify deploys a few minutes after a commit), then submits once.
  * The key below is public by design: it is served at https://built2bid.org/<key>.txt to prove ownership.
  */
 export const INDEXNOW_KEY = "e89608af96996d3374af4cfe3195e1df";
@@ -26,7 +26,7 @@ export function validUrls(list) {
   });
 }
 
-async function waitFor200(url, { tries = 30, delayMs = 30_000 } = {}) {
+async function waitFor200(url, { tries = 12, delayMs = 30_000 } = {}) {
   for (let i = 0; i < tries; i++) {
     const r = await fetch(url, { method: "GET", redirect: "manual" }).catch(() => null);
     if (r?.status === 200) return true;

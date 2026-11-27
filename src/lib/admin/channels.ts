@@ -50,9 +50,9 @@ export function classifyChannel(l: LeadAttribution | null | undefined): Channel 
   // Creator Partner links are tagged by hand and win over the platform the creator posted on.
   if (CREATOR_MED.test(med) || src === "creator") return "creator";
   if (src === "youtube" || (!src && YT.test(ref))) return "youtube";
-  // AI assistants before search: gemini.google.com would otherwise read as Google organic search.
-  if ((src && AI_SRC.test(src) && !PAID.test(med)) || (!src && ref && AI_SEARCH.test(ref))) return "ai_search";
   if (med === "email" || src === "instantly" || l.first_campaign_id) return "email_outreach";
+  // AI assistants after outreach, before search: gemini.google.com would otherwise read as Google organic search.
+  if ((src && AI_SRC.test(src) && !PAID.test(med)) || (!src && ref && AI_SEARCH.test(ref))) return "ai_search";
   // Organic posts tagged by hand (Facebook groups, group chats, other social sites): utm_medium social.
   if (SOCIAL_MED.test(med)) return "social";
   if (src) return META_SRC.test(src) ? "social" : src === "google" || src === "bing" ? "organic_search" : "referral";
