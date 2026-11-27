@@ -2,6 +2,7 @@ import "server-only";
 import { notFound, redirect } from "next/navigation";
 import { createAdminClient, createClient, getUser, type SessionUser } from "../supabase/server";
 import { isSupabaseConfigured } from "../env";
+import { requireAdminTwoStep } from "../admin/server";
 
 export type StaffCap = "staff.view" | "staff.manage" | "payouts.view" | "payouts.manage" | "payouts.activate" | "banking.view" | "banking.manage" | "tax.view" | "reports.export" | "reconcile" | "self.view";
 
@@ -18,7 +19,10 @@ export async function requireStaffCap(cap: StaffCap): Promise<{ user: SessionUse
   const { data, error } = await db.rpc("staff_capabilities", { p_user: user.id });
   const caps = (error ? [] : (data as string[] | null) ?? []);
   if (!caps.includes(cap)) notFound();
-  return { user, db, caps, owner: caps.includes("payouts.activate") };
+  const owner = caps.includes("payouts.activate");
+  // The owner's admin account always needs the authenticator step here too (same rule as requireAdmin).
+  if (owner) await requireAdminTwoStep();
+  return { user, db, caps, owner };
 }
 
 /** True when this session passed the authenticator step (aal2). Financial administration requires it. */

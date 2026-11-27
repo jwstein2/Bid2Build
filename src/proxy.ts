@@ -9,6 +9,7 @@ import { practiceSwap, type CookieOp } from "@/lib/demo/swap";
 import { SALES_JOIN_COOKIE, SALES_JOIN_MAX_AGE, inviteTokenFromPath, salesLoginRedirect } from "@/lib/sales/next";
 import { canonicalHostRedirect } from "@/lib/config/deploy";
 import { appLoginRedirect } from "@/lib/auth/app-next";
+import { adminLoginRedirect } from "@/lib/auth/admin-gate";
 
 /** First-touch attribution: set once from UTM/ic/ref parameters, an ad click id or an outside referrer host; never overwritten. */
 function withAttribution(request: NextRequest, response: NextResponse): NextResponse {
@@ -87,7 +88,9 @@ export async function proxy(request: NextRequest) {
   // afterwards. The portal layout still authorizes; this only keeps the destination.
   if (!claims?.claims && request.method === "GET") {
     // App pages do the same with the main sign-in (the app layout alone could only send them to /dashboard).
-    const login = salesLoginRedirect(request.nextUrl.pathname, request.nextUrl.search) ?? appLoginRedirect(request.nextUrl.pathname, request.nextUrl.search);
+    // The owner admin area goes to its own sign-in page (same account and email code, then the authenticator).
+    const login = salesLoginRedirect(request.nextUrl.pathname, request.nextUrl.search) ?? appLoginRedirect(request.nextUrl.pathname, request.nextUrl.search)
+      ?? adminLoginRedirect(request.nextUrl.pathname, request.nextUrl.search);
     if (login) {
       const redirect = NextResponse.redirect(new URL(login, request.url));
       response.cookies.getAll().forEach((c) => redirect.cookies.set(c));
