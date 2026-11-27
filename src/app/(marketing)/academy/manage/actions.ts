@@ -57,6 +57,7 @@ export async function saveCourse(form: FormData) {
     featured: form.get("featured") === "on", sort_order: Number(str(form, "sort_order")) || 0, planned_lessons: lines(form, "planned_lessons", 20),
     seo_title: opt(form, "seo_title"), seo_description: opt(form, "seo_description"),
     release_on: /^\d{4}-\d{2}-\d{2}$/.test(str(form, "release_on")) ? str(form, "release_on") : null,
+    ...(form.has("adv_subject") ? { adv_subject: opt(form, "adv_subject") } : {}),
   };
   let courseId = id;
   if (id) {

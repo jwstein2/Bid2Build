@@ -13,7 +13,7 @@ import { FileDrop } from "@/components/ui/file-drop";
 
 type CourseRow = {
   id: string; slug: string; title: string; summary: string; description: string | null; trade_slug: string | null; pillar: Pillar; level: string; access: string; status: string;
-  content_class: string; cover_path: string | null; cover_theme: CoverTheme; featured: boolean; sort_order: number; planned_lessons: string[]; seo_title: string | null; seo_description: string | null; release_on: string | null;
+  content_class: string; cover_path: string | null; cover_theme: CoverTheme; featured: boolean; sort_order: number; planned_lessons: string[]; seo_title: string | null; seo_description: string | null; release_on: string | null; adv_subject?: string | null;
 };
 const THEMES: CoverTheme[] = ["navy", "cyan", "amber", "green", "slate", "rose"];
 
@@ -26,6 +26,8 @@ export default async function CourseEditor({ params, searchParams }: PageProps<"
   if (!isNew && !/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const db = createAdminClient();
   const trades = await listTrades();
+  // Academy Advanced subjects (absent until 20270303001000 is applied; the field is hidden then).
+  const { data: advSubjects, error: advErr } = await db.from("academy_adv_subjects").select("slug, title").order("sort_order");
   let c: CourseRow | null = null;
   let modules: { id: string; title: string; sort_order: number }[] = [];
   let lessons: { id: string; slug: string; title: string; status: string; access: string; module_id: string | null; sort_order: number }[] = [];
@@ -72,6 +74,7 @@ export default async function CourseEditor({ params, searchParams }: PageProps<"
             <label className={label}>Access<select name="access" defaultValue={c?.access ?? "public"} className={field}><option value="public">Free (public)</option><option value="members">Members</option><option value="premium">Premium</option></select></label>
             <label className={label}>Content class<select name="content_class" defaultValue={c?.content_class ?? "original"} className={field}><option value="original">Built2Bid original</option><option value="mixed">Original + curated</option><option value="curated">External curated</option><option value="licensed">Licensed</option></select></label>
             <label className={label}>Cover theme<select name="cover_theme" defaultValue={c?.cover_theme ?? "navy"} className={field}>{THEMES.map((t) => <option key={t}>{t}</option>)}</select></label>
+            {!advErr && <label className={label}>Advanced subject<select name="adv_subject" defaultValue={c?.adv_subject ?? ""} className={field} data-testid="adv-subject"><option value="">Not an advanced course</option>{(advSubjects ?? []).map((x) => <option key={x.slug} value={x.slug}>{x.title}</option>)}</select></label>}
             <label className={label}>Sort order<input name="sort_order" type="number" defaultValue={c?.sort_order ?? 0} className={field} /></label>
             <label className={label}>Release date (upcoming)<input name="release_on" type="date" defaultValue={c?.release_on ?? ""} className={field} data-testid="release-on" /></label>
             <label className="flex items-center gap-2 pt-6 text-sm font-semibold"><input type="checkbox" name="featured" defaultChecked={c?.featured} /> Featured</label>

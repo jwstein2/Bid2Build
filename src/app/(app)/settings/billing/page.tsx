@@ -48,6 +48,10 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
     loadMyCompany(supabase),
     loadChallenge(), // null before the Academy rewards migration
   ]);
+  // Academy All Access + Estimator includes one Individual Unlimited entitlement (errors before the migration = none).
+  const { data: aaRows } = await supabase.from("academy_adv_memberships").select("status, current_period_end, cancel_at_period_end, amount_cents")
+    .eq("plan", "all_access").in("status", ["active", "trialing", "past_due"]).order("current_period_end", { ascending: false }).limit(1);
+  const aaMembership = (aaRows?.[0] ?? null) as { status: string; current_period_end: string | null; cancel_at_period_end: boolean; amount_cents: number | null } | null;
   const q = credits ? { unlimited: credits.unlimited } : null;
   const pm = isPmEnabled() && credits?.unlimited ? await loadPmAccess(supabase) : null;
   const current = subs?.find((s) => ["active", "trialing", "past_due"].includes(s.status)) ?? subs?.[0];
@@ -55,9 +59,10 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
   const comp = (Array.isArray(compRows) ? compRows[0] : null) as CompAccess | null;
   const compActive = comp?.state === "active";
   // Unlimited only because of a complimentary grant: show that, never a made-up paid plan.
-  const compOnly = Boolean(q?.unlimited && compActive && !paidActive);
+  const academyOnly = Boolean(q?.unlimited && aaMembership && !paidActive && !company?.entitlement.active);
+  const compOnly = Boolean(q?.unlimited && compActive && !paidActive && !academyOnly);
   // Unlimited only because of an Enterprise seat: the company pays, so never show a personal Unlimited price.
-  const seatOnly = Boolean(q?.unlimited && company?.entitlement.active && !paidActive && !compOnly);
+  const seatOnly = Boolean(q?.unlimited && company?.entitlement.active && !paidActive && !compOnly && !academyOnly);
   const companyBilling = company ? (can(company, "manage_billing") ? "/company/billing" : null) : null;
   const compEnded = !q?.unlimited && comp && ["expired", "revoked"].includes(comp.state) ? (comp.state === "revoked" ? null : comp.expires_at) : null;
   const ended = !q?.unlimited && current && ["canceled", "unpaid", "incomplete_expired"].includes(current.status) ? (current.ended_at ?? current.current_period_end) : null;
@@ -96,14 +101,15 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-sm text-muted">Current plan</p>
-            <p className="text-2xl font-extrabold">{seatOnly ? "Team" : compOnly ? `Complimentary ${comp!.plan === "enterprise" ? "Team" : "Individual Unlimited"}` : q?.unlimited ? (current?.plan === "annual" ? ANNUAL.name : MONTHLY.name) : "Free"}</p>
+            <p className="text-2xl font-extrabold">{academyOnly ? "Individual Unlimited (Academy All Access)" : seatOnly ? "Team" : compOnly ? `Complimentary ${comp!.plan === "enterprise" ? "Team" : "Individual Unlimited"}` : q?.unlimited ? (current?.plan === "annual" ? ANNUAL.name : MONTHLY.name) : "Free"}</p>
+            {academyOnly && <p className="text-sm text-ink-soft" data-testid="academy-all-access-plan">Individual Unlimited is included in your Academy All Access + Estimator membership{aaMembership?.current_period_end ? `, ${aaMembership.cancel_at_period_end ? "until" : "renewing"} ${longDate(aaMembership.current_period_end)}` : ""}. Manage it from <Link href="/academy/advanced/membership" className="font-semibold underline">Academy membership</Link>.</p>}
             {compOnly && <p className="text-sm text-ink-soft">Free until {longDate(comp!.expires_at)}. No payment details are on file and nothing is charged when it ends; you&apos;ll simply return to the Free plan unless you subscribe.</p>}
             {seatOnly && <p className="text-sm text-ink-soft" data-testid="seat-plan">Your licensed seat is part of {company!.name}&apos;s Team plan. You aren&apos;t billed personally.</p>}
-            {q?.unlimited && !compOnly && !seatOnly && <p className="text-sm text-ink-soft">{current?.plan === "annual" ? `${ANNUAL.price}/year, billed annually` : `${MONTHLY.price}/month, billed monthly`}</p>}
-            {q?.unlimited && !compOnly && !seatOnly && end && <p className="text-sm text-ink-soft">{current?.cancel_at_period_end ? `Cancels on ${end}. You keep Individual Unlimited until then.` : `Renews on ${end}.`}</p>}
+            {q?.unlimited && !compOnly && !seatOnly && !academyOnly && <p className="text-sm text-ink-soft">{current?.plan === "annual" ? `${ANNUAL.price}/year, billed annually` : `${MONTHLY.price}/month, billed monthly`}</p>}
+            {q?.unlimited && !compOnly && !seatOnly && !academyOnly && end && <p className="text-sm text-ink-soft">{current?.cancel_at_period_end ? `Cancels on ${end}. You keep Individual Unlimited until then.` : `Renews on ${end}.`}</p>}
             {!q?.unlimited && <p className="text-sm text-ink-soft">{plans.starterCredits} starter credits to begin, then {plans.monthlyCredits} free bid every month.</p>}
           </div>
-          {seatOnly ? <Badge tone="ok">company plan</Badge> : compOnly ? <Badge tone="ok">complimentary</Badge> : current && <Badge tone={q?.unlimited ? "ok" : "neutral"}>{current.status.replace("_", " ")}</Badge>}
+          {academyOnly ? <Badge tone="ok">academy</Badge> : seatOnly ? <Badge tone="ok">company plan</Badge> : compOnly ? <Badge tone="ok">complimentary</Badge> : current && <Badge tone={q?.unlimited ? "ok" : "neutral"}>{current.status.replace("_", " ")}</Badge>}
         </div>
         {bc && <div className="mt-5 border-t border-line pt-4" data-guide="billing.manage"><PortalButton label="Manage subscription, payment method & billing history" /><p className="mt-2 text-xs text-muted">Opens Stripe&apos;s secure customer portal, where you can change plans, cancel, update your card, and download invoices.</p><LegalStatusCompact className="mt-1" />
           {personalPaid && !current?.cancel_at_period_end && <CancelStep monthly={current?.plan === "monthly"} annualSavings={savings} />}</div>}

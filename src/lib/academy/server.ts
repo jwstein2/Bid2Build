@@ -26,6 +26,8 @@ export type Course = {
   seo_title: string | null; seo_description: string | null; updated_at?: string | null; published_at?: string | null; lesson_count?: number;
   /** Release day (YYYY-MM-DD) of an upcoming course; absent before the release-schedule migration. */
   release_on?: string | null;
+  /** Academy Advanced subject this course belongs to (paid lessons); absent before 20270303001000. */
+  adv_subject?: string | null;
 };
 export type OutlineItem = { id: string; slug: string; title: string; summary: string | null; module_id: string | null; module_title: string | null; access: Access; locked: boolean; estimated_minutes: number | null; sort_order: number; completed: boolean };
 export type Resource = {
@@ -110,12 +112,16 @@ export async function getTrade(slug: string): Promise<Trade | null> {
 }
 
 const BASE_COURSE_COLS = "id, slug, trade_slug, pillar, title, summary, description, level, access, status, content_class, cover_path, cover_theme, featured, sort_order, planned_lessons, seo_title, seo_description, updated_at, published_at";
-const COURSE_COLS = `${BASE_COURSE_COLS}, release_on`;
+const RELEASE_COLS = `${BASE_COURSE_COLS}, release_on`;
+const COURSE_COLS = `${RELEASE_COLS}, adv_subject`;
 /** Undefined column (release_on before 20270216001000 is applied): retry with the original column list. */
 const noColumn = (e: { code?: string } | null | undefined) => e?.code === "42703";
 
-/** Course cards. trade=null: cross-trade courses only; trade=undefined: every course. Lesson counts included. */
-export const listCourses = cache(async (opts: { trade?: string | null; pillar?: string; q?: string } = {}): Promise<Course[]> => {
+/**
+ * Course cards. trade=null: cross-trade courses only; trade=undefined: every course. Lesson counts included.
+ * Academy Advanced courses are left out unless `advanced` is true (they're listed under Advanced Learning only).
+ */
+export const listCourses = cache(async (opts: { trade?: string | null; pillar?: string; q?: string; advanced?: boolean } = {}): Promise<Course[]> => {
   const db = await academyDb();
   let rows: Course[] | null = null;
   if (db) {
@@ -128,6 +134,7 @@ export const listCourses = cache(async (opts: { trade?: string | null; pillar?: 
       return query;
     };
     let { data, error } = await run(COURSE_COLS);
+    if (noColumn(error)) ({ data, error } = await run(RELEASE_COLS));
     if (noColumn(error)) ({ data, error } = await run(BASE_COURSE_COLS));
     if (!error) {
       rows = (data ?? []).map((r) => {
@@ -139,6 +146,7 @@ export const listCourses = cache(async (opts: { trade?: string | null; pillar?: 
       });
     } else if (!isMissing(error)) rows = [];
   }
+  if (rows && !opts.advanced) rows = rows.filter((c) => !c.adv_subject);
   if (!rows) {
     rows = staticCourses().filter((c) => (opts.trade === undefined ? true : opts.trade === null ? c.trade_slug === null : c.trade_slug === opts.trade))
       .filter((c) => !opts.pillar || c.pillar === opts.pillar).filter((c) => !opts.q || c.title.toLowerCase().includes(opts.q.toLowerCase()));
@@ -150,6 +158,7 @@ export async function getCourse(slug: string): Promise<{ course: Course; outline
   const db = await academyDb();
   if (db) {
     let { data, error } = await db.from("academy_courses").select(COURSE_COLS).eq("slug", slug).maybeSingle();
+    if (noColumn(error)) ({ data, error } = await db.from("academy_courses").select(RELEASE_COLS).eq("slug", slug).maybeSingle());
     if (noColumn(error)) ({ data, error } = await db.from("academy_courses").select(BASE_COURSE_COLS).eq("slug", slug).maybeSingle());
     if (!error) {
       if (!data) return null;

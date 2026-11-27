@@ -3,6 +3,7 @@ import { createSign } from "node:crypto";
 import { getStripe } from "@/lib/billing/stripe";
 import type { Snapshot } from "./model";
 import { bankProviderMode } from "@/lib/tax-banking/isolation";
+import { isAcademyMeta } from "@/lib/academy/advanced/plans";
 
 /**
  * Read-only integrations for the owner command center. Nothing here writes to Stripe, Google or any
@@ -159,9 +160,12 @@ export async function stripeReconcile(days: number, excludedCustomers: Set<strin
     const cust = (c: string | { id: string } | null) => (typeof c === "string" ? c : c?.id ?? "");
     const keep = <T extends { customer: string | { id: string } | null }>(xs: T[]) => xs.filter((x) => !excludedCustomers.has(cust(x.customer)));
     const paid = keep(invoices as unknown as { customer: string | { id: string } | null; amount_paid: number }[]);
+    // Software subscriptions only: Academy Advanced packages are reported in Manage Academy → Advanced.
+    type SubRow = { customer: string | { id: string } | null; metadata?: Record<string, string> | null };
+    const software = (xs: unknown[]) => keep(xs as SubRow[]).filter((x) => !isAcademyMeta(x.metadata));
     return {
-      active: keep(active as unknown as { customer: string | { id: string } | null }[]).length,
-      pastDue: keep(pastDue as unknown as { customer: string | { id: string } | null }[]).length,
+      active: software(active).length,
+      pastDue: software(pastDue).length,
       paidCents: paid.reduce((n, i) => n + (i.amount_paid ?? 0), 0), invoices: paid.length,
       refundsNote: "Gross of refunds and Stripe fees", fetchedAt: new Date().toISOString(),
     };

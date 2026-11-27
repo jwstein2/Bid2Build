@@ -18,6 +18,7 @@ export default async function ManageLayout({ children }: { children: React.React
     { href: "/academy/manage/licenses", label: "Creator licences", roles: ["admin"] },
     { href: "/academy/manage/reports", label: "Reports", roles: ["admin", "moderator"] },
     { href: "/academy/manage/members", label: "Members", roles: ["admin", "moderator"] },
+    { href: "/academy/manage/advanced", label: "Advanced", roles: ["admin"] },
     { href: "/academy/manage/settings", label: "Settings", roles: ["admin"] },
     { href: "/academy/manage/audit", label: "Audit log", roles: ["admin"] },
   ].filter((l) => l.roles.includes(role));
