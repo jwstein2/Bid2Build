@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import sitemap from "@/app/sitemap";
 import { FREE_RESOURCES, marginFromMarkup, overheadPerHour, priceForMargin, resourceBySlug, roundUpTo } from "@/lib/marketing/free-resources";
 
 describe("free resources", () => {
@@ -35,5 +36,11 @@ describe("free resources", () => {
     expect(priceForMargin(-1, 10)).toBeNaN();
     expect(overheadPerHour(1000, 0, 30)).toBeNaN();
     expect(marginFromMarkup(-5)).toBeNaN();
+  });
+
+  it("lists /free and every resource page in the sitemap", () => {
+    const urls = sitemap().map((e) => e.url);
+    expect(urls.some((u) => u.endsWith("/free"))).toBe(true);
+    for (const r of FREE_RESOURCES) expect(urls.some((u) => u.endsWith(`/free/${r.slug}`))).toBe(true);
   });
 });
