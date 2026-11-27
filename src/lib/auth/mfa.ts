@@ -13,7 +13,7 @@ export const TWO_STEP_BANK_MESSAGE =
   "For your security, turn on two-step sign-in (Account settings → Two-step sign-in) before connecting a bank.";
 
 /** Paths a half-signed-in person (email code passed, authenticator code not yet) may still open. */
-const OPEN_PREFIXES = ["/auth/", "/login", "/signup", "/api/auth/", "/sign/", "/api/sign", "/exempt/", "/api/exempt", "/sub-docs/", "/api/sub-docs/", "/api/health", "/privacy", "/terms", "/security", "/legal"];
+const OPEN_PREFIXES = ["/auth/", "/login", "/admin-login", "/signup", "/api/auth/", "/sign/", "/api/sign", "/exempt/", "/api/exempt", "/sub-docs/", "/api/sub-docs/", "/api/health", "/privacy", "/terms", "/security", "/legal"];
 
 export function stepUpExempt(pathname: string): boolean {
   return OPEN_PREFIXES.some((p) => pathname === p.replace(/\/$/, "") || pathname.startsWith(p));
