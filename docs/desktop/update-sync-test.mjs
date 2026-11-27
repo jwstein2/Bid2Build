@@ -1,15 +1,27 @@
-// Repeatable website-to-desktop update test (V10.1). Builds two production builds (A, B) into /tmp/claude-0/nextA|nextB
-// (DEPLOY_ID=build-A / build-B npm run build), then: node docs/desktop/update-sync-test.cjs (needs Playwright).
-// Paths are the ones used in the original run; adjust OUT/REPO for your machine.
-const { chromium } = require('playwright');
-const { spawn, execSync } = require('child_process');
-const REPO = '/home/user/bid2build';
-const OUT = '/tmp/claude-0/e2e';
+// Repeatable website-to-desktop update test (V10.1).
+// 1. DEPLOY_ID=build-A npm run build && cp -r .next <BUILD_A>
+// 2. make a visible change, DEPLOY_ID=build-B npm run build && cp -r .next <BUILD_B>
+// 3. BUILD_A=<BUILD_A> BUILD_B=<BUILD_B> node docs/desktop/update-sync-test.mjs   (needs Playwright)
+// The step "version B interface" expects the B build's login heading to contain "(version B)".
+import { createRequire } from 'node:module';
+import { spawn } from 'node:child_process';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+// Requires the `playwright` package (pre-installed in Claude Code cloud sessions; otherwise `npm i -D playwright`).
+const { chromium } = createRequire(import.meta.url)('playwright');
+const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const BUILDS = { A: process.env.BUILD_A, B: process.env.BUILD_B };
+if (!BUILDS.A || !BUILDS.B) { console.error('Set BUILD_A and BUILD_B to copies of two .next builds.'); process.exit(2); }
+// Private, randomly named working folder for screenshots and the browser profile.
+const OUT = fs.mkdtempSync(path.join(os.tmpdir(), 'b2b-desktop-test-'));
 const URL = 'http://localhost:3100';
 let server;
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
 async function startServer(build) {
-  execSync(`rm -rf ${REPO}/.next && cp -r /tmp/claude-0/next${build} ${REPO}/.next`);
+  fs.rmSync(path.join(REPO, '.next'), { recursive: true, force: true });
+  fs.cpSync(BUILDS[build], path.join(REPO, '.next'), { recursive: true });
   server = spawn('npx', ['next', 'start', '-p', '3100'], { cwd: REPO, stdio: 'ignore', detached: true });
   for (let i = 0; i < 60; i++) { try { const r = await fetch(URL + '/api/version'); if (r.ok) { log('server', build, await r.text()); return; } } catch {} await new Promise(r => setTimeout(r, 1000)); }
   throw new Error('server did not start');
@@ -104,6 +116,6 @@ const check = (name, ok, detail = '') => { results.push({ name, ok, detail }); l
   stopServer();
   const failed = results.filter(r => !r.ok);
   console.log(`\n${results.length - failed.length}/${results.length} passed`);
-  require('fs').writeFileSync(`${OUT}/results.json`, JSON.stringify(results, null, 2));
+  console.log(`screenshots in ${OUT}`);
   process.exit(failed.length ? 1 : 0);
 })().catch(e => { console.error(e); stopServer(); process.exit(2); });

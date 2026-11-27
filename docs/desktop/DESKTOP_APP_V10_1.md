@@ -57,7 +57,7 @@ sign-in, session cookies, two-step and sign-out as the website.
 
 ## 5. Test results
 
-**Automated, real production builds in Chromium (Linux, headless): 18/18 passed** (`docs/desktop/update-sync-test.cjs`)
+**Automated, real production builds in Chromium (Linux, headless): 18/18 passed** (`docs/desktop/update-sync-test.mjs`)
 
 - HTML `no-store`; `sw.js` `no-cache`; `/api/version` `no-store`.
 - Chromium installability check: **no errors**; manifest parsed with no errors.
