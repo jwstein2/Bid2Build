@@ -46,12 +46,14 @@ export function PaymentsSetup({ canManage, state, hasAccount, settings, surcharg
   return (
     <div className="space-y-4">
       {state === "not_started" && <p className="text-sm text-ink-soft">Connect takes about 10 minutes on Stripe&apos;s secure site. Have your business details, EIN or SSN, and the bank account for deposits ready. If you already use Stripe, you can sign in to it.</p>}
+      {state === "not_started" && <p className="text-sm text-ink-soft" data-testid="connect-name-note">Your Stripe account is set up under this company profile&apos;s name, so customers see your business, not Built2Bid, on the pay page and their card statement. If Stripe offers to reuse details from another Stripe account, check that the business name it copies belongs to this company.</p>}
       {state !== "ready" && state !== "not_started" && <p className="text-sm text-ink-soft">Stripe needs a bit more before customers can pay you online. Continue setup to see what&apos;s missing.</p>}
       <div className="flex flex-wrap gap-2">
         {state !== "ready" && <Button loading={busy === "onboard"} onClick={onboard} disabled={busy !== null} data-testid="connect-stripe">{busy === "onboard" ? "Opening Stripe…" : hasAccount ? "Continue Stripe setup" : "Connect Stripe"}</Button>}
         {hasAccount && <Button loading={busy === "refresh"} variant="secondary" onClick={refresh} disabled={busy !== null}>{busy === "refresh" ? "Checking…" : "Check status"}</Button>}
         {hasAccount && <a className="inline-flex min-h-11 items-center text-sm font-semibold text-accent-ink underline" href="https://dashboard.stripe.com" target="_blank" rel="noreferrer">Open your Stripe Dashboard</a>}
       </div>
+      {hasAccount && <p className="text-xs text-muted" data-testid="connect-rename-note">Customers see the business name and card statement name saved in Stripe. If you rename this company in Built2Bid, Stripe keeps the old name: update it in your Stripe Dashboard under Settings → Business → Public details.</p>}
       {s && (
         <fieldset className="space-y-2 rounded-lg border border-line p-3" disabled={busy !== null}>
           <legend className="px-1 text-sm font-semibold">How customers can pay</legend>
