@@ -9,12 +9,13 @@ import { FACTS_PATH } from "@/lib/marketing/product-facts";
 import { openGraphFor } from "@/lib/seo/open-graph";
 import { breadcrumbLd, ldJson } from "@/lib/seo/structured-data";
 import { site } from "@/lib/site";
+import { metaDescription } from "@/lib/seo/meta";
 
 export const dynamicParams = false;
 export function generateStaticParams() { return COMPARISONS.map((c) => ({ slug: c.slug })); }
 
 const titleFor = (name: string) => `${site.name} vs ${name}: features, pricing and fit`;
-const descFor = (name: string) => `An honest comparison of ${site.name} and ${name} for small contractors: prices, estimating, signatures, scheduling and payments, with sources and when each one fits better.`;
+const descFor = (name: string) => metaDescription(`${site.name} vs ${name} for small contractors: prices, estimating, signatures, scheduling and payments, with sources and when each fits better.`);
 const fmt = (iso: string) => new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
 
 export async function generateMetadata({ params }: PageProps<"/compare/[slug]">): Promise<Metadata> {
