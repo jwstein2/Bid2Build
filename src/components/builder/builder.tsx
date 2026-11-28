@@ -52,6 +52,7 @@ import { claimOffer } from "@/lib/offers/client";
 import { CreditsLowNote, ProposalReadyNote } from "../offers/offer-note";
 import { SAVE_DRAFT_COPY, SaveDraftNote, saveDraftDismissed } from "../offers/save-draft-note";
 import { useAutoDismiss } from "../ui/use-auto-dismiss";
+import { useUnsavedWork } from "@/lib/pwa/unsaved-work";
 
 type Biz = BusinessProfile & { logoPath?: string | null };
 type Step = BuilderStep;
@@ -115,6 +116,8 @@ export function Builder({ initialEstimate, initialConfig, initialBusiness, mode,
   // eslint-disable-next-line react-hooks/set-state-in-effect -- records the step being shown
   useEffect(() => { setVisited((v) => (v.has(step) ? v : new Set([...v, step]))); }, [step]);
   const [save, setSave] = useState<SaveState>(mode === "cloud" ? "saved" : "local");
+  // V10.1: the "Built2Bid has been updated" refresh prompt asks to save first while an edit is still on its way.
+  useUnsavedWork(save === "saving" || save === "error");
   const [credits, setCredits] = useState<CreditStatus | null>(initialCredits);
   const [finalizedHere, setFinalizedHere] = useState(false);
   const [exporting, setExporting] = useState(false);

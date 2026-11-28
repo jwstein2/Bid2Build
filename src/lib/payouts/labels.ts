@@ -31,6 +31,9 @@ export const HOLD_REASON: Record<string, string> = {
   bank_unverified: "Bank account not verified", bank_change_hold: "New bank account in safety hold", pays_by_check: "Paid by check (manual)",
   below_minimum: "Below minimum payout", zero_amount: "Nothing to pay", over_per_payout_limit: "Over the per-payout limit",
   daily_limit: "Daily limit reached, retrying tomorrow", no_staff_record: "Not in the staff directory", insufficient_funds: "Funding balance too low",
+  backup_withholding_setup: "IRS backup withholding notice: turn on withholding in Year-end tax first",
+  tax_state_missing: "Tax state unknown: add the person's work state",
+  state_tax_rule_unverified: "Their state's tax rules aren't verified yet (Year-end tax → States)",
 };
 
 export const FEE_REASON: Record<string, string> = {

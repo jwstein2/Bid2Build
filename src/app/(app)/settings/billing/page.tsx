@@ -21,6 +21,7 @@ import { annualNudgeEligible, annualSavings } from "@/lib/offers/policy";
 import { LegalStatusCompact } from "@/components/legal/legal-status";
 import { loadChallenge } from "@/lib/academy/rewards-server";
 import { rewardHeadline, rewardPhase, shortDate as rewardDate } from "@/lib/academy/rewards";
+import { InstallDesktopCard } from "@/components/pwa/install-desktop-card";
 
 export const metadata: Metadata = { title: "Subscription", robots: { index: false } };
 
@@ -86,6 +87,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/settings
       {sp.checkout === "success" && (q?.unlimited
         ? <Notice tone="ok" title="You're on Individual Unlimited">Thanks! Payment confirmed by Stripe. Unlimited exports are active.</Notice>
         : <ConfirmingPayment planName={isPlanId(sp.plan) ? planDisplay(sp.plan).name : "Individual Unlimited"} />)}
+      {sp.checkout === "success" && <InstallDesktopCard dismissible />}
       {sp.notice === "already_subscribed" && q?.unlimited && <Notice tone="ok" title="You already have Individual Unlimited">We didn&apos;t start a new checkout, so you won&apos;t be charged twice. Change or cancel your plan below.</Notice>}
       {!stripeReady && <Notice tone="warn" title="Billing not configured">Stripe keys are not set on this server. See docs/SETUP.md.</Notice>}
       {current?.status === "past_due" && <Notice tone="danger" title="Payment failed">Your last payment didn&apos;t go through. Stripe will retry automatically; update your payment method to keep Individual Unlimited.</Notice>}

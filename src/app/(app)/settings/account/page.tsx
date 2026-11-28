@@ -15,6 +15,7 @@ import { isPracticeEnabled } from "@/lib/demo/server";
 import { LandingPreference } from "./landing-pref";
 import { hasSales, NO_WORKSPACES } from "@/lib/workspaces";
 import { loadWorkspaces } from "@/lib/workspaces-server";
+import { InstallDesktopCard } from "@/components/pwa/install-desktop-card";
 
 export const metadata: Metadata = { title: "Account settings", robots: { index: false } };
 
@@ -47,6 +48,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         </>
       )}
       {hasSales(workspaces) && <LandingPreference ws={workspaces} />}
+      {/* V10.1: install the same Built2Bid as a desktop app (hidden inside the installed app). */}
+      <InstallDesktopCard id="install-app" className="scroll-mt-20 p-5" />
       {!user.demo && (isAdmin === true || isPracticeEnabled()) && (
         <Card className="scroll-mt-20 p-5" id="practice" data-testid="demo-settings-card">
           <h2 className="font-bold">{isAdmin === true ? "Demo Mode" : "Practice Mode"}</h2>

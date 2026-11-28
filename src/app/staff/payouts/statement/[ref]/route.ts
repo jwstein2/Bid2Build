@@ -12,7 +12,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ ref
   if (!user) return new NextResponse("Sign in first.", { status: 401 });
   const { ref } = await params;
   const { data, error } = await (await createClient()).rpc("staff_my_payouts");
-  type P = { ref: string; mode: string; status: string; gross_cents: number; fee_cents: number; fee_bearer: string; net_cents: number; scheduled_for: string; settled_at: string | null;
+  type P = { ref: string; mode: string; status: string; gross_cents: number; fee_cents: number; fee_bearer: string; net_cents: number; withholding_cents?: number; state_withholding_cents?: number; tax_state?: string | null; scheduled_for: string; settled_at: string | null;
     destination: { institution_name: string | null; last4: string | null } | null; items: { source_kind: string; description: string | null; amount_cents: number; active: boolean }[] };
   const p = error ? null : ((data as { payouts: P[] } | null)?.payouts ?? []).find((x) => x.ref === ref);
   if (!p) return new NextResponse("Not found.", { status: 404 });
@@ -24,6 +24,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ ref
     ...p.items.filter((i) => i.active).map((i) => csvRow([i.description ?? "", i.source_kind, $(i.amount_cents)])), "",
     csvRow(["Gross earned", "", $(p.gross_cents)]),
     csvRow(["Processing fee", p.fee_bearer === "recipient" ? "deducted" : "paid by Built2Bid", p.fee_bearer === "recipient" ? $(p.fee_cents) : "0.00"]),
+    ...((p.withholding_cents ?? 0) > 0 ? [csvRow(["Federal backup withholding", "IRS notice", $(p.withholding_cents ?? 0)])] : []),
+    ...((p.state_withholding_cents ?? 0) > 0 ? [csvRow([`State backup withholding (${p.tax_state ?? ""})`, "", $(p.state_withholding_cents ?? 0)])] : []),
     csvRow(["Net deposit", "", $(p.net_cents)]),
   ];
   return new NextResponse(lines.join("\r\n") + "\r\n", { headers: { "content-type": "text/csv; charset=utf-8", "content-disposition": `attachment; filename="${p.ref.replace(/[^A-Za-z0-9-]/g, "")}.csv"`, "cache-control": "no-store" } });

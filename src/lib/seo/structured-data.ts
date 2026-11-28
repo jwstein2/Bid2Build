@@ -52,6 +52,8 @@ export function organizationLd() {
     url: site.url,
     logo: `${site.url}/icon.png`,
     contactPoint: { "@type": "ContactPoint", contactType: "customer support", email: site.supportEmail, availableLanguage: "English" },
+    // Official profiles Built2Bid controls. Add a profile here only once it is live and claimed.
+    sameAs: ["https://www.linkedin.com/company/built2bid", "https://www.g2.com/products/built2bid/reviews", "https://www.crunchbase.com/organization/built2bid"],
   };
 }
 
