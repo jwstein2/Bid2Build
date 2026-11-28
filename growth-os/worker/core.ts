@@ -85,7 +85,10 @@ export const builtinHandlers: Record<string, Handler> = {
       const [{ r }] = await ctx.deps.sql`select growth_api.crm_apply(${ctx.job.job_id}, ${ctx.deps.worker}) as r`;
       return { output: r };
     } catch (e) {
-      throw new PermanentError((e as Error).message);
+      // Errors crm_apply raises on purpose (no approval, tampered payload, not forward...) are SQLSTATE P0001:
+      // final. Anything else (dropped connection, timeout, serialization) is transient: let the job retry.
+      if ((e as { code?: string }).code === "P0001") throw new PermanentError((e as Error).message);
+      throw e;
     }
   },
 

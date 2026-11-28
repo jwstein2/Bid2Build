@@ -24,6 +24,7 @@ import { trades as TRADE_CATALOG } from "@/lib/trades/catalog";
 import timelineShot from "@/assets/marketing/timeline.webp";
 import { AdvancedOffer } from "@/components/academy/advanced/offer";
 import { advancedState } from "@/lib/academy/advanced/server";
+import { lessonTitle, metaDescription } from "@/lib/seo/meta";
 
 const tradeLabel = (slug: string) => slug.split("-").map((w) => w[0].toUpperCase() + w.slice(1)).join(" ");
 
@@ -31,8 +32,9 @@ export async function generateMetadata({ params }: PageProps<"/academy/courses/[
   const { slug, lesson } = await params;
   const r = await getLesson(slug, lesson);
   if (!r) return { title: "Lesson" };
-  const title = r.state === "ok" ? `${r.lesson.title} | ${r.course.title}` : r.title;
-  const description = r.state === "ok" ? (r.lesson.summary ?? r.course.summary) : r.course.summary;
+  // Long course names push the title past what search results show; then the lesson name stands alone.
+  const title = r.state === "ok" ? lessonTitle(r.lesson.title, r.course.title) : r.title;
+  const description = metaDescription(r.state === "ok" ? (r.lesson.summary ?? r.course.summary ?? "") : (r.course.summary ?? ""));
   // Only lessons open to everyone are indexable; member and premium lessons are not shown to crawlers.
   const indexable = r.state === "ok" && r.lesson.access === "public";
   return {

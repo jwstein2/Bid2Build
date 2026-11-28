@@ -18,6 +18,7 @@ import { quantityToolForTrade, toolBySlug } from "@/lib/marketing/tools";
 import { ACADEMY_TRADES } from "@/lib/academy/content/catalog";
 import { WELCOME_VIDEO } from "@/components/onboarding/steps";
 import { VideoPlaceholder } from "@/components/onboarding/video-placeholder";
+import { metaDescription } from "@/lib/seo/meta";
 
 export const dynamicParams = false;
 export function generateStaticParams() {
@@ -30,9 +31,9 @@ export async function generateMetadata({ params }: PageProps<"/bids/[trade]">): 
   if (!t) return {};
   return {
     title: t.seoTitle,
-    description: `${t.intro} ${plans.starterCredits} free bids to start, plus ${plans.monthlyCredits} free every month.`,
+    description: metaDescription(`${t.intro} ${plans.starterCredits} free bids to start, plus ${plans.monthlyCredits} free every month.`),
     alternates: { canonical: `/bids/${t.slug}` },
-    openGraph: openGraphFor({ title: `${t.seoTitle} | ${site.name}`, description: t.intro, path: `/bids/${t.slug}`, ownImage: true }),
+    openGraph: openGraphFor({ title: `${t.seoTitle} | ${site.name}`, description: metaDescription(t.intro), path: `/bids/${t.slug}`, ownImage: true }),
   };
 }
 

@@ -16,7 +16,7 @@ import { META_EVENT_FOR, queueMetaConversion } from "./conversions";
  * fall back to a plain insert, new names are skipped. Never throws.
  */
 export const LEGACY_EVENTS = ["landing_view", "trade_selected", "builder_started", "signup_started", "account_created", "preview_opened", "export_succeeded", "quota_reached", "checkout_started", "subscribed"] as const;
-export const NEW_EVENTS = ["first_bid_started", "bid_created", "bid_activated", "proposal_sent", "subscription_renewed", "subscription_canceled"] as const;
+export const NEW_EVENTS = ["first_bid_started", "bid_created", "bid_activated", "proposal_sent", "subscription_renewed", "subscription_canceled", "subscription_cancel_scheduled"] as const;
 export type ProductEvent = (typeof LEGACY_EVENTS)[number] | (typeof NEW_EVENTS)[number];
 
 /** Stable ids: one per account for once-only milestones, one per estimate (or per day) otherwise. */

@@ -19,18 +19,21 @@ const gaId = deploy.allowIndexing ? gaMeasurementId(process.env.NEXT_PUBLIC_GA_M
 // Meta Pixel: only with a configured id on indexable production, and only after the visitor allows it.
 const metaPixelId = deploy.allowIndexing ? pixelId(process.env.NEXT_PUBLIC_META_PIXEL_ID) : null;
 const googleVerification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION?.trim() || undefined;
+const GSC_VERIFICATION = "lUTCO3gUcHNkQT8XuY7mrCqrnFORf03Wa8iRgqjUSnE";
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
   title: { default: `${site.name}: Contractor estimate and proposal software for every trade`, template: `%s | ${site.name}` },
-  description: site.description,
-  openGraph: { siteName: site.name, type: "website", locale: "en_US", title: `${site.name}: ${site.tagline}`, description: site.description, images: [OG_IMAGE] },
+  description: site.metaDescription,
+  openGraph: { siteName: site.name, type: "website", locale: "en_US", title: `${site.name}: ${site.tagline}`, description: site.metaDescription, images: [OG_IMAGE] },
   twitter: { card: "summary_large_image" },
   alternates: { canonical: "/" },
   // iPhone/iPad home screen app: opens full screen, labeled "Built2Bid" under the icon.
   appleWebApp: { capable: true, title: site.name, statusBarStyle: "default" },
-  // Optional: Search Console "HTML tag" verification. Not needed when the domain is verified by DNS.
-  ...(googleVerification ? { verification: { google: googleVerification } } : {}),
+  // Search Console "HTML tag" verification for the https://built2bid.org/ URL-prefix property owned by the
+  // owner's main Google login (the DNS Domain property sits under a different login). Public, not a secret.
+  // NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION can add one more token.
+  verification: { google: [GSC_VERIFICATION, ...(googleVerification && googleVerification !== GSC_VERIFICATION ? [googleVerification] : [])] },
   // impact.com publisher site verification (Home Depot affiliate application). Public, not a secret.
   // Bing Webmaster Tools site verification for https://built2bid.org/ (public, not a secret; no DNS change).
   other: { "impact-site-verification": "7d246bfc-cc5e-4068-8536-071c794657f8", "msvalidate.01": "6FD9B4E391B37E30EE8555E5F917FFE6" },

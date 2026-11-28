@@ -17,13 +17,14 @@ import { StateRequirementsPanel } from "@/components/academy/startup/state-panel
 import { resolveLocation } from "@/lib/academy/kb/server";
 import { advancedState } from "@/lib/academy/advanced/server";
 import { AdvancedOffer } from "@/components/academy/advanced/offer";
+import { metaDescription } from "@/lib/seo/meta";
 
 export async function generateMetadata({ params }: PageProps<"/academy/courses/[slug]">): Promise<Metadata> {
   const { slug } = await params;
   const c = await getCourse(slug);
   if (!c) return { title: "Course" };
   const title = c.course.seo_title ?? c.course.title;
-  const description = c.course.seo_description ?? c.course.summary;
+  const description = metaDescription(c.course.seo_description ?? c.course.summary ?? "");
   // Only published courses with lessons are indexable; "coming soon" cards are kept out of search (thin content).
   const indexable = c.course.status === "published" && c.outline.length > 0;
   return {

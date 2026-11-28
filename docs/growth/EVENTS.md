@@ -18,6 +18,7 @@ only where the transaction actually succeeded. Code: `src/lib/growth/events.ts`.
 | paid_subscription_started | `subscribed` | Stripe `checkout.session.completed` (complimentary access never counts) | `subscribed:<subscription>` |
 | subscription_renewed | `subscription_renewed` | Stripe `invoice.paid` with billing_reason `subscription_cycle` and amount > 0 | `subscription_renewed:<invoice>` |
 | subscription_canceled | `subscription_canceled` | Stripe `customer.subscription.deleted` | `subscription_canceled:<subscription>` |
+| (cancel scheduled) | `subscription_cancel_scheduled` | Stripe `customer.subscription.updated` with cancel at period end (Growth OS Phase 3) | `subscription_cancel_scheduled:<subscription>:<cancel_at>` |
 
 Before the migration is applied, legacy names still record (without dedupe) and new names are skipped,
 so nothing breaks if the code deploys first. No prices, customer names or addresses are stored in events.

@@ -1,0 +1,209 @@
+{
+ "version": "2.0.0",
+ "experiments": [
+  {
+   "id": "X00",
+   "window": "Days 1-30",
+   "name": "Measurement readiness gate",
+   "channel": "All paid",
+   "hypothesis": "Every paid click can be tied to signup, 7-day activation and paid subscription by channel and creative.",
+   "actions": "Owner: GA4 key events (sign_up, pdf_exported) and Google Ads link; Meta privacy text, SQL, dataset, CAPI token and a test event seen in Events Manager; UTM QA in a private window per ADS.md.",
+   "metric": "Test signup appears in GA4 DebugView, Google Ads conversions and Meta Test Events, and in /admin/marketing with the right utm_content.",
+   "replaces": [
+    "G208"
+   ],
+   "sample": "3 test signups per channel",
+   "decision": "No paid test starts until this passes for that channel.",
+   "cost_usd": 0,
+   "needs_owner": true
+  },
+  {
+   "id": "X01",
+   "window": "Days 1-30",
+   "name": "Search demand forecast",
+   "channel": "Google Search",
+   "hypothesis": "Enough monthly searches exist for tight contractor-estimating keywords to support the SEARCH cap.",
+   "actions": "Owner opens Keyword Planner (free in a Google Ads account, no campaign) for 30-50 seed terms per priority trade; export volumes and top-of-page bid ranges.",
+   "metric": "Monthly searches and bid ranges per keyword group.",
+   "replaces": [
+    "F01 SEARCH",
+    "SEARCH cap",
+    "G202"
+   ],
+   "sample": "All seed terms",
+   "decision": "If forecast CPC exceeds the conservative F01 value, the $300 and $500 scenarios switch to META (rerun the model).",
+   "cost_usd": 0,
+   "needs_owner": true,
+   "status": "Deferred 2026-11-23 by owner decision. The Google Ads account is held in the guided campaign setup, which cannot be left without entering billing; Expert Mode was not offered. Benchmark CPC (F01) stays until the owner decides to fund a search test."
+  },
+  {
+   "id": "X02",
+   "window": "Days 1-30",
+   "name": "Reach estimates",
+   "channel": "Meta, YouTube, LinkedIn",
+   "hypothesis": "Contractor-signal audiences are large enough for the planned spend.",
+   "actions": "Owner reads the estimated audience size in Meta Ads Manager and Google Ads draft (unpublished) audiences.",
+   "metric": "Estimated reach for each draft audience.",
+   "replaces": [
+    "G202"
+   ],
+   "sample": "n/a",
+   "decision": "Record in channels.json reachable_ad_audience.",
+   "cost_usd": 0,
+   "needs_owner": true
+  },
+  {
+   "id": "X03",
+   "window": "Days 1-30",
+   "name": "Organic landing-page baseline",
+   "channel": "Organic search, direct",
+   "hypothesis": "Trade landing pages convert organic visitors at a measurable rate before paid traffic arrives.",
+   "actions": "Read GA4 landing_view to sign_up by trade page for 30 days.",
+   "metric": "Visit-to-signup rate by page.",
+   "replaces": [
+    "F03 anchor"
+   ],
+   "sample": "At least 300 landing views in total",
+   "decision": "If below 2%, fix the landing page before any paid test (paid traffic converts worse than organic).",
+   "cost_usd": 0,
+   "needs_owner": false
+  },
+  {
+   "id": "X04",
+   "window": "Days 1-30",
+   "name": "Lifecycle emails on",
+   "channel": "Email",
+   "hypothesis": "Lifecycle emails A-E raise 7-day activation.",
+   "actions": "Owner approves LIFECYCLE_EMAIL_MODE; compare matured cohorts before and after.",
+   "metric": "7-day activation rate of matured cohorts.",
+   "replaces": [
+    "F04"
+   ],
+   "sample": "All new signups; directional until about 100 per arm",
+   "decision": "Keep on unless unsubscribes or complaints spike.",
+   "cost_usd": 0,
+   "needs_owner": true
+  },
+  {
+   "id": "X05",
+   "window": "Days 15-90",
+   "name": "First paid search test",
+   "channel": "Google Search",
+   "hypothesis": "Contractor-intent keywords produce signups that activate at or above the base assumption.",
+   "actions": "One campaign, exact/phrase match on estimate-template and estimating-software terms for the priority trades, strong negatives for homeowner terms; landing on matching /bids/[trade] page. Starts only after X00 passes and the owner approves the ADS.md gate table.",
+   "metric": "CTR, CPC, landing conversion, cost per 7-day activated contractor, paid accounts.",
+   "replaces": [
+    "F01 SEARCH",
+    "F02 SEARCH",
+    "F03 SEARCH",
+    "F05 SEARCH"
+   ],
+   "sample": "At least 150 clicks before judging landing conversion",
+   "decision": "ADS.md stop rules; continue past day 90 only if cost per activated contractor is at or below the base-model value.",
+   "cost_usd": "scenario budget",
+   "needs_owner": true
+  },
+  {
+   "id": "X06",
+   "window": "Days 31-90",
+   "name": "Meta creative test",
+   "channel": "Meta",
+   "hypothesis": "At least one of concepts B, A or E delivers activated contractors at a lower cost than search.",
+   "actions": "One campaign, one ad set, three creatives from ADS.md; optimize on CompleteRegistration only after the CAPI test event is verified.",
+   "metric": "Cost per 7-day activated contractor by utm_content.",
+   "replaces": [
+    "F01 META",
+    "F03 META",
+    "F05 META"
+   ],
+   "sample": "About 2,000 impressions per creative before the CTR stop rule applies",
+   "decision": "ADS.md stop rules per ad and ad set.",
+   "cost_usd": "scenario budget ($1,000 and up)",
+   "needs_owner": true
+  },
+  {
+   "id": "X07",
+   "window": "Days 31-60",
+   "name": "Activation onboarding test",
+   "channel": "Product",
+   "hypothesis": "Opening the builder on the trade picked from the landing page raises 7-day activation.",
+   "actions": "Compare activation by entry path (trade chip vs generic) in existing reports; no app change in this phase.",
+   "metric": "7-day activation by entry path.",
+   "replaces": [
+    "F04"
+   ],
+   "sample": "Directional",
+   "decision": "Feed findings to Phase 8 (conversion).",
+   "cost_usd": 0,
+   "needs_owner": false
+  },
+  {
+   "id": "X08",
+   "window": "Days 31-90",
+   "name": "Creator partner pilot",
+   "channel": "Partnerships",
+   "hypothesis": "A trade creator delivers activated contractors at or below search cost.",
+   "actions": "Shortlist creators; owner approves outreach and any fee; creator link with utm_medium=creator; FTC disclosure required.",
+   "metric": "Clicks, signups, activated and paid by utm_campaign (creator handle).",
+   "replaces": [
+    "F01 PARTNERS",
+    "F03 PARTNERS",
+    "G206"
+   ],
+   "sample": "One deal",
+   "decision": "Repeat only if cost per activated contractor is at or below search.",
+   "cost_usd": "$500-1,000 per deal (assumption; only in the $2,500+ scenarios)",
+   "needs_owner": true
+  },
+  {
+   "id": "X09",
+   "window": "Days 1-90",
+   "name": "Organic video cadence",
+   "channel": "YouTube (organic)",
+   "hypothesis": "Weekly how-to estimating videos produce search traffic and signups within 90 days.",
+   "actions": "Publish per the organic plan; track YouTube Studio search traffic and utm-tagged description links.",
+   "metric": "Views from YouTube search, link clicks, signups by utm_source=youtube&utm_medium=organic.",
+   "replaces": [
+    "organic opportunity scores"
+   ],
+   "sample": "12 videos",
+   "decision": "Shift organic hours toward the format with the most signups per hour.",
+   "cost_usd": 0,
+   "needs_owner": false
+  },
+  {
+   "id": "X10",
+   "window": "Days 61-90",
+   "name": "Paid conversion read and scale/stop",
+   "channel": "All paid",
+   "hypothesis": "Observed funnel is within the model range.",
+   "actions": "Pull channel and creative tables from /admin/marketing; compute cost per activated and per paid; rerun build.py with observed values.",
+   "metric": "Activated-to-paid rate, CAC, payback by channel.",
+   "replaces": [
+    "F05",
+    "F06",
+    "F08"
+   ],
+   "sample": "Paid conversion is only readable after about 30 activated contractors per channel; below that, report as directional",
+   "decision": "Scale only per the ADS.md scale rule; otherwise hold or cut to $0 paid.",
+   "cost_usd": 0,
+   "needs_owner": true
+  },
+  {
+   "id": "X11",
+   "window": "Day 90+",
+   "name": "Retention first read",
+   "channel": "All",
+   "hypothesis": "Month-1 and month-2 retention are at or above the base churn assumption.",
+   "actions": "Count renewals (subscription_renewed) and cancellations by cohort.",
+   "metric": "Monthly churn by cohort.",
+   "replaces": [
+    "F07"
+   ],
+   "sample": "Needs 6+ months for a real estimate",
+   "decision": "Update LTV; no scaling decision on churn under 3 months of data.",
+   "cost_usd": 0,
+   "needs_owner": false
+  }
+ ]
+}
