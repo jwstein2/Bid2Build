@@ -11,13 +11,13 @@ export const metadata: Metadata = { title: "Privacy Policy", alternates: { canon
  * Privacy Policy. The 2026-11-19 revision (legal review) brings it in line with what the product does:
  * every service provider, e-signature records, team/HR records, sales prospects, the Academy, market data
  * sharing, ad measurement and account emails. Published 2026-11-19 (PR #175); independent legal review pending.
- * 2026-11-24: first-party visit measurement (b2b_vid / b2b_touch, Growth OS Phase 3) added. Publish this together with
+ * 2026-11-28: first-party visit measurement (b2b_vid / b2b_touch, Growth OS Phase 3) added. Publish this together with
  * turning MARKETING_TOUCHES on, not before; update the date here and in the registry if that day differs.
  * Review status is shown by LegalPage from src/lib/legal/registry.ts; don't add status wording here.
  */
 export default function Privacy() {
   return (
-    <LegalPage title="Privacy Policy" updated="November 24, 2026" docKey="privacy">
+    <LegalPage title="Privacy Policy" updated="November 28, 2026" docKey="privacy">
       <p>This policy explains what Built2Bid L.L.C. (&quot;{site.name}&quot;, &quot;we&quot;) collects, why, who we share it with and the choices you have. It covers built2bid.org, the {site.name} apps, signing and update links, and the Contractor Academy.</p>
 
       <H2>What we collect</H2>

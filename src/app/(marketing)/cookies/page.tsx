@@ -22,7 +22,7 @@ const ROWS: [string, string, string, string][] = [
 
 export default function CookiePolicy() {
   return (
-    <LegalPage title="Cookie Policy" updated="November 24, 2026" docKey="cookies">
+    <LegalPage title="Cookie Policy" updated="November 28, 2026" docKey="cookies">
       <p>Cookies are small files a website stores in your browser. {site.name} uses a few, plus similar browser storage for things like unsaved drafts and display preferences. This page lists them and how to control them. See also our <A href="/privacy">Privacy Policy</A>.</p>
       <H2>Cookies we use</H2>
       <div className="overflow-x-auto">

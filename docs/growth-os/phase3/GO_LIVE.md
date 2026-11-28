@@ -7,7 +7,7 @@ Everything below waits for James's explicit "go live". No secret values belong i
 
 | # | Where | What | Secret? | Undo |
 |---|---|---|---|---|
-| 1 | GitHub, PR #265 | Review, then merge. Merging publishes the Privacy and Cookie Policy text (dated November 24, 2026), so do it the same day as steps 2 and 3. | No | Revert the PR |
+| 1 | GitHub, PR #265 | Review, then merge. Merging publishes the Privacy and Cookie Policy text (dated November 28, 2026), so do it the same day as steps 2 and 3. | No | Revert the PR |
 | 2 | Supabase, production project, SQL editor | Run `supabase/migrations/20270228001000_marketing_measurement.sql`. It's safe to run twice. | No | `docs/growth-os/phase3/rollback_20270228001000.sql` |
 | 3 | Netlify, site built2bid, environment variables (Production) | Add `MARKETING_TOUCHES` = `on`, then redeploy | No (it's a switch, not a key) | Delete the variable and redeploy |
 | 4 | Stripe, live webhook endpoint (optional) | Add the events `invoice.voided` and `invoice.marked_uncollectible`. The code already handles them. | No | Remove the events |
