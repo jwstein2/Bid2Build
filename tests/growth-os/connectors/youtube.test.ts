@@ -22,7 +22,9 @@ describe("connector: YouTube channel", () => {
     let f = fakeFetch([{ match: /tokeninfo/, json: { scope: `${RO} ${AN}` } }, { match: /channels/, json: { items: [{ id: "UCyg", snippet: { title: "Built2Bid" } }] } }]);
     expect(await checkConnection({ provider: "youtube", accountRef: "UCyg", token: tok, fetch: f.fetch })).toMatchObject({ outcome: "ok", grantedScopes: [RO, AN] });
     f = fakeFetch([{ match: /tokeninfo/, json: { scope: RO } }, { match: /channels/, json: { items: [{ id: "UCother" }] } }]);
-    expect((await checkConnection({ provider: "youtube", accountRef: "UCyg", token: tok, fetch: f.fetch })).errorCode).toBe("channel_not_granted");
+    expect(await checkConnection({ provider: "youtube", accountRef: "UCyg", token: tok, fetch: f.fetch })).toMatchObject({ errorCode: "channel_not_granted", message: expect.stringContaining("? (UCother)") });
+    f = fakeFetch([{ match: /tokeninfo/, json: { scope: RO } }, { match: /channels/, json: {} }]);
+    expect((await checkConnection({ provider: "youtube", accountRef: "UCyg", token: tok, fetch: f.fetch })).message).toContain("no YouTube channel");
     f = fakeFetch([{ match: /tokeninfo/, status: 400, json: { error: "invalid_token" } }]);
     expect((await checkConnection({ provider: "youtube", accountRef: "UCyg", token: tok, fetch: f.fetch })).outcome).toBe("auth_error");
   });

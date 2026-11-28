@@ -129,6 +129,11 @@ function googleApiError(r: { status: number; json: any }, product: string): Heal
   return { outcome: classifyHttp(r.status), httpStatus: r.status, errorCode: `google_${r.status}`, message: `${product}: Google returned HTTP ${r.status}.` };
 }
 
+const seenChannels = (items: unknown): string => {
+  const list = Array.isArray(items) ? items.slice(0, 5).map((x: { id?: string; snippet?: { title?: string } }) => `${String(x.snippet?.title ?? "?").slice(0, 60)} (${x.id})`) : [];
+  return list.length ? list.join(", ") : "no YouTube channel";
+};
+
 async function checkGoogle(i: HealthInput, token: string): Promise<HealthResult> {
   const g = await googleScopes(i, token);
   if (g.fail) return g.fail;
@@ -138,7 +143,7 @@ async function checkGoogle(i: HealthInput, token: string): Promise<HealthResult>
     if (r.status !== 200) return { ...googleApiError(r, "YouTube"), grantedScopes: scopes };
     const ch = (r.json?.items ?? []).find((x: { id: string }) => x.id === i.accountRef) ?? null;
     if (!ch) return { outcome: "limited", httpStatus: 200, grantedScopes: scopes, errorCode: "channel_not_granted",
-      message: `The Google login can't manage channel ${i.accountRef}. Reconnect and pick the Built2Bid channel.` };
+      message: `The Google login can't manage channel ${i.accountRef}. It sees: ${seenChannels(r.json?.items)}. Reconnect and pick the Built2Bid channel.` };
     return { outcome: "ok", httpStatus: 200, grantedScopes: scopes, accountLabel: ch.snippet?.title };
   }
   if (i.provider === "google_ads") {
