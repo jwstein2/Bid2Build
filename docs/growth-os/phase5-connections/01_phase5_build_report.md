@@ -30,7 +30,7 @@ official docs page today; **[platform-doc]** from docs as known, re-check at go-
 
 | Test | Result |
 |---|---|
-| 14 per-integration contract suites + registry suite (recorded fixtures, no network) | **88/88 pass** [verified] |
+| 14 per-integration contract suites + registry suite (recorded fixtures, no network) | **86/86 pass** [verified] |
 | Database suite on real Postgres: grants, guards, OAuth states, Vault storage, refresh + pause, Stripe diagnostics, Supabase live read, audit, rollback + re-apply | **24/24 pass** [verified] |
 | Phase 4 foundation suite (regression) | **26/26 pass** [verified] |
 | Page view model | **3/3 pass**; admin/radar suites 181/181 pass after nav changes [verified] |
