@@ -99,13 +99,15 @@ is avoided by not offering Gmail scopes.
 | A2 | A simulated or stale connection never shows as verified | Yes | **Pass** (CHECK constraint, trigger, freshness view, UI fallback; tests + staging check) |
 | A3 | Admin-only connect; privileged scopes need a separate recorded owner approval | Yes | **Pass** (grants, `is_operator`, approval hash; tests) |
 | A4 | No password/recovery/MFA code through Claude or Built2Bid; tokens only in Vault, never in browser/logs | Yes | **Pass** (design + test that scans overview, audit, checks and run logs for token patterns) |
-| A5 | Token refresh works for at least one OAuth connection on staging; failure pauses + alerts | Yes | **Partial**: passes on local Postgres with recorded Google responses; **not yet on staging** (needs steps 1 and 4) |
+| A5 | Token refresh works for at least one OAuth connection on staging; failure pauses + alerts | Yes | **Pass** (2026-11-28 15:00 UTC, staging): YouTube token refreshed by the worker (job 15, `refreshed`), expiry moved forward, refresh token kept, status stayed verified. Failure path: local tests |
 | A6 | Health check + diagnostics show granted vs required scopes and a plain-language fix | Yes | **Pass** (tests; Stripe missing-permission message) |
 | A7 | Connect / approve / refresh / revoke audited | Yes | **Pass** (DB test lists 12 audited actions) |
-| A8 | One suite per integration, all passing; live smoke where authorized | Yes (contract/DB) | **Pass** for contract + DB (14 suites); live smoke: none authorized yet |
+| A8 | One suite per integration, all passing; live smoke where authorized | Yes (contract/DB) | **Pass** for contract + DB (14 suites). Live smoke on staging 2026-11-28: Stripe (test-mode restricted key) and YouTube @Built2Bid both `verified_operational` from real API calls |
 | A9 | Manual authorization instructions on each card | No | **Pass** (every connector; test forbids asking for passwords or codes) |
 | A10 | Production untouched until James approves rollout | Yes | **Pass** |
 
-Critical result: 8 pass, A5 partial (staging half blocked on James's steps 1 and 4), A8 live smoke pending
-authorizations. Recommendation: treat Phase 5 as build-complete; close A5 on staging as soon as step 1 and one
-Google OAuth client exist, before Phase 6 relies on any connection.
+Critical result: all critical criteria pass (updated 2026-11-28 15:00 UTC after James's staging setup). Live on staging:
+Stripe and YouTube. Bugs found by the live run and fixed: jsonb parameters were double-encoded by postgres.js (OAuth
+token rejected; run outputs stored as strings), and `record_check` left a stale detail. Note: while the Google OAuth app
+is in Testing mode, Google expires refresh tokens after 7 days, so YouTube needs a weekly reconnect until the app is
+published (read-only YouTube scopes are "sensitive", so publishing needs Google verification).
