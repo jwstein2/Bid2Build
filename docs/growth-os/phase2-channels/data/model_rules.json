@@ -1,0 +1,105 @@
+{
+ "version": "2.0.0",
+ "label": "ANALYST PARAMETERS [PARAM]. Chosen by judgment; change them here and rebuild.",
+ "weights": {
+  "audience_quality": 0.2,
+  "purchase_intent": 0.2,
+  "expected_cac": 0.2,
+  "content_cost": 0.1,
+  "measurability": 0.15,
+  "competitive_pressure": 0.05,
+  "evidence_confidence": 0.1
+ },
+ "cac_score_bands_ltv_to_cac": [
+  [
+   1.5,
+   5
+  ],
+  [
+   1.0,
+   4
+  ],
+  [
+   0.5,
+   3
+  ],
+  [
+   0.15,
+   2
+  ],
+  [
+   0.0,
+   1
+  ]
+ ],
+ "paid_gates": {
+  "min_measurability": 3,
+  "min_opportunity_score": 2.25,
+  "min_evidence_confidence": 3,
+  "exploratory_min_evidence_confidence": 2,
+  "exploratory_from_budget": 2500,
+  "max_exploratory_units": 1
+ },
+ "max_paid_units_by_budget": {
+  "300": 1,
+  "500": 1,
+  "1000": 2,
+  "2500": 3,
+  "5000": 4
+ },
+ "budgets": [
+  300,
+  500,
+  1000,
+  2500,
+  5000
+ ],
+ "reserve_pct": 5,
+ "reserve_round_usd": 5,
+ "allocation_round_usd": 5,
+ "min_clicks_per_month": 50,
+ "test_window_days": 90,
+ "unit_caps_usd_month": {
+  "SEARCH": 1500,
+  "META": 2500,
+  "YOUTUBE": 1500,
+  "PARTNERS": 1000,
+  "LINKEDIN": 1000,
+  "TIKTOK": 1000
+ },
+ "unit_cap_basis": "Test-stage ceilings. SEARCH is limited by the volume of tightly relevant searches, unknown until a Keyword Planner forecast (X01). PARTNERS = at most two creator deals per month. Others: spend above this before a positive read is not a test.",
+ "platform_min_usd_month": {
+  "SEARCH": 0,
+  "META": 0,
+  "YOUTUBE": 0,
+  "LINKEDIN": 304,
+  "TIKTOK": 608,
+  "PARTNERS": 500
+ },
+ "platform_min_basis": {
+  "LINKEDIN": "$10/day minimum [CE025] x 30.4 days",
+  "TIKTOK": "$20/day ad-group minimum [CE029] x 30.4 days (a campaign-level budget would need more than $50/day [CE028])",
+  "PARTNERS": "one small creator deal [PARAM]",
+  "SEARCH": "no platform minimum relied on",
+  "META": "no platform minimum relied on",
+  "YOUTUBE": "no platform minimum relied on"
+ },
+ "scale_rule": "Inherited from docs/growth/ADS.md: more budget only after 3 paying customers from a creative with gross-profit CAC payback under 10 months and at least one renewal. Views, CTR or signups alone never earn budget.",
+ "payback_target_months": 10,
+ "organic_hours_per_week": {
+  "lean": 5,
+  "base": 10,
+  "committed": 20
+ },
+ "organic_weights": {
+  "audience_quality": 0.25,
+  "organic_opportunity": 0.4,
+  "content_cost": 0.15,
+  "measurability": 0.2
+ },
+ "organic_repurpose_only_cap_share": 0.05,
+ "cac_score_basis": "LTV/CAC on capped base LTV. 1.0 = break-even. Lower bands are kept to rank channels that are all below break-even before any data exists.",
+ "reserve_from_budget": 1000,
+ "reserve_basis": "Below $1,000 a single channel is tested and a reserve would push it under its minimum viable test; unspent budget is simply not spent.",
+ "exploratory_gets_min_viable_only": true
+}

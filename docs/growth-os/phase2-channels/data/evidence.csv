@@ -1,0 +1,49 @@
+id,source_id,metric,value,unit,base_or_population,period,locator,claim_type,confidence,note
+CE001,C01,Google/Microsoft search ads median CPC (all industries),5.26,USD,"16,446 US search campaigns",Apr 2024-Mar 2025,Overall averages,verified_fact,C,Medians; not contractor-specific
+CE002,C01,Search ads median CTR (all industries),6.66,percent,"16,446 US search campaigns",Apr 2024-Mar 2025,Overall averages,verified_fact,C,
+CE003,C01,Search ads median conversion rate (all industries),7.52,percent,"16,446 US search campaigns",Apr 2024-Mar 2025,Overall averages,verified_fact,C,Conversion = any advertiser-defined lead action
+CE004,C01,Search ads median cost per lead (all industries),70.11,USD,"16,446 US search campaigns",Apr 2024-Mar 2025,Overall averages,verified_fact,C,
+CE005,C01,Search CPC: Home & Home Improvement,7.85,USD,Home & Home Improvement advertisers,Apr 2024-Mar 2025,Industry table,verified_fact,C,Advertisers selling to homeowners; closest row to contractor keywords
+CE006,C01,Search CVR: Home & Home Improvement,7.33,percent,Home & Home Improvement advertisers,Apr 2024-Mar 2025,Industry table,verified_fact,C,
+CE007,C01,Search CPC: Business Services,5.58,USD,Business Services advertisers,Apr 2024-Mar 2025,Industry table,verified_fact,C,
+CE008,C01,Search CVR: Business Services,5.14,percent,Business Services advertisers,Apr 2024-Mar 2025,Industry table,verified_fact,C,
+CE009,C01,Search CTR: Business Services,5.65,percent,Business Services advertisers,Apr 2024-Mar 2025,Industry table,verified_fact,C,Prose on the page says 5.56; table value used
+CE010,C02,Search ads median CPC (all industries),5.42,USD,"13,474 US search campaigns",Apr 2025-Mar 2026,Overall averages,verified_fact,C,
+CE011,C02,Search CPC: Home & Home Improvement,8.33,USD,Home & Home Improvement advertisers,Apr 2025-Mar 2026,Industry table,verified_fact,C,
+CE012,C02,Search CPC: Business Services,5.87,USD,Business Services advertisers,Apr 2025-Mar 2026,Industry table,verified_fact,C,
+CE013,C02,Search CVR: Business Services,4.85,percent,Business Services advertisers,Apr 2025-Mar 2026,Industry table,verified_fact,C,
+CE014,C02,Search CTR: Home & Home Improvement,6.47,percent,Home & Home Improvement advertisers,Apr 2025-Mar 2026,Industry table,verified_fact,C,
+CE015,C02,Search CTR: Business Services,6.10,percent,Business Services advertisers,Apr 2025-Mar 2026,Industry table,verified_fact,C,
+CE016,C03,Meta traffic campaigns median CTR (all industries),1.71,percent,554 US Meta traffic campaigns,Apr 2024-Jun 2025,Traffic objective,verified_fact,C,Page's data note says 'search' campaigns (wording error on page)
+CE017,C03,Meta traffic campaigns median CPC (all industries),0.70,USD,554 US Meta traffic campaigns,Apr 2024-Jun 2025,Traffic objective,verified_fact,C,
+CE018,C03,Meta traffic CTR: Home & Home Improvement,1.28,percent,Home & Home Improvement advertisers,Apr 2024-Jun 2025,Traffic CTR table,verified_fact,C,
+CE019,C03,Meta traffic CPC: Home & Home Improvement,0.99,USD,Home & Home Improvement advertisers,Apr 2024-Jun 2025,Traffic CPC table,verified_fact,C,
+CE020,C03,Meta traffic CPC: Business Services,0.75,USD,Business Services advertisers,Apr 2024-Jun 2025,Traffic CPC table,verified_fact,C,
+CE021,C03,Meta traffic CTR: Business Services,1.38,percent,Business Services advertisers,Apr 2024-Jun 2025,Traffic CTR table,verified_fact,C,
+CE022,C03,Meta leads campaigns median CPC (all industries),1.92,USD,726 US Meta leads campaigns,Apr 2024-Jun 2025,Leads objective,verified_fact,C,
+CE023,C03,Meta leads CPC: Home & Home Improvement,2.23,USD,Home & Home Improvement advertisers,Apr 2024-Jun 2025,Leads CPC table,verified_fact,C,
+CE024,C03,Meta leads CPL: Home & Home Improvement,41.26,USD,Home & Home Improvement advertisers,Apr 2024-Jun 2025,Leads CPL table,verified_fact,C,
+CE025,C04,LinkedIn minimum daily budget,10,USD per day,LinkedIn Ads (any format),2026,Minimums section,verified_fact,A,
+CE026,C04,LinkedIn minimum lifetime budget for a new campaign,100,USD,LinkedIn Ads,2026,Minimums section,verified_fact,A,
+CE027,C05,LinkedIn minimum audience size to run a campaign,300,members,LinkedIn Ads,2026,Audience FAQ,verified_fact,A,LinkedIn recommends 50000+ for image/text ads
+CE028,C06,TikTok minimum campaign daily budget (must exceed),50,USD per day,TikTok Ads Manager,Jul 2026,Budget table,verified_fact,A,Page names no currency/market; USD assumed
+CE029,C06,TikTok minimum ad group daily budget (must exceed),20,USD per day,TikTok Ads Manager,Jul 2026,Budget table,verified_fact,A,Page names no currency/market; USD assumed
+CE030,C07,Meta detailed targeting exclusions,"Removed (developer deadline Apr 21, 2025); employer exclusion kept at account level",text,Meta Marketing API,2025-01-21,Developer blog,verified_fact,A,Meta's own test claim of lower cost per conversion is not used
+CE031,C08,Meta further consolidation of detailed targeting options,"Ad sets using consolidated options stop delivering from Jan 15, 2026",text,Meta Ads Manager notice (secondary report),2025-08-17,News article,verified_fact,C,List of removed options not published in the article
+CE032,C09,Freemium products: visit-to-signup,9,percent,"200 B2B software products, self-reported",Jan 2026,Conversion path figure,verified_fact,C,Self-reported convenience sample; typical ARPA $50-249/month (higher than Built2Bid)
+CE033,C09,Freemium products: free-to-paid within 6 months,5.5,percent,"200 B2B software products, self-reported",Jan 2026,Conversion path figure,verified_fact,C,
+CE034,C09,Median free-to-paid conversion (all products),8,percent,"200 B2B software products, self-reported",Jan 2026,Report text,verified_fact,C,
+CE035,C09,'Good' freemium self-serve free-to-paid,3%-5%,text,"200 B2B software products, self-reported",Jan 2026,Report text,verified_fact,C,Report's 'great' band is 8%-12%
+CE036,C09,Credit-card-required trial free-to-paid,30,percent,"200 B2B software products, self-reported",Jan 2026,Report text,verified_fact,C,Built2Bid's 7-day trial is off by default
+CE037,C09,Survey sample size,200,B2B software products,Survey respondents,Jan 2026,Methodology,verified_fact,C,
+CE038,C10,Freemium to paid (secondary compilation),2.6,percent,Not stated (cites First Page Sage),2026,Benchmark table,verified_fact,D,Sample and period not stated
+CE039,C10,Visitor to freemium signup (secondary compilation),13.3,percent,Not stated (cites First Page Sage),2026,Benchmark table,verified_fact,D,
+CE040,C11,CAN-SPAM and business email,"No exception for business-to-business email",text,US commercial email,2023 (edited Jan 2024),FTC guide,verified_fact,A,
+CE041,C11,Maximum civil penalty per violating email,53088,USD,US commercial email,Jan 2024,FTC guide,verified_fact,A,
+CE042,C11,Opt-out deadline,10,business days,US commercial email,2023,FTC guide,verified_fact,A,
+CE043,C12,YouTube skippable in-stream billing (CPV),"Pay when a viewer watches 30 seconds (or the whole ad if shorter) or interacts",text,Google Ads,2025,Video ad formats help,verified_fact,A,
+CE044,C12,YouTube in-feed billing,"Charged when someone clicks to watch the ad",text,Google Ads,2025,Video ad formats help,verified_fact,A,
+CE045,C13,Email open rate (all Mailchimp users),35.63,percent,Mailchimp campaigns with 1000+ subscribers,Dec 2023,Industry table,verified_fact,C,No construction row on the public page; opens inflated by Apple Mail Privacy Protection
+CE046,C13,Email click rate (all Mailchimp users),2.62,percent,Mailchimp campaigns with 1000+ subscribers,Dec 2023,Industry table,verified_fact,C,
+CE047,C14,LinkedIn CPC (third-party estimates relayed),$5-10,text,Not stated,Undated,Article text,verified_fact,E,WordStream says it has no clear LinkedIn benchmarks
+CE048,C04,LinkedIn suggested daily budget for new advertisers,25,USD per day,LinkedIn Ads,2026,Minimums section,verified_fact,A,A suggestion; the minimum is CE025

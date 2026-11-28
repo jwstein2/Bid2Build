@@ -1,0 +1,234 @@
+{
+ "model_version": "2.0.0",
+ "model_date": "2026-11-23",
+ "label": "SCENARIO ASSUMPTIONS. None of these is a measured Built2Bid or contractor statistic. Benchmarks cited in the basis come from other advertisers and software companies and are used only as anchors.",
+ "scenarios": [
+  "optimistic",
+  "base",
+  "conservative"
+ ],
+ "assumptions": [
+  {
+   "id": "F01",
+   "name": "cpc_usd",
+   "description": "Cost per click by buy unit.",
+   "by_unit": {
+    "SEARCH": {
+     "optimistic": 4.0,
+     "base": 5.87,
+     "conservative": 8.33
+    },
+    "META": {
+     "optimistic": 0.75,
+     "base": 0.99,
+     "conservative": 2.23
+    },
+    "YOUTUBE": {
+     "optimistic": 0.5,
+     "base": 1.0,
+     "conservative": 2.0
+    },
+    "LINKEDIN": {
+     "optimistic": 5.0,
+     "base": 7.5,
+     "conservative": 10.0
+    },
+    "TIKTOK": {
+     "optimistic": 0.5,
+     "base": 1.0,
+     "conservative": 2.0
+    },
+    "PARTNERS": {
+     "optimistic": 1.0,
+     "base": 2.5,
+     "conservative": 5.0
+    }
+   },
+   "basis": "SEARCH base = Business Services 2026 median [CE012], conservative = Home & Home Improvement 2026 [CE011], optimistic = long-tail template keywords (assumption). META base = Home & Home Improvement traffic [CE019], optimistic = Business Services traffic [CE020], conservative = Home & Home Improvement leads objective [CE023] because optimizing for registrations raises CPC. LINKEDIN = third-party $5-10 range [CE047]. YOUTUBE, TIKTOK, PARTNERS: no benchmark found; analyst assumption.",
+   "requires_experiment": true,
+   "experiment": "X05/X06/X08; X01 replaces SEARCH with a Keyword Planner forecast"
+  },
+  {
+   "id": "F02",
+   "name": "ctr_pct",
+   "description": "Click-through rate, used only to estimate impressions.",
+   "by_unit": {
+    "SEARCH": {
+     "optimistic": 6.47,
+     "base": 6.1,
+     "conservative": 5.65
+    },
+    "META": {
+     "optimistic": 1.38,
+     "base": 1.28,
+     "conservative": 0.9
+    },
+    "YOUTUBE": {
+     "optimistic": 1.0,
+     "base": 0.5,
+     "conservative": 0.25
+    },
+    "LINKEDIN": {
+     "optimistic": 0.8,
+     "base": 0.5,
+     "conservative": 0.3
+    },
+    "TIKTOK": {
+     "optimistic": 1.0,
+     "base": 0.6,
+     "conservative": 0.3
+    },
+    "PARTNERS": {
+     "optimistic": null,
+     "base": null,
+     "conservative": null
+    }
+   },
+   "basis": "SEARCH medians for advertisers: 6.47% Home & Home Improvement [CE014], 6.10% Business Services [CE015], 5.65% Business Services in the prior year [CE009]. META: 1.28% for Home & Home Improvement advertisers [CE018], 1.38% for Business Services advertisers [CE021]; the conservative value is an assumption. Other units are assumptions; PARTNERS has no impression-based CTR.",
+   "requires_experiment": true,
+   "experiment": "X05/X06"
+  },
+  {
+   "id": "F03",
+   "name": "landing_conversion_pct",
+   "description": "Click to account created (sign_up / CompleteRegistration) on the trade landing page.",
+   "by_unit": {
+    "SEARCH": {
+     "optimistic": 8.0,
+     "base": 5.0,
+     "conservative": 3.0
+    },
+    "META": {
+     "optimistic": 4.0,
+     "base": 2.5,
+     "conservative": 1.25
+    },
+    "YOUTUBE": {
+     "optimistic": 3.0,
+     "base": 1.5,
+     "conservative": 0.75
+    },
+    "LINKEDIN": {
+     "optimistic": 5.0,
+     "base": 3.0,
+     "conservative": 1.5
+    },
+    "TIKTOK": {
+     "optimistic": 2.0,
+     "base": 1.0,
+     "conservative": 0.5
+    },
+    "PARTNERS": {
+     "optimistic": 8.0,
+     "base": 5.0,
+     "conservative": 2.5
+    }
+   },
+   "basis": "Anchors: search advertisers' median lead conversion 4.85-7.52% [CE013] [CE003]; freemium B2B visit-to-signup 9% for all traffic sources [CE032]. Paid social and video traffic is assumed to convert at half or less of search (assumption). Built2Bid has no measured paid-traffic conversion yet (0 accounts with UTM data at the 2026-11-16 baseline).",
+   "requires_experiment": true,
+   "experiment": "X03 (organic baseline), X05, X06"
+  },
+  {
+   "id": "F04",
+   "name": "activation_7d_pct",
+   "description": "Share of new accounts that reach 7-day activation (3+ meaningful line items, finalize, or send) as defined in docs/growth/ACTIVATION.md.",
+   "value": {
+    "optimistic": 45,
+    "base": 30,
+    "conservative": 15
+   },
+   "basis": "Assumption. The 2026-11-16 baseline had 8 non-test accounts and 3 finalized a bid [P1:E190], too few (and partly owner logins) to measure.",
+   "requires_experiment": true,
+   "experiment": "X04, X07"
+  },
+  {
+   "id": "F05",
+   "name": "activation_quality_multiplier",
+   "description": "Multiplier on F04 by buy unit: how much more or less likely a signup from this channel is a real contractor with a live estimate need.",
+   "by_unit": {
+    "SEARCH": 1.0,
+    "PARTNERS": 1.0,
+    "LINKEDIN": 0.9,
+    "META": 0.75,
+    "YOUTUBE": 0.75,
+    "TIKTOK": 0.5
+   },
+   "basis": "Analyst judgment from purchase intent and targeting precision (see channel scores). Replace with per-channel activation from /admin/marketing.",
+   "requires_experiment": true,
+   "experiment": "X10"
+  },
+  {
+   "id": "F06",
+   "name": "activated_to_paid_90d_pct",
+   "description": "Share of 7-day-activated accounts that start a paid subscription within 90 days of signup.",
+   "value": {
+    "optimistic": 25,
+    "base": 12,
+    "conservative": 5
+   },
+   "basis": "Assumption. Cross-check: base F04 x F06 = 3.6% of signups paying, inside the 3%-5% band that a survey of B2B software products calls good for freemium self-serve [CE035] and below the 5.5% freemium figure for those products [CE033]; a secondary compilation gives 2.6% for software products [CE038]. Those products charge more than Built2Bid. Built2Bid had 0 paying accounts [P1:E190].",
+   "requires_experiment": true,
+   "experiment": "X10"
+  },
+  {
+   "id": "F07",
+   "name": "monthly_churn_pct",
+   "description": "Monthly logo churn of paying accounts.",
+   "value": {
+    "optimistic": 3,
+    "base": 6,
+    "conservative": 10
+   },
+   "basis": "Assumption; no low-price contractor-software churn source found. docs/growth/ADS.md used 5% and 10% as illustrations [P1:S14]. Annual plans lower effective churn.",
+   "requires_experiment": true,
+   "experiment": "X11 (first read only at day 90; real churn needs 6+ months)"
+  },
+  {
+   "id": "F08",
+   "name": "employer_account_share",
+   "description": "Share of new paying accounts that are employer businesses (priced with Phase 1 employer ARPA) versus solo (solo ARPA).",
+   "value": {
+    "optimistic": 0.3,
+    "base": 0.2,
+    "conservative": 0.1
+   },
+   "basis": "Assumption. Self-serve ads skew to owner-operators; Phase 1 ARPA by type comes from real list prices plus an assumed plan mix (Phase 1 A07).",
+   "requires_experiment": true,
+   "experiment": "X10"
+  },
+  {
+   "id": "F09",
+   "name": "payment_fees",
+   "description": "Card processing per charge.",
+   "value": {
+    "pct": 2.9,
+    "fixed_usd": 0.3
+   },
+   "basis": "Stated in docs/growth/ADS.md [P1:S14]; confirm against the Stripe account statement.",
+   "requires_experiment": false,
+   "experiment": "Verify on first Stripe payout"
+  },
+  {
+   "id": "F10",
+   "name": "variable_cost_pct_of_revenue",
+   "description": "Hosting, email and AI cost per paying account as a share of net revenue (1 - gross margin).",
+   "value": {
+    "optimistic": 10,
+    "base": 15,
+    "conservative": 25
+   },
+   "basis": "ADS.md assumed 85% gross margin [P1:S14]; replace with Tech Stack & Costs actuals.",
+   "requires_experiment": false,
+   "experiment": "Finance actuals, monthly"
+  },
+  {
+   "id": "F11",
+   "name": "ltv_horizon_months",
+   "description": "LTV is capped at this many months of retained gross profit.",
+   "value": 36,
+   "basis": "Analyst parameter to avoid infinite-tail LTV at low churn; matches the Phase 1 36-month SOM horizon.",
+   "requires_experiment": false,
+   "experiment": "n/a"
+  }
+ ]
+}
