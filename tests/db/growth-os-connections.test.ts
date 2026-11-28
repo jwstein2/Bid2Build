@@ -145,10 +145,15 @@ d("Growth OS Connections Center (Phase 5)", () => {
         .rejects.toThrow(/only be set by a health check/);
     });
 
+    it("operators (SQL editor, service role) cannot declare a connection healthy: only the worker records checks", async () => {
+      await expect(q("select growth_api.record_check('stripe', 'built2bid', 'ok', 200, 1, null, null, null, null, 'me')")).rejects.toThrow(/only the worker/);
+      await expect(q("select growth_api.record_refresh('stripe', 'built2bid', true, '{}'::jsonb, null, null, null, 'me')")).rejects.toThrow(/only the worker/);
+    });
+
     it("a simulated connection with a perfect check stays limited and is labelled simulated", async () => {
       await q("select growth_api.register_connection('meta_business', 'sim-portfolio', 'Simulated', true)");
-      const s = (await one(`select growth_api.record_check('meta_business', 'sim-portfolio', 'ok', 200, 5, array['business_management', 'ads_read'],
-        null, null, null, 'test') as s`)).s;
+      const s = (await w()`select growth_api.record_check('meta_business', 'sim-portfolio', 'ok', 200, 5, array['business_management', 'ads_read'],
+        null, null, null, 'test') as s`)[0].s;
       expect(s).toBe("limited");
       const v = await one("select status, is_simulated, last_error from growth.connection_status_v where provider = 'meta_business'");
       expect(v).toMatchObject({ status: "limited", is_simulated: true });
@@ -187,7 +192,9 @@ d("Growth OS Connections Center (Phase 5)", () => {
       await w()`select growth_api.oauth_complete(${sha}, ${token}::jsonb, ${["https://www.googleapis.com/auth/youtube.readonly"]}::text[], ${new Date(Date.now() + 3600e3).toISOString()}::timestamptz)`;
       await expect(w()`select growth_api.oauth_complete(${sha}, ${token}::jsonb, null, null)`).rejects.toThrow(/not in the callback step/);
       const row = await one("select secret_name, status, last_error_code, granted_scopes from growth.connections where provider = 'youtube'");
-      expect(row.secret_name).toBe("growth_conn_youtube_ucygpefvjuvynpmdpoxxfexg");
+      expect(row.secret_name).toBe((await one("select growth.conn_secret_name('youtube', 'UCygpeFVjUVYNpmDpoXxFEXg') as n")).n);
+      expect(row.secret_name).toMatch(/^growth_conn_youtube_ucygpefvjuvynpmdpoxxfexg_[0-9a-f]{8}$/);
+      expect((await one("select growth.conn_secret_name('linkedin', 'Acme.Co') <> growth.conn_secret_name('linkedin', 'acme_co') as d")).d).toBe(true);
       expect(JSON.parse((await vault(row.secret_name))!).access_token).toBe(TOKEN);
       expect(row).toMatchObject({ status: "awaiting_authorization", last_error_code: "pending_check" });
       expect(await status("youtube")).toBe("awaiting_authorization");
@@ -214,10 +221,11 @@ d("Growth OS Connections Center (Phase 5)", () => {
 
       await new Promise((r) => setTimeout(r, 1100));   // distinct idempotency second
       await q("select growth_api.request_health_check('youtube')");
-      const { calls } = await runTick(yt("https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/yt-analytics.readonly"));
+      // the platform also reports youtube.upload (granted earlier), but the owner never approved it
+      const { calls } = await runTick(yt("https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/yt-analytics.readonly https://www.googleapis.com/auth/youtube.upload"));
       expect(calls.some((c) => c.url.includes("tokeninfo"))).toBe(true);
       expect(await status("youtube")).toBe("verified_operational");
-      // later-phase privileged operations are listed but not rolled up, and stay awaiting authorization
+      // privileged operations need the owner's approval even when granted, and are not rolled up
       expect((await one("select status from growth.operation_status_v where provider = 'youtube' and op_key = 'videos.upload'")).status).toBe("awaiting_authorization");
     });
 
@@ -275,7 +283,12 @@ d("Growth OS Connections Center (Phase 5)", () => {
       await q("select growth_api.request_health_check('youtube')");
       const { calls } = await runTick([]);
       expect(calls).toHaveLength(0);
-      await q("select growth_api.set_paused('connector', 'youtube', false)");
+      // reconnecting (a fresh OAuth token) lifts the automatic pause, audited
+      const st = (await one("select growth_api.oauth_begin('youtube', 'UCygpeFVjUVYNpmDpoXxFEXg') as r")).r.state;
+      const c = (await w()`select growth_api.oauth_consume(${st}) as c`)[0].c;
+      await w()`select growth_api.oauth_complete(${c.state_sha256}, ${JSON.stringify({ access_token: "ya29.again", refresh_token: "1//refresh-secret-abcdef", obtained_at: "x" })}::jsonb, null, ${new Date(Date.now() + 3600e3).toISOString()}::timestamptz)`;
+      expect((await one("select paused_connectors from growth.control")).paused_connectors).not.toContain("youtube");
+      expect(await one("select 1 as x from growth.audit where action = 'connector_unpause'")).toBeTruthy();
     });
   });
 
@@ -323,12 +336,11 @@ d("Growth OS Connections Center (Phase 5)", () => {
   describe("A7: audit trail, revoke and rollback", () => {
     it("every connect / approve / refresh / check-status change / revoke is audited", async () => {
       await q("select growth_api.revoke_connection('youtube', 'UCygpeFVjUVYNpmDpoXxFEXg', 'test', 'admin:james')");
-      expect(await vault("growth_conn_youtube_ucygpefvjuvynpmdpoxxfexg")).toBeUndefined();
       expect((await one("select count(*)::int as n from vault.secrets where name like 'growth_conn_youtube%'")).n).toBe(0);
       expect(await status("youtube")).toBe("awaiting_authorization");
       const actions = (await q("select distinct action from growth.audit")).map((r) => r.action);
       for (const a of ["connection_register", "scopes_approve", "oauth_begin", "oauth_complete", "secret_attach", "token_refresh",
-        "token_refresh_failed", "connector_alert", "connector_status", "health_check_request", "connection_revoke"]) expect(actions).toContain(a);
+        "token_refresh_failed", "connector_alert", "connector_unpause", "connector_status", "health_check_request", "connection_revoke"]) expect(actions).toContain(a);
       const reg = await one("select actor, detail from growth.audit where action = 'connection_register' and detail->>'provider' = 'facebook_pages'");
       expect(reg.detail.on_behalf).toBe("admin:james");
     });

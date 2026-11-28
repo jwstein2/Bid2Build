@@ -160,8 +160,8 @@ select o.provider, o.op_key, o.label, o.scopes, o.privileged, o.phase, o.note, o
        case
          when k.baseline_status = 'unsupported' or o.baseline_status = 'unsupported' then 'unsupported'
          when cn.provider is null then o.baseline_status
-         when o.privileged and exists (select 1 from unnest(o.scopes) s
-                                        where not s = any (cn.approved_privileged_scopes) and not s = any (cn.granted_scopes)) then
+         -- Privileged operations need the owner's recorded approval for every scope, even when the platform granted it.
+         when o.privileged and exists (select 1 from unnest(o.scopes) s where not s = any (cn.approved_privileged_scopes)) then
               case when o.baseline_status = 'awaiting_platform_approval' then 'awaiting_platform_approval' else 'awaiting_authorization' end
          when cn.status in ('awaiting_authorization', 'awaiting_platform_approval', 'unsupported') then cn.status
          when exists (select 1 from unnest(o.scopes) s where not s = any (cn.granted_scopes)) then
@@ -214,7 +214,8 @@ revoke all on growth.operation_status_v, growth.connection_status_v from public;
 -- 4. Helpers
 -- ---------------------------------------------------------------------------------------------------
 create function growth.conn_secret_name(p_provider text, p_account text) returns text language sql immutable set search_path = '' as $$
-  select 'growth_conn_' || p_provider || '_' || lower(regexp_replace(p_account, '[^A-Za-z0-9]+', '_', 'g'))
+  -- Readable prefix + hash of the exact account ref, so 'Acme.Co' and 'acme_co' never share a secret.
+  select 'growth_conn_' || p_provider || '_' || left(lower(regexp_replace(p_account, '[^A-Za-z0-9]+', '_', 'g')), 40) || '_' || left(md5(p_account), 8)
 $$;
 
 -- Create or replace a Vault secret (Supabase Vault API). SECURITY DEFINER callers only.
@@ -241,6 +242,15 @@ create function growth.vault_delete(p_name text) returns void language plpgsql s
 begin
   if p_name not like 'growth\_%' then raise exception 'secret % is outside Growth OS', p_name; end if;
   execute 'delete from vault.secrets where name = $1' using p_name;
+end $$;
+
+-- A fresh credential lifts an automatic pause for that connector (audited).
+create function growth.unpause_connector(p_provider text, p_actor text) returns void language plpgsql set search_path = '' as $$
+begin
+  if exists (select 1 from growth.control where id and p_provider = any (paused_connectors)) then
+    update growth.control set paused_connectors = array_remove(paused_connectors, p_provider), updated_at = now() where id;
+    insert into growth.audit (actor, action, detail) values (p_actor, 'connector_unpause', jsonb_build_object('provider', p_provider, 'why', 'new credential'));
+  end if;
 end $$;
 
 create function growth.connector_scopes(p_provider text, p_privileged boolean) returns text[] language sql stable set search_path = '' as $$
@@ -334,6 +344,7 @@ begin
          last_error = 'Secret attached. Waiting for the first health check.', last_error_code = 'pending_check'
    where provider = p_provider and account_ref = p_account_ref and not is_simulated;
   if not found then raise exception 'unknown (or simulated) connection %/%', p_provider, p_account_ref; end if;
+  perform growth.unpause_connector(p_provider, growth.actor());
   insert into growth.audit (actor, action, detail) values (growth.actor(), 'secret_attach',
     jsonb_build_object('provider', p_provider, 'account', p_account_ref, 'secret_name', p_secret_name, 'on_behalf', p_on_behalf));
   return 'attached';
@@ -447,6 +458,7 @@ begin
          last_error = 'Authorized. Waiting for the first health check.', last_error_code = 'pending_check', detail = 'authorized'
    where provider = s.provider and account_ref = s.account_ref;
   update growth.oauth_states set result = 'stored' where state_sha256 = p_state_sha256;
+  perform growth.unpause_connector(s.provider, 'oauth_callback');
   insert into growth.connection_checks (provider, account_ref, kind, outcome, granted_scopes, missing_scopes, message, status_after)
   values (s.provider, s.account_ref, 'oauth', 'ok', p_granted_scopes,
           array(select x from unnest(s.requested_scopes) x where not x = any (coalesce(p_granted_scopes, '{}'))), 'token stored', 'awaiting_authorization');
@@ -491,7 +503,8 @@ create function growth_api.record_check(p_provider text, p_account_ref text, p_o
 returns text language plpgsql security definer set search_path = '' as $$
 declare c growth.connections; v_required text[] := growth.connector_scopes(p_provider, false); v_granted text[]; v_missing text[]; v_status text;
 begin
-  if not (session_user = 'growth_worker' or growth.is_operator()) then raise exception 'not allowed'; end if;
+  -- Worker login only: operators (service role, SQL editor) cannot declare a connection healthy without a real call.
+  if session_user <> 'growth_worker' then raise exception 'not allowed: only the worker records checks'; end if;
   if p_outcome not in ('ok', 'limited', 'auth_error', 'platform_pending', 'error') then raise exception 'bad outcome %', p_outcome; end if;
   select * into c from growth.connections where provider = p_provider and account_ref = p_account_ref for update;
   if not found then raise exception 'unknown connection %/%', p_provider, p_account_ref; end if;
@@ -532,13 +545,14 @@ create function growth_api.record_refresh(p_provider text, p_account_ref text, p
 language plpgsql security definer set search_path = '' as $$
 declare c growth.connections; v_fails int;
 begin
-  if not (session_user = 'growth_worker' or growth.is_operator()) then raise exception 'not allowed'; end if;
+  if session_user <> 'growth_worker' then raise exception 'not allowed: only the worker records refreshes'; end if;
   select * into c from growth.connections where provider = p_provider and account_ref = p_account_ref for update;
   if not found or c.secret_name is null or c.secret_name not like 'growth\_conn\_%' then raise exception 'no OAuth token for %/%', p_provider, p_account_ref; end if;
   if p_ok then
     if p_token is null or coalesce(p_token->>'access_token', '') = '' then raise exception 'no access token'; end if;
     perform growth.vault_put(c.secret_name, p_token::text, 'Growth OS OAuth token ' || p_provider || '/' || p_account_ref);
     update growth.connections set expires_at = p_expires_at, last_refresh_at = now(), refresh_fail_count = 0,
+           last_error = case when last_error_code in ('refresh_failed', 'pending_refresh') then null else last_error end,
            last_error_code = case when last_error_code in ('refresh_failed', 'pending_refresh') then null else last_error_code end
      where provider = p_provider and account_ref = p_account_ref;
     insert into growth.connection_checks (provider, account_ref, kind, outcome, message, status_after, worker)
@@ -580,6 +594,8 @@ grant execute on function growth_api.oauth_start(text), growth_api.oauth_consume
 do $$ begin
   if exists (select 1 from pg_roles where rolname = 'service_role') then
     execute 'grant execute on all functions in schema growth_api to service_role';
+    execute 'revoke execute on function growth_api.record_check(text, text, text, int, int, text[], text, text, jsonb, text),
+      growth_api.record_refresh(text, text, boolean, jsonb, timestamptz, text, text, text) from service_role';
     execute 'grant select on all tables in schema growth to service_role';
   end if;
 end $$;

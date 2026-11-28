@@ -22,6 +22,10 @@ describe("connector: Instagram professional account (Instagram Login)", () => {
     f = fakeFetch([{ match: /me/, json: { account_type: "PERSONAL" } }]);
     expect((await checkConnection({ provider: "instagram", accountRef: "1789", token, fetch: f.fetch })).outcome).toBe("limited");
   });
+  it("a different Instagram account than the registered one → limited", async () => {
+    const f = fakeFetch([{ match: /me/, json: { user_id: "555", username: "someoneelse", account_type: "BUSINESS" } }]);
+    expect((await checkConnection({ provider: "instagram", accountRef: "built2bid", token: { access_token: "x", obtained_at: "x" }, fetch: f.fetch })).errorCode).toBe("account_mismatch");
+  });
   it("expired token → awaiting authorization", async () => {
     const f = fakeFetch([{ match: /me/, status: 400, json: { error: { code: 190, message: "expired" } } }]);
     expect((await checkConnection({ provider: "instagram", accountRef: "1", token: { access_token: "x", obtained_at: "x" }, fetch: f.fetch })).outcome).toBe("auth_error");

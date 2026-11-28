@@ -65,6 +65,7 @@ async function callback(url: URL) {
   const cfg = OAUTH[c.provider];
   const [clientId, clientSecret] = cfg ? [await secret(cfg.clientIdSecret), await secret(cfg.clientSecretSecret)] : [null, null];
   if (!cfg || !clientId || !clientSecret) return fail("no_client", "OAuth client id/secret missing in Vault.");
+  let stored = false;
   try {
     const req = tokenRequest(cfg, { clientId, clientSecret, code, redirectUri: redirectUri(FUNCTIONS_BASE), codeVerifier: c.code_verifier });
     let parsed = parseTokenResponse(c.provider, await (await fetch(req.url, req.init)).json(), Date.now());
@@ -75,21 +76,28 @@ async function callback(url: URL) {
     }
     await sql`select growth_api.oauth_complete(${c.state_sha256}, ${JSON.stringify(parsed.token)}::jsonb, ${parsed.grantedScopes}::text[],
       ${parsed.expiresAt}::timestamptz, ${parsed.accountLabel ?? null})`;
+    stored = true;   // from here on the connection IS stored: later problems must not report a failed connect
 
-    // First health check right away, unless Growth OS (or this connector) is stopped.
-    const [{ stopped }] = await sql`select growth_api.is_stopped(null, ${c.provider}) as stopped`;
-    if (!stopped) {
-      const needsClient = ["linkedin", "tiktok_business"].includes(c.provider);
-      const t0 = Date.now();
-      const res = await checkConnection({ provider: c.provider, accountRef: c.account_ref, token: parsed.token, grantedScopes: parsed.grantedScopes ?? undefined,
-        clientId: needsClient ? clientId : undefined, clientSecret: needsClient ? clientSecret : undefined,
-        developerToken: c.provider === "google_ads" ? (await secret("growth_google_ads_developer_token")) ?? undefined : undefined, fetch });
-      const msg = res.message ? redact(res.message, [parsed.token.access_token, parsed.token.refresh_token, clientSecret]) : null;
-      await sql`select growth_api.record_check(${c.provider}, ${c.account_ref}, ${res.outcome}, ${res.httpStatus ?? null}, ${Date.now() - t0},
-        ${res.grantedScopes ?? null}::text[], ${res.errorCode ?? null}, ${msg}, ${res.rateLimit ? JSON.stringify(res.rateLimit) : null}::jsonb, 'growth-oauth')`;
+    // First health check right away, unless Growth OS (or this connector) is stopped. A failure here only
+    // delays the check to the next scheduled run.
+    try {
+      const [{ stopped }] = await sql`select growth_api.is_stopped(null, ${c.provider}) as stopped`;
+      if (!stopped) {
+        const needsClient = ["linkedin", "tiktok_business"].includes(c.provider);
+        const t0 = Date.now();
+        const res = await checkConnection({ provider: c.provider, accountRef: c.account_ref, token: parsed.token, grantedScopes: parsed.grantedScopes ?? undefined,
+          clientId: needsClient ? clientId : undefined, clientSecret: needsClient ? clientSecret : undefined,
+          developerToken: c.provider === "google_ads" ? (await secret("growth_google_ads_developer_token")) ?? undefined : undefined, fetch });
+        const msg = res.message ? redact(res.message, [parsed.token.access_token, parsed.token.refresh_token, clientSecret]) : null;
+        await sql`select growth_api.record_check(${c.provider}, ${c.account_ref}, ${res.outcome}, ${res.httpStatus ?? null}, ${Date.now() - t0},
+          ${res.grantedScopes ?? null}::text[], ${res.errorCode ?? null}, ${msg}, ${res.rateLimit ? JSON.stringify(res.rateLimit) : null}::jsonb, 'growth-oauth')`;
+      }
+    } catch (e) {
+      console.error("growth-oauth first health check failed", (e as Error).name);
     }
     return finish(c.provider, "connected");
   } catch (e) {
+    if (stored) return finish(c.provider, "connected");
     const codeStr = e instanceof OAuthError ? e.code : "exchange_failed";
     return fail(codeStr, redact(String((e as Error).message ?? e), [code, clientSecret]).slice(0, 400));
   }

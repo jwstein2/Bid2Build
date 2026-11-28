@@ -1,6 +1,6 @@
 // Worker handlers for the Connections Center: connector.health and connector.refresh (risk tier 0, read-only).
 // Tokens are read from Vault through growth_api.secret only for the duration of one call and never logged.
-import type { Ctx, Handler, HandlerResult, Sql } from "./core.ts";
+import { type Ctx, type Handler, type HandlerResult, PermanentError, type Sql, StopError } from "./core.ts";
 import { checkConnection, type Fetch, type HealthResult, redact } from "../connectors/health.ts";
 import { OAUTH, OAuthError, parseTokenResponse, refreshRequest, type StoredToken } from "../connectors/oauth.ts";
 
@@ -41,6 +41,7 @@ export async function refreshOne(ctx: Ctx, fetchImpl: Fetch, row: DueRow, token:
       ${parsed.expiresAt}::timestamptz, null, null, ${worker}) as s`;
     return { status: String(s), token: parsed.token };
   } catch (e) {
+    if (e instanceof StopError || e instanceof PermanentError) throw e;   // a stop or pause is not a failed refresh
     const code = e instanceof OAuthError ? e.code : "refresh_error";
     return fail(code, redact(String((e as Error).message ?? e), [token.access_token, token.refresh_token, clientSecret]).slice(0, 400));
   }

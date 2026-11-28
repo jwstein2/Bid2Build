@@ -87,3 +87,10 @@ export async function recordSubmission(form: FormData) {
     await growthRpc("record_platform_submission", { p_provider: provider, p_status: status, p_note: get(form, "note").slice(0, 500) || null, p_on_behalf: onBehalf });
   });
 }
+
+/** Lifts a pause on one connector (an automatic pause after 3 failed refreshes, or a manual one). */
+export async function resumeConnector(form: FormData) {
+  await run(form, "resume_connector", async ({ provider }) => {
+    await growthRpc("set_paused", { p_kind: "connector", p_name: provider, p_paused: false });
+  });
+}

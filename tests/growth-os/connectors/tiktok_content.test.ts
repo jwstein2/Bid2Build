@@ -6,7 +6,7 @@ import { registryChecks } from "./common";
 
 describe("connector: TikTok account content (Login Kit)", () => {
   registryChecks("tiktok_content");
-  it("uses client_key, comma-separated scopes and PKCE", () => {
+  it("uses client_key and comma-separated scopes (web app: client secret, no PKCE)", () => {
     const u = new URL(buildAuthorizeUrl(OAUTH.tiktok_content, { clientId: "ck", redirectUri: "https://r", state: "s", scopes: ["user.info.basic", "video.list"], codeChallenge: "c" }));
     expect(u.searchParams.get("client_key")).toBe("ck");
     expect(u.searchParams.get("scope")).toBe("user.info.basic,video.list");
@@ -21,8 +21,10 @@ describe("connector: TikTok account content (Login Kit)", () => {
     expect(second.token).toMatchObject({ refresh_token: "rft.2", extra: { open_id: "o1" } });
   });
   it("health: user info ok → ok; invalid token → awaiting authorization", async () => {
-    let f = fakeFetch([{ match: /user\/info/, json: { data: { user: { display_name: "built2bid" } }, error: { code: "ok" } } }]);
+    let f = fakeFetch([{ match: /user\/info/, json: { data: { user: { open_id: "o1", display_name: "built2bid" } }, error: { code: "ok" } } }]);
     expect((await checkConnection({ provider: "tiktok_content", accountRef: "o1", token: { access_token: "a", obtained_at: "x" }, grantedScopes: ["user.info.basic"], fetch: f.fetch })).outcome).toBe("ok");
+    f = fakeFetch([{ match: /user\/info/, json: { data: { user: { open_id: "o2", display_name: "other" } }, error: { code: "ok" } } }]);
+    expect((await checkConnection({ provider: "tiktok_content", accountRef: "o1", token: { access_token: "a", obtained_at: "x" }, fetch: f.fetch })).errorCode).toBe("account_mismatch");
     f = fakeFetch([{ match: /user\/info/, status: 401, json: { error: { code: "access_token_invalid" } } }]);
     expect((await checkConnection({ provider: "tiktok_content", accountRef: "o1", token: { access_token: "a", obtained_at: "x" }, fetch: f.fetch })).outcome).toBe("auth_error");
   });

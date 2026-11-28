@@ -69,7 +69,8 @@ export const OAUTH: Record<string, OAuthConfig> = {
     provider: "tiktok_content",
     authorizeUrl: "https://www.tiktok.com/v2/auth/authorize/",
     tokenUrl: "https://open.tiktokapis.com/v2/oauth/token/",
-    scopeSeparator: ",", pkce: true, clientIdParam: "client_key",
+    // Web apps authenticate with the client secret. TikTok's PKCE (desktop/mobile) uses a hex challenge, not S256 base64url.
+    scopeSeparator: ",", pkce: false, clientIdParam: "client_key",
     clientIdSecret: "growth_tiktok_content_client_id", clientSecretSecret: "growth_tiktok_content_client_secret",
     tokenStyle: "form", refreshStyle: "form_refresh_token", sendScopes: true,
   },

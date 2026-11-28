@@ -33,6 +33,7 @@ drop function if exists growth.vault_put(text, text, text);
 drop function if exists growth.vault_exists(text);
 drop function if exists growth.vault_delete(text);
 drop function if exists growth.connector_scopes(text, boolean);
+drop function if exists growth.unpause_connector(text, text);
 
 delete from growth.connections;
 drop trigger if exists connections_status_guard on growth.connections;

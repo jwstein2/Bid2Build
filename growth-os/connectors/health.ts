@@ -82,7 +82,15 @@ async function checkMeta(i: HealthInput, token: string): Promise<HealthResult> {
       message: `The token cannot see Page ${i.accountRef}. Reconnect and tick that Page on Facebook's screen.` };
     return { outcome: "ok", httpStatus: 200, grantedScopes: granted, rateLimit: a.rate, accountLabel: page.name };
   }
-  return { outcome: "ok", httpStatus: 200, grantedScopes: granted, rateLimit: p.rate };
+  // meta_business: the token must reach the registered Business portfolio, not just hold the permissions.
+  const b = await call(i.fetch, `${base}/${encodeURIComponent(i.accountRef)}?fields=id,name`, { headers: bearer(token) });
+  if (b.status !== 200 || String(b.json?.id ?? "") !== i.accountRef) {
+    const e = b.json?.error;
+    if (e && Number(e.code) === 190) return { ...metaError(e, b.status), grantedScopes: granted };
+    return { outcome: "limited", httpStatus: b.status, grantedScopes: granted, rateLimit: b.rate, errorCode: "business_not_accessible",
+      message: `The token cannot read Business portfolio ${i.accountRef}. Give the system user (or your login) access to that portfolio.` };
+  }
+  return { outcome: "ok", httpStatus: 200, grantedScopes: granted, rateLimit: b.rate, accountLabel: b.json?.name };
 }
 
 async function checkInstagram(i: HealthInput, token: string): Promise<HealthResult> {
@@ -91,6 +99,9 @@ async function checkInstagram(i: HealthInput, token: string): Promise<HealthResu
   if (r.json?.account_type && !["BUSINESS", "MEDIA_CREATOR", "CREATOR"].includes(String(r.json.account_type).toUpperCase())) {
     return { outcome: "limited", httpStatus: 200, errorCode: "not_professional", message: "This Instagram account is not a Business or Creator account." };
   }
+  const ids = [r.json?.user_id, r.json?.id, r.json?.username].filter(Boolean).map((x: unknown) => String(x).toLowerCase());
+  if (!ids.includes(i.accountRef.toLowerCase())) return { outcome: "limited", httpStatus: 200, errorCode: "account_mismatch",
+    message: `The connected Instagram account (${r.json?.username ?? "unknown"}) is not the registered account ${i.accountRef}.` };
   const perms = (i.token?.extra?.permissions as string[] | undefined) ?? i.grantedScopes;
   return { outcome: "ok", httpStatus: 200, grantedScopes: perms, rateLimit: r.rate, accountLabel: r.json?.username };
 }
@@ -238,7 +249,11 @@ async function checkTikTokContent(i: HealthInput, token: string): Promise<Health
   if (r.status === 401 || err?.code === "access_token_invalid") return { outcome: "auth_error", httpStatus: r.status, errorCode: "tiktok_token_invalid", message: "TikTok says the token is invalid. It refreshes automatically; reconnect if this repeats." };
   if (err?.code === "scope_not_authorized") return { outcome: "limited", httpStatus: r.status, errorCode: "tiktok_scope", message: "TikTok: a scope was not authorized for this app." };
   if (r.status !== 200 || (err?.code && err.code !== "ok")) return { outcome: classifyHttp(r.status === 200 ? 500 : r.status), httpStatus: r.status, errorCode: `tiktok_${err?.code ?? r.status}`, message: String(err?.message ?? `TikTok returned HTTP ${r.status}.`).slice(0, 300) };
-  return { outcome: "ok", httpStatus: 200, grantedScopes: i.grantedScopes, accountLabel: r.json?.data?.user?.display_name };
+  const u = r.json?.data?.user ?? {};
+  const ids = [u.open_id, i.token?.extra?.open_id, u.display_name].filter(Boolean).map((x: unknown) => String(x).toLowerCase());
+  if (!ids.includes(i.accountRef.toLowerCase())) return { outcome: "limited", httpStatus: 200, errorCode: "account_mismatch",
+    message: `The connected TikTok account (${u.display_name ?? "unknown"}) is not the registered account ${i.accountRef}.` };
+  return { outcome: "ok", httpStatus: 200, grantedScopes: i.grantedScopes, accountLabel: u.display_name };
 }
 
 const STRIPE_PROBES: [string, string][] = [

@@ -9,12 +9,17 @@ describe("connector: Meta Business Portfolio", () => {
   const perms = { data: [{ permission: "business_management", status: "granted" }, { permission: "ads_read", status: "granted" }, { permission: "ads_management", status: "declined" }] };
 
   it("system-user token (manual secret): /me/permissions lists only granted permissions; token sent as a header, not in the URL", async () => {
-    const f = fakeFetch([{ match: /\/me\/permissions$/, json: perms, headers: { "x-business-use-case-usage": '{"121510736":[{"call_count":1}]}' } }]);
-    const r = await checkConnection({ provider: "meta_business", accountRef: "b2b", secret: "EAAGsystemusertoken", fetch: f.fetch });
-    expect(r).toMatchObject({ outcome: "ok", grantedScopes: ["business_management", "ads_read"] });
+    const f = fakeFetch([{ match: /\/me\/permissions$/, json: perms },
+      { match: /\/1234567890\?fields=id,name$/, json: { id: "1234567890", name: "Built2Bid" }, headers: { "x-business-use-case-usage": '{"121510736":[{"call_count":1}]}' } }]);
+    const r = await checkConnection({ provider: "meta_business", accountRef: "1234567890", secret: "EAAGsystemusertoken", fetch: f.fetch });
+    expect(r).toMatchObject({ outcome: "ok", grantedScopes: ["business_management", "ads_read"], accountLabel: "Built2Bid" });
     expect(r.rateLimit?.["x-business-use-case-usage"]).toContain("call_count");
     expect(f.calls[0].url).not.toContain("EAAG");
     expect(f.calls[0].init?.headers?.Authorization).toBe("Bearer EAAGsystemusertoken");
+  });
+  it("permissions alone are not enough: a token that cannot read the registered portfolio is limited", async () => {
+    const f = fakeFetch([{ match: /permissions/, json: perms }, { match: /\/1234567890\?/, status: 400, json: { error: { code: 100, message: "Unsupported get request" } } }]);
+    expect((await checkConnection({ provider: "meta_business", accountRef: "1234567890", secret: "EAAGx", fetch: f.fetch })).errorCode).toBe("business_not_accessible");
   });
   it("expired token (code 190) → awaiting authorization; rate limit (17) → transient error; missing permission (200) → limited", async () => {
     for (const [code, outcome] of [[190, "auth_error"], [17, "error"], [200, "limited"]] as const) {

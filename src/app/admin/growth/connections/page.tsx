@@ -3,7 +3,7 @@ import { requireAdmin } from "@/lib/admin/server";
 import { growthConfigured, loadOverview } from "@/lib/growth-os/connections";
 import { STATUS_LABEL, STATUS_TONE, buildView, type CardView } from "@/lib/growth-os/connections-view";
 import { STATUSES, connectorByProvider, privilegedScopes } from "../../../../../growth-os/connectors/registry";
-import { approvePrivileged, attachSecret, checkNow, connectOAuth, recordSubmission, registerConnection, revokeConnection } from "./actions";
+import { approvePrivileged, attachSecret, checkNow, connectOAuth, recordSubmission, registerConnection, resumeConnector, revokeConnection } from "./actions";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Growth OS Connections" };
@@ -89,6 +89,7 @@ function Card({ c, live, now }: { c: CardView; live: boolean; now: number }) {
                 </form>
               )}
               <form action={checkNow}><input type="hidden" name="provider" value={c.provider} /><input type="hidden" name="account" value={acct} /><button className={btn}>Check now</button></form>
+              {c.paused && <form action={resumeConnector}><input type="hidden" name="provider" value={c.provider} /><input type="hidden" name="account" value={acct} /><button className={btn}>Resume connector</button></form>}
             </div>
           )}
           {c.accountRef && priv.length > 0 && (

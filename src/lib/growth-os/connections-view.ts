@@ -66,6 +66,7 @@ export function buildView(overview: any | null): ConnectionsView {
   });
   cards.forEach((c) => counts[c.status]++);
   const audit = (overview.audit ?? []) as ConnectionsView["audit"];
-  const alerts = audit.filter((a) => a.action === "connector_alert").map((a) => ({ at: a.at, provider: String(a.detail?.provider ?? ""), message: String(a.detail?.message ?? "") }));
+  // An alert stays up only while its connector is still paused; reconnecting lifts the pause and clears it.
+  const alerts = audit.filter((a) => a.action === "connector_alert" && paused.has(String(a.detail?.provider ?? ""))).map((a) => ({ at: a.at, provider: String(a.detail?.provider ?? ""), message: String(a.detail?.message ?? "") }));
   return { source: "live", env: overview.env ?? null, generatedAt: overview.generated_at ?? null, cards, alerts, audit, counts };
 }
