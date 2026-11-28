@@ -37,7 +37,7 @@ export async function refreshOne(ctx: Ctx, fetchImpl: Fetch, row: DueRow, token:
       try { return JSON.parse(text); } catch { throw new OAuthError(`http_${r.status}`, `Token endpoint returned HTTP ${r.status}.`); }
     });
     const parsed = parseTokenResponse(row.provider, body, now(), token);
-    const [{ s }] = await sql`select growth_api.record_refresh(${row.provider}, ${row.account_ref}, true, ${JSON.stringify(parsed.token)}::jsonb,
+    const [{ s }] = await sql`select growth_api.record_refresh(${row.provider}, ${row.account_ref}, true, ${JSON.stringify(parsed.token)}::text::jsonb,
       ${parsed.expiresAt}::timestamptz, null, null, ${worker}) as s`;
     return { status: String(s), token: parsed.token };
   } catch (e) {
@@ -95,7 +95,7 @@ export function connectorHandlers(fetchImpl: Fetch, opts: { now?: () => number }
       }
       const [{ s }] = await sql`select growth_api.record_check(${row.provider}, ${row.account_ref}, ${res.outcome}, ${res.httpStatus ?? null},
         ${now() - t0}, ${res.grantedScopes ?? null}::text[], ${res.errorCode ?? null}, ${res.message ?? null},
-        ${res.rateLimit ? JSON.stringify(res.rateLimit) : null}::jsonb, ${worker}) as s`;
+        ${res.rateLimit ? JSON.stringify(res.rateLimit) : null}::text::jsonb, ${worker}) as s`;
       results[key] = String(s);
     }
     return { output: { checked: rows.length, results } };

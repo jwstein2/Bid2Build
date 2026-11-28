@@ -178,6 +178,6 @@ async function runJob(d: Deps, handlers: Record<string, Handler>, job: ClaimedJo
 
 async function complete(d: Deps, job: ClaimedJob, ok: boolean, retryable: boolean, output: unknown, error: string | null, res: HandlerResult) {
   const [{ s }] = await d.sql`select growth_api.complete(${job.run_id}, ${d.worker}, ${ok}, ${retryable},
-    ${output === null || output === undefined ? null : JSON.stringify(output)}::jsonb, ${error}, ${res.tokensIn ?? null}, ${res.tokensOut ?? null}) as s`;
+    ${output === null || output === undefined ? null : JSON.stringify(output)}::text::jsonb, ${error}, ${res.tokensIn ?? null}, ${res.tokensOut ?? null}) as s`;
   return String(s);
 }

@@ -74,7 +74,7 @@ async function callback(url: URL) {
       const long = parseTokenResponse(c.provider, await (await fetch(ll.url, ll.init)).json(), Date.now(), parsed.token);
       parsed = { ...long, grantedScopes: long.grantedScopes ?? parsed.grantedScopes };
     }
-    await sql`select growth_api.oauth_complete(${c.state_sha256}, ${JSON.stringify(parsed.token)}::jsonb, ${parsed.grantedScopes}::text[],
+    await sql`select growth_api.oauth_complete(${c.state_sha256}, ${JSON.stringify(parsed.token)}::text::jsonb, ${parsed.grantedScopes}::text[],
       ${parsed.expiresAt}::timestamptz, ${parsed.accountLabel ?? null})`;
     stored = true;   // from here on the connection IS stored: later problems must not report a failed connect
 
@@ -90,7 +90,7 @@ async function callback(url: URL) {
           developerToken: c.provider === "google_ads" ? (await secret("growth_google_ads_developer_token")) ?? undefined : undefined, fetch });
         const msg = res.message ? redact(res.message, [parsed.token.access_token, parsed.token.refresh_token, clientSecret]) : null;
         await sql`select growth_api.record_check(${c.provider}, ${c.account_ref}, ${res.outcome}, ${res.httpStatus ?? null}, ${Date.now() - t0},
-          ${res.grantedScopes ?? null}::text[], ${res.errorCode ?? null}, ${msg}, ${res.rateLimit ? JSON.stringify(res.rateLimit) : null}::jsonb, 'growth-oauth')`;
+          ${res.grantedScopes ?? null}::text[], ${res.errorCode ?? null}, ${msg}, ${res.rateLimit ? JSON.stringify(res.rateLimit) : null}::text::jsonb, 'growth-oauth')`;
       }
     } catch (e) {
       console.error("growth-oauth first health check failed", (e as Error).name);
