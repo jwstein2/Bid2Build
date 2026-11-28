@@ -594,8 +594,11 @@ grant execute on function growth_api.oauth_start(text), growth_api.oauth_consume
 do $$ begin
   if exists (select 1 from pg_roles where rolname = 'service_role') then
     execute 'grant execute on all functions in schema growth_api to service_role';
+    -- Worker-only steps stay worker-only: the service role cannot record checks or drive the OAuth callback.
     execute 'revoke execute on function growth_api.record_check(text, text, text, int, int, text[], text, text, jsonb, text),
-      growth_api.record_refresh(text, text, boolean, jsonb, timestamptz, text, text, text) from service_role';
+      growth_api.record_refresh(text, text, boolean, jsonb, timestamptz, text, text, text), growth_api.oauth_start(text),
+      growth_api.oauth_consume(text), growth_api.oauth_complete(text, jsonb, text[], timestamptz, text),
+      growth_api.oauth_fail(text, text, text) from service_role';
     execute 'grant select on all tables in schema growth to service_role';
   end if;
 end $$;
