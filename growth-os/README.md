@@ -14,6 +14,10 @@ through `growth_api.crm_apply` after a human approval.
 | `supabase/staging/01_synthetic_seed.sql` | Staging project only: synthetic accounts and events on `.test` domains. |
 | `supabase/staging/02_staging_wiring.sql` | Staging project only: env, worker login and Vault secrets (generated in the database). |
 | `supabase/staging/03_schedule_tick.sql` | Staging project only: the every-minute pg_cron tick. |
+| `supabase/migrations/20270302001000_growth_os_connections.sql` | Phase 5 Connections Center (registry tables, five-state status, OAuth states, checks, audited functions). Seed generated from `connectors/registry.ts` (`npx tsx growth-os/connectors/gen-seed.ts`). Report: `docs/growth-os/phase5-connections/01_phase5_build_report.md`. |
+| `connectors/` | Registry, OAuth helpers and read-only health checks for every connector. |
+| `oauth/index.ts` | Edge Function `growth-oauth` (verify_jwt off): one-time `/start` link and `/callback`. |
+| `supabase/staging/05_connections_checks.sql` | Staging guard checks for Phase 5. |
 | `worker/core.ts` | The tick: ingest, dispatch, schedules, claim and run jobs. Runtime-agnostic and unit tested. |
 | `worker/index.ts` | Supabase Edge Function entry (Deno), deployed as `growth-worker` with `verify_jwt = false`. |
 

@@ -12,19 +12,10 @@
 import postgres from "npm:postgres@3.4.5";
 import Anthropic from "npm:@anthropic-ai/sdk@1";
 import { type Deps, type Llm, tick } from "./core.ts";
+import { connectorHandlers } from "./connectors.ts";
+import { workerDbUrl } from "./db.ts";
 
-// Connect as growth_worker only. Keep the ".<project-ref>" user suffix the pooler needs, if the platform URL has one.
-export function workerDbUrl(env: (k: string) => string | undefined): string {
-  const explicit = env("GROWTH_DB_URL");
-  if (explicit) return explicit;
-  const base = env("SUPABASE_DB_URL"), password = env("GROWTH_DB_PASSWORD");
-  if (!base || !password) throw new Error("set GROWTH_DB_PASSWORD (or GROWTH_DB_URL) for the growth_worker role");
-  const u = new URL(base);
-  const dot = decodeURIComponent(u.username).indexOf(".");
-  u.username = "growth_worker" + (dot >= 0 ? decodeURIComponent(u.username).slice(dot) : "");
-  u.password = encodeURIComponent(password);
-  return u.toString();
-}
+export { workerDbUrl };
 
 const sql = postgres(workerDbUrl((k) => Deno.env.get(k)), { prepare: false, max: 2, idle_timeout: 20 });
 const ENV = (Deno.env.get("GROWTH_ENV") ?? "") as Deps["env"];
@@ -67,7 +58,7 @@ Deno.serve(async (req) => {
   const route = new URL(req.url).pathname.split("/").filter(Boolean).pop();
   if (route !== "tick") return new Response("unknown route", { status: 404 });
   try {
-    const out = await tick({ sql: sql as unknown as Deps["sql"], worker: `edge-${crypto.randomUUID().slice(0, 8)}`, env: ENV, llm });
+    const out = await tick({ sql: sql as unknown as Deps["sql"], worker: `edge-${crypto.randomUUID().slice(0, 8)}`, env: ENV, llm, handlers: connectorHandlers(fetch) });
     return Response.json(out);
   } catch (e) {
     console.error("growth tick failed", (e as Error).message);

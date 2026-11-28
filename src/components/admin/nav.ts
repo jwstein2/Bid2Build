@@ -15,6 +15,7 @@ export const PRIMARY = [
 /** Existing owner tools, kept reachable from every page (and listed on Operations). */
 export const TOOLS = [
   { href: "/admin/costs", label: "Tech Stack & Costs" },
+  { href: "/admin/growth/connections", label: "Growth OS connections" },
   { href: "/admin/costs/forecast", label: "Scaling forecast" },
   { href: "/admin/revenue/scorecard", label: "Business Scorecard" },
   { href: "/admin/complimentary", label: "Complimentary access" },
