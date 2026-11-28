@@ -1,7 +1,7 @@
 // Health checks and permission diagnostics: one cheap, read-only API call (or a few) per connection.
 // The result goes to growth_api.record_check, which alone decides whether a connection is verified_operational.
 // Every request is a GET or a read-only POST (token introspection, GA4 runReport, GraphQL query). Nothing here writes.
-import { META_GRAPH } from "./registry.ts";
+import { META_GRAPH } from "./constants.ts";
 import type { StoredToken } from "./oauth.ts";
 
 export type Outcome = "ok" | "limited" | "auth_error" | "platform_pending" | "error";

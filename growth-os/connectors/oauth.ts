@@ -2,7 +2,7 @@
 // Runtime-agnostic (Deno Edge Functions and Node tests). No network here: callers pass the result to fetch.
 // Client ids and secrets are read from Vault by the caller (growth_api.secret); this file never sees a password,
 // recovery code or MFA code — people sign in only on the platform's own consent screen.
-import { META_GRAPH } from "./registry.ts";
+import { META_GRAPH } from "./constants.ts";
 
 export interface StoredToken {
   access_token: string;

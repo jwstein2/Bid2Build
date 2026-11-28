@@ -8,6 +8,7 @@
 // Labels used in `facts`: [platform-doc 2026-11-28] = read on the official docs page on that date;
 // [platform-doc] = from platform docs as known, re-check before relying on it; [verified] = checked in our own
 // systems; [reported] = from an earlier Growth OS thread; [estimate].
+import { META_GRAPH } from "./constants.ts";
 
 export const STATUSES = [
   "verified_operational",
@@ -52,7 +53,6 @@ export interface Connector {
   operations: Operation[];
 }
 
-const META_GRAPH = "v23.0"; // [platform-doc] check the current Graph API version before go-live
 
 export const CONNECTORS: Connector[] = [
   {
