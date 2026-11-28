@@ -1,5 +1,5 @@
 "use client";
-import { Check, ChevronDown, Info, Loader2, Minus, Plus } from "lucide-react";
+import { Check, ChevronDown, Info, Minus, Plus } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Button, ButtonLink } from "../ui/button";
@@ -237,7 +237,7 @@ export function EnterprisePlan({ signedIn, mode, supportEmail, extraFeatures = [
               : mode === "member" ? <p className="text-sm text-ink-soft" role={asked ? "status" : undefined}>You&apos;re already on your company&apos;s Team plan. Ask your company owner about seats.</p>
               : blocked ? <ButtonLink href="/settings/billing" variant="secondary" size="lg" className="w-full" data-cta="team-manage-unlimited">Manage your Individual Unlimited subscription</ButtonLink>
               : mode === "contact" ? <ButtonLink href={`mailto:${supportEmail}?subject=${encodeURIComponent("Built2Bid Team")}`} size="lg" className="w-full">Contact us about Team</ButtonLink>
-              : <Button size="lg" className="h-auto min-h-12 w-full whitespace-normal py-3" onClick={start} disabled={busy}>{busy && <Loader2 className="h-4 w-4 animate-spin" />}{open ? `Continue to checkout · ${formatCents(dueCents)}/month` : "Get Team"}</Button>}
+              : <Button loading={busy} size="lg" className="h-auto min-h-12 w-full whitespace-normal py-3" onClick={start} disabled={busy}>{open ? `Continue to checkout · ${formatCents(dueCents)}/month` : "Get Team"}</Button>}
             {err && <p role="alert" className="mt-2 text-sm text-danger">{err}</p>}
             <p className="mt-2 text-xs text-ink-soft">Billed monthly, no long-term contract. Added users are prorated; removed users lower your price from the next invoice, with no refund for the current month. Prices in USD; taxes may apply.</p>
           </div>

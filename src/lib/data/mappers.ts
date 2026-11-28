@@ -1,7 +1,7 @@
-import type { Estimate, EstimateGroup, LineItem, PricingRule } from "../estimate/types";
+import type { Estimate, EstimateGroup, LineItem, PricingRule, ProjectDiscount } from "../estimate/types";
 import type { EstimateWorksheet } from "../calculators/types";
 import { worksheetSchema } from "../estimate/schema";
-import type { ProjectProfile } from "../market/trade-models";
+import { tradeDetail, tradeDetailsToStore, type ProjectProfile, type TradeDetail } from "../market/trade-models";
 import { normalizeExclusions, normalizeScope } from "../proposal/text-sections";
 import { defaultBusinessProfile, defaultProposalConfig, type BusinessProfile, type ProposalConfig } from "../proposal/types";
 
@@ -67,8 +67,8 @@ export function proposalConfigFrom(raw: unknown): ProposalConfig {
   const d = defaultProposalConfig();
   if (!raw || typeof raw !== "object") return d;
   // The worksheet and roundTotal are stored alongside the proposal settings but belong to the estimate.
-  const { worksheet: _w, roundTotal: _rt, roundLines: _rl, ...r } = raw as Partial<ProposalConfig> & { worksheet?: unknown; roundTotal?: unknown; roundLines?: unknown };
-  void _w; void _rt; void _rl;
+  const { worksheet: _w, roundTotal: _rt, roundLines: _rl, projectDiscount: _pd, ...r } = raw as Partial<ProposalConfig> & { worksheet?: unknown; roundTotal?: unknown; roundLines?: unknown; projectDiscount?: unknown };
+  void _w; void _rt; void _rl; void _pd;
   const exclusionList = normalizeExclusions(r.exclusionList, typeof r.exclusions === "string" ? r.exclusions : "");
   return {
     ...d, ...r,
@@ -134,9 +134,22 @@ export function roundLinesFrom(rawConfig: unknown): boolean {
   return Boolean(rawConfig && typeof rawConfig === "object" && (rawConfig as { roundLines?: unknown }).roundLines === true);
 }
 
+/** Whole-project discount stored in proposal_config (absent = none). */
+export function projectDiscountFrom(rawConfig: unknown): ProjectDiscount | null {
+  if (!rawConfig || typeof rawConfig !== "object") return null;
+  const pd = (rawConfig as { projectDiscount?: unknown }).projectDiscount as Partial<ProjectDiscount> | null | undefined;
+  if (!pd || typeof pd !== "object" || (pd.kind !== "amount" && pd.kind !== "percent") || typeof pd.value !== "string" || !pd.value.trim()) return null;
+  return { kind: pd.kind, value: pd.value, ...(typeof pd.label === "string" && pd.label.trim() ? { label: pd.label.slice(0, 100) } : {}) };
+}
+
 /** Estimate-level options persisted inside proposal_config (estimates has no column for them). */
-export function estimateOptionsToStore(estimate: Pick<Estimate, "roundTotal" | "roundLines">): { roundTotal?: true; roundLines?: true } {
-  return { ...(estimate.roundTotal ? { roundTotal: true as const } : {}), ...(estimate.roundLines ? { roundLines: true as const } : {}) };
+export function estimateOptionsToStore(estimate: Pick<Estimate, "roundTotal" | "roundLines" | "projectDiscount">): { roundTotal?: true; roundLines?: true; projectDiscount?: ProjectDiscount } {
+  const pd = estimate.projectDiscount;
+  return {
+    ...(estimate.roundTotal ? { roundTotal: true as const } : {}),
+    ...(estimate.roundLines ? { roundLines: true as const } : {}),
+    ...(pd && pd.value.trim() ? { projectDiscount: pd } : {}),
+  };
 }
 
 /** Read the estimate worksheet (calculator inputs, minimum charge) back out of a stored proposal_config. */
@@ -150,7 +163,7 @@ export function worksheetFrom(rawConfig: unknown): EstimateWorksheet | null {
  * The worksheet to persist: calculations only for line items that still exist, plus each section's
  * trade (estimate_groups has no trade column); null when empty.
  */
-export function worksheetToStore(estimate: Pick<Estimate, "items" | "worksheet"> & { groups?: EstimateGroup[] }): EstimateWorksheet | null {
+export function worksheetToStore(estimate: Pick<Estimate, "items" | "worksheet"> & { groups?: EstimateGroup[]; trades?: string[]; projectProfile?: ProjectProfile | null }): EstimateWorksheet | null {
   const w = estimate.worksheet ?? {};
   const ids = new Set(estimate.items.filter((i) => !i.isExample).map((i) => i.id));
   const calcs = Object.fromEntries(Object.entries(w.calcs ?? {}).filter(([id]) => ids.has(id)));
@@ -159,6 +172,8 @@ export function worksheetToStore(estimate: Pick<Estimate, "items" | "worksheet">
   if (Object.keys(calcs).length) out.calcs = calcs;
   if (w.minimumCharge && w.minimumCharge.trim()) out.minimumCharge = w.minimumCharge.trim();
   if (Object.keys(sectionTrades).length) out.sectionTrades = sectionTrades;
+  const tradeDetails = tradeDetailsToStore(estimate.projectProfile, estimate.trades ?? []);
+  if (tradeDetails) out.tradeDetails = tradeDetails;
   return Object.keys(out).length ? out : null;
 }
 
@@ -168,8 +183,26 @@ export function worksheetToStore(estimate: Pick<Estimate, "items" | "worksheet">
  */
 export function applySectionTrades(estimate: Estimate, worksheet: EstimateWorksheet | null): Estimate {
   const map = worksheet?.sectionTrades ?? {};
-  const { sectionTrades: _st, ...rest } = worksheet ?? {};
-  void _st;
+  // tradeDetails is read separately (applyTradeDetails) and lives on projectProfile in the editor.
+  const { sectionTrades: _st, tradeDetails: _td, ...rest } = worksheet ?? {};
+  void _st; void _td;
   const groups = estimate.groups.map((g) => (map[g.id] ? { ...g, trade: map[g.id] } : g));
   return { ...estimate, groups, worksheet: worksheet && Object.keys(rest).length ? rest : null };
+}
+
+/**
+ * Puts stored per-trade project details on the profile. Details saved before per-trade support live
+ * only on the profile's top level; they are kept as the first trade's details so reordering trades
+ * later doesn't move them to another trade.
+ */
+export function applyTradeDetails(profile: ProjectProfile | null, stored: Record<string, TradeDetail> | undefined, trades: string[]): ProjectProfile | null {
+  if (!profile && !stored) return null;
+  const p: ProjectProfile = profile ?? {};
+  const map: Record<string, TradeDetail> = { ...(stored ?? {}) };
+  const first = trades[0];
+  if (first && !map[first]) {
+    const legacy = tradeDetail(p, first, true);
+    if (legacy.workType || legacy.projectType || (legacy.measurements && Object.keys(legacy.measurements).length)) map[first] = legacy;
+  }
+  return Object.keys(map).length ? { ...p, trades: map } : p;
 }

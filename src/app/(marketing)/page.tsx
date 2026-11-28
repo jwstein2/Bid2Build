@@ -19,6 +19,8 @@ import { InstallAppButton } from "@/components/marketing/install-app-button";
 import { getAccountStatus } from "@/lib/account/server";
 import { COMPANY, PROMISES } from "@/lib/marketing/about";
 import { accountCtas, creditBadge, MEMBER_TAGLINE, type AccountStatus } from "@/lib/account/status";
+import { isQuickBooksEnabled } from "@/lib/quickbooks/config";
+import { faqLd, ldJson, ORG_ID, organizationLd, softwareApplicationLd } from "@/lib/seo/structured-data";
 
 const faqs: { q: string; a: string; visitorOnly?: boolean; freePlanOnly?: boolean; pmOnly?: boolean }[] = [
   { visitorOnly: true, q: "Is it really free?", a: `Yes. Every verified account gets ${plans.starterCredits} free bids to start, plus ${plans.monthlyCredits} free bid every month from your second month on. Drafts and previews are unlimited, with every trade and your branding. No credit card required.` },
@@ -28,6 +30,10 @@ const faqs: { q: string; a: string; visitorOnly?: boolean; freePlanOnly?: boolea
   { q: "Where is my draft saved?", a: "Before you sign in, drafts are saved in this browser on this device. After you sign in, they autosave to your account so you can pick them up on any device." },
   { q: `What is ${PM_PRODUCT_NAME}?`, a: `An add-on for Individual Unlimited that turns won bids into job schedules: a Gantt timeline built from your estimate, a company calendar, staff and subcontractor assignments, progress tracking, and customer progress updates you review and share. It's ${PRICES.pmMonthly}/month (${PRICES.pmAnnual}/year on annual plans). Team includes ${PRICES.pmIncludedEnterpriseEditors} schedule editor, and extra editors are ${PRICES.pmEditor}/month each.`, pmOnly: true },
   { q: "Does Built2Bid work for a team?", a: `Yes. The Team plan is ${PRICES.enterpriseBase}/month for ${PRICES.enterpriseIncludedUsers} licensed users, each with their own login and unlimited bidding, plus roles and permissions, a company dashboard, and one proposal style for the whole company. More users are added at volume pricing.` },
+  // Honest scope: Built2Bid tracks hours and labor; payroll and paying subs stay with the contractor's own tools.
+  { q: "Does Built2Bid run payroll?", a: isQuickBooksEnabled()
+    ? "Not yet. Built2Bid tracks hours and labor costs and sends approved hours to QuickBooks Online, where you run payroll and pay your subs. Built-in payroll is on our roadmap."
+    : "Not yet. Built2Bid tracks hours and labor costs, and you can export approved hours for the payroll provider you already use. Built-in payroll is on our roadmap." },
   { freePlanOnly: true, q: "What counts as one of my free bids?", a: "A credit is used when you finalize a new bid. Editing, re-finalizing, or re-downloading a bid you already finalized is free, and drafts never use a credit. Your monthly bid is used first, then starter credits." },
 ];
 
@@ -44,41 +50,18 @@ export default async function HomePage() {
   const badge = creditBadge(status);
   const pm = pmMarketedLive();
   const shownFaqs = faqs.filter((f) => (!f.visitorOnly || visitor) && (!f.freePlanOnly || status.kind !== "unlimited") && (!f.pmOnly || pm));
-  const softwareApp = {
-    "@type": "SoftwareApplication",
-    name: site.name,
-    applicationCategory: "BusinessApplication",
-    operatingSystem: "Web",
-    description: site.description,
-    offers: [
-      { "@type": "Offer", price: "0", priceCurrency: "USD", name: "Free" },
-      { "@type": "Offer", price: "19.99", priceCurrency: "USD", name: "Individual Unlimited Monthly" },
-      { "@type": "Offer", price: "199", priceCurrency: "USD", name: "Individual Unlimited Annual" },
-      ...(pm ? [{ "@type": "Offer", price: PRICES.pmMonthly.replace("$", ""), priceCurrency: "USD", name: `${PM_PRODUCT_NAME} add-on (monthly)` }] : []),
-      { "@type": "Offer", price: PRICES.enterpriseBase.replace("$", ""), priceCurrency: "USD", name: `Team (${PRICES.enterpriseIncludedUsers} users, monthly)` },
-    ],
-  };
   // One graph: the business, the website and the product, linked by @id so search engines can
-  // tie the brand name, logo and support contact to the app listing.
-  const orgId = `${site.url}/#organization`;
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "Organization",
-        "@id": orgId,
-        name: site.name,
-        url: site.url,
-        logo: `${site.url}/icon.png`,
-        contactPoint: { "@type": "ContactPoint", contactType: "customer support", email: site.supportEmail, availableLanguage: "English" },
-      },
-      { "@type": "WebSite", "@id": `${site.url}/#website`, name: site.name, url: site.url, publisher: { "@id": orgId } },
-      { ...softwareApp, url: site.url, publisher: { "@id": orgId } },
-    ],
-  };
+  // tie the brand name, logo and support contact to the app listing. Offers come from the billing modules.
+  const jsonLd = ldJson(
+    organizationLd(),
+    { "@type": "WebSite", "@id": `${site.url}/#website`, name: site.name, url: site.url, publisher: { "@id": ORG_ID() } },
+    softwareApplicationLd(),
+    // Only the questions this visitor can see on the page.
+    faqLd(shownFaqs),
+  );
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd }} />
       <section className="on-dark relative overflow-hidden bg-navy text-white">
         <div aria-hidden className="blueprint-grid-dark pointer-events-none absolute inset-0 [mask-image:linear-gradient(to_bottom,black,transparent_95%)]" />
         {/* Phones: headline, then the trade picker, then CTAs, so the first thing to tap is a trade.

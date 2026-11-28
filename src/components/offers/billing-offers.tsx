@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
-import { CalendarCheck, Loader2, X } from "lucide-react";
+import { CalendarCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { claimOffer, reportOffer } from "@/lib/offers/client";
 import { CANCEL_REASONS, type CancelReason } from "@/lib/offers/policy";
@@ -33,8 +33,8 @@ export function AnnualNudge({ bids, savings, annualPrice }: { bids: number; savi
         <p className="font-semibold text-ink">You&apos;ve finalized {bids} bids on Individual Unlimited. Switching to annual saves {savings} a year.</p>
         <p className="mt-0.5 text-ink-soft">Same features, {annualPrice} once a year. Stripe shows the exact amount and date before anything changes.</p>
         <div className="mt-2 flex flex-wrap items-center gap-3">
-          <Button size="sm" disabled={busy} onClick={async () => { setBusy(true); setErr(null); reportOffer("t5_annual", "clicked", "portal_annual"); const e = await openPortal("annual"); if (e) { setErr(e); setBusy(false); } }}>
-            {busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}Switch to annual
+          <Button loading={busy} size="sm" disabled={busy} onClick={async () => { setBusy(true); setErr(null); reportOffer("t5_annual", "clicked", "portal_annual"); const e = await openPortal("annual"); if (e) { setErr(e); setBusy(false); } }}>
+            Switch to annual
           </Button>
           <button type="button" onClick={dismiss} className="min-h-9 text-ink-soft hover:text-ink">Not now</button>
         </div>
@@ -92,12 +92,12 @@ export function CancelStep({ monthly, annualSavings }: { monthly: boolean; annua
         <li>Paid periods aren&apos;t refunded. You keep Individual Unlimited until the end of the period you paid for.</li>
       </ul>
       <div className="mt-4 flex flex-wrap items-center gap-2">
-        <Button variant="secondary" disabled={busy !== null} onClick={() => go("cancel")} data-testid="cancel-continue">
-          {busy === "cancel" && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}Continue to cancel
+        <Button loading={busy === "cancel"} variant="secondary" disabled={busy !== null} onClick={() => go("cancel")} data-testid="cancel-continue">
+          Continue to cancel
         </Button>
         {monthly && (
-          <Button variant="ghost" disabled={busy !== null} onClick={() => go("annual")}>
-            {busy === "annual" && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}Switch to annual instead (save {annualSavings})
+          <Button loading={busy === "annual"} variant="ghost" disabled={busy !== null} onClick={() => go("annual")}>
+            Switch to annual instead (save {annualSavings})
           </Button>
         )}
         <button type="button" onClick={() => setOpen(false)} className="min-h-11 px-2 text-sm text-muted hover:text-ink">Keep my plan</button>

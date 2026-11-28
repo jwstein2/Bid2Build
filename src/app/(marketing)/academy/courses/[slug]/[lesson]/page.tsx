@@ -22,6 +22,8 @@ import { StateRequirementsPanel } from "@/components/academy/startup/state-panel
 import { resolveLocation } from "@/lib/academy/kb/server";
 import { trades as TRADE_CATALOG } from "@/lib/trades/catalog";
 import timelineShot from "@/assets/marketing/timeline.webp";
+import { AdvancedOffer } from "@/components/academy/advanced/offer";
+import { advancedState } from "@/lib/academy/advanced/server";
 
 const tradeLabel = (slug: string) => slug.split("-").map((w) => w[0].toUpperCase() + w.slice(1)).join(" ");
 
@@ -74,6 +76,8 @@ export default async function LessonPage({ params, searchParams }: PageProps<"/a
   const sp = await searchParams;
   const r = await getLesson(slug, lessonSlug);
   if (!r) notFound();
+  // Academy Advanced courses exist only while Advanced Learning is visible (staff can always preview).
+  if (r.course.adv_subject && !(await advancedState()).visible) notFound();
   const { me } = await loadMe();
   const idx = r.outline.findIndex((o) => o.slug === lessonSlug);
   const prev = idx > 0 ? r.outline[idx - 1] : null;
@@ -106,6 +110,7 @@ export default async function LessonPage({ params, searchParams }: PageProps<"/a
 
   if (r.state === "locked") {
     const premium = r.access === "premium";
+    const advanced = r.access === "advanced" && r.course.adv_subject;
     return (
       <Container className="py-8">
         <Link href={`/academy/courses/${slug}`} className="inline-flex items-center gap-1 text-sm font-semibold text-accent-ink hover:underline"><ArrowLeft className="h-4 w-4" aria-hidden /> {r.course.title}</Link>
@@ -114,7 +119,12 @@ export default async function LessonPage({ params, searchParams }: PageProps<"/a
           <div className="min-w-0" data-testid="lesson-locked">
             <h1 className="font-display text-3xl font-extrabold">{r.title}</h1>
             <div className="mt-5 max-w-2xl">
-              {premium ? (
+              {advanced ? (
+                <>
+                  <Notice title="This lesson is part of Advanced Learning">The first lesson of every advanced subject is a free preview. Choose a package below to open the rest, or keep learning free in the Classroom.</Notice>
+                  <AdvancedOffer subject={r.course.adv_subject!} className="mt-5" />
+                </>
+              ) : premium ? (
                 <Notice title="This is a premium lesson">Premium lessons are included with Built2Bid Individual Unlimited, or when an Academy admin grants premium access.{" "}
                   <Link href="/pricing" className="font-semibold underline">See plans</Link></Notice>
               ) : (

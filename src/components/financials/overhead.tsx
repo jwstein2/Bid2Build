@@ -1,10 +1,11 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Plus, Repeat } from "lucide-react";
+import { Plus, Repeat } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { finAction, newKey, today, usd } from "./fin-client";
 import { OVERHEAD_CATEGORIES, RECURRENCE_LABEL, type OverheadCategory, type Recurrence } from "@/lib/financials/overhead";
+import { FileDrop } from "@/components/ui/file-drop";
 
 const MONEY = /^\d{1,12}(\.\d{1,2})?$/;
 const toMoney = (v: string) => (MONEY.test(v.trim()) ? v.trim() : "");
@@ -110,16 +111,16 @@ export function OverheadForm({ vendors, prefill, canPlan, onCancel }: { vendors:
             </select>
           </label>
         )}
-        <label className="label sm:col-span-2" htmlFor="oh-file">Bill or receipt <span className="font-normal text-muted">(optional photo or PDF)</span>
+        <FileDrop className="sm:col-span-2 rounded-lg"><label className="label" htmlFor="oh-file">Bill or receipt <span className="font-normal text-muted">(optional photo or PDF)</span>
           <input id="oh-file" type="file" accept="image/*,application/pdf" className="field mt-1" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-        </label>
+        </label></FileDrop>
       </div>
       {f.recurrence !== "none" && !prefill?.recurringEventId && (
         <p className="flex items-start gap-1.5 text-xs text-muted"><Repeat className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
           {canPlan ? "Future dates go into the cash-flow forecast as planned costs. Enter each actual bill when it arrives and the plan moves to the next date, so nothing is counted twice." : "Your role can record the bill, but adding future dates to the cash-flow forecast needs a role with cash planning."}</p>
       )}
       <div className="flex flex-wrap items-center gap-2">
-        <Button type="submit" disabled={busy} data-testid="overhead-save">{busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Plus className="h-4 w-4" aria-hidden />} Save</Button>
+        <Button loading={busy} type="submit" disabled={busy} data-testid="overhead-save">{!busy && <Plus className="h-4 w-4" aria-hidden />} Save</Button>
         <span className="text-xs text-muted">Records the cost only. Nothing is paid or sent from Built2Bid.</span>
       </div>
       {msg && <p role="status" className={msg.tone === "ok" ? "rounded-md bg-ok-tint px-3 py-2 text-sm text-ok" : "rounded-md bg-danger-tint px-3 py-2 text-sm text-danger"}>{msg.text}</p>}
@@ -151,7 +152,7 @@ export function PayBill({ billId, balance }: { billId: string; balance: string }
       <label className="text-xs font-semibold text-ink-soft">Amount<input inputMode="decimal" className="field field-sm mt-1 w-28" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))} /></label>
       <label className="text-xs font-semibold text-ink-soft">Paid on<input type="date" className="field field-sm mt-1" value={paidOn} onChange={(e) => setPaidOn(e.target.value)} /></label>
       <label className="text-xs font-semibold text-ink-soft">By<select className="field field-sm mt-1" value={method} onChange={(e) => setMethod(e.target.value)}><option value="card">Card</option><option value="ach">ACH</option><option value="check">Check</option><option value="cash">Cash</option><option value="wire">Wire</option><option value="other">Other</option></select></label>
-      <Button type="submit" size="sm" disabled={busy}>{busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}Save</Button>
+      <Button loading={busy} type="submit" size="sm" disabled={busy}>Save</Button>
       <Button type="button" size="sm" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
       {err && <span role="alert" className="text-xs text-danger">{err}</span>}
     </form>

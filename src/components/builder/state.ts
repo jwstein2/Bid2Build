@@ -1,4 +1,4 @@
-import { newLineItem, uid } from "@/lib/estimate/factory";
+import { newLineItem, uid, withAutoTitle } from "@/lib/estimate/factory";
 import type { Estimate, EstimateGroup, LineItem, PricingRule } from "@/lib/estimate/types";
 import type { TemplateItem } from "@/lib/trades/catalog";
 import type { CalcRecord } from "@/lib/calculators/types";
@@ -59,6 +59,14 @@ function setGroupItems(e: Estimate, groupId: string, ordered: LineItem[]): Estim
 }
 
 export function reducer(state: State, action: Action): State {
+  const out = reduce(state, action);
+  // An automatic title follows the customer name and estimate date ("Jane Smith – 11/24/2026").
+  if (out === state || action.type === "replace") return out;
+  const estimate = withAutoTitle(state.estimate, out.estimate);
+  return estimate === out.estimate ? out : { ...out, estimate };
+}
+
+function reduce(state: State, action: Action): State {
   const e = state.estimate;
   const next = (estimate: Estimate, trash = state.trash): State => ({ estimate, trash, dirty: state.dirty + 1 });
 

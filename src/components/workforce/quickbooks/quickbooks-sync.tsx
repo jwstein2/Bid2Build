@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Banknote, CircleCheck, FileUp, Link2, RefreshCw, Send, Unplug } from "lucide-react";
+import { Banknote, CircleCheck, FileUp, Link2, Send, Unplug } from "lucide-react";
 import { Button, buttonClass } from "@/components/ui/button";
 import { Badge, Card, Notice } from "@/components/ui/misc";
 import { api } from "@/components/schedule/client";
@@ -156,8 +156,8 @@ export function QuickBooksSync({ configured, workers, projects, isFinancialsOn =
             <div className="flex flex-wrap items-end gap-3">
               <label className="text-sm font-medium text-navy">From<input type="date" value={from} max={to} onChange={(e) => setFrom(e.target.value)} className="mt-1 block min-h-11 rounded-lg border border-line-strong bg-surface px-2" /></label>
               <label className="text-sm font-medium text-navy">To<input type="date" value={to} min={from} onChange={(e) => setTo(e.target.value)} className="mt-1 block min-h-11 rounded-lg border border-line-strong bg-surface px-2" /></label>
-              <Button onClick={sync} disabled={busy === "sync" || matched === 0} data-testid="qb-sync">
-                {busy === "sync" ? <RefreshCw className="h-4 w-4 animate-spin" aria-hidden /> : <Send className="h-4 w-4" aria-hidden />} Send to QuickBooks
+              <Button loading={busy === "sync"} onClick={sync} disabled={busy === "sync" || matched === 0} data-testid="qb-sync">
+                {!(busy === "sync") && <Send className="h-4 w-4" aria-hidden />} Send to QuickBooks
               </Button>
             </div>
             {matched === 0 && <p className="text-sm text-muted">Match at least one worker first.</p>}

@@ -15,7 +15,7 @@ export const PILLARS = [
 
 export type Pillar = (typeof PILLARS)[number]["key"];
 export type CoverTheme = "navy" | "cyan" | "amber" | "green" | "slate" | "rose";
-export type Access = "public" | "members" | "premium";
+export type Access = "public" | "members" | "premium" | "advanced";
 export type CourseStatus = "draft" | "upcoming" | "in_review" | "published" | "archived";
 export type Level = "beginner" | "intermediate" | "advanced";
 
@@ -25,7 +25,7 @@ export const isPillar = (k: unknown): k is Pillar => typeof k === "string" && PI
 export const STATUS_LABEL: Record<CourseStatus, string> = {
   draft: "Draft", upcoming: "Coming soon", in_review: "In review", published: "Published", archived: "Archived",
 };
-export const ACCESS_LABEL: Record<Access, string> = { public: "Free", members: "Free for members", premium: "Premium" };
+export const ACCESS_LABEL: Record<Access, string> = { public: "Free", members: "Free for members", premium: "Premium", advanced: "Advanced" };
 export const LEVEL_LABEL: Record<Level, string> = { beginner: "Beginner", intermediate: "Intermediate", advanced: "Advanced" };
 
 /** Original Built2Bid level names (1-9) and the all-time points each needs. */

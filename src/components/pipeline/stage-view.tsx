@@ -16,9 +16,9 @@ export const STAGE_PAGE = 24;
  * with the same search the stage cards use, sorting, and incremental loading. Count and total are the stage's,
  * whatever the search shows. Same moves, actions and menus as the board cards.
  */
-export function StageView({ col, bids, total, allBids, capped, esign, onMove, initialQuery, onBack }: {
+export function StageView({ col, bids, total, allBids, capped, esign, onMove, onDelete, initialQuery, onBack }: {
   col: Column; bids: BoardBid[]; total: ColumnTotal; allBids: BoardBid[]; capped: boolean; esign: boolean;
-  onMove: (b: BoardBid, to: Column) => void; initialQuery: string; onBack: () => void;
+  onMove: (b: BoardBid, to: Column) => void; onDelete?: (b: BoardBid) => void; initialQuery: string; onBack: () => void;
 }) {
   const [query, setQuery] = useState(initialQuery);
   const [sort, setSort] = useState<StageSort>("recent");
@@ -59,7 +59,7 @@ export function StageView({ col, bids, total, allBids, capped, esign, onMove, in
             </p>
             <p className="text-xs text-muted">{COLUMN_HINTS[col]}</p>
           </div>
-          {col === "draft" && <ButtonLink href="/bids" variant="accent" size="sm">Create New Bid</ButtonLink>}
+          {col === "draft" && <ButtonLink href="/new-bid" variant="accent" size="sm">Create New Bid</ButtonLink>}
         </div>
         <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
           <StageSearchInput
@@ -86,7 +86,7 @@ export function StageView({ col, bids, total, allBids, capped, esign, onMove, in
           </p>
         ) : (
           <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 min-[112.5rem]:grid-cols-5" data-testid="stage-grid">
-            {shown.map((b) => <li key={b.id}><BidCard b={b} esign={esign} onMove={onMove} /></li>)}
+            {shown.map((b) => <li key={b.id}><BidCard b={b} esign={esign} onMove={onMove} onDelete={onDelete} /></li>)}
           </ul>
         )}
         {list.length > 0 && (

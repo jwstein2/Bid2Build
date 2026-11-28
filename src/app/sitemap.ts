@@ -1,8 +1,11 @@
 import type { MetadataRoute } from "next";
 import { site } from "@/lib/site";
+import { FACTS_PATH, VERIFIED_ON } from "@/lib/marketing/product-facts";
+import { COMPARISONS } from "@/lib/marketing/comparisons";
 import { trades } from "@/lib/trades/catalog";
 import { articles } from "@/lib/learn/articles";
 import { TOOLS } from "@/lib/marketing/tools";
+import { FREE_RESOURCES } from "@/lib/marketing/free-resources";
 import { ACADEMY_TRADES, ALL_COURSES } from "@/lib/academy/content/catalog";
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -11,9 +14,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: u("/"), changeFrequency: "weekly", priority: 1 },
     { url: u("/bids"), changeFrequency: "weekly", priority: 0.9 },
     { url: u("/pricing"), changeFrequency: "monthly", priority: 0.8 },
+    { url: u(FACTS_PATH), lastModified: VERIFIED_ON, changeFrequency: "monthly", priority: 0.7 },
+    { url: u("/compare"), changeFrequency: "monthly", priority: 0.5 },
+    ...COMPARISONS.map((c) => ({ url: u(`/compare/${c.slug}`), lastModified: c.verifiedOn, changeFrequency: "monthly" as const, priority: 0.6 })),
     { url: u("/learn"), changeFrequency: "monthly", priority: 0.6 },
     { url: u("/tools"), changeFrequency: "monthly", priority: 0.7 },
     ...TOOLS.map((t) => ({ url: u(`/tools/${t.slug}`), changeFrequency: "monthly" as const, priority: 0.7 })),
+    { url: u("/free"), changeFrequency: "monthly", priority: 0.6 },
+    ...FREE_RESOURCES.map((r) => ({ url: u(`/free/${r.slug}`), changeFrequency: "monthly" as const, priority: 0.6 })),
     ...trades.map((t) => ({ url: u(`/bids/${t.slug}`), changeFrequency: "monthly" as const, priority: t.featured ? 0.8 : 0.7 })),
     ...articles.map((a) => ({ url: u(`/learn/${a.slug}`), lastModified: a.updated, changeFrequency: "yearly" as const, priority: 0.5 })),
     // Contractor Academy: public pages only (discussions, profiles and member pages are never listed).

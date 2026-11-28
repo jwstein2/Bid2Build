@@ -72,7 +72,7 @@ export function AssignPanel({ task, project, team, tasks, people, me, myName, on
         <p className="mt-1 text-xs font-semibold text-warn" data-testid="assign-busy">Also booked then: {busyList.slice(0, 3).map((b) => `${b.name} (${formatRange(b.plannedStart, b.plannedEnd)})`).join(", ")}{busyList.length > 3 ? "…" : ""}. You can still assign them.</p>
       )}
       <div className="mt-2 flex flex-wrap gap-2">
-        <Button size="sm" onClick={save} disabled={busy || !changed} data-testid="assign-save">{busy ? "Saving…" : "Save assignment"}</Button>
+        <Button loading={busy} size="sm" onClick={save} disabled={busy || !changed} data-testid="assign-save">{busy ? "Saving…" : "Save assignment"}</Button>
         {team.canManage && !adding && <Button size="sm" variant="secondary" onClick={() => setAdding(true)} data-testid="assign-quick-add"><Plus className="h-4 w-4" aria-hidden /> New contact</Button>}
       </div>
       {adding && (

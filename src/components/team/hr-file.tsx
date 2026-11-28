@@ -12,6 +12,7 @@ import {
   type HrDocType, type HrField, type HrFile,
 } from "@/lib/team/hr";
 import { BankAccountCard } from "@/components/team/bank-account";
+import { FileDrop } from "@/components/ui/file-drop";
 
 const fmt = (d: string | null) => (d ? new Date(`${d.slice(0, 10)}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) : "");
 const hrs = (n: number) => `${Number.isInteger(n) ? n : n.toFixed(1)} h`;
@@ -160,7 +161,7 @@ function DetailsForm({ file, onSaved, onError }: { file: HrFile; onSaved: () => 
       )}
       <label className="block"><span className="label">HR notes (private)</span><textarea className="field" rows={3} maxLength={5000} value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })} /></label>
       <div className="flex items-center gap-2">
-        <Button size="sm" onClick={save} disabled={busy || !dirty} data-testid="hr-save">{busy ? "Saving…" : "Save HR file"}</Button>
+        <Button loading={busy} size="sm" onClick={save} disabled={busy || !dirty} data-testid="hr-save">{busy ? "Saving…" : "Save HR file"}</Button>
         {dirty && <span className="text-xs text-muted">Unsaved changes</span>}
       </div>
     </Section>
@@ -208,7 +209,7 @@ function SsnCard({ file, ready, onDone, onError }: { file: HrFile; ready: boolea
           {editing ? (
             <div className="flex flex-wrap items-end gap-2">
               <label className="block"><span className="label">9-digit SSN</span><input className="field" inputMode="numeric" autoComplete="off" maxLength={11} value={ssn} onChange={(e) => setSsn(e.target.value.replace(/[^\d-]/g, ""))} /></label>
-              <Button size="sm" onClick={save} disabled={busy}>{busy ? "Saving…" : "Save"}</Button>
+              <Button loading={busy} size="sm" onClick={save} disabled={busy}>{busy ? "Saving…" : "Save"}</Button>
               <Button size="sm" variant="secondary" onClick={() => { setEditing(false); setSsn(""); }}>Cancel</Button>
             </div>
           ) : <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>{file.ssn.onFile ? "Replace" : "Enter SSN"}</Button>}
@@ -257,9 +258,9 @@ function Documents({ file, today, onDone, onError }: { file: HrFile; today: stri
           <label className="block"><span className="label">Title (optional)</span><input className="field" maxLength={200} value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} /></label>
           <label className="block"><span className="label">Signed / dated</span><input type="date" className="field" value={f.signedOn} onChange={(e) => setF({ ...f, signedOn: e.target.value })} /></label>
           <label className="block"><span className="label">Expires (if it does)</span><input type="date" className="field" value={f.expiresOn} onChange={(e) => setF({ ...f, expiresOn: e.target.value })} /></label>
-          <label className="block"><span className="label">File (PDF or photo, up to 15 MB)</span><input type="file" accept="application/pdf,image/jpeg,image/png,image/webp" className="field py-2" onChange={(e) => setUpload(e.target.files?.[0] ?? null)} /></label>
+          <FileDrop className="rounded-lg"><label className="block"><span className="label">File (PDF or photo, up to 15 MB)</span><input type="file" accept="application/pdf,image/jpeg,image/png,image/webp" className="field py-2" onChange={(e) => setUpload(e.target.files?.[0] ?? null)} /></label></FileDrop>
           <label className="block sm:col-span-2"><span className="label">Note (optional)</span><input className="field" maxLength={1000} value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} /></label>
-          <div className="flex gap-2"><Button size="sm" onClick={save} disabled={busy}><FileUp className="h-4 w-4" aria-hidden /> {busy ? "Saving…" : "Save"}</Button><Button size="sm" variant="secondary" onClick={() => setType("")}>Cancel</Button></div>
+          <div className="flex gap-2"><Button loading={busy} size="sm" onClick={save} disabled={busy}><FileUp className="h-4 w-4" aria-hidden /> {busy ? "Saving…" : "Save"}</Button><Button size="sm" variant="secondary" onClick={() => setType("")}>Cancel</Button></div>
         </div>
       )}
       {file.documents.length === 0 ? <p className="text-sm text-muted">Nothing on file yet: application, W-4, I-9, direct deposit form, handbook acknowledgment.</p> : (
@@ -321,7 +322,7 @@ function Certifications({ file, today, onDone, onError }: { file: HrFile; today:
           <label className="block"><span className="label">Issued by</span><input className="field" maxLength={200} value={f.issuer} onChange={(e) => setF({ ...f, issuer: e.target.value })} /></label>
           <label className="block"><span className="label">Issued on</span><input type="date" className="field" value={f.issuedOn} onChange={(e) => setF({ ...f, issuedOn: e.target.value })} /></label>
           <label className="block"><span className="label">Expires on</span><input type="date" className="field" value={f.expiresOn} onChange={(e) => setF({ ...f, expiresOn: e.target.value })} /></label>
-          <div className="flex gap-2"><Button size="sm" onClick={save} disabled={busy || !f.name.trim()}>{busy ? "Saving…" : "Save"}</Button><Button size="sm" variant="secondary" onClick={() => setF(null)}>Cancel</Button></div>
+          <div className="flex gap-2"><Button loading={busy} size="sm" onClick={save} disabled={busy || !f.name.trim()}>{busy ? "Saving…" : "Save"}</Button><Button size="sm" variant="secondary" onClick={() => setF(null)}>Cancel</Button></div>
         </div>
       ) : <Button size="sm" variant="secondary" onClick={() => setF(blank)}>Add a license or certification</Button>}
     </Section>
@@ -370,7 +371,7 @@ function TimeOff({ file, onDone, onError }: { file: HrFile; onDone: (t: string) 
           <label className="block"><span className="label">Hours</span><input className="field" inputMode="decimal" value={f.hours} onChange={(e) => setF({ ...f, hours: e.target.value.replace(/[^\d.]/g, "") })} /></label>
           <label className="block"><span className="label">Status</span><select className="field" value={f.status} onChange={(e) => setF({ ...f, status: e.target.value as "approved" | "requested" })}><option value="approved">Approved</option><option value="requested">Requested</option></select></label>
           <label className="block"><span className="label">Note</span><input className="field" maxLength={500} value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} /></label>
-          <div className="flex gap-2"><Button size="sm" onClick={save} disabled={busy || !f.startDate || !Number(f.hours)}>{busy ? "Saving…" : "Save"}</Button><Button size="sm" variant="secondary" onClick={() => setF(null)}>Cancel</Button></div>
+          <div className="flex gap-2"><Button loading={busy} size="sm" onClick={save} disabled={busy || !f.startDate || !Number(f.hours)}>{busy ? "Saving…" : "Save"}</Button><Button size="sm" variant="secondary" onClick={() => setF(null)}>Cancel</Button></div>
         </div>
       ) : <Button size="sm" variant="secondary" onClick={() => setF({ kind: "pto", startDate: "", endDate: "", hours: "8", status: "approved", note: "" })}>Record time off</Button>}
       <p className="text-xs text-muted">Allowances are set in the details above. Balances count approved time off in the calendar year; carry-over and accrual rules aren&apos;t applied.</p>

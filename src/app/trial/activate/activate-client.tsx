@@ -63,7 +63,7 @@ export function ActivateTrial({ signedInAs }: { signedInAs: string | null | unde
         <p className="mt-2 text-ink-soft">Built2Bid Individual Unlimited is active until <strong>{when}</strong>. No card is on file and nothing will be charged.</p>
         <p className="mt-3 text-sm text-muted">When it ends your account goes back to its normal plan. Your bids, customers and any remaining free credits stay right where they are.</p>
         <div className="mt-6 flex flex-wrap gap-2">
-          <ButtonLink href="/bids" variant="accent">Create a bid</ButtonLink>
+          <ButtonLink href="/new-bid" variant="accent">Create a bid</ButtonLink>
           <ButtonLink href="/dashboard" variant="secondary">Go to dashboard</ButtonLink>
         </div>
       </>
@@ -100,7 +100,7 @@ export function ActivateTrial({ signedInAs }: { signedInAs: string | null | unde
           )}
           <div className="mt-6 flex flex-wrap items-center gap-3">
             {!(result && !result.ok && ["already_has_access", "already_used", "invalid", "invite_expired"].includes(result.reason)) && (
-              <Button type="button" variant="accent" onClick={activate} disabled={busy}>{busy ? "Activating…" : "Activate my 7 days"}</Button>
+              <Button loading={busy} type="button" variant="accent" onClick={activate} disabled={busy}>{busy ? "Activating…" : "Activate my 7 days"}</Button>
             )}
             <form action="/auth/signout" method="post" className="text-sm text-ink-soft"><button type="submit" className="underline">Use a different account</button></form>
           </div>

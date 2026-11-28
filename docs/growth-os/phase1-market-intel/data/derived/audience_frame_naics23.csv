@@ -1,0 +1,13 @@
+id,metric,value,unit,formula,claim_type,inputs
+D001,NAICS 23 employer establishments with <20 paid employees (1-20 total-people employer proxy),740085,establishments,n_lt5+n5_9+n10_19,derived_fact,"E003,E004,E005,A02"
+D002,Share of NAICS 23 employer establishments with <20 paid employees,90.9,percent,lt20/est,derived_fact,"E001,E003-E005"
+D003,NAICS 23 employer establishments with 20+ paid employees (outside audience),74472,establishments,est-lt20,derived_fact,"E001,E003-E005"
+D004,"NAICS 23 nonemployers with receipts >= $50,000 (viable solo operators, low scenario floor)",1038633,establishments,sum of NES size classes >= floor,derived_fact,"E010,E013-E017,A01"
+D005,"NAICS 23 nonemployers with receipts >= $25,000 (viable solo operators, base scenario floor)",1583437,establishments,sum of NES size classes >= floor,derived_fact,"E010,E013-E017,A01"
+D006,"NAICS 23 nonemployers with receipts >= $10,000 (viable solo operators, high scenario floor)",2230446,establishments,sum of NES size classes >= floor,derived_fact,"E010,E013-E017,A01"
+D007,"Share of NAICS 23 nonemployers with receipts < $10,000",26.7,percent,(size111+size118)/total,derived_fact,"E010,E013,E014"
+D008,Share of NAICS 23 nonemployers that are sole proprietorships,89.7,percent,LFO S / total,derived_fact,"E010,E012"
+D009,Average receipts per NAICS 23 nonemployer,84859,USD,receipts/estab,derived_fact,"E010,E011"
+D010,"NAICS 23 business units with 1-20 total people, base (employer <20 + solo >= base floor)",2323522,business units,D001 + base solo,derived_estimate,"D001,A01,A02"
+D011,"Paid employees at NAICS 23 employer establishments (workers, NOT buyers)",7659459,employees,CBP emp,derived_fact,E002
+D012,Paid employees per NAICS 23 employer establishment with <20 employees is not published; CPWR reports 2.4M workers at <20-employee establishments in 2023,2400000,workers,from CPWR,verified_fact,E032

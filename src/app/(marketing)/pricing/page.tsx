@@ -1,3 +1,4 @@
+import { breadcrumbLd, ldJson } from "@/lib/seo/structured-data";
 import { openGraphFor } from "@/lib/seo/open-graph";
 import type { Metadata } from "next";
 import { CalendarRange, Check, Clock, Gem, Minus } from "lucide-react";
@@ -88,6 +89,7 @@ export default async function PricingPage() {
   const manage = <ButtonLink href="/settings/billing" variant="secondary" size="lg" className="w-full">Manage subscription</ButtonLink>;
   return (
     <Container className="py-14">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(breadcrumbLd([{ name: "Pricing", path: "/pricing" }])) }} />
       <div className="mx-auto max-w-2xl text-center">
         <h1 className="text-4xl font-extrabold">Simple pricing for every contractor</h1>
         <p className="mt-3 text-lg text-ink-soft" data-testid="pricing-intro">{pricingIntro(status)}</p>

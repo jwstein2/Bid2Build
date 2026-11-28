@@ -1,3 +1,4 @@
+import { breadcrumbLd, ldJson } from "@/lib/seo/structured-data";
 import { site } from "@/lib/site";
 import { openGraphFor } from "@/lib/seo/open-graph";
 import type { Metadata } from "next";
@@ -22,6 +23,7 @@ export default function BidsIndex() {
   const families = Array.from(new Set(trades.map((t) => t.family)));
   return (
     <Container className="py-14">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(breadcrumbLd([{ name: "Trades", path: "/bids" }])) }} />
       <p className="text-xs font-bold uppercase tracking-[0.14em] text-accent-ink">Start here · Choose your trade</p>
       <h1 className="mt-2 text-4xl font-extrabold text-navy">What are you bidding today?</h1>
       <p className="mt-3 max-w-2xl text-lg text-ink-soft">Choose a trade to start with suggested sections and items, or start a custom project. Every trade uses the same pricing engine and proposal builder.</p>

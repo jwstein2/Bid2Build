@@ -1,5 +1,5 @@
 "use client";
-import { Check, Copy, Loader2, Mail, UserPlus } from "lucide-react";
+import { Check, Copy, Mail, UserPlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { Button, ButtonLink } from "../ui/button";
@@ -95,7 +95,7 @@ function InviteForm({ teams, free, canBuySeats, disabled }: { teams: Team[]; fre
           <select id={`${id}-r`} value={role} onChange={(e) => setRole(e.target.value as typeof role)} className="mt-1 h-11 w-full rounded-lg border border-line bg-surface px-2 text-base">{ROLES.map((r) => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}</select></div>
         <div><label htmlFor={`${id}-t`} className="text-sm font-semibold">Team</label>
           <select id={`${id}-t`} value={team} onChange={(e) => setTeam(e.target.value)} className="mt-1 h-11 w-full rounded-lg border border-line bg-surface px-2 text-base"><option value="">No team</option>{teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select></div>
-        <Button type="submit" disabled={busy || disabled || free === 0}>{busy && <Loader2 className="h-4 w-4 animate-spin" />}Create invitation</Button>
+        <Button loading={busy} type="submit" disabled={busy || disabled || free === 0}>Create invitation</Button>
       </form>
       {err && <p role="alert" className="mt-2 text-sm text-danger">{err}</p>}
       {link && (

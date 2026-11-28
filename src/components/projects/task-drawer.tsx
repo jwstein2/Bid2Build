@@ -139,7 +139,7 @@ export function TaskDrawer({ task, project, people, resource, today, onClose, on
                   </fieldset>
                 ) : <p className="text-xs text-ink-soft">Only this task changes.</p>}
                 <div className="flex gap-2">
-                  <Button size="sm" onClick={saveDates} disabled={busy} data-testid="drawer-save-dates">{busy ? "Saving…" : "Save dates"}</Button>
+                  <Button loading={busy} size="sm" onClick={saveDates} disabled={busy} data-testid="drawer-save-dates">{busy ? "Saving…" : "Save dates"}</Button>
                   <Button size="sm" variant="secondary" onClick={() => setPlan(null)}>Cancel</Button>
                 </div>
               </div>

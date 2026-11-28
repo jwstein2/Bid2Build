@@ -8,6 +8,7 @@ import { api } from "@/components/schedule/client";
 import { DIVERSITY_CERTS, docTypeLabel, expiryState, maskTin, SUB_DOC_TYPES, TAX_CLASSIFICATIONS, type DiversityCert, type SubDocType, type SubDocument, type SubRecord, type TaxClassification } from "@/lib/team/records";
 import { ACCOUNT_TYPES, routingOk } from "@/lib/team/hr";
 import { BankAccountCard } from "@/components/team/bank-account";
+import { FileDrop } from "@/components/ui/file-drop";
 
 const fmtDay = (d: string | null) => (d ? new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) : "");
 const money = (n: number | null) => (n === null ? "" : n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }));
@@ -131,14 +132,14 @@ function DocForm({ resourceId, docType, onCancel, onSaved }: { resourceId: strin
         {meta.expires && <label className="block"><span className="label">Effective date</span><input type="date" className="field" value={f.effectiveOn} onChange={set("effectiveOn")} /></label>}
         {meta.expires && <label className="block"><span className="label">Expiration date</span><input type="date" className="field" value={f.expiresOn} onChange={set("expiresOn")} data-testid="doc-expires" /></label>}
         {(docType === "w9" || meta.group === "agreement") && <label className="block"><span className="label">Signed on</span><input type="date" className="field" value={f.signedOn} onChange={set("signedOn")} /></label>}
-        <label className="block sm:col-span-2"><span className="label">File (PDF or photo, up to 15 MB, optional)</span>
-          <input type="file" accept="application/pdf,image/jpeg,image/png,image/webp" className="field py-2" onChange={(e) => setFile(e.target.files?.[0] ?? null)} data-testid="doc-file" /></label>
+        <FileDrop className="sm:col-span-2 rounded-lg"><label className="block"><span className="label">File (PDF or photo, up to 15 MB, optional)</span>
+          <input type="file" accept="application/pdf,image/jpeg,image/png,image/webp" className="field py-2" onChange={(e) => setFile(e.target.files?.[0] ?? null)} data-testid="doc-file" /></label></FileDrop>
         <label className="block sm:col-span-2"><span className="label">Note (optional)</span><input className="field" value={f.note} maxLength={1000} onChange={set("note")} /></label>
       </div>
       {(docType === "w9" || insurance) && <p className="text-xs text-muted">Recording a new {meta.label.toLowerCase()} keeps the old one as an older version.</p>}
       {err && <Notice tone="danger">{err}</Notice>}
       <div className="flex gap-2">
-        <Button size="sm" onClick={save} disabled={busy} data-testid="doc-save"><FileUp className="h-4 w-4" aria-hidden /> {busy ? "Saving…" : "Save"}</Button>
+        <Button loading={busy} size="sm" onClick={save} disabled={busy} data-testid="doc-save"><FileUp className="h-4 w-4" aria-hidden /> {busy ? "Saving…" : "Save"}</Button>
         <Button size="sm" variant="secondary" onClick={onCancel}>Cancel</Button>
       </div>
     </div>
@@ -184,7 +185,7 @@ function TaxForm({ record, onSaved, onError }: { record: SubRecord; onSaved: () 
             <option value="auto">Automatic ({corp ? "no: corporations usually don't get a 1099-NEC" : "yes"})</option><option value="yes">Yes, always</option><option value="no">No</option></select></label>
       </div>
       <p className="text-xs text-muted">For security we keep only the last 4 digits of the SSN or EIN. The full number stays on the W-9 file you upload below, which only people allowed to manage subcontractor compliance can open.</p>
-      <Button size="sm" onClick={save} disabled={busy} data-testid="tax-save">{busy ? "Saving…" : "Save W-9 details"}</Button>
+      <Button loading={busy} size="sm" onClick={save} disabled={busy} data-testid="tax-save">{busy ? "Saving…" : "Save W-9 details"}</Button>
     </section>
   );
 }
@@ -235,7 +236,7 @@ function ProfileForm({ record, onSaved, onError }: { record: SubRecord; onSaved:
       </fieldset>
       <label className="flex min-h-9 items-center gap-2 text-sm"><input type="checkbox" checked={backup} onChange={(e) => setBackup(e.target.checked)} data-testid="sub-backup" />Backup withholding applies (no valid TIN, or the IRS sent a B-notice)</label>
       <p className="text-xs text-muted">EMR is the experience modification rate from their workers&apos; comp insurer; 1.0 is average and lower is safer. The ACH account number is saved separately, encrypted.</p>
-      <Button size="sm" onClick={save} disabled={busy} data-testid="sub-profile-save">{busy ? "Saving…" : "Save business details"}</Button>
+      <Button loading={busy} size="sm" onClick={save} disabled={busy} data-testid="sub-profile-save">{busy ? "Saving…" : "Save business details"}</Button>
     </section>
   );
 }

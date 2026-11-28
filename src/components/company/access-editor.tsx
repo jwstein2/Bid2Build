@@ -8,7 +8,7 @@
  * The draft is a permission set. Saving sends the same granted/revoked arrays the older editor sends (plus the
  * profile), and the database re-checks every rule.
  */
-import { ChevronDown, Eye, History, Loader2, Lock, RotateCcw, Search, ShieldAlert } from "lucide-react";
+import { ChevronDown, Eye, History, Lock, RotateCcw, Search, ShieldAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useId, useMemo, useState } from "react";
 import { Button } from "../ui/button";
@@ -294,7 +294,7 @@ export function AccessEditor({ member, licenses, policy, premium, actor, flags, 
         {!review ? (
           <Button type="button" onClick={() => setReview(true)} disabled={!dirty} data-testid="access-review-btn">Review changes</Button>
         ) : (
-          <Button type="button" onClick={save} disabled={busy || !dirty} data-testid="access-save">{busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}Save Access</Button>
+          <Button loading={busy} type="button" onClick={save} disabled={busy || !dirty} data-testid="access-save">Save Access</Button>
         )}
         <Button type="button" variant="secondary" onClick={() => { if (review) setReview(false); else onClose(); }}>Cancel</Button>
         {!dirty && <span className="text-xs text-ink-soft">No changes yet.</span>}
@@ -365,7 +365,7 @@ function HistoryButton({ userId }: { userId: string }) {
   }
   return (
     <>
-      <Button type="button" variant="secondary" size="sm" onClick={load} aria-expanded={rows !== null} data-testid="access-history-toggle">{busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <History className="h-4 w-4" aria-hidden />}Change history</Button>
+      <Button loading={busy} type="button" variant="secondary" size="sm" onClick={load} aria-expanded={rows !== null} data-testid="access-history-toggle">{!busy && <History className="h-4 w-4" aria-hidden />}Change history</Button>
       {err && <p role="alert" className="w-full text-sm text-danger">{err}</p>}
       {rows && (
         <div className="w-full rounded-lg border border-line bg-surface p-3" data-testid="access-history">
@@ -424,7 +424,7 @@ export function AccessPolicyCard({ policy }: { policy: AccessPolicy }) {
               </span>
             </li>
           ))}</ul>
-          <Button type="button" className="mt-3" onClick={save} disabled={busy} data-testid="policy-save">{busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}Save policy</Button>
+          <Button loading={busy} type="button" className="mt-3" onClick={save} disabled={busy} data-testid="policy-save">Save policy</Button>
           {msg && <p role={msg.ok ? "status" : "alert"} className={`mt-2 text-sm ${msg.ok ? "text-ok" : "text-danger"}`}>{msg.text}</p>}
         </div>
       )}

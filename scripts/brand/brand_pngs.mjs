@@ -20,7 +20,7 @@ for (const s of icoSizes) {
   icoPngs.push(buf);
   writeFileSync(join(brand, `favicon-${s}.png`), buf);
 }
-for (const s of [192, 512]) await png(mark, s, join(brand, `icon-${s}.png`));
+for (const s of [192, 256, 512, 1024]) await png(mark, s, join(brand, `icon-${s}.png`));
 await png(mark, 180, join(root, "src/app/apple-icon.png"));
 await png(mark, 512, join(root, "src/app/icon.png"));
 

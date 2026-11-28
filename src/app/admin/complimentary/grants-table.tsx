@@ -151,7 +151,7 @@ function ActionDialog({ dialog, onClose }: { dialog: Exclude<Dialog, null>; onCl
   const footer = (confirmLabel: string, onConfirm: () => void, danger = false, disabled = false) => (
     <div className="mt-5 flex flex-wrap justify-end gap-2">
       <Button variant="ghost" onClick={onClose}>{done ? "Close" : "Cancel"}</Button>
-      {!done && <Button variant={danger ? "danger" : "primary"} onClick={onConfirm} disabled={pending || disabled}>{pending ? "Working…" : confirmLabel}</Button>}
+      {!done && <Button loading={pending} variant={danger ? "danger" : "primary"} onClick={onConfirm} disabled={pending || disabled}>{pending ? "Working…" : confirmLabel}</Button>}
     </div>
   );
 

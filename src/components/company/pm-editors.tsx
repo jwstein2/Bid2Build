@@ -1,5 +1,5 @@
 "use client";
-import { ArrowRightLeft, CalendarRange, Loader2, Minus, Plus, UserMinus } from "lucide-react";
+import { ArrowRightLeft, CalendarRange, Minus, Plus, UserMinus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { Button } from "../ui/button";
@@ -113,7 +113,7 @@ export function PmEditorsCard({ seats, members, extra, canManage, canBuy, comp, 
                   </label>
                   <p className="mt-2 text-xs text-ink-soft">The seat keeps its place and kind, so nothing is bought or charged again. {nameOf(x.userId)} becomes view-only{n ? ` on ${n} schedule${n === 1 ? "" : "s"}` : ""}; every schedule and its history stay as they are.</p>
                   <div className="mt-2 flex gap-2">
-                    <Button size="sm" disabled={!moving.to || busy !== null} onClick={() => reassign(x.userId, moving.to)} data-testid="reassign-confirm">{busy === x.userId && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}Move seat</Button>
+                    <Button loading={busy === x.userId} size="sm" disabled={!moving.to || busy !== null} onClick={() => reassign(x.userId, moving.to)} data-testid="reassign-confirm">Move seat</Button>
                     <Button size="sm" variant="secondary" onClick={() => setMoving(null)}>Cancel</Button>
                   </div>
                 </div>
@@ -124,7 +124,7 @@ export function PmEditorsCard({ seats, members, extra, canManage, canBuy, comp, 
                     <span id={`${id}-rm-${x.userId}`}>{n ? `They can currently edit ${n} company schedule${n === 1 ? "" : "s"}. ` : ""}After this they can still view schedules but can&apos;t change them. No schedule, task or customer update is deleted.{x.seatType === "paid" ? " The paid seat stays on your subscription until you remove it under Billing." : ""}</span>
                   </Notice>
                   <div className="mt-2 flex gap-2">
-                    <Button size="sm" variant="danger" disabled={busy !== null} onClick={() => remove(x.userId)} data-testid="remove-yes">{busy === x.userId && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}Remove seat</Button>
+                    <Button loading={busy === x.userId} size="sm" variant="danger" disabled={busy !== null} onClick={() => remove(x.userId)} data-testid="remove-yes">Remove seat</Button>
                     <Button size="sm" variant="secondary" onClick={() => setConfirmRemove(null)}>Keep</Button>
                   </div>
                 </div>
@@ -144,7 +144,7 @@ export function PmEditorsCard({ seats, members, extra, canManage, canBuy, comp, 
               {others.map((m) => (
                 <li key={m.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm">
                   <span className="min-w-0"><span className="font-medium">{m.name}</span> <span className="capitalize text-muted">· {m.role}</span></span>
-                  <Button size="sm" variant="secondary" disabled={busy !== null || full} onClick={() => assign(m)} aria-label={`Make ${m.name} a schedule editor`}>{busy === m.id && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}Make editor</Button>
+                  <Button loading={busy === m.id} size="sm" variant="secondary" disabled={busy !== null || full} onClick={() => assign(m)} aria-label={`Make ${m.name} a schedule editor`}>Make editor</Button>
                 </li>
               ))}
             </ul>
@@ -160,7 +160,7 @@ export function PmEditorsCard({ seats, members, extra, canManage, canBuy, comp, 
             <Button type="button" variant="secondary" aria-label="Fewer editor seats" onClick={() => set(target - 1)} disabled={target <= minExtra}><Minus className="h-4 w-4" /></Button>
             <input id={`${id}-n`} type="number" inputMode="numeric" min={minExtra} value={target} onChange={(e) => set(Number(e.target.value))} className="h-10 w-20 rounded-lg border border-line bg-surface px-3 text-center text-base font-semibold" />
             <Button type="button" variant="secondary" aria-label="More editor seats" onClick={() => set(target + 1)}><Plus className="h-4 w-4" /></Button>
-            <Button type="button" onClick={() => buy("preview")} disabled={busy !== null || target === extra}>{busy === "preview" && <Loader2 className="h-4 w-4 animate-spin" />}Preview change</Button>
+            <Button loading={busy === "preview"} type="button" onClick={() => buy("preview")} disabled={busy !== null || target === extra}>Preview change</Button>
           </div>
           {preview && (
             <div role="dialog" aria-labelledby={`${id}-c`} className="mt-4 rounded-xl border border-line bg-paper p-4" data-testid="pm-editor-preview">
@@ -176,7 +176,7 @@ export function PmEditorsCard({ seats, members, extra, canManage, canBuy, comp, 
               </dl>
               {!adding && <p className="mt-2 text-xs text-ink-soft">The unassigned editor seats are removed now. Your next invoice is at the new price.</p>}
               <div className="mt-3 flex flex-wrap gap-2">
-                <Button onClick={() => buy("confirm")} disabled={busy !== null}>{busy === "confirm" && <Loader2 className="h-4 w-4 animate-spin" />}{adding ? `Confirm and pay ${formatCents(preview.dueNowCents)}` : "Confirm removal"}</Button>
+                <Button loading={busy === "confirm"} onClick={() => buy("confirm")} disabled={busy !== null}>{adding ? `Confirm and pay ${formatCents(preview.dueNowCents)}` : "Confirm removal"}</Button>
                 <Button variant="secondary" onClick={() => setPreview(null)} disabled={busy !== null}>Cancel</Button>
               </div>
             </div>

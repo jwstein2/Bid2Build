@@ -1,5 +1,5 @@
 "use client";
-import { Loader2, Mail, MessageSquareText } from "lucide-react";
+import { Mail, MessageSquareText } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -100,7 +100,7 @@ function PhoneRow({ phone, verified, canChange }: { phone: string | null; verifi
           <p className="text-xs text-muted">We&apos;ll text a one-time code to confirm it. Msg &amp; data rates may apply.</p>
           {err && <Notice tone="danger">{err}</Notice>}
           <div className="flex gap-2">
-            <Button type="submit" size="sm" disabled={busy || input.replace(/\D/g, "").length < 6}>{busy && <Loader2 className="h-4 w-4 animate-spin" />} Text me a code</Button>
+            <Button loading={busy} type="submit" size="sm" disabled={busy || input.replace(/\D/g, "").length < 6}> Text me a code</Button>
             <Button type="button" size="sm" variant="ghost" onClick={() => setMode("view")}>Cancel</Button>
           </div>
         </form>
@@ -112,7 +112,7 @@ function PhoneRow({ phone, verified, canChange }: { phone: string | null; verifi
             value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} />
           {err && <Notice tone="danger">{err}</Notice>}
           <div className="flex flex-wrap items-center gap-3">
-            <Button type="submit" size="sm" disabled={busy || code.length < 6}>{busy && <Loader2 className="h-4 w-4 animate-spin" />} Confirm phone</Button>
+            <Button loading={busy} type="submit" size="sm" disabled={busy || code.length < 6}> Confirm phone</Button>
             <button type="button" className="min-h-11 text-sm text-brand underline disabled:text-muted disabled:no-underline" disabled={busy || cooldown > 0} onClick={() => void send(true)}>{cooldown > 0 ? `Resend in ${cooldown}s` : "Resend code"}</button>
             <button type="button" className="min-h-11 text-sm text-brand underline" onClick={() => setMode("enter")}>Different number</button>
           </div>
@@ -173,7 +173,7 @@ function EmailRow({ email, verified }: { email: string | null; verified: boolean
           <input id="settings-email" type="email" autoComplete="email" inputMode="email" autoCapitalize="none" spellCheck={false} className="field" value={input} onChange={(e) => setInput(e.target.value)} />
           {err && <Notice tone="danger">{err}</Notice>}
           <div className="flex gap-2">
-            <Button type="submit" size="sm" disabled={busy || !input.includes("@")}>{busy && <Loader2 className="h-4 w-4 animate-spin" />} Send confirmation</Button>
+            <Button loading={busy} type="submit" size="sm" disabled={busy || !input.includes("@")}> Send confirmation</Button>
             <Button type="button" size="sm" variant="ghost" onClick={() => setMode("view")}>Cancel</Button>
           </div>
         </form>
@@ -186,7 +186,7 @@ function EmailRow({ email, verified }: { email: string | null; verified: boolean
             value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} />
           {err && <Notice tone="danger">{err}</Notice>}
           <div className="flex gap-2">
-            <Button type="submit" size="sm" disabled={busy || code.length < 6}>{busy && <Loader2 className="h-4 w-4 animate-spin" />} Confirm email</Button>
+            <Button loading={busy} type="submit" size="sm" disabled={busy || code.length < 6}> Confirm email</Button>
             <Button type="button" size="sm" variant="ghost" onClick={() => setMode("enter")}>Change email</Button>
           </div>
         </form>

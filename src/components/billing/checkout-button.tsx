@@ -1,5 +1,5 @@
 "use client";
-import { Loader2 } from "lucide-react";
+import {  } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
@@ -41,7 +41,7 @@ export function CheckoutButton({ plan, signedIn, label, variant = "accent", clas
   }
   return (
     <div className={className}>
-      <Button variant={variant} size="lg" className="w-full" onClick={go} disabled={busy}>{busy && <Loader2 className="h-4 w-4 animate-spin" />}{label}</Button>
+      <Button loading={busy} variant={variant} size="lg" className="w-full" onClick={go} disabled={busy}>{label}</Button>
       {err && <p role="alert" className="mt-2 text-sm text-danger">{err}</p>}
     </div>
   );
@@ -59,7 +59,7 @@ export function PortalButton({ label = "Manage subscription" }: { label?: string
   }
   return (
     <div>
-      <Button variant="secondary" onClick={go} disabled={busy}>{busy && <Loader2 className="h-4 w-4 animate-spin" />}{label}</Button>
+      <Button loading={busy} variant="secondary" onClick={go} disabled={busy}>{label}</Button>
       {err && <p role="alert" className="mt-2 text-sm text-danger">{err}</p>}
     </div>
   );

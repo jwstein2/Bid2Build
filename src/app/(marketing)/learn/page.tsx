@@ -1,3 +1,4 @@
+import { breadcrumbLd, ldJson } from "@/lib/seo/structured-data";
 import { site } from "@/lib/site";
 import { openGraphFor } from "@/lib/seo/open-graph";
 import type { Metadata } from "next";
@@ -19,6 +20,7 @@ export const metadata: Metadata = {
 export default function LearnIndex() {
   return (
     <Container className="py-12">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(breadcrumbLd([{ name: "Contractor guides", path: "/learn" }])) }} />
       <LearnTabs current="/learn" />
       <h1 className="text-4xl font-extrabold">Contractor pricing and estimating guides</h1>
       <p className="mt-2 max-w-2xl text-ink-soft">Straightforward guides to pricing and presenting your work.</p>

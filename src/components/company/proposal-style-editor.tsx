@@ -1,5 +1,5 @@
 "use client";
-import { Building2, History, Lock, LockOpen, Loader2 } from "lucide-react";
+import { Building2, History, Lock, LockOpen } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { buildProposal } from "@/lib/proposal/build";
@@ -81,7 +81,7 @@ export function ProposalStyleEditor({ initial, ownerBusiness, people }: { initia
           <label className="mt-2 flex items-start gap-3">
             <input type="checkbox" className="mt-1 h-5 w-5" checked={allow} disabled={!canPolicy} onChange={(e) => setAllow(e.target.checked)} data-testid="allow-customization" />
             <span><span className="font-semibold">Allow Team Members to Customize Bid Style</span>
-              <span className="block text-sm text-ink-soft">Off: every bid uses the company style. On: people with &quot;Customize individual proposal style&quot; can change anything you haven&apos;t locked.</span></span>
+              <span className="block text-sm text-ink-soft">Off: every bid uses the company style. On: people with &quot;Customize individual proposal style&quot; can change anything you haven&apos;t locked. The owner and admins with template access can always change unlocked items on their own bids.</span></span>
           </label>
           {!canPolicy && <p className="mt-2 text-xs text-muted">Only the company owner, or someone they granted &quot;Change company-wide proposal policy&quot;, can change this or the locks.</p>}
           {canPolicy && <p className="mt-2 text-xs text-muted">Use the lock icons to keep an element fixed on every bid, even when customization is on.</p>}
@@ -137,7 +137,7 @@ export function ProposalStyleEditor({ initial, ownerBusiness, people }: { initia
         {!canStyle && <p className="text-xs text-muted">You can view the company style. Changing it needs &quot;Manage company proposal template&quot;.</p>}
 
         {msg && <p role={msg.tone === "danger" ? "alert" : "status"} className={cn("text-sm", msg.tone === "danger" ? "text-danger" : "text-ok")}>{msg.text}</p>}
-        {(canStyle || canPolicy) && <Button onClick={() => void save()} disabled={busy} data-testid="save-style">{busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />} Save company style</Button>}
+        {(canStyle || canPolicy) && <Button loading={busy} onClick={() => void save()} disabled={busy} data-testid="save-style"> Save company style</Button>}
         <p className="text-xs text-muted">Style never changes prices, and never alters a proposal that was already sent, approved or signed.</p>
 
         {initial.history.length > 0 && (

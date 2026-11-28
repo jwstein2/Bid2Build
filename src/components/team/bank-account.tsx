@@ -54,7 +54,7 @@ export function BankAccountCard({ resourceId, status, ready, purpose, onDone, on
           {editing ? (
             <div className="flex flex-wrap items-end gap-2">
               <label className="block"><span className="label">Account number</span><input className="field" inputMode="numeric" autoComplete="off" maxLength={20} value={account} onChange={(e) => setAccount(e.target.value.replace(/[^\d]/g, ""))} data-testid="bank-input" /></label>
-              <Button size="sm" onClick={save} disabled={busy}>{busy ? "Saving…" : "Save"}</Button>
+              <Button loading={busy} size="sm" onClick={save} disabled={busy}>{busy ? "Saving…" : "Save"}</Button>
               <Button size="sm" variant="secondary" onClick={() => { setEditing(false); setAccount(""); }}>Cancel</Button>
             </div>
           ) : <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>{status.onFile ? "Replace" : "Enter account number"}</Button>}

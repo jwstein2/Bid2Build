@@ -15,6 +15,8 @@ import { salesChargeDispute, salesChargeRefunded, syncSalesBilling } from "@/lib
 import { affiliateChargeDispute, affiliateChargeRefunded, syncAffiliateBilling } from "@/lib/affiliates/billing-server";
 import { recordChargeFact, recordInvoiceFact } from "@/lib/reconciliation/evidence";
 import type { StripeInvoiceLike } from "@/lib/reconciliation/facts";
+import { academyChargeEvent, finishConversion, recordAcademyInvoice } from "@/lib/academy/advanced/billing";
+import { isAcademyMeta } from "@/lib/academy/advanced/plans";
 
 /** List value of a new subscription's first period, in USD, from its price (for ad conversion value only). */
 function listValueUsd(sub: Stripe.Subscription): number | null {
@@ -26,6 +28,9 @@ export const runtime = "nodejs";
 
 const HANDLED = new Set([
   "checkout.session.completed",
+  // Academy Advanced: releases a founding-price reservation as soon as its Checkout session expires (optional:
+  // reservations also expire on their own). Ignored for every other session.
+  "checkout.session.expired",
   "customer.subscription.created",
   "customer.subscription.updated",
   "customer.subscription.deleted",
@@ -87,15 +92,24 @@ export async function POST(req: Request) {
       await recordChargeFact(admin, stripe, obj as unknown as Stripe.Charge);
       await salesChargeRefunded(admin, stripe, obj as unknown as Stripe.Charge);
       await affiliateChargeRefunded(admin, stripe, obj as unknown as Stripe.Charge);
+      await academyChargeEvent(admin, stripe, obj as unknown as Stripe.Charge);
     } else if (event.type === "charge.dispute.created" || event.type === "charge.dispute.closed") {
       const d = obj as unknown as Stripe.Dispute;
       const chargeId = typeof d.charge === "string" ? d.charge : d.charge?.id;
       if (chargeId) {
         const status = event.type === "charge.dispute.created" ? "open" : d.status === "won" ? "won" : "lost";
-        await recordChargeFact(admin, stripe, await stripe.charges.retrieve(chargeId), { status }).catch(() => "failed");
+        const charge = await stripe.charges.retrieve(chargeId);
+        await recordChargeFact(admin, stripe, charge, { status }).catch(() => "failed");
+        await academyChargeEvent(admin, stripe, charge, status);
       }
       await salesChargeDispute(admin, stripe, obj as unknown as Stripe.Dispute, event.type === "charge.dispute.closed");
       await affiliateChargeDispute(admin, stripe, obj as unknown as Stripe.Dispute, event.type === "charge.dispute.closed");
+    } else if (event.type === "checkout.session.expired") {
+      const s = obj as unknown as Stripe.Checkout.Session;
+      const quote = s.metadata?.quote_id;
+      if (isAcademyMeta(s.metadata) && quote && /^[0-9a-f-]{36}$/i.test(quote)) {
+        await admin.rpc("academy_adv_quote_mark", { p_quote_id: quote, p_status: "expired", p_session_id: s.id, p_subscription_id: null });
+      }
     } else if (event.type.startsWith("customer.subscription.")) {
       // Re-fetch so we always store the latest state, not a possibly stale event payload.
       subscriptionId = obj.id as string;
@@ -113,13 +127,29 @@ export async function POST(req: Request) {
       else await recordInvoiceFact(admin, obj as unknown as StripeInvoiceLike, { failed: event.type === "invoice.payment_failed" });
     }
 
+    let lastApplied: Awaited<ReturnType<typeof applySubscription>> | null = null;
+    let lastSub: Stripe.Subscription | null = null;
     if (subscriptionId) {
       const sub = await stripe.subscriptions.retrieve(subscriptionId);
       const res = await applySubscription(admin, sub, event.created);
+      lastApplied = res; lastSub = sub;
       if (!res.userId) throw new Error(`No user for subscription ${subscriptionId}`);
       if (event.type.startsWith("invoice.")) {
         await recordInvoiceFact(admin, obj as unknown as StripeInvoiceLike, { userId: res.userId, failed: event.type === "invoice.payment_failed" });
       }
+    }
+    if (subscriptionId && lastApplied?.academy) {
+      // Academy Advanced: its own payment ledger (founding-member count), and the Individual Unlimited -> All Access
+      // conversion. Sales commissions, affiliate credit, the founder welcome email and referral rewards are for
+      // software plans and are deliberately not triggered by Academy packages.
+      const sub = lastSub!;
+      if (event.type === "invoice.paid" || event.type === "invoice.payment_failed") {
+        await recordAcademyInvoice(admin, obj as never, { userId: lastApplied.userId!, subscriptionId, failed: event.type === "invoice.payment_failed" });
+      }
+      await finishConversion(admin, stripe, sub as never, (c) => applySubscription(admin, c, Math.floor(Date.now() / 1000)));
+    } else if (subscriptionId && lastApplied) {
+      const res = { ...lastApplied, userId: lastApplied.userId! };
+      const sub = lastSub!;
       // Sales Portal: keep a rep-attributed customer's plan and commission basis current, and create the
       // sale-month / anniversary commission from a paid invoice. Idempotent in the database; never throws.
       await syncSalesBilling(admin, stripe, sub, res.userId, {

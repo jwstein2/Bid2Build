@@ -1,10 +1,9 @@
-import { companyNav, loadMyCompany } from "@/lib/enterprise/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { cookies, headers } from "next/headers";
 import { after } from "next/server";
-import { getUser, createClient, createAdminClient } from "@/lib/supabase/server";
-import { isFinancialsEnabled, isPmEnabled, isSupabaseConfigured, isUnifiedHomeEnabled, serverEnv } from "@/lib/env";
+import { getUser, createAdminClient } from "@/lib/supabase/server";
+import { isSupabaseConfigured, serverEnv } from "@/lib/env";
 import { ATTRIBUTION_COOKIE, decodeAttribution } from "@/lib/growth/attribution";
 import { syncSignedInUser } from "@/lib/growth/leads";
 import { decodeTouches, touchesEnabled, trackingPermitted, TOUCHES_COOKIE, VISITOR_COOKIE } from "@/lib/growth/touches";
@@ -14,28 +13,10 @@ import { recordReferral } from "@/lib/growth/referral-server";
 import { decodeRepCookie, SALES_COOKIE } from "@/lib/sales/link";
 import { SALES_JOIN_COOKIE } from "@/lib/sales/next";
 import { isInviteToken } from "@/lib/sales/invite";
-import { NO_WORKSPACES, switchLinks } from "@/lib/workspaces";
-import { loadWorkspaces } from "@/lib/workspaces-server";
 import { recordRepAttribution } from "@/lib/sales/billing-server";
 import { recordAffiliateAttribution } from "@/lib/affiliates/billing-server";
 import { AFFILIATE_COOKIE, attributionOrder, decodeAffiliateCookie } from "@/lib/affiliates/link";
-import { AppSidebar } from "@/components/layout/app-nav";
-import { FeatureHost } from "@/components/features/feature-host";
-import { formatPhone } from "@/lib/auth/phone";
-import { loadLearningNav } from "@/lib/creator/nav";
-import { hasPremiumAccess } from "@/lib/billing/entitlement";
-import { PremiumAccessProvider } from "@/components/billing/premium";
-import { AccountThemeScript } from "@/components/theme/account-theme-script";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
-import { NotificationBell } from "@/components/operations/notification-bell";
-import { Suspense } from "react";
-import { GlobalSearchHost, SearchField } from "@/components/search/global-search";
-import { SearchFocus } from "@/components/search/search-focus";
-import { loadEffectiveAccess } from "@/lib/access/server";
-import { sidebarAccess } from "@/lib/access/nav";
-import { DemoBanner } from "@/components/demo/demo-controls";
-import { isPracticeEnabled } from "@/lib/demo/server";
-import { GuideHost } from "@/components/guide/guide-host";
+import { AppShell } from "@/components/layout/app-shell";
 
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -51,23 +32,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // A sales invite opened before signing in some other way: finish (or confirm) it before the contractor
   // app's own onboarding can take over. /sales/join forgets the invite once it's used or no longer open.
   if (isInviteToken((await cookies()).get(SALES_JOIN_COOKIE)?.value ?? "")) redirect("/sales/join");
-  const supabase = await createClient();
-  const [{ data: isAdmin }, company, premium, learning, access, workspaces, clockRes, wonRes] = await Promise.all([
-    supabase.rpc("is_admin", { p_user_id: user.id }), loadMyCompany(supabase), hasPremiumAccess(supabase), loadLearningNav(supabase),
-    // V6.7: which workspace links this person sees (company members only; solo accounts and owners see everything).
-    loadEffectiveAccess(supabase).catch(() => null),
-    // V8.10: "Switch to Sales Hub" in the account menu for sales reps and sales admins.
-    loadWorkspaces().catch(() => NO_WORKSPACES),
-    // V8.2: "Time clock" in the sidebar for anyone linked to a Staff entry (employees clock in there).
-    isPmEnabled() ? supabase.from("pm_resources").select("id").eq("linked_user_id", user.id).eq("kind", "staff").eq("status", "active").limit(1) : Promise.resolve({ data: [] }),
-    // 2026-11-22 simpler menu: has this account won a job yet? (One indexed head count.)
-    supabase.from("estimates").select("id", { count: "exact", head: true }).eq("user_id", user.id).in("pipeline_stage", ["won", "scheduled", "in_progress", "completed"]),
-  ]);
-  const clock = ((clockRes.data as unknown[] | null) ?? []).length > 0;
-  // New solo accounts start with the essentials (bids, customers, prices, templates); Projects, Workforce,
-  // Financials and Industry News sit under "More tools" until the first won job. Companies, admins,
-  // practice logins and anyone who already won a job see the full menu.
-  const essentials = !company && !isAdmin && !user.demo && !clock && !wonRes.error && (wonRes.count ?? 0) === 0;
   // Link the account to its lead + first-touch attribution (best effort, one indexed lookup when already linked).
   // Runs after the page is sent (next/server after()), so this bookkeeping never delays a signed-in page.
   // Demo / Practice logins are sample tenants: no lead, attribution or referral bookkeeping.
@@ -98,31 +62,5 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       }
     });
   }
-  return (
-    <PremiumAccessProvider unlocked={premium}>
-    <AccountThemeScript pref={user.theme} />
-    {/* app-theme: marks a customer app screen, so the Dark Mode tokens (globals.css) apply. */}
-    {user.demo && <DemoBanner kind={user.demo.kind} company={company?.name ?? null} />}
-    <div className="app-theme flex min-h-screen flex-col md:flex-row">
-      <aside className="on-dark bg-navy text-white md:sticky md:top-0 md:flex md:h-screen md:w-64 md:shrink-0 md:flex-col md:overflow-y-auto md:overscroll-contain no-print">
-        <AppSidebar essentials={essentials} isAdmin={Boolean(isAdmin)} projects={isPmEnabled()} clock={clock} financials={isFinancialsEnabled()} home={isUnifiedHomeEnabled()} company={companyNav(company)} access={sidebarAccess(access)} learning={learning} switches={switchLinks(workspaces, "contractor")} email={user.email ?? (user.phone ? formatPhone(user.phone) : null)} theme={user.theme ?? null} practice={isPracticeEnabled()} demo={user.demo?.kind ?? null} bell={isPmEnabled() ? <NotificationBell only="phone" tone="dark" /> : null} />
-      </aside>
-      {/* Bottom padding keeps the last controls on every page clear of the fixed Guide button (bottom left). */}
-      <main id="main" className="min-w-0 flex-1 px-4 pb-24 pt-4 sm:px-8 md:pt-2">
-        {/* Desktop header row: search field, task review notices (V4.3) and the Light/Dark switch, top right. */}
-        {/* On phones all three live in the top bar (search icon, bell, theme in the Menu), so this row is desktop only. */}
-        <div className="mb-1 hidden items-center justify-end gap-1 no-print md:flex">
-          <div className="mr-auto w-full max-w-md"><SearchField /></div>
-          {isPmEnabled() && <NotificationBell only="desktop" />}
-          <span className="hidden md:inline-flex"><ThemeToggle signedIn account={user.theme ?? null} /></span>
-        </div>
-        {children}
-      </main>
-      <FeatureHost />
-      <GuideHost />
-      <GlobalSearchHost />
-      <Suspense fallback={null}><SearchFocus /></Suspense>
-    </div>
-    </PremiumAccessProvider>
-  );
+  return <AppShell user={user}>{children}</AppShell>;
 }

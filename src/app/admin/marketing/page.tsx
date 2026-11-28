@@ -277,13 +277,13 @@ export default async function Marketing({ searchParams }: { searchParams: Promis
               </div>
               <Table head={["Top pages", "Clicks", "Impr."]} align={["l", "r", "r"]} minWidth={360}>{gsc.pages.map((p) => <tr key={p.page}><td className="max-w-[16rem] truncate font-sans">{p.page}</td><td className="text-right">{fmt(p.clicks)}</td><td className="text-right">{fmt(p.impressions)}</td></tr>)}</Table>
               <Table head={["Top queries", "Clicks", "Impr."]} align={["l", "r", "r"]} minWidth={360}>{gsc.queries.map((p) => <tr key={p.query}><td className="max-w-[16rem] truncate font-sans">{p.query}</td><td className="text-right">{fmt(p.clicks)}</td><td className="text-right">{fmt(p.impressions)}</td></tr>)}</Table>
-              <p className="text-xs text-muted">Impressions are times Built2Bid appeared in Google results, not visitors. Data lags about two days. Organic signups: {fmt(channels.find((c) => c.key === "organic_search")?.signups ?? 0)}.</p>
+              <p className="text-xs text-muted">Impressions are times Built2Bid appeared in Google results, not visitors. Data lags about two days. Organic signups: {fmt(channels.find((c) => c.key === "organic_search")?.signups ?? 0)}. AI Search signups (ChatGPT, Perplexity, Claude, Gemini, Copilot referrals): {fmt(channels.find((c) => c.key === "ai_search")?.signups ?? 0)}.</p>
             </div>
           ) : (
             <div className="space-y-2 text-sm text-ink-soft">
               <NotConnected />
               <p>Search Console is verified for built2bid.org, but this dashboard cannot read it yet. To connect (free, read-only): create a Google Cloud service account, add its email as a <span className="text-white">Restricted</span> user in Search Console, then set <code className="text-white">SEARCH_CONSOLE_SITE</code> (sc-domain:built2bid.org) and <code className="text-white">GOOGLE_SERVICE_ACCOUNT_JSON</code> in Netlify. Steps: docs/admin/INTEGRATIONS.md.</p>
-              <p className="text-xs text-muted">Organic Search signups below still come from Built2Bid&apos;s own referrer records: {fmt(channels.find((c) => c.key === "organic_search")?.signups ?? 0)} in this window.</p>
+              <p className="text-xs text-muted">Organic Search signups below still come from Built2Bid&apos;s own referrer records: {fmt(channels.find((c) => c.key === "organic_search")?.signups ?? 0)} in this window. AI Search signups: {fmt(channels.find((c) => c.key === "ai_search")?.signups ?? 0)}.</p>
             </div>
           )}
         </Panel>

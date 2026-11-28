@@ -8,6 +8,7 @@ import { scoredActions, toActionResult, type ActionResult, type SearchCaps } fro
 import { searchNews, type NewsHit } from "@/lib/news/search";
 import { accessFromRaw, loadWorkspaceRaw } from "@/lib/access/server";
 import { searchableKinds } from "./kind-access";
+import { createAdminClient } from "@/lib/supabase/server";
 
 export interface SearchParams {
   q: string;
@@ -99,7 +100,10 @@ export async function runSearch(db: SupabaseClient, p: SearchParams): Promise<Se
     if (missingMigration(error)) return { ...empty, available: false, actions, actionsFirst };
     throw error;
   }
-  const rows = ((data ?? []) as SearchRow[]).filter((r) => isSearchKind(r.kind));
+  const all = ((data ?? []) as SearchRow[]).filter((r) => isSearchKind(r.kind));
+  // Deleted bids (soft delete) stay in the database for the audit trail but never show in search.
+  const deleted = await deletedEstimateIds(all.map((r) => r.estimate_id).filter((x): x is string => Boolean(x)));
+  const rows = deleted.size ? all.filter((r) => !(r.estimate_id && deleted.has(r.estimate_id))) : all;
   const results = rows.map(toResult);
   const totals = new Map<SearchKind, number>();
   for (const r of rows) totals.set(r.kind, r.total_kind);
@@ -142,4 +146,15 @@ export function paramsFromUrl(sp: URLSearchParams, mode: "quick" | "page"): Sear
     scope: sp.get("scope") === "project" ? "project" : "all",
     context: { estimateId: uuidOrNull(sp.get("ctx_estimate")), scheduleId: uuidOrNull(sp.get("ctx_schedule")) },
   };
+}
+
+/** Which of these bids were deleted (hidden). Read with the service role, only for ids the search already returned. */
+async function deletedEstimateIds(ids: string[]): Promise<Set<string>> {
+  const unique = [...new Set(ids)];
+  if (!unique.length) return new Set();
+  try {
+    const { data, error } = await createAdminClient().from("estimates").select("id").in("id", unique.slice(0, 1000)).not("deleted_at", "is", null);
+    if (error) return new Set();   // before the soft-delete migration runs there's nothing to hide
+    return new Set(((data ?? []) as { id: string }[]).map((r) => r.id));
+  } catch { return new Set(); }
 }

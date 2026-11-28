@@ -5,6 +5,7 @@ import { EmailStatusBadge } from "@/components/sales/email-status";
 import { dateLabel } from "@/lib/sales/format";
 import { ageLabel, filterQuery, HOLD_LABEL, ORIGIN_LABEL, WARNING_LABEL, type LeadFilters } from "@/lib/sales/leads-admin";
 import { allocateQueue, assignLeadsV86, cancelAssign, confirmAssign, decideDuplicate, importLeadsV86, recheckAllLeadEmails } from "./lead-actions";
+import { FileDrop } from "@/components/ui/file-drop";
 
 export interface AdminLeadRow {
   id: string; company_name: string; contact_name: string | null; email: string | null; phone: string | null; website: string | null;
@@ -112,7 +113,7 @@ export function LeadsPanel({ data, filters, reps, canAssign, pending, dups, view
             <p className="mt-2 text-sm text-ink-soft">Upload a CSV with a header row (company, contact, email, phone, website, city, state, zip, trades), or paste one business per line in that order. Every row is checked against the whole CRM: matches by website, email or phone stay with their current owner; same-name matches wait for your review.</p>
             <form action={importLeadsV86} className="mt-3 grid gap-3">
               <input type="hidden" name="back" value={back} />
-              <label className="text-sm">CSV file<input type="file" name="file" accept=".csv,text/csv,text/plain" className={`${input} py-2`} /></label>
+              <FileDrop className="rounded-lg"><label className="text-sm">CSV file<input type="file" name="file" accept=".csv,text/csv,text/plain" className={`${input} py-2`} /></label></FileDrop>
               <label className="text-sm">Or paste rows<textarea name="rows" rows={3} className={`${input} py-2 font-mono`} placeholder="Summit Roofing, Dana Lee, dana@summitroofing.com, 612-555-0100, summitroofing.com, Minneapolis, MN, 55401, roofing;siding" /></label>
               <div className="flex flex-wrap items-end gap-3">
                 <label className="text-sm">Then<select name="mode" defaultValue="auto" className={sel}><option value="auto">Share out by round robin</option><option value="rep">Give them all to one rep</option><option value="hold">Hold in the queue</option></select></label>

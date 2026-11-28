@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { CheckCircle2, XCircle } from "lucide-react";
+import { FileDrop } from "@/components/ui/file-drop";
 
 type Result = { match: false } | { match: true; kind: "signed" | "executed"; companyName: string | null; proposalNumber: string; versionNumber: number; signedAt: string; executedAt: string | null };
 
@@ -32,9 +33,9 @@ export function VerifyForm() {
 
   return (
     <div className="space-y-3 rounded-xl border border-line bg-surface p-4">
-      <label className="block text-sm font-semibold text-ink">Signed PDF
+      <FileDrop className="rounded-lg" disabled={busy}><label className="block text-sm font-semibold text-ink">Signed PDF
         <input type="file" accept="application/pdf,.pdf" className="mt-1 block w-full text-sm" disabled={busy} onChange={(e) => check(e.target.files?.[0])} data-testid="verify-file" />
-      </label>
+      </label></FileDrop>
       {busy && <p className="text-sm text-muted">Checking…</p>}
       {error && <p className="text-sm text-danger" role="alert">{error}</p>}
       {result?.match === true && (

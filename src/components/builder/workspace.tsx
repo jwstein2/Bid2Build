@@ -1,13 +1,13 @@
 "use client";
 import {
-  AlertCircle, ArrowDown, ArrowRightLeft, ArrowUp, BookmarkPlus, Check, ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown, Copy, Layers, Lock, MoreHorizontal, Plus, Trash2, X,
+  AlertCircle, ArrowDown, ArrowRightLeft, ArrowUp, BookmarkPlus, Check, ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown, Copy, Layers, Lock, MoreHorizontal, Plus, Tag, Trash2, X,
 } from "lucide-react";
 import { useEffect, useMemo, useState, type Dispatch } from "react";
 import * as Dropdown from "@radix-ui/react-dropdown-menu";
 import { computeEstimate, itemsForGroup, type EstimateTotals } from "@/lib/estimate/engine";
 import { formatCurrency, formatPercent } from "@/lib/estimate/money";
-import type { Estimate, EstimateGroup, GroupVisibility, LineItem, PricingRule } from "@/lib/estimate/types";
-import { COST_TYPES, UNIT_ABBR, UNITS, getTrade, type TemplateItem } from "@/lib/trades/catalog";
+import { DISCOUNT_PERCENT_UNIT, type Estimate, type EstimateGroup, type GroupVisibility, type LineItem, type PricingRule } from "@/lib/estimate/types";
+import { LINE_COST_TYPES, UNIT_ABBR, UNITS, getTrade, type TemplateItem } from "@/lib/trades/catalog";
 import { cn } from "@/lib/cn";
 import { Button } from "../ui/button";
 import { useVisualViewport } from "../ui/use-visual-viewport";
@@ -218,8 +218,8 @@ function BulkBar({ count, hasOverride, onClear, onApply, onRemoveOverride, onDup
       aria-label={`Edit ${count} selected ${count === 1 ? "item" : "items"}`}
       className={cn(
         "z-40 border-brand/30 bg-brand-tint text-sm",
-        "max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:border-t max-lg:px-3 max-lg:pt-2 max-lg:pb-[max(0.5rem,env(safe-area-inset-bottom))] max-lg:shadow-[0_-4px_14px_rgb(0_0_0/0.12)]",
-        "lg:sticky lg:top-[calc(var(--builder-header-h,7.5rem)+0.5rem)] lg:rounded-lg lg:border lg:px-3 lg:py-2 lg:shadow-sm",
+        "max-lg:fixed max-lg:inset-x-0 md:max-lg:left-[var(--app-sidebar-w,0px)] max-lg:bottom-0 max-lg:border-t max-lg:px-3 max-lg:pt-2 max-lg:pb-[max(0.5rem,env(safe-area-inset-bottom))] max-lg:shadow-[0_-4px_14px_rgb(0_0_0/0.12)]",
+        "lg:sticky lg:top-[calc(var(--builder-header-h,7.5rem)+var(--app-sticky-top)+0.5rem)] lg:rounded-lg lg:border lg:px-3 lg:py-2 lg:shadow-sm",
       )}
       style={vv && vv.inset > 0 ? { bottom: vv.inset } : undefined}
     >
@@ -377,7 +377,7 @@ function GroupCard(props: {
                         if (s.has(it.id)) s.delete(it.id); else s.add(it.id);
                         props.setSelected(s);
                       }}
-                      onEnterAtEnd={() => props.addItem(g.id, { unit: it.unit, costType: it.costType, taxable: it.taxable }, it.id)}
+                      onEnterAtEnd={() => props.addItem(g.id, it.costType === "discount" ? undefined : { unit: it.unit, costType: it.costType, taxable: it.taxable }, it.id)}
                       lib={props.lib}
                     />
                   ))}
@@ -397,6 +397,7 @@ function GroupCard(props: {
 
           <div className="flex flex-wrap items-center gap-2 px-3 py-2.5 sm:px-4">
             <Button size="sm" variant="secondary" onClick={() => props.addItem(g.id)}><Plus className="h-4 w-4" /> Add line item</Button>
+            <Button size="sm" variant="ghost" data-testid="add-discount" onClick={() => props.addItem(g.id, { name: "Discount", costType: "discount", unit: "lump sum", quantity: "1", taxable: true }, undefined, "cost")}><Tag className="h-4 w-4" /> Add discount</Button>
             <SavedItemsPicker group={g} estimate={estimate} suggestions={props.suggestions} lib={props.lib} dispatch={dispatch} />
           </div>
         </div>
@@ -648,7 +649,14 @@ function ItemRow({ item: it, isLast, totals, estimate, dispatch, selected, toggl
   };
   const groups = orderedSections(estimate);
   const multiTrade = estimate.trades.length > 1;
-  const customUnit = !(UNITS as readonly string[]).includes(it.unit);
+  const discount = it.costType === "discount";
+  const pctDiscount = discount && it.unit === DISCOUNT_PERCENT_UNIT;
+  const customUnit = !discount && !(UNITS as readonly string[]).includes(it.unit);
+  // A Discount line is a flat amount or a percent of its section: never marked up, no cost.
+  const changeType = (costType: LineItem["costType"]) => {
+    if (costType === "discount") up({ costType, unit: "lump sum", quantity: it.quantity.trim() ? it.quantity : "1", pricingOverride: null, treatment: "marked_up" });
+    else up({ costType, ...(it.unit === DISCOUNT_PERCENT_UNIT ? { unit: "each" } : {}) });
+  };
 
   return (
     <>
@@ -667,7 +675,8 @@ function ItemRow({ item: it, isLast, totals, estimate, dispatch, selected, toggl
           </div>
           <div className="flex flex-wrap gap-1 pl-6 max-md:pl-9">
             {it.pricingOverride && <span className="rounded bg-accent-tint px-1 text-[10px] font-semibold text-accent-dark">{it.pricingOverride.percent}% {it.pricingOverride.mode}</span>}
-            {it.treatment === "pass_through" && <span className="rounded bg-brand-tint px-1 text-[10px] font-semibold text-brand">at cost</span>}
+            {discount && <span className="rounded bg-ok-tint px-1 text-[10px] font-semibold text-ok">discount{pctDiscount && t?.discount?.percent ? ` ${t.discount.percent.toString()}% of section` : ""}, shown on proposal</span>}
+            {it.treatment === "pass_through" && !discount && <span className="rounded bg-brand-tint px-1 text-[10px] font-semibold text-brand">at cost</span>}
             {!it.showOnProposal && <span className="rounded bg-black/5 px-1 text-[10px] font-semibold text-muted">hidden from customer</span>}
             {!it.taxable && <span className="rounded bg-black/5 px-1 text-[10px] font-semibold text-muted">non-taxable</span>}
             <SubQuoteBadge itemId={it.id} />
@@ -675,8 +684,8 @@ function ItemRow({ item: it, isLast, totals, estimate, dispatch, selected, toggl
         </td>
         <td className="px-1 max-md:col-span-4 max-md:p-0">
           <span aria-hidden="true" className="mb-0.5 block text-[11px] font-semibold text-muted md:hidden">Type</span>
-          <select value={it.costType} onChange={(e) => up({ costType: e.target.value as LineItem["costType"] })} className="cell max-md:min-h-11 max-md:border-line" aria-label="Cost type">
-            {COST_TYPES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+          <select value={it.costType} onChange={(e) => changeType(e.target.value as LineItem["costType"])} className="cell max-md:min-h-11 max-md:border-line" aria-label="Cost type">
+            {LINE_COST_TYPES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
           </select>
         </td>
         <td className="px-1 max-md:col-span-4 max-md:p-0">
@@ -684,12 +693,21 @@ function ItemRow({ item: it, isLast, totals, estimate, dispatch, selected, toggl
           <div className="flex items-center gap-0.5">
             {/* Calculator sits left of the number so the quantity's right edge lines up with the right-aligned Qty header. */}
             <QuantityCalculator item={it} estimate={estimate} dispatch={dispatch} />
-            <input data-col="qty" value={it.quantity} onChange={(e) => up({ quantity: e.target.value })} onKeyDown={onKey} inputMode="decimal" className="cell tabular min-w-0 text-right max-md:min-h-11 max-md:border-line max-md:text-base" aria-label="Quantity" aria-invalid={invalid("quantity")} />
+            {pctDiscount ? (
+              <span className="cell tabular min-w-0 text-right text-muted max-md:min-h-11" aria-label="Quantity not used for a percent discount">—</span>
+            ) : (
+              <input data-col="qty" value={it.quantity} onChange={(e) => up({ quantity: e.target.value })} onKeyDown={onKey} inputMode="decimal" className="cell tabular min-w-0 text-right max-md:min-h-11 max-md:border-line max-md:text-base" aria-label="Quantity" aria-invalid={invalid("quantity")} />
+            )}
           </div>
         </td>
         <td className="px-1 max-md:col-span-4 max-md:p-0">
           <span aria-hidden="true" className="mb-0.5 block text-[11px] font-semibold text-muted md:hidden">Unit</span>
-          {customUnit ? (
+          {discount ? (
+            <select value={pctDiscount ? DISCOUNT_PERCENT_UNIT : "lump sum"} onChange={(e) => up({ unit: e.target.value })} className="cell max-md:min-h-11 max-md:border-line" aria-label="Discount type" data-testid="discount-kind">
+              <option value="lump sum">$ off</option>
+              <option value={DISCOUNT_PERCENT_UNIT}>% off section</option>
+            </select>
+          ) : customUnit ? (
             <input value={it.unit} onChange={(e) => up({ unit: e.target.value || "each" })} className="cell max-md:min-h-11 max-md:border-line" aria-label="Custom unit" onBlur={(e) => !e.target.value && up({ unit: "each" })} />
           ) : (
             <select value={it.unit} onChange={(e) => up({ unit: e.target.value === "__custom" ? "custom" : e.target.value })} className="cell max-md:min-h-11 max-md:border-line" aria-label="Unit">
@@ -699,10 +717,10 @@ function ItemRow({ item: it, isLast, totals, estimate, dispatch, selected, toggl
           )}
         </td>
         <td className="px-1 max-md:col-span-6 max-md:p-0">
-          <span aria-hidden="true" className="mb-0.5 block text-[11px] font-semibold text-muted md:hidden">Unit cost (internal)</span>
+          <span aria-hidden="true" className="mb-0.5 block text-[11px] font-semibold text-muted md:hidden">{discount ? "Discount" : "Unit cost (internal)"}</span>
           <div className="relative">
-            <span className="pointer-events-none absolute left-1.5 top-1/2 -translate-y-1/2 text-xs text-muted">$</span>
-            <input data-focus={`${it.id}:cost`} data-col="cost" value={it.unitCost} onChange={(e) => up({ unitCost: e.target.value })} onKeyDown={onKey} inputMode="decimal" placeholder="0.00" className="cell tabular pl-4 text-right max-md:min-h-11 max-md:border-line max-md:text-base" aria-label="Internal unit cost" aria-invalid={invalid("unitCost")} />
+            <span className="pointer-events-none absolute left-1.5 top-1/2 -translate-y-1/2 text-xs text-muted">{pctDiscount ? "%" : "$"}</span>
+            <input data-focus={`${it.id}:cost`} data-col="cost" value={it.unitCost} onChange={(e) => up({ unitCost: e.target.value })} onKeyDown={onKey} inputMode="decimal" placeholder={pctDiscount ? "10" : "0.00"} className="cell tabular pl-4 text-right max-md:min-h-11 max-md:border-line max-md:text-base" aria-label={discount ? (pctDiscount ? "Discount percent" : "Discount amount") : "Internal unit cost"} aria-invalid={invalid("unitCost")} />
           </div>
         </td>
         <td className="tabular px-1 text-right text-ink-soft max-md:col-span-6 max-md:row-start-4 max-md:p-0 max-md:text-left max-md:text-xs"><span className="text-muted md:hidden">Ext. cost </span>{t ? formatCurrency(t.extendedCost) : "—"}</td>
@@ -727,8 +745,8 @@ function ItemRow({ item: it, isLast, totals, estimate, dispatch, selected, toggl
                       </Dropdown.SubContent>
                     </Dropdown.Portal>
                   </Dropdown.Sub>
-                  <MenuItem onSelect={() => setEditPricing(true)}>% Override pricing</MenuItem>
-                  <MenuItem onSelect={() => void lib.saveItem(it)}><BookmarkPlus className="h-4 w-4" /> Save Item{!lib.access && !lib.itemsAccess && <Lock className="ml-auto h-3.5 w-3.5 text-muted" aria-label="Premium" />}</MenuItem>
+                  {!discount && <MenuItem onSelect={() => setEditPricing(true)}>% Override pricing</MenuItem>}
+                  {!discount && <MenuItem onSelect={() => void lib.saveItem(it)}><BookmarkPlus className="h-4 w-4" /> Save Item{!lib.access && !lib.itemsAccess && <Lock className="ml-auto h-3.5 w-3.5 text-muted" aria-label="Premium" />}</MenuItem>}
                   <Dropdown.Separator className="my-1 h-px bg-line" />
                   <MenuItem onSelect={() => dispatch({ type: "deleteItem", id: it.id })} danger><Trash2 className="h-4 w-4" /> Delete</MenuItem>
                 </Dropdown.Content>
@@ -754,12 +772,14 @@ function ItemRow({ item: it, isLast, totals, estimate, dispatch, selected, toggl
                 <textarea id={`n-${it.id}`} rows={2} value={it.notes ?? ""} onChange={(e) => up({ notes: e.target.value })} className="field text-sm" />
               </div>
               <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
-                <label className="flex items-center gap-2"><input type="checkbox" checked={it.taxable} onChange={(e) => up({ taxable: e.target.checked })} className="accent-[var(--color-brand)]" /> Taxable</label>
+                {!discount && <label className="flex items-center gap-2"><input type="checkbox" checked={it.taxable} onChange={(e) => up({ taxable: e.target.checked })} className="accent-[var(--color-brand)]" /> Taxable</label>}
                 <label className="flex items-center gap-2"><input type="checkbox" checked={it.showOnProposal} onChange={(e) => up({ showOnProposal: e.target.checked })} className="accent-[var(--color-brand)]" /> Show item on proposal</label>
-                <label className="flex items-center gap-2">
-                  <input type="checkbox" checked={it.treatment === "pass_through"} onChange={(e) => up({ treatment: e.target.checked ? "pass_through" : "marked_up" })} className="accent-[var(--color-brand)]" />
-                  Bill at cost (pass-through charge)
-                </label>
+                {!discount && (
+                  <label className="flex items-center gap-2">
+                    <input type="checkbox" checked={it.treatment === "pass_through"} onChange={(e) => up({ treatment: e.target.checked ? "pass_through" : "marked_up" })} className="accent-[var(--color-brand)]" />
+                    Bill at cost (pass-through charge)
+                  </label>
+                )}
               </div>
               <div className="text-sm">
                 <p className="font-semibold text-ink-soft">Regional reference price</p>
@@ -768,10 +788,12 @@ function ItemRow({ item: it, isLast, totals, estimate, dispatch, selected, toggl
             </div>
             {t && (
               <p className="mt-2 text-xs text-muted">
-                {t.appliedRule ? `Priced at ${t.appliedRule.percent}% ${t.appliedRule.mode}${it.pricingOverride ? " (item override)" : ""}.` : "Billed at cost."} Gross profit on this line: <span className="tabular font-semibold">{formatCurrency(t.grossProfit)}</span>
+                {discount
+                  ? <>Discount line: lowers this section&apos;s price by <span className="tabular font-semibold">{formatCurrency(t.extendedPrice.negated())}</span>, and sales tax is figured on the discounted price. The customer sees this line with its amount.</>
+                  : <>{t.appliedRule ? `Priced at ${t.appliedRule.percent}% ${t.appliedRule.mode}${it.pricingOverride ? " (item override)" : ""}.` : "Billed at cost."} Gross profit on this line: <span className="tabular font-semibold">{formatCurrency(t.grossProfit)}</span></>}
               </p>
             )}
-            <SubQuotePanel itemId={it.id} itemName={it.name} lineCost={t ? t.extendedCost.toFixed(2) : "0"} trade={(() => { const g = estimate.groups.find((x) => x.id === it.groupId); return g ? sectionTrade(estimate, g) : null; })()} />
+            {!discount && <SubQuotePanel itemId={it.id} itemName={it.name} lineCost={t ? t.extendedCost.toFixed(2) : "0"} trade={(() => { const g = estimate.groups.find((x) => x.id === it.groupId); return g ? sectionTrade(estimate, g) : null; })()} />}
             </div>
           </td>
         </tr>

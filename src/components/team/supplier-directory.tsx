@@ -163,7 +163,7 @@ function SupplierForm({ initial, onCancel, onSaved }: { initial: Supplier | null
       <label className="block"><span className="label">Notes (internal only)</span><textarea className="field min-h-16" value={f.notes} maxLength={2000} onChange={set("notes")} /></label>
       {err && <Notice tone="danger">{err}</Notice>}
       <div className="flex gap-2">
-        <Button size="sm" onClick={save} disabled={busy || !f.name.trim()} data-testid="supplier-save">{busy ? "Saving…" : initial ? "Save changes" : "Add supplier"}</Button>
+        <Button loading={busy} size="sm" onClick={save} disabled={busy || !f.name.trim()} data-testid="supplier-save">{busy ? "Saving…" : initial ? "Save changes" : "Add supplier"}</Button>
         <Button size="sm" variant="secondary" onClick={onCancel}>Cancel</Button>
       </div>
     </div>

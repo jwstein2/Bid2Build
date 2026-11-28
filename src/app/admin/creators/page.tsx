@@ -5,6 +5,7 @@ import { STAGE_GROUPS, STAGE_LABELS, STAGE_TONES, isStage, outreachMetrics, type
 import { Flash, btn, fmtDate, input } from "@/components/creator/flash";
 import { importResearch } from "./actions";
 import { CreatorSubNav } from "./sub-nav";
+import { FileDrop } from "@/components/ui/file-drop";
 
 export const dynamic = "force-dynamic";
 
@@ -104,8 +105,8 @@ export default async function CreatorPartnerships({ searchParams }: { searchPara
         <h2 className="font-display text-lg font-bold">Import research</h2>
         <p className="mt-1 text-sm text-ink-soft">Upload <code>creators_seed.json</code> (required) and optionally <code>outreach_drafts.md</code>. Creators are matched by YouTube channel ID, so re-importing updates research without touching outreach status. Drafts are saved as drafts only.</p>
         <form action={importResearch} className="mt-3 flex flex-wrap items-end gap-3">
-          <label className="text-sm"><span className="mb-1 block font-medium">Research seed (JSON)</span><input type="file" name="seed" accept="application/json,.json" required className="text-sm" /></label>
-          <label className="text-sm"><span className="mb-1 block font-medium">Outreach drafts (Markdown, optional)</span><input type="file" name="drafts" accept=".md,text/markdown,text/plain" className="text-sm" /></label>
+          <FileDrop className="rounded-lg"><label className="text-sm"><span className="mb-1 block font-medium">Research seed (JSON)</span><input type="file" name="seed" accept="application/json,.json" required className="text-sm" /></label></FileDrop>
+          <FileDrop className="rounded-lg"><label className="text-sm"><span className="mb-1 block font-medium">Outreach drafts (Markdown, optional)</span><input type="file" name="drafts" accept=".md,text/markdown,text/plain" className="text-sm" /></label></FileDrop>
           <button className={btn}>Import</button>
         </form>
       </Card>

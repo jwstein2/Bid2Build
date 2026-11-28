@@ -1,0 +1,41 @@
+id,persona,intent,question
+Q01,general contractor,estimating,What is the best estimating software for a small general contractor?
+Q02,general contractor,proposals,What software do small general contractors use to send proposals customers can sign online?
+Q03,general contractor,price,What is an affordable contractor estimating software under $25 a month?
+Q04,owner-operator,estimating,What estimating software works for a one-person construction business?
+Q05,owner-operator,spreadsheets,What is a good alternative to Excel or Google Sheets for construction estimates?
+Q06,owner-operator,free,Is there free estimating software for contractors?
+Q07,remodeler,estimating,What is the best remodeling estimate software for a small remodeling company?
+Q08,remodeler,proposals,How can a remodeler make professional proposals with markup and margin?
+Q09,remodeler,change orders,What app lets remodelers send change orders that customers sign?
+Q10,carpenter,decks,What software do deck builders use to estimate and quote jobs?
+Q11,carpenter,trim,What estimating tool works for finish carpentry and trim jobs?
+Q12,electrician,estimating,What is good estimating and proposal software for a small electrical contractor?
+Q13,electrician,change orders,How do small electrical contractors handle change orders and proposals in software?
+Q14,concrete,estimating,What software do concrete contractors use for estimates?
+Q15,concrete,calculator,Is there a free concrete calculator that turns into a customer estimate?
+Q16,painter,estimating,What is the best painting estimate software for a small painting business?
+Q17,roofer,estimating,What estimating software do small roofing companies use?
+Q18,plumber,estimating,What is simple estimating software for a plumbing contractor?
+Q19,HVAC,estimating,What quoting software is good for a small HVAC contractor?
+Q20,landscaper,estimating,What estimating software works for landscaping and hardscaping contractors?
+Q21,specialty trade,estimating,What estimating software supports many specialty trades?
+Q22,small crew,project management,What project management software is good for a small construction company with under 10 people?
+Q23,small crew,scheduling,What contractor software turns a signed bid into a job schedule?
+Q24,small crew,scheduling,What is affordable construction scheduling software with a Gantt chart for small contractors?
+Q25,small crew,team,What contractor software lets a small team share customers and pricing with roles and permissions?
+Q26,general contractor,CRM,What is a good construction CRM for a small contracting business?
+Q27,general contractor,pipeline,How can a contractor track bids from draft to won?
+Q28,owner-operator,AI,Are there AI estimating tools for contractors and are they accurate?
+Q29,owner-operator,e-signature,What contractor estimating software includes e-signatures?
+Q30,price-sensitive,comparison,What are cheaper alternatives to Buildertrend for a small contractor?
+Q31,price-sensitive,comparison,What are alternatives to Jobber for construction estimates?
+Q32,price-sensitive,comparison,Joist vs other contractor estimate apps: which is best for a small business?
+Q33,price-sensitive,comparison,What is cheaper than Procore for a small residential contractor?
+Q34,price-sensitive,comparison,Houzz Pro alternatives for remodelers
+Q35,price-sensitive,comparison,Contractor Foreman alternatives
+Q36,owner-operator,QuickBooks,What estimating software works alongside QuickBooks Online for a small contractor?
+Q37,general contractor,customer updates,What software lets contractors send customers progress updates?
+Q38,owner-operator,brand,What is Built2Bid?
+Q39,owner-operator,brand,How much does Built2Bid cost?
+Q40,owner-operator,brand,Does Built2Bid do payroll?

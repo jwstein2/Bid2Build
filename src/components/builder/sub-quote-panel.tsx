@@ -1,5 +1,5 @@
 "use client";
-import { FileText, HardHat, Loader2, Paperclip } from "lucide-react";
+import { FileText, HardHat, Paperclip } from "lucide-react";
 import { useMemo, useState } from "react";
 import { formatCurrency } from "@/lib/estimate/money";
 import { latestRevision, originalRevision, SUB_QUOTE_STATUS_LABELS, type SubQuote } from "@/lib/operations/sub-quotes";
@@ -7,6 +7,7 @@ import { cn } from "@/lib/cn";
 import { Button } from "../ui/button";
 import { useBuilderOps, type TeamResource } from "./ops-context";
 import { SubcontractorPicker, type SubChoice } from "./sub-picker";
+import { FileDrop } from "@/components/ui/file-drop";
 
 /** Small indicator on a line item that has a subcontractor quote (internal only). */
 export function SubQuoteBadge({ itemId }: { itemId: string }) {
@@ -111,10 +112,10 @@ function QuoteForm({ estimateId, itemId, quoteId, resources, trade, onResourceCr
       <label className="text-xs font-semibold text-ink-soft sm:col-span-2">{quoteId ? "What changed" : "Internal notes"}
         <textarea rows={2} className="field mt-0.5 text-sm" value={note} onChange={(e) => setNote(e.target.value)} maxLength={2000} />
       </label>
-      <label className="flex items-center gap-2 text-xs font-semibold text-ink-soft sm:col-span-2">
+      <FileDrop className="sm:col-span-2 rounded-lg"><label className="flex items-center gap-2 text-xs font-semibold text-ink-soft">
         <Paperclip className="h-3.5 w-3.5" aria-hidden /> Attach quote (PDF or photo, 15 MB max)
         <input type="file" accept="application/pdf,image/jpeg,image/png,image/webp" className="text-xs font-normal" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-      </label>
+      </label></FileDrop>
       {err && <p className="text-xs text-danger sm:col-span-2" role="alert">{err}</p>}
       {confirmCancel ? (
         <div className="flex flex-wrap items-center justify-end gap-2 sm:col-span-2" role="alert" data-testid="quote-discard">
@@ -125,8 +126,8 @@ function QuoteForm({ estimateId, itemId, quoteId, resources, trade, onResourceCr
       ) : (
       <div className="flex justify-end gap-2 sm:col-span-2">
         <Button size="sm" variant="ghost" onClick={cancel} disabled={busy}>Cancel</Button>
-        <Button size="sm" onClick={() => void submit()} disabled={busy || (!quoteId && !resourceId && !vendorName.trim()) || (revise && !amount.trim())} data-testid="quote-save">
-          {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />} {revise ? "Record revision" : "Save quote"}
+        <Button loading={busy} size="sm" onClick={() => void submit()} disabled={busy || (!quoteId && !resourceId && !vendorName.trim()) || (revise && !amount.trim())} data-testid="quote-save">
+           {revise ? "Record revision" : "Save quote"}
         </Button>
       </div>
       )}

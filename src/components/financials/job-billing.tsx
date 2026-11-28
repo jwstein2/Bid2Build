@@ -134,7 +134,7 @@ export function MilestoneCard({ milestones, perms, writable, jobId, onInvoice, o
           <Field label="When it happened" htmlFor="tr-when"><input id="tr-when" type="date" className="field" value={when} max={today()} onChange={(e) => setWhen(e.target.value)} required /></Field>
           <Field label="Note" optional htmlFor="tr-note"><input id="tr-note" className="field" value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} placeholder="e.g. Crew mobilized, materials delivered" /></Field>
           {err && <Notice tone="danger">{err}</Notice>}
-          <Button type="submit" disabled={busy} data-testid="fin-trigger-save">{busy ? "Saving…" : "Record it"}</Button>
+          <Button loading={busy} type="submit" disabled={busy} data-testid="fin-trigger-save">{busy ? "Saving…" : "Record it"}</Button>
         </form>
       </FinDialog>
     </section>
@@ -224,7 +224,7 @@ export function InvoiceDialog({ open, onOpenChange, jobId, milestone, draft, onD
           )}
           {err && <Notice tone="danger">{err}</Notice>}
           <div className="flex flex-wrap gap-2">
-            <Button type="submit" disabled={busy} data-testid="fin-invoice-issue">{busy ? "Working…" : "Issue invoice"}</Button>
+            <Button loading={busy} type="submit" disabled={busy} data-testid="fin-invoice-issue">{busy ? "Working…" : "Issue invoice"}</Button>
             <Button variant="secondary" disabled={busy} onClick={async () => { if (await saveDraft()) onDone(); }}>Save draft</Button>
           </div>
           <p className="text-xs text-muted">Issuing gives it a number and locks it. To change an issued invoice, void it and create a new one.</p>
@@ -312,7 +312,7 @@ export function PaymentDialog({ open, onOpenChange, jobId, customerId, invoices,
           {cmp(leftover, 0) > 0 && <div className="flex justify-between font-semibold text-warn"><span>Left over: stays as customer credit (unapplied)</span><span className="tabular">{usd(leftover)}</span></div>}
         </div>
         {err && <Notice tone="danger">{err}</Notice>}
-        <Button type="submit" disabled={busy} data-testid="fin-payment-save">{busy ? "Saving…" : "Record payment"}</Button>
+        <Button loading={busy} type="submit" disabled={busy} data-testid="fin-payment-save">{busy ? "Saving…" : "Record payment"}</Button>
       </form>
     </FinDialog>
   );

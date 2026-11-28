@@ -1,5 +1,5 @@
 import { D, Dec, ZERO, round2, toDec } from "./money";
-import type { Estimate, EstimateGroup, GroupVisibility, LineItem, PricingRule } from "./types";
+import { DISCOUNT_PERCENT_UNIT, type Estimate, type EstimateGroup, type GroupVisibility, type LineItem, type PricingRule } from "./types";
 
 export const MAX_MARGIN = new D("99.99");
 export const MIN_MARKUP = new D("-100");
@@ -79,6 +79,8 @@ export interface ItemTotals {
   appliedRule: PricingRule | null; // null = pass-through
   taxable: boolean;
   valid: boolean;
+  /** Set on discount lines: extendedPrice is negative and percent is set for percent-of-section discounts. */
+  discount?: { percent: Dec | null };
 }
 
 export interface GroupTotals {
@@ -90,6 +92,8 @@ export interface GroupTotals {
   taxableBase: Dec;
   itemCount: number;
   visibility: GroupVisibility;
+  /** Discount lines in this section, as a positive amount (already subtracted from price). */
+  discount: Dec;
 }
 
 export interface EstimateTotals {
@@ -97,9 +101,13 @@ export interface EstimateTotals {
   groups: Record<string, GroupTotals>;
   groupOrder: string[];
   totalCost: Dec;
-  itemsPrice: Dec; // sum of group prices
+  itemsPrice: Dec; // sum of group prices (after discount lines)
+  /** Discount lines across all sections, as a positive amount (already inside itemsPrice). */
+  lineDiscounts: Dec;
+  /** Whole-project discount actually applied, as a positive amount. */
+  projectDiscount: Dec;
   adjustment: Dec;
-  subtotal: Dec; // pre-tax customer price = itemsPrice + adjustment
+  subtotal: Dec; // pre-tax customer price = itemsPrice - projectDiscount + adjustment
   grossProfit: Dec;
   grossMargin: Dec | null;
   effectiveMarkup: Dec | null;
@@ -114,8 +122,11 @@ export interface EstimateTotals {
   issues: Issue[];
 }
 
+export const isDiscountItem = (item: Pick<LineItem, "costType">) => item.costType === "discount";
+export const isPercentDiscount = (item: Pick<LineItem, "costType" | "unit">) => isDiscountItem(item) && item.unit === DISCOUNT_PERCENT_UNIT;
+
 export function resolveRule(item: LineItem, group: EstimateGroup | undefined, estimate: Pick<Estimate, "pricing">): PricingRule | null {
-  if (item.treatment === "pass_through") return null;
+  if (item.treatment === "pass_through" || isDiscountItem(item)) return null;
   return item.pricingOverride ?? group?.pricingOverride ?? estimate.pricing;
 }
 
@@ -169,7 +180,19 @@ export function computeEstimate(estimate: Estimate): EstimateTotals {
     let quantity = q.value;
     let unitCost = c.value;
     if (quantity.isNegative()) { valid = false; quantity = ZERO; issues.push({ code: "negative_quantity", message: `Quantity for "${item.name || "item"}" cannot be negative.`, itemId: item.id, field: "quantity" }); }
-    if (unitCost.isNegative()) { valid = false; unitCost = ZERO; issues.push({ code: "negative_cost", message: `Unit cost for "${item.name || "item"}" cannot be negative. Use the project adjustment for discounts.`, itemId: item.id, field: "unitCost" }); }
+    if (unitCost.isNegative()) { valid = false; unitCost = ZERO; issues.push({ code: "negative_cost", message: isDiscountItem(item) ? `Enter the discount for "${item.name || "item"}" as a positive number.` : `Unit cost for "${item.name || "item"}" cannot be negative. Use a Discount line or the project discount instead.`, itemId: item.id, field: "unitCost" }); }
+
+    if (isDiscountItem(item)) {
+      // Discount lines carry no cost and are never marked up. Percent discounts are sized per section below.
+      const percent = isPercentDiscount(item) ? D.min(unitCost, new D(100)) : null;
+      const amount = percent ? ZERO : round2(quantity.times(unitCost));
+      items[item.id] = {
+        itemId: item.id, groupId: item.groupId, quantity, unitCost, extendedCost: ZERO,
+        unitPrice: percent ? ZERO : round2(unitCost).negated(), extendedPrice: amount.negated(), unitPriceExact: true,
+        grossProfit: amount.negated(), appliedRule: null, taxable: item.taxable, valid, discount: { percent },
+      };
+      continue;
+    }
 
     const rule = resolveRule(item, group, estimate);
     let factor = new D(1);
@@ -214,13 +237,31 @@ export function computeEstimate(estimate: Estimate): EstimateTotals {
   const ordered = sortedGroups(estimate);
   for (const g of ordered) {
     let cost = ZERO, price = ZERO, taxableBase = ZERO, count = 0;
+    const discounts: ItemTotals[] = [];
     for (const it of itemsForGroup(estimate, g.id)) {
       const t = items[it.id];
       if (!t) continue;
+      count++;
+      if (t.discount) { discounts.push(t); continue; }
       cost = cost.plus(t.extendedCost);
       price = price.plus(t.extendedPrice);
       if (t.taxable) taxableBase = taxableBase.plus(t.extendedPrice);
-      count++;
+    }
+    // Discount lines, in order: a percent is of the section's other lines; together they can at most
+    // bring the section to zero. They lower the taxable amount in proportion to the taxable share.
+    const base = price;
+    let discount = ZERO;
+    for (const t of discounts) {
+      const pct = t.discount!.percent;
+      const wanted = pct ? base.times(pct).div(100).toDecimalPlaces(estimate.roundLines ? 0 : 2, D.ROUND_HALF_UP) : t.extendedPrice.negated();
+      const amount = D.max(ZERO, D.min(wanted, base.minus(discount)));
+      t.extendedPrice = amount.negated();
+      t.grossProfit = amount.negated();
+      discount = discount.plus(amount);
+    }
+    if (!discount.isZero() && !base.isZero()) {
+      taxableBase = D.max(ZERO, round2(taxableBase.minus(discount.times(taxableBase).div(base))));
+      price = price.minus(discount);
     }
     groups[g.id] = {
       groupId: g.id,
@@ -231,24 +272,41 @@ export function computeEstimate(estimate: Estimate): EstimateTotals {
       taxableBase,
       itemCount: count,
       visibility: effectiveVisibility(g, estimate),
+      discount,
     };
   }
 
   const totalCost = Object.values(groups).reduce((s, g) => s.plus(g.cost), ZERO);
   const itemsPrice = Object.values(groups).reduce((s, g) => s.plus(g.price), ZERO);
   const itemsTaxable = Object.values(groups).reduce((s, g) => s.plus(g.taxableBase), ZERO);
+  const lineDiscounts = Object.values(groups).reduce((s, g) => s.plus(g.discount), ZERO);
+
+  // Whole-project discount: dollars or a percent of the line-item total, never more than that total.
+  let projectDiscount = ZERO;
+  const pd = estimate.projectDiscount;
+  if (pd && pd.value.trim()) {
+    const v = toDec(pd.value);
+    if (!v.valid || v.value.isNegative()) {
+      issues.push({ code: "invalid_number", message: "Enter the project discount as a positive number.", field: "projectDiscount" });
+    } else {
+      const wanted = pd.kind === "percent" ? round2(itemsPrice.times(D.min(v.value, new D(100))).div(100)) : round2(v.value);
+      projectDiscount = D.max(ZERO, D.min(wanted, itemsPrice));
+    }
+  }
+  const afterDiscount = itemsPrice.minus(projectDiscount);
 
   const adj = toDec(estimate.fixedAdjustment);
   if (!adj.valid) issues.push({ code: "invalid_number", message: "Fixed adjustment is not a number.", field: "fixedAdjustment" });
   const adjustment = round2(adj.value);
   // A discount can at most bring the price to zero.
-  const subtotal = D.max(ZERO, itemsPrice.plus(adjustment));
-  const appliedAdjustment = subtotal.minus(itemsPrice);
+  const subtotal = D.max(ZERO, afterDiscount.plus(adjustment));
+  const appliedAdjustment = subtotal.minus(afterDiscount);
 
-  // The adjustment is allocated to the taxable base in proportion to the taxable share of the price.
+  // The project discount and adjustment are allocated to the taxable base in proportion to the taxable share of the price.
   let taxableBase = itemsTaxable;
-  if (!itemsPrice.isZero() && !appliedAdjustment.isZero()) {
-    taxableBase = itemsTaxable.plus(appliedAdjustment.times(itemsTaxable).div(itemsPrice));
+  const change = subtotal.minus(itemsPrice);
+  if (!itemsPrice.isZero() && !change.isZero()) {
+    taxableBase = itemsTaxable.plus(change.times(itemsTaxable).div(itemsPrice));
   }
   taxableBase = D.max(ZERO, round2(taxableBase));
 
@@ -270,6 +328,8 @@ export function computeEstimate(estimate: Estimate): EstimateTotals {
     groupOrder: ordered.map((g) => g.id),
     totalCost,
     itemsPrice,
+    lineDiscounts,
+    projectDiscount,
     adjustment: appliedAdjustment,
     subtotal,
     grossProfit,

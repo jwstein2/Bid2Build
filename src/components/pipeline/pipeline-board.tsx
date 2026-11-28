@@ -1,6 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { UNDO_TOAST_MS, useAutoDismiss } from "@/components/ui/use-auto-dismiss";
 import { ArrowRight, ChevronsDown, Maximize2 } from "lucide-react";
 import {
   COLUMN_HINTS, COLUMN_LABELS, COLUMNS, JOB_COLUMNS, SALES_COLUMNS, checkMove, columnOf, columnTotals, lastActivity,
@@ -10,6 +11,7 @@ import { SEARCH_PLACEHOLDER, stageQueryParam } from "@/lib/pipeline/stage-search
 import { cn } from "@/lib/cn";
 import { MoveDialog, type MoveExtras } from "./move-dialog";
 import { BidCard } from "./bid-card";
+import { DeleteDialog, postDelete } from "./delete-dialog";
 import { OtherStageResults, ResultsLabel, StageSearchInput, onResultKeys, useStageSearch } from "./stage-search";
 import { StageView } from "./stage-view";
 import { money } from "./format";
@@ -38,13 +40,16 @@ export function PipelineBoard({ bids, allBids, esign, focus, capped = false, exp
   const [overrides, setOverrides] = useState<Record<string, { stage: Stage; wonAt?: string | null }>>({});
   const [pending, setPending] = useState<{ bid: BoardBid; to: Column; confirm: "won" | "lost" | "reopen" | "job" } | null>(null);
   const [toast, setToast] = useState<Toast>(null);
+  // Delete: the bid waiting for confirmation, and bids hidden right away while the server catches up.
+  const [deleting, setDeleting] = useState<BoardBid | null>(null);
+  const [hidden, setHidden] = useState<Set<string>>(() => new Set());
   const [dragId, setDragId] = useState<string | null>(null);
   const [overCol, setOverCol] = useState<Column | null>(null);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // The ref is read by drag handlers that fire before React re-renders with dragId.
   const dragRef = useRef<string | null>(null);
 
-  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+  // Undo toasts get longer to reach the button; either kind pauses while hovered or focused.
+  const toastProps = useAutoDismiss(toast, () => setToast(null), toast?.undo ? UNDO_TOAST_MS : 6000);
 
   // Each stage's mini search keeps its own text here, so opening a stage view and coming back keeps it.
   const [queries, setQueries] = useState<ColumnQueries>(() => initialQueries ?? {});
@@ -58,10 +63,10 @@ export function PipelineBoard({ bids, allBids, esign, focus, capped = false, exp
   }, [queries]);
 
   // An optimistic override only applies until the refreshed server data shows the same stage.
-  const apply = useCallback((list: BoardBid[]) => list.map((b) => {
+  const apply = useCallback((list: BoardBid[]) => list.filter((b) => !hidden.has(b.id)).map((b) => {
     const o = overrides[b.id];
     return o && o.stage !== b.stage ? { ...b, ...o } : b;
-  }), [overrides]);
+  }), [overrides, hidden]);
   const view = useMemo(() => apply(bids), [apply, bids]);
   const searchable = useMemo(() => (allBids ? apply(allBids) : view), [apply, allBids, view]);
   const totals = useMemo(() => columnTotals(view), [view]);
@@ -74,8 +79,6 @@ export function PipelineBoard({ bids, allBids, esign, focus, capped = false, exp
 
   function show(t: Toast) {
     setToast(t);
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => setToast(null), t?.undo ? 9000 : 6000);
   }
 
   async function post(id: string, stage: Stage, extras: MoveExtras = {}) {
@@ -106,6 +109,24 @@ export function PipelineBoard({ bids, allBids, esign, focus, capped = false, exp
     router.refresh();
   }
 
+  const setHiddenOne = (id: string, on: boolean) => setHidden((h) => { const n = new Set(h); if (on) n.add(id); else n.delete(id); return n; });
+
+  async function commitDelete(b: BoardBid, reason?: string) {
+    setHiddenOne(b.id, true);
+    const err = await postDelete(b.id, "delete", reason);
+    if (err) { setHiddenOne(b.id, false); show({ text: err, tone: "danger" }); return; }
+    show({ text: `Deleted "${b.title}". It's kept in Recently deleted.`, tone: "ok", undo: () => void undoDelete(b) });
+    router.refresh();
+  }
+
+  async function undoDelete(b: BoardBid) {
+    const err = await postDelete(b.id, "restore");
+    if (err) { show({ text: err, tone: "danger" }); return; }
+    setHiddenOne(b.id, false);
+    show({ text: `Restored "${b.title}".`, tone: "ok" });
+    router.refresh();
+  }
+
   function request(b: BoardBid, to: Column) {
     const c = checkMove(b, to);
     if (!c.ok) { show({ text: c.reason, tone: "danger" }); return; }
@@ -116,7 +137,7 @@ export function PipelineBoard({ bids, allBids, esign, focus, capped = false, exp
   const dragged = dragId ? view.find((b) => b.id === dragId) ?? null : null;
   const draggedNow = () => (dragRef.current ? view.find((b) => b.id === dragRef.current) ?? null : null);
   const colProps = (c: Column) => ({
-    col: c, bids: byCol[c], total: totals[c], esign, onMove: request, allBids: searchable, capped,
+    col: c, bids: byCol[c], total: totals[c], esign, onMove: request, onDelete: setDeleting, allBids: searchable, capped,
     query: queries[c] ?? "", onQuery: (v: string) => setQuery(c, v), onOpen: () => onExpand?.(c),
     dropState: dragged ? (checkMove(dragged, c).ok ? (overCol === c ? "over" : "can") : "no") as "over" | "can" | "no" : null,
     onDragOver: (e: React.DragEvent) => { const b = draggedNow(); if (b && checkMove(b, c).ok) { e.preventDefault(); if (overCol !== c) setOverCol(c); } },
@@ -128,7 +149,7 @@ export function PipelineBoard({ bids, allBids, esign, focus, capped = false, exp
     <div data-testid="pipeline-board">
       {expanded && (
         <StageView
-          key={expanded} col={expanded} bids={byCol[expanded]} total={totals[expanded]} allBids={searchable} capped={capped} esign={esign} onMove={request}
+          key={expanded} col={expanded} bids={byCol[expanded]} total={totals[expanded]} allBids={searchable} capped={capped} esign={esign} onMove={request} onDelete={setDeleting}
           initialQuery={queries[expanded] ?? ""} onBack={() => onExpand?.(null)}
         />
       )}
@@ -155,9 +176,13 @@ export function PipelineBoard({ bids, allBids, esign, focus, capped = false, exp
           onConfirm={(extras) => { const p = pending; setPending(null); void commit(p.bid, p.to, extras); }}
         />
       )}
+      {deleting && (
+        <DeleteDialog bid={deleting} onCancel={() => setDeleting(null)}
+          onConfirm={(reason) => { const b = deleting; setDeleting(null); void commitDelete(b, reason); }} />
+      )}
       <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-4 z-40 flex justify-center px-4">
         {toast && (
-          <div role={toast.tone === "danger" ? "alert" : "status"} data-testid="pipeline-toast"
+          <div {...toastProps} role={toast.tone === "danger" ? "alert" : "status"} data-testid="pipeline-toast"
             className={cn("pointer-events-auto flex max-w-xl items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium shadow-2xl", toast.tone === "ok" ? "bg-navy text-white" : "bg-danger text-white")}>
             <span>{toast.text}</span>
             {toast.undo && <button type="button" onClick={() => { const u = toast.undo!; setToast(null); u(); }} className="rounded-md bg-white/15 px-2 py-1 font-bold hover:bg-white/25">Undo</button>}
@@ -178,9 +203,9 @@ function StageRow({ cols, testId, children }: { cols: number; testId?: string; c
   );
 }
 
-function BoardColumn({ col, bids, total, esign, onMove, dropState, onDragOver, onDrop, onDragStart, onDragEnd, allBids, capped, query, onQuery, onOpen }: {
+function BoardColumn({ col, bids, total, esign, onMove, onDelete, dropState, onDragOver, onDrop, onDragStart, onDragEnd, allBids, capped, query, onQuery, onOpen }: {
   col: Column; bids: BoardBid[]; total: ColumnTotal; esign: boolean;
-  onMove: (b: BoardBid, to: Column) => void; dropState: "over" | "can" | "no" | null;
+  onMove: (b: BoardBid, to: Column) => void; onDelete?: (b: BoardBid) => void; dropState: "over" | "can" | "no" | null;
   onDragOver: (e: React.DragEvent) => void; onDrop: (e: React.DragEvent) => void; onDragStart: (id: string) => void; onDragEnd: () => void;
   allBids: BoardBid[]; capped: boolean; query: string; onQuery: (v: string) => void; onOpen: () => void;
 }) {
@@ -190,7 +215,7 @@ function BoardColumn({ col, bids, total, esign, onMove, dropState, onDragOver, o
   const searching = s.q.length > 0;
   const headId = `col-${col}`;
   const valueText = total.count && total.count === total.unpriced ? "No prices yet" : money(total.value);
-  const card = (b: BoardBid) => <BidCard b={b} esign={esign} onMove={onMove} onDragStart={onDragStart} onDragEnd={onDragEnd} />;
+  const card = (b: BoardBid) => <BidCard b={b} esign={esign} onMove={onMove} onDelete={onDelete} onDragStart={onDragStart} onDragEnd={onDragEnd} />;
   return (
     <section
       data-search-scope aria-labelledby={headId} data-testid={`column-${col}`} data-guide="bids.stage" onDragOver={onDragOver} onDrop={onDrop}

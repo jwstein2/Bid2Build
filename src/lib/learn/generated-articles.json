@@ -402,5 +402,149 @@
         "url": "https://usabusinesstimes.com/americas-construction-material-shortage-is-forcing-a-supply-chain-reckoning/"
       }
     ]
+  },
+  {
+    "slug": "how-to-price-decks-jobs",
+    "title": "How to Price Decks & Porches Jobs: A Step-by-Step Method",
+    "description": "A step-by-step method for pricing deck and porch jobs, covering takeoff units, waste, labor hours, equipment, permits, overhead, and markup or margin.",
+    "updated": "2026-11-26",
+    "published": "2026-11-26",
+    "trade": "decks",
+    "blocks": [
+      {
+        "p": [
+          "A deck or porch bid is easier to defend when every line has a quantity, a unit and a cost behind it. This guide follows the order most contractors use: measure, count materials with waste, estimate labor hours, add equipment and disposal, confirm permits, load overhead, and then apply markup or margin.",
+          "The steps follow the sections and suggested items in your estimate, so the bid you price matches the one you build. Your numbers should come from you: supplier quotes, recent invoices, your own labor rate and local permit fees."
+        ]
+      },
+      {
+        "h": "Set up the groups before you measure",
+        "p": [
+          "Group the estimate the way the work is built: Footings & Foundation, Framing Package, Decking Material Package, Stairs & Railings, and Labor. Keep railings in their own group. Homeowners often compare railing options, and a separate group lets you price railing choices without changing the rest of the bid."
+        ]
+      },
+      {
+        "h": "Measuring and quantity takeoff in the right units",
+        "list": [
+          "Decking in square feet. Measure the deck or porch floor area and any landing separately.",
+          "Railings and ledger flashing in linear feet.",
+          "Posts, beams, joists, joist hangers, footings, post bases and stair stringers as each.",
+          "Structural screws and connectors by the box.",
+          "Framing labor in hours. Decking installed by the square foot. Railings installed by the linear foot.",
+          "Demolition, delivery and cleanup as lump sums."
+        ]
+      },
+      {
+        "p": [
+          "Use the quantity calculators for areas, perimeters, roof planes, stairs and labor hours rather than working from memory. Check each count against a dimensioned sketch before you enter it. A porch rebuild often adds demolition and a tie-in to the existing roof or columns, so list those as separate lines."
+        ]
+      },
+      {
+        "h": "Materials and waste",
+        "p": [
+          "Count pressure-treated posts, beams and joists from the framing plan, then add extra material for cuts and defects based on your own job history. For decking, add waste to the board count before you order. Confirm the purchase unit with your supplier, since some products are sold by the board and others by the box or the lineal foot.",
+          "Choose the decking product before you finish the framing takeoff. Some composite products need closer joist spacing than wood decking, so changing the decking late can change the joist and hanger counts."
+        ]
+      },
+      {
+        "h": "Labor hours and labor rate",
+        "p": [
+          "Multiply framing hours by your own labor rate. Price decking installation by the square foot, railing installation by the linear foot, and demolition and cleanup as lump sums, using rates from your past jobs. Your labor rate should cover wages, the payroll costs you pay, and the time you spend on the job. Confirm how to treat these costs with a tax professional."
+        ]
+      },
+      {
+        "h": "Equipment, demolition and disposal",
+        "p": [
+          "List rented equipment such as augers, compactors, lifts or a saw rental as equipment lines with the rental quote. Price tear-out of an existing deck or porch as a lump sum, and add hauling and dump fees as separate lines. Delivery of composite material and final cleanup also belong on their own lines so you can see them when a client asks what changed.",
+          "Sales tax applies only to lines marked taxable, and adjustments or discounts apply before tax. Ask a tax professional which of your lines are taxable where you work."
+        ]
+      },
+      {
+        "h": "Permits, insurance and local requirements",
+        "p": [
+          "Whether a deck or porch needs a permit depends on the scope and on local rules. R105 (Permits) covers which work needs a permit, and Chapter 1 is often amended locally. Ask the local building department for the permit fee and enter it as a line item.",
+          "Some local building departments ask for proof of insurance and bonding before they issue a permit. Enter your actual insurance premium as an overhead item. For licensing and contract terms, check with the state licensing board and an attorney."
+        ]
+      },
+      {
+        "h": "Overhead and markup or margin",
+        "p": [
+          "Overhead covers the costs that do not belong to one job, such as the truck, phones, office, insurance premiums, licensing fees and the time you spend on estimating. Load your overhead into the job using your own figures, then choose how you price the estimate.",
+          "Built2Bid prices an estimate with either markup on cost or a target gross margin, and shows the other number for reference. Markup uses Price = Cost × (1 + Markup). Margin uses Price = Cost ÷ (1 − Margin). Set a price validity date on every proposal so the numbers stay tied to the costs you used."
+        ]
+      },
+      {
+        "h": "Simplified example",
+        "p": [
+          "This simplified example covers only the composite deck board lines and the decking installation labor. A real estimate includes every section above.",
+          "All numbers below are for illustration only. The example assumes 12-foot boards with a 5.5-inch face width, which cover 5.5 square feet each. Replace every number with your own supplier quotes, board sizes and labor rate."
+        ],
+        "formula": [
+          "Example: 200 square feet × 1.10 waste = 220 square feet of decking to buy",
+          "Example: 220 square feet ÷ 5.5 square feet per board = 40 boards",
+          "Example: 40 boards × $30 each = $1,200 for composite deck boards",
+          "Example: 200 square feet × $4 per square foot = $800 for decking installation labor",
+          "Example: $1,200 + $800 = $2,000 cost for these lines",
+          "Example: $2,000 × 1.25 markup = $2,500 price",
+          "Example: $2,000 ÷ (1 − 0.20 margin) = $2,500 price, the same price shown as a 20 percent margin"
+        ]
+      },
+      {
+        "h": "Quality tips and code items inspectors check",
+        "p": [
+          "These tips point to items an inspector may look at. Local editions and amendments vary, so ask the building department which inspections apply to your project. Follow manufacturer installation instructions for every product."
+        ],
+        "list": [
+          "R507 (Exterior decks) covers footings, ledger attachment, joists, beams and posts. Price footing excavation, post bases and joist hangers as their own lines, and allow framing hours for careful ledger attachment.",
+          "R403 (Footings) covers footings. Include footing excavation and concrete footings as separate each lines, and add digging time if soil conditions are harder than expected.",
+          "R312 (Guards and window fall protection) covers guards. Keep railings in their own group priced by the linear foot, with railing materials, post caps and railing hours as separate lines. Composite deck surfaces cannot carry railing loads alone, so posts must be anchored to the deck frame using blocking. Allow blocking material and framing hours in every railing estimate on composite decking, and follow the railing manufacturer's instructions and the requirements that apply where you work.",
+          "R311.7 (Stairways) covers width, headroom, risers, treads and handrails. Price stair stringers each, allow layout time for stairs to grade, and put handrail material in the railing group so it is visible to the client.",
+          "R317 (Protection of wood and wood-based products against decay) covers protection of wood against decay. Confirm lumber and fastener types with your supplier and the manufacturer instructions, and price those choices into materials from the start rather than as a later change."
+        ]
+      },
+      {
+        "h": "What is changing for decks and porches contractors and how to reflect it in a bid",
+        "p": [
+          "Several changes are showing up in deck guidance, and local rules may differ from the model text. Check how each one applies where you work."
+        ],
+        "list": [
+          "Ledger flashing: guidance describes flashing installed flush to the weather-resistive barrier and extending above the ledger, treated as a specified detail rather than an option. Price flashing by the linear foot and include the time to install it at the ledger.",
+          "Beam tables: guidance describes expanded tables that show combinations of joist span and cantilever producing the same beam load. Confirm beam sizing before you order beams, and set a price validity date in case the beam choice changes.",
+          "Local amendments: some counties adopt the International Residential Code with local amendments, so deck requirements can differ from the model text. Ask about amendments before you price the framing.",
+          "Composite joist spacing: some composite products need closer joist spacing than wood decking. Choose the decking first, then re-quote joists and hangers if the decking product changes.",
+          "Insurance and bonding: some local departments ask for proof of insurance and bonding before issuing a permit. Ask your insurance agent for certificates of insurance, allow time for them in the schedule, and ask an attorney about contract terms."
+        ]
+      },
+      {
+        "p": [
+          "Before you send a bid, confirm lead times for composite products and specialty connectors, and check supplier quotes against your price validity date."
+        ]
+      },
+      {
+        "h": "Putting it together",
+        "p": [
+          "Work through the groups in order: takeoff, waste, labor hours at your rate, equipment and disposal, permits, overhead, then markup or margin. Check each line for a unit, a source such as a supplier quote or invoice, and a cost type of material, labor, equipment, subcontractor or other.",
+          "Built2Bid can show the client item names, prices or totals only for each section of the proposal, so the proposal stays clear while your cost lines stay on file. Requirements for permits, licensing, tax and contract terms vary, so confirm them with the local building department, state licensing board, a tax professional or an attorney."
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "title": "2025 Deck Building Code Updates",
+        "url": "https://grip-rite.com/blog/deck-building-codes-2025/"
+      },
+      {
+        "title": "Amendments to the 2021 International Residential Code",
+        "url": "https://www.larimer.org/sites/default/files/uploads/2022/2021_irc_amendments_final_1.pdf"
+      },
+      {
+        "title": "Deck Contractor Insurance Requirements and Verification",
+        "url": "https://nationaldeckauthority.com/deck-contractor-insurance-requirements/"
+      },
+      {
+        "title": "2024 IRC Code Changes: What Deck Builders Need To Know",
+        "url": "https://www.premiumdeckingsupply.com/2024-irc-code-changes/"
+      }
+    ]
   }
 ]

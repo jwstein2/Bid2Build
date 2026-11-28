@@ -68,3 +68,6 @@ export const COST_TYPES: { value: CostType; label: string }[] = [
   { value: "labor_burden", label: "Labor burden" },
   { value: "other", label: "Other" },
 ];
+
+/** Types offered on estimate line items: the cost types plus a customer Discount line (never a Saved Item). */
+export const LINE_COST_TYPES: { value: CostType; label: string }[] = [...COST_TYPES, { value: "discount", label: "Discount" }];

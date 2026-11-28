@@ -21,7 +21,7 @@ const friendly = (e: unknown) => {
  * the email code. Required before connecting a bank. Uses Supabase Auth MFA (TOTP); the secret never reaches
  * Built2Bid's servers beyond Supabase Auth.
  */
-export function TwoStepSignIn() {
+export function TwoStepSignIn({ admin = false, adminRequired = false }: { admin?: boolean; adminRequired?: boolean } = {}) {
   const supabase = getBrowserClient();
   const [factors, setFactors] = useState<Factor[] | null>(null);
   const [enrolling, setEnrolling] = useState<Enrolling | null>(null);
@@ -48,7 +48,7 @@ export function TwoStepSignIn() {
     setBusy(true); setMsg(null);
     // Clear any half-finished setup first so a fresh QR code can be issued.
     for (const f of (factors ?? []).filter((x) => x.status !== "verified")) await supabase.auth.mfa.unenroll({ factorId: f.id }).catch(() => null);
-    const { data, error } = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName: `Authenticator ${new Date().toISOString().slice(0, 10)}` });
+    const { data, error } = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName: `Authenticator ${new Date().toISOString().slice(0, 16).replace("T", " ")}` /* unique per account; a backup gets its own name */ });
     setBusy(false);
     if (error || !data?.totp) { setMsg({ tone: "danger", text: friendly(error) }); return; }
     setEnrolling({ factorId: data.id, qr: data.totp.qr_code, secret: data.totp.secret });
@@ -62,19 +62,25 @@ export function TwoStepSignIn() {
     setBusy(false);
     if (error) { setMsg({ tone: "danger", text: friendly(error) }); return; }
     setEnrolling(null); setCode("");
-    setMsg({ tone: "ok", text: "Two-step sign-in is on. Next time you sign in, you'll enter a code from your authenticator app after the email code." });
+    setMsg({ tone: "ok", text: adminRequired
+      ? "Two-step sign-in is on. You can open the admin area now. Next time you sign in, you'll enter a code from your authenticator app after the email code."
+      : "Two-step sign-in is on. Next time you sign in, you'll enter a code from your authenticator app after the email code." });
     await load();
   }
 
   async function remove(f: Factor) {
     if (!supabase) return;
-    if (!window.confirm("Turn off two-step sign-in? You won't be able to connect or reconnect a bank until you turn it back on.")) return;
+    const last = verified.length <= 1;
+    const warn = admin && last
+      ? "Remove your only authenticator? The admin area will ask you to set up a new one before it opens, and you won't be able to connect a bank until you do."
+      : last ? "Turn off two-step sign-in? You won't be able to connect or reconnect a bank until you turn it back on." : "Remove this authenticator? Your other one keeps working.";
+    if (!window.confirm(warn)) return;
     setBusy(true); setMsg(null);
     const { error } = await supabase.auth.mfa.unenroll({ factorId: f.id });
     if (!error) await supabase.auth.refreshSession().catch(() => null);
     setBusy(false);
     if (error) { setMsg({ tone: "danger", text: friendly(error) }); return; }
-    setMsg({ tone: "ok", text: "Two-step sign-in is off." });
+    setMsg({ tone: "ok", text: verified.length > 1 ? "Authenticator removed." : "Two-step sign-in is off." });
     await load();
   }
 
@@ -82,9 +88,11 @@ export function TwoStepSignIn() {
     <Card className="p-5" id="two-step" data-testid="two-step">
       <h2 className="flex items-center gap-2 font-bold"><ShieldCheck className="h-5 w-5 text-brand" aria-hidden /> Two-step sign-in</h2>
       <p className="text-sm text-ink-soft">Add a code from an authenticator app (Google Authenticator, Microsoft Authenticator, 1Password and others) after your email code. It&apos;s required before you connect a bank account.</p>
+      {adminRequired && !verified.length && <Notice tone="warn" className="mt-3">The admin area requires two-step sign-in. Set it up below, then open <a className="font-semibold underline" href="/admin">the admin area</a> again.</Notice>}
+      {adminRequired && verified.length > 0 && <Notice tone="ok" className="mt-3">Two-step sign-in is on. <a className="font-semibold underline" href="/admin">Open the admin area</a>.</Notice>}
       {!supabase ? <p className="mt-3 text-sm text-muted">Sign-in isn&apos;t configured on this site.</p> : factors === null ? (
         <p className="mt-3 flex items-center gap-2 text-sm text-muted"><Loader2 className="h-4 w-4 animate-spin" aria-hidden /> Checking…</p>
-      ) : verified.length ? (
+      ) : verified.length && !enrolling ? (
         <div className="mt-3 space-y-2">
           <p className="text-sm font-semibold text-ok" data-testid="two-step-on">On</p>
           {verified.map((f) => (
@@ -93,7 +101,14 @@ export function TwoStepSignIn() {
               <Button size="sm" variant="secondary" disabled={busy} onClick={() => void remove(f)}>Turn off</Button>
             </div>
           ))}
-          <p className="text-xs text-muted">Lost your phone? Email support from the address on your account and we&apos;ll verify you before resetting it.</p>
+          {admin ? (
+            <>
+              {verified.length < 2 && <p className="text-sm text-ink-soft" data-testid="two-step-backup-tip">Admin account: add a backup so a lost phone can&apos;t lock you out, for example a second phone or 1Password on your computer.</p>}
+              <Button size="sm" variant="secondary" disabled={busy} onClick={() => void start()} data-testid="two-step-add-backup">Add a backup authenticator</Button>
+            </>
+          ) : (
+            <p className="text-xs text-muted">Lost your phone? Email support from the address on your account and we&apos;ll verify you before resetting it.</p>
+          )}
         </div>
       ) : enrolling ? (
         <div className="mt-3 space-y-3">
@@ -121,12 +136,12 @@ export function TwoStepSignIn() {
               <input className="field w-36 tracking-widest" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code}
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} onKeyDown={(e) => { if (e.key === "Enter") void confirm(); }} data-testid="two-step-code" />
             </label>
-            <Button disabled={busy || !codeOk(code)} onClick={() => void confirm()}>{busy ? "Checking…" : "Turn on"}</Button>
+            <Button loading={busy} disabled={busy || !codeOk(code)} onClick={() => void confirm()}>{busy ? "Checking…" : "Turn on"}</Button>
             <Button variant="ghost" disabled={busy} onClick={() => { setEnrolling(null); void load(); }}>Cancel</Button>
           </div>
         </div>
       ) : (
-        <div className="mt-3"><Button disabled={busy} onClick={() => void start()} data-testid="two-step-start">{busy ? "Starting…" : "Set up two-step sign-in"}</Button></div>
+        <div className="mt-3"><Button loading={busy} disabled={busy} onClick={() => void start()} data-testid="two-step-start">{busy ? "Starting…" : "Set up two-step sign-in"}</Button></div>
       )}
       {msg && <Notice tone={msg.tone} className="mt-3">{msg.text}</Notice>}
     </Card>

@@ -12,6 +12,7 @@ import { PM_EDITOR_CENTS, PM_INCLUDED_ENTERPRISE_EDITORS } from "@/lib/pm/billin
 import { verifyPmPrice } from "@/lib/pm/server";
 import { site } from "@/lib/site";
 import { fail, json, logError, rateLimit, sameOrigin } from "@/lib/http/api";
+import { isAcademyMeta } from "@/lib/academy/advanced/plans";
 
 export const runtime = "nodejs";
 
@@ -79,7 +80,8 @@ export async function POST(req: Request) {
 
     // Stripe is the source of truth for existing subscriptions (Unlimited or Enterprise).
     const subs = await stripe.subscriptions.list({ customer, status: "all", limit: 20 });
-    const existing = subs.data.find((s) => BLOCKING_SUBSCRIPTION_STATUSES.has(s.status));
+    // Academy Advanced education packages are separate from software plans and don't block a Team purchase.
+    const existing = subs.data.find((s) => BLOCKING_SUBSCRIPTION_STATUSES.has(s.status) && !isAcademyMeta(s.metadata));
     if (existing) {
       await applySubscription(admin, existing, Math.floor(Date.now() / 1000)).catch(() => null);
       return fail(409, "already_subscribed", "You already have a paid subscription. Manage or cancel it from Subscription settings before switching to the Team plan.");
@@ -91,7 +93,7 @@ export async function POST(req: Request) {
 
     const now = Math.floor(Date.now() / 1000);
     // One open checkout per customer: expire any other open sessions first.
-    const open = (await stripe.checkout.sessions.list({ customer, status: "open", limit: 20 })).data;
+    const open = (await stripe.checkout.sessions.list({ customer, status: "open", limit: 20 })).data.filter((s) => !isAcademyMeta(s.metadata));
     await Promise.all(open.map((s) => stripe.checkout.sessions.expire(s.id).catch(() => null)));
 
     const extra = users - ENTERPRISE_INCLUDED_USERS;

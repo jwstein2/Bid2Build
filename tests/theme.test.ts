@@ -87,7 +87,7 @@ describe("dark theme tokens", () => {
 
   it("app shells opt in; documents opt out", () => {
     const read = (p: string) => readFileSync(join(__dirname, "..", p), "utf8");
-    expect(read("src/app/(app)/layout.tsx")).toContain('className="app-theme');
+    expect(read("src/components/layout/app-shell.tsx")).toContain('className="app-theme');
     expect(read("src/components/builder/builder.tsx")).toContain('className="app-theme');
     expect(read("src/components/proposal/proposal-view.tsx")).toContain('className="theme-light');
     expect(read("src/components/schedule/report-view.tsx")).toContain('className="theme-light');

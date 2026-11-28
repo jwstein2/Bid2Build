@@ -1,3 +1,4 @@
+import { breadcrumbLd, ldJson } from "@/lib/seo/structured-data";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -20,6 +21,7 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <Container className="py-12 sm:py-16">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(breadcrumbLd([{ name: "About", path: "/about" }])) }} />
       <div className="mx-auto max-w-3xl">
         <p className="text-xs font-bold uppercase tracking-[0.14em] text-accent-ink">About</p>
         <h1 className="mt-2 text-4xl font-extrabold text-navy">Estimating software built for the trades</h1>
@@ -67,6 +69,7 @@ export default function AboutPage() {
 
         <div className="mt-12 flex flex-wrap items-center gap-4">
           <ButtonLink href="/#trades" variant="accent" size="lg">Start Your {plans.starterCredits} Free Bids</ButtonLink>
+          <Link href="/what-is-built2bid" className="inline-flex min-h-11 items-center font-semibold text-accent-ink underline-offset-4 hover:underline">Product facts and pricing</Link>
           <Link href="/#sample-proposal" className="inline-flex min-h-11 items-center font-semibold text-accent-ink underline-offset-4 hover:underline">See a sample proposal</Link>
         </div>
       </div>

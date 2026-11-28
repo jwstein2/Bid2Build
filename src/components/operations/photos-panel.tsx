@@ -5,6 +5,7 @@ import { PHOTO_LABELS } from "@/lib/operations/photo-labels";
 import { cn } from "@/lib/cn";
 import { Button } from "../ui/button";
 import { Drawer } from "../projects/task-drawer";
+import { FileDrop } from "@/components/ui/file-drop";
 
 interface Photo {
   id: string; customer_id: string | null; estimate_id: string | null; scope_section_id: string | null; width: number | null; height: number | null;
@@ -72,19 +73,21 @@ export function PhotosPanel({ estimateId, customerId, sections }: { estimateId?:
   return (
     <div className="space-y-4" data-testid="photos-panel">
       {data.canUpload && (
+        <FileDrop className="rounded-xl" label="Drop photos to upload" disabled={uploading}>
         <section className="rounded-xl border border-line bg-surface p-4">
           <h2 className="font-bold">Add photos</h2>
-          <p className="mt-1 text-xs text-muted">Stored privately in Built2Bid. Location data is removed. Up to 10 photos at a time, 10 MB each.</p>
+          <p className="mt-1 text-xs text-muted">Stored privately in Built2Bid. Location data is removed. Up to 10 photos at a time, 10 MB each. You can also drag photos onto this box.</p>
           <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_10rem_auto]">
             <input aria-label="Caption for these photos" className="field field-sm" placeholder="Caption (optional)" value={caption} onChange={(e) => setCaption(e.target.value)} maxLength={500} />
             <input aria-label="Date taken" type="date" className="field field-sm" value={takenOn} onChange={(e) => setTakenOn(e.target.value)} />
-            <Button size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
-              {uploading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Upload className="h-4 w-4" aria-hidden />} {uploading ? "Uploading…" : "Choose photos"}
+            <Button loading={uploading} size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
+              {!uploading && <Upload className="h-4 w-4" aria-hidden />} {uploading ? "Uploading…" : "Choose photos"}
             </Button>
           </div>
           <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/*" multiple hidden onChange={(e) => void upload(e.target.files)} data-testid="photo-input" />
           {failed.length > 0 && <ul className="mt-2 text-xs text-danger" role="alert">{failed.map((f, i) => <li key={i}>{f.name}: {f.error}</li>)}</ul>}
         </section>
+        </FileDrop>
       )}
       {!data.photos.length ? (
         <p className="flex items-center gap-2 rounded-xl border border-dashed border-line p-6 text-sm text-muted"><Camera className="h-5 w-5" aria-hidden /> No photos yet.</p>

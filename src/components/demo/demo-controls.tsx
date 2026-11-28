@@ -8,6 +8,9 @@ import type { DemoSessionKind } from "@/lib/demo/session";
 import { useDemoSwitch } from "./use-demo-switch";
 import { DEMO_HINT_COOKIE, readDemoHint } from "@/lib/demo/session";
 import { inPracticeScope } from "@/lib/demo/scope";
+import { useCssHeightVar } from "@/components/layout/sticky-height";
+
+const NO_EL = { current: null };
 
 /**
  * One hard reload when a client navigation crossed the paid-app boundary: the server already switched the
@@ -117,12 +120,15 @@ export function DemoBanner({ kind, company, sticky = true, anywhere = false }: {
   const s = useDemoSwitch();
   const [confirming, setConfirming] = useState(false);
   const cancel = useRef<HTMLButtonElement>(null);
+  const bar = useRef<HTMLDivElement>(null);
   const practice = kind === "practice";
+  // Publish the bar's height so the sticky search bar (and page toolbars) stop just under it.
+  useCssHeightVar(sticky ? bar : NO_EL, "--b2b-banner-h");
   useEffect(() => { document.documentElement.dataset.b2bDemo = kind; return () => { delete document.documentElement.dataset.b2bDemo; }; }, [kind]);
   useEffect(() => { if (confirming) cancel.current?.focus(); }, [confirming]);
   const busy = s.phase === "preparing" || s.phase === "switching";
   return (
-    <div role="region" aria-label={practice ? "Practice Mode" : "Demo Mode"} data-testid="demo-banner" data-kind={kind} data-anywhere={anywhere ? "" : undefined}
+    <div ref={bar} role="region" aria-label={practice ? "Practice Mode" : "Demo Mode"} data-testid="demo-banner" data-kind={kind} data-anywhere={anywhere ? "" : undefined}
       className={cn(sticky ? "sticky top-0 z-40" : "relative z-40", "flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 text-sm no-print", practice ? "bg-[#14B8A6] text-[#06231F]" : "bg-[#F59E0B] text-[#2B1600]")}>
       <span className="rounded bg-black/15 px-2 py-0.5 text-xs font-extrabold tracking-[0.12em]">{practice ? "PRACTICE MODE · FAKE DATA" : "DEMO MODE"}</span>
       {practice ? (

@@ -10,6 +10,7 @@ import { BLOCKING_SUBSCRIPTION_STATUSES, converge, reusableSession, staleSession
 import { createAdminClient, getUser } from "@/lib/supabase/server";
 import { isStripeConfigured, serverEnv } from "@/lib/env";
 import { site } from "@/lib/site";
+import { isAcademyMeta } from "@/lib/academy/advanced/plans";
 import { fail, json, logError, rateLimit, sameOrigin } from "@/lib/http/api";
 
 export const runtime = "nodejs";
@@ -63,6 +64,11 @@ export async function POST(req: Request) {
     if (await holdsCompanySeat(admin, user.id)) {
       return fail(409, "company_seat", "Your company's Team license already includes everything in Individual Unlimited, so there's nothing to buy. Ask your company owner about add-ons.");
     }
+    // Academy All Access already includes one Individual Unlimited seat: never sell a second one.
+    const ent = await admin.rpc("user_entitlement", { p_user_id: user.id });
+    if (!ent.error && (Array.isArray(ent.data) ? ent.data[0] : ent.data)?.source === "academy_all_access") {
+      return fail(409, "academy_all_access", "Your Academy All Access membership already includes Individual Unlimited, so there's nothing to buy. Manage it from Academy → Membership.");
+    }
 
     let { data: bc } = await admin.from("billing_customers").select("stripe_customer_id").eq("user_id", user.id).maybeSingle();
     if (!bc) {
@@ -76,7 +82,8 @@ export async function POST(req: Request) {
     // Stripe is the source of truth: if a subscription exists that our database hasn't heard about yet
     // (delayed webhook), record it and send the customer to manage it instead of selling a second one.
     const subs = await stripe.subscriptions.list({ customer, status: "all", limit: 20 });
-    const existing = subs.data.find((s) => BLOCKING_SUBSCRIPTION_STATUSES.has(s.status));
+    // Academy Advanced subscriptions (education packages) live on the same customer but aren't software plans.
+    const existing = subs.data.find((s) => BLOCKING_SUBSCRIPTION_STATUSES.has(s.status) && !isAcademyMeta(s.metadata));
     if (existing) {
       await applySubscription(admin, existing, Math.floor(Date.now() / 1000)).catch(() => null);
       return fail(409, "already_subscribed", "You already have Individual Unlimited. Manage it from Subscription settings.");
@@ -88,7 +95,7 @@ export async function POST(req: Request) {
 
     // At most one open Checkout session per customer: reuse a live one for this plan, expire the rest.
     const now = Math.floor(Date.now() / 1000);
-    const open = (await stripe.checkout.sessions.list({ customer, status: "open", limit: 20 })).data;
+    const open = (await stripe.checkout.sessions.list({ customer, status: "open", limit: 20 })).data.filter((s) => !isAcademyMeta(s.metadata));
     const reuse = reusableSession(open, plan, now);
     await expireQuietly(stripe, staleSessions(open, plan, now));
     if (reuse?.url) return json({ url: reuse.url, plan, reused: true });
@@ -121,7 +128,7 @@ export async function POST(req: Request) {
     }
 
     // Concurrent requests (two tabs) converge on the same session; the others are expired.
-    const after = (await stripe.checkout.sessions.list({ customer, status: "open", limit: 20 })).data;
+    const after = (await stripe.checkout.sessions.list({ customer, status: "open", limit: 20 })).data.filter((s) => !isAcademyMeta(s.metadata));
     const { keep, expire } = converge(after.some((s) => s.id === created.id) ? after : [...after, created]);
     await expireQuietly(stripe, expire);
     if (!keep?.url) return fail(409, "checkout_retry", "Please try again.");
