@@ -53,7 +53,9 @@ TikTok content, Google Ads, LinkedIn. Unsupported: video tools (OpusClip, Stream
   (one detail string points to the new page).
 - Staging Supabase: Phase 5 migration + registry seed applied through the SQL editor. Growth OS remains STOPPED.
 - Not changed: production database, production Vault, Netlify env vars, the website, any platform account.
-- Not deployed yet: Edge Function `growth-oauth` (it needs `GROWTH_DB_PASSWORD` to boot and an OAuth client to be useful).
+- Deployed 2026-11-28 (staging only): Edge Functions `growth-oauth` (new, verify_jwt off) and `growth-worker` v4 (Phase 4 worker plus the
+  connector handlers). Both are a one-line loader that imports the source pinned to commit `891d20f` of this repo, so the deployed
+  code is exactly the reviewed code. Smoke: `growth-oauth` 404 on an unknown route, 400 on an unknown state [verified via pg_net].
 
 ## 4. Permissions or credentials still required (James does these himself; Claude never sees the values)
 

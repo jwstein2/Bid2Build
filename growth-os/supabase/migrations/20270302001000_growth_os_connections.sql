@@ -519,6 +519,7 @@ begin
   end;
   perform set_config('growth.status_writer', 'health_check', true);
   update growth.connections set status = v_status, granted_scopes = v_granted, last_check_at = now(), last_health_at = now(),
+         detail = 'last health check: ' || p_outcome,
          last_verified_at = case when v_status = 'verified_operational' then now() else last_verified_at end,
          last_error_code = case when v_status = 'verified_operational' then null
                                 when cardinality(v_missing) > 0 and p_outcome = 'ok' then 'missing_scopes' else left(p_error_code, 60) end,
