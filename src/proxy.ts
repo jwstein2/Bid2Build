@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { ATTRIBUTION_COOKIE, ATTRIBUTION_MAX_AGE, captureAttribution, encodeAttribution } from "@/lib/growth/attribution";
+import { appendTouch, decodeTouches, encodeTouches, touchesEnabled, touchFromAttribution, trackingPermitted, validVisitorId, TOUCHES_COOKIE, TOUCHES_MAX_AGE, VISITOR_COOKIE, VISITOR_MAX_AGE } from "@/lib/growth/touches";
 import { normalizeReferralCode, REFERRAL_COOKIE, REFERRAL_MAX_AGE } from "@/lib/growth/referral";
 import { TWO_STEP_REQUIRED, needsStepUp, stepUpExempt } from "@/lib/auth/mfa";
 import { demoBlockedMessage, isDemoBlocked, parseDemoClaim } from "@/lib/demo/session";
@@ -20,9 +21,22 @@ function withAttribution(request: NextRequest, response: NextResponse): NextResp
   if (ref && !request.cookies.has(REFERRAL_COOKIE)) {
     response.cookies.set(REFERRAL_COOKIE, ref, { maxAge: REFERRAL_MAX_AGE, httpOnly: true, sameSite: "lax", secure: request.nextUrl.protocol === "https:", path: "/" });
   }
-  if (request.cookies.has(ATTRIBUTION_COOKIE)) return response;
+  const hasFirst = request.cookies.has(ATTRIBUTION_COOKIE);
+  const permitted = trackingPermitted(request.headers, (n) => request.cookies.get(n)?.value);
+  // Opted out (GPC or the analytics opt-out) after visits were recorded: clear the touch cookies, as the cookie policy says.
+  if (!permitted) for (const name of [VISITOR_COOKIE, TOUCHES_COOKIE]) if (request.cookies.has(name)) response.cookies.delete(name);
+  const touches = touchesEnabled() && permitted;
+  if (hasFirst && !touches) return response;
   const a = captureAttribution(request.nextUrl, request.headers.get("referer"), request.headers.get("user-agent"));
-  if (a) response.cookies.set(ATTRIBUTION_COOKIE, encodeAttribution(a), { maxAge: ATTRIBUTION_MAX_AGE, httpOnly: true, sameSite: "lax", secure: request.nextUrl.protocol === "https:", path: "/" });
+  if (!a) return response;
+  const secure = request.nextUrl.protocol === "https:";
+  if (!hasFirst) response.cookies.set(ATTRIBUTION_COOKIE, encodeAttribution(a), { maxAge: ATTRIBUTION_MAX_AGE, httpOnly: true, sameSite: "lax", secure, path: "/" });
+  // Growth OS Phase 3 (off unless MARKETING_TOUCHES=on): anonymous visitor id + every tagged visit, for last touch.
+  if (touches) {
+    if (!validVisitorId(request.cookies.get(VISITOR_COOKIE)?.value)) response.cookies.set(VISITOR_COOKIE, crypto.randomUUID(), { maxAge: VISITOR_MAX_AGE, httpOnly: true, sameSite: "lax", secure, path: "/" });
+    const list = appendTouch(decodeTouches(request.cookies.get(TOUCHES_COOKIE)?.value), touchFromAttribution(a));
+    response.cookies.set(TOUCHES_COOKIE, encodeTouches(list), { maxAge: TOUCHES_MAX_AGE, httpOnly: true, sameSite: "lax", secure, path: "/" });
+  }
   return response;
 }
 

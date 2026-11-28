@@ -23,6 +23,7 @@ export const TOOLS = [
   { href: "/academy/manage", label: "Contractor Academy" },
   { href: "/admin/states", label: "Bids by state" },
   { href: "/admin/definitions", label: "Metric definitions" },
+  { href: "/admin/marketing/journey", label: "Customer journey" },
   { href: "/admin/marketing/radar", label: "Opportunity Radar" },
   { href: "/admin/sales", label: "Outreach funnel (Sales)" },
   { href: "/admin/referrals", label: "Referrals" },
