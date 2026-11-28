@@ -26,9 +26,10 @@ import {
   type Cell, type CompareGroup,
 } from "@/lib/marketing/catalog";
 import { LegalStatusCompact } from "@/components/legal/legal-status";
+import { metaDescription } from "@/lib/seo/meta";
 
 const pageTitle = `Pricing: Free, then ${MONTHLY.price}/month`;
-const pageDescription = `Free: ${plans.starterCredits} bids to start, plus ${plans.monthlyCredits} free bid every month. Individual Unlimited: ${MONTHLY.price}/month or ${ANNUAL.price}/year. ${PM_PRODUCT_NAME} scheduling add-on: ${PRICES.pmMonthly}/month. Team: ${PRICES.enterpriseBase}/month for ${PRICES.enterpriseIncludedUsers} users.`;
+const pageDescription = metaDescription(`Free: ${plans.starterCredits} bids to start, plus ${plans.monthlyCredits} free bid every month. Individual Unlimited: ${MONTHLY.price}/month or ${ANNUAL.price}/year. ${PM_PRODUCT_NAME} scheduling add-on: ${PRICES.pmMonthly}/month. Team: ${PRICES.enterpriseBase}/month for ${PRICES.enterpriseIncludedUsers} users.`);
 
 export const metadata: Metadata = {
   title: pageTitle,

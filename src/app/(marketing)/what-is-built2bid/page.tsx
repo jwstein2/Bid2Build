@@ -9,7 +9,7 @@ import { breadcrumbLd, faqLd, ldJson, organizationLd, softwareApplicationLd } fr
 import { site } from "@/lib/site";
 
 const title = `What is ${site.name}? Features, pricing and limits`;
-const description = `Plain facts about ${site.name}: contractor estimating and proposal software for small contracting businesses. Who it's for, what it does, what it costs, and what it doesn't do.`;
+const description = `Plain facts about ${site.name}, estimating and proposal software for small contractors: who it's for, what it does, what it costs and what it doesn't do.`;
 
 export const metadata: Metadata = {
   title,
