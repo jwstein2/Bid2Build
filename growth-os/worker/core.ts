@@ -85,7 +85,10 @@ export const builtinHandlers: Record<string, Handler> = {
       const [{ r }] = await ctx.deps.sql`select growth_api.crm_apply(${ctx.job.job_id}, ${ctx.deps.worker}) as r`;
       return { output: r };
     } catch (e) {
-      throw new PermanentError((e as Error).message);
+      // Errors crm_apply raises on purpose (no approval, tampered payload, not forward...) are SQLSTATE P0001:
+      // final. Anything else (dropped connection, timeout, serialization) is transient: let the job retry.
+      if ((e as { code?: string }).code === "P0001") throw new PermanentError((e as Error).message);
+      throw e;
     }
   },
 
@@ -178,6 +181,6 @@ async function runJob(d: Deps, handlers: Record<string, Handler>, job: ClaimedJo
 
 async function complete(d: Deps, job: ClaimedJob, ok: boolean, retryable: boolean, output: unknown, error: string | null, res: HandlerResult) {
   const [{ s }] = await d.sql`select growth_api.complete(${job.run_id}, ${d.worker}, ${ok}, ${retryable},
-    ${output === null || output === undefined ? null : JSON.stringify(output)}::jsonb, ${error}, ${res.tokensIn ?? null}, ${res.tokensOut ?? null}) as s`;
+    ${output === null || output === undefined ? null : JSON.stringify(output)}::text::jsonb, ${error}, ${res.tokensIn ?? null}, ${res.tokensOut ?? null}) as s`;
   return String(s);
 }
